@@ -643,6 +643,26 @@
     .adapt-run-btn:hover { opacity: .88; transform: translateY(-2px); }
     .adapt-run-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
 
+    /* Mobile inline result */
+    .mobile-adapt-result {
+      margin-top: 12px; background: var(--surf);
+      border: 1px solid var(--border); border-radius: var(--r);
+      overflow: hidden;
+    }
+    .mobile-adapt-result-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px 0;
+    }
+    .mobile-adapt-result-label {
+      font-size: .72rem; font-weight: 600; color: var(--text3);
+      text-transform: uppercase; letter-spacing: .5px;
+    }
+    .mobile-adapt-result-body {
+      padding: 10px 14px 14px; font-size: .86rem; line-height: 1.65;
+      color: var(--text); white-space: pre-wrap; word-break: break-word;
+      max-height: 300px; overflow-y: auto;
+    }
+
     .adapt-res { display: none; margin-top: 16px; }
     .adapt-res.on { display: block; }
     .adapt-res-txt {
@@ -1977,14 +1997,49 @@
       .hero-input-wrap.has-result .hero-input-left { flex: none; width: 100%; }
       .btn-queue-add { width: 44px; }
 
-      /* Adapt */
-      .adapt-section { padding: 60px 16px; }
-      .adapt-inner { grid-template-columns: 1fr; gap: 36px; }
-      .adapt-right { position: relative; top: 0; }
-      .preview-card { min-height: 260px; }
-      .style-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-      .style-pill { padding: 14px 12px; min-height: 90px; }
-      .style-pill .sp-emoji { width: 34px; height: 34px; font-size: 1rem; }
+      /* Adapt — mobile compact layout */
+      .adapt-section { padding: 40px 16px; min-height: auto; }
+      .adapt-inner { grid-template-columns: 1fr; gap: 20px; }
+      .adapt-header h2 { font-size: 1.6rem; }
+      .adapt-header p { display: none; }
+
+      /* Textarea compact with transform button */
+      .script-ta { min-height: 100px; font-size: 14px; }
+      .adapt-run-btn { margin-top: 10px; padding: 14px; font-size: .9rem; }
+
+      /* Style grid → horizontal carousel */
+      .style-grid {
+        display: flex !important; flex-wrap: nowrap;
+        overflow-x: auto; -webkit-overflow-scrolling: touch;
+        gap: 8px; padding-bottom: 8px;
+        scroll-snap-type: x mandatory;
+      }
+      .style-grid::-webkit-scrollbar { height: 3px; }
+      .style-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
+      .style-pill {
+        flex: 0 0 140px; min-height: 80px; padding: 12px;
+        scroll-snap-align: start;
+      }
+      .style-pill .sp-emoji { width: 30px; height: 30px; }
+      .style-pill .sp-emoji svg { width: 20px; height: 24px; }
+      .style-pill .sp-name { font-size: .68rem; }
+      .style-pill .sp-hint { display: none; }
+
+      /* "+" assistant card in carousel */
+      .style-pill-add { flex: 0 0 100px; min-height: 80px; }
+
+      /* Search bar compact */
+      .style-search { font-size: 14px; padding: 8px 12px; }
+
+      /* Preview card hidden on mobile — result shows inline after transform */
+      .adapt-right { display: none; }
+
+      /* Custom row compact */
+      .custom-row input { font-size: 14px; }
+
+      /* Mobile result inline */
+      .mobile-adapt-result { display: none !important; }
+      .mobile-adapt-result.on { display: block !important; }
 
       /* Flow */
       .flow-nodes { flex-direction: column; gap: 16px; }
@@ -2391,6 +2446,18 @@
       <div class="custom-row" id="customRow">
         <input type="text" id="customPrompt" placeholder="Ej: Escríbelo como una carta de ventas…" />
         <button class="btn-grad" onclick="runAdapt()">→</button>
+      </div>
+
+      <!-- Mobile result (shown inline after transform on mobile) -->
+      <div id="mobileAdaptResult" class="mobile-adapt-result" style="display:none">
+        <div class="mobile-adapt-result-head">
+          <span class="mobile-adapt-result-label">Result</span>
+          <button class="rs-card-copy" onclick="copyMobileResult()">
+            <span class="rs-tip">Copy</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
+        </div>
+        <div id="mobileAdaptResultTxt" class="mobile-adapt-result-body"></div>
       </div>
 
       <!-- result kept in DOM for adaptFromView compatibility, rendered in right panel -->
@@ -4703,6 +4770,10 @@ async function runAdapt() {
       previewLabel.textContent = "Tu resultado";
       pfCopyBtn.style.display = "block";
       if (st.user) document.getElementById("pfSaveBtn").style.display = "block";
+      // Mobile: show result inline
+      const mobileRes = document.getElementById("mobileAdaptResult");
+      document.getElementById("mobileAdaptResultTxt").textContent = d.result;
+      mobileRes.classList.add("on");
       previewFooterTxt.textContent = d.cost_cents > 0
         ? `−${eur(d.cost_cents)} de saldo`
         : "Generado con IA · gratis";
@@ -4721,6 +4792,12 @@ async function runAdapt() {
 }
 
 let _lastAdaptResult = "";
+function copyMobileResult() {
+  const text = document.getElementById("mobileAdaptResultTxt").textContent;
+  navigator.clipboard.writeText(text);
+  showToast("Copied!");
+}
+
 function copyPreviewResult() {
   const txt = document.getElementById("previewResultText").textContent;
   if (!txt) return;
