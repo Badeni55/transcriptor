@@ -2388,10 +2388,6 @@
         </button>
       </div>
 
-      <button class="adapt-run-btn" id="btnRunAdapt" onclick="runAdapt()" style="display:none">
-        ✨ Transform
-      </button>
-
       <div class="custom-row" id="customRow">
         <input type="text" id="customPrompt" placeholder="Ej: Escríbelo como una carta de ventas…" />
         <button class="btn-grad" onclick="runAdapt()">→</button>
@@ -2455,6 +2451,9 @@
           <button class="pf-copy" id="pfSaveBtn" style="display:none" onclick="saveScript()">💾 Guardar</button>
         </div>
       </div>
+      <button class="adapt-run-btn" id="btnRunAdapt" onclick="runAdapt()" style="display:none">
+        Transform
+      </button>
     </div>
 
   </div>
@@ -4657,11 +4656,8 @@ function selectStyle(btn) {
   activeStyle = s;
   previewStyle(s);
   document.getElementById("customRow").classList.toggle("on", s === "custom");
-  // Show Transform button (always visible once a style is picked)
+  // Show Transform button (always visible once a style is picked, hidden for custom which has its own →)
   document.getElementById("btnRunAdapt").style.display = s === "custom" ? "none" : "";
-  // Auto-run if text already present and on desktop
-  const text = document.getElementById("adaptInput").value.trim();
-  if (s !== "custom" && text && window.innerWidth > 768) runAdapt();
 }
 
 async function runAdapt() {
