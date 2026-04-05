@@ -464,6 +464,34 @@
     }
     .rs-card-act:hover { border-color: var(--purple); color: #fed7aa; }
 
+    /* Inline transform in result cards */
+    .rs-card-transform {
+      display: none; padding: 0 16px 14px;
+      flex-direction: column; gap: 10px;
+    }
+    .rs-card-transform.on { display: flex; }
+    .rs-card-transform-chips {
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .rs-card-chip {
+      padding: 6px 12px; border-radius: 20px; font-size: .72rem; font-weight: 600;
+      border: 1px solid var(--border); background: var(--surf);
+      color: var(--text2); cursor: pointer; transition: all .15s;
+      white-space: nowrap;
+    }
+    .rs-card-chip:hover { border-color: var(--purple); color: var(--text); }
+    .rs-card-chip.loading { opacity: .5; pointer-events: none; }
+    .rs-card-transform-result {
+      padding: 12px; background: var(--surf2); border: 1px solid var(--border);
+      border-radius: var(--rsm); font-size: .84rem; line-height: 1.6;
+      color: var(--text); white-space: pre-wrap; word-break: break-word;
+      max-height: 250px; overflow-y: auto; position: relative;
+    }
+    .rs-card-transform-result .rs-card-copy {
+      position: absolute; top: 8px; right: 8px;
+    }
+    .rs-card.collapsed .rs-card-transform { display: none; }
+
     /* Loading card */
     .rs-card-loading {
       padding: 20px 16px; display: flex; align-items: center; gap: 12px;
@@ -2360,9 +2388,13 @@
         </button>
       </div>
 
+      <button class="adapt-run-btn" id="btnRunAdapt" onclick="runAdapt()" style="display:none">
+        ✨ Transform
+      </button>
+
       <div class="custom-row" id="customRow">
         <input type="text" id="customPrompt" placeholder="Ej: Escríbelo como una carta de ventas…" />
-        <button class="btn-grad" onclick="runAdapt()">Aplicar</button>
+        <button class="btn-grad" onclick="runAdapt()">→</button>
       </div>
 
       <!-- result kept in DOM for adaptFromView compatibility, rendered in right panel -->
@@ -4334,6 +4366,45 @@ function rsCopyResult(btn, idx) {
   setTimeout(() => { btn.classList.remove("ok"); tip.textContent = "Copy"; }, 1500);
 }
 
+function rsToggleTransform(idx) {
+  const el = document.getElementById(`rsTransform-${idx}`);
+  if (el) el.classList.toggle("on");
+}
+
+async function rsQuickTransform(idx, style, btn) {
+  const item = rsResults[idx];
+  if (!item) return;
+
+  // Disable all chips in this card
+  const chips = btn.parentElement.querySelectorAll(".rs-card-chip");
+  chips.forEach(c => c.classList.add("loading"));
+  btn.textContent = "...";
+
+  try {
+    const res = await fetch("/adapt", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: item.text, style, custom_prompt: "", assistant_id: selectedAssistantId || "" }),
+    });
+    const d = await res.json();
+    chips.forEach(c => c.classList.remove("loading"));
+    btn.textContent = { viral: "🔥 Viral", divertido: "😂 Funny", linkedin: "💼 LinkedIn", storytelling: "📖 Story", hooks: "🪝 Hooks" }[style] || style;
+
+    if (!res.ok) { showToast(d.error || "Error"); return; }
+
+    const resultEl = document.getElementById(`rsTransformResult-${idx}`);
+    resultEl.style.display = "";
+    resultEl.innerHTML = `${esc(d.result)}<button class="rs-card-copy" onclick="navigator.clipboard.writeText(this.parentElement.textContent.replace('Copy','').trim());this.querySelector('.rs-tip').textContent='Copied!';setTimeout(()=>this.querySelector('.rs-tip').textContent='Copy',1500)" style="position:absolute;top:8px;right:8px"><span class="rs-tip">Copy</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>`;
+
+    if (d.credits_cents !== undefined) {
+      st.credits = d.credits_cents;
+      document.getElementById("balDisp").textContent = usos(d.credits_cents);
+    }
+  } catch {
+    chips.forEach(c => c.classList.remove("loading"));
+    showToast("Error");
+  }
+}
+
 function rsUseInAdapt(idx) {
   const text = rsResults[idx].text;
   const adaptInput = document.getElementById("adaptInput");
@@ -4438,7 +4509,17 @@ async function rsTranscribeOne(url) {
       </div>
       <div class="rs-card-body">${esc(result.text)}</div>
       <div class="rs-card-actions">
-        <button class="rs-card-act" onclick="rsUseInAdapt(${idx})">✨ Make it yours</button>
+        <button class="rs-card-act" onclick="rsToggleTransform(${idx})">✨ Transform</button>
+      </div>
+      <div class="rs-card-transform" id="rsTransform-${idx}">
+        <div class="rs-card-transform-chips">
+          <button class="rs-card-chip" onclick="rsQuickTransform(${idx},'viral',this)">🔥 Viral</button>
+          <button class="rs-card-chip" onclick="rsQuickTransform(${idx},'divertido',this)">😂 Funny</button>
+          <button class="rs-card-chip" onclick="rsQuickTransform(${idx},'linkedin',this)">💼 LinkedIn</button>
+          <button class="rs-card-chip" onclick="rsQuickTransform(${idx},'storytelling',this)">📖 Story</button>
+          <button class="rs-card-chip" onclick="rsQuickTransform(${idx},'hooks',this)">🪝 Hooks</button>
+        </div>
+        <div class="rs-card-transform-result" id="rsTransformResult-${idx}" style="display:none"></div>
       </div>
     `;
     // Collapse previous cards
@@ -4576,7 +4657,11 @@ function selectStyle(btn) {
   activeStyle = s;
   previewStyle(s);
   document.getElementById("customRow").classList.toggle("on", s === "custom");
-  if (s !== "custom") runAdapt();
+  // Show Transform button (always visible once a style is picked)
+  document.getElementById("btnRunAdapt").style.display = s === "custom" ? "none" : "";
+  // Auto-run if text already present and on desktop
+  const text = document.getElementById("adaptInput").value.trim();
+  if (s !== "custom" && text && window.innerWidth > 768) runAdapt();
 }
 
 async function runAdapt() {
