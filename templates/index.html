@@ -2012,7 +2012,7 @@
     @media (max-width: 768px) {
       /* Nav */
       nav { padding: 0 12px; height: 52px; }
-      .lang-switch { display: none; }
+      /* .lang-switch visible on all sizes */
       .user-pill span { display: none; }
       .badge-bal { padding: 4px 10px; font-size: .72rem; }
 
@@ -2684,7 +2684,7 @@
     <div class="drawer-av" id="drawerAv" style="overflow:hidden;padding:0"></div>
     <div class="drawer-user-info">
       <div class="drawer-email" id="drawerEmail">—</div>
-      <div class="drawer-since">Cuenta ReelScript</div>
+      <div class="drawer-since" data-i18n="drawer.account">ReelScript Account</div>
     </div>
     <button class="drawer-close" onclick="closeDrawer()">✕</button>
   </div>
@@ -2692,33 +2692,33 @@
   <div class="drawer-balance">
     <div>
       <div class="drawer-balance-amt" id="drawerBal">0 usos</div>
-      <div class="drawer-balance-lbl">Usos restantes</div>
+      <div class="drawer-balance-lbl" data-i18n="drawer.uses_left">Uses left</div>
     </div>
-    <button class="btn-topup-sm" onclick="closeDrawer();openTopup()">+ Recargar</button>
+    <button class="btn-topup-sm" onclick="closeDrawer();openTopup()" data-i18n="drawer.topup">+ Top up</button>
   </div>
 
   <div class="drawer-stats">
     <div class="stat-card">
       <div class="stat-num" id="statTotal">0</div>
-      <div class="stat-lbl">Transcripciones</div>
+      <div class="stat-lbl" data-i18n="drawer.transcriptions">Transcriptions</div>
     </div>
     <div class="stat-card">
       <div class="stat-num" id="statToday">0/2</div>
-      <div class="stat-lbl">Gratis hoy</div>
+      <div class="stat-lbl" data-i18n="drawer.free_today">Free today</div>
     </div>
   </div>
 
   <div class="drawer-hist-title">
-    <span>Historial</span>
+    <span data-i18n="drawer.history">History</span>
     <span class="count-badge" id="histCount">0</span>
   </div>
   <div class="drawer-hist-list">
     <ul class="hist-list" id="histList">
-      <li class="empty-state">Sin transcripciones todavía</li>
+      <li class="empty-state" data-i18n="drawer.empty">No transcriptions yet</li>
     </ul>
   </div>
 
-  <button class="drawer-logout" onclick="logout()">Cerrar sesión</button>
+  <button class="drawer-logout" onclick="logout()" data-i18n="drawer.logout">Log out</button>
 </div>
 
 
@@ -2730,11 +2730,11 @@
     <div class="prof-sidebar">
       <div class="prof-sidebar-identity" style="position:relative">
         <div class="prof-av" id="profAv" onclick="toggleAvatarPicker(event)" title="Change avatar" style="width:64px;height:64px;border-radius:14px;margin:0 auto 12px;display:block">
-          <div class="prof-av-edit">Edit</div>
+          <div class="prof-av-edit" data-i18n="prof.edit">Edit</div>
         </div>
         <!-- Avatar picker grid -->
         <div class="avatar-picker" id="avatarPicker">
-          <div class="avatar-picker-title">Choose your avatar</div>
+          <div class="avatar-picker-title" data-i18n="prof.choose_avatar">Choose your avatar</div>
           <div class="avatar-picker-grid" id="avatarPickerGrid"></div>
         </div>
         <div>
@@ -2743,7 +2743,7 @@
           <!-- Usage bar -->
           <div id="profUsageWrap" style="display:none;margin-top:10px">
             <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-              <span style="font-size:.68rem;color:var(--text3)">Monthly usage</span>
+              <span style="font-size:.68rem;color:var(--text3)" data-i18n="prof.monthly_usage">Monthly usage</span>
               <span style="font-size:.68rem;color:var(--text2)" id="profUsageLabel">0/0</span>
             </div>
             <div style="height:3px;background:var(--surf2);border-radius:2px;overflow:hidden">
@@ -2754,18 +2754,18 @@
       </div>
 
       <div class="prof-sidebar-nav" id="profSidebarNav">
-        <button class="prof-nav-item on" onclick="profTab('overview')">📊 Overview</button>
-        <button class="prof-nav-item" onclick="profTab('scripts')">✨ Saved scripts</button>
-        <button class="prof-nav-item" onclick="profTab('transc')">🎙 Transcriptions</button>
-        <button class="prof-nav-item" id="profNavProjects" style="display:none" onclick="profTab('projects')">📁 Projects</button>
-        <button class="prof-nav-item" id="profNavAssistants" style="display:none" onclick="profTab('assistants')">🤖 Assistants</button>
-        <button class="prof-nav-item" id="profNavTeam" style="display:none" onclick="profTab('team')">👥 Team</button>
+        <button class="prof-nav-item on" onclick="profTab('overview')" data-i18n="prof.overview">📊 Overview</button>
+        <button class="prof-nav-item" onclick="profTab('scripts')" data-i18n="prof.saved_scripts">✨ Saved scripts</button>
+        <button class="prof-nav-item" onclick="profTab('transc')" data-i18n="prof.transcriptions">🎙 Transcriptions</button>
+        <button class="prof-nav-item" id="profNavProjects" style="display:none" onclick="profTab('projects')" data-i18n="prof.projects">📁 Projects</button>
+        <button class="prof-nav-item" id="profNavAssistants" style="display:none" onclick="profTab('assistants')" data-i18n="prof.assistants">🤖 Assistants</button>
+        <button class="prof-nav-item" id="profNavTeam" style="display:none" onclick="profTab('team')" data-i18n="prof.team">👥 Team</button>
       </div>
 
       <div class="prof-sidebar-footer">
-        <button style="padding:9px;border-radius:8px;background:var(--purple);color:#fff;font-size:.8rem;font-weight:600;border:none;cursor:pointer" onclick="closeProfile();openTopup()">+ Top up</button>
-        <button id="profManageSubSidebar" style="display:none;padding:8px;border-radius:8px;background:transparent;color:var(--text3);font-size:.75rem;border:1px solid var(--border);cursor:pointer" onclick="manageSub()">Manage subscription</button>
-        <button style="padding:8px;border-radius:8px;background:transparent;color:var(--text3);font-size:.75rem;border:1px solid var(--border);cursor:pointer" onclick="closeProfile()">← Back to app</button>
+        <button style="padding:9px;border-radius:8px;background:var(--purple);color:#fff;font-size:.8rem;font-weight:600;border:none;cursor:pointer" onclick="closeProfile();openTopup()" data-i18n="prof.topup">+ Top up</button>
+        <button id="profManageSubSidebar" style="display:none;padding:8px;border-radius:8px;background:transparent;color:var(--text3);font-size:.75rem;border:1px solid var(--border);cursor:pointer" onclick="manageSub()" data-i18n="prof.manage_sub">Manage subscription</button>
+        <button style="padding:8px;border-radius:8px;background:transparent;color:var(--text3);font-size:.75rem;border:1px solid var(--border);cursor:pointer" onclick="closeProfile()" data-i18n="prof.back">← Back to app</button>
       </div>
     </div>
 
@@ -2777,15 +2777,15 @@
         <div class="prof-stats-row">
           <div class="prof-stat-card">
             <div class="prof-stat-icon orange">🎙</div>
-            <div><div class="prof-stat-val" id="profStatTransc">0</div><div class="prof-stat-label">Transcriptions</div></div>
+            <div><div class="prof-stat-val" id="profStatTransc">0</div><div class="prof-stat-label" data-i18n="prof.stat_transc">Transcriptions</div></div>
           </div>
           <div class="prof-stat-card">
             <div class="prof-stat-icon purple">✨</div>
-            <div><div class="prof-stat-val" id="profStatScripts">0</div><div class="prof-stat-label">Saved scripts</div></div>
+            <div><div class="prof-stat-val" id="profStatScripts">0</div><div class="prof-stat-label" data-i18n="prof.stat_scripts">Saved scripts</div></div>
           </div>
           <div class="prof-stat-card">
             <div class="prof-stat-icon green">⚡</div>
-            <div><div class="prof-stat-val" id="profStatUsos">0</div><div class="prof-stat-label">Uses left</div></div>
+            <div><div class="prof-stat-val" id="profStatUsos">0</div><div class="prof-stat-label" data-i18n="prof.stat_uses">Uses left</div></div>
           </div>
         </div>
         <div id="profRecentScripts"></div>
@@ -2794,7 +2794,7 @@
       <!-- Scripts panel -->
       <div id="profPanelScripts" style="display:none">
         <div class="prof-section-head">
-          <div><div class="prof-section-title">Saved scripts</div></div>
+          <div><div class="prof-section-title" data-i18n="prof.saved_scripts">Saved scripts</div></div>
         </div>
         <div id="profListScripts"></div>
       </div>
@@ -2802,7 +2802,7 @@
       <!-- Transcriptions panel -->
       <div id="profPanelTransc" style="display:none">
         <div class="prof-section-head">
-          <div><div class="prof-section-title">Transcriptions</div></div>
+          <div><div class="prof-section-title" data-i18n="prof.transcriptions">Transcriptions</div></div>
         </div>
         <div id="profListTransc"></div>
       </div>
@@ -2811,23 +2811,23 @@
       <div id="profPanelProjects" style="display:none">
         <div class="prof-section-head">
           <div>
-            <div class="prof-section-title">Projects</div>
+            <div class="prof-section-title" data-i18n="proj.title">Projects</div>
             <div class="prof-section-sub" id="profProjCount"></div>
           </div>
-          <button style="background:var(--purple);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openNewProjectModal()">+ New project</button>
+          <button style="background:var(--purple);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openNewProjectModal()" data-i18n="proj.new">+ New project</button>
         </div>
         <div class="proj-cards-grid" id="profProjGrid"></div>
-        <div class="prof-empty" id="profProjEmpty" style="display:none"><div class="prof-empty-icon">📁</div>No projects yet.</div>
+        <div class="prof-empty" id="profProjEmpty" style="display:none"><div class="prof-empty-icon">📁</div><span data-i18n="empty.projects">No projects yet.</span></div>
       </div>
 
       <!-- Assistants panel -->
       <div id="profPanelAssistants" style="display:none">
         <div class="prof-section-head">
           <div>
-            <div class="prof-section-title">Your assistants</div>
+            <div class="prof-section-title" data-i18n="asst.title">Your assistants</div>
             <div class="prof-section-sub" id="profAsstCount"></div>
           </div>
-          <button id="profNewAsstBtn" style="background:var(--purple);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openAssistantModal()">+ New assistant</button>
+          <button id="profNewAsstBtn" style="background:var(--purple);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openAssistantModal()" data-i18n="asst.new">+ New assistant</button>
         </div>
         <div class="asst-cards-grid" id="profListAssistants"></div>
       </div>
@@ -2835,9 +2835,9 @@
       <!-- Team panel -->
       <div id="profPanelTeam" style="display:none">
         <div class="prof-section-head">
-          <div><div class="prof-section-title">Team members</div></div>
+          <div><div class="prof-section-title" data-i18n="team.title">Team members</div></div>
           <div style="display:flex;gap:8px">
-            <button style="background:var(--purple);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openInviteModal()">Invite member</button>
+            <button style="background:var(--purple);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openInviteModal()" data-i18n="team.invite">Invite member</button>
           </div>
         </div>
         <div id="profTeamList"></div>
@@ -2851,19 +2851,19 @@
 <div class="overlay" id="newProjectOverlay" onclick="if(event.target===this)closeModal('newProjectOverlay')">
   <div class="modal">
     <button class="modal-x" onclick="closeModal('newProjectOverlay')">✕</button>
-    <h2>New Project</h2>
-    <p>Organize your scripts into projects with a custom style.</p>
+    <h2 data-i18n="proj.new_title">New Project</h2>
+    <p data-i18n="proj.new_desc">Organize your scripts into projects with a custom style.</p>
     <div class="field">
-      <label>Project name</label>
+      <label data-i18n="proj.name_label">Project name</label>
       <input type="text" id="newProjName" placeholder="e.g. Instagram Content" />
     </div>
     <div class="field">
-      <label>Default style prompt (optional)</label>
+      <label data-i18n="proj.style_label">Default style prompt (optional)</label>
       <textarea id="newProjStyle" class="script-ta" style="min-height:80px;font-size:.88rem"
         placeholder="e.g. Viral hooks with high-energy CTA..."></textarea>
     </div>
     <div class="form-err" id="newProjErr"></div>
-    <button class="btn-full" onclick="submitNewProject()">Create project</button>
+    <button class="btn-full" onclick="submitNewProject()" data-i18n="proj.create">Create project</button>
   </div>
 </div>
 
@@ -2871,14 +2871,14 @@
 <div class="overlay" id="inviteOverlay" onclick="if(event.target===this)closeModal('inviteOverlay')">
   <div class="modal">
     <button class="modal-x" onclick="closeModal('inviteOverlay')">✕</button>
-    <h2>Invite team member</h2>
-    <p>Send an invitation to join your agency workspace.</p>
+    <h2 data-i18n="team.invite_title">Invite team member</h2>
+    <p data-i18n="team.invite_desc">Send an invitation to join your agency workspace.</p>
     <div class="field">
-      <label>Email address</label>
+      <label data-i18n="team.email_label">Email address</label>
       <input type="email" id="inviteEmail" placeholder="colleague@email.com" />
     </div>
     <div class="form-err" id="inviteErr"></div>
-    <button class="btn-full" onclick="submitInvite()">Send invitation</button>
+    <button class="btn-full" onclick="submitInvite()" data-i18n="team.send_invite">Send invitation</button>
   </div>
 </div>
 
@@ -2887,15 +2887,15 @@
 <div class="view-overlay" id="viewOverlay" onclick="if(event.target===this)closeView()">
   <div class="view-modal">
     <div class="view-modal-head">
-      <h3 id="viewTitle">Transcripción</h3>
+      <h3 id="viewTitle" data-i18n="view.title">Transcription</h3>
       <button class="modal-x" onclick="closeView()">✕</button>
     </div>
     <div class="view-modal-body" id="viewBody"></div>
     <div class="view-modal-foot">
-      <button class="btn-sm" id="viewCopyBtn" onclick="copyView()">Copy</button>
-      <button class="btn-sm" onclick="adaptFromView()">Transform →</button>
-      <button class="btn-sm" onclick="saveViewToProject()">Save to project</button>
-      <button class="btn-sm" id="viewDlBtn">Download</button>
+      <button class="btn-sm" id="viewCopyBtn" onclick="copyView()" data-i18n="view.copy">Copy</button>
+      <button class="btn-sm" onclick="adaptFromView()" data-i18n="view.transform">Transform →</button>
+      <button class="btn-sm" onclick="saveViewToProject()" data-i18n="view.save_project">Save to project</button>
+      <button class="btn-sm" id="viewDlBtn" data-i18n="view.download">Download</button>
     </div>
   </div>
 </div>
@@ -2904,25 +2904,25 @@
 <div class="proj-detail-overlay" id="projDetailOverlay">
   <div class="proj-detail-inner">
     <div class="proj-detail-top">
-      <button class="proj-detail-back" onclick="closeProjDetail()">← Back</button>
+      <button class="proj-detail-back" onclick="closeProjDetail()" data-i18n="proj.back">← Back</button>
       <input class="proj-detail-name" id="projDetailName" onblur="saveProjName()" />
       <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
-        <span style="font-size:.72rem;color:var(--text3)">Assistant:</span>
+        <span style="font-size:.72rem;color:var(--text3)" data-i18n="proj.assistant_label">Assistant:</span>
         <select id="projDetailAssistant" onchange="saveProjAssistant()" style="padding:8px 14px;background:var(--surf);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:.82rem;font-family:var(--font-body);outline:none;cursor:pointer;transition:border-color .2s;-webkit-appearance:none;appearance:none;padding-right:28px;background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%234a5168%27 stroke-width=%272%27%3E%3Cpath d=%27M6 9l6 6 6-6%27/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 10px center">
-          <option value="">None</option>
+          <option value="" data-i18n="proj.none">None</option>
         </select>
       </div>
-      <button class="proj-detail-del" onclick="delProjFromDetail()">Delete</button>
+      <button class="proj-detail-del" onclick="delProjFromDetail()" data-i18n="proj.delete">Delete</button>
     </div>
     <div class="proj-detail-style">
-      <label>Default style prompt (auto-applies when generating scripts in this project)</label>
+      <label data-i18n="proj.style_auto">Default style prompt (auto-applies when generating scripts in this project)</label>
       <textarea id="projDetailStyle" placeholder="e.g. Rewrite as a viral reel script with strong hook..." onblur="saveProjStyle()"></textarea>
     </div>
     <div class="proj-detail-toolbar">
       <select id="projScriptSort" onchange="sortProjScripts()">
-        <option value="recent">Most recent</option>
-        <option value="views">Most viewed</option>
-        <option value="engagement">Best engagement</option>
+        <option value="recent" data-i18n="proj.sort_recent">Most recent</option>
+        <option value="views" data-i18n="proj.sort_views">Most viewed</option>
+        <option value="engagement" data-i18n="proj.sort_engagement">Best engagement</option>
       </select>
       <span class="count" id="projScriptCount">0 scripts</span>
     </div>
@@ -2934,19 +2934,19 @@
 <div class="overlay" id="assistantOverlay" onclick="backdropClose(event,'assistantOverlay')">
   <div class="modal">
     <button class="modal-x" onclick="closeModal('assistantOverlay')">✕</button>
-    <h2 id="asstModalTitle">New assistant</h2>
+    <h2 id="asstModalTitle" data-i18n="asst.new_title">New assistant</h2>
     <div class="field">
-      <label>Assistant name</label>
+      <label data-i18n="asst.name_label">Assistant name</label>
       <input type="text" id="asstName" placeholder="e.g. My viral style" />
     </div>
     <div class="field">
-      <label>Your instructions</label>
+      <label data-i18n="asst.instructions_label">Your instructions</label>
       <textarea id="asstInstructions" rows="5" style="width:100%;padding:11px 14px;background:var(--surf2);border:1.5px solid var(--border);border-radius:var(--rsm);font-size:.88rem;color:var(--text);outline:none;resize:vertical;font-family:var(--font-body);line-height:1.6" placeholder="Describe how you want your scripts..."></textarea>
     </div>
-    <div style="background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);padding:12px 14px;font-size:.75rem;color:var(--text3);margin-bottom:16px;line-height:1.5">
+    <div style="background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);padding:12px 14px;font-size:.75rem;color:var(--text3);margin-bottom:16px;line-height:1.5" data-i18n="asst.base_note">
       Base structure rules are always applied automatically. Your instructions are added on top to define your personal style.
     </div>
-    <button class="btn-full" id="asstSaveBtn" onclick="saveAssistant()">Create assistant</button>
+    <button class="btn-full" id="asstSaveBtn" onclick="saveAssistant()" data-i18n="asst.create">Create assistant</button>
     <div class="form-err" id="asstErr"></div>
   </div>
 </div>
@@ -2955,7 +2955,7 @@
 <div class="overlay" id="projPickerOverlay" onclick="backdropClose(event,'projPickerOverlay')" style="z-index:400">
   <div class="modal" style="max-width:360px;padding:28px 24px">
     <button class="modal-x" onclick="closeModal('projPickerOverlay')">&#10005;</button>
-    <h2 style="font-size:1.1rem;margin-bottom:16px">Save to project</h2>
+    <h2 style="font-size:1.1rem;margin-bottom:16px" data-i18n="picker.title">Save to project</h2>
     <div id="projPickerList" style="display:flex;flex-direction:column;gap:6px"></div>
   </div>
 </div>
@@ -2972,7 +2972,7 @@
     </div>
     <div class="field"><label data-i18n="auth.email">Email</label><input type="email" id="authEmail" placeholder="you@email.com" /></div>
     <div class="field"><label data-i18n="auth.pass">Password</label><input type="password" id="authPass" placeholder="Min 6 characters" /></div>
-    <div id="forgotLink" style="text-align:right;margin:-8px 0 12px"><a href="/forgot-password" style="font-size:.75rem;color:var(--text3);text-decoration:underline">Forgot password?</a></div>
+    <div id="forgotLink" style="text-align:right;margin:-8px 0 12px"><a href="/forgot-password" style="font-size:.75rem;color:var(--text3);text-decoration:underline" data-i18n="auth.forgot">Forgot password?</a></div>
     <div class="form-err" id="authErr"></div>
     <button class="btn-full" id="btnAuthOk" onclick="submitAuth()" data-i18n="auth.login">Log in</button>
   </div>
@@ -2986,11 +2986,11 @@
     <p id="topupSubtitle"></p>
     <div class="topup-grid" style="grid-template-columns:1fr">
       <div class="topup-opt on">
-        <div class="topup-amt" id="topupPrice"></div><div class="topup-cred">7 usos</div>
+        <div class="topup-amt" id="topupPrice"></div><div class="topup-cred">7 <span data-i18n="topup.uses">uses</span></div>
       </div>
     </div>
-    <p class="topup-note">Pago seguro con tarjeta vía Stripe · Sin suscripción</p>
-    <button class="btn-full" id="btnTopupOk" onclick="submitTopup()">Ir al pago →</button>
+    <p class="topup-note" data-i18n="topup.secure">Secure card payment via Stripe · No subscription</p>
+    <button class="btn-full" id="btnTopupOk" onclick="submitTopup()" data-i18n="topup.go">Go to payment →</button>
     <div class="form-err" id="topupErr"></div>
   </div>
 </div>
@@ -3045,6 +3045,162 @@ const LANGS = {
     "ex.storytelling": 'Era 2021. Tenía 0 seguidores y grababa en el baño de mi casa para que nadie me oyera.\n\n<span class="ph">Cada vídeo tardaba 4 horas en editarse.</span> Cada uno tenía 12 vistas.\n\nUn día lo dejé todo. Durante 3 meses, no publiqué nada.\n\nCuando volví, cambié solo una cosa: <span class="ph">el primer segundo.</span>\n\nY todo cambió.',
     "ex.hooks": '<span class="ph">1.</span> ¿Sabías que el 90% de creadores comete este error en el primer segundo?\n\n<span class="ph">2.</span> El error que cometen todos los principiantes (y que yo también cometí)\n\n<span class="ph">3.</span> Lo que nadie te dice sobre crear contenido que realmente funciona\n\n<span class="ph">4.</span> Si hubiera sabido esto antes, tendría el doble de seguidores hoy\n\n<span class="ph">5.</span> Para cuando termines este vídeo, querrás regrabar todo lo que tienes',
     "ex.custom": '<span class="ph">✍️ Tú tienes el control.</span>\n\nEscribe cualquier instrucción en el campo de texto:\n\n<span class="ph">"Escríbelo como carta de ventas"</span>\n<span class="ph">"Hazlo en formato pregunta-respuesta"</span>\n<span class="ph">"Tono motivacional, sin tecnicismos"</span>\n\nLa IA adaptará el guión exactamente a lo que pidas.',
+    // Profile hub
+    "prof.overview": "Resumen",
+    "prof.saved_scripts": "Guiones guardados",
+    "prof.transcriptions": "Transcripciones",
+    "prof.projects": "Proyectos",
+    "prof.assistants": "Asistentes",
+    "prof.team": "Equipo",
+    "prof.topup": "+ Recargar",
+    "prof.manage_sub": "Gestionar suscripción",
+    "prof.back": "← Volver a la app",
+    "prof.stat_transc": "Transcripciones",
+    "prof.stat_scripts": "Guiones guardados",
+    "prof.stat_uses": "Usos restantes",
+    "prof.monthly_usage": "Uso mensual",
+    "prof.change_avatar": "Cambiar avatar",
+    "prof.choose_avatar": "Elige tu avatar",
+    "prof.edit": "Editar",
+    "prof.upgrade": "Mejorar plan",
+    // Drawer
+    "drawer.account": "Cuenta ReelScript",
+    "drawer.uses_left": "Usos restantes",
+    "drawer.transcriptions": "Transcripciones",
+    "drawer.free_today": "Gratis hoy",
+    "drawer.history": "Historial",
+    "drawer.empty": "Sin transcripciones todavía",
+    "drawer.logout": "Cerrar sesión",
+    "drawer.topup": "+ Recargar",
+    // Projects
+    "proj.title": "Proyectos",
+    "proj.new": "+ Nuevo proyecto",
+    "proj.empty": "Sin proyectos todavía.",
+    "proj.new_title": "Nuevo Proyecto",
+    "proj.new_desc": "Organiza tus guiones en proyectos con un estilo personalizado.",
+    "proj.name_label": "Nombre del proyecto",
+    "proj.name_placeholder": "Ej. Contenido Instagram",
+    "proj.style_label": "Prompt de estilo por defecto (opcional)",
+    "proj.style_placeholder": "Ej. Hooks virales con CTA de alta energía...",
+    "proj.create": "Crear proyecto",
+    "proj.back": "← Volver",
+    "proj.delete": "Eliminar",
+    "proj.assistant_label": "Asistente:",
+    "proj.none": "Ninguno",
+    "proj.style_auto": "Prompt de estilo por defecto (se aplica automáticamente al generar guiones en este proyecto)",
+    "proj.sort_recent": "Más recientes",
+    "proj.sort_views": "Más vistos",
+    "proj.sort_engagement": "Mejor engagement",
+    "proj.scripts_count": "guiones",
+    "proj.open": "Abrir",
+    "proj.created": "Proyecto creado",
+    "proj.deleted": "Proyecto eliminado",
+    // Assistants
+    "asst.title": "Tus asistentes",
+    "asst.new": "+ Nuevo asistente",
+    "asst.new_title": "Nuevo asistente",
+    "asst.edit_title": "Editar asistente",
+    "asst.name_label": "Nombre del asistente",
+    "asst.name_placeholder": "Ej. Mi estilo viral",
+    "asst.instructions_label": "Tus instrucciones",
+    "asst.instructions_placeholder": "Describe cómo quieres tus guiones...",
+    "asst.base_note": "Las reglas de estructura base se aplican automáticamente. Tus instrucciones se añaden encima para definir tu estilo personal.",
+    "asst.create": "Crear asistente",
+    "asst.save": "Guardar cambios",
+    "asst.created": "Asistente creado",
+    "asst.updated": "Asistente actualizado",
+    "asst.deleted": "Asistente eliminado",
+    "asst.delete_confirm": "¿Eliminar este asistente?",
+    "asst.upgrade": "Mejora a Basic para crear tu primer asistente.",
+    "asst.empty": "Sin asistentes todavía. Crea el primero.",
+    "asst.limit_reached": "Mejora tu plan para crear más asistentes",
+    "asst.name_required": "Nombre e instrucciones requeridos",
+    // Team
+    "team.title": "Miembros del equipo",
+    "team.invite": "Invitar miembro",
+    "team.invite_title": "Invitar miembro al equipo",
+    "team.invite_desc": "Envía una invitación para unirse a tu workspace de agencia.",
+    "team.email_label": "Correo electrónico",
+    "team.email_placeholder": "colega@email.com",
+    "team.send_invite": "Enviar invitación",
+    "team.empty": "Sin miembros todavía. ¡Invita al primero!",
+    "team.invited": "Invitación enviada",
+    "team.removed": "Miembro eliminado",
+    "team.copied": "¡Enlace de invitación copiado!",
+    // View modal
+    "view.title": "Transcripción",
+    "view.copy": "Copiar",
+    "view.transform": "Transformar →",
+    "view.save_project": "Guardar en proyecto",
+    "view.download": "Descargar",
+    // Topup
+    "topup.subtitle": "Transcribe sin límite diario. Tu saldo no caduca.",
+    "topup.secure": "Pago seguro con tarjeta vía Stripe · Sin suscripción",
+    "topup.go": "Ir al pago →",
+    "topup.uses": "usos",
+    // Project picker
+    "picker.title": "Guardar en proyecto",
+    // Actions
+    "act.copy": "Copiar",
+    "act.copied": "¡Copiado!",
+    "act.view": "Ver",
+    "act.edit": "Editar",
+    "act.delete": "Eliminar",
+    "act.to_project": "Al proyecto",
+    "act.transform": "Transformar",
+    "act.save": "Guardar",
+    "act.cancel": "Cancelar",
+    "act.saved": "Guardado",
+    "act.search": "Buscar estilos...",
+    // Toast messages
+    "toast.balance_added": "✅ ¡Saldo añadido!",
+    "toast.payment_cancelled": "Pago cancelado.",
+    "toast.sub_activated": "✅ ¡Suscripción activada!",
+    "toast.sub_cancelled": "Suscripción cancelada.",
+    "toast.session_closed": "Sesión cerrada.",
+    "toast.welcome": "¡Bienvenido!",
+    "toast.account_created": "¡Cuenta creada!",
+    "toast.error_transform": "Error al transformar",
+    "toast.error_connection": "Error de conexión.",
+    "toast.error_save": "Error al guardar",
+    "toast.paste_url": "Pega una URL primero",
+    "toast.paste_script": "Escribe o pega un guión primero",
+    "toast.select_style": "Selecciona un estilo",
+    "toast.saved_to": "Guardado en",
+    "toast.login_required": "Inicia sesión",
+    "toast.create_project_first": "Crea un proyecto primero en tu perfil",
+    "toast.avatar_updated": "Avatar actualizado",
+    "toast.project_created": "Proyecto creado",
+    "toast.project_deleted": "Proyecto eliminado",
+    "toast.perf_saved": "Rendimiento guardado",
+    "toast.script_deleted": "Guión eliminado",
+    "toast.loading": "Cargando…",
+    "toast.generating": "Generando…",
+    // Subscription
+    "sub.cancel_confirm": "¿Cancelar tu suscripción? Seguirá activa hasta fin de período.",
+    "sub.cancelled": "Suscripción cancelada. Activa hasta fin de período.",
+    "sub.current_plan": "Plan actual",
+    // Pricing dynamic
+    "pricing.choose_basic": "Elegir Básico",
+    "pricing.choose_pro": "Elegir Pro",
+    "pricing.choose_agency": "Elegir Agencia",
+    // Free bar
+    "freebar.monthly_used": "usados este mes",
+    "freebar.limit_reached": "Límite mensual alcanzado",
+    "freebar.upgrade": "Mejorar plan",
+    // Adapt section
+    "adapt.your_result": "Tu resultado",
+    "adapt.example": "Ejemplo",
+    "adapt.example_footer": "Ejemplo · El tuyo será único",
+    "adapt.generated": "Generado con IA · gratis",
+    "adapt.result_label": "Resultado",
+    // Empty states
+    "empty.transc": "Sin transcripciones todavía",
+    "empty.scripts": "Sin guiones guardados todavía.",
+    "empty.projects": "Sin proyectos todavía.",
+    "empty.proj_scripts": "Sin guiones en este proyecto todavía.",
+    // Forgot password
+    "auth.forgot": "¿Olvidaste tu contraseña?",
   },
   en: {
     "nav.login": "Log in", "nav.register": "Free →",
@@ -3090,8 +3246,168 @@ const LANGS = {
     "ex.storytelling": 'It was 2021. I had 0 followers and recorded in my bathroom so nobody could hear me.\n\n<span class="ph">Each video took 4 hours to edit.</span> Each one got 12 views.\n\nOne day I quit. For 3 months, I posted nothing.\n\nWhen I came back, I changed just one thing: <span class="ph">the first second.</span>\n\nAnd everything changed.',
     "ex.hooks": '<span class="ph">1.</span> Did you know 90% of creators make this mistake in the first second?\n\n<span class="ph">2.</span> The mistake every beginner makes (and I made it too)\n\n<span class="ph">3.</span> What nobody tells you about creating content that actually works\n\n<span class="ph">4.</span> If I\'d known this sooner, I\'d have twice the followers today\n\n<span class="ph">5.</span> By the time this video ends, you\'ll want to re-record everything you have',
     "ex.custom": '<span class="ph">✍️ You\'re in control.</span>\n\nType any instruction in the text field:\n\n<span class="ph">"Write it as a sales letter"</span>\n<span class="ph">"Make it Q&A format"</span>\n<span class="ph">"Motivational tone, no jargon"</span>\n\nThe AI will adapt the script to exactly what you ask.',
+    // Profile hub
+    "prof.overview": "Overview",
+    "prof.saved_scripts": "Saved scripts",
+    "prof.transcriptions": "Transcriptions",
+    "prof.projects": "Projects",
+    "prof.assistants": "Assistants",
+    "prof.team": "Team",
+    "prof.topup": "+ Top up",
+    "prof.manage_sub": "Manage subscription",
+    "prof.back": "← Back to app",
+    "prof.stat_transc": "Transcriptions",
+    "prof.stat_scripts": "Saved scripts",
+    "prof.stat_uses": "Uses left",
+    "prof.monthly_usage": "Monthly usage",
+    "prof.change_avatar": "Change avatar",
+    "prof.choose_avatar": "Choose your avatar",
+    "prof.edit": "Edit",
+    "prof.upgrade": "Upgrade plan",
+    // Drawer
+    "drawer.account": "ReelScript Account",
+    "drawer.uses_left": "Uses left",
+    "drawer.transcriptions": "Transcriptions",
+    "drawer.free_today": "Free today",
+    "drawer.history": "History",
+    "drawer.empty": "No transcriptions yet",
+    "drawer.logout": "Log out",
+    "drawer.topup": "+ Top up",
+    // Projects
+    "proj.title": "Projects",
+    "proj.new": "+ New project",
+    "proj.empty": "No projects yet.",
+    "proj.new_title": "New Project",
+    "proj.new_desc": "Organize your scripts into projects with a custom style.",
+    "proj.name_label": "Project name",
+    "proj.name_placeholder": "e.g. Instagram Content",
+    "proj.style_label": "Default style prompt (optional)",
+    "proj.style_placeholder": "e.g. Viral hooks with high-energy CTA...",
+    "proj.create": "Create project",
+    "proj.back": "← Back",
+    "proj.delete": "Delete",
+    "proj.assistant_label": "Assistant:",
+    "proj.none": "None",
+    "proj.style_auto": "Default style prompt (auto-applies when generating scripts in this project)",
+    "proj.sort_recent": "Most recent",
+    "proj.sort_views": "Most viewed",
+    "proj.sort_engagement": "Best engagement",
+    "proj.scripts_count": "scripts",
+    "proj.open": "Open",
+    "proj.created": "Project created",
+    "proj.deleted": "Project deleted",
+    // Assistants
+    "asst.title": "Your assistants",
+    "asst.new": "+ New assistant",
+    "asst.new_title": "New assistant",
+    "asst.edit_title": "Edit assistant",
+    "asst.name_label": "Assistant name",
+    "asst.name_placeholder": "e.g. My viral style",
+    "asst.instructions_label": "Your instructions",
+    "asst.instructions_placeholder": "Describe how you want your scripts...",
+    "asst.base_note": "Base structure rules are always applied automatically. Your instructions are added on top to define your personal style.",
+    "asst.create": "Create assistant",
+    "asst.save": "Save changes",
+    "asst.created": "Assistant created",
+    "asst.updated": "Assistant updated",
+    "asst.deleted": "Assistant deleted",
+    "asst.delete_confirm": "Delete this assistant?",
+    "asst.upgrade": "Upgrade to Basic to create your first assistant.",
+    "asst.empty": "No assistants yet. Create your first one.",
+    "asst.limit_reached": "Upgrade your plan to create more assistants",
+    "asst.name_required": "Name and instructions required",
+    // Team
+    "team.title": "Team members",
+    "team.invite": "Invite member",
+    "team.invite_title": "Invite team member",
+    "team.invite_desc": "Send an invitation to join your agency workspace.",
+    "team.email_label": "Email address",
+    "team.email_placeholder": "colleague@email.com",
+    "team.send_invite": "Send invitation",
+    "team.empty": "No team members yet. Invite your first one!",
+    "team.invited": "Invitation sent",
+    "team.removed": "Member removed",
+    "team.copied": "Invite link copied!",
+    // View modal
+    "view.title": "Transcription",
+    "view.copy": "Copy",
+    "view.transform": "Transform →",
+    "view.save_project": "Save to project",
+    "view.download": "Download",
+    // Topup
+    "topup.subtitle": "Transcribe without daily limits. Your balance never expires.",
+    "topup.secure": "Secure card payment via Stripe · No subscription",
+    "topup.go": "Go to payment →",
+    "topup.uses": "uses",
+    // Project picker
+    "picker.title": "Save to project",
+    // Actions
+    "act.copy": "Copy",
+    "act.copied": "Copied!",
+    "act.view": "View",
+    "act.edit": "Edit",
+    "act.delete": "Delete",
+    "act.to_project": "To project",
+    "act.transform": "Transform",
+    "act.save": "Save",
+    "act.cancel": "Cancel",
+    "act.saved": "Saved",
+    "act.search": "Search styles...",
+    // Toast messages
+    "toast.balance_added": "✅ Balance added!",
+    "toast.payment_cancelled": "Payment cancelled.",
+    "toast.sub_activated": "✅ Subscription activated!",
+    "toast.sub_cancelled": "Subscription cancelled.",
+    "toast.session_closed": "Session closed.",
+    "toast.welcome": "Welcome!",
+    "toast.account_created": "Account created!",
+    "toast.error_transform": "Error transforming",
+    "toast.error_connection": "Connection error.",
+    "toast.error_save": "Error saving",
+    "toast.paste_url": "Paste a URL first",
+    "toast.paste_script": "Paste or write a script first",
+    "toast.select_style": "Select a style",
+    "toast.saved_to": "Saved to",
+    "toast.login_required": "Login required",
+    "toast.create_project_first": "Create a project first in your profile",
+    "toast.avatar_updated": "Avatar updated",
+    "toast.project_created": "Project created",
+    "toast.project_deleted": "Project deleted",
+    "toast.perf_saved": "Performance saved",
+    "toast.script_deleted": "Script deleted",
+    "toast.loading": "Loading...",
+    "toast.generating": "Generating...",
+    // Subscription
+    "sub.cancel_confirm": "Cancel your subscription? It will stay active until the end of the period.",
+    "sub.cancelled": "Subscription cancelled. Active until end of period.",
+    "sub.current_plan": "Current plan",
+    // Pricing dynamic
+    "pricing.choose_basic": "Get Basic",
+    "pricing.choose_pro": "Get Pro",
+    "pricing.choose_agency": "Get Agency",
+    // Free bar
+    "freebar.monthly_used": "used this month",
+    "freebar.limit_reached": "Monthly limit reached",
+    "freebar.upgrade": "Upgrade plan",
+    // Adapt section
+    "adapt.your_result": "Your result",
+    "adapt.example": "Example",
+    "adapt.example_footer": "Example · Yours will be unique",
+    "adapt.generated": "AI generated · free",
+    "adapt.result_label": "Result",
+    // Empty states
+    "empty.transc": "No transcriptions yet",
+    "empty.scripts": "No saved scripts yet.",
+    "empty.projects": "No projects yet.",
+    "empty.proj_scripts": "No scripts in this project yet.",
+    // Forgot password
+    "auth.forgot": "Forgot password?",
   }
 };
+
+function t(key) {
+  return (LANGS[currentLang] || LANGS.en)[key] || (LANGS.en[key]) || key;
+}
 
 let currentLang = localStorage.getItem("rs-lang") || "en";
 
@@ -3099,7 +3415,7 @@ function setLang(lang) {
   currentLang = lang;
   localStorage.setItem("rs-lang", lang);
   document.querySelectorAll(".lang-btn").forEach(b => b.classList.toggle("active", b.dataset.lang === lang));
-  const t = LANGS[lang] || LANGS.es;
+  const t = LANGS[lang] || LANGS.en;
   document.querySelectorAll("[data-i18n]").forEach(el => {
     const key = el.dataset.i18n;
     if (t[key] !== undefined) el.innerHTML = t[key];
@@ -3230,10 +3546,10 @@ function renderStyleGrid() {
   const addBtn = document.createElement("button");
   addBtn.className = "style-pill-add" + (atLimit && plan !== "agency" ? " disabled" : "");
   addBtn.onclick = () => {
-    if (atLimit && plan !== "agency") { showToast("Upgrade your plan to create more assistants"); return; }
+    if (atLimit && plan !== "agency") { showToast(t("asst.limit_reached")); return; }
     openAssistantModal();
   };
-  addBtn.innerHTML = `<span class="add-icon">+</span><span class="add-label">New assistant</span>`;
+  addBtn.innerHTML = `<span class="add-icon">+</span><span class="add-label">${t("asst.new")}</span>`;
   grid.appendChild(addBtn);
 }
 
@@ -3250,7 +3566,7 @@ function selectAssistant(id, btn) {
 
 async function runAdaptWithAssistant(id) {
   const text = document.getElementById("adaptInput").value.trim();
-  if (!text) { showToast("Escribe o pega un guión primero"); return; }
+  if (!text) { showToast(t("toast.paste_script")); return; }
 
   const previewSpinner  = document.getElementById("previewSpinner");
   const previewContent  = document.getElementById("previewContent");
@@ -3264,7 +3580,7 @@ async function runAdaptWithAssistant(id) {
   previewResult.classList.remove("on");
   pfCopyBtn.style.display = "none";
   document.getElementById("pfSaveBtn").style.display = "none";
-  previewLabel.textContent = "Generando…";
+  previewLabel.textContent = t("toast.generating");
 
   try {
     const r = await fetch("/adapt", {
@@ -3275,18 +3591,18 @@ async function runAdaptWithAssistant(id) {
     previewSpinner.classList.remove("on");
     previewContent.style.visibility = "visible";
     if (!r.ok) {
-      showToast(d.error || "Error al transformar");
-      previewLabel.textContent = "Ejemplo";
+      showToast(d.error || t("toast.error_transform"));
+      previewLabel.textContent = t("adapt.example");
     } else {
       document.querySelectorAll(".preview-slide").forEach(s => s.classList.remove("on"));
       previewResult.textContent = d.result;
       previewResult.classList.add("on");
-      previewLabel.textContent = "Tu resultado";
+      previewLabel.textContent = t("adapt.your_result");
       pfCopyBtn.style.display = "block";
       if (st.user) document.getElementById("pfSaveBtn").style.display = "block";
       previewFooterTxt.textContent = d.cost_cents > 0
         ? `−${eur(d.cost_cents)} de saldo`
-        : "Generado con IA · gratis";
+        : t("adapt.generated");
       if (d.credits_cents !== undefined) {
         st.credits = d.credits_cents; st.freeUsed = d.free_used_today;
         document.getElementById("balDisp").textContent = usos(d.credits_cents);
@@ -3296,8 +3612,8 @@ async function runAdaptWithAssistant(id) {
   } catch {
     previewSpinner.classList.remove("on");
     previewContent.style.visibility = "visible";
-    previewLabel.textContent = "Ejemplo";
-    showToast("Error de conexión.");
+    previewLabel.textContent = t("adapt.example");
+    showToast(t("toast.error_connection"));
   }
 }
 
@@ -3313,11 +3629,11 @@ function openAssistantModal(id) {
       document.getElementById("asstName").value = a.name;
       document.getElementById("asstInstructions").value = a.instructions;
     }
-    document.getElementById("asstModalTitle").textContent = "Edit assistant";
-    document.getElementById("asstSaveBtn").textContent = "Save changes";
+    document.getElementById("asstModalTitle").textContent = t("asst.edit_title");
+    document.getElementById("asstSaveBtn").textContent = t("asst.save");
   } else {
-    document.getElementById("asstModalTitle").textContent = "New assistant";
-    document.getElementById("asstSaveBtn").textContent = "Create assistant";
+    document.getElementById("asstModalTitle").textContent = t("asst.new_title");
+    document.getElementById("asstSaveBtn").textContent = t("asst.create");
   }
 
   openModal("assistantOverlay");
@@ -3332,7 +3648,7 @@ async function saveAssistant() {
   err.classList.remove("on");
 
   if (!name || !instructions) {
-    err.textContent = "Name and instructions required";
+    err.textContent = t("asst.name_required");
     err.classList.add("on");
     return;
   }
@@ -3353,14 +3669,14 @@ async function saveAssistant() {
   }
 
   closeModal("assistantOverlay");
-  showToast(editingAssistantId ? "Assistant updated" : "Assistant created");
+  showToast(editingAssistantId ? t("asst.updated") : t("asst.created"));
   await loadAssistants();
 }
 
 async function deleteAssistant(id) {
-  if (!confirm("Delete this assistant?")) return;
+  if (!confirm(t("asst.delete_confirm"))) return;
   await fetch(`/assistants/${id}`, { method: "DELETE" });
-  showToast("Assistant deleted");
+  showToast(t("asst.deleted"));
   if (selectedAssistantId === id) selectedAssistantId = null;
   await loadAssistants();
 }
@@ -3376,12 +3692,12 @@ function renderProfAssistants() {
   if (countEl) countEl.textContent = `${userAssistants.length} / ${plan === "agency" ? "∞" : limit} assistants`;
 
   if (plan === "free") {
-    el.innerHTML = '<div class="prof-empty"><div class="prof-empty-icon">🤖</div>Upgrade to Basic to create your first assistant.</div>';
+    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">🤖</div>${t("asst.upgrade")}</div>`;
     return;
   }
 
   if (!userAssistants.length) {
-    el.innerHTML = '<div class="prof-empty"><div class="prof-empty-icon">🤖</div>No assistants yet. Create your first one.</div>';
+    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">🤖</div>${t("asst.empty")}</div>`;
     return;
   }
 
@@ -3398,8 +3714,8 @@ function renderProfAssistants() {
       </div>
       <div class="asst-card-v2-preview">"${esc((a.instructions || '').slice(0, 120))}"</div>
       <div class="asst-card-v2-acts">
-        <button class="btn-sm" onclick="editAssistant('${a.id}')">Edit</button>
-        <button class="btn-sm del" onclick="deleteAssistant('${a.id}')">Delete</button>
+        <button class="btn-sm" onclick="editAssistant('${a.id}')">${t("act.edit")}</button>
+        <button class="btn-sm del" onclick="deleteAssistant('${a.id}')">${t("act.delete")}</button>
       </div>
     </div>
   `).join("");
@@ -3418,9 +3734,7 @@ function initPrices() {
   if (tp) tp.textContent = isEUR ? "1€" : "$1.29";
   // Topup subtitle
   const sub = document.getElementById("topupSubtitle");
-  if (sub) sub.textContent = currentLang === "es"
-    ? "Transcribe sin límite diario. Tu saldo no caduca."
-    : "Transcribe without daily limits. Your balance never expires.";
+  if (sub) sub.textContent = t("topup.subtitle");
   // CTA bajo pricing cards
   const cta = document.getElementById("topupCta");
   if (cta) {
@@ -3458,17 +3772,17 @@ window.addEventListener("DOMContentLoaded", async () => {
     localStorage.setItem("affiliate_ref", ref);
     fetch("/affiliate/click", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: ref }) }).catch(() => {});
   }
-  if (p.get("topup") === "success")  { showToast("✅ ¡Saldo añadido!"); history.replaceState({}, "", "/"); await refreshMe(); }
-  if (p.get("topup") === "cancel")   { showToast("Pago cancelado."); history.replaceState({}, "", "/"); }
-  if (p.get("subscribed") === "true") { showToast("✅ ¡Suscripción activada!"); history.replaceState({}, "", "/"); await refreshMe(); }
-  if (p.get("sub_cancel") === "true") { showToast("Suscripción cancelada."); history.replaceState({}, "", "/"); }
+  if (p.get("topup") === "success")  { showToast(t("toast.balance_added")); history.replaceState({}, "", "/"); await refreshMe(); }
+  if (p.get("topup") === "cancel")   { showToast(t("toast.payment_cancelled")); history.replaceState({}, "", "/"); }
+  if (p.get("subscribed") === "true") { showToast(t("toast.sub_activated")); history.replaceState({}, "", "/"); await refreshMe(); }
+  if (p.get("sub_cancel") === "true") { showToast(t("toast.sub_cancelled")); history.replaceState({}, "", "/"); }
 
   // Agency join flow: check for ?token= in URL
   const token = p.get("token");
   if (token) {
     if (!st.user) {
       // Must be logged in to join — open auth then join
-      showToast("Please log in or create an account to join the team.");
+      showToast(t("toast.login_required"));
       openAuth("login");
       localStorage.setItem("pending_agency_token", token);
       history.replaceState({}, "", "/");
@@ -3625,7 +3939,7 @@ function renderProfileHub() {
 
   // Avatar
   const profAv = document.getElementById("profAv");
-  profAv.innerHTML = '<div class="prof-av-edit">Edit</div>';
+  profAv.innerHTML = `<div class="prof-av-edit">${t("prof.edit")}</div>`;
   if (seed) {
     const img = avatarImgEl(seed, 64);
     img.style.cssText = "width:100%;height:100%;object-fit:cover;border-radius:14px;position:absolute;inset:0";
@@ -3727,7 +4041,7 @@ async function selectAvatar(seed) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ seed }),
     });
-    if (!res.ok) { showToast("Could not save avatar"); return; }
+    if (!res.ok) { showToast(currentLang === "es" ? "No se pudo guardar el avatar" : "Could not save avatar"); return; }
     // Update local state
     if (st.user) st.user.avatar_seed = seed;
     // Update all avatar elements
@@ -3737,8 +4051,8 @@ async function selectAvatar(seed) {
       el.classList.toggle("selected", el.title === seed);
     });
     closeAvatarPicker();
-    showToast("Avatar updated");
-  } catch { showToast("Connection error"); }
+    showToast(t("toast.avatar_updated"));
+  } catch { showToast(t("toast.error_connection")); }
 }
 
 function updateAllAvatars(seed) {
@@ -3752,7 +4066,7 @@ function updateAllAvatars(seed) {
   // Profile page avatar
   const profAv = document.getElementById("profAv");
   if (profAv) {
-    profAv.innerHTML = `<div class="prof-av-edit">Edit</div>`;
+    profAv.innerHTML = `<div class="prof-av-edit">${t("prof.edit")}</div>`;
     const img = document.createElement("img");
     img.src = url;
     img.style.cssText = "width:100%;height:100%;object-fit:cover;border-radius:14px;position:absolute;inset:0";
@@ -3800,7 +4114,7 @@ function renderProfOverview() {
     .slice(0, 8);
 
   if (!all.length) {
-    el.innerHTML = '<div class="prof-empty"><div class="prof-empty-icon">📄</div>No scripts yet. Transcribe your first reel!</div>';
+    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">📄</div>${t("empty.transc")}. Transcribe your first reel!</div>`;
     return;
   }
   el.innerHTML = all.map(it => {
@@ -3822,7 +4136,7 @@ function renderProfOverview() {
 function renderProfTransc() {
   const el = document.getElementById("profListTransc");
   if (!histCache.length) {
-    el.innerHTML = '<div class="prof-empty"><div class="prof-empty-icon">📄</div>No transcriptions yet</div>';
+    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">📄</div>${t("empty.transc")}</div>`;
     return;
   }
   el.innerHTML = histCache.map(it => `
@@ -3834,11 +4148,11 @@ function renderProfTransc() {
       </div>
       <div class="prof-card-text" onclick="viewItem(${it.id})">${esc(it.text.slice(0, 200))}${it.text.length > 200 ? "…" : ""}</div>
       <div class="prof-card-acts">
-        <button onclick="cpHist(${it.id},this)">Copy</button>
-        <button onclick="viewItem(${it.id})">View</button>
-        <button onclick="profAdaptFromTransc(${it.id})">Transform</button>
-        <button onclick="saveTranscToProject(${it.id})">To project</button>
-        <button class="del" onclick="delItem(${it.id},this);setTimeout(()=>{renderProfTransc();renderProfOverview();document.getElementById('profStatTransc').textContent=histCache.length},300)">Delete</button>
+        <button onclick="cpHist(${it.id},this)">${t("act.copy")}</button>
+        <button onclick="viewItem(${it.id})">${t("act.view")}</button>
+        <button onclick="profAdaptFromTransc(${it.id})">${t("act.transform")}</button>
+        <button onclick="saveTranscToProject(${it.id})">${t("act.to_project")}</button>
+        <button class="del" onclick="delItem(${it.id},this);setTimeout(()=>{renderProfTransc();renderProfOverview();document.getElementById('profStatTransc').textContent=histCache.length},300)">${t("act.delete")}</button>
       </div>
     </div>
   `).join("");
@@ -3884,7 +4198,7 @@ async function loadSavedScripts() {
 function renderProfScripts() {
   const el = document.getElementById("profListScripts");
   if (!scriptsCache.length) {
-    el.innerHTML = '<div class="prof-empty"><div class="prof-empty-icon">✨</div>No saved scripts yet.<br>Use 💾 Save after adapting or transcribing.</div>';
+    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">✨</div>${t("empty.scripts")}<br>Use 💾 Save after adapting or transcribing.</div>`;
     return;
   }
   el.innerHTML = scriptsCache.map(it => {
@@ -3898,10 +4212,10 @@ function renderProfScripts() {
       </div>
       <div class="prof-card-text" onclick="viewScript('${it.id}')">${esc(text.slice(0, 200))}${text.length > 200 ? "…" : ""}</div>
       <div class="prof-card-acts">
-        <button onclick="cpScript('${it.id}',this)">Copy</button>
-        <button onclick="viewScript('${it.id}')">View</button>
-        <button onclick="saveScriptCardToProject('${it.id}')">To project</button>
-        <button class="del" onclick="delScript('${it.id}',this)">Delete</button>
+        <button onclick="cpScript('${it.id}',this)">${t("act.copy")}</button>
+        <button onclick="viewScript('${it.id}')">${t("act.view")}</button>
+        <button onclick="saveScriptCardToProject('${it.id}')">${t("act.to_project")}</button>
+        <button class="del" onclick="delScript('${it.id}',this)">${t("act.delete")}</button>
       </div>
     </div>`;
   }).join("");
@@ -3912,8 +4226,8 @@ function cpScript(id, btn) {
   if (!item) return;
   const text = item._src === "script" ? (item.script || item.transcription || "") : (item.content || "");
   navigator.clipboard.writeText(text);
-  btn.textContent = "Copied!";
-  setTimeout(() => (btn.textContent = "Copy"), 1500);
+  btn.textContent = t("act.copied");
+  setTimeout(() => (btn.textContent = t("act.copy")), 1500);
 }
 
 function viewScript(id) {
@@ -3927,7 +4241,7 @@ function viewScript(id) {
 }
 
 async function delScript(id, btn) {
-  if (!confirm("Delete this script?")) return;
+  if (!confirm(currentLang === "es" ? "¿Eliminar este guión?" : "Delete this script?")) return;
   btn.disabled = true;
   const item = scriptsCache.find(i => i.id === id);
   const endpoint = item && item._src === "script" ? `/scripts/${id}` : `/saved-scripts/${id}`;
@@ -3980,8 +4294,8 @@ function renderProfProjects() {
         <div class="proj-card-v2-footer">
           <span style="font-size:.72rem;color:var(--text3)">${fmtDate(p.created_at)}</span>
           <div style="display:flex;gap:6px" onclick="event.stopPropagation()">
-            <button class="btn-sm" onclick="openProjDetail('${p.id}')">Open</button>
-            <button class="btn-sm del" onclick="delProject('${p.id}')">Delete</button>
+            <button class="btn-sm" onclick="openProjDetail('${p.id}')">${t("proj.open")}</button>
+            <button class="btn-sm del" onclick="delProject('${p.id}')">${t("proj.delete")}</button>
           </div>
         </div>
       </div>
@@ -3989,7 +4303,7 @@ function renderProfProjects() {
   }).join("") + `
     <button class="proj-card-new" onclick="openNewProjectModal()">
       <span style="font-size:1.2rem">+</span>
-      <span style="font-size:.78rem">New project</span>
+      <span style="font-size:.78rem">${t("proj.new")}</span>
     </button>
   `;
 }
@@ -4007,14 +4321,14 @@ async function submitNewProject() {
   const style = document.getElementById("newProjStyle").value.trim();
   const err = document.getElementById("newProjErr");
   err.classList.remove("on");
-  if (!name) { err.textContent = "Project name is required"; err.classList.add("on"); return; }
+  if (!name) { err.textContent = currentLang === "es" ? "El nombre del proyecto es requerido" : "Project name is required"; err.classList.add("on"); return; }
   const res = await fetch("/projects", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, style_prompt: style }),
   });
   if (!res.ok) { const d = await res.json(); err.textContent = d.error || "Error creating project"; err.classList.add("on"); return; }
   closeModal("newProjectOverlay");
-  showToast("Project created");
+  showToast(t("toast.project_created"));
   await loadProjects();
 }
 
@@ -4028,13 +4342,13 @@ async function createProject(name, stylePrompt) {
   });
   if (!res.ok) { const d = await res.json(); showToast(d.error || "Error"); return null; }
   const p = await res.json();
-  showToast("Project created");
+  showToast(t("toast.project_created"));
   await loadProjects();
   return p;
 }
 
 async function delProject(id) {
-  if (!confirm("Delete this project?")) return;
+  if (!confirm(currentLang === "es" ? "¿Eliminar este proyecto?" : "Delete this project?")) return;
   await fetch(`/projects/${id}`, { method: "DELETE" });
   await loadProjects();
 }
@@ -4067,7 +4381,7 @@ async function openProjDetail(projectId) {
 
   // Populate assistant selector
   const sel = document.getElementById("projDetailAssistant");
-  sel.innerHTML = '<option value="">No assistant</option>' +
+  sel.innerHTML = `<option value="">${t("proj.none")}</option>` +
     userAssistants.map(a => `<option value="${a.id}" ${a.id === proj.assistant_id ? "selected" : ""}>${esc(a.name)}</option>`).join("");
 
   // Load scripts for this project
@@ -4124,11 +4438,11 @@ async function saveProjAssistant() {
 }
 
 async function delProjFromDetail() {
-  if (!confirm("Delete this project and all its scripts?")) return;
+  if (!confirm(currentLang === "es" ? "¿Eliminar este proyecto y todos sus guiones?" : "Delete this project and all its scripts?")) return;
   await fetch(`/projects/${currentProjId}`, { method: "DELETE" });
   closeProjDetail();
   await loadProjects();
-  showToast("Project deleted");
+  showToast(t("toast.project_deleted"));
 }
 
 function sortProjScripts() {
@@ -4145,7 +4459,7 @@ function renderProjScripts() {
   count.textContent = `${projScripts.length} script${projScripts.length !== 1 ? "s" : ""}`;
 
   if (!projScripts.length) {
-    grid.innerHTML = '<div class="prof-empty"><div class="prof-empty-icon">📝</div>No scripts in this project yet.</div>';
+    grid.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">📝</div>${t("empty.proj_scripts")}</div>`;
     return;
   }
 
@@ -4163,8 +4477,8 @@ function renderProjScripts() {
       <div class="script-card-editor" id="sc-editor-${i}" style="display:none">
         <textarea id="sc-text-${i}" class="script-editor-ta">${esc(text)}</textarea>
         <div class="script-editor-bar">
-          <button class="btn-sm" onclick="saveScriptContent('${s.id}',${i})">Save</button>
-          <button class="btn-sm" onclick="closeScriptEditor(${i})">Cancel</button>
+          <button class="btn-sm" onclick="saveScriptContent('${s.id}',${i})">${t("act.save")}</button>
+          <button class="btn-sm" onclick="closeScriptEditor(${i})">${t("act.cancel")}</button>
           <span class="script-editor-status" id="sc-status-${i}"></span>
         </div>
       </div>
@@ -4184,9 +4498,9 @@ function renderProjScripts() {
         <button class="perf-save" onclick="savePerfData('${s.id}', ${i})">Save</button>
       </div>
       <div class="script-card-acts">
-        <button class="btn-sm" onclick="openScriptEditor(${i})">Edit</button>
-        <button class="btn-sm" onclick="copyProjScript(${i}, this)">Copy</button>
-        <button class="btn-sm del" onclick="delProjScript('${s.id}', ${i})">Delete</button>
+        <button class="btn-sm" onclick="openScriptEditor(${i})">${t("act.edit")}</button>
+        <button class="btn-sm" onclick="copyProjScript(${i}, this)">${t("act.copy")}</button>
+        <button class="btn-sm del" onclick="delProjScript('${s.id}', ${i})">${t("act.delete")}</button>
       </div>
     </div>`;
   }).join("");
@@ -4217,9 +4531,9 @@ async function saveScriptContent(scriptId, idx) {
     const preview = text.split("\n").slice(0, 2).join("\n").slice(0, 150);
     document.getElementById(`sc-preview-${idx}`).textContent = preview + (text.length > 150 ? "…" : "");
     const status = document.getElementById(`sc-status-${idx}`);
-    status.textContent = "Saved";
+    status.textContent = t("act.saved");
     setTimeout(() => status.textContent = "", 2000);
-  } else showToast("Error saving");
+  } else showToast(t("toast.error_save"));
 }
 
 async function saveScriptField(scriptId, idx, field) {
@@ -4247,8 +4561,8 @@ async function savePerfData(scriptId, idx) {
     projScripts[idx].views_count = views;
     projScripts[idx].engagement_rate = eng;
     projScripts[idx].performance_notes = notes;
-    showToast("Performance saved");
-  } else showToast("Error saving");
+    showToast(t("toast.perf_saved"));
+  } else showToast(t("toast.error_save"));
 }
 
 function viewProjScript(idx) {
@@ -4264,16 +4578,16 @@ function copyProjScript(idx, btn) {
   const s = projScripts[idx];
   if (!s) return;
   navigator.clipboard.writeText(s.script || s.transcription || "");
-  btn.textContent = "Copied!";
-  setTimeout(() => (btn.textContent = "Copy"), 1500);
+  btn.textContent = t("act.copied");
+  setTimeout(() => (btn.textContent = t("act.copy")), 1500);
 }
 
 async function delProjScript(scriptId, idx) {
-  if (!confirm("Delete this script?")) return;
+  if (!confirm(currentLang === "es" ? "¿Eliminar este guión?" : "Delete this script?")) return;
   await fetch(`/scripts/${scriptId}`, { method: "DELETE" });
   projScripts.splice(idx, 1);
   renderProjScripts();
-  showToast("Script deleted");
+  showToast(t("toast.script_deleted"));
 }
 
 // ── Team (agency) ─────────────────────────────────────────────────────────
@@ -4291,7 +4605,7 @@ async function loadTeamMembers() {
 function renderTeamMembers() {
   const el = document.getElementById("profTeamList");
   if (!teamCache.length) {
-    el.innerHTML = '<div class="prof-empty"><div class="prof-empty-icon">👥</div>No team members yet. Invite your first one!</div>';
+    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">👥</div>${t("team.empty")}</div>`;
     return;
   }
   el.innerHTML = teamCache.map(m => {
@@ -4326,7 +4640,7 @@ async function submitInvite() {
   const email = document.getElementById("inviteEmail").value.trim();
   const err = document.getElementById("inviteErr");
   err.classList.remove("on");
-  if (!email) { err.textContent = "Email is required"; err.classList.add("on"); return; }
+  if (!email) { err.textContent = currentLang === "es" ? "El email es requerido" : "Email is required"; err.classList.add("on"); return; }
   await inviteMember(email);
 }
 
@@ -4344,19 +4658,19 @@ async function inviteMember(email) {
       return;
     }
     closeModal("inviteOverlay");
-    showToast("Invitation sent to " + email);
+    showToast(t("team.invited") + " " + email);
     await loadTeamMembers();
-  } catch { showToast("Connection error"); }
+  } catch { showToast(t("toast.error_connection")); }
 }
 
 async function removeMember(memberId) {
-  if (!confirm("Remove this member from your team?")) return;
+  if (!confirm(currentLang === "es" ? "¿Eliminar este miembro del equipo?" : "Remove this member from your team?")) return;
   try {
     const res = await fetch(`/agency/members/${memberId}`, { method: "DELETE" });
     if (!res.ok) { const d = await res.json(); showToast(d.error || "Error"); return; }
-    showToast("Member removed");
+    showToast(t("team.removed"));
     await loadTeamMembers();
-  } catch { showToast("Connection error"); }
+  } catch { showToast(t("toast.error_connection")); }
 }
 
 async function copyInviteLink() {
@@ -4365,11 +4679,11 @@ async function copyInviteLink() {
     const d = await res.json();
     if (res.ok && d.link) {
       navigator.clipboard.writeText(d.link);
-      showToast("Invite link copied!");
+      showToast(t("team.copied"));
     } else {
       showToast(d.error || "Could not get invite link");
     }
-  } catch { showToast("Connection error"); }
+  } catch { showToast(t("toast.error_connection")); }
 }
 
 async function joinAgency(token) {
@@ -4380,13 +4694,13 @@ async function joinAgency(token) {
     });
     const d = await res.json();
     if (res.ok) {
-      showToast("You have joined the team!");
+      showToast(currentLang === "es" ? "¡Te has unido al equipo!" : "You have joined the team!");
       history.replaceState({}, "", "/");
       await refreshMe();
     } else {
       showToast(d.error || "Invalid or expired invite link");
     }
-  } catch { showToast("Connection error"); }
+  } catch { showToast(t("toast.error_connection")); }
 }
 
 function profAdaptFromTransc(id) {
@@ -4414,8 +4728,8 @@ function renderFreeBar() {
       `<div class="fdot ${i < Math.min(st.monthlyUsage, 20) ? 'u' : ''}"></div>`).join("");
     document.getElementById("freeDots").innerHTML = dots;
     document.getElementById("freeBarTxt").innerHTML = rem > 0
-      ? `${st.monthlyUsage}/${st.monthlyLimit} usados este mes`
-      : 'Límite mensual alcanzado · <a href="#pricingSection" style="color:#fed7aa;font-weight:700;text-decoration:none">Mejorar plan</a>';
+      ? `${st.monthlyUsage}/${st.monthlyLimit} ${t("freebar.monthly_used")}`
+      : `${t("freebar.limit_reached")} · <a href="#pricingSection" style="color:#fed7aa;font-weight:700;text-decoration:none">${t("freebar.upgrade")}</a>`;
     return;
   }
   if (st.user && st.credits >= 8) { bar.classList.remove("on"); return; }
@@ -4427,7 +4741,7 @@ function renderFreeBar() {
   document.getElementById("freeDots").innerHTML = dots;
   const rem = limit - used;
   document.getElementById("freeBarTxt").innerHTML = st.user
-    ? (rem > 0 ? `${rem} de ${limit} gratis hoy` : "Límite alcanzado · Recarga saldo para continuar")
+    ? (rem > 0 ? `${rem} de ${limit} ${t("drawer.free_today")}` : `${t("freebar.limit_reached")} · Recarga saldo para continuar`)
     : `${st.freeDailyAnon} free/day · <a href="#" onclick="openAuth('register');return false" style="color:#fed7aa;font-weight:700;text-decoration:none">Sign up for ${st.freeLimit}/day</a>`;
 }
 
@@ -4518,7 +4832,7 @@ function hideLoading(success = true) {
   if (success) {
     bar.style.width = "100%";
     pct.textContent = "100%";
-    msg.textContent = "¡Listo!";
+    msg.textContent = currentLang === "es" ? "¡Listo!" : "Done!";
   }
   setTimeout(() => {
     document.getElementById("inlineLoading").classList.remove("on");
@@ -4542,9 +4856,9 @@ function rsToggleCard(head) {
 function rsCopyResult(btn, idx) {
   navigator.clipboard.writeText(rsResults[idx].text);
   const tip = btn.querySelector(".rs-tip");
-  tip.textContent = "Copied!";
+  tip.textContent = t("act.copied");
   btn.classList.add("ok");
-  setTimeout(() => { btn.classList.remove("ok"); tip.textContent = "Copy"; }, 1500);
+  setTimeout(() => { btn.classList.remove("ok"); tip.textContent = t("act.copy"); }, 1500);
 }
 
 function rsToggleTransform(idx) {
@@ -4574,7 +4888,8 @@ async function rsQuickTransform(idx, style, btn) {
 
     const resultEl = document.getElementById(`rsTransformResult-${idx}`);
     resultEl.style.display = "";
-    resultEl.innerHTML = `${esc(d.result)}<button class="rs-card-copy" onclick="navigator.clipboard.writeText(this.parentElement.textContent.replace('Copy','').trim());this.querySelector('.rs-tip').textContent='Copied!';setTimeout(()=>this.querySelector('.rs-tip').textContent='Copy',1500)" style="position:absolute;top:8px;right:8px"><span class="rs-tip">Copy</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>`;
+    const copyLbl = t("act.copy"); const copiedLbl = t("act.copied");
+    resultEl.innerHTML = `${esc(d.result)}<button class="rs-card-copy" onclick="navigator.clipboard.writeText(this.parentElement.textContent.replace('${copyLbl}','').trim());this.querySelector('.rs-tip').textContent='${copiedLbl}';setTimeout(()=>this.querySelector('.rs-tip').textContent='${copyLbl}',1500)" style="position:absolute;top:8px;right:8px"><span class="rs-tip">${copyLbl}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>`;
 
     if (d.credits_cents !== undefined) {
       st.credits = d.credits_cents;
@@ -4590,18 +4905,18 @@ async function rsSaveToProject(idx) {
   const item = rsResults[idx];
   if (!item) return;
   if (!projectsCache.length) {
-    showToast("Create a project first in your profile");
+    showToast(t("toast.create_project_first"));
     return;
   }
   // Pick project
   const names = projectsCache.map((p, i) => `${i + 1}. ${p.name}`).join("\n");
-  const choice = prompt(`Save to which project?\n\n${names}\n\nEnter number:`);
+  const choice = prompt(`${t("picker.title")}:\n\n${names}\n\n${currentLang === "es" ? "Ingresa el número:" : "Enter number:"}`);
   if (!choice) return;
   const projIdx = parseInt(choice) - 1;
-  if (isNaN(projIdx) || projIdx < 0 || projIdx >= projectsCache.length) { showToast("Invalid choice"); return; }
+  if (isNaN(projIdx) || projIdx < 0 || projIdx >= projectsCache.length) { showToast(currentLang === "es" ? "Opción inválida" : "Invalid choice"); return; }
   const project = projectsCache[projIdx];
 
-  const title = item.platform ? `${item.platform} · ${new Date().toLocaleDateString()}` : "Transcription";
+  const title = item.platform ? `${item.platform} · ${new Date().toLocaleDateString()}` : t("view.title");
   const res = await fetch("/scripts", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -4611,8 +4926,8 @@ async function rsSaveToProject(idx) {
       project_id: project.id,
     }),
   });
-  if (res.ok) showToast(`Saved to "${project.name}"`);
-  else showToast("Error saving");
+  if (res.ok) showToast(`${t("toast.saved_to")} "${project.name}"`);
+  else showToast(t("toast.error_save"));
 }
 
 function rsUseInAdapt(idx) {
@@ -4621,7 +4936,7 @@ function rsUseInAdapt(idx) {
   if (adaptInput) {
     adaptInput.value = text;
     adaptInput.scrollIntoView({ behavior: "smooth", block: "center" });
-    showToast("Copied to Make it yours");
+    showToast(t("act.copied"));
   }
 }
 
@@ -4713,14 +5028,14 @@ async function rsTranscribeOne(url) {
         <span class="rs-card-plat">${esc(plat)}</span>
         <span class="rs-card-title">${esc(title)}</span>
         <button class="rs-card-copy" onclick="event.stopPropagation();rsCopyResult(this, ${idx})">
-          <span class="rs-tip">Copy</span>
+          <span class="rs-tip">${t("act.copy")}</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
         </button>
       </div>
       <div class="rs-card-body">${esc(result.text)}</div>
       <div class="rs-card-actions">
-        <button class="rs-card-act" onclick="rsToggleTransform(${idx})">Transform</button>
-        ${st.user ? `<button class="rs-card-act" onclick="rsSaveToProject(${idx})">Save to project</button>` : ""}
+        <button class="rs-card-act" onclick="rsToggleTransform(${idx})">${t("act.transform")}</button>
+        ${st.user ? `<button class="rs-card-act" onclick="rsSaveToProject(${idx})">${t("view.save_project")}</button>` : ""}
       </div>
       <div class="rs-card-transform" id="rsTransform-${idx}">
         <div class="rs-card-transform-chips">
@@ -4745,14 +5060,14 @@ async function rsTranscribeOne(url) {
     if (st.monthlyLimit) st.monthlyUsage++;
     renderFreeBar();
 
-  } catch { loader.remove(); showToast("Connection error"); }
+  } catch { loader.remove(); showToast(t("toast.error_connection")); }
 }
 
 // Transcribe button — sends current URL to queue
 function doTranscribe() {
   const input = document.getElementById("urlInput");
   const url = input.value.trim();
-  if (!url) { showToast("Paste a URL first"); return; }
+  if (!url) { showToast(t("toast.paste_url")); return; }
   rsPending.push(url);
   input.value = "";
   input.dispatchEvent(new Event("input"));
@@ -4809,10 +5124,10 @@ async function runInlineAdapt() {
       body: JSON.stringify({ text, style: activeChip, custom_prompt: custom, assistant_id: selectedAssistantId }),
     });
     const d = await r.json();
-    if (!r.ok) { showToast(d.error || "Error al transformar"); }
+    if (!r.ok) { showToast(d.error || t("toast.error_transform")); }
     else {
       body.textContent = d.result;
-      label.textContent = CHIP_LABELS[activeChip] || "Resultado";
+      label.textContent = CHIP_LABELS[activeChip] || t("adapt.result_label");
       result.classList.add("on");
       if (d.credits_cents !== undefined) {
         st.credits = d.credits_cents; st.freeUsed = d.free_used_today;
@@ -4820,14 +5135,14 @@ async function runInlineAdapt() {
         renderFreeBar();
       }
     }
-  } catch { showToast("Error de conexión."); }
+  } catch { showToast(t("toast.error_connection")); }
   spinner.classList.remove("on");
 }
 
 function copyTransform() {
   const txt = document.getElementById("transformBody").textContent;
   navigator.clipboard.writeText(txt);
-  showToast("¡Copiado!");
+  showToast(t("act.copied"));
 }
 
 // ── Hazlo tuyo ─────────────────────────────────────────────────────────────
@@ -4851,10 +5166,10 @@ function previewStyle(s) {
   if (result && result.classList.contains("on") && activeStyle === s) return;
   // Reset to example
   result && result.classList.remove("on");
-  label && (label.textContent = "Ejemplo");
+  label && (label.textContent = t("adapt.example"));
   copyBtn && (copyBtn.style.display = "none");
   const saveBtn = document.getElementById("pfSaveBtn"); saveBtn && (saveBtn.style.display = "none");
-  footTxt && (footTxt.textContent = "Ejemplo · El tuyo será único");
+  footTxt && (footTxt.textContent = t("adapt.example_footer"));
   document.querySelectorAll(".preview-slide").forEach(sl => {
     sl.classList.toggle("on", sl.dataset.style === s);
   });
@@ -4875,8 +5190,8 @@ function selectStyle(btn) {
 async function runAdapt() {
   const text   = document.getElementById("adaptInput").value.trim();
   const custom = document.getElementById("customPrompt").value.trim();
-  if (!text) { showToast("Escribe o pega un guión primero"); return; }
-  if (!activeStyle) { showToast("Selecciona un estilo del dock"); return; }
+  if (!text) { showToast(t("toast.paste_script")); return; }
+  if (!activeStyle) { showToast(t("toast.select_style")); return; }
   if (activeStyle === "custom" && !custom) { document.getElementById("customPrompt").focus(); return; }
 
   // Show spinner inside preview card, hide examples
@@ -4892,7 +5207,7 @@ async function runAdapt() {
   previewResult.classList.remove("on");
   pfCopyBtn.style.display = "none";
   document.getElementById("pfSaveBtn").style.display = "none";
-  previewLabel.textContent = "Generando…";
+  previewLabel.textContent = t("toast.generating");
 
   let lastResult = "";
   try {
@@ -4904,15 +5219,15 @@ async function runAdapt() {
     previewSpinner.classList.remove("on");
     previewContent.style.visibility = "visible";
     if (!r.ok) {
-      showToast(d.error || "Error al transformar");
-      previewLabel.textContent = "Ejemplo";
+      showToast(d.error || t("toast.error_transform"));
+      previewLabel.textContent = t("adapt.example");
     } else {
       lastResult = d.result;
       // Hide example slides, show AI result
       document.querySelectorAll(".preview-slide").forEach(s => s.classList.remove("on"));
       previewResult.textContent = d.result;
       previewResult.classList.add("on");
-      previewLabel.textContent = "Tu resultado";
+      previewLabel.textContent = t("adapt.your_result");
       pfCopyBtn.style.display = "block";
       if (st.user) document.getElementById("pfSaveBtn").style.display = "block";
       // Mobile: show result inline
@@ -4921,7 +5236,7 @@ async function runAdapt() {
       mobileRes.classList.add("on");
       previewFooterTxt.textContent = d.cost_cents > 0
         ? `−${eur(d.cost_cents)} de saldo`
-        : "Generado con IA · gratis";
+        : t("adapt.generated");
       if (d.credits_cents !== undefined) {
         st.credits = d.credits_cents; st.freeUsed = d.free_used_today;
         document.getElementById("balDisp").textContent = usos(d.credits_cents);
@@ -4931,8 +5246,8 @@ async function runAdapt() {
   } catch {
     previewSpinner.classList.remove("on");
     previewContent.style.visibility = "visible";
-    previewLabel.textContent = "Ejemplo";
-    showToast("Error de conexión.");
+    previewLabel.textContent = t("adapt.example");
+    showToast(t("toast.error_connection"));
   }
 }
 
@@ -4940,7 +5255,7 @@ let _lastAdaptResult = "";
 function copyMobileResult() {
   const text = document.getElementById("mobileAdaptResultTxt").textContent;
   navigator.clipboard.writeText(text);
-  showToast("Copied!");
+  showToast(t("act.copied"));
 }
 
 function copyPreviewResult() {
@@ -4948,8 +5263,8 @@ function copyPreviewResult() {
   if (!txt) return;
   navigator.clipboard.writeText(txt);
   const btn = document.getElementById("pfCopyBtn");
-  btn.textContent = "¡Copiado!";
-  setTimeout(() => (btn.textContent = "Copiar"), 2000);
+  btn.textContent = t("act.copied");
+  setTimeout(() => (btn.textContent = t("act.copy")), 2000);
 }
 
 async function saveScript() {
@@ -4963,11 +5278,11 @@ async function saveScript() {
   });
   const btn = document.getElementById("pfSaveBtn");
   if (res.ok) {
-    showToast("Guión guardado ✓");
-    btn.textContent = "✓ Guardado";
-    setTimeout(() => (btn.textContent = "💾 Guardar"), 2000);
+    showToast(t("act.saved") + " ✓");
+    btn.textContent = "✓ " + t("act.saved");
+    setTimeout(() => (btn.textContent = "💾 " + t("act.save")), 2000);
   } else {
-    showToast("Error al guardar");
+    showToast(t("toast.error_save"));
   }
 }
 
@@ -4981,7 +5296,7 @@ async function loadHistory() {
   document.getElementById("histCount").textContent = histCache.length;
   document.getElementById("statTotal").textContent = histCache.length;
   const list = document.getElementById("histList");
-  if (!histCache.length) { list.innerHTML = '<li class="empty-state">Todavía no hay transcripciones</li>'; return; }
+  if (!histCache.length) { list.innerHTML = `<li class="empty-state" data-i18n="drawer.empty">${t("drawer.empty")}</li>`; return; }
   list.innerHTML = histCache.map(it => `
     <li class="d-hist-item">
       <div class="d-hist-meta">
@@ -4991,10 +5306,10 @@ async function loadHistory() {
       </div>
       <div class="d-hist-prev" style="cursor:pointer" onclick="viewItem(${it.id})">${esc(it.text.slice(0,100))}${it.text.length>100?"…":""}</div>
       <div class="d-hist-acts">
-        <button class="btn-ico" onclick="cpHist(${it.id},this)">Copiar</button>
-        <button class="btn-ico" onclick="viewItem(${it.id})">Ver completo</button>
-        <button class="btn-ico" onclick="window.open('/download/${it.id}','_blank')">Descargar</button>
-        <button class="btn-ico del" onclick="delItem(${it.id},this)">Eliminar</button>
+        <button class="btn-ico" onclick="cpHist(${it.id},this)">${t("act.copy")}</button>
+        <button class="btn-ico" onclick="viewItem(${it.id})">${t("act.view")}</button>
+        <button class="btn-ico" onclick="window.open('/download/${it.id}','_blank')">${t("view.download")}</button>
+        <button class="btn-ico del" onclick="delItem(${it.id},this)">${t("act.delete")}</button>
       </div>
     </li>`).join("");
 }
@@ -5003,8 +5318,8 @@ function cpHist(id, btn) {
   const item = histCache.find(i => i.id === id);
   if (!item) return;
   navigator.clipboard.writeText(item.text);
-  btn.textContent = "¡Copiado!";
-  setTimeout(() => (btn.textContent = "Copiar"), 2000);
+  btn.textContent = t("act.copied");
+  setTimeout(() => (btn.textContent = t("act.copy")), 2000);
 }
 
 async function delItem(id, btn) {
@@ -5032,8 +5347,8 @@ function copyView() {
   const txt = document.getElementById("viewBody").textContent;
   navigator.clipboard.writeText(txt);
   const btn = document.getElementById("viewCopyBtn");
-  btn.textContent = "¡Copiado!";
-  setTimeout(() => (btn.textContent = "Copiar"), 2000);
+  btn.textContent = t("act.copied");
+  setTimeout(() => (btn.textContent = t("act.copy")), 2000);
 }
 
 function adaptFromView() {
@@ -5053,10 +5368,10 @@ let _pendingSaveText = "";
 let _pendingSaveTitle = "";
 
 async function saveTextToProject(text, title) {
-  if (!st.user) { showToast("Login required"); return; }
+  if (!st.user) { showToast(t("toast.login_required")); return; }
   if (!projectsCache.length) {
     await loadProjects();
-    if (!projectsCache.length) { showToast("Create a project first in your profile"); return; }
+    if (!projectsCache.length) { showToast(t("toast.create_project_first")); return; }
   }
   _pendingSaveText = text;
   _pendingSaveTitle = title || "Script";
@@ -5092,11 +5407,11 @@ async function doSaveToProject(projectId, projectName) {
     body: JSON.stringify({ title: _pendingSaveTitle, transcription: _pendingSaveText, project_id: projectId }),
   });
   if (res.ok) {
-    showToast(`Saved to "${projectName}"`);
+    showToast(`${t("toast.saved_to")} "${projectName}"`);
     // Close any open view modal
     const viewOverlay = document.getElementById("viewOverlay");
     if (viewOverlay) viewOverlay.classList.remove("on");
-  } else showToast("Error saving");
+  } else showToast(t("toast.error_save"));
 }
 
 // ── Auth modal ─────────────────────────────────────────────────────────────
@@ -5125,7 +5440,7 @@ async function submitAuth() {
   const btn   = document.getElementById("btnAuthOk");
   const err   = document.getElementById("authErr");
   err.classList.remove("on");
-  btn.disabled = true; btn.textContent = currentLang === "es" ? "Cargando…" : "Loading…";
+  btn.disabled = true; btn.textContent = t("toast.loading");
 
   const authBody = { email, password: pass };
   if (authMode === "register") {
@@ -5146,7 +5461,7 @@ async function submitAuth() {
   closeModal("authOverlay");
   await refreshMe(); loadHistory();
   const t3 = LANGS[currentLang] || LANGS.en;
-  showToast(authMode === "login" ? (currentLang === "es" ? "¡Bienvenido!" : "Welcome!") : (currentLang === "es" ? "¡Cuenta creada!" : "Account created!"));
+  showToast(authMode === "login" ? t("toast.welcome") : t("toast.account_created"));
 }
 
 document.addEventListener("keydown", e => {
@@ -5156,7 +5471,7 @@ document.addEventListener("keydown", e => {
 async function logout() {
   await fetch("/auth/logout", { method: "POST" });
   st = { user: null, credits: 0, freeUsed: 0, freeLimit: 5, freeDailyAnon: 3, plan: "free" };
-  renderLoggedOut(); renderFreeBar(); renderPlanCards(); showToast("Sesión cerrada.");
+  renderLoggedOut(); renderFreeBar(); renderPlanCards(); showToast(t("toast.session_closed"));
 }
 
 // ── Topup ──────────────────────────────────────────────────────────────────
@@ -5172,13 +5487,13 @@ function pickTopup(el) {
 async function submitTopup() {
   const btn = document.getElementById("btnTopupOk");
   const err = document.getElementById("topupErr");
-  err.classList.remove("on"); btn.disabled = true; btn.textContent = "Redirigiendo…";
+  err.classList.remove("on"); btn.disabled = true; btn.textContent = currentLang === "es" ? "Redirigiendo…" : "Redirecting…";
   const res = await fetch("/checkout", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ currency: CUR }),
   });
   const d = await res.json();
-  if (!res.ok) { err.textContent = d.error; err.classList.add("on"); btn.disabled = false; btn.textContent = "Ir al pago →"; return; }
+  if (!res.ok) { err.textContent = d.error; err.classList.add("on"); btn.disabled = false; btn.textContent = t("topup.go"); return; }
   window.location.href = d.url;
 }
 
@@ -5204,13 +5519,13 @@ async function manageSub() {
 }
 
 async function cancelSubscription() {
-  if (!confirm("¿Cancelar tu suscripción? Seguirá activa hasta fin de período.")) return;
+  if (!confirm(t("sub.cancel_confirm"))) return;
   const res = await fetch("/cancel-subscription", {
     method: "POST", headers: { "Content-Type": "application/json" },
   });
   const d = await res.json();
   if (!res.ok) { showToast(d.error || "Error"); return; }
-  showToast("Suscripción cancelada. Activa hasta fin de período.");
+  showToast(t("sub.cancelled"));
 }
 
 const PLAN_PRICES = {
@@ -5226,17 +5541,17 @@ function renderPlanCards() {
     const btn = card ? card.querySelector(".btn-plan") : null;
     if (!btn) return;
     if (p === plan) {
-      btn.textContent = "Plan actual";
+      btn.textContent = t("sub.current_plan");
       btn.disabled = true;
       btn.classList.add("active");
       btn.onclick = null;
     } else if (p === "free") {
-      btn.textContent = plan === "free" ? "Plan actual" : "Plan Free";
+      btn.textContent = plan === "free" ? t("sub.current_plan") : "Plan Free";
       btn.disabled = plan === "free";
       btn.classList.toggle("active", plan === "free");
       btn.onclick = null;
     } else {
-      const labels = { basic: "Elegir Básico", pro: "Elegir Pro", agency: "Elegir Agencia" };
+      const labels = { basic: t("pricing.choose_basic"), pro: t("pricing.choose_pro"), agency: t("pricing.choose_agency") };
       btn.textContent = labels[p];
       btn.disabled = false;
       btn.classList.remove("active");
