@@ -2476,13 +2476,13 @@
       <!-- Language row -->
       <div style="display:flex;gap:10px;margin-bottom:12px">
         <select id="language" style="flex:1;padding:10px 14px;background:var(--surf);border:1.5px solid var(--border);border-radius:var(--rsm);font-size:.85rem;color:var(--text);outline:none;transition:border-color .2s">
-          <option value="">Auto-detect language</option>
-          <option value="es">Spanish</option>
-          <option value="en">English</option>
-          <option value="fr">French</option>
-          <option value="pt">Portuguese</option>
-          <option value="de">German</option>
-          <option value="it">Italian</option>
+          <option value="" data-i18n-es="Detectar idioma" data-i18n-en="Auto-detect language">Auto-detect language</option>
+          <option value="es" data-i18n-es="Español" data-i18n-en="Spanish">Spanish</option>
+          <option value="en" data-i18n-es="Inglés" data-i18n-en="English">English</option>
+          <option value="fr" data-i18n-es="Francés" data-i18n-en="French">French</option>
+          <option value="pt" data-i18n-es="Portugués" data-i18n-en="Portuguese">Portuguese</option>
+          <option value="de" data-i18n-es="Alemán" data-i18n-en="German">German</option>
+          <option value="it" data-i18n-es="Italiano" data-i18n-en="Italian">Italian</option>
         </select>
         <button class="btn-shimmer inactive" id="btnTranscribe" style="flex:2" onclick="doTranscribe()" data-i18n="hero.btn">
           ✦ Transcribe now
@@ -3606,6 +3606,10 @@ function setLang(lang) {
   // placeholder
   const urlInput = document.getElementById("urlInput");
   if (urlInput) urlInput.placeholder = lang === "en" ? "🔗 Paste your Instagram or TikTok reel here..." : "🔗 Pega aquí tu reel de Instagram o TikTok...";
+  // translate select options
+  document.querySelectorAll("[data-i18n-" + lang + "]").forEach(el => {
+    el.textContent = el.getAttribute("data-i18n-" + lang);
+  });
   if (typeof initPrices === "function") initPrices();
 }
 
