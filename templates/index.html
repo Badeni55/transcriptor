@@ -4686,8 +4686,7 @@ async function loadProjects() {
   } catch {}
 }
 
-const PROJECT_COLORS = ['#f97316','#a78bfa','#22c55e','#3b82f6','#ec4899','#14b8a6','#f59e0b'];
-function getProjectColor(name) { return PROJECT_COLORS[(name || '').charCodeAt(0) % PROJECT_COLORS.length]; }
+// PROJECT_COLORS and getProjectColor defined earlier
 
 function renderProfProjects() {
   const grid = document.getElementById("profProjGrid");
