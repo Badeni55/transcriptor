@@ -1481,6 +1481,10 @@
       display: none; position: fixed; inset: 0;
       background: #0a0b0f; z-index: 300;
       overflow: hidden;
+      background-image:
+        radial-gradient(ellipse at 20% 0%, rgba(249,115,22,.07) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 100%, rgba(139,92,246,.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(249,115,22,.03) 0%, transparent 60%);
     }
     .profile-overlay.on { display: block; }
 
@@ -1491,8 +1495,7 @@
 
     /* Sidebar */
     .prof-sidebar {
-      background: rgba(17,19,24,.6); backdrop-filter: blur(16px);
-      border-right: 1px solid var(--border);
+      background: var(--surf); border-right: 1px solid var(--border);
       display: flex; flex-direction: column;
       height: 100vh; overflow-y: auto;
     }
@@ -1544,7 +1547,7 @@
       gap: 14px; margin-bottom: 28px;
     }
     .prof-stat-card {
-      background: rgba(17,19,24,.55); backdrop-filter: blur(12px);
+      background: var(--surf);
       border: 1px solid var(--border);
       border-radius: 14px; padding: 20px; display: flex;
       align-items: flex-start; gap: 14px; transition: border-color .2s;
@@ -1602,7 +1605,7 @@
       gap: 14px;
     }
     .proj-card-v2 {
-      background: rgba(17,19,24,.55); backdrop-filter: blur(12px);
+      background: var(--surf);
       border: 1px solid var(--border);
       border-radius: 16px; overflow: hidden; cursor: pointer;
       transition: all .2s; position: relative;
@@ -1648,7 +1651,7 @@
       gap: 14px;
     }
     .asst-card-v2 {
-      background: rgba(17,19,24,.55); backdrop-filter: blur(12px);
+      background: var(--surf);
       border: 1px solid var(--border);
       border-radius: 14px; padding: 18px; position: relative;
       transition: all .18s;
@@ -1801,6 +1804,9 @@
     .proj-detail-overlay {
       position: fixed; inset: 0; background: #0a0b0f; z-index: 310;
       overflow-y: auto; display: none;
+      background-image:
+        radial-gradient(ellipse at 20% 0%, rgba(249,115,22,.07) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 100%, rgba(139,92,246,.05) 0%, transparent 50%);
     }
     .proj-detail-overlay.on { display: block; }
     .proj-detail-inner {
@@ -1849,7 +1855,7 @@
     /* Script cards in project */
     .script-grid { display: flex; flex-direction: column; gap: 12px; }
     .script-card {
-      background: rgba(17,19,24,.55); backdrop-filter: blur(12px);
+      background: var(--surf);
       border: 1px solid var(--border);
       border-radius: var(--r); overflow: hidden; transition: border-color .2s;
     }
@@ -1958,7 +1964,7 @@
       display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;
     }
     .metrics-summary-card {
-      background: rgba(17,19,24,.55); backdrop-filter: blur(12px);
+      background: var(--surf);
       border: 1px solid var(--border); border-radius: 14px;
       padding: 18px; text-align: center;
     }
@@ -1970,7 +1976,7 @@
       font-size: .68rem; color: var(--text3); text-transform: uppercase; letter-spacing: .05em;
     }
     .metrics-winner-card {
-      background: rgba(17,19,24,.55); backdrop-filter: blur(12px);
+      background: var(--surf);
       border: 1px solid var(--border); border-radius: 12px;
       padding: 14px 16px; margin-bottom: 10px; display: flex; gap: 14px; align-items: flex-start;
       transition: border-color .2s; cursor: pointer;
@@ -2861,8 +2867,7 @@
 
 <!-- ── PROFILE PAGE ──────────────────────────────────────────────────── -->
 <div class="profile-overlay" id="profilePage">
-  <canvas id="profileAurora" style="position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:0;opacity:.6"></canvas>
-  <div class="prof-layout" style="position:relative;z-index:1">
+  <div class="prof-layout">
 
     <!-- Sidebar -->
     <div class="prof-sidebar">
@@ -3070,8 +3075,7 @@
 
 <!-- ── PROJECT DETAIL VIEW ────────────────────────────────────────────── -->
 <div class="proj-detail-overlay" id="projDetailOverlay">
-  <canvas id="projDetailAurora" style="position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:0;opacity:.5"></canvas>
-  <div class="proj-detail-inner" style="position:relative;z-index:1">
+  <div class="proj-detail-inner">
     <div class="proj-detail-top">
       <button class="proj-detail-back" onclick="closeProjDetail()" data-i18n="proj.back">← Back</button>
       <input class="proj-detail-name" id="projDetailName" onblur="saveProjName()" />
@@ -4108,12 +4112,6 @@ function openProfile() {
   document.body.style.overflow = "hidden";
   closeAvatarPicker();
 
-  // Init aurora if not already
-  if (!document.getElementById("profileAurora")._auroraInit) {
-    createAurora("profileAurora");
-    document.getElementById("profileAurora")._auroraInit = true;
-  }
-
   if (st.user) {
     renderProfileHub();
   }
@@ -4571,12 +4569,6 @@ async function openProjDetail(projectId) {
   document.getElementById("projDetailStyle").value = proj.style_prompt || "";
   document.getElementById("projDetailOverlay").classList.add("on");
 
-  // Init aurora if not already
-  const pdCanvas = document.getElementById("projDetailAurora");
-  if (pdCanvas && !pdCanvas._auroraInit) {
-    createAurora("projDetailAurora");
-    pdCanvas._auroraInit = true;
-  }
   document.body.style.overflow = "hidden";
 
   // Populate assistant selector
