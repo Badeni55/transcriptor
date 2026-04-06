@@ -1479,7 +1479,7 @@
     /* ── Profile Hub — full width sidebar + content ───────────── */
     .profile-overlay {
       display: none; position: fixed; inset: 0;
-      background: var(--bg); z-index: 300;
+      background: rgba(10,11,15,.85); z-index: 300;
       overflow: hidden;
     }
     .profile-overlay.on { display: block; }
@@ -1491,7 +1491,7 @@
 
     /* Sidebar */
     .prof-sidebar {
-      background: var(--surf); backdrop-filter: blur(12px);
+      background: rgba(17,19,24,.6); backdrop-filter: blur(16px);
       border-right: 1px solid var(--border);
       display: flex; flex-direction: column;
       height: 100vh; overflow-y: auto;
@@ -1544,7 +1544,8 @@
       gap: 14px; margin-bottom: 28px;
     }
     .prof-stat-card {
-      background: var(--surf); border: 1px solid var(--border);
+      background: rgba(17,19,24,.55); backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
       border-radius: 14px; padding: 20px; display: flex;
       align-items: flex-start; gap: 14px; transition: border-color .2s;
     }
@@ -1601,7 +1602,8 @@
       gap: 14px;
     }
     .proj-card-v2 {
-      background: var(--surf); border: 1px solid var(--border);
+      background: rgba(17,19,24,.55); backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
       border-radius: 16px; overflow: hidden; cursor: pointer;
       transition: all .2s; position: relative;
     }
@@ -1646,7 +1648,8 @@
       gap: 14px;
     }
     .asst-card-v2 {
-      background: var(--surf); border: 1px solid var(--border);
+      background: rgba(17,19,24,.55); backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
       border-radius: 14px; padding: 18px; position: relative;
       transition: all .18s;
     }
@@ -1763,7 +1766,7 @@
 
     .prof-list { display: flex; flex-direction: column; gap: 8px; }
     .prof-card {
-      padding: 16px 18px; background: var(--surf);
+      padding: 16px 18px; background: rgba(17,19,24,.55); backdrop-filter: blur(12px);
       border: 1px solid var(--border); border-radius: 14px;
       transition: border-color .2s;
     }
@@ -1796,7 +1799,7 @@
 
     /* ── Project detail view ───────────────────────────── */
     .proj-detail-overlay {
-      position: fixed; inset: 0; background: var(--bg); z-index: 310;
+      position: fixed; inset: 0; background: rgba(10,11,15,.85); z-index: 310;
       overflow-y: auto; display: none;
     }
     .proj-detail-overlay.on { display: block; }
@@ -1846,7 +1849,8 @@
     /* Script cards in project */
     .script-grid { display: flex; flex-direction: column; gap: 12px; }
     .script-card {
-      background: var(--surf); border: 1px solid var(--border);
+      background: rgba(17,19,24,.55); backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
       border-radius: var(--r); overflow: hidden; transition: border-color .2s;
     }
     .script-card:hover { border-color: rgba(249,115,22,.3); }
@@ -1954,7 +1958,8 @@
       display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;
     }
     .metrics-summary-card {
-      background: var(--surf); border: 1px solid var(--border); border-radius: 14px;
+      background: rgba(17,19,24,.55); backdrop-filter: blur(12px);
+      border: 1px solid var(--border); border-radius: 14px;
       padding: 18px; text-align: center;
     }
     .metrics-summary-val {
@@ -1965,7 +1970,8 @@
       font-size: .68rem; color: var(--text3); text-transform: uppercase; letter-spacing: .05em;
     }
     .metrics-winner-card {
-      background: var(--surf); border: 1px solid var(--border); border-radius: 12px;
+      background: rgba(17,19,24,.55); backdrop-filter: blur(12px);
+      border: 1px solid var(--border); border-radius: 12px;
       padding: 14px 16px; margin-bottom: 10px; display: flex; gap: 14px; align-items: flex-start;
       transition: border-color .2s; cursor: pointer;
     }
@@ -2855,7 +2861,8 @@
 
 <!-- ── PROFILE PAGE ──────────────────────────────────────────────────── -->
 <div class="profile-overlay" id="profilePage">
-  <div class="prof-layout">
+  <canvas id="profileAurora" style="position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:0;opacity:.6"></canvas>
+  <div class="prof-layout" style="position:relative;z-index:1">
 
     <!-- Sidebar -->
     <div class="prof-sidebar">
@@ -3063,7 +3070,8 @@
 
 <!-- ── PROJECT DETAIL VIEW ────────────────────────────────────────────── -->
 <div class="proj-detail-overlay" id="projDetailOverlay">
-  <div class="proj-detail-inner">
+  <canvas id="projDetailAurora" style="position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:0;opacity:.5"></canvas>
+  <div class="proj-detail-inner" style="position:relative;z-index:1">
     <div class="proj-detail-top">
       <button class="proj-detail-back" onclick="closeProjDetail()" data-i18n="proj.back">← Back</button>
       <input class="proj-detail-name" id="projDetailName" onblur="saveProjName()" />
@@ -4100,6 +4108,12 @@ function openProfile() {
   document.body.style.overflow = "hidden";
   closeAvatarPicker();
 
+  // Init aurora if not already
+  if (!document.getElementById("profileAurora")._auroraInit) {
+    createAurora("profileAurora");
+    document.getElementById("profileAurora")._auroraInit = true;
+  }
+
   if (st.user) {
     renderProfileHub();
   }
@@ -4556,6 +4570,13 @@ async function openProjDetail(projectId) {
   document.getElementById("projDetailName").value = proj.name;
   document.getElementById("projDetailStyle").value = proj.style_prompt || "";
   document.getElementById("projDetailOverlay").classList.add("on");
+
+  // Init aurora if not already
+  const pdCanvas = document.getElementById("projDetailAurora");
+  if (pdCanvas && !pdCanvas._auroraInit) {
+    createAurora("projDetailAurora");
+    pdCanvas._auroraInit = true;
+  }
   document.body.style.overflow = "hidden";
 
   // Populate assistant selector
