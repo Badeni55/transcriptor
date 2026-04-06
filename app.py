@@ -374,6 +374,59 @@ def auth_login():
         return jsonify({"error": "Error de conexión"}), 500
 
 
+@app.route("/auth/forgot-password", methods=["POST"])
+@limiter.limit("3 per minute;10 per hour")
+def forgot_password():
+    body = request.get_json() or {}
+    email = (body.get("email") or "").strip().lower()
+    if not email or not validate_email(email):
+        return jsonify({"error": "Valid email required"}), 400
+    try:
+        resp = requests.post(
+            f"{SUPABASE_URL}/auth/v1/recover",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Content-Type": "application/json"},
+            json={"email": email},
+            timeout=10,
+        )
+        if resp.status_code not in (200, 204):
+            return jsonify({"error": "Could not send reset email"}), 500
+        return jsonify({"ok": True})
+    except Exception:
+        logger.error("Forgot password error", exc_info=True)
+        return jsonify({"error": "Internal server error"}), 500
+
+
+@app.route("/auth/reset-password", methods=["POST"])
+@limiter.limit("5 per minute")
+def reset_password():
+    body = request.get_json() or {}
+    access_token = (body.get("access_token") or "").strip()
+    new_password = body.get("password", "")
+
+    if not access_token:
+        return jsonify({"error": "Token required"}), 400
+    if len(new_password) < 6:
+        return jsonify({"error": "Password must be at least 6 characters"}), 400
+
+    try:
+        resp = requests.put(
+            f"{SUPABASE_URL}/auth/v1/user",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            },
+            json={"password": new_password},
+            timeout=10,
+        )
+        if resp.status_code != 200:
+            return jsonify({"error": "Invalid or expired token"}), 400
+        return jsonify({"ok": True})
+    except Exception:
+        logger.error("Reset password error", exc_info=True)
+        return jsonify({"error": "Internal server error"}), 500
+
+
 @app.route("/auth/logout", methods=["POST"])
 def auth_logout():
     session.clear()
@@ -1198,7 +1251,7 @@ def update_script(script_id):
     user = current_user()
     body = request.get_json()
     updates = {}
-    for key in ("title", "performance_notes", "views_count", "engagement_rate"):
+    for key in ("title", "transcription", "script", "performance_notes", "views_count", "engagement_rate", "project_id"):
         if key in body:
             updates[key] = body[key]
     if not updates:
@@ -1429,6 +1482,16 @@ def index():
 @app.route("/affiliate")
 def affiliate_page():
     return render_template("affiliate.html")
+
+
+@app.route("/forgot-password")
+def forgot_password_page():
+    return render_template("forgot-password.html")
+
+
+@app.route("/reset-password")
+def reset_password_page():
+    return render_template("reset-password.html")
 
 
 if __name__ == "__main__":

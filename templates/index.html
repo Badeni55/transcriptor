@@ -1886,6 +1886,32 @@
       padding: 0 16px 14px; display: flex; gap: 6px;
     }
 
+    /* Inline title editing */
+    .script-card-title-edit {
+      font-family: var(--font-display); font-size: .9rem; font-weight: 400;
+      background: none; border: none; border-bottom: 1px solid transparent;
+      color: var(--text); outline: none; flex: 1; min-width: 0;
+      padding: 2px 0; transition: border-color .2s;
+    }
+    .script-card-title-edit:focus { border-bottom-color: var(--purple); }
+
+    /* Script editor textarea */
+    .script-editor-ta {
+      width: 100%; min-height: 200px; padding: 14px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--rsm); color: var(--text);
+      font-family: var(--font-body); font-size: .88rem; line-height: 1.7;
+      resize: vertical; outline: none; transition: border-color .2s;
+    }
+    .script-editor-ta:focus { border-color: var(--purple); }
+    .script-card-editor { padding: 0 16px 12px; }
+    .script-editor-bar {
+      display: flex; gap: 8px; margin-top: 8px; align-items: center;
+    }
+    .script-editor-status {
+      font-size: .75rem; color: var(--green); margin-left: auto;
+    }
+
     /* Team members list */
     .team-list { display: flex; flex-direction: column; gap: 8px; }
     .team-member {
@@ -2933,6 +2959,7 @@
     </div>
     <div class="field"><label data-i18n="auth.email">Email</label><input type="email" id="authEmail" placeholder="you@email.com" /></div>
     <div class="field"><label data-i18n="auth.pass">Password</label><input type="password" id="authPass" placeholder="Min 6 characters" /></div>
+    <div id="forgotLink" style="text-align:right;margin:-8px 0 12px"><a href="/forgot-password" style="font-size:.75rem;color:var(--text3);text-decoration:underline">Forgot password?</a></div>
     <div class="form-err" id="authErr"></div>
     <button class="btn-full" id="btnAuthOk" onclick="submitAuth()" data-i18n="auth.login">Log in</button>
   </div>
@@ -4092,10 +4119,18 @@ function renderProjScripts() {
     <div class="script-card" id="sc-${i}">
       <div class="script-card-head" onclick="document.getElementById('sc-${i}').classList.toggle('collapsed')">
         <span class="script-card-toggle">▼</span>
-        <span class="script-card-title">${esc(s.title || "Untitled")}</span>
+        <input class="script-card-title-edit" id="sc-title-${i}" value="${esc(s.title || "Untitled")}" onblur="saveScriptField('${s.id}',${i},'title')" />
         <span class="script-card-date">${fmtDate(s.created_at)}</span>
       </div>
-      <div class="script-card-preview">${esc(preview)}${text.length > 150 ? "…" : ""}</div>
+      <div class="script-card-preview" id="sc-preview-${i}">${esc(preview)}${text.length > 150 ? "…" : ""}</div>
+      <div class="script-card-editor" id="sc-editor-${i}" style="display:none">
+        <textarea id="sc-text-${i}" class="script-editor-ta">${esc(text)}</textarea>
+        <div class="script-editor-bar">
+          <button class="btn-sm" onclick="saveScriptContent('${s.id}',${i})">Save</button>
+          <button class="btn-sm" onclick="closeScriptEditor(${i})">Cancel</button>
+          <span class="script-editor-status" id="sc-status-${i}"></span>
+        </div>
+      </div>
       <div class="script-card-perf">
         <div class="perf-field">
           <label>Views</label>
@@ -4112,12 +4147,54 @@ function renderProjScripts() {
         <button class="perf-save" onclick="savePerfData('${s.id}', ${i})">Save</button>
       </div>
       <div class="script-card-acts">
-        <button class="btn-sm" onclick="viewProjScript(${i})">View full</button>
+        <button class="btn-sm" onclick="openScriptEditor(${i})">Edit</button>
         <button class="btn-sm" onclick="copyProjScript(${i}, this)">Copy</button>
         <button class="btn-sm del" onclick="delProjScript('${s.id}', ${i})">Delete</button>
       </div>
     </div>`;
   }).join("");
+}
+
+function openScriptEditor(idx) {
+  document.getElementById(`sc-preview-${idx}`).style.display = "none";
+  document.getElementById(`sc-editor-${idx}`).style.display = "";
+  document.getElementById(`sc-text-${idx}`).focus();
+}
+
+function closeScriptEditor(idx) {
+  document.getElementById(`sc-editor-${idx}`).style.display = "none";
+  document.getElementById(`sc-preview-${idx}`).style.display = "";
+}
+
+async function saveScriptContent(scriptId, idx) {
+  const text = document.getElementById(`sc-text-${idx}`).value;
+  const s = projScripts[idx];
+  const field = s.script != null ? "script" : "transcription";
+
+  const res = await fetch(`/scripts/${scriptId}`, {
+    method: "PATCH", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ [field]: text }),
+  });
+  if (res.ok) {
+    projScripts[idx][field] = text;
+    const preview = text.split("\n").slice(0, 2).join("\n").slice(0, 150);
+    document.getElementById(`sc-preview-${idx}`).textContent = preview + (text.length > 150 ? "…" : "");
+    const status = document.getElementById(`sc-status-${idx}`);
+    status.textContent = "Saved";
+    setTimeout(() => status.textContent = "", 2000);
+  } else showToast("Error saving");
+}
+
+async function saveScriptField(scriptId, idx, field) {
+  const el = document.getElementById(`sc-title-${idx}`);
+  const val = el.value.trim();
+  if (!val) return;
+  if (val === (projScripts[idx].title || "")) return;
+  await fetch(`/scripts/${scriptId}`, {
+    method: "PATCH", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ [field]: val }),
+  });
+  projScripts[idx].title = val;
 }
 
 async function savePerfData(scriptId, idx) {
@@ -4472,6 +4549,35 @@ async function rsQuickTransform(idx, style, btn) {
   }
 }
 
+async function rsSaveToProject(idx) {
+  const item = rsResults[idx];
+  if (!item) return;
+  if (!projectsCache.length) {
+    showToast("Create a project first in your profile");
+    return;
+  }
+  // Pick project
+  const names = projectsCache.map((p, i) => `${i + 1}. ${p.name}`).join("\n");
+  const choice = prompt(`Save to which project?\n\n${names}\n\nEnter number:`);
+  if (!choice) return;
+  const projIdx = parseInt(choice) - 1;
+  if (isNaN(projIdx) || projIdx < 0 || projIdx >= projectsCache.length) { showToast("Invalid choice"); return; }
+  const project = projectsCache[projIdx];
+
+  const title = item.platform ? `${item.platform} · ${new Date().toLocaleDateString()}` : "Transcription";
+  const res = await fetch("/scripts", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title,
+      transcription: item.text,
+      reel_url: item.url || "",
+      project_id: project.id,
+    }),
+  });
+  if (res.ok) showToast(`Saved to "${project.name}"`);
+  else showToast("Error saving");
+}
+
 function rsUseInAdapt(idx) {
   const text = rsResults[idx].text;
   const adaptInput = document.getElementById("adaptInput");
@@ -4576,7 +4682,8 @@ async function rsTranscribeOne(url) {
       </div>
       <div class="rs-card-body">${esc(result.text)}</div>
       <div class="rs-card-actions">
-        <button class="rs-card-act" onclick="rsToggleTransform(${idx})">✨ Transform</button>
+        <button class="rs-card-act" onclick="rsToggleTransform(${idx})">Transform</button>
+        ${st.user ? `<button class="rs-card-act" onclick="rsSaveToProject(${idx})">Save to project</button>` : ""}
       </div>
       <div class="rs-card-transform" id="rsTransform-${idx}">
         <div class="rs-card-transform-chips">
