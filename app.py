@@ -335,12 +335,12 @@ def auth_register():
         })
         user = result.user
         session["user"] = {"id": str(user.id), "email": user.email}
-        # Guardar referencia de afiliado si viene
+        # Save terms acceptance + affiliate ref
+        upsert_data = {"id": str(user.id), "terms_accepted_at": datetime.now(timezone.utc).isoformat()}
         affiliate_ref = body.get("affiliate_ref", "").strip()
         if affiliate_ref:
-            db.table("profiles").upsert({
-                "id": str(user.id), "affiliate_ref": affiliate_ref
-            }).execute()
+            upsert_data["affiliate_ref"] = affiliate_ref
+        db.table("profiles").upsert(upsert_data).execute()
         return jsonify({"ok": True, "email": user.email})
     except Exception as e:
         msg = str(e).lower()
@@ -1523,6 +1523,82 @@ def affiliate_dashboard_data():
     })
 
 
+# ── GDPR endpoints ───────────────────────────────────────────────────────────
+
+@app.route("/account/export")
+@require_auth
+def export_account():
+    user = current_user()
+    profile = db.table("profiles").select("*").eq("id", user["id"]).execute()
+    projects = db.table("projects").select("*").eq("user_id", user["id"]).execute()
+    scripts = db.table("scripts").select("*").eq("user_id", user["id"]).execute()
+    transcriptions = db.table("transcriptions").select("*").eq("user_id", user["id"]).execute()
+    saved = db.table("saved_scripts").select("*").eq("user_id", user["id"]).execute()
+
+    payload = {
+        "profile": profile.data[0] if profile.data else None,
+        "projects": projects.data,
+        "scripts": scripts.data,
+        "transcriptions": transcriptions.data,
+        "saved_scripts": saved.data,
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+    }
+    response = jsonify(payload)
+    response.headers["Content-Disposition"] = "attachment; filename=reelscript-data-export.json"
+    return response
+
+
+@app.route("/account", methods=["DELETE"])
+@require_auth
+@limiter.limit("2 per hour")
+def delete_account():
+    user = current_user()
+    uid = user["id"]
+
+    try:
+        profile = db.table("profiles").select("*").eq("id", uid).execute()
+        if not profile.data:
+            return jsonify({"error": "Profile not found"}), 404
+
+        prof = profile.data[0]
+
+        # 1. Audit log
+        db.table("deletion_log").insert({
+            "user_id": uid,
+            "email": user.get("email"),
+        }).execute()
+
+        # 2. Cancel Stripe subscription if exists
+        sub_id = prof.get("stripe_subscription_id")
+        if sub_id and STRIPE_OK:
+            try:
+                stripe_lib.Subscription.delete(sub_id)
+            except Exception as e:
+                logger.error(f"Stripe cancellation failed for {uid}: {e}")
+                return jsonify({"error": "Could not cancel subscription. Contact support."}), 500
+
+        # 3. Delete user data (cascade should handle most, but be explicit)
+        db.table("assistants").delete().eq("user_id", uid).execute()
+        db.table("scripts").delete().eq("user_id", uid).execute()
+        db.table("projects").delete().eq("user_id", uid).execute()
+        db.table("saved_scripts").delete().eq("user_id", uid).execute()
+        db.table("transcriptions").delete().eq("user_id", uid).execute()
+        db.table("agency_members").delete().eq("agency_owner_id", uid).execute()
+        db.table("profiles").delete().eq("id", uid).execute()
+
+        # 4. Delete auth user
+        db.auth.admin.delete_user(uid)
+
+        # 5. Clear session
+        session.clear()
+
+        return jsonify({"ok": True})
+
+    except Exception as e:
+        logger.error(f"Account deletion failed for {uid}: {e}", exc_info=True)
+        return jsonify({"error": "Internal server error. Contact support."}), 500
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 @app.route("/")
@@ -1533,6 +1609,26 @@ def index():
 @app.route("/affiliate")
 def affiliate_page():
     return render_template("affiliate.html")
+
+
+@app.route("/cookies")
+def cookies_page():
+    return render_template("cookies.html")
+
+
+@app.route("/privacy")
+def privacy_page():
+    return render_template("privacy.html")
+
+
+@app.route("/terms")
+def terms_page():
+    return render_template("terms.html")
+
+
+@app.route("/legal")
+def legal_notice_page():
+    return render_template("legal.html")
 
 
 @app.route("/forgot-password")

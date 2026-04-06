@@ -2914,6 +2914,7 @@
         <button class="prof-nav-item" id="profNavAssistants" style="display:none" onclick="profTab('assistants')" data-i18n="prof.assistants">🤖 Assistants</button>
         <button class="prof-nav-item" id="profNavMetrics" style="display:none" onclick="profTab('metrics')" data-i18n="prof.metrics">Metrics</button>
         <button class="prof-nav-item" id="profNavTeam" style="display:none" onclick="profTab('team')" data-i18n="prof.team">👥 Team</button>
+        <button class="prof-nav-item" id="profNavPrivacy" onclick="profTab('privacy')" data-i18n="prof.privacy">🔒 Privacy &amp; Data</button>
       </div>
 
       <div class="prof-sidebar-footer">
@@ -3014,6 +3015,29 @@
           </div>
         </div>
         <div id="profTeamList"></div>
+      </div>
+
+      <!-- Privacy & Data panel -->
+      <div id="profPanelPrivacy" style="display:none">
+        <div class="prof-section-head">
+          <div><div class="prof-section-title">Privacy &amp; Data</div></div>
+        </div>
+
+        <div class="prof-card" style="margin-bottom:12px">
+          <div style="margin-bottom:12px">
+            <div style="font-family:var(--font-display);font-size:1rem;margin-bottom:4px">Export your data</div>
+            <div style="font-size:.82rem;color:var(--text2);font-weight:300">Download all your data as a JSON file — transcriptions, scripts, projects, profile.</div>
+          </div>
+          <button class="btn-sm" style="background:var(--purple);color:#fff;border:none;padding:8px 16px" onclick="exportMyData()">Download my data</button>
+        </div>
+
+        <div class="prof-card" style="border-color:rgba(239,68,68,.2)">
+          <div style="margin-bottom:12px">
+            <div style="font-family:var(--font-display);font-size:1rem;margin-bottom:4px;color:#f87171">Delete account</div>
+            <div style="font-size:.82rem;color:var(--text2);font-weight:300">Permanently delete your account, all projects, scripts, and transcriptions. Your active subscription will be cancelled. This cannot be undone.</div>
+          </div>
+          <button class="btn-sm" style="background:transparent;border:1px solid rgba(239,68,68,.3);color:#f87171;padding:8px 16px" onclick="openDeleteAccountModal()">Delete my account</button>
+        </div>
       </div>
 
     </div><!-- /.prof-main -->
@@ -3157,6 +3181,15 @@
     <div class="field"><label data-i18n="auth.pass">Password</label><input type="password" id="authPass" placeholder="Min 6 characters" /></div>
     <div id="forgotLink" style="text-align:right;margin:-8px 0 12px"><a href="/forgot-password" style="font-size:.75rem;color:var(--text3);text-decoration:underline" data-i18n="auth.forgot">Forgot password?</a></div>
     <div class="form-err" id="authErr"></div>
+    <div id="termsConsent" style="display:none;margin-bottom:14px">
+      <label style="display:flex;gap:8px;align-items:flex-start;font-size:.78rem;color:var(--text2);cursor:pointer">
+        <input type="checkbox" id="termsCheck" style="margin-top:3px;accent-color:var(--purple)" />
+        <span>
+          I accept the <a href="/privacy" target="_blank" style="color:var(--purple)">Privacy Policy</a>
+          and <a href="/terms" target="_blank" style="color:var(--purple)">Terms of Service</a>
+        </span>
+      </label>
+    </div>
     <button class="btn-full" id="btnAuthOk" onclick="submitAuth()" data-i18n="auth.login">Log in</button>
   </div>
 </div>
@@ -3236,6 +3269,7 @@ const LANGS = {
     "prof.assistants": "Asistentes",
     "prof.metrics": "Métricas",
     "prof.team": "Equipo",
+    "prof.privacy": "🔒 Privacidad y datos",
     "prof.topup": "+ Recargar",
     "prof.manage_sub": "Gestionar suscripción",
     "prof.back": "← Volver a la app",
@@ -3442,6 +3476,7 @@ const LANGS = {
     "prof.assistants": "Assistants",
     "prof.metrics": "Metrics",
     "prof.team": "Team",
+    "prof.privacy": "🔒 Privacy & Data",
     "prof.topup": "+ Top up",
     "prof.manage_sub": "Manage subscription",
     "prof.back": "← Back to app",
@@ -4190,6 +4225,7 @@ function renderProfileHub() {
   document.getElementById("profNavAssistants").style.display = hasPaidPlan ? "" : "none";
   document.getElementById("profNavMetrics").style.display = hasPaidPlan ? "" : "none";
   document.getElementById("profNavTeam").style.display = isAgency ? "" : "none";
+  document.getElementById("profNavPrivacy").style.display = "";
 
   // Manage sub button in sidebar
   document.getElementById("profManageSubSidebar").style.display = st.hasStripeSub ? "" : "none";
@@ -4209,6 +4245,64 @@ function closeProfile() {
   document.getElementById("profilePage").classList.remove("on");
   document.body.style.overflow = "";
   closeAvatarPicker();
+}
+
+// ── Privacy & Data ────────────────────────────────────────────────────────
+
+// Export data
+async function exportMyData() {
+  showToast(t("toast.loading"));
+  const res = await fetch("/account/export");
+  if (!res.ok) { showToast("Error"); return; }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "reelscript-data-export.json";
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(t("act.saved"));
+}
+
+// Delete account
+function openDeleteAccountModal() {
+  document.getElementById("deleteConfirmEmail").value = "";
+  document.getElementById("deleteErr").classList.remove("on");
+  document.getElementById("btnDeleteAccount").disabled = true;
+  document.getElementById("btnDeleteAccount").style.opacity = ".5";
+  openModal("deleteAccountOverlay");
+}
+
+// Enable button only when email matches
+document.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("deleteConfirmEmail");
+  if (input) input.addEventListener("input", () => {
+    const matches = input.value.trim().toLowerCase() === (st.user?.email || "").toLowerCase();
+    document.getElementById("btnDeleteAccount").disabled = !matches;
+    document.getElementById("btnDeleteAccount").style.opacity = matches ? "1" : ".5";
+  });
+});
+
+async function confirmDeleteAccount() {
+  const btn = document.getElementById("btnDeleteAccount");
+  const err = document.getElementById("deleteErr");
+  err.classList.remove("on");
+  btn.disabled = true;
+  btn.textContent = "Deleting...";
+
+  const res = await fetch("/account", { method: "DELETE" });
+  const d = await res.json();
+  if (!res.ok) {
+    err.textContent = d.error || "Error";
+    err.classList.add("on");
+    btn.disabled = false;
+    btn.textContent = "Delete permanently";
+    return;
+  }
+  closeModal("deleteAccountOverlay");
+  closeProfile();
+  showToast("Account deleted");
+  setTimeout(() => window.location.reload(), 1000);
 }
 
 // ── Avatar picker ─────────────────────────────────────────────────────────
@@ -4281,6 +4375,7 @@ function profTab(tab) {
     assistants: "profPanelAssistants",
     metrics: "profPanelMetrics",
     team: "profPanelTeam",
+    privacy: "profPanelPrivacy",
   };
   // Hide all panels
   Object.values(panels).forEach(id => {
@@ -5743,6 +5838,8 @@ function switchTab(mode) {
   const t = LANGS[currentLang] || LANGS.en;
   document.getElementById("btnAuthOk").textContent = mode === "login" ? (t["auth.login"] || "Log in") : (t["auth.register"] || "Create account");
   document.getElementById("authPass").autocomplete = mode === "login" ? "current-password" : "new-password";
+  document.getElementById("termsConsent").style.display = mode === "register" ? "" : "none";
+  if (mode === "login") document.getElementById("termsCheck").checked = false;
 }
 
 async function submitAuth() {
@@ -5753,6 +5850,11 @@ async function submitAuth() {
   err.classList.remove("on");
   btn.disabled = true; btn.textContent = t("toast.loading");
 
+  if (authMode === "register" && !document.getElementById("termsCheck").checked) {
+    err.textContent = "You must accept the terms"; err.classList.add("on");
+    btn.disabled = false; btn.textContent = (LANGS[currentLang] || LANGS.en)["auth.register"] || "Create account";
+    return;
+  }
   const authBody = { email, password: pass };
   if (authMode === "register") {
     const aRef = localStorage.getItem("affiliate_ref");
@@ -6127,6 +6229,21 @@ function startTourFromModal() {
 <!-- Tutorial button -->
 <button class="btn-tutorial" onclick="openTutorial()">? Tutorial</button>
 
+<!-- DELETE ACCOUNT MODAL -->
+<div class="overlay" id="deleteAccountOverlay" onclick="backdropClose(event,'deleteAccountOverlay')" style="z-index:400">
+  <div class="modal" style="max-width:440px">
+    <button class="modal-x" onclick="closeModal('deleteAccountOverlay')">✕</button>
+    <h2 style="color:#f87171">Delete account</h2>
+    <p style="font-size:.84rem;color:var(--text2);margin-bottom:20px;font-weight:300">This will permanently delete your account and all data. Type your email to confirm:</p>
+    <div class="field">
+      <label>YOUR EMAIL</label>
+      <input type="email" id="deleteConfirmEmail" placeholder="Type your email to confirm" />
+    </div>
+    <button class="btn-full" id="btnDeleteAccount" onclick="confirmDeleteAccount()" disabled style="background:#ef4444;opacity:.5">Delete permanently</button>
+    <div class="form-err" id="deleteErr"></div>
+  </div>
+</div>
+
 <!-- Tutorial modal -->
 <div class="tut-modal-overlay" id="tutorialOverlay" onclick="tutorialBackdrop(event)">
   <div class="tut-modal">
@@ -6156,5 +6273,17 @@ closeTutorial = function() {
   _origCloseTut();
 };
 </script>
+
+<!-- ── FOOTER ────────────────────────────────────────────────────────── -->
+<footer style="border-top:1px solid var(--border);padding:32px 24px;text-align:center;color:var(--text3);font-size:.72rem">
+  <div style="display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin-bottom:12px">
+    <a href="/privacy" style="color:inherit;text-decoration:none">Privacy</a>
+    <a href="/terms" style="color:inherit;text-decoration:none">Terms</a>
+    <a href="/cookies" style="color:inherit;text-decoration:none">Cookies</a>
+    <a href="/legal" style="color:inherit;text-decoration:none">Aviso Legal</a>
+    <a href="mailto:support@reelscript.net" style="color:inherit;text-decoration:none">Contact</a>
+  </div>
+  <div>© 2026 ReelScript</div>
+</footer>
 </body>
 </html>
