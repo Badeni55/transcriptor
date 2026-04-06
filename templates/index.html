@@ -2077,7 +2077,7 @@
       transition: color .15s;
     }
     .prof-bottom-tab.on { color: var(--purple); }
-    .prof-bottom-tab-icon { font-size: 1.2rem; }
+    .prof-bottom-tab-icon { width: 20px; height: 20px; }
 
     /* Mobile responsive — Profile Hub */
     @media (max-width: 768px) {
@@ -3024,6 +3024,16 @@
         </div>
 
         <div class="prof-card" style="margin-bottom:12px">
+          <div style="font-family:var(--font-display);font-size:1rem;margin-bottom:10px">Legal documents</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <a href="/privacy" target="_blank" class="btn-sm" style="text-decoration:none;color:var(--text2)">Privacy Policy</a>
+            <a href="/terms" target="_blank" class="btn-sm" style="text-decoration:none;color:var(--text2)">Terms of Service</a>
+            <a href="/cookies" target="_blank" class="btn-sm" style="text-decoration:none;color:var(--text2)">Cookie Policy</a>
+            <a href="/legal" target="_blank" class="btn-sm" style="text-decoration:none;color:var(--text2)">Aviso Legal</a>
+          </div>
+        </div>
+
+        <div class="prof-card" style="margin-bottom:12px">
           <div style="margin-bottom:12px">
             <div style="font-family:var(--font-display);font-size:1rem;margin-bottom:4px">Export your data</div>
             <div style="font-size:.82rem;color:var(--text2);font-weight:300">Download all your data as a JSON file — transcriptions, scripts, projects, profile.</div>
@@ -3046,10 +3056,10 @@
   <!-- Mobile bottom tab bar -->
   <div class="prof-bottom-bar" id="profBottomBar">
     <div class="prof-bottom-bar-inner">
-      <button class="prof-bottom-tab on" onclick="profTabMobile('overview')"><span class="prof-bottom-tab-icon">📊</span>Overview</button>
-      <button class="prof-bottom-tab" onclick="profTabMobile('scripts')"><span class="prof-bottom-tab-icon">✨</span>Scripts</button>
-      <button class="prof-bottom-tab" onclick="profTabMobile('projects')"><span class="prof-bottom-tab-icon">📁</span>Projects</button>
-      <button class="prof-bottom-tab" onclick="profTabMobile('metrics')"><span class="prof-bottom-tab-icon">📊</span>Metrics</button>
+      <button class="prof-bottom-tab on" onclick="profTabMobile('overview')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="1" width="6" height="6" fill="currentColor"/><rect x="9" y="1" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" fill="currentColor" opacity=".3"/></svg>Overview</button>
+      <button class="prof-bottom-tab" onclick="profTabMobile('scripts')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="10" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg>Scripts</button>
+      <button class="prof-bottom-tab" onclick="profTabMobile('projects')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="3" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="6" height="3" fill="currentColor"/><rect x="5" y="8" width="6" height="1.5" fill="currentColor" opacity=".4"/></svg>Projects</button>
+      <button class="prof-bottom-tab" onclick="profTabMobile('metrics')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="10" width="3" height="5" fill="currentColor" opacity=".4"/><rect x="5" y="7" width="3" height="8" fill="currentColor" opacity=".6"/><rect x="9" y="4" width="3" height="11" fill="currentColor" opacity=".8"/><rect x="13" y="1" width="3" height="14" fill="currentColor"/></svg>Metrics</button>
     </div>
   </div>
 </div>
@@ -3832,9 +3842,7 @@ async function runAdaptWithAssistant(id) {
       previewLabel.textContent = t("adapt.your_result");
       pfCopyBtn.style.display = "block";
       if (st.user) document.getElementById("pfSaveBtn").style.display = "block";
-      previewFooterTxt.textContent = d.cost_cents > 0
-        ? `−${eur(d.cost_cents)} de saldo`
-        : t("adapt.generated");
+      previewFooterTxt.textContent = t("adapt.generated");
       if (d.credits_cents !== undefined) {
         st.credits = d.credits_cents; st.freeUsed = d.free_used_today;
         document.getElementById("balDisp").textContent = usos(d.credits_cents);
@@ -4443,7 +4451,6 @@ function renderProfTransc() {
     <div class="prof-card">
       <div class="prof-card-top">
         <span class="prof-card-badge">${esc(it.platform || "reel")}</span>
-        ${it.cost_cents > 0 ? `<span class="prof-card-badge" style="background:rgba(251,191,36,.15);color:#d97706">−${eur(it.cost_cents)}</span>` : ""}
         <span class="prof-card-date">${fmtDate(it.created_at)}</span>
       </div>
       <div class="prof-card-text" onclick="viewItem(${it.id})">${esc(it.text.slice(0, 200))}${it.text.length > 200 ? "…" : ""}</div>
@@ -5640,9 +5647,7 @@ async function runAdapt() {
       const mobileRes = document.getElementById("mobileAdaptResult");
       document.getElementById("mobileAdaptResultTxt").textContent = d.result;
       mobileRes.classList.add("on");
-      previewFooterTxt.textContent = d.cost_cents > 0
-        ? `−${eur(d.cost_cents)} de saldo`
-        : t("adapt.generated");
+      previewFooterTxt.textContent = t("adapt.generated");
       if (d.credits_cents !== undefined) {
         st.credits = d.credits_cents; st.freeUsed = d.free_used_today;
         document.getElementById("balDisp").textContent = usos(d.credits_cents);
@@ -5708,7 +5713,6 @@ async function loadHistory() {
       <div class="d-hist-meta">
         <span class="ptag ${it.platform}">${it.platform}</span>
         <span class="hist-date">${fmtDate(it.created_at)}</span>
-        ${it.cost_cents > 0 ? `<span class="hist-cost">−${eur(it.cost_cents)}</span>` : ""}
       </div>
       <div class="d-hist-prev" style="cursor:pointer" onclick="viewItem(${it.id})">${esc(it.text.slice(0,100))}${it.text.length>100?"…":""}</div>
       <div class="d-hist-acts">
