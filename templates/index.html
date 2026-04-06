@@ -2907,14 +2907,14 @@
       </div>
 
       <div class="prof-sidebar-nav" id="profSidebarNav">
-        <button class="prof-nav-item on" onclick="profTab('overview')" data-i18n="prof.overview">📊 Overview</button>
-        <button class="prof-nav-item" onclick="profTab('scripts')" data-i18n="prof.saved_scripts">✨ Saved scripts</button>
-        <button class="prof-nav-item" onclick="profTab('transc')" data-i18n="prof.transcriptions">🎙 Transcriptions</button>
-        <button class="prof-nav-item" id="profNavProjects" style="display:none" onclick="profTab('projects')" data-i18n="prof.projects">📁 Projects</button>
-        <button class="prof-nav-item" id="profNavAssistants" style="display:none" onclick="profTab('assistants')" data-i18n="prof.assistants">🤖 Assistants</button>
-        <button class="prof-nav-item" id="profNavMetrics" style="display:none" onclick="profTab('metrics')" data-i18n="prof.metrics">Metrics</button>
-        <button class="prof-nav-item" id="profNavTeam" style="display:none" onclick="profTab('team')" data-i18n="prof.team">👥 Team</button>
-        <button class="prof-nav-item" id="profNavPrivacy" onclick="profTab('privacy')" data-i18n="prof.privacy">🔒 Privacy &amp; Data</button>
+        <button class="prof-nav-item on" onclick="profTab('overview')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="1" width="6" height="6" fill="currentColor"/><rect x="9" y="1" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.overview">Overview</span></button>
+        <button class="prof-nav-item" onclick="profTab('scripts')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="10" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.saved_scripts">Saved scripts</span></button>
+        <button class="prof-nav-item" onclick="profTab('transc')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.transcriptions">Transcriptions</span></button>
+        <button class="prof-nav-item" id="profNavProjects" style="display:none" onclick="profTab('projects')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="3" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="6" height="3" fill="currentColor"/></svg><span data-i18n="prof.projects">Projects</span></button>
+        <button class="prof-nav-item" id="profNavAssistants" style="display:none" onclick="profTab('assistants')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="5" y="1" width="6" height="6" rx="3" fill="currentColor"/><rect x="3" y="9" width="10" height="6" rx="2" fill="currentColor" opacity=".6"/><rect x="6" y="3" width="1.5" height="1.5" fill="#0a0b0f"/><rect x="9" y="3" width="1.5" height="1.5" fill="#0a0b0f"/></svg><span data-i18n="prof.assistants">Assistants</span></button>
+        <button class="prof-nav-item" id="profNavMetrics" style="display:none" onclick="profTab('metrics')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="10" width="3" height="5" fill="currentColor" opacity=".4"/><rect x="5" y="7" width="3" height="8" fill="currentColor" opacity=".6"/><rect x="9" y="4" width="3" height="11" fill="currentColor" opacity=".8"/><rect x="13" y="1" width="3" height="14" fill="currentColor"/></svg><span data-i18n="prof.metrics">Metrics</span></button>
+        <button class="prof-nav-item" id="profNavTeam" style="display:none" onclick="profTab('team')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><circle cx="5" cy="4" r="2.5" fill="currentColor"/><circle cx="11" cy="4" r="2.5" fill="currentColor" opacity=".6"/><rect x="1" y="8" width="8" height="5" rx="2" fill="currentColor"/><rect x="7" y="8" width="8" height="5" rx="2" fill="currentColor" opacity=".5"/></svg><span data-i18n="prof.team">Team</span></button>
+        <button class="prof-nav-item" id="profNavPrivacy" onclick="profTab('privacy')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="3" y="6" width="10" height="9" rx="1" fill="currentColor" opacity=".6"/><rect x="5" y="1" width="6" height="7" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="7" y="9" width="2" height="3" fill="#0a0b0f"/></svg><span data-i18n="prof.privacy">Privacy &amp; Data</span></button>
       </div>
 
       <div class="prof-sidebar-footer">
@@ -2931,15 +2931,15 @@
       <div id="profPanelOverview">
         <div class="prof-stats-row">
           <div class="prof-stat-card" style="--stat-accent:#f97316">
-            <div class="prof-stat-icon orange">🎙</div>
+            <div class="prof-stat-icon orange"><svg width="18" height="18" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><rect x="5" y="10" width="6" height="1" fill="currentColor" opacity=".5"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".3"/></svg></div>
             <div><div class="prof-stat-val" id="profStatTransc">0</div><div class="prof-stat-label" data-i18n="prof.stat_transc">Transcriptions</div></div>
           </div>
           <div class="prof-stat-card" style="--stat-accent:#a78bfa">
-            <div class="prof-stat-icon purple">✨</div>
+            <div class="prof-stat-icon purple"><svg width="18" height="18" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="10" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg></div>
             <div><div class="prof-stat-val" id="profStatScripts">0</div><div class="prof-stat-label" data-i18n="prof.stat_scripts">Saved scripts</div></div>
           </div>
           <div class="prof-stat-card" style="--stat-accent:#22c55e">
-            <div class="prof-stat-icon green">⚡</div>
+            <div class="prof-stat-icon green"><svg width="18" height="18" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="4" y="2" width="8" height="3" fill="currentColor"/><rect x="6" y="5" width="4" height="6" fill="currentColor"/><rect x="3" y="11" width="10" height="3" fill="currentColor" opacity=".5"/></svg></div>
             <div><div class="prof-stat-val" id="profStatUsos">0</div><div class="prof-stat-label" data-i18n="prof.stat_uses">Uses left</div></div>
           </div>
         </div>
@@ -2972,7 +2972,7 @@
           <button style="background:var(--purple);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openNewProjectModal()" data-i18n="proj.new">+ New project</button>
         </div>
         <div class="proj-cards-grid" id="profProjGrid"></div>
-        <div class="prof-empty" id="profProjEmpty" style="display:none"><div class="prof-empty-icon">📁</div><span data-i18n="empty.projects">No projects yet.</span></div>
+        <div class="prof-empty" id="profProjEmpty" style="display:none"><div class="prof-empty-icon"><svg width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="3" width="14" height="12" rx="1" fill="var(--text3)" opacity=".3"/><rect x="1" y="1" width="6" height="3" fill="var(--text3)" opacity=".4"/></svg></div><span data-i18n="empty.projects">No projects yet.</span></div>
       </div>
 
       <!-- Assistants panel -->
@@ -3269,7 +3269,7 @@ const LANGS = {
     "prof.assistants": "Asistentes",
     "prof.metrics": "Métricas",
     "prof.team": "Equipo",
-    "prof.privacy": "🔒 Privacidad y datos",
+    "prof.privacy": "Privacidad y datos",
     "prof.topup": "+ Recargar",
     "prof.manage_sub": "Gestionar suscripción",
     "prof.back": "← Volver a la app",
@@ -3476,7 +3476,7 @@ const LANGS = {
     "prof.assistants": "Assistants",
     "prof.metrics": "Metrics",
     "prof.team": "Team",
-    "prof.privacy": "🔒 Privacy & Data",
+    "prof.privacy": "Privacy & Data",
     "prof.topup": "+ Top up",
     "prof.manage_sub": "Manage subscription",
     "prof.back": "← Back to app",
@@ -3922,12 +3922,12 @@ function renderProfAssistants() {
   if (countEl) countEl.textContent = `${userAssistants.length} / ${plan === "agency" ? "∞" : limit} assistants`;
 
   if (plan === "free") {
-    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">🤖</div>${t("asst.upgrade")}</div>`;
+    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">${EMPTY_ICON}</div>${t("asst.upgrade")}</div>`;
     return;
   }
 
   if (!userAssistants.length) {
-    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">🤖</div>${t("asst.empty")}</div>`;
+    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">${EMPTY_ICON}</div>${t("asst.empty")}</div>`;
     return;
   }
 
@@ -4412,14 +4412,16 @@ function renderProfOverview() {
     .slice(0, 8);
 
   if (!all.length) {
-    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">📄</div>${t("empty.transc")}. Transcribe your first reel!</div>`;
+    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">${EMPTY_ICON}</div>${t("empty.transc")}. Transcribe your first reel!</div>`;
     return;
   }
   el.innerHTML = all.map(it => {
     const isTransc = !it._src || it._src === "transc";
     const text = it.text || it.content || it.script || "";
     const title = isTransc ? `${it.platform || "Reel"} · ${fmtDate(it.created_at)}` : (STYLE_LABELS[it.style] || it.title || "Script");
-    const icon = isTransc ? "📄" : "✨";
+    const icon = isTransc
+      ? '<svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".4"/></svg>'
+      : '<svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/></svg>';
     return `<div class="recent-script-item" onclick="${isTransc ? `viewItem(${it.id})` : `viewScript('${it.id}')`}">
       <span class="rsi-icon">${icon}</span>
       <div class="rsi-info">
@@ -4434,7 +4436,7 @@ function renderProfOverview() {
 function renderProfTransc() {
   const el = document.getElementById("profListTransc");
   if (!histCache.length) {
-    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">📄</div>${t("empty.transc")}</div>`;
+    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">${EMPTY_ICON}</div>${t("empty.transc")}</div>`;
     return;
   }
   el.innerHTML = histCache.map(it => `
@@ -4495,7 +4497,7 @@ async function loadSavedScripts() {
 function renderProfScripts() {
   const el = document.getElementById("profListScripts");
   if (!scriptsCache.length) {
-    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">✨</div>${t("empty.scripts")}<br>Use 💾 Save after adapting or transcribing.</div>`;
+    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">${EMPTY_ICON}</div>${t("empty.scripts")}</div>`;
     return;
   }
   el.innerHTML = scriptsCache.map(it => {
@@ -4751,6 +4753,8 @@ function sortProjScripts() {
   renderProjScripts();
 }
 
+const EMPTY_ICON = '<svg width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges" style="opacity:.3"><rect x="3" y="1" width="10" height="14" rx="1" fill="currentColor"/><rect x="5" y="4" width="6" height="1" fill="#0a0b0f"/><rect x="5" y="7" width="6" height="1" fill="#0a0b0f"/><rect x="5" y="10" width="4" height="1" fill="#0a0b0f"/></svg>';
+
 function fmtNum(n) {
   if (!n) return '0';
   if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
@@ -4764,7 +4768,7 @@ function renderProjScripts() {
   count.textContent = `${projScripts.length} script${projScripts.length !== 1 ? "s" : ""}`;
 
   if (!projScripts.length) {
-    grid.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">📝</div>${t("empty.proj_scripts")}</div>`;
+    grid.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">${EMPTY_ICON}</div>${t("empty.proj_scripts")}</div>`;
     return;
   }
 
@@ -4943,7 +4947,7 @@ async function loadMetricsWinners() {
     const el = document.getElementById('metricsWinners');
 
     if (!data.length) {
-      el.innerHTML = '<div class="prof-empty"><div class="prof-empty-icon">📊</div>' + t('metrics.empty') + '</div>';
+      el.innerHTML = '<div class="prof-empty"><div class="prof-empty-icon">${EMPTY_ICON}</div>' + t('metrics.empty') + '</div>';
       return;
     }
 
@@ -5008,7 +5012,7 @@ async function loadTeamMembers() {
 function renderTeamMembers() {
   const el = document.getElementById("profTeamList");
   if (!teamCache.length) {
-    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">👥</div>${t("team.empty")}</div>`;
+    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">${EMPTY_ICON}</div>${t("team.empty")}</div>`;
     return;
   }
   el.innerHTML = teamCache.map(m => {
