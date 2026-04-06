@@ -2952,7 +2952,7 @@
 </div>
 
 <!-- ── PROJECT PICKER MODAL ─────────────────────────────────────────── -->
-<div class="overlay" id="projPickerOverlay" onclick="backdropClose(event,'projPickerOverlay')">
+<div class="overlay" id="projPickerOverlay" onclick="backdropClose(event,'projPickerOverlay')" style="z-index:400">
   <div class="modal" style="max-width:360px;padding:28px 24px">
     <button class="modal-x" onclick="closeModal('projPickerOverlay')">&#10005;</button>
     <h2 style="font-size:1.1rem;margin-bottom:16px">Save to project</h2>
@@ -5091,8 +5091,12 @@ async function doSaveToProject(projectId, projectName) {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title: _pendingSaveTitle, transcription: _pendingSaveText, project_id: projectId }),
   });
-  if (res.ok) showToast(`Saved to "${projectName}"`);
-  else showToast("Error saving");
+  if (res.ok) {
+    showToast(`Saved to "${projectName}"`);
+    // Close any open view modal
+    const viewOverlay = document.getElementById("viewOverlay");
+    if (viewOverlay) viewOverlay.classList.remove("on");
+  } else showToast("Error saving");
 }
 
 // ── Auth modal ─────────────────────────────────────────────────────────────
