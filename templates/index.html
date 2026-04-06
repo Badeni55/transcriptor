@@ -2892,9 +2892,10 @@
     </div>
     <div class="view-modal-body" id="viewBody"></div>
     <div class="view-modal-foot">
-      <button class="btn-sm" id="viewCopyBtn" onclick="copyView()">Copiar</button>
-      <button class="btn-sm" onclick="adaptFromView()">✨ Hazlo tuyo →</button>
-      <button class="btn-sm" id="viewDlBtn">Descargar</button>
+      <button class="btn-sm" id="viewCopyBtn" onclick="copyView()">Copy</button>
+      <button class="btn-sm" onclick="adaptFromView()">Transform →</button>
+      <button class="btn-sm" onclick="saveViewToProject()">Save to project</button>
+      <button class="btn-sm" id="viewDlBtn">Download</button>
     </div>
   </div>
 </div>
@@ -2905,10 +2906,13 @@
     <div class="proj-detail-top">
       <button class="proj-detail-back" onclick="closeProjDetail()">← Back</button>
       <input class="proj-detail-name" id="projDetailName" onblur="saveProjName()" />
-      <select id="projDetailAssistant" onchange="saveProjAssistant()" style="padding:6px 12px;background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text2);font-size:.8rem;outline:none">
-        <option value="">No assistant</option>
-      </select>
-      <button class="proj-detail-del" onclick="delProjFromDetail()">Delete project</button>
+      <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+        <span style="font-size:.72rem;color:var(--text3)">Assistant:</span>
+        <select id="projDetailAssistant" onchange="saveProjAssistant()" style="padding:8px 14px;background:var(--surf);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:.82rem;font-family:var(--font-body);outline:none;cursor:pointer;transition:border-color .2s;-webkit-appearance:none;appearance:none;padding-right:28px;background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%234a5168%27 stroke-width=%272%27%3E%3Cpath d=%27M6 9l6 6 6-6%27/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 10px center">
+          <option value="">None</option>
+        </select>
+      </div>
+      <button class="proj-detail-del" onclick="delProjFromDetail()">Delete</button>
     </div>
     <div class="proj-detail-style">
       <label>Default style prompt (auto-applies when generating scripts in this project)</label>
@@ -2944,6 +2948,15 @@
     </div>
     <button class="btn-full" id="asstSaveBtn" onclick="saveAssistant()">Create assistant</button>
     <div class="form-err" id="asstErr"></div>
+  </div>
+</div>
+
+<!-- ── PROJECT PICKER MODAL ─────────────────────────────────────────── -->
+<div class="overlay" id="projPickerOverlay" onclick="backdropClose(event,'projPickerOverlay')">
+  <div class="modal" style="max-width:360px;padding:28px 24px">
+    <button class="modal-x" onclick="closeModal('projPickerOverlay')">&#10005;</button>
+    <h2 style="font-size:1.1rem;margin-bottom:16px">Save to project</h2>
+    <div id="projPickerList" style="display:flex;flex-direction:column;gap:6px"></div>
   </div>
 </div>
 
@@ -3816,11 +3829,27 @@ function renderProfTransc() {
       <div class="prof-card-acts">
         <button onclick="cpHist(${it.id},this)">Copy</button>
         <button onclick="viewItem(${it.id})">View</button>
-        <button onclick="profAdaptFromTransc(${it.id})">✨ Adapt</button>
+        <button onclick="profAdaptFromTransc(${it.id})">Transform</button>
+        <button onclick="saveTranscToProject(${it.id})">To project</button>
         <button class="del" onclick="delItem(${it.id},this);setTimeout(()=>{renderProfTransc();renderProfOverview();document.getElementById('profStatTransc').textContent=histCache.length},300)">Delete</button>
       </div>
     </div>
   `).join("");
+}
+
+async function saveScriptCardToProject(id) {
+  const item = scriptsCache.find(i => i.id === id);
+  if (!item) return;
+  const text = item._src === "script" ? (item.script || item.transcription || "") : (item.content || "");
+  const title = item._src === "script" ? (item.title || "Script") : (item.style || "Script");
+  await saveTextToProject(text, title);
+}
+
+async function saveTranscToProject(id) {
+  const item = histCache.find(i => i.id === id);
+  if (!item) return;
+  const title = `${item.platform || "Reel"} · ${fmtDate(item.created_at)}`;
+  await saveTextToProject(item.text, title);
 }
 
 async function loadSavedScripts() {
@@ -3864,6 +3893,7 @@ function renderProfScripts() {
       <div class="prof-card-acts">
         <button onclick="cpScript('${it.id}',this)">Copy</button>
         <button onclick="viewScript('${it.id}')">View</button>
+        <button onclick="saveScriptCardToProject('${it.id}')">To project</button>
         <button class="del" onclick="delScript('${it.id}',this)">Delete</button>
       </div>
     </div>`;
@@ -5004,6 +5034,58 @@ function adaptFromView() {
   closeView(); closeDrawer();
   document.getElementById("adaptInput").value = txt;
   document.getElementById("adaptCard").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function saveViewToProject() {
+  const txt = document.getElementById("viewBody").textContent;
+  const title = document.getElementById("viewTitle").textContent;
+  await saveTextToProject(txt, title);
+}
+
+let _pendingSaveText = "";
+let _pendingSaveTitle = "";
+
+async function saveTextToProject(text, title) {
+  if (!st.user) { showToast("Login required"); return; }
+  if (!projectsCache.length) {
+    await loadProjects();
+    if (!projectsCache.length) { showToast("Create a project first in your profile"); return; }
+  }
+  _pendingSaveText = text;
+  _pendingSaveTitle = title || "Script";
+
+  // If only 1 project, save directly
+  if (projectsCache.length === 1) {
+    await doSaveToProject(projectsCache[0].id, projectsCache[0].name);
+    return;
+  }
+
+  // Show picker modal
+  const list = document.getElementById("projPickerList");
+  const PROJECT_COLORS = ["#f97316","#a78bfa","#22c55e","#3b82f6","#ec4899","#14b8a6","#f59e0b"];
+  list.innerHTML = projectsCache.map(p => {
+    const color = PROJECT_COLORS[(p.name || "").charCodeAt(0) % PROJECT_COLORS.length];
+    const initial = (p.name || "?")[0].toUpperCase();
+    return `<button onclick="pickProject('${p.id}','${esc(p.name)}')" style="display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:var(--surf);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s;text-align:left;color:var(--text);font-family:var(--font-body);font-size:.88rem">
+      <div style="width:32px;height:32px;border-radius:8px;background:${color}20;border:1px solid ${color}35;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);color:${color};font-size:.9rem;flex-shrink:0">${initial}</div>
+      <span>${esc(p.name)}</span>
+    </button>`;
+  }).join("");
+  openModal("projPickerOverlay");
+}
+
+async function pickProject(projectId, projectName) {
+  closeModal("projPickerOverlay");
+  await doSaveToProject(projectId, projectName);
+}
+
+async function doSaveToProject(projectId, projectName) {
+  const res = await fetch("/scripts", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title: _pendingSaveTitle, transcription: _pendingSaveText, project_id: projectId }),
+  });
+  if (res.ok) showToast(`Saved to "${projectName}"`);
+  else showToast("Error saving");
 }
 
 // ── Auth modal ─────────────────────────────────────────────────────────────
