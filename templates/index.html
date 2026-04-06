@@ -1912,6 +1912,91 @@
       font-size: .75rem; color: var(--green); margin-left: auto;
     }
 
+    /* Script metrics */
+    .script-card-text {
+      padding: 0 16px 12px; font-size: .84rem; color: var(--text2);
+      line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+      display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;
+      cursor: pointer; transition: all .2s;
+    }
+    .script-card-text:hover { color: var(--text); }
+    .script-card-text.expanded {
+      -webkit-line-clamp: unset !important; max-height: none;
+    }
+    .script-metrics-chips {
+      padding: 0 16px 10px; display: flex; gap: 8px; flex-wrap: wrap; cursor: pointer;
+    }
+    .metric-chip {
+      font-size: .72rem; padding: 3px 8px; border-radius: 6px;
+      background: var(--surf2); color: var(--text2); border: 1px solid var(--border);
+    }
+    .script-metrics-panel {
+      padding: 0 16px 14px;
+    }
+    .metrics-fields {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+    }
+    .metric-field label {
+      display: block; font-size: .65rem; font-weight: 600; color: var(--text3);
+      text-transform: uppercase; letter-spacing: .4px; margin-bottom: 4px;
+    }
+    .metric-field input, .metric-field textarea {
+      width: 100%; padding: 7px 10px; background: var(--surf2);
+      border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text); font-size: .82rem; outline: none;
+      font-family: var(--font-body);
+    }
+    .metric-field input:focus, .metric-field textarea:focus { border-color: var(--purple); }
+    .metric-field textarea { resize: vertical; min-height: 40px; }
+
+    .metrics-summary-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;
+    }
+    .metrics-summary-card {
+      background: var(--surf); border: 1px solid var(--border); border-radius: 14px;
+      padding: 18px; text-align: center;
+    }
+    .metrics-summary-val {
+      font-family: var(--font-display); font-size: 1.6rem; font-weight: 400;
+      margin-bottom: 4px;
+    }
+    .metrics-summary-label {
+      font-size: .68rem; color: var(--text3); text-transform: uppercase; letter-spacing: .05em;
+    }
+    .metrics-winner-card {
+      background: var(--surf); border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px 16px; margin-bottom: 10px; display: flex; gap: 14px; align-items: flex-start;
+      transition: border-color .2s; cursor: pointer;
+    }
+    .metrics-winner-card:hover { border-color: rgba(249,115,22,.25); }
+    .metrics-winner-rank {
+      width: 28px; height: 28px; border-radius: 8px; background: var(--surf2);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-size: .85rem; color: var(--text3);
+      flex-shrink: 0;
+    }
+    .metrics-winner-rank.top { background: rgba(249,115,22,.15); color: var(--purple); }
+    .metrics-winner-body { flex: 1; min-width: 0; }
+    .metrics-winner-title {
+      font-family: var(--font-display); font-size: .88rem; margin-bottom: 4px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .metrics-winner-preview {
+      font-size: .78rem; color: var(--text2); line-height: 1.4;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .metrics-winner-stats { display: flex; gap: 10px; font-size: .72rem; color: var(--text3); }
+    .metrics-winner-highlight {
+      font-family: var(--font-display); font-size: 1.2rem; color: var(--purple);
+      flex-shrink: 0; text-align: right;
+    }
+
+    @media (max-width: 768px) {
+      .metrics-fields { grid-template-columns: repeat(2, 1fr); }
+      .metrics-summary-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
     /* Team members list */
     .team-list { display: flex; flex-direction: column; gap: 8px; }
     .team-member {
@@ -2759,6 +2844,7 @@
         <button class="prof-nav-item" onclick="profTab('transc')" data-i18n="prof.transcriptions">🎙 Transcriptions</button>
         <button class="prof-nav-item" id="profNavProjects" style="display:none" onclick="profTab('projects')" data-i18n="prof.projects">📁 Projects</button>
         <button class="prof-nav-item" id="profNavAssistants" style="display:none" onclick="profTab('assistants')" data-i18n="prof.assistants">🤖 Assistants</button>
+        <button class="prof-nav-item" id="profNavMetrics" style="display:none" onclick="profTab('metrics')" data-i18n="prof.metrics">Metrics</button>
         <button class="prof-nav-item" id="profNavTeam" style="display:none" onclick="profTab('team')" data-i18n="prof.team">👥 Team</button>
       </div>
 
@@ -2830,6 +2916,25 @@
           <button id="profNewAsstBtn" style="background:var(--purple);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openAssistantModal()" data-i18n="asst.new">+ New assistant</button>
         </div>
         <div class="asst-cards-grid" id="profListAssistants"></div>
+      </div>
+
+      <!-- Metrics panel -->
+      <div id="profPanelMetrics" style="display:none">
+        <div class="prof-section-head">
+          <div><div class="prof-section-title" data-i18n="metrics.title">Metrics</div></div>
+        </div>
+        <div class="metrics-summary-grid" id="metricsSummary"></div>
+        <div class="prof-section-head" style="margin-top:24px">
+          <div><div class="prof-section-title" style="font-size:1rem" data-i18n="metrics.winners">Top performers</div></div>
+          <select id="metricsRankBy" onchange="loadMetricsWinners()" style="padding:6px 12px;background:var(--surf);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text2);font-size:.8rem;outline:none">
+            <option value="views_count">Views</option>
+            <option value="likes">Likes</option>
+            <option value="comments">Comments</option>
+            <option value="saves">Saves</option>
+            <option value="engagement_rate">Engagement %</option>
+          </select>
+        </div>
+        <div id="metricsWinners"></div>
       </div>
 
       <!-- Team panel -->
@@ -3051,6 +3156,7 @@ const LANGS = {
     "prof.transcriptions": "Transcripciones",
     "prof.projects": "Proyectos",
     "prof.assistants": "Asistentes",
+    "prof.metrics": "Métricas",
     "prof.team": "Equipo",
     "prof.topup": "+ Recargar",
     "prof.manage_sub": "Gestionar suscripción",
@@ -3127,6 +3233,10 @@ const LANGS = {
     "team.invited": "Invitación enviada",
     "team.removed": "Miembro eliminado",
     "team.copied": "¡Enlace de invitación copiado!",
+    // Metrics
+    "metrics.title": "Métricas",
+    "metrics.winners": "Mejor rendimiento",
+    "metrics.empty": "Sin métricas todavía. Añade datos de rendimiento a tus guiones para ver tus ganadores aquí.",
     // View modal
     "view.title": "Transcripción",
     "view.copy": "Copiar",
@@ -3252,6 +3362,7 @@ const LANGS = {
     "prof.transcriptions": "Transcriptions",
     "prof.projects": "Projects",
     "prof.assistants": "Assistants",
+    "prof.metrics": "Metrics",
     "prof.team": "Team",
     "prof.topup": "+ Top up",
     "prof.manage_sub": "Manage subscription",
@@ -3328,6 +3439,10 @@ const LANGS = {
     "team.invited": "Invitation sent",
     "team.removed": "Member removed",
     "team.copied": "Invite link copied!",
+    // Metrics
+    "metrics.title": "Metrics",
+    "metrics.winners": "Top performers",
+    "metrics.empty": "No metrics yet. Add performance data to your scripts to see your winners here.",
     // View modal
     "view.title": "Transcription",
     "view.copy": "Copy",
@@ -3991,6 +4106,7 @@ function renderProfileHub() {
   const isAgency = plan === "agency";
   document.getElementById("profNavProjects").style.display = hasPaidPlan ? "" : "none";
   document.getElementById("profNavAssistants").style.display = hasPaidPlan ? "" : "none";
+  document.getElementById("profNavMetrics").style.display = hasPaidPlan ? "" : "none";
   document.getElementById("profNavTeam").style.display = isAgency ? "" : "none";
 
   // Manage sub button in sidebar
@@ -4081,6 +4197,7 @@ function profTab(tab) {
     transc: "profPanelTransc",
     projects: "profPanelProjects",
     assistants: "profPanelAssistants",
+    metrics: "profPanelMetrics",
     team: "profPanelTeam",
   };
   // Hide all panels
@@ -4094,16 +4211,15 @@ function profTab(tab) {
 
   // Update nav active state
   document.querySelectorAll(".prof-nav-item").forEach(btn => btn.classList.remove("on"));
-  const tabOrder = ["overview","scripts","transc","projects","assistants","team"];
-  const navItems = document.querySelectorAll(".prof-nav-item");
-  const idx = tabOrder.indexOf(tab);
-  if (navItems[idx]) navItems[idx].classList.add("on");
+  const navBtn = document.querySelector(`.prof-nav-item[onclick="profTab('${tab}')"]`);
+  if (navBtn) navBtn.classList.add("on");
 
   // Load data for specific tabs
   if (tab === "scripts") renderProfScripts();
   if (tab === "transc") renderProfTransc();
   if (tab === "projects") renderProfProjects();
   if (tab === "assistants") renderProfAssistants();
+  if (tab === "metrics") loadMetricsSummary();
   if (tab === "team") loadTeamMembers();
 }
 
@@ -4453,6 +4569,13 @@ function sortProjScripts() {
   renderProjScripts();
 }
 
+function fmtNum(n) {
+  if (!n) return '0';
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+  return n.toString();
+}
+
 function renderProjScripts() {
   const grid = document.getElementById("projScriptGrid");
   const count = document.getElementById("projScriptCount");
@@ -4465,40 +4588,48 @@ function renderProjScripts() {
 
   grid.innerHTML = projScripts.map((s, i) => {
     const text = s.script || s.transcription || "";
-    const preview = text.split("\n").slice(0, 2).join("\n").slice(0, 150);
+    const hasMetrics = s.views_count || s.likes || s.comments || s.saves;
     return `
     <div class="script-card" id="sc-${i}">
-      <div class="script-card-head" onclick="document.getElementById('sc-${i}').classList.toggle('collapsed')">
-        <span class="script-card-toggle">▼</span>
-        <input class="script-card-title-edit" id="sc-title-${i}" value="${esc(s.title || "Untitled")}" onblur="saveScriptField('${s.id}',${i},'title')" />
+      <div class="script-card-head" onclick="toggleScriptExpand(${i})">
+        <span class="script-card-toggle" id="sc-toggle-${i}">▼</span>
+        <input class="script-card-title-edit" id="sc-title-${i}" value="${esc(s.title || 'Untitled')}" onclick="event.stopPropagation()" onblur="saveScriptField('${s.id}',${i},'title')" />
         <span class="script-card-date">${fmtDate(s.created_at)}</span>
       </div>
-      <div class="script-card-preview" id="sc-preview-${i}">${esc(preview)}${text.length > 150 ? "…" : ""}</div>
+      <div class="script-card-text" id="sc-text-${i}" onclick="openScriptEditor(${i})" style="-webkit-line-clamp:3">${esc(text)}</div>
       <div class="script-card-editor" id="sc-editor-${i}" style="display:none">
-        <textarea id="sc-text-${i}" class="script-editor-ta">${esc(text)}</textarea>
+        <textarea id="sc-textarea-${i}" class="script-editor-ta">${esc(text)}</textarea>
         <div class="script-editor-bar">
           <button class="btn-sm" onclick="saveScriptContent('${s.id}',${i})">${t("act.save")}</button>
           <button class="btn-sm" onclick="closeScriptEditor(${i})">${t("act.cancel")}</button>
           <span class="script-editor-status" id="sc-status-${i}"></span>
         </div>
       </div>
-      <div class="script-card-perf">
-        <div class="perf-field">
-          <label>Views</label>
-          <input type="number" id="perf-views-${i}" value="${s.views_count || ""}" placeholder="0" />
+      ${hasMetrics ? `
+        <div class="script-metrics-chips" onclick="toggleMetricsPanel(${i})">
+          ${s.views_count ? '<span class="metric-chip">👁 ' + fmtNum(s.views_count) + '</span>' : ''}
+          ${s.likes ? '<span class="metric-chip">❤ ' + fmtNum(s.likes) + '</span>' : ''}
+          ${s.comments ? '<span class="metric-chip">💬 ' + fmtNum(s.comments) + '</span>' : ''}
+          ${s.saves ? '<span class="metric-chip">🔖 ' + fmtNum(s.saves) + '</span>' : ''}
+          ${s.engagement_rate ? '<span class="metric-chip">📊 ' + s.engagement_rate + '%</span>' : ''}
         </div>
-        <div class="perf-field">
-          <label>Engagement %</label>
-          <input type="number" step="0.01" id="perf-eng-${i}" value="${s.engagement_rate || ""}" placeholder="0.00" />
+      ` : ''}
+      <div class="script-metrics-panel" id="sc-metrics-${i}" style="display:none">
+        <div class="metrics-fields">
+          <div class="metric-field"><label>Views</label><input type="number" id="m-views-${i}" value="${s.views_count || ''}" placeholder="0" /></div>
+          <div class="metric-field"><label>Likes</label><input type="number" id="m-likes-${i}" value="${s.likes || ''}" placeholder="0" /></div>
+          <div class="metric-field"><label>Comments</label><input type="number" id="m-comments-${i}" value="${s.comments || ''}" placeholder="0" /></div>
+          <div class="metric-field"><label>Saves</label><input type="number" id="m-saves-${i}" value="${s.saves || ''}" placeholder="0" /></div>
+          <div class="metric-field"><label>Engagement %</label><input type="number" step="0.01" id="m-eng-${i}" value="${s.engagement_rate || ''}" placeholder="0.00" /></div>
         </div>
-        <div class="perf-field">
-          <label>Notes</label>
-          <textarea id="perf-notes-${i}" placeholder="Performance notes...">${esc(s.performance_notes || "")}</textarea>
+        <div class="metric-field" style="margin-top:8px"><label>Notes</label><textarea id="m-notes-${i}" rows="2" placeholder="Performance notes...">${esc(s.performance_notes || '')}</textarea></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn-sm" style="background:var(--purple);color:#fff;border:none" onclick="saveMetrics('${s.id}',${i})">${t("act.save")}</button>
+          <button class="btn-sm" onclick="toggleMetricsPanel(${i})">${t("act.cancel")}</button>
         </div>
-        <button class="perf-save" onclick="savePerfData('${s.id}', ${i})">Save</button>
       </div>
       <div class="script-card-acts">
-        <button class="btn-sm" onclick="openScriptEditor(${i})">${t("act.edit")}</button>
+        ${!hasMetrics ? '<button class="btn-sm" onclick="toggleMetricsPanel(' + i + ')" style="color:var(--text3)">+ Add metrics</button>' : ''}
         <button class="btn-sm" onclick="copyProjScript(${i}, this)">${t("act.copy")}</button>
         <button class="btn-sm del" onclick="delProjScript('${s.id}', ${i})">${t("act.delete")}</button>
       </div>
@@ -4507,18 +4638,18 @@ function renderProjScripts() {
 }
 
 function openScriptEditor(idx) {
-  document.getElementById(`sc-preview-${idx}`).style.display = "none";
+  document.getElementById(`sc-text-${idx}`).style.display = "none";
   document.getElementById(`sc-editor-${idx}`).style.display = "";
-  document.getElementById(`sc-text-${idx}`).focus();
+  document.getElementById(`sc-textarea-${idx}`).focus();
 }
 
 function closeScriptEditor(idx) {
   document.getElementById(`sc-editor-${idx}`).style.display = "none";
-  document.getElementById(`sc-preview-${idx}`).style.display = "";
+  document.getElementById(`sc-text-${idx}`).style.display = "";
 }
 
 async function saveScriptContent(scriptId, idx) {
-  const text = document.getElementById(`sc-text-${idx}`).value;
+  const text = document.getElementById(`sc-textarea-${idx}`).value;
   const s = projScripts[idx];
   const field = s.script != null ? "script" : "transcription";
 
@@ -4528,11 +4659,11 @@ async function saveScriptContent(scriptId, idx) {
   });
   if (res.ok) {
     projScripts[idx][field] = text;
-    const preview = text.split("\n").slice(0, 2).join("\n").slice(0, 150);
-    document.getElementById(`sc-preview-${idx}`).textContent = preview + (text.length > 150 ? "…" : "");
+    const textEl = document.getElementById(`sc-text-${idx}`);
+    if (textEl) textEl.textContent = text;
     const status = document.getElementById(`sc-status-${idx}`);
     status.textContent = t("act.saved");
-    setTimeout(() => status.textContent = "", 2000);
+    setTimeout(() => { status.textContent = ""; closeScriptEditor(idx); }, 1500);
   } else showToast(t("toast.error_save"));
 }
 
@@ -4548,21 +4679,111 @@ async function saveScriptField(scriptId, idx, field) {
   projScripts[idx].title = val;
 }
 
-async function savePerfData(scriptId, idx) {
-  const views = parseInt(document.getElementById(`perf-views-${idx}`).value) || null;
-  const eng = parseFloat(document.getElementById(`perf-eng-${idx}`).value) || null;
-  const notes = document.getElementById(`perf-notes-${idx}`).value.trim() || null;
+function toggleScriptExpand(idx) {
+  const text = document.getElementById('sc-text-' + idx);
+  const toggle = document.getElementById('sc-toggle-' + idx);
+  if (!text) return;
 
-  const res = await fetch(`/scripts/${scriptId}`, {
-    method: "PATCH", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ views_count: views, engagement_rate: eng, performance_notes: notes }),
+  const isExpanded = text.classList.contains('expanded');
+  if (isExpanded) {
+    text.classList.remove('expanded');
+    text.style.webkitLineClamp = '3';
+    if (toggle) toggle.style.transform = '';
+  } else {
+    text.classList.add('expanded');
+    text.style.webkitLineClamp = 'unset';
+    if (toggle) toggle.style.transform = 'rotate(180deg)';
+  }
+}
+
+function toggleMetricsPanel(idx) {
+  const panel = document.getElementById('sc-metrics-' + idx);
+  if (panel) panel.style.display = panel.style.display === 'none' ? '' : 'none';
+}
+
+async function saveMetrics(scriptId, idx) {
+  const views = parseInt(document.getElementById('m-views-' + idx).value) || null;
+  const likes = parseInt(document.getElementById('m-likes-' + idx).value) || null;
+  const comments = parseInt(document.getElementById('m-comments-' + idx).value) || null;
+  const saves = parseInt(document.getElementById('m-saves-' + idx).value) || null;
+  const eng = parseFloat(document.getElementById('m-eng-' + idx).value) || null;
+  const notes = document.getElementById('m-notes-' + idx).value.trim() || null;
+
+  const res = await fetch('/scripts/' + scriptId, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ views_count: views, likes, comments, saves, engagement_rate: eng, performance_notes: notes }),
   });
   if (res.ok) {
     projScripts[idx].views_count = views;
+    projScripts[idx].likes = likes;
+    projScripts[idx].comments = comments;
+    projScripts[idx].saves = saves;
     projScripts[idx].engagement_rate = eng;
     projScripts[idx].performance_notes = notes;
-    showToast(t("toast.perf_saved"));
-  } else showToast(t("toast.error_save"));
+    showToast(t('toast.perf_saved'));
+    renderProjScripts();
+  } else showToast(t('toast.error_save'));
+}
+
+async function loadMetricsSummary() {
+  try {
+    const r = await fetch('/metrics/summary');
+    if (!r.ok) return;
+    const d = await r.json();
+    document.getElementById('metricsSummary').innerHTML = `
+      <div class="metrics-summary-card">
+        <div class="metrics-summary-val">${fmtNum(d.total_views)}</div>
+        <div class="metrics-summary-label">Total Views</div>
+      </div>
+      <div class="metrics-summary-card">
+        <div class="metrics-summary-val">${fmtNum(d.total_likes)}</div>
+        <div class="metrics-summary-label">Total Likes</div>
+      </div>
+      <div class="metrics-summary-card">
+        <div class="metrics-summary-val">${fmtNum(d.total_comments)}</div>
+        <div class="metrics-summary-label">Total Comments</div>
+      </div>
+      <div class="metrics-summary-card">
+        <div class="metrics-summary-val">${fmtNum(d.total_saves)}</div>
+        <div class="metrics-summary-label">Total Saves</div>
+      </div>
+    `;
+    loadMetricsWinners();
+  } catch {}
+}
+
+async function loadMetricsWinners() {
+  const rankBy = document.getElementById('metricsRankBy').value;
+  try {
+    const r = await fetch('/metrics/winners?rank_by=' + rankBy + '&limit=5');
+    if (!r.ok) return;
+    const data = await r.json();
+    const el = document.getElementById('metricsWinners');
+
+    if (!data.length) {
+      el.innerHTML = '<div class="prof-empty"><div class="prof-empty-icon">📊</div>' + t('metrics.empty') + '</div>';
+      return;
+    }
+
+    el.innerHTML = data.map((s, i) => {
+      const text = s.script || s.transcription || '';
+      const val = s[rankBy] || 0;
+      return `
+      <div class="metrics-winner-card" onclick="openProjDetail('${s.project_id}')">
+        <div class="metrics-winner-rank ${i === 0 ? 'top' : ''}">${i + 1}</div>
+        <div class="metrics-winner-body">
+          <div class="metrics-winner-title">${esc(s.title || 'Untitled')}</div>
+          <div class="metrics-winner-preview">${esc(text.slice(0, 120))}</div>
+          <div class="metrics-winner-stats">
+            ${s.views_count ? '👁 ' + fmtNum(s.views_count) : ''}
+            ${s.likes ? ' · ❤ ' + fmtNum(s.likes) : ''}
+            ${s.comments ? ' · 💬 ' + fmtNum(s.comments) : ''}
+          </div>
+        </div>
+        <div class="metrics-winner-highlight">${rankBy === 'engagement_rate' ? val + '%' : fmtNum(val)}</div>
+      </div>`;
+    }).join('');
+  } catch {}
 }
 
 function viewProjScript(idx) {

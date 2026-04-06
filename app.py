@@ -1251,7 +1251,7 @@ def update_script(script_id):
     user = current_user()
     body = request.get_json()
     updates = {}
-    for key in ("title", "transcription", "script", "performance_notes", "views_count", "engagement_rate", "project_id"):
+    for key in ("title", "transcription", "script", "performance_notes", "views_count", "engagement_rate", "project_id", "likes", "comments", "saves", "metrics_image_url", "published_at"):
         if key in body:
             updates[key] = body[key]
     if not updates:
@@ -1367,6 +1367,56 @@ def profile_data():
         data["recent_scripts"] = recent.data
 
     return jsonify(data)
+
+
+# ── Metrics ──────────────────────────────────────────────────────────────────
+
+@app.route("/metrics/summary")
+@require_auth
+def metrics_summary():
+    user = current_user()
+    project_id = request.args.get("project_id")
+
+    q = db.table("scripts").select("views_count, likes, comments, saves, engagement_rate").eq("user_id", user["id"])
+    if project_id:
+        q = q.eq("project_id", project_id)
+    rows = q.execute()
+
+    total_views = sum(r.get("views_count") or 0 for r in rows.data)
+    total_likes = sum(r.get("likes") or 0 for r in rows.data)
+    total_comments = sum(r.get("comments") or 0 for r in rows.data)
+    total_saves = sum(r.get("saves") or 0 for r in rows.data)
+    rates = [r.get("engagement_rate") for r in rows.data if r.get("engagement_rate")]
+    avg_engagement = round(sum(rates) / len(rates), 2) if rates else 0
+
+    return jsonify({
+        "total_views": total_views,
+        "total_likes": total_likes,
+        "total_comments": total_comments,
+        "total_saves": total_saves,
+        "avg_engagement": avg_engagement,
+        "scripts_with_metrics": len([r for r in rows.data if r.get("views_count")]),
+    })
+
+
+@app.route("/metrics/winners")
+@require_auth
+def metrics_winners():
+    user = current_user()
+    rank_by = request.args.get("rank_by", "views_count")
+    limit = min(int(request.args.get("limit", 5)), 20)
+    project_id = request.args.get("project_id")
+
+    valid_fields = {"views_count", "likes", "comments", "saves", "engagement_rate"}
+    if rank_by not in valid_fields:
+        rank_by = "views_count"
+
+    q = db.table("scripts").select("*").eq("user_id", user["id"]).not_.is_(rank_by, "null")
+    if project_id:
+        q = q.eq("project_id", project_id)
+    rows = q.order(rank_by, desc=True).limit(limit).execute()
+
+    return jsonify(rows.data)
 
 
 # ── Affiliate program ────────────────────────────────────────────────────────
