@@ -1779,6 +1779,7 @@
       font-size: .88rem; line-height: 1.6; color: var(--text2);
       display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
       overflow: hidden; cursor: pointer;
+      white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere;
     }
     .prof-card-text:hover { color: var(--text); }
     .prof-card-acts { display: flex; gap: 6px; margin-top: 10px; }
@@ -2037,6 +2038,25 @@
     .rsi-link  { font-size: .75rem; color: var(--purple); font-weight: 600; flex-shrink: 0; text-decoration: none; }
     .rsi-link:hover { text-decoration: underline; }
 
+    /* Mobile bottom tab bar for profile */
+    .prof-bottom-bar {
+      display: none; position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--surf); backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border); z-index: 350;
+      padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+    }
+    .prof-bottom-bar-inner {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+    }
+    .prof-bottom-tab {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      background: none; border: none; color: var(--text3); cursor: pointer;
+      font-size: .6rem; font-family: var(--font-body); padding: 4px 0;
+      transition: color .15s;
+    }
+    .prof-bottom-tab.on { color: var(--purple); }
+    .prof-bottom-tab-icon { font-size: 1.2rem; }
+
     /* Mobile responsive — Profile Hub */
     @media (max-width: 768px) {
       .prof-layout { grid-template-columns: 1fr; height: auto; }
@@ -2044,21 +2064,47 @@
         height: auto; border-right: none; border-bottom: 1px solid var(--border);
         overflow: visible;
       }
-      .prof-sidebar-identity { padding: 16px; display: flex; align-items: center; gap: 14px; text-align: left; }
-      .prof-sidebar-identity .prof-av { width: 48px; height: 48px; margin: 0; }
-      .prof-sidebar-nav {
-        flex-direction: row; overflow-x: auto; padding: 8px 12px;
-        gap: 4px; -webkit-overflow-scrolling: touch;
+      .prof-sidebar-identity {
+        padding: 24px 16px; display: flex; flex-direction: column;
+        align-items: center; gap: 12px; text-align: center;
       }
-      .prof-nav-item { flex: 0 0 auto; white-space: nowrap; padding: 8px 12px; font-size: .78rem; }
+      .prof-sidebar-identity .prof-av { width: 80px; height: 80px; margin: 0; }
+      .prof-sidebar-nav { display: none; }
       .prof-sidebar-footer { flex-direction: row; padding: 8px 12px; }
-      .prof-sidebar-footer button { flex: 1; }
-      .prof-main { padding: 20px 16px 60px; overflow-y: visible; }
+      .prof-sidebar-footer button { flex: 1; font-size: .72rem; }
+      .prof-main { padding: 20px 16px 100px; overflow-y: visible; }
       .prof-stats-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-      .prof-stat-card { padding: 14px 12px; flex-direction: column; gap: 8px; }
-      .prof-stat-val { font-size: 1.3rem; }
+      .prof-stat-card { padding: 14px 10px; flex-direction: column; gap: 6px; text-align: center; }
+      .prof-stat-icon { margin: 0 auto; }
+      .prof-stat-val { font-size: 1.2rem; }
+      .prof-stat-label { font-size: .6rem; }
       .proj-cards-grid { grid-template-columns: 1fr; }
       .asst-cards-grid { grid-template-columns: 1fr; }
+      .prof-bottom-bar { display: block; }
+      .metrics-summary-grid { grid-template-columns: repeat(2, 1fr); }
+
+      /* View modal on mobile */
+      .view-overlay { align-items: flex-end; padding: 0; }
+      .view-modal {
+        max-width: 100%; max-height: 85vh;
+        border-radius: 20px 20px 0 0;
+        animation: sheet-up .25s ease;
+      }
+      .view-modal-head { padding: 16px; }
+      .view-modal-body { padding: 16px; font-size: .88rem; overflow-wrap: anywhere; }
+      .view-modal-foot { padding: 12px 16px; flex-wrap: wrap; }
+      .view-modal-foot .btn-sm { font-size: .75rem; }
+
+      /* Project detail mobile */
+      .proj-detail-inner { padding: 16px 16px 60px; }
+      .proj-detail-top { flex-wrap: wrap; gap: 8px; }
+      .proj-detail-name { font-size: 1rem; width: 100%; }
+      .proj-detail-top > div { width: 100%; justify-content: flex-start; }
+
+      /* Script card text overflow fix */
+      .script-card-text { overflow-wrap: anywhere; }
+      .script-editor-ta { font-size: 14px; }
+      .metrics-fields { grid-template-columns: repeat(2, 1fr); }
     }
 
     /* ── Toast ────────────────────────────────────────────────── */
@@ -2950,6 +2996,16 @@
 
     </div><!-- /.prof-main -->
   </div><!-- /.prof-layout -->
+
+  <!-- Mobile bottom tab bar -->
+  <div class="prof-bottom-bar" id="profBottomBar">
+    <div class="prof-bottom-bar-inner">
+      <button class="prof-bottom-tab on" onclick="profTabMobile('overview')"><span class="prof-bottom-tab-icon">📊</span>Overview</button>
+      <button class="prof-bottom-tab" onclick="profTabMobile('scripts')"><span class="prof-bottom-tab-icon">✨</span>Scripts</button>
+      <button class="prof-bottom-tab" onclick="profTabMobile('projects')"><span class="prof-bottom-tab-icon">📁</span>Projects</button>
+      <button class="prof-bottom-tab" onclick="profTabMobile('metrics')"><span class="prof-bottom-tab-icon">📊</span>Metrics</button>
+    </div>
+  </div>
 </div>
 
 <!-- New Project modal -->
@@ -3961,7 +4017,7 @@ async function refreshMe() {
   if (d.user) {
     // Ensure avatar_seed is stored on the user object
     if (d.avatar_seed !== undefined) d.user.avatar_seed = d.avatar_seed;
-    st = { user: d.user, credits: d.credits_cents, freeUsed: d.free_used_today, freeLimit: d.free_daily_limit, freeDailyAnon: 3, plan: d.plan || "free", monthlyUsage: d.monthly_usage || 0, monthlyLimit: d.monthly_limit || null };
+    st = { user: d.user, credits: d.credits_cents, freeUsed: d.free_used_today, freeLimit: d.free_daily_limit, freeDailyAnon: 3, plan: d.plan || "free", monthlyUsage: d.monthly_usage || 0, monthlyLimit: d.monthly_limit || null, hasStripeSub: !!d.has_stripe_sub };
     renderLoggedIn();
   } else {
     st = { user: null, credits: 0, freeUsed: 0, freeLimit: 5, freeDailyAnon: d.free_daily_anon ?? 3, plan: "free" };
@@ -4110,7 +4166,7 @@ function renderProfileHub() {
   document.getElementById("profNavTeam").style.display = isAgency ? "" : "none";
 
   // Manage sub button in sidebar
-  document.getElementById("profManageSubSidebar").style.display = hasPaidPlan ? "" : "none";
+  document.getElementById("profManageSubSidebar").style.display = st.hasStripeSub ? "" : "none";
 
   // Load data
   loadSavedScripts();
@@ -4221,7 +4277,14 @@ function profTab(tab) {
   if (tab === "assistants") renderProfAssistants();
   if (tab === "metrics") loadMetricsSummary();
   if (tab === "team") loadTeamMembers();
+
+  // Update bottom bar active state
+  document.querySelectorAll(".prof-bottom-tab").forEach(btn => btn.classList.remove("on"));
+  const bottomBtn = document.querySelector(`.prof-bottom-tab[onclick="profTabMobile('${tab}')"]`);
+  if (bottomBtn) bottomBtn.classList.add("on");
 }
+
+function profTabMobile(tab) { profTab(tab); }
 
 function renderProfOverview() {
   const el = document.getElementById("profRecentScripts");

@@ -449,6 +449,7 @@ def auth_me():
         "monthly_usage": profile.get("monthly_usage", 0),
         "monthly_limit": PLAN_LIMITS.get(plan),
         "avatar_seed": profile.get("avatar_seed", "default"),
+        "has_stripe_sub": bool(profile.get("stripe_subscription_id")),
     })
 
 
