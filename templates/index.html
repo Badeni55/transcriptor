@@ -2991,6 +2991,7 @@
       <div id="profPanelMetrics" style="display:none">
         <div class="prof-section-head">
           <div><div class="prof-section-title" data-i18n="metrics.title">Metrics</div></div>
+          <button class="btn-sm" style="background:var(--purple);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openAddMetricsFlow()">+ Add metrics</button>
         </div>
         <div class="metrics-summary-grid" id="metricsSummary"></div>
         <div class="prof-section-head" style="margin-top:24px">
@@ -4248,6 +4249,131 @@ function closeProfile() {
 // ── Privacy & Data ────────────────────────────────────────────────────────
 
 // Export data
+// ── Add Metrics flow ──────────────────────────────────────────────────────
+let amSelectedProject = null;
+let amSelectedScript = null;
+let amScriptsData = [];
+
+const PROJECT_COLORS = ["#f97316","#a78bfa","#22c55e","#3b82f6","#ec4899","#14b8a6","#f59e0b"];
+function getProjectColor(name) { return PROJECT_COLORS[(name || "").charCodeAt(0) % PROJECT_COLORS.length]; }
+
+async function openAddMetricsFlow() {
+  if (!projectsCache.length) await loadProjects();
+  if (!projectsCache.length) { showToast(t("toast.create_project_first")); return; }
+
+  // Reset steps
+  document.getElementById("amStep1").style.display = "";
+  document.getElementById("amStep2").style.display = "none";
+  document.getElementById("amStep3").style.display = "none";
+  document.getElementById("amErr").classList.remove("on");
+
+  // Render project list
+  const list = document.getElementById("amProjectList");
+  list.innerHTML = projectsCache.map(p => {
+    const color = getProjectColor(p.name);
+    const initial = (p.name || "?")[0].toUpperCase();
+    return `<button onclick="amPickProject('${p.id}')" style="display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:var(--surf);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s;text-align:left;color:var(--text);font-family:var(--font-body);font-size:.88rem">
+      <div style="width:32px;height:32px;border-radius:8px;background:${color}20;border:1px solid ${color}35;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);color:${color};font-size:.9rem;flex-shrink:0">${initial}</div>
+      <div><div style="font-weight:500">${esc(p.name)}</div><div style="font-size:.72rem;color:var(--text3)">${p.script_count || 0} scripts</div></div>
+    </button>`;
+  }).join("");
+
+  openModal("addMetricsOverlay");
+}
+
+async function amPickProject(projectId) {
+  amSelectedProject = projectsCache.find(p => p.id === projectId);
+  if (!amSelectedProject) return;
+
+  document.getElementById("amProjectName").textContent = amSelectedProject.name;
+  document.getElementById("amStep1").style.display = "none";
+  document.getElementById("amStep2").style.display = "";
+
+  // Load scripts for this project
+  const list = document.getElementById("amScriptList");
+  list.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3);font-size:.82rem">Loading...</div>';
+
+  try {
+    const r = await fetch(`/scripts?project_id=${projectId}`);
+    if (r.ok) amScriptsData = await r.json();
+    else amScriptsData = [];
+  } catch { amScriptsData = []; }
+
+  if (!amScriptsData.length) {
+    list.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3);font-size:.82rem">No scripts in this project yet.</div>';
+    return;
+  }
+
+  list.innerHTML = amScriptsData.map(s => {
+    const text = (s.script || s.transcription || "").slice(0, 60);
+    const hasMetrics = s.views_count || s.likes;
+    return `<button onclick="amPickScript('${s.id}')" style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;background:var(--surf);border:1px solid var(--border);border-radius:8px;cursor:pointer;text-align:left;color:var(--text);font-family:var(--font-body);font-size:.84rem;transition:all .15s">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:500;margin-bottom:2px">${esc(s.title || "Untitled")}</div>
+        <div style="font-size:.72rem;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(text)}</div>
+      </div>
+      ${hasMetrics ? '<span style="font-size:.65rem;padding:2px 6px;border-radius:4px;background:rgba(34,197,94,.15);color:#22c55e;flex-shrink:0">Has data</span>' : ''}
+    </button>`;
+  }).join("");
+}
+
+function amBackToProjects() {
+  document.getElementById("amStep1").style.display = "";
+  document.getElementById("amStep2").style.display = "none";
+}
+
+function amPickScript(scriptId) {
+  amSelectedScript = amScriptsData.find(s => s.id === scriptId);
+  if (!amSelectedScript) return;
+
+  document.getElementById("amScriptName").textContent = amSelectedScript.title || "Untitled";
+  document.getElementById("amStep2").style.display = "none";
+  document.getElementById("amStep3").style.display = "";
+
+  // Pre-fill existing data
+  document.getElementById("am-views").value = amSelectedScript.views_count || "";
+  document.getElementById("am-likes").value = amSelectedScript.likes || "";
+  document.getElementById("am-comments").value = amSelectedScript.comments || "";
+  document.getElementById("am-saves").value = amSelectedScript.saves || "";
+  document.getElementById("am-eng").value = amSelectedScript.engagement_rate || "";
+  document.getElementById("am-notes").value = amSelectedScript.performance_notes || "";
+}
+
+function amBackToScripts() {
+  document.getElementById("amStep2").style.display = "";
+  document.getElementById("amStep3").style.display = "none";
+}
+
+async function amSaveMetrics() {
+  if (!amSelectedScript) return;
+  const err = document.getElementById("amErr");
+  err.classList.remove("on");
+
+  const body = {
+    views_count: parseInt(document.getElementById("am-views").value) || null,
+    likes: parseInt(document.getElementById("am-likes").value) || null,
+    comments: parseInt(document.getElementById("am-comments").value) || null,
+    saves: parseInt(document.getElementById("am-saves").value) || null,
+    engagement_rate: parseFloat(document.getElementById("am-eng").value) || null,
+    performance_notes: document.getElementById("am-notes").value.trim() || null,
+  };
+
+  const res = await fetch(`/scripts/${amSelectedScript.id}`, {
+    method: "PATCH", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (res.ok) {
+    closeModal("addMetricsOverlay");
+    showToast(t("toast.perf_saved"));
+    loadMetricsSummary();
+  } else {
+    err.textContent = "Error saving";
+    err.classList.add("on");
+  }
+}
+
+// ── Export & Delete ──────────────────────────────────────────────────────
 async function exportMyData() {
   showToast(t("toast.loading"));
   const res = await fetch("/account/export");
@@ -4947,7 +5073,7 @@ async function loadMetricsWinners() {
     const el = document.getElementById('metricsWinners');
 
     if (!data.length) {
-      el.innerHTML = '<div class="prof-empty"><div class="prof-empty-icon">${EMPTY_ICON}</div>' + t('metrics.empty') + '</div>';
+      el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">${EMPTY_ICON}</div>${t('metrics.empty')}<br><button class="btn-sm" style="margin-top:12px;background:var(--purple);color:#fff;border:none;padding:8px 16px" onclick="openAddMetricsFlow()">+ Add metrics</button></div>`;
       return;
     }
 
@@ -6226,6 +6352,49 @@ function startTourFromModal() {
 
 <!-- Tutorial button -->
 <button class="btn-tutorial" onclick="openTutorial()">? Tutorial</button>
+
+<!-- ADD METRICS MODAL -->
+<div class="overlay" id="addMetricsOverlay" onclick="backdropClose(event,'addMetricsOverlay')" style="z-index:400">
+  <div class="modal" style="max-width:480px;padding:28px 24px">
+    <button class="modal-x" onclick="closeModal('addMetricsOverlay')">&#10005;</button>
+    <h2 style="font-size:1.1rem;margin-bottom:4px">Add metrics to a script</h2>
+    <p style="color:var(--text2);font-size:.82rem;margin-bottom:20px;font-weight:300">Pick a project and script, then enter performance data.</p>
+
+    <!-- Step 1: pick project -->
+    <div id="amStep1">
+      <label style="display:block;font-size:.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Project</label>
+      <div id="amProjectList" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+
+    <!-- Step 2: pick script -->
+    <div id="amStep2" style="display:none">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <button class="btn-sm" onclick="amBackToProjects()" style="padding:4px 8px">←</button>
+        <span style="font-size:.85rem;font-weight:600" id="amProjectName"></span>
+      </div>
+      <label style="display:block;font-size:.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Script</label>
+      <div id="amScriptList" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto"></div>
+    </div>
+
+    <!-- Step 3: metrics form -->
+    <div id="amStep3" style="display:none">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+        <button class="btn-sm" onclick="amBackToScripts()" style="padding:4px 8px">←</button>
+        <span style="font-size:.85rem;font-weight:600" id="amScriptName"></span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+        <div class="metric-field"><label>Views</label><input type="number" id="am-views" placeholder="0" /></div>
+        <div class="metric-field"><label>Likes</label><input type="number" id="am-likes" placeholder="0" /></div>
+        <div class="metric-field"><label>Comments</label><input type="number" id="am-comments" placeholder="0" /></div>
+        <div class="metric-field"><label>Saves</label><input type="number" id="am-saves" placeholder="0" /></div>
+        <div class="metric-field"><label>Engagement %</label><input type="number" step="0.01" id="am-eng" placeholder="0.00" /></div>
+      </div>
+      <div class="metric-field" style="margin-top:8px"><label>Notes</label><textarea id="am-notes" rows="2" placeholder="Performance notes..." style="width:100%;padding:7px 10px;background:var(--surf2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.82rem;font-family:var(--font-body);outline:none;resize:vertical"></textarea></div>
+      <button class="btn-full" style="margin-top:14px;background:var(--purple)" onclick="amSaveMetrics()">Save metrics</button>
+      <div class="form-err" id="amErr"></div>
+    </div>
+  </div>
+</div>
 
 <!-- DELETE ACCOUNT MODAL -->
 <div class="overlay" id="deleteAccountOverlay" onclick="backdropClose(event,'deleteAccountOverlay')" style="z-index:400">
