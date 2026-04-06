@@ -1482,9 +1482,10 @@
       background: #0a0b0f; z-index: 300;
       overflow: hidden;
       background-image:
-        radial-gradient(ellipse at 20% 0%, rgba(249,115,22,.07) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 100%, rgba(139,92,246,.05) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 50%, rgba(249,115,22,.03) 0%, transparent 60%);
+        radial-gradient(ellipse at 15% -5%, rgba(249,115,22,.1) 0%, transparent 45%),
+        radial-gradient(ellipse at 85% 95%, rgba(139,92,246,.07) 0%, transparent 45%),
+        radial-gradient(ellipse at 60% 30%, rgba(249,115,22,.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 30% 70%, rgba(139,92,246,.03) 0%, transparent 50%);
     }
     .profile-overlay.on { display: block; }
 
@@ -1503,6 +1504,7 @@
       padding: 28px 20px 20px;
       border-bottom: 1px solid var(--border);
       text-align: center;
+      background: radial-gradient(ellipse at 50% 20%, rgba(249,115,22,.06) 0%, transparent 70%);
     }
     .prof-sidebar-nav {
       padding: 12px 12px; flex: 1;
@@ -1527,6 +1529,7 @@
     .prof-nav-item.on {
       background: rgba(249,115,22,.08); border-color: rgba(249,115,22,.15);
       color: var(--purple); font-weight: 500;
+      box-shadow: 0 0 12px rgba(249,115,22,.06);
     }
     .prof-nav-count {
       margin-left: auto; font-size: .68rem;
@@ -1547,12 +1550,17 @@
       gap: 14px; margin-bottom: 28px;
     }
     .prof-stat-card {
-      background: var(--surf);
+      background: var(--surf); position: relative;
       border: 1px solid var(--border);
       border-radius: 14px; padding: 20px; display: flex;
-      align-items: flex-start; gap: 14px; transition: border-color .2s;
+      align-items: flex-start; gap: 14px; transition: all .2s;
+      overflow: hidden;
     }
-    .prof-stat-card:hover { border-color: rgba(249,115,22,.2); }
+    .prof-stat-card::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: var(--stat-accent, var(--purple)); opacity: .5;
+    }
+    .prof-stat-card:hover { border-color: rgba(255,255,255,.12); transform: translateY(-1px); }
     .prof-stat-icon {
       width: 40px; height: 40px; border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
@@ -1701,13 +1709,14 @@
     /* DiceBear avatar in profile */
     .prof-av {
       width: 72px; height: 72px; border-radius: 50%;
-      background: var(--surf2); border: 2px solid var(--border);
+      background: var(--surf2); border: 2px solid rgba(249,115,22,.25);
       display: flex; align-items: center; justify-content: center;
       font-size: 1.4rem; font-weight: 900; color: #fff; flex-shrink: 0;
       cursor: pointer; transition: border-color .2s, box-shadow .2s; overflow: hidden;
       position: relative;
+      box-shadow: 0 0 20px rgba(249,115,22,.1), 0 0 40px rgba(249,115,22,.05);
     }
-    .prof-av:hover { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(249,115,22,.2); }
+    .prof-av:hover { border-color: var(--purple); box-shadow: 0 0 24px rgba(249,115,22,.2), 0 0 48px rgba(249,115,22,.1); }
     .prof-av img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
     .prof-av-edit {
       position: absolute; inset: 0; border-radius: 50%;
@@ -1805,8 +1814,9 @@
       position: fixed; inset: 0; background: #0a0b0f; z-index: 310;
       overflow-y: auto; display: none;
       background-image:
-        radial-gradient(ellipse at 20% 0%, rgba(249,115,22,.07) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 100%, rgba(139,92,246,.05) 0%, transparent 50%);
+        radial-gradient(ellipse at 15% -5%, rgba(249,115,22,.09) 0%, transparent 45%),
+        radial-gradient(ellipse at 85% 95%, rgba(139,92,246,.06) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 40%, rgba(249,115,22,.03) 0%, transparent 50%);
     }
     .proj-detail-overlay.on { display: block; }
     .proj-detail-inner {
@@ -2919,15 +2929,15 @@
       <!-- Overview panel (default) -->
       <div id="profPanelOverview">
         <div class="prof-stats-row">
-          <div class="prof-stat-card">
+          <div class="prof-stat-card" style="--stat-accent:#f97316">
             <div class="prof-stat-icon orange">🎙</div>
             <div><div class="prof-stat-val" id="profStatTransc">0</div><div class="prof-stat-label" data-i18n="prof.stat_transc">Transcriptions</div></div>
           </div>
-          <div class="prof-stat-card">
+          <div class="prof-stat-card" style="--stat-accent:#a78bfa">
             <div class="prof-stat-icon purple">✨</div>
             <div><div class="prof-stat-val" id="profStatScripts">0</div><div class="prof-stat-label" data-i18n="prof.stat_scripts">Saved scripts</div></div>
           </div>
-          <div class="prof-stat-card">
+          <div class="prof-stat-card" style="--stat-accent:#22c55e">
             <div class="prof-stat-icon green">⚡</div>
             <div><div class="prof-stat-val" id="profStatUsos">0</div><div class="prof-stat-label" data-i18n="prof.stat_uses">Uses left</div></div>
           </div>
