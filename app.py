@@ -385,7 +385,7 @@ def forgot_password():
         resp = requests.post(
             f"{SUPABASE_URL}/auth/v1/recover",
             headers={"apikey": SUPABASE_SERVICE_KEY, "Content-Type": "application/json"},
-            json={"email": email},
+            json={"email": email, "redirect_to": request.host_url.rstrip("/") + "/reset-password"},
             timeout=10,
         )
         if resp.status_code not in (200, 204):
