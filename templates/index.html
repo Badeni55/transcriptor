@@ -311,23 +311,29 @@
     }
     .btn-queue-add:hover { border-color: var(--purple); background: rgba(249,115,22,.1); }
 
-    /* Inline error toast */
-    .url-error {
-      position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 10;
-      display: none; align-items: center; gap: 10px;
-      padding: 10px 14px;
-      background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.2);
-      border-left: 4px solid #f87171; border-radius: var(--rsm);
-      font-size: .82rem; color: #fca5a5; line-height: 1.4;
-      animation: errIn .2s ease;
+    /* Inline error — collapsible wrapper */
+    .url-error-wrap {
+      max-height: 0; overflow: hidden;
+      transition: max-height .25s ease, margin .25s ease;
+      margin: 0;
     }
-    .url-error.on { display: flex; }
+    .url-error-wrap.on {
+      max-height: 60px; margin-bottom: 8px;
+    }
+    .url-error {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
+      background: rgba(249,115,22,.06); border: 1px solid rgba(249,115,22,.15);
+      border-left: 4px solid #fb923c; border-radius: var(--rsm);
+      font-size: .82rem; color: #fdba74; line-height: 1.4;
+      animation: errIn .25s ease;
+    }
     .url-error-icon { flex-shrink: 0; font-size: 1rem; }
     @keyframes errIn {
-      0% { opacity: 0; transform: translateY(-6px); }
-      60% { transform: translateX(3px); }
+      0% { opacity: 0; transform: translateY(-4px); }
+      60% { transform: translateX(2px); }
       80% { transform: translateX(-2px); }
-      100% { opacity: 1; transform: translateY(0) translateX(0); }
+      100% { opacity: 1; transform: none; }
     }
 
     /* Style carousel dots (mobile only) */
@@ -2508,7 +2514,7 @@
   <!-- Input + Results -->
   <div class="hero-input-wrap" id="heroInputWrap">
     <div class="hero-input-left">
-      <div style="display:flex;gap:8px;align-items:stretch;position:relative">
+      <div style="display:flex;gap:8px;align-items:stretch">
         <div class="input-glow-wrap" style="flex:1">
           <input id="urlInput" type="url" data-tour="url-input"
             placeholder="🔗 Pega aquí tu reel de Instagram o TikTok..."
@@ -2516,7 +2522,6 @@
           <span class="input-plat-icon" id="platIcon"></span>
         </div>
         <button class="btn-queue-add" id="btnQueueAdd" onclick="addToQueue()" title="Add to queue">+</button>
-        <div class="url-error" id="urlError"><span class="url-error-icon">&#9888;</span><span id="urlErrorTxt"></span></div>
       </div>
 
       <!-- Queue list -->
@@ -2536,6 +2541,11 @@
         <button class="btn-shimmer inactive" id="btnTranscribe" style="flex:2" onclick="doTranscribe()" data-i18n="hero.btn">
           ✦ Transcribe now
         </button>
+      </div>
+
+      <!-- Inline error -->
+      <div class="url-error-wrap" id="urlError">
+        <div class="url-error"><span class="url-error-icon">&#9888;</span><span id="urlErrorTxt"></span></div>
       </div>
 
       <!-- Inline loading indicator -->
@@ -3428,6 +3438,7 @@ const LANGS = {
     "toast.error_connection": "Error de conexión.",
     "toast.error_save": "Error al guardar",
     "toast.paste_url": "Pega una URL primero",
+    "toast.invalid_url": "Solo se admiten URLs de Instagram, TikTok o YouTube",
     "toast.paste_script": "Escribe o pega un guión primero",
     "toast.select_style": "Selecciona un estilo",
     "toast.saved_to": "Guardado en",
@@ -3635,6 +3646,7 @@ const LANGS = {
     "toast.error_connection": "Connection error.",
     "toast.error_save": "Error saving",
     "toast.paste_url": "Paste a URL first",
+    "toast.invalid_url": "Only Instagram, TikTok, or YouTube links are supported",
     "toast.paste_script": "Paste or write a script first",
     "toast.select_style": "Select a style",
     "toast.saved_to": "Saved to",
@@ -4044,7 +4056,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     const val = _urlInput.value.trim();
     const valid = val && _urlValidRx.test(val);
     _btnTranscribe.disabled = !valid;
-    // Clear error when typing
     document.getElementById("urlError").classList.remove("on");
   }
   _urlInput.addEventListener("input", validateUrlInput);
@@ -5657,12 +5668,11 @@ async function rsTranscribeOne(url) {
 
 // Transcribe button — sends current URL to queue
 function showUrlError(msg) {
-  const el = document.getElementById("urlError");
+  const wrap = document.getElementById("urlError");
   document.getElementById("urlErrorTxt").textContent = msg;
-  el.classList.add("on");
-  // Auto-dismiss after 6s
-  clearTimeout(el._timer);
-  el._timer = setTimeout(() => el.classList.remove("on"), 6000);
+  wrap.classList.add("on");
+  clearTimeout(wrap._timer);
+  wrap._timer = setTimeout(() => wrap.classList.remove("on"), 6000);
 }
 
 function doTranscribe() {
@@ -5670,7 +5680,7 @@ function doTranscribe() {
   const url = input.value.trim();
   if (!url) { showUrlError(t("toast.paste_url")); return; }
   const validRx = /^https?:\/\/(www\.)?(instagram\.com\/(reel|p|tv)\/[\w-]+|((vm|vt)\.)?tiktok\.com\/|((m\.)?youtube\.com|youtu\.be)\/)/i;
-  if (!validRx.test(url)) { showUrlError("Only Instagram, TikTok, or YouTube links are supported"); return; }
+  if (!validRx.test(url)) { showUrlError(t("toast.invalid_url")); return; }
   document.getElementById("urlError").classList.remove("on");
   rsPending.push(url);
   input.value = "";
