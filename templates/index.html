@@ -310,6 +310,41 @@
       transition: all .2s; display: flex; align-items: center; justify-content: center;
     }
     .btn-queue-add:hover { border-color: var(--purple); background: rgba(249,115,22,.1); }
+
+    /* Inline error toast */
+    .url-error {
+      position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 10;
+      display: none; align-items: center; gap: 10px;
+      padding: 10px 14px;
+      background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.2);
+      border-left: 4px solid #f87171; border-radius: var(--rsm);
+      font-size: .82rem; color: #fca5a5; line-height: 1.4;
+      animation: errIn .2s ease;
+    }
+    .url-error.on { display: flex; }
+    .url-error-icon { flex-shrink: 0; font-size: 1rem; }
+    @keyframes errIn {
+      0% { opacity: 0; transform: translateY(-6px); }
+      60% { transform: translateX(3px); }
+      80% { transform: translateX(-2px); }
+      100% { opacity: 1; transform: translateY(0) translateX(0); }
+    }
+
+    /* Style carousel dots (mobile only) */
+    .style-dots {
+      display: none; justify-content: center; gap: 6px;
+      padding: 8px 0 4px;
+    }
+    .style-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--border); transition: all .2s; cursor: pointer;
+      border: none; padding: 0;
+    }
+    .style-dot.on { background: var(--purple); width: 16px; border-radius: 3px; }
+    @media (max-width: 768px) {
+      .style-dots { display: flex; }
+    }
+
     .queue-list {
       display: flex; flex-direction: column; gap: 6px;
       margin-bottom: 12px; max-height: 160px; overflow-y: auto;
@@ -2470,7 +2505,7 @@
   <!-- Input + Results -->
   <div class="hero-input-wrap" id="heroInputWrap">
     <div class="hero-input-left">
-      <div style="display:flex;gap:8px;align-items:stretch">
+      <div style="display:flex;gap:8px;align-items:stretch;position:relative">
         <div class="input-glow-wrap" style="flex:1">
           <input id="urlInput" type="url" data-tour="url-input"
             placeholder="🔗 Pega aquí tu reel de Instagram o TikTok..."
@@ -2478,6 +2513,7 @@
           <span class="input-plat-icon" id="platIcon"></span>
         </div>
         <button class="btn-queue-add" id="btnQueueAdd" onclick="addToQueue()" title="Add to queue">+</button>
+        <div class="url-error" id="urlError"><span class="url-error-icon">&#9888;</span><span id="urlErrorTxt"></span></div>
       </div>
 
       <!-- Queue list -->
@@ -2622,6 +2658,7 @@
           <span class="sp-hint" data-i18n="sh.custom">Tú decides las instrucciones</span>
         </button>
       </div>
+      <div class="style-dots" id="styleDots"></div>
 
       <div class="custom-row" id="customRow">
         <input type="text" id="customPrompt" placeholder="Ej: Escríbelo como una carta de ventas…" />
@@ -3995,8 +4032,27 @@ window.addEventListener("DOMContentLoaded", async () => {
   initDemo();
   initScrollReveal();
 
-  // Enter to transcribe in URL input
-  document.getElementById("urlInput").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); doTranscribe(); } });
+  // URL validation + transcribe button state
+  const _urlInput = document.getElementById("urlInput");
+  const _btnTranscribe = document.getElementById("btnTranscribe");
+  const _urlValidRx = /^https?:\/\/(www\.)?(instagram\.com\/(reel|p|tv)\/[\w-]+|((vm|vt)\.)?tiktok\.com\/|((m\.)?youtube\.com|youtu\.be)\/)/i;
+
+  function validateUrlInput() {
+    const val = _urlInput.value.trim();
+    const valid = val && _urlValidRx.test(val);
+    _btnTranscribe.disabled = !valid;
+    // Clear error when typing
+    document.getElementById("urlError").classList.remove("on");
+  }
+  _urlInput.addEventListener("input", validateUrlInput);
+  _urlInput.addEventListener("paste", () => setTimeout(validateUrlInput, 50));
+  validateUrlInput();
+
+  // Enter to transcribe
+  _urlInput.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); doTranscribe(); } });
+
+  // Style carousel dots (mobile)
+  initStyleDots();
 
   const p = new URLSearchParams(location.search);
   const ref = p.get("ref");
@@ -5525,7 +5581,7 @@ async function rsTranscribeOne(url) {
       body: JSON.stringify({ url, language: lang }),
     });
     const d = await res.json();
-    if (!res.ok) { loader.remove(); showToast(d.error || "Error"); return; }
+    if (!res.ok) { loader.remove(); showUrlError(d.error || "Error"); return; }
 
     const result = await new Promise((resolve) => {
       const interval = setInterval(async () => {
@@ -5597,10 +5653,22 @@ async function rsTranscribeOne(url) {
 }
 
 // Transcribe button — sends current URL to queue
+function showUrlError(msg) {
+  const el = document.getElementById("urlError");
+  document.getElementById("urlErrorTxt").textContent = msg;
+  el.classList.add("on");
+  // Auto-dismiss after 6s
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => el.classList.remove("on"), 6000);
+}
+
 function doTranscribe() {
   const input = document.getElementById("urlInput");
   const url = input.value.trim();
-  if (!url) { showToast(t("toast.paste_url")); return; }
+  if (!url) { showUrlError(t("toast.paste_url")); return; }
+  const validRx = /^https?:\/\/(www\.)?(instagram\.com\/(reel|p|tv)\/[\w-]+|((vm|vt)\.)?tiktok\.com\/|((m\.)?youtube\.com|youtu\.be)\/)/i;
+  if (!validRx.test(url)) { showUrlError("Only Instagram, TikTok, or YouTube links are supported"); return; }
+  document.getElementById("urlError").classList.remove("on");
   rsPending.push(url);
   input.value = "";
   input.dispatchEvent(new Event("input"));
@@ -5706,6 +5774,46 @@ function previewStyle(s) {
   document.querySelectorAll(".preview-slide").forEach(sl => {
     sl.classList.toggle("on", sl.dataset.style === s);
   });
+}
+
+// ── Style carousel dots (mobile) ──────────────────────────────────────────
+function initStyleDots() {
+  const grid = document.querySelector(".adapt-left .style-grid");
+  const dotsEl = document.getElementById("styleDots");
+  if (!grid || !dotsEl) return;
+
+  const pills = grid.querySelectorAll(".style-pill");
+  if (!pills.length) return;
+
+  // Create dots
+  dotsEl.innerHTML = "";
+  pills.forEach((pill, i) => {
+    const dot = document.createElement("button");
+    dot.className = "style-dot" + (i === 0 ? " on" : "");
+    dot.onclick = () => pill.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    dotsEl.appendChild(dot);
+  });
+
+  // IntersectionObserver
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const idx = Array.from(pills).indexOf(entry.target);
+        dotsEl.querySelectorAll(".style-dot").forEach((d, i) => d.classList.toggle("on", i === idx));
+      }
+    });
+  }, { root: grid, threshold: 0.6 });
+
+  pills.forEach(p => obs.observe(p));
+
+  // Hint: micro-scroll on first mobile visit
+  if (window.innerWidth <= 768 && !sessionStorage.getItem("style-scroll-hint")) {
+    sessionStorage.setItem("style-scroll-hint", "1");
+    setTimeout(() => {
+      grid.scrollTo({ left: 30, behavior: "smooth" });
+      setTimeout(() => grid.scrollTo({ left: 0, behavior: "smooth" }), 400);
+    }, 1200);
+  }
 }
 
 function selectStyle(btn) {
