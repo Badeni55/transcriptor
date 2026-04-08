@@ -3409,7 +3409,13 @@ const LANGS = {
     "toast.error_connection": "Error de conexión.",
     "toast.error_save": "Error al guardar",
     "toast.paste_url": "Pega una URL primero",
-    "toast.invalid_url": "Solo se admiten URLs de Instagram o TikTok",
+    "toast.invalid_url": [
+      "¡Eh! Revisa la URL, ¿se te ha colado algo? Por ahora solo Instagram y TikTok (hehe)",
+      "Esa URL tiene pinta rara 👀 Pega un reel de Instagram o TikTok, porfa",
+      "Mmm, eso no me suena a reel. ¿Seguro que copiaste bien? Solo IG y TikTok por ahora",
+      "Houston, tenemos un problema 🚀 Esa URL no es de Instagram ni TikTok",
+      "Nope. Esa URL no cuela. Solo bailo con Instagram y TikTok (de momento)"
+    ],
     "toast.paste_script": "Escribe o pega un guión primero",
     "toast.select_style": "Selecciona un estilo",
     "toast.saved_to": "Guardado en",
@@ -3617,7 +3623,13 @@ const LANGS = {
     "toast.error_connection": "Connection error.",
     "toast.error_save": "Error saving",
     "toast.paste_url": "Paste a URL first",
-    "toast.invalid_url": "Only Instagram and TikTok links are supported",
+    "toast.invalid_url": [
+      "Dude!! Check your URL — maybe you missed a dot? We only do Instagram and TikTok for now (hehe)",
+      "That URL looks sus 👀 Paste an Instagram or TikTok reel, please",
+      "Hmm, that doesn't ring a bell. Sure you copied it right? Only IG and TikTok for now",
+      "Houston, we have a problem 🚀 That URL isn't Instagram or TikTok",
+      "Nope. That URL ain't it. I only dance with Instagram and TikTok (for now)"
+    ],
     "toast.paste_script": "Paste or write a script first",
     "toast.select_style": "Select a style",
     "toast.saved_to": "Saved to",
@@ -3660,6 +3672,11 @@ const LANGS = {
 
 function t(key) {
   return (LANGS[currentLang] || LANGS.en)[key] || (LANGS.en[key]) || key;
+}
+function pickRandomError() {
+  const arr = (LANGS[currentLang] || LANGS.en)["toast.invalid_url"];
+  if (!Array.isArray(arr)) return arr || "Invalid URL";
+  return arr[Math.floor(Math.random() * arr.length)];
 }
 
 let currentLang = localStorage.getItem("rs-lang") || "en";
@@ -5671,14 +5688,15 @@ function showUrlError(msg) {
   if (_validationErrCard) { _validationErrCard.remove(); _validationErrCard = null; }
   if (_validationErrTimer) { clearTimeout(_validationErrTimer); _validationErrTimer = null; }
 
+  const text = msg || pickRandomError();
   const panel = document.getElementById("resultPanel");
   rsShowPanel();
 
   const card = document.createElement("div");
   card.className = "rs-card";
-  card.style.borderColor = "rgba(239,68,68,.2)";
-  card.innerHTML = `<div style="padding:14px 16px;display:flex;align-items:center;gap:10px;color:#fca5a5;font-size:.82rem">
-    <span>&#9888;</span><span>${esc(msg)}</span>
+  card.style.borderColor = "rgba(249,115,22,.2)";
+  card.innerHTML = `<div style="padding:14px 16px;display:flex;align-items:flex-start;gap:10px;color:#fdba74;font-size:.84rem;line-height:1.5">
+    <span style="font-size:1.2rem;flex-shrink:0">&#9888;</span><span>${esc(text)}</span>
   </div>`;
   panel.prepend(card);
   _validationErrCard = card;
@@ -5694,7 +5712,7 @@ function doTranscribe() {
   const url = input.value.trim();
   if (!url) { showUrlError(t("toast.paste_url")); return; }
   const validRx = /^https?:\/\/(www\.)?(instagram\.com\/(reel|p|tv)\/[\w-]+|((vm|vt)\.)?tiktok\.com\/)/i;
-  if (!validRx.test(url)) { showUrlError(t("toast.invalid_url")); return; }
+  if (!validRx.test(url)) { showUrlError(); return; }
   if (_validationErrCard) { _validationErrCard.remove(); _validationErrCard = null; }
   if (_validationErrTimer) { clearTimeout(_validationErrTimer); _validationErrTimer = null; }
   rsPending.push(url);
