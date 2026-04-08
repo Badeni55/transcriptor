@@ -592,12 +592,12 @@
     .adapt-header p  { color: var(--text2); font-size: .92rem; line-height: 1.6; font-weight: 300; max-width: 420px; }
 
     .script-ta {
-      width: 100%; min-height: 200px;
+      width: 100%; max-width: 100%; min-height: 200px;
       padding: 16px; background: var(--surf2);
       border: 1px solid var(--border); border-radius: 12px;
       font-size: .9rem; color: var(--text); resize: vertical; outline: none;
       font-family: var(--font-body); line-height: 1.7;
-      transition: border-color .2s;
+      transition: border-color .2s; box-sizing: border-box;
     }
     .script-ta:focus { border-color: var(--purple); }
     .script-ta::placeholder { color: var(--text3); }
@@ -2213,8 +2213,9 @@
       .btn-queue-add { width: 44px; }
 
       /* Adapt — mobile compact layout */
-      .adapt-section { padding: 40px 16px; min-height: auto; }
-      .adapt-inner { grid-template-columns: 1fr; gap: 20px; }
+      .adapt-section { padding: 40px 16px; min-height: auto; overflow: visible; }
+      .adapt-inner { grid-template-columns: 1fr; gap: 20px; min-width: 0; }
+      .adapt-left { min-width: 0; }
       .adapt-header h2 { font-size: 1.6rem; }
       .adapt-header p { display: none; }
 
@@ -2225,8 +2226,9 @@
       /* Style grid → horizontal carousel */
       .style-grid {
         display: flex !important; flex-wrap: nowrap;
-        overflow-x: auto; -webkit-overflow-scrolling: touch;
-        gap: 8px; padding-bottom: 8px;
+        overflow-x: auto; overflow-y: visible;
+        -webkit-overflow-scrolling: touch;
+        gap: 8px; padding: 8px 0 12px;
         scroll-snap-type: x mandatory;
       }
       .style-grid::-webkit-scrollbar { height: 3px; }
@@ -2235,6 +2237,7 @@
         flex: 0 0 140px; min-height: 80px; padding: 12px;
         scroll-snap-align: start;
       }
+      .style-pill:hover, .style-pill.act { transform: none; }
       .style-pill .sp-emoji { width: 30px; height: 30px; }
       .style-pill .sp-emoji svg { width: 20px; height: 24px; }
       .style-pill .sp-name { font-size: .68rem; }
