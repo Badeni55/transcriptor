@@ -3438,7 +3438,7 @@ const LANGS = {
     "toast.error_connection": "Error de conexión.",
     "toast.error_save": "Error al guardar",
     "toast.paste_url": "Pega una URL primero",
-    "toast.invalid_url": "Solo se admiten URLs de Instagram, TikTok o YouTube",
+    "toast.invalid_url": "Solo se admiten URLs de Instagram o TikTok",
     "toast.paste_script": "Escribe o pega un guión primero",
     "toast.select_style": "Selecciona un estilo",
     "toast.saved_to": "Guardado en",
@@ -3646,7 +3646,7 @@ const LANGS = {
     "toast.error_connection": "Connection error.",
     "toast.error_save": "Error saving",
     "toast.paste_url": "Paste a URL first",
-    "toast.invalid_url": "Only Instagram, TikTok, or YouTube links are supported",
+    "toast.invalid_url": "Only Instagram and TikTok links are supported",
     "toast.paste_script": "Paste or write a script first",
     "toast.select_style": "Select a style",
     "toast.saved_to": "Saved to",
@@ -4050,7 +4050,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   // URL validation + transcribe button state
   const _urlInput = document.getElementById("urlInput");
   const _btnTranscribe = document.getElementById("btnTranscribe");
-  const _urlValidRx = /^https?:\/\/(www\.)?(instagram\.com\/(reel|p|tv)\/[\w-]+|((vm|vt)\.)?tiktok\.com\/|((m\.)?youtube\.com|youtu\.be)\/)/i;
+  const _urlValidRx = /^https?:\/\/(www\.)?(instagram\.com\/(reel|p|tv)\/[\w-]+|((vm|vt)\.)?tiktok\.com\/)/i;
 
   function validateUrlInput() {
     const val = _urlInput.value.trim();
@@ -5354,8 +5354,7 @@ const platIcon = document.getElementById("platIcon");
 const btnTranscribe = document.getElementById("btnTranscribe");
 
 function isValidUrl(v) {
-  return v.includes("instagram.com") || v.includes("tiktok.com") ||
-         v.includes("youtube.com")   || v.includes("youtu.be");
+  return v.includes("instagram.com") || v.includes("tiktok.com");
 }
 
 let lastValid = false;
@@ -5364,7 +5363,6 @@ urlInput.addEventListener("input", () => {
   let ic = "";
   if (v.includes("instagram.com")) ic = "📸";
   else if (v.includes("tiktok.com")) ic = "🎵";
-  else if (v.includes("youtube.com") || v.includes("youtu.be")) ic = "▶️";
   platIcon.textContent = ic;
   platIcon.classList.toggle("on", !!ic);
 
@@ -5705,7 +5703,7 @@ function doTranscribe() {
   const input = document.getElementById("urlInput");
   const url = input.value.trim();
   if (!url) { showUrlError(t("toast.paste_url")); return; }
-  const validRx = /^https?:\/\/(www\.)?(instagram\.com\/(reel|p|tv)\/[\w-]+|((vm|vt)\.)?tiktok\.com\/|((m\.)?youtube\.com|youtu\.be)\/)/i;
+  const validRx = /^https?:\/\/(www\.)?(instagram\.com\/(reel|p|tv)\/[\w-]+|((vm|vt)\.)?tiktok\.com\/)/i;
   if (!validRx.test(url)) { showUrlError(t("toast.invalid_url")); return; }
   document.getElementById("urlError").classList.remove("on");
   rsPending.push(url);
