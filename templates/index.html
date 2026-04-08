@@ -311,30 +311,6 @@
     }
     .btn-queue-add:hover { border-color: var(--purple); background: rgba(249,115,22,.1); }
 
-    /* Inline error — collapsible wrapper */
-    .url-error-wrap {
-      max-height: 0; overflow: hidden;
-      transition: max-height .25s ease, margin .25s ease;
-      margin: 0;
-    }
-    .url-error-wrap.on {
-      max-height: 60px; margin-bottom: 8px;
-    }
-    .url-error {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 14px;
-      background: rgba(249,115,22,.06); border: 1px solid rgba(249,115,22,.15);
-      border-left: 4px solid #fb923c; border-radius: var(--rsm);
-      font-size: .82rem; color: #fdba74; line-height: 1.4;
-      animation: errIn .25s ease;
-    }
-    .url-error-icon { flex-shrink: 0; font-size: 1rem; }
-    @keyframes errIn {
-      0% { opacity: 0; transform: translateY(-4px); }
-      60% { transform: translateX(2px); }
-      80% { transform: translateX(-2px); }
-      100% { opacity: 1; transform: none; }
-    }
 
     /* Style carousel dots (mobile only) */
     .style-dots {
@@ -2543,11 +2519,6 @@
         </button>
       </div>
 
-      <!-- Inline error -->
-      <div class="url-error-wrap" id="urlError">
-        <div class="url-error"><span class="url-error-icon">&#9888;</span><span id="urlErrorTxt"></span></div>
-      </div>
-
       <!-- Inline loading indicator -->
       <div class="inline-loading" id="inlineLoading">
         <div class="sq-loader">
@@ -4056,7 +4027,9 @@ window.addEventListener("DOMContentLoaded", async () => {
     const val = _urlInput.value.trim();
     const valid = val && _urlValidRx.test(val);
     _btnTranscribe.disabled = !valid;
-    document.getElementById("urlError").classList.remove("on");
+    // Clear validation error card if user is typing
+    if (_validationErrCard) { _validationErrCard.remove(); _validationErrCard = null; }
+    if (_validationErrTimer) { clearTimeout(_validationErrTimer); _validationErrTimer = null; }
   }
   _urlInput.addEventListener("input", validateUrlInput);
   _urlInput.addEventListener("paste", () => setTimeout(validateUrlInput, 50));
@@ -5691,12 +5664,29 @@ async function rsTranscribeOne(url) {
 }
 
 // Transcribe button — sends current URL to queue
+let _validationErrCard = null;
+let _validationErrTimer = null;
+
 function showUrlError(msg) {
-  const wrap = document.getElementById("urlError");
-  document.getElementById("urlErrorTxt").textContent = msg;
-  wrap.classList.add("on");
-  clearTimeout(wrap._timer);
-  wrap._timer = setTimeout(() => wrap.classList.remove("on"), 6000);
+  if (_validationErrCard) { _validationErrCard.remove(); _validationErrCard = null; }
+  if (_validationErrTimer) { clearTimeout(_validationErrTimer); _validationErrTimer = null; }
+
+  const panel = document.getElementById("resultPanel");
+  rsShowPanel();
+
+  const card = document.createElement("div");
+  card.className = "rs-card";
+  card.style.borderColor = "rgba(239,68,68,.2)";
+  card.innerHTML = `<div style="padding:14px 16px;display:flex;align-items:center;gap:10px;color:#fca5a5;font-size:.82rem">
+    <span>&#9888;</span><span>${esc(msg)}</span>
+  </div>`;
+  panel.prepend(card);
+  _validationErrCard = card;
+
+  _validationErrTimer = setTimeout(() => {
+    if (_validationErrCard === card) { card.remove(); _validationErrCard = null; }
+    _validationErrTimer = null;
+  }, 5000);
 }
 
 function doTranscribe() {
@@ -5705,7 +5695,8 @@ function doTranscribe() {
   if (!url) { showUrlError(t("toast.paste_url")); return; }
   const validRx = /^https?:\/\/(www\.)?(instagram\.com\/(reel|p|tv)\/[\w-]+|((vm|vt)\.)?tiktok\.com\/)/i;
   if (!validRx.test(url)) { showUrlError(t("toast.invalid_url")); return; }
-  document.getElementById("urlError").classList.remove("on");
+  if (_validationErrCard) { _validationErrCard.remove(); _validationErrCard = null; }
+  if (_validationErrTimer) { clearTimeout(_validationErrTimer); _validationErrTimer = null; }
   rsPending.push(url);
   input.value = "";
   input.dispatchEvent(new Event("input"));
