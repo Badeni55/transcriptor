@@ -3177,18 +3177,43 @@
 
 <!-- ASSISTANT MODAL -->
 <div class="overlay" id="assistantOverlay" onclick="backdropClose(event,'assistantOverlay')">
-  <div class="modal">
+  <div class="modal" style="max-width:460px">
     <button class="modal-x" onclick="closeModal('assistantOverlay')">✕</button>
-    <h2 id="asstModalTitle" data-i18n="asst.new_title">New assistant</h2>
+
+    <!-- Header with pixel art -->
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+      <svg width="44" height="54" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" style="flex-shrink:0">
+        <rect x="24" y="4" width="24" height="4" fill="#f97316"/><rect x="20" y="8" width="32" height="4" fill="#f97316"/>
+        <rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#92400e"/>
+        <rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/>
+        <rect x="28" y="34" width="16" height="4" fill="#f97316"/>
+        <rect x="18" y="40" width="36" height="4" fill="#f97316"/><rect x="14" y="44" width="44" height="16" fill="#f97316"/>
+        <rect x="18" y="60" width="14" height="20" fill="#f97316"/><rect x="40" y="60" width="14" height="20" fill="#f97316"/>
+        <rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/>
+      </svg>
+      <div>
+        <h2 id="asstModalTitle" style="margin-bottom:4px" data-i18n="asst.new_title">New assistant</h2>
+        <p id="asstModalDesc" style="color:var(--text2);font-size:.82rem;font-weight:300;line-height:1.4;margin:0" data-i18n="asst.modal_desc">Create your own style assistant for generating scripts. Assign it to projects as default.</p>
+      </div>
+    </div>
+
+    <!-- Help tooltip -->
+    <div style="display:flex;align-items:flex-start;gap:10px;background:rgba(249,115,22,.05);border:1px solid rgba(249,115,22,.12);border-radius:var(--rsm);padding:12px 14px;margin-bottom:18px">
+      <span style="font-size:1rem;flex-shrink:0;margin-top:1px">?</span>
+      <div style="font-size:.78rem;color:var(--text2);line-height:1.5" data-i18n="asst.help">
+        Write instructions like you'd tell a copywriter: tone, structure, words to avoid, how to open and close. The AI will follow your rules every time you generate a script with this assistant.
+      </div>
+    </div>
+
     <div class="field">
       <label data-i18n="asst.name_label">Assistant name</label>
       <input type="text" id="asstName" placeholder="e.g. My viral style" />
     </div>
     <div class="field">
       <label data-i18n="asst.instructions_label">Your instructions</label>
-      <textarea id="asstInstructions" rows="5" style="width:100%;padding:11px 14px;background:var(--surf2);border:1.5px solid var(--border);border-radius:var(--rsm);font-size:.88rem;color:var(--text);outline:none;resize:vertical;font-family:var(--font-body);line-height:1.6" placeholder="Describe how you want your scripts..."></textarea>
+      <textarea id="asstInstructions" rows="5" style="width:100%;padding:11px 14px;background:var(--surf2);border:1.5px solid var(--border);border-radius:var(--rsm);font-size:.88rem;color:var(--text);outline:none;resize:vertical;font-family:var(--font-body);line-height:1.6" placeholder="e.g. Always start with a question. Short sentences. No buzzwords. End with a save-worthy CTA."></textarea>
     </div>
-    <div style="background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);padding:12px 14px;font-size:.75rem;color:var(--text3);margin-bottom:16px;line-height:1.5" data-i18n="asst.base_note">
+    <div style="background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);padding:10px 14px;font-size:.72rem;color:var(--text3);margin-bottom:16px;line-height:1.5" data-i18n="asst.base_note">
       Base structure rules are always applied automatically. Your instructions are added on top to define your personal style.
     </div>
     <button class="btn-full" id="asstSaveBtn" onclick="saveAssistant()" data-i18n="asst.create">Create assistant</button>
@@ -3355,6 +3380,8 @@ const LANGS = {
     "asst.title": "Tus asistentes",
     "asst.new": "+ Nuevo asistente",
     "asst.new_title": "Nuevo asistente",
+    "asst.modal_desc": "Crea tu propio asistente de estilo para generar guiones. Asígnalo a proyectos de manera predeterminada.",
+    "asst.help": "Escribe instrucciones como se las darías a un copywriter: tono, estructura, palabras a evitar, cómo abrir y cerrar. La IA seguirá tus reglas cada vez que generes un guion con este asistente.",
     "asst.edit_title": "Editar asistente",
     "asst.name_label": "Nombre del asistente",
     "asst.name_placeholder": "Ej. Mi estilo viral",
@@ -3569,6 +3596,8 @@ const LANGS = {
     "asst.title": "Your assistants",
     "asst.new": "+ New assistant",
     "asst.new_title": "New assistant",
+    "asst.modal_desc": "Create your own style assistant for generating scripts. Assign it to projects as default.",
+    "asst.help": "Write instructions like you'd tell a copywriter: tone, structure, words to avoid, how to open and close. The AI will follow your rules every time you generate a script with this assistant.",
     "asst.edit_title": "Edit assistant",
     "asst.name_label": "Assistant name",
     "asst.name_placeholder": "e.g. My viral style",
@@ -3917,9 +3946,11 @@ function openAssistantModal(id) {
       document.getElementById("asstInstructions").value = a.instructions;
     }
     document.getElementById("asstModalTitle").textContent = t("asst.edit_title");
+    document.getElementById("asstModalDesc").style.display = "none";
     document.getElementById("asstSaveBtn").textContent = t("asst.save");
   } else {
     document.getElementById("asstModalTitle").textContent = t("asst.new_title");
+    document.getElementById("asstModalDesc").style.display = "";
     document.getElementById("asstSaveBtn").textContent = t("asst.create");
   }
 
