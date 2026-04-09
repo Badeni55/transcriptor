@@ -5434,31 +5434,10 @@ async function rsQuickTransform(idx, style, btn) {
 async function rsSaveToProject(idx) {
   const item = rsResults[idx];
   if (!item) return;
-  if (!projectsCache.length) {
-    showToast(t("toast.create_project_first"));
-    return;
-  }
-  // Pick project
-  const names = projectsCache.map((p, i) => `${i + 1}. ${p.name}`).join("\n");
-  const choice = prompt(`${t("picker.title")}:\n\n${names}\n\n${currentLang === "es" ? "Ingresa el número:" : "Enter number:"}`);
-  if (!choice) return;
-  const projIdx = parseInt(choice) - 1;
-  if (isNaN(projIdx) || projIdx < 0 || projIdx >= projectsCache.length) { showToast(currentLang === "es" ? "Opción inválida" : "Invalid choice"); return; }
-  const project = projectsCache[projIdx];
-
   const title = item.platform ? `${item.platform} · ${new Date().toLocaleDateString()}` : t("view.title");
-  const res = await fetch("/scripts", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      title,
-      transcription: item.text,
-      reel_url: item.url || "",
-      project_id: project.id,
-    }),
-  });
-  if (res.ok) showToast(`${t("toast.saved_to")} "${project.name}"`);
-  else showToast(t("toast.error_save"));
+  await saveTextToProject(item.text, title);
 }
+
 
 function rsUseInAdapt(idx) {
   const text = rsResults[idx].text;
