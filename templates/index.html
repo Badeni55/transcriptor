@@ -2533,6 +2533,97 @@
       font-family: var(--font-body); outline: none; transition: border-color .2s;
     }
     .style-search:focus { border-color: var(--purple); }
+
+    /* ── Teleprompter ──────────────────────────────── */
+    #tpOverlay {
+      position: fixed; inset: 0; z-index: 500;
+      background: #0a0a0a; display: none;
+      flex-direction: column; overflow: hidden;
+    }
+    #tpOverlay.on { display: flex; }
+    #tpHeader {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 2;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; transition: opacity .3s;
+    }
+    #tpHeader.hide { opacity: 0; pointer-events: none; }
+    #tpControls {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 2;
+      display: flex; align-items: center; justify-content: center; gap: 16px;
+      padding: 16px 20px; transition: opacity .3s;
+      background: linear-gradient(transparent, rgba(0,0,0,.8));
+    }
+    #tpControls.hide { opacity: 0; pointer-events: none; }
+    .tp-btn {
+      background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+      color: #fff; width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all .2s; font-size: 1.1rem;
+    }
+    .tp-btn:hover { background: rgba(255,255,255,.2); }
+    .tp-btn-play { width: 56px; height: 56px; font-size: 1.3rem; background: rgba(249,115,22,.3); border-color: rgba(249,115,22,.5); }
+    .tp-btn-play:hover { background: rgba(249,115,22,.5); }
+    #tpTextArea {
+      flex: 1; position: relative; overflow: hidden;
+    }
+    #tpText {
+      position: absolute; left: 50%; width: 100%; max-width: 800px;
+      transform: translateX(-50%); padding: 60vh 24px 60vh;
+      font-size: 48px; line-height: 1.5; color: #fff;
+      font-family: var(--font-body); text-align: center;
+      white-space: pre-wrap; word-break: break-word;
+      will-change: transform;
+    }
+    #tpReadLine {
+      position: absolute; left: 0; right: 0; height: 1px;
+      background: rgba(255,255,255,.15); z-index: 1;
+      top: 40%;
+    }
+    .tp-speed { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,.6); font-size: .78rem; }
+    .tp-speed input[type="range"] {
+      width: 100px; accent-color: #f97316;
+    }
+    .tp-countdown {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 120px; font-family: var(--font-display); color: #fff; z-index: 3;
+      animation: tpCountFade 1s ease both;
+    }
+    @keyframes tpCountFade { 0% { transform: scale(.8); opacity: 0; } 20% { transform: scale(1.05); opacity: 1; } 80% { opacity: 1; } 100% { transform: scale(.9); opacity: 0; } }
+    #tpEnd {
+      position: absolute; inset: 0; display: none; flex-direction: column;
+      align-items: center; justify-content: center; gap: 16px; z-index: 3;
+      background: rgba(0,0,0,.8);
+    }
+    #tpEnd.on { display: flex; }
+    #tpEnd h2 { font-family: var(--font-display); font-size: 2rem; color: #fff; }
+    /* Settings drawer */
+    #tpSettings {
+      position: absolute; top: 0; right: 0; bottom: 0; width: 300px; z-index: 4;
+      background: #111; border-left: 1px solid rgba(255,255,255,.1);
+      padding: 20px; overflow-y: auto; transform: translateX(100%);
+      transition: transform .25s ease;
+    }
+    #tpSettings.on { transform: translateX(0); }
+    .tp-setting { margin-bottom: 16px; }
+    .tp-setting label { display: block; font-size: .72rem; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+    .tp-setting input[type="range"] { width: 100%; accent-color: #f97316; }
+    .tp-setting-row { display: flex; align-items: center; justify-content: space-between; }
+    .tp-toggle { width: 40px; height: 22px; border-radius: 11px; background: rgba(255,255,255,.15); border: none; cursor: pointer; position: relative; transition: background .2s; }
+    .tp-toggle.on { background: #f97316; }
+    .tp-toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .2s; }
+    .tp-toggle.on::after { transform: translateX(18px); }
+    .tp-color-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: border-color .2s; }
+    .tp-color-btn.on { border-color: #f97316; }
+    .tp-landscape-hint {
+      position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,.7); color: rgba(255,255,255,.6); font-size: .78rem;
+      padding: 8px 16px; border-radius: 20px; z-index: 3; display: none;
+    }
+    @media (max-width: 768px) {
+      #tpText { font-size: 32px; max-width: 100%; padding: 50vh 16px 50vh; }
+      #tpSettings { width: 100%; }
+      .tp-speed input[type="range"] { width: 80px; }
+    }
   </style>
 </head>
 <body>
@@ -2819,6 +2910,7 @@
           <span id="previewFooterTxt">Ejemplo · El tuyo será único</span>
           <button class="pf-copy" id="pfCopyBtn" style="display:none" onclick="copyPreviewResult()">Copiar</button>
           <button class="pf-copy" id="pfSaveBtn" style="display:none" onclick="saveScript()">💾 Guardar</button>
+          <button class="pf-copy" id="pfTpBtn" style="display:none" onclick="tpOpenFromAdapt()">Teleprompter</button>
         </div>
       </div>
       <button class="adapt-run-btn adapt-run-desktop" id="btnRunAdaptDesktop" onclick="runAdapt()" style="display:none">
@@ -4058,6 +4150,7 @@ async function runAdaptWithAssistant(id) {
   previewResult.classList.remove("on");
   pfCopyBtn.style.display = "none";
   document.getElementById("pfSaveBtn").style.display = "none";
+  document.getElementById("pfTpBtn").style.display = "none";
   previewLabel.textContent = t("toast.generating");
 
   try {
@@ -4077,6 +4170,7 @@ async function runAdaptWithAssistant(id) {
       previewResult.classList.add("on");
       previewLabel.textContent = t("adapt.your_result");
       pfCopyBtn.style.display = "block";
+      document.getElementById("pfTpBtn").style.display = "block";
       if (st.user) document.getElementById("pfSaveBtn").style.display = "block";
       previewFooterTxt.textContent = t("adapt.generated");
       if (d.credits_cents !== undefined) {
@@ -5454,6 +5548,7 @@ function renderIdeas() {
       <div class="idea-card-acts">
         <button class="btn-sm" onclick="regenerateIdea('${idea.id}')">${t("ideas.regenerate")}</button>
         <button class="btn-sm" onclick="ideaToScript('${idea.id}')">${t("ideas.to_script")}</button>
+        <button class="btn-sm" onclick="tpOpenFromIdea('${idea.id}')">Teleprompter</button>
         <button class="btn-sm del" onclick="deleteIdea('${idea.id}')">${t("act.delete")}</button>
       </div>
     </div>`;
@@ -6175,6 +6270,7 @@ async function runAdapt() {
   previewResult.classList.remove("on");
   pfCopyBtn.style.display = "none";
   document.getElementById("pfSaveBtn").style.display = "none";
+  document.getElementById("pfTpBtn").style.display = "none";
   previewLabel.textContent = t("toast.generating");
 
   let lastResult = "";
@@ -6197,6 +6293,7 @@ async function runAdapt() {
       previewResult.classList.add("on");
       previewLabel.textContent = t("adapt.your_result");
       pfCopyBtn.style.display = "block";
+      document.getElementById("pfTpBtn").style.display = "block";
       if (st.user) document.getElementById("pfSaveBtn").style.display = "block";
       // Mobile: show result inline
       const mobileRes = document.getElementById("mobileAdaptResult");
@@ -6465,6 +6562,252 @@ document.addEventListener("keydown", e => {
     closeIdeaModal();
   }
 });
+
+// ── Teleprompter ──────────────────────────────────────────────────────────
+const TP = {
+  isOpen: false, isPlaying: false, currentY: 0, speed: 60,
+  fontSize: 48, mirrorX: false, mirrorY: false, textColor: "#fff",
+  showLine: true, linePos: 40, countdown: true,
+  rafId: null, lastTime: 0, totalHeight: 0, autoHideTimer: null,
+};
+
+function tpLoadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem("teleprompter_settings"));
+    if (s) Object.assign(TP, s);
+  } catch {}
+}
+function tpSaveSettings() {
+  const save = {};
+  for (const k of ["speed","fontSize","mirrorX","mirrorY","textColor","showLine","linePos","countdown"])
+    save[k] = TP[k];
+  localStorage.setItem("teleprompter_settings", JSON.stringify(save));
+}
+
+function tpOpen(text) {
+  tpLoadSettings();
+  TP.isOpen = true; TP.isPlaying = false; TP.currentY = 0;
+  const overlay = document.getElementById("tpOverlay");
+  const tpText = document.getElementById("tpText");
+  overlay.classList.add("on");
+  document.body.style.overflow = "hidden";
+  tpText.textContent = text;
+  tpText.style.transform = "translateX(-50%) translateY(0)";
+  document.getElementById("tpEnd").classList.remove("on");
+  document.getElementById("tpPlayBtn").textContent = "▶";
+  // Apply settings
+  tpSetFontSize(TP.fontSize, true);
+  tpSetColor(TP.textColor, null, true);
+  tpSetSpeed(TP.speed, true);
+  document.getElementById("tpSpeedSlider").value = TP.speed;
+  document.getElementById("tpFontSlider").value = TP.fontSize;
+  document.getElementById("tpLinePosSlider").value = TP.linePos;
+  document.getElementById("tpReadLine").style.top = TP.linePos + "%";
+  document.getElementById("tpReadLine").style.display = TP.showLine ? "" : "none";
+  document.getElementById("tpLineToggle").classList.toggle("on", TP.showLine);
+  document.getElementById("tpCountdownToggle").classList.toggle("on", TP.countdown);
+  document.getElementById("tpMirrorX").classList.toggle("on", TP.mirrorX);
+  document.getElementById("tpMirrorY").classList.toggle("on", TP.mirrorY);
+  tpApplyMirror();
+  tpStartAutoHide();
+  // Calculate total height after render
+  requestAnimationFrame(() => { TP.totalHeight = tpText.scrollHeight; });
+  // Landscape hint on mobile
+  if (window.innerWidth < 768 && window.innerHeight > window.innerWidth) {
+    document.getElementById("tpLandscapeHint").style.display = "";
+    setTimeout(() => document.getElementById("tpLandscapeHint").style.display = "none", 4000);
+  }
+}
+
+function tpClose() {
+  if (TP.isPlaying && !confirm("Close teleprompter?")) return;
+  tpStop();
+  TP.isOpen = false;
+  document.getElementById("tpOverlay").classList.remove("on");
+  document.getElementById("tpSettings").classList.remove("on");
+  document.body.style.overflow = "";
+}
+
+function tpTogglePlay() {
+  if (TP.isPlaying) { tpPause(); } else { tpPlay(); }
+}
+
+function tpPlay() {
+  if (TP.countdown && TP.currentY === 0) {
+    tpRunCountdown(() => tpStartScroll());
+  } else {
+    tpStartScroll();
+  }
+}
+
+function tpRunCountdown(cb) {
+  const area = document.getElementById("tpTextArea");
+  let count = 3;
+  function show() {
+    const el = document.createElement("div");
+    el.className = "tp-countdown";
+    el.textContent = count > 0 ? count : "GO";
+    area.appendChild(el);
+    setTimeout(() => el.remove(), 900);
+    if (count > 0) { count--; setTimeout(show, 1000); }
+    else { setTimeout(cb, 500); }
+  }
+  show();
+}
+
+function tpStartScroll() {
+  TP.isPlaying = true;
+  TP.lastTime = performance.now();
+  document.getElementById("tpPlayBtn").textContent = "⏸";
+  tpTick();
+}
+
+function tpTick() {
+  if (!TP.isPlaying) return;
+  const now = performance.now();
+  const dt = (now - TP.lastTime) / 1000;
+  TP.lastTime = now;
+  TP.currentY += TP.speed * dt;
+  const viewH = document.getElementById("tpTextArea").clientHeight;
+  if (TP.currentY >= TP.totalHeight - viewH * 0.4) {
+    tpPause();
+    document.getElementById("tpEnd").classList.add("on");
+    return;
+  }
+  document.getElementById("tpText").style.transform = `translateX(-50%) translateY(-${TP.currentY}px)`;
+  TP.rafId = requestAnimationFrame(tpTick);
+}
+
+function tpPause() {
+  TP.isPlaying = false;
+  if (TP.rafId) { cancelAnimationFrame(TP.rafId); TP.rafId = null; }
+  document.getElementById("tpPlayBtn").textContent = "▶";
+}
+
+function tpStop() {
+  tpPause();
+  TP.currentY = 0;
+  const tpText = document.getElementById("tpText");
+  if (tpText) tpText.style.transform = "translateX(-50%) translateY(0)";
+}
+
+function tpReset() {
+  tpStop();
+  document.getElementById("tpEnd").classList.remove("on");
+}
+
+function tpSkipEnd() {
+  const viewH = document.getElementById("tpTextArea").clientHeight;
+  TP.currentY = TP.totalHeight - viewH * 0.4;
+  document.getElementById("tpText").style.transform = `translateX(-50%) translateY(-${TP.currentY}px)`;
+  tpPause();
+  document.getElementById("tpEnd").classList.add("on");
+}
+
+function tpSetSpeed(val, noSave) {
+  TP.speed = parseInt(val);
+  const factor = (TP.speed / 60).toFixed(1);
+  document.getElementById("tpSpeedLabel").textContent = factor + "x";
+  if (!noSave) tpSaveSettings();
+}
+
+function tpSetFontSize(val, noSave) {
+  TP.fontSize = parseInt(val);
+  document.getElementById("tpText").style.fontSize = TP.fontSize + "px";
+  document.getElementById("tpFontLabel").textContent = TP.fontSize + "px";
+  requestAnimationFrame(() => { TP.totalHeight = document.getElementById("tpText").scrollHeight; });
+  if (!noSave) tpSaveSettings();
+}
+
+function tpSetColor(color, btn, noSave) {
+  TP.textColor = color;
+  document.getElementById("tpText").style.color = color;
+  document.querySelectorAll(".tp-color-btn").forEach(b => b.classList.remove("on"));
+  if (btn) btn.classList.add("on");
+  else document.querySelectorAll(".tp-color-btn").forEach(b => { if (b.style.background === color) b.classList.add("on"); });
+  if (!noSave) tpSaveSettings();
+}
+
+function tpToggleMirror(axis, btn) {
+  if (axis === "x") TP.mirrorX = !TP.mirrorX;
+  if (axis === "y") TP.mirrorY = !TP.mirrorY;
+  btn.classList.toggle("on");
+  tpApplyMirror();
+  tpSaveSettings();
+}
+
+function tpApplyMirror() {
+  const sx = TP.mirrorX ? -1 : 1;
+  const sy = TP.mirrorY ? -1 : 1;
+  document.getElementById("tpText").style.scale = `${sx} ${sy}`;
+}
+
+function tpToggleLine(btn) {
+  TP.showLine = !TP.showLine;
+  btn.classList.toggle("on");
+  document.getElementById("tpReadLine").style.display = TP.showLine ? "" : "none";
+  tpSaveSettings();
+}
+
+function tpSetLinePos(val) {
+  TP.linePos = parseInt(val);
+  document.getElementById("tpReadLine").style.top = TP.linePos + "%";
+  tpSaveSettings();
+}
+
+function tpToggleSettings() {
+  document.getElementById("tpSettings").classList.toggle("on");
+}
+
+// Auto-hide header/controls
+function tpStartAutoHide() {
+  clearTimeout(TP.autoHideTimer);
+  document.getElementById("tpHeader").classList.remove("hide");
+  document.getElementById("tpControls").classList.remove("hide");
+  TP.autoHideTimer = setTimeout(() => {
+    if (TP.isPlaying) {
+      document.getElementById("tpHeader").classList.add("hide");
+      document.getElementById("tpControls").classList.add("hide");
+    }
+  }, 3000);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const overlay = document.getElementById("tpOverlay");
+  if (overlay) {
+    overlay.addEventListener("mousemove", tpStartAutoHide);
+    overlay.addEventListener("touchstart", tpStartAutoHide);
+  }
+});
+
+// Keyboard shortcuts for teleprompter
+document.addEventListener("keydown", e => {
+  if (!TP.isOpen) return;
+  if (e.code === "Space" && document.activeElement.tagName !== "TEXTAREA" && document.activeElement.tagName !== "INPUT") { e.preventDefault(); tpTogglePlay(); }
+  if (e.code === "ArrowUp") { e.preventDefault(); tpSetSpeed(Math.min(200, TP.speed + 5)); document.getElementById("tpSpeedSlider").value = TP.speed; }
+  if (e.code === "ArrowDown") { e.preventDefault(); tpSetSpeed(Math.max(20, TP.speed - 5)); document.getElementById("tpSpeedSlider").value = TP.speed; }
+  if (e.code === "ArrowRight") { e.preventDefault(); tpSetFontSize(Math.min(96, TP.fontSize + 4)); document.getElementById("tpFontSlider").value = TP.fontSize; }
+  if (e.code === "ArrowLeft") { e.preventDefault(); tpSetFontSize(Math.max(24, TP.fontSize - 4)); document.getElementById("tpFontSlider").value = TP.fontSize; }
+  if (e.code === "KeyR") { tpReset(); }
+  if (e.code === "KeyF") { if (document.fullscreenElement) document.exitFullscreen(); else document.getElementById("tpOverlay").requestFullscreen?.(); }
+  if (e.code === "KeyM") { tpToggleMirror("x", document.getElementById("tpMirrorX")); }
+  if (e.code === "Escape") { e.preventDefault(); tpClose(); }
+});
+
+// Helper to open teleprompter from an idea
+function tpOpenFromIdea(ideaId) {
+  const idea = ideasCache.find(i => i.id === ideaId);
+  if (!idea) return;
+  const draft = idea.script_draft || {};
+  const text = [draft.intro, draft.desarrollo, draft.cierre].filter(Boolean).join("\n\n");
+  tpOpen(text || idea.raw_text);
+}
+
+// Helper to open teleprompter from adapt result
+function tpOpenFromAdapt() {
+  const text = document.getElementById("previewResultText")?.textContent;
+  if (text) tpOpen(text);
+}
 
 function copyPreviewResult() {
   const txt = document.getElementById("previewResultText").textContent;
@@ -7173,6 +7516,82 @@ closeTutorial = function() {
   _origCloseTut();
 };
 </script>
+
+<!-- ── TELEPROMPTER ──────────────────────────────────────────────────── -->
+<div id="tpOverlay">
+  <div id="tpHeader">
+    <button class="tp-btn" onclick="tpClose()" title="Close">✕</button>
+    <button class="tp-btn" onclick="tpToggleSettings()" title="Settings">⚙</button>
+  </div>
+  <div id="tpTextArea">
+    <div id="tpReadLine"></div>
+    <div id="tpText"></div>
+  </div>
+  <div id="tpControls">
+    <button class="tp-btn" onclick="tpReset()" title="Reset">⏮</button>
+    <button class="tp-btn tp-btn-play" id="tpPlayBtn" onclick="tpTogglePlay()">▶</button>
+    <button class="tp-btn" onclick="tpSkipEnd()" title="Skip to end">⏭</button>
+    <div class="tp-speed">
+      <span id="tpSpeedLabel">1x</span>
+      <input type="range" id="tpSpeedSlider" min="20" max="200" value="60" oninput="tpSetSpeed(this.value)">
+    </div>
+  </div>
+  <div id="tpEnd">
+    <h2>End</h2>
+    <div style="display:flex;gap:12px">
+      <button class="tp-btn" onclick="tpReset()" style="width:auto;border-radius:8px;padding:10px 20px;font-size:.85rem">Restart</button>
+      <button class="tp-btn" onclick="tpClose()" style="width:auto;border-radius:8px;padding:10px 20px;font-size:.85rem">Close</button>
+    </div>
+  </div>
+  <div id="tpSettings">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <span style="font-size:.9rem;font-weight:600;color:#fff">Settings</span>
+      <button class="tp-btn" onclick="tpToggleSettings()" style="width:32px;height:32px;font-size:.8rem">✕</button>
+    </div>
+    <div class="tp-setting">
+      <label>Font size</label>
+      <input type="range" id="tpFontSlider" min="24" max="96" value="48" oninput="tpSetFontSize(this.value)">
+      <div style="text-align:center;color:rgba(255,255,255,.4);font-size:.72rem" id="tpFontLabel">48px</div>
+    </div>
+    <div class="tp-setting">
+      <label>Text color</label>
+      <div style="display:flex;gap:8px">
+        <button class="tp-color-btn on" style="background:#fff" onclick="tpSetColor('#fff',this)"></button>
+        <button class="tp-color-btn" style="background:#fbbf24" onclick="tpSetColor('#fbbf24',this)"></button>
+        <button class="tp-color-btn" style="background:#4ade80" onclick="tpSetColor('#4ade80',this)"></button>
+      </div>
+    </div>
+    <div class="tp-setting">
+      <div class="tp-setting-row">
+        <label style="margin:0">Mirror horizontal</label>
+        <button class="tp-toggle" id="tpMirrorX" onclick="tpToggleMirror('x',this)"></button>
+      </div>
+    </div>
+    <div class="tp-setting">
+      <div class="tp-setting-row">
+        <label style="margin:0">Mirror vertical</label>
+        <button class="tp-toggle" id="tpMirrorY" onclick="tpToggleMirror('y',this)"></button>
+      </div>
+    </div>
+    <div class="tp-setting">
+      <div class="tp-setting-row">
+        <label style="margin:0">Countdown</label>
+        <button class="tp-toggle on" id="tpCountdownToggle" onclick="this.classList.toggle('on');TP.countdown=this.classList.contains('on');tpSaveSettings()"></button>
+      </div>
+    </div>
+    <div class="tp-setting">
+      <div class="tp-setting-row">
+        <label style="margin:0">Reading line</label>
+        <button class="tp-toggle on" id="tpLineToggle" onclick="tpToggleLine(this)"></button>
+      </div>
+    </div>
+    <div class="tp-setting">
+      <label>Line position</label>
+      <input type="range" id="tpLinePosSlider" min="20" max="60" value="40" oninput="tpSetLinePos(this.value)">
+    </div>
+  </div>
+  <div class="tp-landscape-hint" id="tpLandscapeHint">Better in landscape</div>
+</div>
 
 <!-- ── FOOTER ────────────────────────────────────────────────────────── -->
 <footer style="border-top:1px solid var(--border);padding:32px 24px;text-align:center;color:var(--text2);font-size:.75rem">
