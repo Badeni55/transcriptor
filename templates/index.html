@@ -2388,8 +2388,62 @@
     }
 
     /* Tutorial button */
+    /* Idea FAB — pill on desktop, circle on mobile */
+    .idea-fab {
+      position: fixed; bottom: 24px; right: 24px; z-index: 200;
+      height: 48px; border-radius: 9999px;
+      background: linear-gradient(135deg, #f97316, #FBBF24);
+      border: none; cursor: pointer; display: none;
+      align-items: center; justify-content: center; gap: 8px;
+      padding: 0 20px;
+      box-shadow: 0 4px 16px rgba(249,115,22,.4);
+      transition: transform .2s, box-shadow .2s;
+      animation: fabIn .4s cubic-bezier(.34,1.56,.64,1) 1s both;
+      font-family: var(--font-body); font-size: .85rem; font-weight: 600;
+      color: #fff; white-space: nowrap;
+    }
+    .idea-fab.on { display: flex; }
+    .idea-fab:hover { transform: scale(1.03); box-shadow: 0 6px 24px rgba(249,115,22,.5); }
+    .idea-fab svg { width: 20px; height: 20px; flex-shrink: 0; }
+    .idea-fab-label { }
+    @keyframes fabIn { from { transform: scale(0); } to { transform: scale(1); } }
+    @keyframes fabPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+    .idea-fab:not(:hover) { animation: fabIn .4s cubic-bezier(.34,1.56,.64,1) 1s both, fabPulse .6s ease 10s infinite; }
+
+    /* Onboarding tooltip */
+    .idea-fab-onboard {
+      position: fixed; bottom: 80px; right: 24px; z-index: 201;
+      max-width: 260px; padding: 14px 16px;
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 12px; box-shadow: var(--sh-lg);
+      font-size: .82rem; color: var(--text2); line-height: 1.5;
+      display: none;
+      animation: onboardIn .25s ease;
+    }
+    .idea-fab-onboard.on { display: block; }
+    .idea-fab-onboard::after {
+      content: ""; position: absolute; bottom: -6px; right: 28px;
+      width: 12px; height: 12px; background: var(--surf);
+      border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      transform: rotate(45deg);
+    }
+    .idea-fab-onboard-x {
+      position: absolute; top: 6px; right: 8px;
+      background: none; border: none; color: var(--text3); cursor: pointer;
+      font-size: .8rem; padding: 2px 4px;
+    }
+    @keyframes onboardIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    @media (max-width: 768px) {
+      .idea-fab { width: 52px; height: 52px; padding: 0; bottom: 90px; right: 16px; }
+      .idea-fab-label { display: none; }
+      .idea-fab svg { width: 24px; height: 24px; }
+      .idea-fab-onboard { bottom: 150px; right: 16px; }
+      .idea-fab-onboard::after { right: 20px; }
+    }
+
     .btn-tutorial {
-      position: fixed; bottom: 16px; right: 16px; z-index: 200;
+      position: fixed; bottom: 16px; left: 16px; z-index: 200;
       background: var(--surf); border: 1px solid var(--border);
       color: var(--text3); font-size: .78rem; padding: 7px 14px;
       border-radius: var(--rsm); cursor: pointer; transition: all .2s;
@@ -3406,6 +3460,16 @@ const LANGS = {
     "ideas.delete_confirm": "¿Eliminar esta idea?",
     "ideas.regenerate": "Regenerar",
     "ideas.to_script": "Crear guión",
+    "ideas.fab_tooltip": "Apunta una idea",
+    "ideas.onboard_tip": "Apunta aquí cualquier idea que se te ocurra. Te la desarrollo y guardo al instante.",
+    "ideas.modal_title": "Apunta una idea",
+    "ideas.modal_subtitle": "Te la desarrollo y guardo.",
+    "ideas.assistant_label": "Asistente",
+    "ideas.project_label": "Proyecto",
+    "ideas.no_project": "Sin proyecto",
+    "ideas.cancel": "Cancelar",
+    "ideas.save": "Guardar",
+    "ideas.saved_toast": "Idea guardada",
     "prof.team": "Equipo",
     "prof.privacy": "Privacidad y datos",
     "prof.topup": "+ Recargar",
@@ -3633,6 +3697,16 @@ const LANGS = {
     "ideas.delete_confirm": "Delete this idea?",
     "ideas.regenerate": "Regenerate",
     "ideas.to_script": "Create script",
+    "ideas.fab_tooltip": "Capture an idea",
+    "ideas.onboard_tip": "Capture any idea here. I'll develop and save it instantly.",
+    "ideas.modal_title": "Capture an idea",
+    "ideas.modal_subtitle": "I'll develop it and save it for you.",
+    "ideas.assistant_label": "Assistant",
+    "ideas.project_label": "Project",
+    "ideas.no_project": "No project",
+    "ideas.cancel": "Cancel",
+    "ideas.save": "Save",
+    "ideas.saved_toast": "Idea saved",
     "prof.team": "Team",
     "prof.privacy": "Privacy & Data",
     "prof.topup": "+ Top up",
@@ -4284,6 +4358,7 @@ function renderLoggedIn() {
   const initial = st.user.email[0].toUpperCase();
   document.getElementById("btnLogin").style.display = "none";
   document.getElementById("btnReg").style.display = "none";
+  updateIdeaFab();
   document.getElementById("navAffiliate").style.display = "";
   document.getElementById("userPill").classList.add("on");
   document.getElementById("userEmail").textContent = st.user.email;
@@ -5584,6 +5659,8 @@ function renderLoggedOut() {
   document.getElementById("btnReg").style.display = "";
   document.getElementById("userPill").classList.remove("on");
   document.getElementById("balBadge").classList.remove("on");
+  document.getElementById("ideaFab").classList.remove("on");
+  dismissFabOnboard();
 }
 
 function renderFreeBar() {
@@ -6147,6 +6224,248 @@ function copyMobileResult() {
   showToast(t("act.copied"));
 }
 
+// ── Speech-to-text for idea capture ───────────────────────────────────────
+let _ideaRecognition = null;
+let _ideaRecording = false;
+
+function toggleIdeaMic() {
+  const btn = document.getElementById("ideaMicBtn");
+  const ta = document.getElementById("ideaCaptureText");
+
+  if (_ideaRecording) {
+    if (_ideaRecognition) _ideaRecognition.stop();
+    return;
+  }
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showToast(currentLang === "es" ? "Tu navegador no soporta dictado" : "Your browser doesn't support dictation"); return; }
+
+  _ideaRecognition = new SR();
+  _ideaRecognition.lang = currentLang === "es" ? "es-ES" : "en-US";
+  _ideaRecognition.continuous = true;
+  _ideaRecognition.interimResults = true;
+
+  let finalTranscript = "";
+
+  _ideaRecognition.onstart = () => {
+    _ideaRecording = true;
+    btn.style.background = "rgba(239,68,68,.15)";
+    btn.style.borderColor = "#ef4444";
+    btn.style.color = "#ef4444";
+    btn.style.animation = "fabPulse .8s ease infinite";
+  };
+
+  _ideaRecognition.onresult = (e) => {
+    let interim = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) {
+        finalTranscript += e.results[i][0].transcript + " ";
+      } else {
+        interim += e.results[i][0].transcript;
+      }
+    }
+    const existing = ta.value.replace(/\n?🎙.*$/, "");
+    ta.value = existing + (existing && !existing.endsWith(" ") ? " " : "") + finalTranscript + (interim ? "🎙 " + interim : "");
+    ta.dispatchEvent(new Event("input"));
+  };
+
+  _ideaRecognition.onend = () => {
+    _ideaRecording = false;
+    btn.style.background = "";
+    btn.style.borderColor = "";
+    btn.style.color = "";
+    btn.style.animation = "";
+    // Clean interim marker
+    ta.value = ta.value.replace(/🎙\s*.*$/, "").trim();
+    if (finalTranscript.trim()) {
+      ta.value = (ta.value ? ta.value + " " : "") + finalTranscript.trim();
+    }
+    ta.dispatchEvent(new Event("input"));
+    finalTranscript = "";
+    _ideaRecognition = null;
+  };
+
+  _ideaRecognition.onerror = (e) => {
+    if (e.error !== "aborted") showToast(currentLang === "es" ? "Error de micrófono" : "Microphone error");
+    _ideaRecognition.stop();
+  };
+
+  _ideaRecognition.start();
+}
+
+// ── Idea FAB + capture modal ──────────────────────────────────────────────
+const _savingMsgs = {
+  es: ["Desarrollando…", "Estructurando el guión…", "Casi…"],
+  en: ["Developing…", "Structuring the script…", "Almost…"],
+};
+
+let _fabOnboardTimer = null;
+
+function updateIdeaFab() {
+  const fab = document.getElementById("ideaFab");
+  if (!fab) return;
+  fab.classList.toggle("on", !!st.user);
+  // Update label
+  const label = document.getElementById("ideaFabLabel");
+  if (label) label.textContent = t("ideas.fab_tooltip");
+  // Onboarding tooltip (first time only)
+  if (st.user && !localStorage.getItem("ideas_fab_onboarded")) {
+    _fabOnboardTimer = setTimeout(showFabOnboard, 2000);
+  }
+}
+
+function showFabOnboard() {
+  const el = document.getElementById("ideaFabOnboard");
+  const txt = document.getElementById("ideaFabOnboardTxt");
+  if (!el || !txt) return;
+  txt.textContent = t("ideas.onboard_tip");
+  el.classList.add("on");
+  // Auto-dismiss after 12s
+  _fabOnboardTimer = setTimeout(dismissFabOnboard, 12000);
+}
+
+function dismissFabOnboard() {
+  clearTimeout(_fabOnboardTimer);
+  const el = document.getElementById("ideaFabOnboard");
+  if (el) el.classList.remove("on");
+  localStorage.setItem("ideas_fab_onboarded", "true");
+}
+
+function onFabClick() {
+  dismissFabOnboard();
+  openIdeaModal();
+}
+
+function openIdeaModal() {
+  const ta = document.getElementById("ideaCaptureText");
+  ta.value = "";
+  document.getElementById("ideaCaptureErr").classList.remove("on");
+  const btn = document.getElementById("ideaCaptureSaveBtn");
+  btn.disabled = true; btn.style.opacity = ".5"; btn.textContent = t("ideas.save");
+
+  // Set placeholder based on lang
+  ta.placeholder = currentLang === "es"
+    ? "Escribe tu idea cruda. Una frase, un párrafo, lo que sea."
+    : "Write your raw idea. A sentence, a paragraph, whatever.";
+
+  // Populate assistants
+  const asstSel = document.getElementById("ideaCaptureAsst");
+  asstSel.querySelectorAll("option[data-custom]").forEach(o => o.remove());
+  if (userAssistants && userAssistants.length) {
+    userAssistants.forEach(a => {
+      const opt = document.createElement("option");
+      opt.value = a.id; opt.textContent = a.name; opt.dataset.custom = "1";
+      asstSel.appendChild(opt);
+    });
+  }
+
+  // Populate projects
+  const projWrap = document.getElementById("ideaCaptureProjectWrap");
+  const projSel = document.getElementById("ideaCaptureProj");
+  if (projectsCache && projectsCache.length) {
+    projWrap.style.display = "";
+    projSel.innerHTML = `<option value="">${t("ideas.no_project")}</option>` +
+      projectsCache.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("");
+  } else {
+    projWrap.style.display = "none";
+  }
+
+  openModal("ideaCaptureOverlay");
+  setTimeout(() => ta.focus(), 100);
+}
+
+function closeIdeaModal() {
+  if (_ideaRecognition) _ideaRecognition.stop();
+  const ta = document.getElementById("ideaCaptureText");
+  if (ta.value.trim().length > 0) {
+    if (!confirm(currentLang === "es" ? "¿Descartar la idea?" : "Discard the idea?")) return;
+  }
+  closeModal("ideaCaptureOverlay");
+}
+
+function ideaCaptureBackdrop(e) {
+  if (e.target === document.getElementById("ideaCaptureOverlay")) closeIdeaModal();
+}
+
+// Enable save button when text > 5 chars
+document.addEventListener("DOMContentLoaded", () => {
+  const ta = document.getElementById("ideaCaptureText");
+  if (ta) ta.addEventListener("input", () => {
+    const valid = ta.value.trim().length >= 5;
+    const btn = document.getElementById("ideaCaptureSaveBtn");
+    btn.disabled = !valid;
+    btn.style.opacity = valid ? "1" : ".5";
+  });
+});
+
+async function saveIdeaCapture() {
+  const ta = document.getElementById("ideaCaptureText");
+  const btn = document.getElementById("ideaCaptureSaveBtn");
+  const err = document.getElementById("ideaCaptureErr");
+  err.classList.remove("on");
+
+  const text = ta.value.trim();
+  if (text.length < 5) return;
+
+  btn.disabled = true;
+  const msgs = _savingMsgs[currentLang] || _savingMsgs.en;
+  let msgIdx = 0;
+  btn.textContent = msgs[0];
+  const msgTimer = setInterval(() => {
+    msgIdx = (msgIdx + 1) % msgs.length;
+    btn.textContent = msgs[msgIdx];
+  }, 2000);
+
+  const body = { raw_text: text, language: currentLang };
+  const asstId = document.getElementById("ideaCaptureAsst").value;
+  const projId = document.getElementById("ideaCaptureProj").value;
+  if (asstId) body.assistant_id = asstId;
+  if (projId) body.project_id = projId;
+
+  try {
+    const res = await fetch("/ideas", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    clearInterval(msgTimer);
+    const d = await res.json();
+
+    if (!res.ok) {
+      err.textContent = d.error || "Error";
+      err.classList.add("on");
+      btn.disabled = false; btn.style.opacity = "1"; btn.textContent = t("ideas.save");
+      return;
+    }
+
+    closeModal("ideaCaptureOverlay");
+    showToast(t("ideas.saved_toast"));
+  } catch {
+    clearInterval(msgTimer);
+    err.textContent = t("toast.error_connection");
+    err.classList.add("on");
+    btn.disabled = false; btn.style.opacity = "1"; btn.textContent = t("ideas.save");
+  }
+}
+
+// Keyboard shortcuts
+document.addEventListener("keydown", e => {
+  // Cmd/Ctrl+Shift+I → open idea modal
+  if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "I") {
+    e.preventDefault();
+    if (st.user) openIdeaModal();
+  }
+  // Cmd/Ctrl+Enter inside idea textarea → save
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && document.activeElement?.id === "ideaCaptureText") {
+    e.preventDefault();
+    saveIdeaCapture();
+  }
+  // Escape → close idea modal
+  if (e.key === "Escape" && document.getElementById("ideaCaptureOverlay")?.classList.contains("on")) {
+    e.preventDefault();
+    closeIdeaModal();
+  }
+});
+
 function copyPreviewResult() {
   const txt = document.getElementById("previewResultText").textContent;
   if (!txt) return;
@@ -6709,6 +7028,62 @@ function startTourFromModal() {
 </script>
 
 <!-- Tutorial button -->
+<!-- Idea FAB -->
+<button class="idea-fab" id="ideaFab" onclick="onFabClick()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>
+  <span class="idea-fab-label" id="ideaFabLabel"></span>
+</button>
+
+<!-- Onboarding tooltip -->
+<div class="idea-fab-onboard" id="ideaFabOnboard">
+  <button class="idea-fab-onboard-x" onclick="dismissFabOnboard()">&#10005;</button>
+  <span id="ideaFabOnboardTxt"></span>
+</div>
+
+<!-- Idea capture modal -->
+<div class="overlay" id="ideaCaptureOverlay" onclick="ideaCaptureBackdrop(event)" style="z-index:350">
+  <div class="modal" style="max-width:520px;padding:28px 24px">
+    <button class="modal-x" onclick="closeIdeaModal()">&#10005;</button>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>
+      <div>
+        <h2 style="font-size:1.1rem;margin-bottom:2px" data-i18n="ideas.modal_title">Capture an idea</h2>
+        <p style="font-size:.78rem;color:var(--text3);margin:0;font-weight:300" data-i18n="ideas.modal_subtitle">I'll develop it and save it for you.</p>
+      </div>
+    </div>
+    <div style="position:relative;margin-top:14px">
+      <textarea id="ideaCaptureText" rows="4" style="width:100%;padding:14px 48px 14px 14px;background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text);font-family:var(--font-body);font-size:.9rem;line-height:1.5;resize:vertical;outline:none;box-sizing:border-box;max-height:200px" data-i18n-placeholder-es="Escribe tu idea cruda. Una frase, un párrafo, lo que sea." data-i18n-placeholder-en="Write your raw idea. A sentence, a paragraph, whatever."></textarea>
+      <button id="ideaMicBtn" onclick="toggleIdeaMic()" title="Dictate" style="position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;background:var(--surf);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;color:var(--text3)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+      </button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:120px">
+        <div style="font-size:.68rem;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px" data-i18n="ideas.assistant_label">Assistant</div>
+        <select id="ideaCaptureAsst" style="width:100%;padding:8px 12px;background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text2);font-size:.82rem;font-family:var(--font-body);outline:none">
+          <option value="">Neutral</option>
+          <option value="viral">Viral</option>
+          <option value="divertido">Funny</option>
+          <option value="linkedin">LinkedIn</option>
+          <option value="storytelling">Story</option>
+          <option value="hooks">5 Hooks</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:120px" id="ideaCaptureProjectWrap">
+        <div style="font-size:.68rem;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px" data-i18n="ideas.project_label">Project</div>
+        <select id="ideaCaptureProj" style="width:100%;padding:8px 12px;background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text2);font-size:.82rem;font-family:var(--font-body);outline:none">
+          <option value="" data-i18n="ideas.no_project">No project</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-err" id="ideaCaptureErr" style="margin-top:8px"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+      <button class="btn-sm" onclick="closeIdeaModal()" style="padding:10px 18px" data-i18n="ideas.cancel">Cancel</button>
+      <button id="ideaCaptureSaveBtn" onclick="saveIdeaCapture()" disabled style="padding:10px 22px;background:var(--purple);color:#fff;border:none;border-radius:var(--rsm);font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;opacity:.5" data-i18n="ideas.save">Save</button>
+    </div>
+  </div>
+</div>
+
 <button class="btn-tutorial" onclick="openTutorial()">? Tutorial</button>
 
 <!-- ADD METRICS MODAL -->
