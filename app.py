@@ -1420,6 +1420,259 @@ def metrics_winners():
     return jsonify(rows.data)
 
 
+# ── Ideas ─────────────────────────────────────────────────────────────────────
+
+IDEA_CATEGORIES = {"educational", "storytelling", "opinion", "tutorial", "humor",
+                   "case_study", "motivation", "trend", "behind_scenes", "list"}
+
+IDEA_BASE_PROMPT = (
+    "Eres un asistente de creación de contenido para creators de Instagram, "
+    "TikTok y reels. Recibes una idea cruda del usuario y la conviertes en "
+    "un borrador de guión estructurado en 3 partes: intro, desarrollo y cierre.\n\n"
+    "REGLAS:\n"
+    "- No inventes datos, números ni casos. Si la idea es vaga, desarrolla el concepto sin meter ejemplos falsos.\n"
+    "- Frases cortas, máximo 15 palabras.\n"
+    "- Sin 'increíble', sin 'chicos', sin paja.\n"
+    "- El guión debe sonar hablado, no escrito.\n"
+    "- La intro tiene que parar el scroll en los primeros 3 segundos.\n\n"
+    "CATEGORÍAS DISPONIBLES:\n"
+    "educational, storytelling, opinion, tutorial, humor, case_study, motivation, trend, behind_scenes, list\n\n"
+    "Devuelve EXCLUSIVAMENTE un JSON válido, sin texto antes ni después, sin markdown:\n"
+    '{"title":"string corto max 60 chars","category":"una de las categorías","script_draft":{"intro":"1-2 frases hook","desarrollo":"3-5 frases contenido","cierre":"1-2 frases cierre"}}'
+)
+
+
+def resolve_assistant_prompt(assistant_id, user_id=None):
+    """Returns the style instructions for an assistant_id."""
+    if not assistant_id:
+        return ""
+    # Predefined?
+    if assistant_id in STYLE_PROMPTS:
+        return STYLE_PROMPTS[assistant_id]
+    # Custom assistant from DB?
+    result = db.table("assistants").select("instructions").eq("id", assistant_id).execute()
+    if result.data:
+        return CUSTOM_BASE + result.data[0]["instructions"]
+    return ""
+
+
+def develop_idea(raw_text, assistant_id=None, user_id=None, language="es"):
+    """Call AI to develop a raw idea into structured script draft."""
+    style_block = resolve_assistant_prompt(assistant_id, user_id)
+    system = IDEA_BASE_PROMPT
+    if style_block:
+        system += f"\n\nESTILO ESPECÍFICO PARA ESTE GUIÓN:\n{style_block}"
+
+    api_key = OPENROUTER_API_KEY or GROQ_API_KEY
+    url = OPENROUTER_URL if OPENROUTER_API_KEY else "https://api.groq.com/openai/v1/chat/completions"
+    model = OPENROUTER_MODEL if OPENROUTER_API_KEY else "llama-3.3-70b-versatile"
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        **({"HTTP-Referer": "https://reelscript.net", "X-Title": "ReelScript"} if OPENROUTER_API_KEY else {}),
+    }
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": f"Idioma de salida: {language}. Idea cruda del usuario: {raw_text}"},
+        ],
+        "temperature": 0.7,
+        "max_tokens": 2000,
+    }
+    resp = requests.post(url, headers=headers, json=payload, timeout=60)
+    resp.raise_for_status()
+    content = resp.json()["choices"][0]["message"]["content"].strip()
+
+    # Parse JSON from response
+    import json as json_mod
+    # Strip markdown fences if present
+    if content.startswith("```"):
+        content = content.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+    return json_mod.loads(content)
+
+
+@app.route("/ideas", methods=["POST"])
+@require_auth
+@limiter.limit("20 per minute")
+def create_idea():
+    user = current_user()
+    body = request.get_json() or {}
+    raw_text = (body.get("raw_text") or "").strip()
+    language = body.get("language", "es")
+    project_id = body.get("project_id") or None
+    assistant_id = body.get("assistant_id") or None
+
+    if not raw_text or len(raw_text) < 5:
+        return jsonify({"error": "Idea text too short (min 5 chars)"}), 400
+    if len(raw_text) > 5000:
+        return jsonify({"error": "Idea text too long (max 5000 chars)"}), 400
+
+    # Resolve assistant: body > user default > neutral
+    if not assistant_id:
+        prof = db.table("profiles").select("default_idea_assistant").eq("id", user["id"]).execute()
+        if prof.data and prof.data[0].get("default_idea_assistant"):
+            assistant_id = prof.data[0]["default_idea_assistant"]
+
+    try:
+        result = develop_idea(raw_text, assistant_id, user["id"], language)
+    except Exception as e:
+        logger.error(f"Idea development failed: {e}", exc_info=True)
+        return jsonify({"error": "Failed to develop idea. Try again."}), 502
+
+    row = db.table("ideas").insert({
+        "user_id": user["id"],
+        "project_id": project_id,
+        "raw_text": raw_text,
+        "assistant_id": assistant_id,
+        "title": result.get("title"),
+        "category": result.get("category"),
+        "script_draft": result.get("script_draft"),
+        "status": "developed",
+    }).execute()
+
+    return jsonify(row.data[0] if row.data else result)
+
+
+@app.route("/ideas")
+@require_auth
+def list_ideas():
+    user = current_user()
+    q = db.table("ideas").select("*").eq("user_id", user["id"])
+    project_id = request.args.get("project_id")
+    category = request.args.get("category")
+    assistant_id = request.args.get("assistant_id")
+    if project_id:
+        q = q.eq("project_id", project_id)
+    if category:
+        q = q.eq("category", category)
+    if assistant_id:
+        q = q.eq("assistant_id", assistant_id)
+    limit = min(int(request.args.get("limit", 50)), 100)
+    offset = int(request.args.get("offset", 0))
+    rows = q.order("created_at", desc=True).range(offset, offset + limit - 1).execute()
+    return jsonify(rows.data)
+
+
+@app.route("/ideas/<idea_id>")
+@require_auth
+def get_idea(idea_id):
+    user = current_user()
+    row = db.table("ideas").select("*").eq("id", idea_id).eq("user_id", user["id"]).execute()
+    if not row.data:
+        return jsonify({"error": "Not found"}), 404
+    return jsonify(row.data[0])
+
+
+@app.route("/ideas/<idea_id>", methods=["PATCH"])
+@require_auth
+def update_idea(idea_id):
+    user = current_user()
+    body = request.get_json() or {}
+    updates = {}
+    for key in ("title", "category", "script_draft", "project_id", "assistant_id", "status"):
+        if key in body:
+            updates[key] = body[key]
+    if not updates:
+        return jsonify({"error": "Nothing to update"}), 400
+    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+    db.table("ideas").update(updates).eq("id", idea_id).eq("user_id", user["id"]).execute()
+    return jsonify({"ok": True})
+
+
+@app.route("/ideas/<idea_id>", methods=["DELETE"])
+@require_auth
+def delete_idea(idea_id):
+    user = current_user()
+    db.table("ideas").delete().eq("id", idea_id).eq("user_id", user["id"]).execute()
+    return jsonify({"ok": True})
+
+
+@app.route("/ideas/<idea_id>/regenerate", methods=["POST"])
+@require_auth
+@limiter.limit("10 per minute")
+def regenerate_idea(idea_id):
+    user = current_user()
+    row = db.table("ideas").select("*").eq("id", idea_id).eq("user_id", user["id"]).execute()
+    if not row.data:
+        return jsonify({"error": "Not found"}), 404
+
+    idea = row.data[0]
+    body = request.get_json() or {}
+    assistant_id = body.get("assistant_id") or idea.get("assistant_id")
+    language = body.get("language", "es")
+
+    try:
+        result = develop_idea(idea["raw_text"], assistant_id, user["id"], language)
+    except Exception as e:
+        logger.error(f"Idea regeneration failed: {e}", exc_info=True)
+        return jsonify({"error": "Failed to regenerate. Try again."}), 502
+
+    db.table("ideas").update({
+        "assistant_id": assistant_id,
+        "title": result.get("title"),
+        "category": result.get("category"),
+        "script_draft": result.get("script_draft"),
+        "status": "developed",
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }).eq("id", idea_id).execute()
+
+    return jsonify(result)
+
+
+@app.route("/ideas/<idea_id>/to-script", methods=["POST"])
+@require_auth
+@limiter.limit("10 per minute")
+def idea_to_script(idea_id):
+    user = current_user()
+    row = db.table("ideas").select("*").eq("id", idea_id).eq("user_id", user["id"]).execute()
+    if not row.data:
+        return jsonify({"error": "Not found"}), 404
+
+    idea = row.data[0]
+    body = request.get_json() or {}
+    style = body.get("style", "viral")
+    draft = idea.get("script_draft") or {}
+    full_text = f"{draft.get('intro', '')}\n{draft.get('desarrollo', '')}\n{draft.get('cierre', '')}"
+
+    try:
+        result = adapt_with_ai(full_text, style)
+    except Exception as e:
+        logger.error(f"Idea to script failed: {e}", exc_info=True)
+        return jsonify({"error": "Failed to generate script. Try again."}), 502
+
+    db.table("ideas").update({
+        "status": "scripted",
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }).eq("id", idea_id).execute()
+
+    return jsonify({"script": result, "idea_id": idea_id})
+
+
+@app.route("/me/preferences")
+@require_auth
+def get_preferences():
+    user = current_user()
+    prof = db.table("profiles").select("default_idea_assistant").eq("id", user["id"]).execute()
+    data = prof.data[0] if prof.data else {}
+    return jsonify({"default_idea_assistant": data.get("default_idea_assistant")})
+
+
+@app.route("/me/preferences", methods=["PATCH"])
+@require_auth
+def update_preferences():
+    user = current_user()
+    body = request.get_json() or {}
+    updates = {}
+    if "default_idea_assistant" in body:
+        updates["default_idea_assistant"] = body["default_idea_assistant"]
+    if not updates:
+        return jsonify({"error": "Nothing to update"}), 400
+    db.table("profiles").update(updates).eq("id", user["id"]).execute()
+    return jsonify({"ok": True})
+
+
 # ── Affiliate program ────────────────────────────────────────────────────────
 
 @app.route("/affiliate/apply", methods=["POST"])
