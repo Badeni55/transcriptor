@@ -2110,7 +2110,8 @@
 
     /* Mobile responsive — Profile Hub */
     @media (max-width: 768px) {
-      .prof-layout { grid-template-columns: 1fr; height: auto; }
+      .profile-overlay { overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+      .prof-layout { grid-template-columns: 1fr; height: auto; overflow: visible; }
       .prof-sidebar {
         height: auto; border-right: none; border-bottom: 1px solid var(--border);
         overflow: visible;
