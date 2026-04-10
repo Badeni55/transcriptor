@@ -2624,6 +2624,62 @@
       #tpSettings { width: 100%; }
       .tp-speed input[type="range"] { width: 80px; }
     }
+
+    /* Teleprompter recording */
+    #tpRecBtn {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+      color: #fff; padding: 8px 16px; border-radius: 9999px;
+      cursor: pointer; font-size: .82rem; font-weight: 500;
+      transition: all .2s; font-family: var(--font-body);
+    }
+    #tpRecBtn:hover { background: rgba(255,255,255,.2); }
+    #tpRecBtn.recording { background: rgba(239,68,68,.2); border-color: rgba(239,68,68,.5); }
+    .tp-rec-dot {
+      width: 10px; height: 10px; border-radius: 50%; background: #ef4444;
+      flex-shrink: 0;
+    }
+    .tp-rec-dot.blink { animation: tpBlink 1s infinite; }
+    @keyframes tpBlink { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+    #tpPip {
+      position: absolute; z-index: 5; border-radius: 12px; overflow: hidden;
+      border: 2px solid rgba(255,255,255,.2); box-shadow: 0 4px 24px rgba(0,0,0,.5);
+      cursor: move; display: none; background: #000;
+    }
+    #tpPip.on { display: block; }
+    #tpPip.recording { border-color: #ef4444; }
+    #tpPip video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    #tpPipClose {
+      position: absolute; top: 4px; right: 4px; width: 22px; height: 22px;
+      background: rgba(0,0,0,.6); border: none; border-radius: 50%;
+      color: #fff; font-size: .65rem; cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+    }
+    #tpRecTimer { font-variant-numeric: tabular-nums; }
+    /* Recording result modal */
+    #tpRecResult {
+      position: absolute; inset: 0; z-index: 6; background: rgba(0,0,0,.9);
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      gap: 16px; padding: 24px;
+    }
+    #tpRecResult.on { display: flex; }
+    #tpRecResult video { max-width: 480px; width: 100%; border-radius: 12px; background: #000; }
+    .tp-rec-info { color: rgba(255,255,255,.5); font-size: .78rem; display: flex; gap: 16px; }
+    /* Privacy modal */
+    #tpPrivacy {
+      position: absolute; inset: 0; z-index: 7; background: rgba(0,0,0,.85);
+      display: none; align-items: center; justify-content: center; padding: 24px;
+    }
+    #tpPrivacy.on { display: flex; }
+    .tp-privacy-card {
+      background: #111; border: 1px solid rgba(255,255,255,.1); border-radius: 16px;
+      padding: 32px 28px; max-width: 400px; text-align: center;
+    }
+    .tp-privacy-card h3 { font-family: var(--font-display); font-size: 1.2rem; color: #fff; margin-bottom: 8px; }
+    .tp-privacy-card p { color: rgba(255,255,255,.5); font-size: .85rem; line-height: 1.5; margin-bottom: 20px; }
+    @media (max-width: 768px) {
+      #tpPip { width: 120px; height: 90px; }
+    }
   </style>
 </head>
 <body>
@@ -6617,10 +6673,13 @@ function tpOpen(text) {
     document.getElementById("tpLandscapeHint").style.display = "";
     setTimeout(() => document.getElementById("tpLandscapeHint").style.display = "none", 4000);
   }
+  tpRecInit();
 }
 
 function tpClose() {
-  if (TP.isPlaying && !confirm("Close teleprompter?")) return;
+  if ((TP.isPlaying || TPR.isRecording) && !confirm("Close teleprompter?")) return;
+  if (TPR.isRecording) tpRecStop();
+  tpRecCleanup();
   tpStop();
   TP.isOpen = false;
   document.getElementById("tpOverlay").classList.remove("on");
@@ -6672,6 +6731,7 @@ function tpTick() {
   if (TP.currentY >= TP.totalHeight - viewH * 0.4) {
     tpPause();
     document.getElementById("tpEnd").classList.add("on");
+    if (TPR.isRecording) tpRecStop();
     return;
   }
   document.getElementById("tpText").style.transform = `translateX(-50%) translateY(-${TP.currentY}px)`;
@@ -6702,6 +6762,7 @@ function tpSkipEnd() {
   document.getElementById("tpText").style.transform = `translateX(-50%) translateY(-${TP.currentY}px)`;
   tpPause();
   document.getElementById("tpEnd").classList.add("on");
+  if (TPR.isRecording) tpRecStop();
 }
 
 function tpSetSpeed(val, noSave) {
@@ -6788,6 +6849,7 @@ document.addEventListener("keydown", e => {
   if (e.code === "ArrowDown") { e.preventDefault(); tpSetSpeed(Math.max(20, TP.speed - 5)); document.getElementById("tpSpeedSlider").value = TP.speed; }
   if (e.code === "ArrowRight") { e.preventDefault(); tpSetFontSize(Math.min(96, TP.fontSize + 4)); document.getElementById("tpFontSlider").value = TP.fontSize; }
   if (e.code === "ArrowLeft") { e.preventDefault(); tpSetFontSize(Math.max(24, TP.fontSize - 4)); document.getElementById("tpFontSlider").value = TP.fontSize; }
+  if (e.code === "KeyR" && e.shiftKey) { e.preventDefault(); tpRecToggle(); return; }
   if (e.code === "KeyR") { tpReset(); }
   if (e.code === "KeyF") { if (document.fullscreenElement) document.exitFullscreen(); else document.getElementById("tpOverlay").requestFullscreen?.(); }
   if (e.code === "KeyM") { tpToggleMirror("x", document.getElementById("tpMirrorX")); }
@@ -6808,6 +6870,236 @@ function tpOpenFromAdapt() {
   const text = document.getElementById("previewResultText")?.textContent;
   if (text) tpOpen(text);
 }
+
+// ── Teleprompter Recording ────────────────────────────────────────────────
+const TPR = {
+  supported: !!(navigator.mediaDevices?.getUserMedia && window.MediaRecorder),
+  stream: null,
+  recorder: null,
+  chunks: [],
+  blob: null,
+  blobUrl: null,
+  isRecording: false,
+  isReady: false,
+  startTime: 0,
+  timerInterval: null,
+  maxDuration: 180, // 3 minutes in seconds
+  pipPos: null, // {x, y} for drag
+};
+
+function tpRecInit() {
+  const btn = document.getElementById("tpRecBtn");
+  if (btn) btn.style.display = TPR.supported ? "" : "none";
+}
+
+// Show privacy modal first time, then request permissions
+function tpRecToggle() {
+  if (TPR.isRecording) { tpRecStop(); return; }
+  if (TPR.isReady) { tpRecReady(); return; }
+
+  // First time? Show privacy notice
+  if (!localStorage.getItem("tp_rec_privacy")) {
+    document.getElementById("tpPrivacy").classList.add("on");
+    return;
+  }
+  tpRecRequestPermissions();
+}
+
+function tpPrivacyAccept() {
+  localStorage.setItem("tp_rec_privacy", "true");
+  document.getElementById("tpPrivacy").classList.remove("on");
+  tpRecRequestPermissions();
+}
+
+async function tpRecRequestPermissions() {
+  try {
+    const constraints = { video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }, audio: true };
+    TPR.stream = await navigator.mediaDevices.getUserMedia(constraints);
+    const pip = document.getElementById("tpPip");
+    const video = document.getElementById("tpPipVideo");
+    video.srcObject = TPR.stream;
+    video.style.transform = "scaleX(-1)"; // mirror preview
+    pip.classList.add("on");
+    TPR.isReady = true;
+    document.getElementById("tpRecLabel").textContent = "Ready";
+    // PIP drag setup
+    tpPipDrag();
+  } catch (e) {
+    showToast(currentLang === "es" ? "Necesitas dar permiso a cámara y micrófono" : "Camera and microphone permission required");
+  }
+}
+
+function tpRecReady() {
+  // Start recording — will actually begin when teleprompter plays
+  // But if already playing, start immediately
+  if (TP.isPlaying) {
+    tpRecStart();
+  } else {
+    // Hook into play
+    TPR._waitingForPlay = true;
+    document.getElementById("tpRecLabel").textContent = "Press Play";
+  }
+}
+
+// Hook: modify tpStartScroll to also start recording if waiting
+const _origTpStartScroll = tpStartScroll;
+tpStartScroll = function() {
+  _origTpStartScroll();
+  if (TPR._waitingForPlay || TPR.isReady) {
+    TPR._waitingForPlay = false;
+    tpRecStart();
+  }
+};
+
+function tpRecStart() {
+  if (!TPR.stream) return;
+  const mimeType = ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4']
+    .find(t => MediaRecorder.isTypeSupported(t)) || '';
+
+  TPR.chunks = [];
+  TPR.recorder = new MediaRecorder(TPR.stream, { mimeType: mimeType || undefined });
+  TPR.recorder.ondataavailable = e => { if (e.data.size > 0) TPR.chunks.push(e.data); };
+  TPR.recorder.onstop = () => tpRecFinished();
+  TPR.recorder.start(1000); // chunk every 1s
+
+  TPR.isRecording = true;
+  TPR.startTime = Date.now();
+  document.getElementById("tpRecBtn").classList.add("recording");
+  document.getElementById("tpRecDot").classList.add("blink");
+  document.getElementById("tpRecLabel").textContent = "REC";
+  document.getElementById("tpRecTimer").style.display = "";
+  document.getElementById("tpPip").classList.add("recording");
+
+  // Timer
+  TPR.timerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - TPR.startTime) / 1000);
+    const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
+    const ss = String(elapsed % 60).padStart(2, "0");
+    document.getElementById("tpRecTimer").textContent = `${mm}:${ss}`;
+    // Max duration check
+    if (elapsed >= TPR.maxDuration) {
+      tpRecStop();
+      showToast(currentLang === "es" ? "Límite de 3 minutos alcanzado" : "3 minute limit reached");
+    }
+  }, 500);
+}
+
+function tpRecStop() {
+  if (TPR.recorder && TPR.recorder.state !== "inactive") {
+    TPR.recorder.stop();
+  }
+  clearInterval(TPR.timerInterval);
+  TPR.isRecording = false;
+  document.getElementById("tpRecBtn").classList.remove("recording");
+  document.getElementById("tpRecDot").classList.remove("blink");
+  document.getElementById("tpRecLabel").textContent = "Record";
+  document.getElementById("tpRecTimer").style.display = "none";
+  document.getElementById("tpPip").classList.remove("recording");
+}
+
+function tpRecFinished() {
+  const mimeType = TPR.recorder?.mimeType || "video/webm";
+  TPR.blob = new Blob(TPR.chunks, { type: mimeType });
+  if (TPR.blobUrl) URL.revokeObjectURL(TPR.blobUrl);
+  TPR.blobUrl = URL.createObjectURL(TPR.blob);
+
+  const preview = document.getElementById("tpRecPreview");
+  preview.src = TPR.blobUrl;
+
+  const elapsed = Math.floor((Date.now() - TPR.startTime) / 1000);
+  const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
+  const ss = String(elapsed % 60).padStart(2, "0");
+  document.getElementById("tpRecDuration").textContent = `${mm}:${ss}`;
+  const sizeMB = (TPR.blob.size / (1024 * 1024)).toFixed(1);
+  document.getElementById("tpRecSize").textContent = `${sizeMB} MB`;
+
+  document.getElementById("tpRecResult").classList.add("on");
+  tpPause(); // pause teleprompter
+}
+
+function tpRecDownload() {
+  if (!TPR.blob) return;
+  const ext = TPR.blob.type.includes("mp4") ? "mp4" : "webm";
+  const a = document.createElement("a");
+  a.href = TPR.blobUrl;
+  a.download = `reelscript-${Date.now()}.${ext}`;
+  a.click();
+}
+
+function tpRecRetake() {
+  tpRecResultClose();
+  TPR.blob = null;
+  TPR.chunks = [];
+  if (TPR.blobUrl) { URL.revokeObjectURL(TPR.blobUrl); TPR.blobUrl = null; }
+  tpReset();
+  // Go back to ready state
+  document.getElementById("tpRecLabel").textContent = "Ready";
+}
+
+function tpRecResultClose() {
+  document.getElementById("tpRecResult").classList.remove("on");
+  document.getElementById("tpRecPreview").src = "";
+}
+
+function tpRecCancel() {
+  if (TPR.isRecording) {
+    if (!confirm(currentLang === "es" ? "¿Detener la grabación?" : "Stop recording?")) return;
+    tpRecStop();
+  }
+  tpRecCleanup();
+}
+
+function tpRecCleanup() {
+  if (TPR.stream) { TPR.stream.getTracks().forEach(t => t.stop()); TPR.stream = null; }
+  if (TPR.blobUrl) { URL.revokeObjectURL(TPR.blobUrl); TPR.blobUrl = null; }
+  TPR.blob = null; TPR.chunks = []; TPR.isReady = false; TPR.isRecording = false;
+  TPR._waitingForPlay = false;
+  clearInterval(TPR.timerInterval);
+  document.getElementById("tpPip").classList.remove("on", "recording");
+  document.getElementById("tpPipVideo").srcObject = null;
+  document.getElementById("tpRecBtn").classList.remove("recording");
+  document.getElementById("tpRecDot").classList.remove("blink");
+  document.getElementById("tpRecLabel").textContent = "Record";
+  document.getElementById("tpRecTimer").style.display = "none";
+  document.getElementById("tpRecResult").classList.remove("on");
+}
+
+// PIP drag
+function tpPipDrag() {
+  const pip = document.getElementById("tpPip");
+  let dragging = false, startX, startY, origX, origY;
+
+  function onDown(e) {
+    if (e.target.id === "tpPipClose") return;
+    dragging = true;
+    const touch = e.touches ? e.touches[0] : e;
+    startX = touch.clientX; startY = touch.clientY;
+    origX = pip.offsetLeft; origY = pip.offsetTop;
+    e.preventDefault();
+  }
+  function onMove(e) {
+    if (!dragging) return;
+    const touch = e.touches ? e.touches[0] : e;
+    pip.style.left = (origX + touch.clientX - startX) + "px";
+    pip.style.top = (origY + touch.clientY - startY) + "px";
+    pip.style.right = "auto"; pip.style.bottom = "auto";
+  }
+  function onUp() { dragging = false; }
+
+  pip.addEventListener("mousedown", onDown);
+  pip.addEventListener("touchstart", onDown, { passive: false });
+  document.addEventListener("mousemove", onMove);
+  document.addEventListener("touchmove", onMove, { passive: false });
+  document.addEventListener("mouseup", onUp);
+  document.addEventListener("touchend", onUp);
+}
+
+window.addEventListener("beforeunload", e => {
+  if (TPR.isRecording) {
+    e.preventDefault();
+    e.returnValue = "";
+  }
+});
 
 function copyPreviewResult() {
   const txt = document.getElementById("previewResultText").textContent;
@@ -7521,6 +7813,11 @@ closeTutorial = function() {
 <div id="tpOverlay">
   <div id="tpHeader">
     <button class="tp-btn" onclick="tpClose()" title="Close">✕</button>
+    <button id="tpRecBtn" onclick="tpRecToggle()" style="display:none">
+      <span class="tp-rec-dot" id="tpRecDot"></span>
+      <span id="tpRecLabel">Record</span>
+      <span id="tpRecTimer" style="display:none">00:00</span>
+    </button>
     <button class="tp-btn" onclick="tpToggleSettings()" title="Settings">⚙</button>
   </div>
   <div id="tpTextArea">
@@ -7591,6 +7888,30 @@ closeTutorial = function() {
     </div>
   </div>
   <div class="tp-landscape-hint" id="tpLandscapeHint">Better in landscape</div>
+  <div id="tpPip" style="bottom:80px;right:20px;width:200px;height:150px">
+    <video id="tpPipVideo" autoplay muted playsinline></video>
+    <button id="tpPipClose" onclick="tpRecCancel()">✕</button>
+  </div>
+  <div id="tpRecResult">
+    <h2 style="font-family:var(--font-display);font-size:1.5rem;color:#fff">Recording complete</h2>
+    <video id="tpRecPreview" controls playsinline style="max-height:50vh"></video>
+    <div class="tp-rec-info">
+      <span id="tpRecDuration"></span>
+      <span id="tpRecSize"></span>
+    </div>
+    <div style="display:flex;gap:12px">
+      <button class="tp-btn" onclick="tpRecDownload()" style="width:auto;border-radius:8px;padding:10px 24px;font-size:.85rem;background:rgba(249,115,22,.3);border-color:rgba(249,115,22,.5)">Download</button>
+      <button class="tp-btn" onclick="tpRecRetake()" style="width:auto;border-radius:8px;padding:10px 20px;font-size:.85rem">Retake</button>
+      <button class="tp-btn" onclick="tpRecResultClose()" style="width:auto;border-radius:8px;padding:10px 20px;font-size:.85rem">Close</button>
+    </div>
+  </div>
+  <div id="tpPrivacy">
+    <div class="tp-privacy-card">
+      <h3>Your video never leaves your device</h3>
+      <p>The recording is saved only in your browser and you download it to your device. Nothing is uploaded to our servers. Zero storage, zero traces.</p>
+      <button class="tp-btn" onclick="tpPrivacyAccept()" style="width:auto;border-radius:8px;padding:12px 28px;font-size:.9rem;background:rgba(249,115,22,.3);border-color:rgba(249,115,22,.5)">Got it, grant permissions</button>
+    </div>
+  </div>
 </div>
 
 <!-- ── FOOTER ────────────────────────────────────────────────────────── -->
