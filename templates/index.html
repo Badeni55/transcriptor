@@ -3086,6 +3086,52 @@
     }
     .tp-save-wrap { position: relative; display: inline-block; }
 
+    /* ── Fullcam layout mode ────────────────────────────────── */
+    #tpOverlay.tp-fullcam .tp-cam-box {
+      position: absolute !important; inset: 0 !important;
+      width: 100% !important; height: 100% !important;
+      border: none !important; border-radius: 0 !important;
+      box-shadow: none !important; z-index: 0 !important;
+      background: #000 !important;
+    }
+    #tpOverlay.tp-fullcam .tp-cam-box .tp-box-bar,
+    #tpOverlay.tp-fullcam .tp-cam-box .tp-resize-handle { display: none !important; }
+    #tpOverlay.tp-fullcam .tp-cam-box .tp-box-content { border-radius: 0; }
+    #tpOverlay.tp-fullcam .tp-text-box {
+      left: 0 !important; width: 100% !important;
+      background: rgba(0,0,0,.48) !important;
+      border: none !important; border-radius: 0 !important;
+      box-shadow: none !important; backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      z-index: 2 !important; max-height: 45vh;
+    }
+    #tpOverlay.tp-fullcam .tp-text-box .tp-box-bar,
+    #tpOverlay.tp-fullcam .tp-text-box .tp-resize-handle { display: none !important; }
+    #tpOverlay.tp-fullcam .tp-text-box .tp-box-content {
+      text-align: center; padding: 20px 24px;
+    }
+    #tpOverlay.tp-fullcam #tpTextInner {
+      max-width: 800px; margin: 0 auto;
+      text-shadow: 0 2px 8px rgba(0,0,0,.7);
+    }
+    /* Layout pills in settings */
+    .tp-layout-pills { display: flex; gap: 6px; margin-bottom: 14px; }
+    .tp-layout-pill {
+      flex: 1; padding: 8px 4px; border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06); color: rgba(255,255,255,.5);
+      cursor: pointer; font-size: .78rem; font-weight: 600;
+      text-align: center; transition: all .15s;
+    }
+    .tp-layout-pill.on {
+      background: rgba(249,115,22,.25); border-color: rgba(249,115,22,.5); color: #f97316;
+    }
+    .tp-layout-pill:hover { background: rgba(255,255,255,.1); }
+    .tp-fullcam-only { display: none; }
+    #tpSettings.tp-mode-fullcam .tp-fullcam-only { display: block; }
+    .tp-free-only { display: block; }
+    #tpSettings.tp-mode-fullcam .tp-free-only { display: none; }
+
     /* ── Draggable boxes ──────────────────────────────────────── */
     .tp-text-box,
     .tp-cam-box {
@@ -4190,6 +4236,10 @@ const LANGS = {
     "tp.recording": "Grabación",
     "tp.countdown": "Cuenta atrás",
     "tp.countdown_tip": "Cuántos segundos desde que pulsas REC hasta que empiezas a hablar.",
+    "tp.layout": "Modo",
+    "tp.layout_free": "Cajas",
+    "tp.layout_fullcam": "Cámara completa",
+    "tp.text_pos": "Posición del texto",
     "tp.reset_pos": "Resetear posiciones",
     "tp.close_tp": "Cerrar teleprompter",
     "prof.privacy": "Privacidad y datos",
@@ -4455,6 +4505,10 @@ const LANGS = {
     "tp.recording": "Recording",
     "tp.countdown": "Countdown",
     "tp.countdown_tip": "How many seconds from REC press to start speaking.",
+    "tp.layout": "Mode",
+    "tp.layout_free": "Boxes",
+    "tp.layout_fullcam": "Full camera",
+    "tp.text_pos": "Text position",
     "tp.reset_pos": "Reset positions",
     "tp.close_tp": "Close teleprompter",
     "prof.privacy": "Privacy & Data",
@@ -7414,6 +7468,7 @@ const TP = {
   isOpen: false, isPlaying: false, currentY: 0, speed: 60,
   fontSize: 48, mirrorX: false, textColor: "#fff",
   countdown: true, countdownSec: 3,
+  layout: "free", textY: 5,
   rafId: null, lastTime: 0, totalHeight: 0, autoHideTimer: null,
   _boxesInitialized: false, settingsOpen: false,
 };
@@ -7429,7 +7484,7 @@ function tpSaveSettings() {
   clearTimeout(_tpSaveTimer);
   _tpSaveTimer = setTimeout(() => {
     const save = {};
-    for (const k of ["speed","fontSize","mirrorX","textColor","countdown","countdownSec"])
+    for (const k of ["speed","fontSize","mirrorX","textColor","countdown","countdownSec","layout","textY"])
       save[k] = TP[k];
     localStorage.setItem("teleprompter_settings", JSON.stringify(save));
   }, 200);
@@ -7452,6 +7507,7 @@ function tpOpen(text) {
   if (!TP._boxesInitialized) { tpInitBoxes(); TP._boxesInitialized = true; }
   requestAnimationFrame(() => { TP.totalHeight = inner.scrollHeight; });
 
+  tpApplyLayout();
   tpSetFontSize(TP.fontSize, true);
   tpSetColor(TP.textColor, null, true);
   tpSetSpeed(TP.speed, true);
@@ -7467,8 +7523,8 @@ function tpClose() {
   tpRecCleanup();
   tpStop();
   TP.isOpen = false;
-  document.getElementById("tpOverlay").classList.remove("on");
-  document.getElementById("tpSettings").classList.remove("on");
+  document.getElementById("tpOverlay").classList.remove("on", "tp-fullcam");
+  document.getElementById("tpSettings").classList.remove("on", "tp-mode-fullcam");
   TP.settingsOpen = false;
   document.body.style.overflow = "";
   document.getElementById("tpTextBox").hidden = true;
@@ -7602,7 +7658,49 @@ function tpToggleSettings() {
   if (TP.settingsOpen) tpSyncSettingsUI();
 }
 
+function tpSetLayout(mode, btn) {
+  TP.layout = mode;
+  tpApplyLayout();
+  document.querySelectorAll(".tp-layout-pill").forEach(p => p.classList.toggle("on", p.dataset.layout === mode));
+  document.getElementById("tpSettings").classList.toggle("tp-mode-fullcam", mode === "fullcam");
+  tpSaveSettings();
+}
+
+function tpApplyLayout() {
+  const overlay = document.getElementById("tpOverlay");
+  const textBox = document.getElementById("tpTextBox");
+  const camBox = document.getElementById("tpCamBox");
+  if (TP.layout === "fullcam") {
+    overlay.classList.add("tp-fullcam");
+    textBox.style.top = TP.textY + "%";
+    textBox.style.height = "";
+  } else {
+    overlay.classList.remove("tp-fullcam");
+    try {
+      const savedText = JSON.parse(localStorage.getItem("tp_text_box"));
+      const savedCam = JSON.parse(localStorage.getItem("tp_cam_box"));
+      if (savedText) _tpApplyRect(textBox, savedText);
+      if (savedCam) _tpApplyRect(camBox, savedCam);
+    } catch {}
+  }
+  requestAnimationFrame(() => {
+    const inner = document.getElementById("tpTextInner");
+    if (inner) TP.totalHeight = inner.scrollHeight;
+  });
+}
+
+function tpSetTextY(val) {
+  TP.textY = parseInt(val);
+  document.getElementById("tpTextYLabel").textContent = TP.textY + "%";
+  document.getElementById("tpTextBox").style.top = TP.textY + "%";
+  tpSaveSettings();
+}
+
 function tpSyncSettingsUI() {
+  document.querySelectorAll(".tp-layout-pill").forEach(p => p.classList.toggle("on", p.dataset.layout === TP.layout));
+  document.getElementById("tpSettings").classList.toggle("tp-mode-fullcam", TP.layout === "fullcam");
+  document.getElementById("tpTextYSlider").value = TP.textY;
+  document.getElementById("tpTextYLabel").textContent = TP.textY + "%";
   document.getElementById("tpFontSlider").value = TP.fontSize;
   document.getElementById("tpFontLabel").textContent = TP.fontSize + "px";
   document.getElementById("tpSpeedSlider").value = TP.speed;
@@ -8912,6 +9010,22 @@ closeTutorial = function() {
       <span data-i18n="tp.settings">Settings</span>
       <button class="tp-s-close" onclick="tpToggleSettings()" aria-label="Close">✕</button>
     </div>
+    <!-- Layout -->
+    <div class="tp-s-label" data-i18n="tp.layout">Mode</div>
+    <div class="tp-layout-pills" id="tpLayoutPills">
+      <button class="tp-layout-pill on" onclick="tpSetLayout('free',this)" data-layout="free" data-i18n="tp.layout_free">Boxes</button>
+      <button class="tp-layout-pill" onclick="tpSetLayout('fullcam',this)" data-layout="fullcam" data-i18n="tp.layout_fullcam">Full camera</button>
+    </div>
+    <!-- Text position (fullcam only) -->
+    <div class="tp-fullcam-only">
+      <div class="tp-s-row">
+        <label data-i18n="tp.text_pos">Text position</label>
+        <span class="tp-s-val" id="tpTextYLabel">5%</span>
+      </div>
+      <div class="tp-s-slider-wrap" style="margin-bottom:14px">
+        <input type="range" id="tpTextYSlider" min="0" max="55" value="5" oninput="tpSetTextY(this.value)">
+      </div>
+    </div>
     <!-- Text -->
     <div class="tp-s-label" data-i18n="tp.text">Text</div>
     <div class="tp-s-row">
@@ -8963,7 +9077,9 @@ closeTutorial = function() {
     <div class="tp-s-tip" data-i18n="tp.countdown_tip">How many seconds from REC press to start speaking.</div>
     <div class="tp-s-sep"></div>
     <!-- Actions -->
-    <button class="tp-s-action" onclick="tpResetBoxPositions()" data-i18n="tp.reset_pos">Reset positions</button>
+    <div class="tp-free-only">
+      <button class="tp-s-action" onclick="tpResetBoxPositions()" data-i18n="tp.reset_pos">Reset positions</button>
+    </div>
     <button class="tp-s-action danger" onclick="tpClose()" data-i18n="tp.close_tp">Close teleprompter</button>
   </div>
   <div id="tpRecResult">
