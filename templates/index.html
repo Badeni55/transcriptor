@@ -3186,6 +3186,7 @@
         <button class="prof-nav-item" id="profNavMetrics" style="display:none" onclick="profTab('metrics')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="10" width="3" height="5" fill="currentColor" opacity=".4"/><rect x="5" y="7" width="3" height="8" fill="currentColor" opacity=".6"/><rect x="9" y="4" width="3" height="11" fill="currentColor" opacity=".8"/><rect x="13" y="1" width="3" height="14" fill="currentColor"/></svg><span data-i18n="prof.metrics">Metrics</span></button>
         <button class="prof-nav-item" id="profNavIdeas" style="display:none" onclick="profTab('ideas')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="3" y="1" width="10" height="2" fill="currentColor"/><rect x="2" y="3" width="12" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="6" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="9" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.ideas">Ideas</span></button>
         <button class="prof-nav-item" id="profNavTeam" style="display:none" onclick="profTab('team')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><circle cx="5" cy="4" r="2.5" fill="currentColor"/><circle cx="11" cy="4" r="2.5" fill="currentColor" opacity=".6"/><rect x="1" y="8" width="8" height="5" rx="2" fill="currentColor"/><rect x="7" y="8" width="8" height="5" rx="2" fill="currentColor" opacity=".5"/></svg><span data-i18n="prof.team">Team</span></button>
+        <button class="prof-nav-item" id="profNavTeleprompter" onclick="openTeleprompterPicker()" style="display:none"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="1" width="14" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="8" height="1.5" fill="currentColor" opacity=".5"/><rect x="4" y="7" width="6" height="1.5" fill="currentColor" opacity=".3"/><rect x="5" y="13" width="6" height="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.teleprompter">Teleprompter</span></button>
         <button class="prof-nav-item" id="profNavPrivacy" onclick="profTab('privacy')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="3" y="6" width="10" height="9" rx="1" fill="currentColor" opacity=".6"/><rect x="5" y="1" width="6" height="7" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="7" y="9" width="2" height="3" fill="#0a0b0f"/></svg><span data-i18n="prof.privacy">Privacy &amp; Data</span></button>
       </div>
 
@@ -3628,6 +3629,10 @@ const LANGS = {
     "ideas.draft": "Borrador",
     "ideas.develop_now": "Desarrollar ahora",
     "prof.team": "Equipo",
+    "prof.teleprompter": "Teleprompter",
+    "tp.picker_title": "Abrir en Teleprompter",
+    "tp.picker_desc": "Elige un guion o idea para leer",
+    "tp.no_content": "No hay contenido disponible para el teleprompter",
     "prof.privacy": "Privacidad y datos",
     "prof.topup": "+ Recargar",
     "prof.manage_sub": "Gestionar suscripción",
@@ -3874,6 +3879,10 @@ const LANGS = {
     "ideas.draft": "Draft",
     "ideas.develop_now": "Develop now",
     "prof.team": "Team",
+    "prof.teleprompter": "Teleprompter",
+    "tp.picker_title": "Open in Teleprompter",
+    "tp.picker_desc": "Choose a script or idea to read",
+    "tp.no_content": "No content available for the teleprompter",
     "prof.privacy": "Privacy & Data",
     "prof.topup": "+ Top up",
     "prof.manage_sub": "Manage subscription",
@@ -4659,6 +4668,7 @@ function renderProfileHub() {
   document.getElementById("profNavAssistants").style.display = hasPaidPlan ? "" : "none";
   document.getElementById("profNavMetrics").style.display = hasPaidPlan ? "" : "none";
   document.getElementById("profNavIdeas").style.display = hasPaidPlan ? "" : "none";
+  document.getElementById("profNavTeleprompter").style.display = hasPaidPlan ? "" : "none";
   document.getElementById("profNavTeam").style.display = isAgency ? "" : "none";
   document.getElementById("profNavPrivacy").style.display = "";
 
@@ -5014,6 +5024,7 @@ function renderProfTransc() {
         <button onclick="cpHist(${it.id},this)">${t("act.copy")}</button>
         <button onclick="viewItem(${it.id})">${t("act.view")}</button>
         <button onclick="profAdaptFromTransc(${it.id})">${t("act.transform")}</button>
+        <button onclick="tpOpenFromTransc(${it.id})">${t("prof.teleprompter")}</button>
         <button onclick="saveTranscToProject(${it.id})">${t("act.to_project")}</button>
         <button class="del" onclick="delItem(${it.id},this);setTimeout(()=>{renderProfTransc();renderProfOverview();document.getElementById('profStatTransc').textContent=histCache.length},300)">${t("act.delete")}</button>
       </div>
@@ -5077,6 +5088,7 @@ function renderProfScripts() {
       <div class="prof-card-acts">
         <button onclick="cpScript('${it.id}',this)">${t("act.copy")}</button>
         <button onclick="viewScript('${it.id}')">${t("act.view")}</button>
+        <button onclick="tpOpenFromScript('${it.id}')">${t("prof.teleprompter")}</button>
         <button onclick="saveScriptCardToProject('${it.id}')">${t("act.to_project")}</button>
         <button class="del" onclick="delScript('${it.id}',this)">${t("act.delete")}</button>
       </div>
@@ -6914,6 +6926,78 @@ document.addEventListener("keydown", e => {
 });
 
 // Helper to open teleprompter from an idea
+function openTeleprompterPicker() {
+  // Collect all available texts: scripts, ideas, recent transcriptions
+  const items = [];
+  // From scriptsCache
+  if (scriptsCache && scriptsCache.length) {
+    scriptsCache.forEach(s => {
+      const text = s._src === "script" ? (s.script || s.transcription || "") : (s.content || "");
+      if (text) items.push({ title: s.title || s.style || "Script", text, type: "script" });
+    });
+  }
+  // From ideasCache
+  if (ideasCache && ideasCache.length) {
+    ideasCache.filter(i => i.status === "developed").forEach(i => {
+      const draft = i.script_draft || {};
+      const text = [draft.intro, draft.desarrollo, draft.cierre].filter(Boolean).join("\n\n");
+      if (text) items.push({ title: i.title || i.raw_text.slice(0, 40), text, type: "idea" });
+    });
+  }
+  // From histCache (transcriptions)
+  if (histCache && histCache.length) {
+    histCache.slice(0, 10).forEach(h => {
+      if (h.text) items.push({ title: `${h.platform || "Reel"} · ${fmtDate(h.created_at)}`, text: h.text, type: "transc" });
+    });
+  }
+
+  if (!items.length) {
+    showToast(t("tp.no_content"));
+    return;
+  }
+
+  const list = document.getElementById("tpPickerList");
+  const badges = { script: "Script", idea: "Idea", transc: "Transcription" };
+  const colors = { script: "rgba(167,139,250,.15);color:#a78bfa", idea: "rgba(249,115,22,.15);color:#f97316", transc: "rgba(34,197,94,.15);color:#22c55e" };
+  list.innerHTML = items.map((it, i) => `
+    <button onclick="tpPickItem(${i})" style="display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:var(--surf);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s;text-align:left;color:var(--text);font-family:var(--font-body);font-size:.85rem">
+      <span style="font-size:.62rem;font-weight:600;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:${colors[it.type]};flex-shrink:0">${badges[it.type]}</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(it.title)}</span>
+    </button>
+  `).join("");
+  window._tpPickerItems = items;
+  openModal("tpPickerOverlay");
+}
+
+function tpPickItem(idx) {
+  const item = window._tpPickerItems[idx];
+  if (!item) return;
+  closeModal("tpPickerOverlay");
+  closeProfile();
+  tpOpen(item.text);
+}
+
+function tpOpenFromText(text) {
+  closeProfile();
+  tpOpen(text);
+}
+
+function tpOpenFromScript(id) {
+  const item = scriptsCache.find(i => i.id === id);
+  if (!item) return;
+  const text = item._src === "script" ? (item.script || item.transcription || "") : (item.content || "");
+  if (!text) { showToast("No text"); return; }
+  closeProfile();
+  tpOpen(text);
+}
+
+function tpOpenFromTransc(id) {
+  const item = histCache.find(i => i.id === id);
+  if (!item || !item.text) { showToast("No text"); return; }
+  closeProfile();
+  tpOpen(item.text);
+}
+
 function tpOpenFromIdea(ideaId) {
   const idea = ideasCache.find(i => i.id === ideaId);
   if (!idea) return;
@@ -7869,6 +7953,19 @@ closeTutorial = function() {
   _origCloseTut();
 };
 </script>
+
+<!-- ── TELEPROMPTER PICKER MODAL ───────────────────────────────────── -->
+<div class="overlay" id="tpPickerOverlay" onclick="backdropClose(event,'tpPickerOverlay')" style="z-index:400">
+  <div class="modal" style="max-width:480px;padding:28px 24px">
+    <button class="modal-x" onclick="closeModal('tpPickerOverlay')">&#10005;</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <svg width="22" height="22" viewBox="0 0 16 16" shape-rendering="crispEdges" style="color:var(--purple)"><rect x="1" y="1" width="14" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="8" height="1.5" fill="currentColor" opacity=".5"/><rect x="4" y="7" width="6" height="1.5" fill="currentColor" opacity=".3"/><rect x="5" y="13" width="6" height="2" fill="currentColor" opacity=".4"/></svg>
+      <h2 style="font-size:1.05rem;margin:0" data-i18n="tp.picker_title">Open in Teleprompter</h2>
+    </div>
+    <p style="font-size:.8rem;color:var(--text3);margin-bottom:14px" data-i18n="tp.picker_desc">Choose a script or idea to read</p>
+    <div id="tpPickerList" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto"></div>
+  </div>
+</div>
 
 <!-- ── TELEPROMPTER ──────────────────────────────────────────────────── -->
 <div id="tpOverlay">
