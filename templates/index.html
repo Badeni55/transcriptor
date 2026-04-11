@@ -3618,6 +3618,15 @@ const LANGS = {
     "ideas.cancel": "Cancelar",
     "ideas.save": "Guardar",
     "ideas.saved_toast": "Idea guardada",
+    "ideas.develop_toggle": "Desarrollar con IA",
+    "ideas.save_develop": "Guardar y desarrollar",
+    "ideas.save_only": "Guardar",
+    "ideas.saving_develop": "Desarrollando idea...",
+    "ideas.saving_draft": "Guardando idea...",
+    "ideas.saved_as_draft_fallback": "No se pudo desarrollar — guardada como borrador",
+    "ideas.developed_toast": "Idea desarrollada",
+    "ideas.draft": "Borrador",
+    "ideas.develop_now": "Desarrollar ahora",
     "prof.team": "Equipo",
     "prof.privacy": "Privacidad y datos",
     "prof.topup": "+ Recargar",
@@ -3855,6 +3864,15 @@ const LANGS = {
     "ideas.cancel": "Cancel",
     "ideas.save": "Save",
     "ideas.saved_toast": "Idea saved",
+    "ideas.develop_toggle": "Develop with AI",
+    "ideas.save_develop": "Save & develop",
+    "ideas.save_only": "Save",
+    "ideas.saving_develop": "Developing idea...",
+    "ideas.saving_draft": "Saving idea...",
+    "ideas.saved_as_draft_fallback": "Could not develop — saved as draft",
+    "ideas.developed_toast": "Idea developed",
+    "ideas.draft": "Draft",
+    "ideas.develop_now": "Develop now",
     "prof.team": "Team",
     "prof.privacy": "Privacy & Data",
     "prof.topup": "+ Top up",
@@ -5587,24 +5605,30 @@ function renderIdeas() {
   }
 
   el.innerHTML = ideasCache.map(idea => {
+    const isDraft = idea.status === "draft";
     const draft = idea.script_draft || {};
     return `
     <div class="idea-card">
       <div class="idea-card-head">
-        ${idea.category ? `<span class="idea-card-cat">${esc(idea.category)}</span>` : ""}
+        ${isDraft
+          ? `<span class="idea-card-cat" style="background:rgba(255,255,255,.08);color:var(--text3)">${t("ideas.draft")}</span>`
+          : (idea.category ? `<span class="idea-card-cat">${esc(idea.category)}</span>` : "")}
         <span class="idea-card-title">${esc(idea.title || idea.raw_text.slice(0, 50))}</span>
         <span class="idea-card-date">${fmtDate(idea.created_at)}</span>
       </div>
-      <div class="idea-card-draft">
+      ${isDraft
+        ? `<div class="idea-card-draft" style="color:var(--text3);font-style:italic">${esc(idea.raw_text)}</div>`
+        : `<div class="idea-card-draft">
         ${draft.intro ? `<strong>Intro</strong>${esc(draft.intro)}` : ""}
         ${draft.desarrollo ? `<br><strong>Development</strong>${esc(draft.desarrollo)}` : ""}
         ${draft.cierre ? `<br><strong>Close</strong>${esc(draft.cierre)}` : ""}
       </div>
-      <div style="font-size:.72rem;color:var(--text3);margin-bottom:10px">${esc(idea.raw_text.slice(0, 100))}${idea.raw_text.length > 100 ? "..." : ""}</div>
+      <div style="font-size:.72rem;color:var(--text3);margin-bottom:10px">${esc(idea.raw_text.slice(0, 100))}${idea.raw_text.length > 100 ? "..." : ""}</div>`}
       <div class="idea-card-acts">
-        <button class="btn-sm" onclick="regenerateIdea('${idea.id}')">${t("ideas.regenerate")}</button>
-        <button class="btn-sm" onclick="ideaToScript('${idea.id}')">${t("ideas.to_script")}</button>
-        <button class="btn-sm" onclick="tpOpenFromIdea('${idea.id}')">Teleprompter</button>
+        ${isDraft ? `<button class="btn-sm" style="background:var(--purple);color:#fff;border:none" onclick="developIdeaNow('${idea.id}')">${t("ideas.develop_now")}</button>` : ""}
+        ${!isDraft ? `<button class="btn-sm" onclick="regenerateIdea('${idea.id}')">${t("ideas.regenerate")}</button>` : ""}
+        ${!isDraft ? `<button class="btn-sm" onclick="ideaToScript('${idea.id}')">${t("ideas.to_script")}</button>` : ""}
+        ${!isDraft ? `<button class="btn-sm" onclick="tpOpenFromIdea('${idea.id}')">Teleprompter</button>` : ""}
         <button class="btn-sm del" onclick="deleteIdea('${idea.id}')">${t("act.delete")}</button>
       </div>
     </div>`;
@@ -5674,6 +5698,18 @@ async function ideaToScript(id) {
       }
       await loadIdeas();
     } else { showToast(d.error || "Error"); }
+  } catch { showToast(t("toast.error_connection")); }
+}
+
+async function developIdeaNow(id) {
+  showToast(t("ideas.saving_develop"));
+  try {
+    const res = await fetch(`/ideas/${id}/develop`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ language: currentLang }),
+    });
+    if (res.ok) { showToast(t("ideas.developed_toast")); await loadIdeas(); }
+    else { const d = await res.json(); showToast(d.error || "Error"); }
   } catch { showToast(t("toast.error_connection")); }
 }
 
@@ -6523,6 +6559,13 @@ function openIdeaModal() {
     projWrap.style.display = "none";
   }
 
+  // Restore develop toggle preference
+  const devPref = localStorage.getItem("ideas_default_develop");
+  const toggle = document.getElementById("ideaDevelopToggle");
+  if (devPref === "0") toggle.classList.remove("on");
+  else toggle.classList.add("on");
+  updateIdeaSaveBtn();
+
   openModal("ideaCaptureOverlay");
   setTimeout(() => ta.focus(), 100);
 }
@@ -6551,27 +6594,37 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+function updateIdeaSaveBtn() {
+  const develop = document.getElementById("ideaDevelopToggle").classList.contains("on");
+  const btn = document.getElementById("ideaCaptureSaveBtn");
+  const asstSel = document.getElementById("ideaCaptureAsst");
+  btn.textContent = develop ? t("ideas.save_develop") : t("ideas.save_only");
+  asstSel.style.opacity = develop ? "1" : ".4";
+}
+
+let _pendingIdeaText = "";
+
 async function saveIdeaCapture() {
   const ta = document.getElementById("ideaCaptureText");
-  const btn = document.getElementById("ideaCaptureSaveBtn");
-  const err = document.getElementById("ideaCaptureErr");
-  err.classList.remove("on");
-
   const text = ta.value.trim();
   if (text.length < 5) return;
 
-  btn.disabled = true;
-  const msgs = _savingMsgs[currentLang] || _savingMsgs.en;
-  let msgIdx = 0;
-  btn.textContent = msgs[0];
-  const msgTimer = setInterval(() => {
-    msgIdx = (msgIdx + 1) % msgs.length;
-    btn.textContent = msgs[msgIdx];
-  }, 2000);
-
-  const body = { raw_text: text, language: currentLang };
+  const develop = document.getElementById("ideaDevelopToggle").classList.contains("on");
   const asstId = document.getElementById("ideaCaptureAsst").value;
   const projId = document.getElementById("ideaCaptureProj").value;
+
+  // Save toggle preference
+  localStorage.setItem("ideas_default_develop", develop ? "1" : "0");
+
+  // Close modal immediately
+  _pendingIdeaText = text;
+  closeModal("ideaCaptureOverlay");
+
+  // Show persistent toast
+  const toastMsg = develop ? t("ideas.saving_develop") : t("ideas.saving_draft");
+  showToast(toastMsg);
+
+  const body = { raw_text: text, language: currentLang, develop };
   if (asstId) body.assistant_id = asstId;
   if (projId) body.project_id = projId;
 
@@ -6580,23 +6633,27 @@ async function saveIdeaCapture() {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    clearInterval(msgTimer);
     const d = await res.json();
 
-    if (!res.ok) {
-      err.textContent = d.error || "Error";
-      err.classList.add("on");
-      btn.disabled = false; btn.style.opacity = "1"; btn.textContent = t("ideas.save");
+    if (!res.ok && res.status !== 200) {
+      showToast(d.error || t("toast.error_save"));
       return;
     }
 
-    closeModal("ideaCaptureOverlay");
-    showToast(t("ideas.saved_toast"));
+    // Check if it was a fallback (develop failed, saved as draft)
+    if (d.fallback) {
+      showToast(t("ideas.saved_as_draft_fallback"));
+    } else if (develop) {
+      showToast(t("ideas.developed_toast"));
+    } else {
+      showToast(t("ideas.saved_toast"));
+    }
+    _pendingIdeaText = "";
+
+    // Refresh ideas cache if tab is open
+    if (typeof loadIdeas === "function") loadIdeas();
   } catch {
-    clearInterval(msgTimer);
-    err.textContent = t("toast.error_connection");
-    err.classList.add("on");
-    btn.disabled = false; btn.style.opacity = "1"; btn.textContent = t("ideas.save");
+    showToast(t("toast.error_connection"));
   }
 }
 
@@ -7691,6 +7748,10 @@ function startTourFromModal() {
       <button id="ideaMicBtn" onclick="toggleIdeaMic()" title="Dictate" style="position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;background:var(--surf);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;color:var(--text3)">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
       </button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding:8px 12px;background:var(--surf2);border-radius:var(--rsm)">
+      <span style="font-size:.82rem;color:var(--text2)" data-i18n="ideas.develop_toggle">Develop with AI</span>
+      <button class="tp-toggle on" id="ideaDevelopToggle" onclick="this.classList.toggle('on');updateIdeaSaveBtn()"></button>
     </div>
     <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
       <div style="flex:1;min-width:120px">

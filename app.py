@@ -1509,17 +1509,29 @@ def create_idea():
     if len(raw_text) > 5000:
         return jsonify({"error": "Idea text too long (max 5000 chars)"}), 400
 
+    develop = body.get("develop", True)
+
     # Resolve assistant: body > user default > neutral
     if not assistant_id:
         prof = db.table("profiles").select("default_idea_assistant").eq("id", user["id"]).execute()
         if prof.data and prof.data[0].get("default_idea_assistant"):
             assistant_id = prof.data[0]["default_idea_assistant"]
 
-    try:
-        result = develop_idea(raw_text, assistant_id, user["id"], language)
-    except Exception as e:
-        logger.error(f"Idea development failed: {e}", exc_info=True)
-        return jsonify({"error": "Failed to develop idea. Try again."}), 502
+    if develop:
+        try:
+            result = develop_idea(raw_text, assistant_id, user["id"], language)
+        except Exception as e:
+            logger.error(f"Idea development failed: {e}", exc_info=True)
+            # Fallback: save as draft instead of failing
+            row = db.table("ideas").insert({
+                "user_id": user["id"], "project_id": project_id,
+                "raw_text": raw_text, "assistant_id": assistant_id, "status": "draft",
+            }).execute()
+            return jsonify({"ok": True, "status": "draft", "fallback": True,
+                            "idea": row.data[0] if row.data else None,
+                            "error": "Could not develop — saved as draft"}), 200
+    else:
+        result = {}
 
     row = db.table("ideas").insert({
         "user_id": user["id"],
@@ -1529,7 +1541,7 @@ def create_idea():
         "title": result.get("title"),
         "category": result.get("category"),
         "script_draft": result.get("script_draft"),
-        "status": "developed",
+        "status": "developed" if develop else "draft",
     }).execute()
 
     return jsonify(row.data[0] if row.data else result)
@@ -1587,6 +1599,42 @@ def delete_idea(idea_id):
     user = current_user()
     db.table("ideas").delete().eq("id", idea_id).eq("user_id", user["id"]).execute()
     return jsonify({"ok": True})
+
+
+@app.route("/ideas/<idea_id>/develop", methods=["POST"])
+@require_auth
+@limiter.limit("10 per minute")
+def develop_idea_endpoint(idea_id):
+    """Develop a draft idea that was saved without AI processing."""
+    user = current_user()
+    row = db.table("ideas").select("*").eq("id", idea_id).eq("user_id", user["id"]).execute()
+    if not row.data:
+        return jsonify({"error": "Not found"}), 404
+
+    idea = row.data[0]
+    if idea.get("status") != "draft":
+        return jsonify({"error": "This idea is already developed. Use /regenerate to redo it."}), 400
+
+    body = request.get_json() or {}
+    assistant_id = body.get("assistant_id") or idea.get("assistant_id")
+    language = body.get("language", "es")
+
+    try:
+        result = develop_idea(idea["raw_text"], assistant_id, user["id"], language)
+    except Exception as e:
+        logger.error(f"Idea development failed: {e}", exc_info=True)
+        return jsonify({"error": "Failed to develop. Try again."}), 502
+
+    db.table("ideas").update({
+        "assistant_id": assistant_id,
+        "title": result.get("title"),
+        "category": result.get("category"),
+        "script_draft": result.get("script_draft"),
+        "status": "developed",
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }).eq("id", idea_id).execute()
+
+    return jsonify(result)
 
 
 @app.route("/ideas/<idea_id>/regenerate", methods=["POST"])
