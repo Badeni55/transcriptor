@@ -2884,22 +2884,6 @@
     .tp-btn:hover { background: rgba(255,255,255,.2); }
     .tp-btn-play { width: 56px; height: 56px; font-size: 1.3rem; background: rgba(249,115,22,.3); border-color: rgba(249,115,22,.5); }
     .tp-btn-play:hover { background: rgba(249,115,22,.5); }
-    #tpTextArea {
-      flex: 1; position: relative; overflow: hidden;
-    }
-    #tpText {
-      position: absolute; left: 50%; width: 100%; max-width: 800px;
-      transform: translateX(-50%); padding: 60vh 24px 60vh;
-      font-size: 48px; line-height: 1.5; color: #fff;
-      font-family: var(--font-body); text-align: center;
-      white-space: pre-wrap; word-break: break-word;
-      will-change: transform;
-    }
-    #tpReadLine {
-      position: absolute; left: 0; right: 0; height: 1px;
-      background: rgba(255,255,255,.15); z-index: 1;
-      top: 40%;
-    }
     .tp-speed { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,.6); font-size: .78rem; }
     .tp-speed input[type="range"] {
       width: 100px; accent-color: #f97316;
@@ -2935,13 +2919,7 @@
     .tp-toggle.on::after { transform: translateX(18px); }
     .tp-color-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: border-color .2s; }
     .tp-color-btn.on { border-color: #f97316; }
-    .tp-landscape-hint {
-      position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
-      background: rgba(0,0,0,.7); color: rgba(255,255,255,.6); font-size: .78rem;
-      padding: 8px 16px; border-radius: 20px; z-index: 3; display: none;
-    }
     @media (max-width: 768px) {
-      #tpText { font-size: 32px; max-width: 100%; padding: 50vh 16px 50vh; }
       #tpSettings { width: 100%; }
       .tp-speed input[type="range"] { width: 80px; }
     }
@@ -2962,20 +2940,6 @@
     }
     .tp-rec-dot.blink { animation: tpBlink 1s infinite; }
     @keyframes tpBlink { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
-    #tpPip {
-      position: absolute; z-index: 5; border-radius: 12px; overflow: hidden;
-      border: 2px solid rgba(255,255,255,.2); box-shadow: 0 4px 24px rgba(0,0,0,.5);
-      cursor: move; display: none; background: #000;
-    }
-    #tpPip.on { display: block; }
-    #tpPip.recording { border-color: #ef4444; }
-    #tpPip video { width: 100%; height: 100%; object-fit: cover; display: block; }
-    #tpPipClose {
-      position: absolute; top: 4px; right: 4px; width: 22px; height: 22px;
-      background: rgba(0,0,0,.6); border: none; border-radius: 50%;
-      color: #fff; font-size: .65rem; cursor: pointer; display: flex;
-      align-items: center; justify-content: center;
-    }
     #tpRecTimer { font-variant-numeric: tabular-nums; }
     /* Recording result modal */
     #tpRecResult {
@@ -2998,49 +2962,6 @@
     }
     .tp-privacy-card h3 { font-family: var(--font-display); font-size: 1.2rem; color: #fff; margin-bottom: 8px; }
     .tp-privacy-card p { color: rgba(255,255,255,.5); font-size: .85rem; line-height: 1.5; margin-bottom: 20px; }
-    @media (max-width: 768px) {
-      #tpPip { width: 120px; height: 90px; }
-    }
-    /* ── Camera layout modes ──────────────────────────────────── */
-    #tpCamBg {
-      position: absolute; inset: 0; width: 100%; height: 100%;
-      object-fit: cover; z-index: 0; display: none;
-      transform: scaleX(-1);
-    }
-    #tpSplitCam {
-      width: 45%; flex-shrink: 0; display: none;
-      background: #000; overflow: hidden; position: relative; z-index: 1;
-    }
-    #tpSplitCam video {
-      width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);
-    }
-    /* OVERLAY — camera fills background, text on top */
-    #tpOverlay.layout-overlay #tpCamBg { display: block; }
-    #tpOverlay.layout-overlay #tpTextArea { background: rgba(0,0,0,.48); }
-    #tpOverlay.layout-overlay #tpPip { display: none !important; }
-    #tpOverlay.layout-overlay #tpSplitCam { display: none !important; }
-    /* SPLIT — camera left, text right */
-    #tpOverlay.layout-split { flex-direction: row !important; }
-    #tpOverlay.layout-split #tpSplitCam { display: flex; }
-    #tpOverlay.layout-split #tpTextArea { flex: 1; }
-    #tpOverlay.layout-split #tpPip { display: none !important; }
-    #tpOverlay.layout-split #tpCamBg { display: none !important; }
-    #tpOverlay.layout-split #tpControls { position: absolute; right: 0; width: 55%; }
-    #tpOverlay.layout-split #tpHeader { position: absolute; right: 0; width: 55%; }
-    /* PIP — floating draggable camera */
-    #tpOverlay.layout-pip #tpCamBg { display: none !important; }
-    #tpOverlay.layout-pip #tpSplitCam { display: none !important; }
-    /* Layout selector buttons */
-    .tp-layout-btns {
-      display: flex; gap: 6px;
-    }
-    .tp-layout-btn {
-      flex: 1; padding: 7px 4px; border-radius: 7px; border: 1px solid rgba(255,255,255,.15);
-      background: rgba(255,255,255,.06); color: rgba(255,255,255,.5); cursor: pointer;
-      font-size: .68rem; font-weight: 600; letter-spacing: .04em; transition: all .15s;
-      text-align: center;
-    }
-    .tp-layout-btn.on { background: rgba(249,115,22,.25); border-color: rgba(249,115,22,.5); color: #f97316; }
     /* Save hint tooltip */
     #tpSaveHint {
       position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
@@ -3055,15 +2976,7 @@
     }
     .tp-save-wrap { position: relative; display: inline-block; }
 
-    /* ── Free layout mode (new boxes active) ───────────────── */
-    #tpOverlay.tp-layout-free { background: #000; }
-    #tpOverlay.tp-layout-free #tpCamBg,
-    #tpOverlay.tp-layout-free #tpSplitCam,
-    #tpOverlay.tp-layout-free #tpPip,
-    #tpOverlay.tp-layout-free #tpTextArea,
-    #tpOverlay.tp-layout-free #tpReadLine { display: none !important; }
-
-    /* ── New draggable boxes (teleprompter redesign) ─────────── */
+    /* ── Draggable boxes ──────────────────────────────────────── */
     .tp-text-box,
     .tp-cam-box {
       position: absolute;
@@ -7363,10 +7276,9 @@ function makeResizable(el, opts) {
 // ── Teleprompter ──────────────────────────────────────────────────────────
 const TP = {
   isOpen: false, isPlaying: false, currentY: 0, speed: 60,
-  fontSize: 48, mirrorX: false, mirrorY: false, textColor: "#fff",
-  showLine: true, linePos: 40, countdown: true,
+  fontSize: 48, mirrorX: false, textColor: "#fff", countdown: true,
   rafId: null, lastTime: 0, totalHeight: 0, autoHideTimer: null,
-  useNewBoxes: false, _boxesInitialized: false,
+  _boxesInitialized: false,
 };
 
 function tpLoadSettings() {
@@ -7377,7 +7289,7 @@ function tpLoadSettings() {
 }
 function tpSaveSettings() {
   const save = {};
-  for (const k of ["speed","fontSize","mirrorX","mirrorY","textColor","showLine","linePos","countdown"])
+  for (const k of ["speed","fontSize","mirrorX","textColor","countdown"])
     save[k] = TP[k];
   localStorage.setItem("teleprompter_settings", JSON.stringify(save));
 }
@@ -7385,46 +7297,27 @@ function tpSaveSettings() {
 function tpOpen(text) {
   tpLoadSettings();
   TP.isOpen = true; TP.isPlaying = false; TP.currentY = 0;
-  TP.useNewBoxes = localStorage.getItem("tp_new_boxes") === "1";
   const overlay = document.getElementById("tpOverlay");
   overlay.classList.add("on");
   document.body.style.overflow = "hidden";
   document.getElementById("tpEnd").classList.remove("on");
   document.getElementById("tpPlayBtn").textContent = "▶";
 
-  if (TP.useNewBoxes) {
-    overlay.classList.add("tp-layout-free");
-    const inner = document.getElementById("tpTextInner");
-    document.getElementById("tpTextBox").hidden = false;
-    document.getElementById("tpCamBox").hidden = false;
-    inner.textContent = text;
-    inner.style.transform = "translateY(0)";
-    if (!TP._boxesInitialized) { tpInitNewBoxes(); TP._boxesInitialized = true; }
-    requestAnimationFrame(() => { TP.totalHeight = inner.scrollHeight; });
-  } else {
-    overlay.classList.remove("tp-layout-free");
-    const tpText = document.getElementById("tpText");
-    tpText.textContent = text;
-    tpText.style.transform = "translateX(-50%) translateY(0)";
-    document.getElementById("tpLinePosSlider").value = TP.linePos;
-    document.getElementById("tpReadLine").style.top = TP.linePos + "%";
-    document.getElementById("tpReadLine").style.display = TP.showLine ? "" : "none";
-    document.getElementById("tpLineToggle").classList.toggle("on", TP.showLine);
-    document.getElementById("tpMirrorX").classList.toggle("on", TP.mirrorX);
-    document.getElementById("tpMirrorY").classList.toggle("on", TP.mirrorY);
-    tpApplyMirror();
-    requestAnimationFrame(() => { TP.totalHeight = tpText.scrollHeight; });
-    if (window.innerWidth < 768 && window.innerHeight > window.innerWidth) {
-      document.getElementById("tpLandscapeHint").style.display = "";
-      setTimeout(() => document.getElementById("tpLandscapeHint").style.display = "none", 4000);
-    }
-  }
+  const inner = document.getElementById("tpTextInner");
+  document.getElementById("tpTextBox").hidden = false;
+  document.getElementById("tpCamBox").hidden = false;
+  inner.textContent = text;
+  inner.style.transform = "translateY(0)";
+  if (!TP._boxesInitialized) { tpInitBoxes(); TP._boxesInitialized = true; }
+  requestAnimationFrame(() => { TP.totalHeight = inner.scrollHeight; });
 
   tpSetFontSize(TP.fontSize, true);
   tpSetColor(TP.textColor, null, true);
   tpSetSpeed(TP.speed, true);
   document.getElementById("tpSpeedSlider").value = TP.speed;
   document.getElementById("tpFontSlider").value = TP.fontSize;
+  document.getElementById("tpMirrorX").classList.toggle("on", TP.mirrorX);
+  tpApplyMirror();
   document.getElementById("tpCountdownToggle").classList.toggle("on", TP.countdown);
   tpStartAutoHide();
   tpRecInit();
@@ -7436,17 +7329,13 @@ function tpClose() {
   tpRecCleanup();
   tpStop();
   TP.isOpen = false;
-  const overlay = document.getElementById("tpOverlay");
-  overlay.classList.remove("on");
-  overlay.classList.remove("tp-layout-free");
+  document.getElementById("tpOverlay").classList.remove("on");
   document.getElementById("tpSettings").classList.remove("on");
   document.body.style.overflow = "";
-  if (TP.useNewBoxes) {
-    document.getElementById("tpTextBox").hidden = true;
-    document.getElementById("tpCamBox").hidden = true;
-    const v = document.getElementById("tpCamBoxVideo");
-    if (v) v.srcObject = null;
-  }
+  document.getElementById("tpTextBox").hidden = true;
+  document.getElementById("tpCamBox").hidden = true;
+  const v = document.getElementById("tpCamBoxVideo");
+  if (v) v.srcObject = null;
 }
 
 function tpTogglePlay() {
@@ -7462,7 +7351,7 @@ function tpPlay() {
 }
 
 function tpRunCountdown(cb) {
-  const area = document.getElementById("tpTextArea");
+  const area = document.getElementById("tpOverlay");
   let count = 3;
   function show() {
     const el = document.createElement("div");
@@ -7489,20 +7378,14 @@ function tpTick() {
   const dt = (now - TP.lastTime) / 1000;
   TP.lastTime = now;
   TP.currentY += TP.speed * dt;
-  const viewH = TP.useNewBoxes
-    ? document.getElementById("tpTextBoxContent").clientHeight
-    : document.getElementById("tpTextArea").clientHeight;
+  const viewH = document.getElementById("tpTextBoxContent").clientHeight;
   if (TP.currentY >= TP.totalHeight - viewH * 0.4) {
     tpPause();
     document.getElementById("tpEnd").classList.add("on");
     if (TPR.isRecording) tpRecStop();
     return;
   }
-  if (TP.useNewBoxes) {
-    document.getElementById("tpTextInner").style.transform = `translateY(-${TP.currentY}px)`;
-  } else {
-    document.getElementById("tpText").style.transform = `translateX(-50%) translateY(-${TP.currentY}px)`;
-  }
+  document.getElementById("tpTextInner").style.transform = `translateY(-${TP.currentY}px)`;
   TP.rafId = requestAnimationFrame(tpTick);
 }
 
@@ -7515,13 +7398,8 @@ function tpPause() {
 function tpStop() {
   tpPause();
   TP.currentY = 0;
-  if (TP.useNewBoxes) {
-    const inner = document.getElementById("tpTextInner");
-    if (inner) inner.style.transform = "translateY(0)";
-  } else {
-    const tpText = document.getElementById("tpText");
-    if (tpText) tpText.style.transform = "translateX(-50%) translateY(0)";
-  }
+  const inner = document.getElementById("tpTextInner");
+  if (inner) inner.style.transform = "translateY(0)";
 }
 
 function tpReset() {
@@ -7530,15 +7408,9 @@ function tpReset() {
 }
 
 function tpSkipEnd() {
-  const viewH = TP.useNewBoxes
-    ? document.getElementById("tpTextBoxContent").clientHeight
-    : document.getElementById("tpTextArea").clientHeight;
+  const viewH = document.getElementById("tpTextBoxContent").clientHeight;
   TP.currentY = TP.totalHeight - viewH * 0.4;
-  if (TP.useNewBoxes) {
-    document.getElementById("tpTextInner").style.transform = `translateY(-${TP.currentY}px)`;
-  } else {
-    document.getElementById("tpText").style.transform = `translateX(-50%) translateY(-${TP.currentY}px)`;
-  }
+  document.getElementById("tpTextInner").style.transform = `translateY(-${TP.currentY}px)`;
   tpPause();
   document.getElementById("tpEnd").classList.add("on");
   if (TPR.isRecording) tpRecStop();
@@ -7553,11 +7425,10 @@ function tpSetSpeed(val, noSave) {
 
 function tpSetFontSize(val, noSave) {
   TP.fontSize = parseInt(val);
-  const target = TP.useNewBoxes ? document.getElementById("tpTextInner") : document.getElementById("tpText");
-  if (target) target.style.fontSize = TP.fontSize + "px";
+  const el = document.getElementById("tpTextInner");
+  if (el) el.style.fontSize = TP.fontSize + "px";
   document.getElementById("tpFontLabel").textContent = TP.fontSize + "px";
   requestAnimationFrame(() => {
-    const el = TP.useNewBoxes ? document.getElementById("tpTextInner") : document.getElementById("tpText");
     if (el) TP.totalHeight = el.scrollHeight;
   });
   if (!noSave) tpSaveSettings();
@@ -7565,8 +7436,8 @@ function tpSetFontSize(val, noSave) {
 
 function tpSetColor(color, btn, noSave) {
   TP.textColor = color;
-  const target = TP.useNewBoxes ? document.getElementById("tpTextInner") : document.getElementById("tpText");
-  if (target) target.style.color = color;
+  const el = document.getElementById("tpTextInner");
+  if (el) el.style.color = color;
   document.querySelectorAll(".tp-color-btn").forEach(b => b.classList.remove("on"));
   if (btn) btn.classList.add("on");
   else document.querySelectorAll(".tp-color-btn").forEach(b => { if (b.style.background === color) b.classList.add("on"); });
@@ -7575,30 +7446,14 @@ function tpSetColor(color, btn, noSave) {
 
 function tpToggleMirror(axis, btn) {
   if (axis === "x") TP.mirrorX = !TP.mirrorX;
-  if (axis === "y") TP.mirrorY = !TP.mirrorY;
   btn.classList.toggle("on");
   tpApplyMirror();
   tpSaveSettings();
 }
 
 function tpApplyMirror() {
-  if (TP.useNewBoxes) return;
-  const sx = TP.mirrorX ? -1 : 1;
-  const sy = TP.mirrorY ? -1 : 1;
-  document.getElementById("tpText").style.scale = `${sx} ${sy}`;
-}
-
-function tpToggleLine(btn) {
-  TP.showLine = !TP.showLine;
-  btn.classList.toggle("on");
-  document.getElementById("tpReadLine").style.display = TP.showLine ? "" : "none";
-  tpSaveSettings();
-}
-
-function tpSetLinePos(val) {
-  TP.linePos = parseInt(val);
-  document.getElementById("tpReadLine").style.top = TP.linePos + "%";
-  tpSaveSettings();
+  const v = document.getElementById("tpCamBoxVideo");
+  if (v) v.style.transform = TP.mirrorX ? "scaleX(-1)" : "";
 }
 
 function tpToggleSettings() {
@@ -7742,59 +7597,16 @@ const TPR = {
   startTime: 0,
   timerInterval: null,
   maxDuration: 180,
-  pipPos: null,
-  layout: localStorage.getItem("tp_layout") || "overlay",
 };
 
-// ── Layout ────────────────────────────────────────────────────────────────
-function tpSetLayout(mode) {
-  TPR.layout = mode;
-  localStorage.setItem("tp_layout", mode);
-  const el = document.getElementById("tpOverlay");
-  el.classList.remove("layout-overlay", "layout-split", "layout-pip");
-  el.classList.add("layout-" + mode);
-  document.querySelectorAll(".tp-layout-btn").forEach(b =>
-    b.classList.toggle("on", b.dataset.layout === mode)
-  );
-  if (TPR.stream) tpRouteCameraToLayout();
-}
-
 function tpRouteCameraToLayout() {
-  if (TP.useNewBoxes) {
-    const v = document.getElementById("tpCamBoxVideo");
-    if (v && TPR.stream) v.srcObject = TPR.stream;
-    return;
-  }
-  const pipVideo   = document.getElementById("tpPipVideo");
-  const bgVideo    = document.getElementById("tpCamBg");
-  const splitVideo = document.getElementById("tpSplitVideo");
-  const pip        = document.getElementById("tpPip");
-
-  bgVideo.srcObject    = null;
-  splitVideo.srcObject = null;
-  pipVideo.srcObject   = null;
-  pip.classList.remove("on");
-
-  if (TPR.layout === "overlay") {
-    bgVideo.srcObject = TPR.stream;
-  } else if (TPR.layout === "split") {
-    splitVideo.srcObject = TPR.stream;
-  } else {
-    pipVideo.srcObject = TPR.stream;
-    pip.classList.add("on");
-    tpPipDrag();
-  }
+  const v = document.getElementById("tpCamBoxVideo");
+  if (v && TPR.stream) v.srcObject = TPR.stream;
 }
 
 function tpRecInit() {
   const btn = document.getElementById("tpRecBtn");
   if (btn) btn.style.display = TPR.supported ? "" : "none";
-  // Apply saved layout
-  const el = document.getElementById("tpOverlay");
-  el.classList.add("layout-" + TPR.layout);
-  document.querySelectorAll(".tp-layout-btn").forEach(b =>
-    b.classList.toggle("on", b.dataset.layout === TPR.layout)
-  );
 }
 
 // ── MIME type — MP4 first for iOS ─────────────────────────────────────────
@@ -7860,13 +7672,11 @@ async function tpRecRequestPermissions() {
     TPR.isReady = true;
     document.getElementById("tpRecLabel").textContent = "Ready";
     tpRouteCameraToLayout();
-    if (TP.useNewBoxes) {
-      const track = TPR.stream.getVideoTracks()[0];
-      if (track) {
-        const s = track.getSettings();
-        if (s.width && s.height) {
-          document.getElementById("tpCamBox")._tpLockAspect = s.width / s.height;
-        }
+    const track = TPR.stream.getVideoTracks()[0];
+    if (track) {
+      const s = track.getSettings();
+      if (s.width && s.height) {
+        document.getElementById("tpCamBox")._tpLockAspect = s.width / s.height;
       }
     }
   } catch (e) {
@@ -7909,7 +7719,6 @@ function tpRecStart() {
   document.getElementById("tpRecDot").classList.add("blink");
   document.getElementById("tpRecLabel").textContent = "REC";
   document.getElementById("tpRecTimer").style.display = "";
-  if (TPR.layout === "pip") document.getElementById("tpPip").classList.add("recording");
 
   TPR.timerInterval = setInterval(() => {
     const elapsed = Math.floor((Date.now() - TPR.startTime) / 1000);
@@ -7931,7 +7740,6 @@ function tpRecStop() {
   document.getElementById("tpRecDot").classList.remove("blink");
   document.getElementById("tpRecLabel").textContent = "Record";
   document.getElementById("tpRecTimer").style.display = "none";
-  document.getElementById("tpPip").classList.remove("recording");
 }
 
 function tpRecFinished() {
@@ -8013,10 +7821,6 @@ function tpRecCleanup() {
   TPR.blob = null; TPR.chunks = []; TPR.isReady = false; TPR.isRecording = false;
   TPR._waitingForPlay = false;
   clearInterval(TPR.timerInterval);
-  document.getElementById("tpPip").classList.remove("on", "recording");
-  document.getElementById("tpPipVideo").srcObject = null;
-  document.getElementById("tpCamBg").srcObject = null;
-  document.getElementById("tpSplitVideo").srcObject = null;
   const camBoxV = document.getElementById("tpCamBoxVideo");
   if (camBoxV) camBoxV.srcObject = null;
   document.getElementById("tpRecBtn").classList.remove("recording");
@@ -8026,37 +7830,7 @@ function tpRecCleanup() {
   document.getElementById("tpRecResult").classList.remove("on");
 }
 
-// PIP drag
-function tpPipDrag() {
-  const pip = document.getElementById("tpPip");
-  let dragging = false, startX, startY, origX, origY;
-
-  function onDown(e) {
-    if (e.target.id === "tpPipClose") return;
-    dragging = true;
-    const touch = e.touches ? e.touches[0] : e;
-    startX = touch.clientX; startY = touch.clientY;
-    origX = pip.offsetLeft; origY = pip.offsetTop;
-    e.preventDefault();
-  }
-  function onMove(e) {
-    if (!dragging) return;
-    const touch = e.touches ? e.touches[0] : e;
-    pip.style.left = (origX + touch.clientX - startX) + "px";
-    pip.style.top = (origY + touch.clientY - startY) + "px";
-    pip.style.right = "auto"; pip.style.bottom = "auto";
-  }
-  function onUp() { dragging = false; }
-
-  pip.addEventListener("mousedown", onDown);
-  pip.addEventListener("touchstart", onDown, { passive: false });
-  document.addEventListener("mousemove", onMove);
-  document.addEventListener("touchmove", onMove, { passive: false });
-  document.addEventListener("mouseup", onUp);
-  document.addEventListener("touchend", onUp);
-}
-
-// ── New draggable boxes (teleprompter redesign) ──────────────────────────
+// ── Draggable boxes ──────────────────────────────────────────────────────
 function getDefaultBoxes() {
   const vw = window.innerWidth, vh = window.innerHeight;
   const mob = vw < 768;
@@ -8089,7 +7863,7 @@ function _tpReadRect(el) {
   return { x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight };
 }
 
-function tpInitNewBoxes() {
+function tpInitBoxes() {
   const textBox = document.getElementById("tpTextBox");
   const camBox = document.getElementById("tpCamBox");
   if (!textBox || !camBox) return;
@@ -8898,8 +8672,6 @@ closeTutorial = function() {
 
 <!-- ── TELEPROMPTER ──────────────────────────────────────────────────── -->
 <div id="tpOverlay">
-  <video id="tpCamBg" autoplay muted playsinline></video>
-  <div id="tpSplitCam"><video id="tpSplitVideo" autoplay muted playsinline></video></div>
   <div id="tpHeader">
     <button class="tp-btn" onclick="tpClose()" title="Close">✕</button>
     <button id="tpRecBtn" onclick="tpRecToggle()" style="display:none">
@@ -8908,10 +8680,6 @@ closeTutorial = function() {
       <span id="tpRecTimer" style="display:none">00:00</span>
     </button>
     <button class="tp-btn" onclick="tpToggleSettings()" title="Settings">⚙</button>
-  </div>
-  <div id="tpTextArea">
-    <div id="tpReadLine"></div>
-    <div id="tpText"></div>
   </div>
   <div id="tpControls">
     <button class="tp-btn" onclick="tpReset()" title="Reset">⏮</button>
@@ -8955,39 +8723,13 @@ closeTutorial = function() {
     </div>
     <div class="tp-setting">
       <div class="tp-setting-row">
-        <label style="margin:0">Mirror vertical</label>
-        <button class="tp-toggle" id="tpMirrorY" onclick="tpToggleMirror('y',this)"></button>
-      </div>
-    </div>
-    <div class="tp-setting">
-      <div class="tp-setting-row">
         <label style="margin:0">Countdown</label>
         <button class="tp-toggle on" id="tpCountdownToggle" onclick="this.classList.toggle('on');TP.countdown=this.classList.contains('on');tpSaveSettings()"></button>
       </div>
     </div>
     <div class="tp-setting">
-      <div class="tp-setting-row">
-        <label style="margin:0">Reading line</label>
-        <button class="tp-toggle on" id="tpLineToggle" onclick="tpToggleLine(this)"></button>
-      </div>
+      <button class="tp-btn" onclick="tpResetBoxPositions()" style="width:auto;border-radius:8px;padding:8px 16px;font-size:.78rem;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6)">Reset positions</button>
     </div>
-    <div class="tp-setting">
-      <label>Line position</label>
-      <input type="range" id="tpLinePosSlider" min="20" max="60" value="40" oninput="tpSetLinePos(this.value)">
-    </div>
-    <div class="tp-setting">
-      <label>Camera layout</label>
-      <div class="tp-layout-btns">
-        <button class="tp-layout-btn on" data-layout="overlay" onclick="tpSetLayout('overlay')">Overlay</button>
-        <button class="tp-layout-btn" data-layout="split" onclick="tpSetLayout('split')">Split</button>
-        <button class="tp-layout-btn" data-layout="pip" onclick="tpSetLayout('pip')">PIP</button>
-      </div>
-    </div>
-  </div>
-  <div class="tp-landscape-hint" id="tpLandscapeHint">Better in landscape</div>
-  <div id="tpPip" style="bottom:80px;right:20px;width:200px;height:150px">
-    <video id="tpPipVideo" autoplay muted playsinline></video>
-    <button id="tpPipClose" onclick="tpRecCancel()">✕</button>
   </div>
   <div id="tpRecResult">
     <h2 style="font-family:var(--font-display);font-size:1.5rem;color:#fff">Recording complete</h2>
@@ -9012,7 +8754,6 @@ closeTutorial = function() {
       <button class="tp-btn" onclick="tpPrivacyAccept()" style="width:auto;border-radius:8px;padding:12px 28px;font-size:.9rem;background:rgba(249,115,22,.3);border-color:rgba(249,115,22,.5)">Got it, grant permissions</button>
     </div>
   </div>
-  <!-- New draggable boxes (teleprompter redesign) -->
   <div class="tp-text-box" id="tpTextBox" hidden>
     <div class="tp-box-bar" data-tp-drag-handle>
       <div class="tp-box-grabber"></div>
