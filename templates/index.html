@@ -7673,7 +7673,7 @@ function tpRecFinished() {
 }
 
 // Save button handler — must be direct (no await before navigator.share)
-document.getElementById("tpSaveBtn").addEventListener("click", () => {
+document.getElementById("tpSaveBtn")?.addEventListener("click", () => {
   if (!TPR.blob) return;
   document.getElementById("tpSaveHint").style.display = "none";
   localStorage.setItem("tp_save_hint_shown", "1");
