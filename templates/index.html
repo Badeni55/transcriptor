@@ -3055,6 +3055,14 @@
     }
     .tp-save-wrap { position: relative; display: inline-block; }
 
+    /* ── Free layout mode (new boxes active) ───────────────── */
+    #tpOverlay.tp-layout-free { background: #000; }
+    #tpOverlay.tp-layout-free #tpCamBg,
+    #tpOverlay.tp-layout-free #tpSplitCam,
+    #tpOverlay.tp-layout-free #tpPip,
+    #tpOverlay.tp-layout-free #tpTextArea,
+    #tpOverlay.tp-layout-free #tpReadLine { display: none !important; }
+
     /* ── New draggable boxes (teleprompter redesign) ─────────── */
     .tp-text-box,
     .tp-cam-box {
@@ -3123,6 +3131,21 @@
     .tp-box-placeholder-cam {
       display: flex; align-items: center; justify-content: center;
       height: 100%; font-size: 48px; opacity: 0.3;
+    }
+    #tpTextInner {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .tp-cam-content {
+      padding: 0 !important;
+      position: relative;
+      background: #000;
+    }
+    #tpCamBoxVideo {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+      display: block;
     }
     .tp-resize-handle {
       position: absolute; width: 16px; height: 16px;
@@ -7258,7 +7281,7 @@ function makeDraggable(el, handleEl, opts) {
 function makeResizable(el, opts) {
   opts = opts || {};
   const onEnd = opts.onEnd || null;
-  const lockAspect = opts.lockAspect || 0;
+  if (opts.lockAspect) el._tpLockAspect = opts.lockAspect;
   const minW = opts.minW || 120;
   const minH = opts.minH || 80;
   const handleSize = opts.handleSize || (window.innerWidth < 768 ? 20 : 12);
@@ -7306,13 +7329,14 @@ function makeResizable(el, opts) {
       if (corner.includes("s")) nh = origRect.h + dy;
       if (corner.includes("n")) { nh = origRect.h - dy; ny = origRect.y + dy; }
 
-      if (lockAspect > 0) {
-        nh = nw / lockAspect;
+      const aspect = el._tpLockAspect || 0;
+      if (aspect > 0) {
+        nh = nw / aspect;
         if (corner.includes("n")) ny = origRect.y + origRect.h - nh;
       }
 
-      if (nw < minW) { if (corner.includes("w")) nx = origRect.x + origRect.w - minW; nw = minW; if (lockAspect > 0) { nh = nw / lockAspect; if (corner.includes("n")) ny = origRect.y + origRect.h - nh; } }
-      if (nh < minH) { if (corner.includes("n")) ny = origRect.y + origRect.h - minH; nh = minH; if (lockAspect > 0) { nw = nh * lockAspect; if (corner.includes("w")) nx = origRect.x + origRect.w - nw; } }
+      if (nw < minW) { if (corner.includes("w")) nx = origRect.x + origRect.w - minW; nw = minW; if (aspect > 0) { nh = nw / aspect; if (corner.includes("n")) ny = origRect.y + origRect.h - nh; } }
+      if (nh < minH) { if (corner.includes("n")) ny = origRect.y + origRect.h - minH; nh = minH; if (aspect > 0) { nw = nh * aspect; if (corner.includes("w")) nx = origRect.x + origRect.w - nw; } }
 
       const vw = window.innerWidth, vh = window.innerHeight;
       if (nx < 0) { nw += nx; nx = 0; }
@@ -7342,6 +7366,7 @@ const TP = {
   fontSize: 48, mirrorX: false, mirrorY: false, textColor: "#fff",
   showLine: true, linePos: 40, countdown: true,
   rafId: null, lastTime: 0, totalHeight: 0, autoHideTimer: null,
+  useNewBoxes: false, _boxesInitialized: false,
 };
 
 function tpLoadSettings() {
@@ -7360,36 +7385,48 @@ function tpSaveSettings() {
 function tpOpen(text) {
   tpLoadSettings();
   TP.isOpen = true; TP.isPlaying = false; TP.currentY = 0;
+  TP.useNewBoxes = localStorage.getItem("tp_new_boxes") === "1";
   const overlay = document.getElementById("tpOverlay");
-  const tpText = document.getElementById("tpText");
   overlay.classList.add("on");
   document.body.style.overflow = "hidden";
-  tpText.textContent = text;
-  tpText.style.transform = "translateX(-50%) translateY(0)";
   document.getElementById("tpEnd").classList.remove("on");
   document.getElementById("tpPlayBtn").textContent = "▶";
-  // Apply settings
+
+  if (TP.useNewBoxes) {
+    overlay.classList.add("tp-layout-free");
+    const inner = document.getElementById("tpTextInner");
+    document.getElementById("tpTextBox").hidden = false;
+    document.getElementById("tpCamBox").hidden = false;
+    inner.textContent = text;
+    inner.style.transform = "translateY(0)";
+    if (!TP._boxesInitialized) { tpInitNewBoxes(); TP._boxesInitialized = true; }
+    requestAnimationFrame(() => { TP.totalHeight = inner.scrollHeight; });
+  } else {
+    overlay.classList.remove("tp-layout-free");
+    const tpText = document.getElementById("tpText");
+    tpText.textContent = text;
+    tpText.style.transform = "translateX(-50%) translateY(0)";
+    document.getElementById("tpLinePosSlider").value = TP.linePos;
+    document.getElementById("tpReadLine").style.top = TP.linePos + "%";
+    document.getElementById("tpReadLine").style.display = TP.showLine ? "" : "none";
+    document.getElementById("tpLineToggle").classList.toggle("on", TP.showLine);
+    document.getElementById("tpMirrorX").classList.toggle("on", TP.mirrorX);
+    document.getElementById("tpMirrorY").classList.toggle("on", TP.mirrorY);
+    tpApplyMirror();
+    requestAnimationFrame(() => { TP.totalHeight = tpText.scrollHeight; });
+    if (window.innerWidth < 768 && window.innerHeight > window.innerWidth) {
+      document.getElementById("tpLandscapeHint").style.display = "";
+      setTimeout(() => document.getElementById("tpLandscapeHint").style.display = "none", 4000);
+    }
+  }
+
   tpSetFontSize(TP.fontSize, true);
   tpSetColor(TP.textColor, null, true);
   tpSetSpeed(TP.speed, true);
   document.getElementById("tpSpeedSlider").value = TP.speed;
   document.getElementById("tpFontSlider").value = TP.fontSize;
-  document.getElementById("tpLinePosSlider").value = TP.linePos;
-  document.getElementById("tpReadLine").style.top = TP.linePos + "%";
-  document.getElementById("tpReadLine").style.display = TP.showLine ? "" : "none";
-  document.getElementById("tpLineToggle").classList.toggle("on", TP.showLine);
   document.getElementById("tpCountdownToggle").classList.toggle("on", TP.countdown);
-  document.getElementById("tpMirrorX").classList.toggle("on", TP.mirrorX);
-  document.getElementById("tpMirrorY").classList.toggle("on", TP.mirrorY);
-  tpApplyMirror();
   tpStartAutoHide();
-  // Calculate total height after render
-  requestAnimationFrame(() => { TP.totalHeight = tpText.scrollHeight; });
-  // Landscape hint on mobile
-  if (window.innerWidth < 768 && window.innerHeight > window.innerWidth) {
-    document.getElementById("tpLandscapeHint").style.display = "";
-    setTimeout(() => document.getElementById("tpLandscapeHint").style.display = "none", 4000);
-  }
   tpRecInit();
 }
 
@@ -7399,9 +7436,17 @@ function tpClose() {
   tpRecCleanup();
   tpStop();
   TP.isOpen = false;
-  document.getElementById("tpOverlay").classList.remove("on");
+  const overlay = document.getElementById("tpOverlay");
+  overlay.classList.remove("on");
+  overlay.classList.remove("tp-layout-free");
   document.getElementById("tpSettings").classList.remove("on");
   document.body.style.overflow = "";
+  if (TP.useNewBoxes) {
+    document.getElementById("tpTextBox").hidden = true;
+    document.getElementById("tpCamBox").hidden = true;
+    const v = document.getElementById("tpCamBoxVideo");
+    if (v) v.srcObject = null;
+  }
 }
 
 function tpTogglePlay() {
@@ -7444,14 +7489,20 @@ function tpTick() {
   const dt = (now - TP.lastTime) / 1000;
   TP.lastTime = now;
   TP.currentY += TP.speed * dt;
-  const viewH = document.getElementById("tpTextArea").clientHeight;
+  const viewH = TP.useNewBoxes
+    ? document.getElementById("tpTextBoxContent").clientHeight
+    : document.getElementById("tpTextArea").clientHeight;
   if (TP.currentY >= TP.totalHeight - viewH * 0.4) {
     tpPause();
     document.getElementById("tpEnd").classList.add("on");
     if (TPR.isRecording) tpRecStop();
     return;
   }
-  document.getElementById("tpText").style.transform = `translateX(-50%) translateY(-${TP.currentY}px)`;
+  if (TP.useNewBoxes) {
+    document.getElementById("tpTextInner").style.transform = `translateY(-${TP.currentY}px)`;
+  } else {
+    document.getElementById("tpText").style.transform = `translateX(-50%) translateY(-${TP.currentY}px)`;
+  }
   TP.rafId = requestAnimationFrame(tpTick);
 }
 
@@ -7464,8 +7515,13 @@ function tpPause() {
 function tpStop() {
   tpPause();
   TP.currentY = 0;
-  const tpText = document.getElementById("tpText");
-  if (tpText) tpText.style.transform = "translateX(-50%) translateY(0)";
+  if (TP.useNewBoxes) {
+    const inner = document.getElementById("tpTextInner");
+    if (inner) inner.style.transform = "translateY(0)";
+  } else {
+    const tpText = document.getElementById("tpText");
+    if (tpText) tpText.style.transform = "translateX(-50%) translateY(0)";
+  }
 }
 
 function tpReset() {
@@ -7474,9 +7530,15 @@ function tpReset() {
 }
 
 function tpSkipEnd() {
-  const viewH = document.getElementById("tpTextArea").clientHeight;
+  const viewH = TP.useNewBoxes
+    ? document.getElementById("tpTextBoxContent").clientHeight
+    : document.getElementById("tpTextArea").clientHeight;
   TP.currentY = TP.totalHeight - viewH * 0.4;
-  document.getElementById("tpText").style.transform = `translateX(-50%) translateY(-${TP.currentY}px)`;
+  if (TP.useNewBoxes) {
+    document.getElementById("tpTextInner").style.transform = `translateY(-${TP.currentY}px)`;
+  } else {
+    document.getElementById("tpText").style.transform = `translateX(-50%) translateY(-${TP.currentY}px)`;
+  }
   tpPause();
   document.getElementById("tpEnd").classList.add("on");
   if (TPR.isRecording) tpRecStop();
@@ -7491,15 +7553,20 @@ function tpSetSpeed(val, noSave) {
 
 function tpSetFontSize(val, noSave) {
   TP.fontSize = parseInt(val);
-  document.getElementById("tpText").style.fontSize = TP.fontSize + "px";
+  const target = TP.useNewBoxes ? document.getElementById("tpTextInner") : document.getElementById("tpText");
+  if (target) target.style.fontSize = TP.fontSize + "px";
   document.getElementById("tpFontLabel").textContent = TP.fontSize + "px";
-  requestAnimationFrame(() => { TP.totalHeight = document.getElementById("tpText").scrollHeight; });
+  requestAnimationFrame(() => {
+    const el = TP.useNewBoxes ? document.getElementById("tpTextInner") : document.getElementById("tpText");
+    if (el) TP.totalHeight = el.scrollHeight;
+  });
   if (!noSave) tpSaveSettings();
 }
 
 function tpSetColor(color, btn, noSave) {
   TP.textColor = color;
-  document.getElementById("tpText").style.color = color;
+  const target = TP.useNewBoxes ? document.getElementById("tpTextInner") : document.getElementById("tpText");
+  if (target) target.style.color = color;
   document.querySelectorAll(".tp-color-btn").forEach(b => b.classList.remove("on"));
   if (btn) btn.classList.add("on");
   else document.querySelectorAll(".tp-color-btn").forEach(b => { if (b.style.background === color) b.classList.add("on"); });
@@ -7515,6 +7582,7 @@ function tpToggleMirror(axis, btn) {
 }
 
 function tpApplyMirror() {
+  if (TP.useNewBoxes) return;
   const sx = TP.mirrorX ? -1 : 1;
   const sy = TP.mirrorY ? -1 : 1;
   document.getElementById("tpText").style.scale = `${sx} ${sy}`;
@@ -7692,6 +7760,11 @@ function tpSetLayout(mode) {
 }
 
 function tpRouteCameraToLayout() {
+  if (TP.useNewBoxes) {
+    const v = document.getElementById("tpCamBoxVideo");
+    if (v && TPR.stream) v.srcObject = TPR.stream;
+    return;
+  }
   const pipVideo   = document.getElementById("tpPipVideo");
   const bgVideo    = document.getElementById("tpCamBg");
   const splitVideo = document.getElementById("tpSplitVideo");
@@ -7787,6 +7860,15 @@ async function tpRecRequestPermissions() {
     TPR.isReady = true;
     document.getElementById("tpRecLabel").textContent = "Ready";
     tpRouteCameraToLayout();
+    if (TP.useNewBoxes) {
+      const track = TPR.stream.getVideoTracks()[0];
+      if (track) {
+        const s = track.getSettings();
+        if (s.width && s.height) {
+          document.getElementById("tpCamBox")._tpLockAspect = s.width / s.height;
+        }
+      }
+    }
   } catch (e) {
     showToast(currentLang === "es" ? "Necesitas dar permiso a cámara y micrófono" : "Camera and microphone permission required");
   }
@@ -7935,6 +8017,8 @@ function tpRecCleanup() {
   document.getElementById("tpPipVideo").srcObject = null;
   document.getElementById("tpCamBg").srcObject = null;
   document.getElementById("tpSplitVideo").srcObject = null;
+  const camBoxV = document.getElementById("tpCamBoxVideo");
+  if (camBoxV) camBoxV.srcObject = null;
   document.getElementById("tpRecBtn").classList.remove("recording");
   document.getElementById("tpRecDot").classList.remove("blink");
   document.getElementById("tpRecLabel").textContent = "Record";
@@ -8935,8 +9019,8 @@ closeTutorial = function() {
       <span class="tp-box-title">Guión</span>
       <button class="tp-box-close" onclick="document.getElementById('tpTextBox').hidden=true" aria-label="Close">✕</button>
     </div>
-    <div class="tp-box-content" id="tpTextBoxContent">
-      <p class="tp-box-placeholder">Texto del guión</p>
+    <div class="tp-box-content" id="tpTextBoxContent" style="overflow:hidden">
+      <div id="tpTextInner"></div>
     </div>
     <div class="tp-resize-handle tp-resize-br"></div>
   </div>
@@ -8946,8 +9030,8 @@ closeTutorial = function() {
       <span class="tp-box-title">Cámara</span>
       <button class="tp-box-close" onclick="document.getElementById('tpCamBox').hidden=true" aria-label="Close">✕</button>
     </div>
-    <div class="tp-box-content">
-      <div class="tp-box-placeholder-cam">📷</div>
+    <div class="tp-box-content tp-cam-content">
+      <video id="tpCamBoxVideo" autoplay playsinline muted></video>
     </div>
     <div class="tp-resize-handle tp-resize-br"></div>
   </div>
