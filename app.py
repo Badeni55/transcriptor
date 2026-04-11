@@ -40,6 +40,7 @@ from supabase import create_client, Client  # noqa: E402 (after dotenv)
 
 app = Flask(__name__)
 app.secret_key = os.environ["FLASK_SECRET_KEY"]
+app.permanent_session_lifetime = timedelta(days=30)
 
 # ── Config ───────────────────────────────────────────────────────────────────
 
@@ -334,6 +335,7 @@ def auth_register():
             "email_confirm": True,
         })
         user = result.user
+        session.permanent = True
         session["user"] = {"id": str(user.id), "email": user.email}
         # Save terms acceptance + affiliate ref
         upsert_data = {"id": str(user.id), "terms_accepted_at": datetime.now(timezone.utc).isoformat()}
@@ -368,6 +370,7 @@ def auth_login():
             return jsonify({"error": "Email o contraseña incorrectos"}), 401
         data = resp.json()
         user = data["user"]
+        session.permanent = True
         session["user"] = {"id": user["id"], "email": user["email"]}
         return jsonify({"ok": True, "email": user["email"]})
     except Exception:

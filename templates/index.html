@@ -3507,20 +3507,22 @@
       <button class="tab on" id="tabLogin" onclick="switchTab('login')" data-i18n="auth.login">Log in</button>
       <button class="tab"    id="tabReg"   onclick="switchTab('register')" data-i18n="auth.register">Create account</button>
     </div>
-    <div class="field"><label data-i18n="auth.email">Email</label><input type="email" id="authEmail" placeholder="you@email.com" /></div>
-    <div class="field"><label data-i18n="auth.pass">Password</label><input type="password" id="authPass" placeholder="Min 6 characters" /></div>
-    <div id="forgotLink" style="text-align:right;margin:-8px 0 12px"><a href="/forgot-password" style="font-size:.75rem;color:var(--text3);text-decoration:underline" data-i18n="auth.forgot">Forgot password?</a></div>
-    <div class="form-err" id="authErr"></div>
-    <div id="termsConsent" style="display:none;margin-bottom:14px">
-      <label style="display:flex;gap:8px;align-items:flex-start;font-size:.78rem;color:var(--text2);cursor:pointer">
-        <input type="checkbox" id="termsCheck" style="margin-top:3px;accent-color:var(--purple)" />
-        <span>
-          I accept the <a href="/privacy" target="_blank" style="color:var(--purple)">Privacy Policy</a>
-          and <a href="/terms" target="_blank" style="color:var(--purple)">Terms of Service</a>
-        </span>
-      </label>
-    </div>
-    <button class="btn-full" id="btnAuthOk" onclick="submitAuth()" data-i18n="auth.login">Log in</button>
+    <form id="authForm" autocomplete="on" onsubmit="event.preventDefault();submitAuth()">
+      <div class="field"><label data-i18n="auth.email">Email</label><input type="email" id="authEmail" name="email" autocomplete="email" placeholder="you@email.com" required /></div>
+      <div class="field"><label data-i18n="auth.pass">Password</label><input type="password" id="authPass" name="password" autocomplete="current-password" placeholder="Min 6 characters" required /></div>
+      <div id="forgotLink" style="text-align:right;margin:-8px 0 12px"><a href="/forgot-password" style="font-size:.75rem;color:var(--text3);text-decoration:underline" data-i18n="auth.forgot">Forgot password?</a></div>
+      <div class="form-err" id="authErr"></div>
+      <div id="termsConsent" style="display:none;margin-bottom:14px">
+        <label style="display:flex;gap:8px;align-items:flex-start;font-size:.78rem;color:var(--text2);cursor:pointer">
+          <input type="checkbox" id="termsCheck" style="margin-top:3px;accent-color:var(--purple)" />
+          <span>
+            I accept the <a href="/privacy" target="_blank" style="color:var(--purple)">Privacy Policy</a>
+            and <a href="/terms" target="_blank" style="color:var(--purple)">Terms of Service</a>
+          </span>
+        </label>
+      </div>
+      <button type="submit" class="btn-full" id="btnAuthOk" data-i18n="auth.login">Log in</button>
+    </form>
   </div>
 </div>
 
