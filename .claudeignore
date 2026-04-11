@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.pyc
+*.db
+*.sqlite
+.DS_Store
+static/
+node_modules/
+.env*
+*.log
+carousel-claude-skills/
+carousel-crear-skill/
