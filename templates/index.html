@@ -7117,6 +7117,132 @@ document.addEventListener("keydown", e => {
   }
 });
 
+// ── Draggable / Resizable utilities ───────────────────────────────────────
+function makeDraggable(el, handleEl, opts) {
+  opts = opts || {};
+  const onEnd = opts.onEnd || null;
+  let dragging = false, startX, startY, origX, origY;
+
+  handleEl.style.cursor = "grab";
+  handleEl.style.touchAction = "none";
+
+  handleEl.addEventListener("pointerdown", e => {
+    if (e.button !== 0) return;
+    dragging = true;
+    startX = e.clientX; startY = e.clientY;
+    origX = el.offsetLeft; origY = el.offsetTop;
+    handleEl.style.cursor = "grabbing";
+    el.style.boxShadow = "0 8px 32px rgba(0,0,0,.5)";
+    el.style.outline = "2px solid rgba(249,115,22,.6)";
+    handleEl.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+
+  handleEl.addEventListener("pointermove", e => {
+    if (!dragging) return;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let nx = origX + e.clientX - startX;
+    let ny = origY + e.clientY - startY;
+    nx = Math.max(0, Math.min(nx, vw - el.offsetWidth));
+    ny = Math.max(0, Math.min(ny, vh - el.offsetHeight));
+    el.style.left = nx + "px";
+    el.style.top = ny + "px";
+    el.style.right = "auto";
+    el.style.bottom = "auto";
+  });
+
+  handleEl.addEventListener("pointerup", () => {
+    if (!dragging) return;
+    dragging = false;
+    handleEl.style.cursor = "grab";
+    el.style.boxShadow = "";
+    el.style.outline = "";
+    if (onEnd) onEnd({ x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight });
+  });
+}
+
+function makeResizable(el, opts) {
+  opts = opts || {};
+  const onEnd = opts.onEnd || null;
+  const lockRatio = opts.lockRatio || false;
+  const minW = opts.minW || 120;
+  const minH = opts.minH || 80;
+  const handleSize = opts.handleSize || (window.innerWidth < 768 ? 20 : 12);
+
+  const corners = ["se", "sw", "ne", "nw"];
+  const handles = {};
+
+  corners.forEach(corner => {
+    const h = document.createElement("div");
+    h.style.cssText = `position:absolute;width:${handleSize}px;height:${handleSize}px;z-index:10;touch-action:none;`;
+    if (corner.includes("s")) h.style.bottom = "0";
+    if (corner.includes("n")) h.style.top = "0";
+    if (corner.includes("e")) h.style.right = "0";
+    if (corner.includes("w")) h.style.left = "0";
+    h.style.cursor = corner + "-resize";
+    el.appendChild(h);
+    handles[corner] = h;
+  });
+
+  corners.forEach(corner => {
+    const h = handles[corner];
+    let resizing = false, startX, startY, origRect, origRatio;
+
+    h.addEventListener("pointerdown", e => {
+      if (e.button !== 0) return;
+      resizing = true;
+      startX = e.clientX; startY = e.clientY;
+      origRect = { x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight };
+      origRatio = origRect.w / origRect.h;
+      h.setPointerCapture(e.pointerId);
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
+    h.addEventListener("pointermove", e => {
+      if (!resizing) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      let nx = origRect.x, ny = origRect.y, nw = origRect.w, nh = origRect.h;
+
+      if (corner.includes("e")) nw = origRect.w + dx;
+      if (corner.includes("w")) { nw = origRect.w - dx; nx = origRect.x + dx; }
+      if (corner.includes("s")) nh = origRect.h + dy;
+      if (corner.includes("n")) { nh = origRect.h - dy; ny = origRect.y + dy; }
+
+      if (lockRatio) {
+        const area = Math.max(nw, nh * origRatio);
+        nw = area;
+        nh = area / origRatio;
+        if (corner.includes("w")) nx = origRect.x + origRect.w - nw;
+        if (corner.includes("n")) ny = origRect.y + origRect.h - nh;
+      }
+
+      if (nw < minW) { if (corner.includes("w")) nx = origRect.x + origRect.w - minW; nw = minW; }
+      if (nh < minH) { if (corner.includes("n")) ny = origRect.y + origRect.h - minH; nh = minH; }
+
+      const vw = window.innerWidth, vh = window.innerHeight;
+      if (nx < 0) { nw += nx; nx = 0; }
+      if (ny < 0) { nh += ny; ny = 0; }
+      if (nx + nw > vw) nw = vw - nx;
+      if (ny + nh > vh) nh = vh - ny;
+
+      el.style.left = nx + "px";
+      el.style.top = ny + "px";
+      el.style.width = nw + "px";
+      el.style.height = nh + "px";
+      el.style.right = "auto";
+      el.style.bottom = "auto";
+    });
+
+    h.addEventListener("pointerup", () => {
+      if (!resizing) return;
+      resizing = false;
+      if (onEnd) onEnd({ x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight });
+    });
+  });
+}
+
 // ── Teleprompter ──────────────────────────────────────────────────────────
 const TP = {
   isOpen: false, isPlaying: false, currentY: 0, speed: 60,
