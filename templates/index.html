@@ -2884,10 +2884,6 @@
     .tp-btn:hover { background: rgba(255,255,255,.2); }
     .tp-btn-play { width: 56px; height: 56px; font-size: 1.3rem; background: rgba(249,115,22,.3); border-color: rgba(249,115,22,.5); }
     .tp-btn-play:hover { background: rgba(249,115,22,.5); }
-    .tp-speed { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,.6); font-size: .78rem; }
-    .tp-speed input[type="range"] {
-      width: 100px; accent-color: #f97316;
-    }
     .tp-countdown {
       position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
       font-size: 120px; font-family: var(--font-display); color: #fff; z-index: 3;
@@ -2901,28 +2897,142 @@
     }
     #tpEnd.on { display: flex; }
     #tpEnd h2 { font-family: var(--font-display); font-size: 2rem; color: #fff; }
-    /* Settings drawer */
+    /* Settings panel — desktop: floating card, mobile: bottom sheet */
     #tpSettings {
-      position: absolute; top: 0; right: 0; bottom: 0; width: 300px; z-index: 4;
-      background: #111; border-left: 1px solid rgba(255,255,255,.1);
-      padding: 20px; overflow-y: auto; transform: translateX(100%);
-      transition: transform .25s ease;
+      position: absolute; z-index: 60; overflow-y: auto; overflow-x: hidden;
+      background: rgba(10,10,10,.78); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,.15); box-shadow: 0 12px 48px rgba(0,0,0,.55);
+      padding: 20px; opacity: 0; pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+      scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.15) transparent;
     }
-    #tpSettings.on { transform: translateX(0); }
-    .tp-setting { margin-bottom: 16px; }
-    .tp-setting label { display: block; font-size: .72rem; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
-    .tp-setting input[type="range"] { width: 100%; accent-color: #f97316; }
-    .tp-setting-row { display: flex; align-items: center; justify-content: space-between; }
-    .tp-toggle { width: 40px; height: 22px; border-radius: 11px; background: rgba(255,255,255,.15); border: none; cursor: pointer; position: relative; transition: background .2s; }
-    .tp-toggle.on { background: #f97316; }
-    .tp-toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .2s; }
-    .tp-toggle.on::after { transform: translateX(18px); }
-    .tp-color-btn { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: border-color .2s; }
-    .tp-color-btn.on { border-color: #f97316; }
+    #tpSettings.on { opacity: 1; pointer-events: auto; }
+    /* Desktop */
+    @media (min-width: 769px) {
+      #tpSettings {
+        top: 16px; right: 16px; width: 320px; max-height: 70vh;
+        border-radius: 14px; transform: translateX(20px);
+      }
+      #tpSettings.on { transform: translateX(0); }
+    }
+    /* Mobile — bottom sheet */
     @media (max-width: 768px) {
-      #tpSettings { width: 100%; }
-      .tp-speed input[type="range"] { width: 80px; }
+      #tpSettings {
+        bottom: 0; left: 0; right: 0; width: 100%; max-height: 70vh;
+        border-radius: 20px 20px 0 0; border-bottom: none;
+        background: rgba(10,10,10,.88); transform: translateY(100%);
+      }
+      #tpSettings.on { transform: translateY(0); }
     }
+    .tp-sheet-handle {
+      width: 40px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.25);
+      margin: 0 auto 14px; display: none;
+    }
+    @media (max-width: 768px) { .tp-sheet-handle { display: block; } }
+    .tp-s-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,.08); margin-bottom: 16px;
+    }
+    .tp-s-header span { font-size: .94rem; font-weight: 600; color: #fff; }
+    .tp-s-close {
+      width: 32px; height: 32px; border-radius: 50%; border: none;
+      background: rgba(255,255,255,.08); color: rgba(255,255,255,.5);
+      cursor: pointer; font-size: .8rem; display: flex; align-items: center; justify-content: center;
+      transition: background .15s;
+    }
+    .tp-s-close:hover { background: rgba(255,255,255,.15); }
+    .tp-s-label {
+      font-size: .69rem; text-transform: uppercase; letter-spacing: .08em;
+      color: rgba(255,255,255,.45); margin-bottom: 10px; margin-top: 2px;
+    }
+    .tp-s-sep { height: 1px; background: rgba(255,255,255,.06); margin: 14px 0; }
+    .tp-s-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      margin-bottom: 12px;
+    }
+    .tp-s-row label { font-size: .82rem; color: rgba(255,255,255,.7); margin: 0; white-space: nowrap; }
+    .tp-s-tip {
+      font-size: .72rem; color: rgba(255,255,255,.35); line-height: 1.4; margin: -6px 0 12px;
+    }
+    /* Range slider */
+    .tp-s-slider-wrap {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+    }
+    .tp-s-slider-wrap input[type="range"] {
+      flex: 1; -webkit-appearance: none; appearance: none;
+      height: 4px; border-radius: 2px; background: rgba(255,255,255,.15); outline: none;
+    }
+    .tp-s-slider-wrap input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+      background: #f97316; cursor: pointer; border: none;
+      box-shadow: 0 0 0 3px rgba(249,115,22,.2);
+      transition: transform .12s, box-shadow .12s;
+    }
+    .tp-s-slider-wrap input[type="range"]::-webkit-slider-thumb:active {
+      transform: scale(1.2); box-shadow: 0 0 0 5px rgba(249,115,22,.3);
+    }
+    .tp-s-slider-wrap input[type="range"]::-moz-range-thumb {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #f97316; cursor: pointer; border: none;
+      box-shadow: 0 0 0 3px rgba(249,115,22,.2);
+    }
+    .tp-s-slider-wrap input[type="range"]:focus-visible {
+      outline: 2px solid rgba(249,115,22,.6); outline-offset: 2px;
+    }
+    .tp-s-val {
+      font-size: .72rem; color: rgba(255,255,255,.4); text-align: center;
+      min-width: 36px; font-variant-numeric: tabular-nums;
+    }
+    .tp-s-slider-btn {
+      width: 32px; height: 32px; border-radius: 8px; border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06); color: rgba(255,255,255,.5);
+      cursor: pointer; font-size: .9rem; display: flex; align-items: center; justify-content: center;
+      transition: background .12s; flex-shrink: 0;
+    }
+    .tp-s-slider-btn:hover { background: rgba(255,255,255,.12); }
+    .tp-s-slider-btn:active { background: rgba(249,115,22,.2); }
+    /* Toggle */
+    .tp-toggle {
+      width: 50px; height: 28px; border-radius: 14px; background: rgba(255,255,255,.15);
+      border: none; cursor: pointer; position: relative; transition: background .18s ease;
+      flex-shrink: 0;
+    }
+    .tp-toggle.on { background: #f97316; }
+    .tp-toggle::after {
+      content: ""; position: absolute; top: 2px; left: 2px; width: 24px; height: 24px;
+      border-radius: 50%; background: #fff; transition: transform .18s ease;
+    }
+    .tp-toggle.on::after { transform: translateX(22px); }
+    .tp-toggle:focus-visible { outline: 2px solid rgba(249,115,22,.6); outline-offset: 2px; }
+    /* Color buttons */
+    .tp-color-btn {
+      width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255,255,255,.2);
+      cursor: pointer; transition: all .15s; flex-shrink: 0;
+    }
+    .tp-color-btn.on { border: 3px solid #f97316; box-shadow: 0 0 0 2px rgba(249,115,22,.3); }
+    .tp-color-btn:hover { transform: scale(1.08); }
+    .tp-color-btn:focus-visible { outline: 2px solid rgba(249,115,22,.6); outline-offset: 2px; }
+    /* Countdown pills */
+    .tp-cd-pills { display: flex; gap: 6px; }
+    .tp-cd-pill {
+      padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06); color: rgba(255,255,255,.5);
+      cursor: pointer; font-size: .78rem; font-weight: 600; transition: all .15s;
+    }
+    .tp-cd-pill.on { background: rgba(249,115,22,.25); border-color: rgba(249,115,22,.5); color: #f97316; }
+    .tp-cd-pill:hover { background: rgba(255,255,255,.1); }
+    .tp-cd-pill:focus-visible { outline: 2px solid rgba(249,115,22,.6); outline-offset: 2px; }
+    .tp-cd-pills.disabled { opacity: .35; pointer-events: none; }
+    /* Action buttons */
+    .tp-s-action {
+      width: 100%; padding: 10px 0; border-radius: 10px; border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04); color: rgba(255,255,255,.55);
+      cursor: pointer; font-size: .82rem; font-weight: 500; transition: all .15s;
+      font-family: var(--font-body); margin-bottom: 8px;
+    }
+    .tp-s-action:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.7); }
+    .tp-s-action.danger { color: rgba(239,68,68,.6); border-color: rgba(239,68,68,.12); }
+    .tp-s-action.danger:hover { background: rgba(239,68,68,.08); color: rgba(239,68,68,.8); }
 
     /* Teleprompter recording */
     #tpRecBtn {
@@ -4069,6 +4179,19 @@ const LANGS = {
     "tp.picker_title": "Abrir en Teleprompter",
     "tp.picker_desc": "Elige un guion o idea para leer",
     "tp.no_content": "No hay contenido disponible para el teleprompter",
+    "tp.settings": "Ajustes",
+    "tp.text": "Texto",
+    "tp.size": "Tamaño",
+    "tp.color": "Color",
+    "tp.speed": "Velocidad",
+    "tp.camera": "Cámara",
+    "tp.mirror": "Espejo",
+    "tp.mirror_tip": "Te ves como en un espejo. No afecta al vídeo grabado.",
+    "tp.recording": "Grabación",
+    "tp.countdown": "Cuenta atrás",
+    "tp.countdown_tip": "Cuántos segundos desde que pulsas REC hasta que empiezas a hablar.",
+    "tp.reset_pos": "Resetear posiciones",
+    "tp.close_tp": "Cerrar teleprompter",
     "prof.privacy": "Privacidad y datos",
     "prof.topup": "+ Recargar",
     "prof.manage_sub": "Gestionar suscripción",
@@ -4321,6 +4444,19 @@ const LANGS = {
     "tp.picker_title": "Open in Teleprompter",
     "tp.picker_desc": "Choose a script or idea to read",
     "tp.no_content": "No content available for the teleprompter",
+    "tp.settings": "Settings",
+    "tp.text": "Text",
+    "tp.size": "Size",
+    "tp.color": "Color",
+    "tp.speed": "Speed",
+    "tp.camera": "Camera",
+    "tp.mirror": "Mirror",
+    "tp.mirror_tip": "You see yourself mirrored. Doesn't affect the recorded file.",
+    "tp.recording": "Recording",
+    "tp.countdown": "Countdown",
+    "tp.countdown_tip": "How many seconds from REC press to start speaking.",
+    "tp.reset_pos": "Reset positions",
+    "tp.close_tp": "Close teleprompter",
     "prof.privacy": "Privacy & Data",
     "prof.topup": "+ Top up",
     "prof.manage_sub": "Manage subscription",
@@ -7276,9 +7412,10 @@ function makeResizable(el, opts) {
 // ── Teleprompter ──────────────────────────────────────────────────────────
 const TP = {
   isOpen: false, isPlaying: false, currentY: 0, speed: 60,
-  fontSize: 48, mirrorX: false, textColor: "#fff", countdown: true,
+  fontSize: 48, mirrorX: false, textColor: "#fff",
+  countdown: true, countdownSec: 3,
   rafId: null, lastTime: 0, totalHeight: 0, autoHideTimer: null,
-  _boxesInitialized: false,
+  _boxesInitialized: false, settingsOpen: false,
 };
 
 function tpLoadSettings() {
@@ -7287,11 +7424,15 @@ function tpLoadSettings() {
     if (s) Object.assign(TP, s);
   } catch {}
 }
+let _tpSaveTimer = null;
 function tpSaveSettings() {
-  const save = {};
-  for (const k of ["speed","fontSize","mirrorX","textColor","countdown"])
-    save[k] = TP[k];
-  localStorage.setItem("teleprompter_settings", JSON.stringify(save));
+  clearTimeout(_tpSaveTimer);
+  _tpSaveTimer = setTimeout(() => {
+    const save = {};
+    for (const k of ["speed","fontSize","mirrorX","textColor","countdown","countdownSec"])
+      save[k] = TP[k];
+    localStorage.setItem("teleprompter_settings", JSON.stringify(save));
+  }, 200);
 }
 
 function tpOpen(text) {
@@ -7314,11 +7455,8 @@ function tpOpen(text) {
   tpSetFontSize(TP.fontSize, true);
   tpSetColor(TP.textColor, null, true);
   tpSetSpeed(TP.speed, true);
-  document.getElementById("tpSpeedSlider").value = TP.speed;
-  document.getElementById("tpFontSlider").value = TP.fontSize;
-  document.getElementById("tpMirrorX").classList.toggle("on", TP.mirrorX);
   tpApplyMirror();
-  document.getElementById("tpCountdownToggle").classList.toggle("on", TP.countdown);
+  tpSyncSettingsUI();
   tpStartAutoHide();
   tpRecInit();
 }
@@ -7331,6 +7469,7 @@ function tpClose() {
   TP.isOpen = false;
   document.getElementById("tpOverlay").classList.remove("on");
   document.getElementById("tpSettings").classList.remove("on");
+  TP.settingsOpen = false;
   document.body.style.overflow = "";
   document.getElementById("tpTextBox").hidden = true;
   document.getElementById("tpCamBox").hidden = true;
@@ -7352,7 +7491,7 @@ function tpPlay() {
 
 function tpRunCountdown(cb) {
   const area = document.getElementById("tpOverlay");
-  let count = 3;
+  let count = TP.countdownSec || 3;
   function show() {
     const el = document.createElement("div");
     el.className = "tp-countdown";
@@ -7457,7 +7596,51 @@ function tpApplyMirror() {
 }
 
 function tpToggleSettings() {
-  document.getElementById("tpSettings").classList.toggle("on");
+  const panel = document.getElementById("tpSettings");
+  TP.settingsOpen = !TP.settingsOpen;
+  panel.classList.toggle("on", TP.settingsOpen);
+  if (TP.settingsOpen) tpSyncSettingsUI();
+}
+
+function tpSyncSettingsUI() {
+  document.getElementById("tpFontSlider").value = TP.fontSize;
+  document.getElementById("tpFontLabel").textContent = TP.fontSize + "px";
+  document.getElementById("tpSpeedSlider").value = TP.speed;
+  document.getElementById("tpSpeedLabel").textContent = (TP.speed / 60).toFixed(1) + "x";
+  document.getElementById("tpMirrorX").classList.toggle("on", TP.mirrorX);
+  document.getElementById("tpCountdownToggle").classList.toggle("on", TP.countdown);
+  document.getElementById("tpCdPills").classList.toggle("disabled", !TP.countdown);
+  document.querySelectorAll(".tp-cd-pill").forEach(p => p.classList.toggle("on", parseInt(p.textContent) === TP.countdownSec));
+  document.querySelectorAll(".tp-color-btn").forEach(b => {
+    const c = b.style.background;
+    b.classList.toggle("on", c === TP.textColor || b.style.backgroundColor === TP.textColor);
+  });
+}
+
+function tpNudgeFont(delta) {
+  const v = Math.max(18, Math.min(96, TP.fontSize + delta));
+  document.getElementById("tpFontSlider").value = v;
+  tpSetFontSize(v);
+}
+
+function tpNudgeSpeed(delta) {
+  const v = Math.max(20, Math.min(200, TP.speed + delta));
+  document.getElementById("tpSpeedSlider").value = v;
+  tpSetSpeed(v);
+}
+
+function tpToggleCountdown(btn) {
+  TP.countdown = !TP.countdown;
+  btn.classList.toggle("on", TP.countdown);
+  document.getElementById("tpCdPills").classList.toggle("disabled", !TP.countdown);
+  tpSaveSettings();
+}
+
+function tpSetCountdownSec(val, btn) {
+  TP.countdownSec = val;
+  document.querySelectorAll(".tp-cd-pill").forEach(p => p.classList.remove("on"));
+  btn.classList.add("on");
+  tpSaveSettings();
 }
 
 // Auto-hide header/controls
@@ -7466,7 +7649,7 @@ function tpStartAutoHide() {
   document.getElementById("tpHeader").classList.remove("hide");
   document.getElementById("tpControls").classList.remove("hide");
   TP.autoHideTimer = setTimeout(() => {
-    if (TP.isPlaying) {
+    if (TP.isPlaying && !TP.settingsOpen) {
       document.getElementById("tpHeader").classList.add("hide");
       document.getElementById("tpControls").classList.add("hide");
     }
@@ -7478,6 +7661,36 @@ document.addEventListener("DOMContentLoaded", () => {
   if (overlay) {
     overlay.addEventListener("mousemove", tpStartAutoHide);
     overlay.addEventListener("touchstart", tpStartAutoHide);
+    // Click outside settings to close (desktop only)
+    overlay.addEventListener("pointerdown", e => {
+      if (!TP.settingsOpen) return;
+      const panel = document.getElementById("tpSettings");
+      const gear = document.getElementById("tpSettingsBtn");
+      if (!panel.contains(e.target) && !gear.contains(e.target) && window.innerWidth >= 769) {
+        tpToggleSettings();
+      }
+    });
+  }
+  // Swipe-down to close settings (mobile bottom sheet)
+  const panel = document.getElementById("tpSettings");
+  if (panel) {
+    let sy = 0, moving = false;
+    panel.addEventListener("touchstart", e => {
+      if (window.innerWidth >= 769 || !TP.settingsOpen) return;
+      sy = e.touches[0].clientY; moving = true;
+    }, { passive: true });
+    panel.addEventListener("touchmove", e => {
+      if (!moving) return;
+      const dy = e.touches[0].clientY - sy;
+      if (dy > 0) panel.style.transform = `translateY(${dy}px)`;
+    }, { passive: true });
+    panel.addEventListener("touchend", e => {
+      if (!moving) return;
+      moving = false;
+      const dy = e.changedTouches[0].clientY - sy;
+      panel.style.transform = "";
+      if (dy > 80) tpToggleSettings();
+    });
   }
 });
 
@@ -7493,7 +7706,7 @@ document.addEventListener("keydown", e => {
   if (e.code === "KeyR") { tpReset(); }
   if (e.code === "KeyF") { if (document.fullscreenElement) document.exitFullscreen(); else document.getElementById("tpOverlay").requestFullscreen?.(); }
   if (e.code === "KeyM") { tpToggleMirror("x", document.getElementById("tpMirrorX")); }
-  if (e.code === "Escape") { e.preventDefault(); tpClose(); }
+  if (e.code === "Escape") { e.preventDefault(); if (TP.settingsOpen) { tpToggleSettings(); } else { tpClose(); } }
 });
 
 // Helper to open teleprompter from an idea
@@ -8679,16 +8892,12 @@ closeTutorial = function() {
       <span id="tpRecLabel">Record</span>
       <span id="tpRecTimer" style="display:none">00:00</span>
     </button>
-    <button class="tp-btn" onclick="tpToggleSettings()" title="Settings">⚙</button>
+    <button class="tp-btn" id="tpSettingsBtn" onclick="tpToggleSettings()" title="Settings">⚙</button>
   </div>
   <div id="tpControls">
     <button class="tp-btn" onclick="tpReset()" title="Reset">⏮</button>
     <button class="tp-btn tp-btn-play" id="tpPlayBtn" onclick="tpTogglePlay()">▶</button>
     <button class="tp-btn" onclick="tpSkipEnd()" title="Skip to end">⏭</button>
-    <div class="tp-speed">
-      <span id="tpSpeedLabel">1x</span>
-      <input type="range" id="tpSpeedSlider" min="20" max="200" value="60" oninput="tpSetSpeed(this.value)">
-    </div>
   </div>
   <div id="tpEnd">
     <h2>End</h2>
@@ -8698,38 +8907,64 @@ closeTutorial = function() {
     </div>
   </div>
   <div id="tpSettings">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <span style="font-size:.9rem;font-weight:600;color:#fff">Settings</span>
-      <button class="tp-btn" onclick="tpToggleSettings()" style="width:32px;height:32px;font-size:.8rem">✕</button>
+    <div class="tp-sheet-handle"></div>
+    <div class="tp-s-header">
+      <span data-i18n="tp.settings">Settings</span>
+      <button class="tp-s-close" onclick="tpToggleSettings()" aria-label="Close">✕</button>
     </div>
-    <div class="tp-setting">
-      <label>Font size</label>
-      <input type="range" id="tpFontSlider" min="24" max="96" value="48" oninput="tpSetFontSize(this.value)">
-      <div style="text-align:center;color:rgba(255,255,255,.4);font-size:.72rem" id="tpFontLabel">48px</div>
+    <!-- Text -->
+    <div class="tp-s-label" data-i18n="tp.text">Text</div>
+    <div class="tp-s-row">
+      <label data-i18n="tp.size">Size</label>
+      <span class="tp-s-val" id="tpFontLabel">48px</span>
     </div>
-    <div class="tp-setting">
-      <label>Text color</label>
-      <div style="display:flex;gap:8px">
-        <button class="tp-color-btn on" style="background:#fff" onclick="tpSetColor('#fff',this)"></button>
-        <button class="tp-color-btn" style="background:#fbbf24" onclick="tpSetColor('#fbbf24',this)"></button>
-        <button class="tp-color-btn" style="background:#4ade80" onclick="tpSetColor('#4ade80',this)"></button>
+    <div class="tp-s-slider-wrap">
+      <button class="tp-s-slider-btn" onclick="tpNudgeFont(-2)" aria-label="Decrease">−</button>
+      <input type="range" id="tpFontSlider" min="18" max="96" value="48" oninput="tpSetFontSize(this.value)">
+      <button class="tp-s-slider-btn" onclick="tpNudgeFont(2)" aria-label="Increase">+</button>
+    </div>
+    <div class="tp-s-row" style="margin-top:12px">
+      <label data-i18n="tp.color">Color</label>
+      <div style="display:flex;gap:10px">
+        <button class="tp-color-btn on" style="background:#fff" onclick="tpSetColor('#fff',this)" aria-label="White"></button>
+        <button class="tp-color-btn" style="background:#fbbf24" onclick="tpSetColor('#fbbf24',this)" aria-label="Amber"></button>
+        <button class="tp-color-btn" style="background:#4ade80" onclick="tpSetColor('#4ade80',this)" aria-label="Green"></button>
       </div>
     </div>
-    <div class="tp-setting">
-      <div class="tp-setting-row">
-        <label style="margin:0">Mirror horizontal</label>
-        <button class="tp-toggle" id="tpMirrorX" onclick="tpToggleMirror('x',this)"></button>
-      </div>
+    <div class="tp-s-row" style="margin-top:12px">
+      <label data-i18n="tp.speed">Speed</label>
+      <span class="tp-s-val" id="tpSpeedLabel">1.0x</span>
     </div>
-    <div class="tp-setting">
-      <div class="tp-setting-row">
-        <label style="margin:0">Countdown</label>
-        <button class="tp-toggle on" id="tpCountdownToggle" onclick="this.classList.toggle('on');TP.countdown=this.classList.contains('on');tpSaveSettings()"></button>
-      </div>
+    <div class="tp-s-slider-wrap">
+      <button class="tp-s-slider-btn" onclick="tpNudgeSpeed(-5)" aria-label="Slower">−</button>
+      <input type="range" id="tpSpeedSlider" min="20" max="200" value="60" oninput="tpSetSpeed(this.value)">
+      <button class="tp-s-slider-btn" onclick="tpNudgeSpeed(5)" aria-label="Faster">+</button>
     </div>
-    <div class="tp-setting">
-      <button class="tp-btn" onclick="tpResetBoxPositions()" style="width:auto;border-radius:8px;padding:8px 16px;font-size:.78rem;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6)">Reset positions</button>
+    <div class="tp-s-sep"></div>
+    <!-- Camera -->
+    <div class="tp-s-label" data-i18n="tp.camera">Camera</div>
+    <div class="tp-s-row">
+      <label data-i18n="tp.mirror">Mirror</label>
+      <button class="tp-toggle" id="tpMirrorX" onclick="tpToggleMirror('x',this)"></button>
     </div>
+    <div class="tp-s-tip" data-i18n="tp.mirror_tip">You see yourself mirrored. Doesn't affect the recorded file.</div>
+    <div class="tp-s-sep"></div>
+    <!-- Recording -->
+    <div class="tp-s-label" data-i18n="tp.recording">Recording</div>
+    <div class="tp-s-row">
+      <label data-i18n="tp.countdown">Countdown</label>
+      <button class="tp-toggle on" id="tpCountdownToggle" onclick="tpToggleCountdown(this)"></button>
+    </div>
+    <div class="tp-cd-pills" id="tpCdPills">
+      <button class="tp-cd-pill on" onclick="tpSetCountdownSec(3,this)">3s</button>
+      <button class="tp-cd-pill" onclick="tpSetCountdownSec(5,this)">5s</button>
+      <button class="tp-cd-pill" onclick="tpSetCountdownSec(10,this)">10s</button>
+    </div>
+    <div class="tp-s-tip" data-i18n="tp.countdown_tip">How many seconds from REC press to start speaking.</div>
+    <div class="tp-s-sep"></div>
+    <!-- Actions -->
+    <button class="tp-s-action" onclick="tpResetBoxPositions()" data-i18n="tp.reset_pos">Reset positions</button>
+    <button class="tp-s-action danger" onclick="tpClose()" data-i18n="tp.close_tp">Close teleprompter</button>
   </div>
   <div id="tpRecResult">
     <h2 style="font-family:var(--font-display);font-size:1.5rem;color:#fff">Recording complete</h2>
