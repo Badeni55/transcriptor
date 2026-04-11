@@ -41,6 +41,8 @@ from supabase import create_client, Client  # noqa: E402 (after dotenv)
 app = Flask(__name__)
 app.secret_key = os.environ["FLASK_SECRET_KEY"]
 app.permanent_session_lifetime = timedelta(days=30)
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_HTTPONLY"] = True
 
 # ── Config ───────────────────────────────────────────────────────────────────
 
@@ -428,6 +430,46 @@ def reset_password():
     except Exception:
         logger.error("Reset password error", exc_info=True)
         return jsonify({"error": "Internal server error"}), 500
+
+
+@app.route("/auth/google")
+def auth_google():
+    """Redirect to Google OAuth via Supabase."""
+    redirect_to = request.host_url.rstrip("/")
+    url = f"{SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to={redirect_to}"
+    return jsonify({"url": url})
+
+
+@app.route("/auth/callback", methods=["POST"])
+def auth_callback():
+    """Exchange OAuth access_token for a Flask session."""
+    body = request.get_json() or {}
+    access_token = (body.get("access_token") or "").strip()
+    if not access_token:
+        return jsonify({"error": "Token required"}), 400
+
+    try:
+        resp = requests.get(
+            f"{SUPABASE_URL}/auth/v1/user",
+            headers={"apikey": SUPABASE_SERVICE_KEY, "Authorization": f"Bearer {access_token}"},
+            timeout=10,
+        )
+        if resp.status_code != 200:
+            return jsonify({"error": "Invalid token"}), 401
+
+        user = resp.json()
+        session.permanent = True
+        session["user"] = {"id": user["id"], "email": user.get("email", "")}
+
+        # Ensure profile exists
+        prof = db.table("profiles").select("id").eq("id", user["id"]).execute()
+        if not prof.data:
+            db.table("profiles").insert({"id": user["id"]}).execute()
+
+        return jsonify({"ok": True, "email": user.get("email", "")})
+    except Exception as e:
+        logger.error(f"OAuth callback error: {e}", exc_info=True)
+        return jsonify({"error": "Authentication failed"}), 500
 
 
 @app.route("/auth/logout", methods=["POST"])
