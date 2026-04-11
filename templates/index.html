@@ -3054,6 +3054,100 @@
       border: 5px solid transparent; border-top-color: rgba(0,0,0,.85);
     }
     .tp-save-wrap { position: relative; display: inline-block; }
+
+    /* ── New draggable boxes (teleprompter redesign) ─────────── */
+    .tp-text-box,
+    .tp-cam-box {
+      position: absolute;
+      background: rgba(10,10,10,0.72);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 2px solid rgba(255,255,255,0.18);
+      border-radius: 14px;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.55);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 50;
+      touch-action: none;
+    }
+    .tp-text-box.tp-dragging,
+    .tp-cam-box.tp-dragging {
+      border-color: #f97316;
+      box-shadow: 0 16px 64px rgba(249,115,22,0.45);
+    }
+    .tp-box-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(0,0,0,0.35);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      cursor: grab;
+      user-select: none;
+      flex-shrink: 0;
+    }
+    .tp-box-bar:active { cursor: grabbing; }
+    .tp-box-grabber {
+      width: 24px; height: 4px;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.35) 0px, rgba(255,255,255,0.35) 2px,
+        transparent 2px, transparent 5px
+      );
+      background-size: 100% 15px;
+      height: 12px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .tp-box-title {
+      font-size: 13px; font-weight: 600;
+      color: rgba(255,255,255,0.85);
+      letter-spacing: 0.02em; flex: 1;
+    }
+    .tp-box-close {
+      background: none; border: none;
+      color: rgba(255,255,255,0.6);
+      font-size: 18px; cursor: pointer;
+      padding: 4px 8px; border-radius: 6px;
+      transition: background 0.15s;
+    }
+    .tp-box-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .tp-box-content {
+      flex: 1; overflow: auto;
+      padding: 16px;
+      color: rgba(255,255,255,0.92);
+      font-size: 18px; line-height: 1.5;
+    }
+    .tp-box-placeholder { opacity: 0.4; font-style: italic; }
+    .tp-box-placeholder-cam {
+      display: flex; align-items: center; justify-content: center;
+      height: 100%; font-size: 48px; opacity: 0.3;
+    }
+    .tp-resize-handle {
+      position: absolute; width: 16px; height: 16px;
+      background: transparent; z-index: 51; touch-action: none;
+    }
+    .tp-resize-br {
+      bottom: 0; right: 0; cursor: nwse-resize;
+      background: linear-gradient(
+        135deg,
+        transparent 50%,
+        rgba(255,255,255,0.35) 50%,
+        rgba(255,255,255,0.35) 60%,
+        transparent 60%,
+        transparent 70%,
+        rgba(255,255,255,0.35) 70%,
+        rgba(255,255,255,0.35) 80%,
+        transparent 80%
+      );
+      border-bottom-right-radius: 14px;
+    }
+    @media (max-width: 768px) {
+      .tp-resize-handle { width: 24px; height: 24px; }
+      .tp-box-bar { padding: 14px 16px; }
+      .tp-box-grabber { width: 32px; height: 16px; }
+    }
   </style>
 </head>
 <body>
@@ -7164,36 +7258,38 @@ function makeDraggable(el, handleEl, opts) {
 function makeResizable(el, opts) {
   opts = opts || {};
   const onEnd = opts.onEnd || null;
-  const lockRatio = opts.lockRatio || false;
+  const lockAspect = opts.lockAspect || 0;
   const minW = opts.minW || 120;
   const minH = opts.minH || 80;
   const handleSize = opts.handleSize || (window.innerWidth < 768 ? 20 : 12);
 
-  const corners = ["se", "sw", "ne", "nw"];
-  const handles = {};
+  let handleEntries;
+  if (opts.handles) {
+    handleEntries = Object.entries(opts.handles);
+  } else {
+    const corners = ["se", "sw", "ne", "nw"];
+    handleEntries = corners.map(corner => {
+      const h = document.createElement("div");
+      h.style.cssText = `position:absolute;width:${handleSize}px;height:${handleSize}px;z-index:10;touch-action:none;`;
+      if (corner.includes("s")) h.style.bottom = "0";
+      if (corner.includes("n")) h.style.top = "0";
+      if (corner.includes("e")) h.style.right = "0";
+      if (corner.includes("w")) h.style.left = "0";
+      h.style.cursor = corner + "-resize";
+      el.appendChild(h);
+      return [corner, h];
+    });
+  }
 
-  corners.forEach(corner => {
-    const h = document.createElement("div");
-    h.style.cssText = `position:absolute;width:${handleSize}px;height:${handleSize}px;z-index:10;touch-action:none;`;
-    if (corner.includes("s")) h.style.bottom = "0";
-    if (corner.includes("n")) h.style.top = "0";
-    if (corner.includes("e")) h.style.right = "0";
-    if (corner.includes("w")) h.style.left = "0";
-    h.style.cursor = corner + "-resize";
-    el.appendChild(h);
-    handles[corner] = h;
-  });
-
-  corners.forEach(corner => {
-    const h = handles[corner];
-    let resizing = false, startX, startY, origRect, origRatio;
+  handleEntries.forEach(([corner, h]) => {
+    let resizing = false, startX, startY, origRect;
+    h.style.touchAction = "none";
 
     h.addEventListener("pointerdown", e => {
       if (e.button !== 0) return;
       resizing = true;
       startX = e.clientX; startY = e.clientY;
       origRect = { x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight };
-      origRatio = origRect.w / origRect.h;
       h.setPointerCapture(e.pointerId);
       e.preventDefault();
       e.stopPropagation();
@@ -7210,16 +7306,13 @@ function makeResizable(el, opts) {
       if (corner.includes("s")) nh = origRect.h + dy;
       if (corner.includes("n")) { nh = origRect.h - dy; ny = origRect.y + dy; }
 
-      if (lockRatio) {
-        const area = Math.max(nw, nh * origRatio);
-        nw = area;
-        nh = area / origRatio;
-        if (corner.includes("w")) nx = origRect.x + origRect.w - nw;
+      if (lockAspect > 0) {
+        nh = nw / lockAspect;
         if (corner.includes("n")) ny = origRect.y + origRect.h - nh;
       }
 
-      if (nw < minW) { if (corner.includes("w")) nx = origRect.x + origRect.w - minW; nw = minW; }
-      if (nh < minH) { if (corner.includes("n")) ny = origRect.y + origRect.h - minH; nh = minH; }
+      if (nw < minW) { if (corner.includes("w")) nx = origRect.x + origRect.w - minW; nw = minW; if (lockAspect > 0) { nh = nw / lockAspect; if (corner.includes("n")) ny = origRect.y + origRect.h - nh; } }
+      if (nh < minH) { if (corner.includes("n")) ny = origRect.y + origRect.h - minH; nh = minH; if (lockAspect > 0) { nw = nh * lockAspect; if (corner.includes("w")) nx = origRect.x + origRect.w - nw; } }
 
       const vw = window.innerWidth, vh = window.innerHeight;
       if (nx < 0) { nw += nx; nx = 0; }
@@ -7877,6 +7970,86 @@ function tpPipDrag() {
   document.addEventListener("touchmove", onMove, { passive: false });
   document.addEventListener("mouseup", onUp);
   document.addEventListener("touchend", onUp);
+}
+
+// ── New draggable boxes (teleprompter redesign) ──────────────────────────
+function getDefaultBoxes() {
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const mob = vw < 768;
+  return {
+    text: mob
+      ? { x: vw * 0.05, y: vh * 0.08, w: vw * 0.9, h: vh * 0.35 }
+      : { x: vw * 0.1, y: vh * 0.1, w: vw * 0.8, h: vh * 0.4 },
+    cam: mob
+      ? { x: vw * 0.55, y: vh * 0.55, w: vw * 0.4, h: vw * 0.4 * (16 / 9) }
+      : { x: vw * 0.7, y: vh * 0.6, w: vw * 0.25, h: vw * 0.25 * (9 / 16) },
+  };
+}
+
+let _tpBoxSaveTimer = null;
+function _tpSaveBoxState(key, rect) {
+  clearTimeout(_tpBoxSaveTimer);
+  _tpBoxSaveTimer = setTimeout(() => {
+    localStorage.setItem(key, JSON.stringify(rect));
+  }, 300);
+}
+
+function _tpApplyRect(el, r) {
+  el.style.left = r.x + "px";
+  el.style.top = r.y + "px";
+  el.style.width = r.w + "px";
+  el.style.height = r.h + "px";
+}
+
+function _tpReadRect(el) {
+  return { x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight };
+}
+
+function tpInitNewBoxes() {
+  const textBox = document.getElementById("tpTextBox");
+  const camBox = document.getElementById("tpCamBox");
+  if (!textBox || !camBox) return;
+
+  const defaults = getDefaultBoxes();
+  let savedText, savedCam;
+  try { savedText = JSON.parse(localStorage.getItem("tp_text_box")); } catch {}
+  try { savedCam = JSON.parse(localStorage.getItem("tp_cam_box")); } catch {}
+
+  _tpApplyRect(textBox, savedText || defaults.text);
+  _tpApplyRect(camBox, savedCam || defaults.cam);
+
+  const textBar = textBox.querySelector("[data-tp-drag-handle]");
+  const camBar = camBox.querySelector("[data-tp-drag-handle]");
+  const textResize = textBox.querySelector(".tp-resize-br");
+  const camResize = camBox.querySelector(".tp-resize-br");
+
+  makeDraggable(textBox, textBar, {
+    onEnd: () => _tpSaveBoxState("tp_text_box", _tpReadRect(textBox))
+  });
+  makeDraggable(camBox, camBar, {
+    onEnd: () => _tpSaveBoxState("tp_cam_box", _tpReadRect(camBox))
+  });
+
+  const mob = window.innerWidth < 768;
+  makeResizable(textBox, {
+    handles: { se: textResize },
+    minW: 200, minH: 120,
+    onEnd: () => _tpSaveBoxState("tp_text_box", _tpReadRect(textBox))
+  });
+  makeResizable(camBox, {
+    handles: { se: camResize },
+    lockAspect: mob ? 9 / 16 : 16 / 9,
+    minW: 140, minH: 80,
+    onEnd: () => _tpSaveBoxState("tp_cam_box", _tpReadRect(camBox))
+  });
+}
+
+function tpResetBoxPositions() {
+  const defaults = getDefaultBoxes();
+  const textBox = document.getElementById("tpTextBox");
+  const camBox = document.getElementById("tpCamBox");
+  if (textBox) { _tpApplyRect(textBox, defaults.text); localStorage.removeItem("tp_text_box"); }
+  if (camBox) { _tpApplyRect(camBox, defaults.cam); localStorage.removeItem("tp_cam_box"); }
 }
 
 window.addEventListener("beforeunload", e => {
@@ -8754,6 +8927,29 @@ closeTutorial = function() {
       <p>The recording is saved only in your browser and you download it to your device. Nothing is uploaded to our servers. Zero storage, zero traces.</p>
       <button class="tp-btn" onclick="tpPrivacyAccept()" style="width:auto;border-radius:8px;padding:12px 28px;font-size:.9rem;background:rgba(249,115,22,.3);border-color:rgba(249,115,22,.5)">Got it, grant permissions</button>
     </div>
+  </div>
+  <!-- New draggable boxes (teleprompter redesign) -->
+  <div class="tp-text-box" id="tpTextBox" hidden>
+    <div class="tp-box-bar" data-tp-drag-handle>
+      <div class="tp-box-grabber"></div>
+      <span class="tp-box-title">Guión</span>
+      <button class="tp-box-close" onclick="document.getElementById('tpTextBox').hidden=true" aria-label="Close">✕</button>
+    </div>
+    <div class="tp-box-content" id="tpTextBoxContent">
+      <p class="tp-box-placeholder">Texto del guión</p>
+    </div>
+    <div class="tp-resize-handle tp-resize-br"></div>
+  </div>
+  <div class="tp-cam-box" id="tpCamBox" hidden>
+    <div class="tp-box-bar" data-tp-drag-handle>
+      <div class="tp-box-grabber"></div>
+      <span class="tp-box-title">Cámara</span>
+      <button class="tp-box-close" onclick="document.getElementById('tpCamBox').hidden=true" aria-label="Close">✕</button>
+    </div>
+    <div class="tp-box-content">
+      <div class="tp-box-placeholder-cam">📷</div>
+    </div>
+    <div class="tp-resize-handle tp-resize-br"></div>
   </div>
 </div>
 
