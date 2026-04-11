@@ -12,7 +12,7 @@ from functools import wraps
 import requests
 import yt_dlp
 from dotenv import load_dotenv
-from flask import Flask, Response, jsonify, render_template, request, session
+from flask import Flask, Response, jsonify, redirect, render_template, request, session
 
 load_dotenv()
 
@@ -1949,7 +1949,56 @@ def delete_account():
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    accept = request.headers.get("Accept-Language", "")
+    if accept.lower().startswith("en"):
+        return redirect("/en/", code=302)
+    return redirect("/es/", code=302)
+
+
+@app.route("/es/")
+def index_es():
+    return render_template("index.html", lang="es")
+
+
+@app.route("/en/")
+def index_en():
+    return render_template("index.html", lang="en")
+
+
+@app.route("/sitemap.xml")
+def sitemap():
+    urls = [
+        ("https://reelscript.net/es/", "1.0", "weekly"),
+        ("https://reelscript.net/en/", "1.0", "weekly"),
+    ]
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
+    xml += 'xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
+    for url, priority, freq in urls:
+        xml += "  <url>\n"
+        xml += f"    <loc>{url}</loc>\n"
+        xml += f"    <changefreq>{freq}</changefreq>\n"
+        xml += f"    <priority>{priority}</priority>\n"
+        xml += '    <xhtml:link rel="alternate" hreflang="es" href="https://reelscript.net/es/"/>\n'
+        xml += '    <xhtml:link rel="alternate" hreflang="en" href="https://reelscript.net/en/"/>\n'
+        xml += "  </url>\n"
+    xml += "</urlset>"
+    return Response(xml, mimetype="application/xml")
+
+
+@app.route("/robots.txt")
+def robots():
+    txt = (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /auth/\n"
+        "Disallow: /stripe-webhook\n"
+        "Disallow: /checkout\n"
+        "Disallow: /task/\n"
+        "\n"
+        "Sitemap: https://reelscript.net/sitemap.xml\n"
+    )
+    return Response(txt, mimetype="text/plain")
 
 
 @app.route("/affiliate")

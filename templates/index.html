@@ -1,9 +1,114 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="{{ lang|default('es') }}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ReelScript — Transcribe y transforma cualquier reel</title>
+  <meta name="robots" content="index, follow, max-image-preview:large">
+
+  {% if lang == 'en' %}
+  <title>ReelScript · Transcribe Instagram and TikTok reels in seconds</title>
+  <meta name="description" content="Paste an Instagram or TikTok reel and get the transcript instantly. Turn it into a viral post, LinkedIn article, story or hooks with one click. Free, no card required.">
+  {% else %}
+  <title>ReelScript · Transcribe reels de Instagram y TikTok en segundos</title>
+  <meta name="description" content="Pega un reel de Instagram o TikTok y obtén la transcripción al instante. Conviértela en post viral, LinkedIn, historia o hooks con un click. Gratis sin tarjeta.">
+  {% endif %}
+
+  <link rel="canonical" href="https://reelscript.net/{{ lang|default('es') }}/">
+  <link rel="alternate" hreflang="es" href="https://reelscript.net/es/">
+  <link rel="alternate" hreflang="en" href="https://reelscript.net/en/">
+  <link rel="alternate" hreflang="x-default" href="https://reelscript.net/">
+
+  <!-- Open Graph -->
+  {% if lang == 'en' %}
+  <meta property="og:title" content="ReelScript · Transcribe Instagram and TikTok reels in seconds">
+  <meta property="og:description" content="Paste an Instagram or TikTok reel and get the transcript instantly. Turn it into a viral post, LinkedIn article, story or hooks with one click. Free, no card required.">
+  <meta property="og:url" content="https://reelscript.net/en/">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="es_ES">
+  <meta property="og:image" content="https://reelscript.net/static/og-image-en.png">
+  <meta property="og:image:alt" content="ReelScript — Transcribe reels in seconds">
+  {% else %}
+  <meta property="og:title" content="ReelScript · Transcribe reels de Instagram y TikTok en segundos">
+  <meta property="og:description" content="Pega un reel de Instagram o TikTok y obtén la transcripción al instante. Conviértela en post viral, LinkedIn, historia o hooks con un click. Gratis sin tarjeta.">
+  <meta property="og:url" content="https://reelscript.net/es/">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta property="og:image" content="https://reelscript.net/static/og-image-es.png">
+  <meta property="og:image:alt" content="ReelScript — Transcribe reels en segundos">
+  {% endif %}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ReelScript">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Twitter Card -->
+  {% if lang == 'en' %}
+  <meta name="twitter:title" content="ReelScript · Transcribe Instagram and TikTok reels in seconds">
+  <meta name="twitter:description" content="Paste an Instagram or TikTok reel and get the transcript instantly. Turn it into a viral post, LinkedIn article, story or hooks with one click. Free, no card required.">
+  <meta name="twitter:image" content="https://reelscript.net/static/og-image-en.png">
+  {% else %}
+  <meta name="twitter:title" content="ReelScript · Transcribe reels de Instagram y TikTok en segundos">
+  <meta name="twitter:description" content="Pega un reel de Instagram o TikTok y obtén la transcripción al instante. Conviértela en post viral, LinkedIn, historia o hooks con un click. Gratis sin tarjeta.">
+  <meta name="twitter:image" content="https://reelscript.net/static/og-image-es.png">
+  {% endif %}
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- JSON-LD: WebApplication -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "ReelScript",
+    "url": "https://reelscript.net",
+    {% if lang == 'en' %}
+    "description": "Transcribe Instagram and TikTok reels instantly and turn the script into viral posts, LinkedIn articles, stories or hooks.",
+    {% else %}
+    "description": "Transcribe reels de Instagram y TikTok al instante y convierte el guión en posts virales, LinkedIn, historias o hooks.",
+    {% endif %}
+    "applicationCategory": "MultimediaApplication",
+    "operatingSystem": "Any (web-based)",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "EUR",
+      "description": "Free plan with 5 transcriptions per day"
+    }
+  }
+  </script>
+
+  <!-- JSON-LD: Organization -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "ReelScript",
+    "url": "https://reelscript.net",
+    "logo": "https://reelscript.net/static/logo.png"
+  }
+  </script>
+
+  <!-- JSON-LD: FAQ -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {% if lang == 'en' %}
+      {"@type": "Question", "name": "How do I transcribe an Instagram reel?", "acceptedAnswer": {"@type": "Answer", "text": "Paste the reel URL into ReelScript and click Transcribe. You'll have the full text in under 10 seconds, powered by Groq Whisper AI."}},
+      {"@type": "Question", "name": "Can I transcribe a private TikTok?", "acceptedAnswer": {"@type": "Answer", "text": "Only public TikToks and reels can be transcribed. If the video is private or restricted, ReelScript won't be able to access the audio."}},
+      {"@type": "Question", "name": "How accurate is the transcription?", "acceptedAnswer": {"@type": "Answer", "text": "ReelScript uses Groq Whisper, one of the most accurate speech-to-text models available. Accuracy is typically above 95% for clear audio in supported languages."}},
+      {"@type": "Question", "name": "Can I use it for free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. You get 5 free transcriptions and 5 free adaptations every day, no credit card required. Paid plans are available if you need more."}},
+      {"@type": "Question", "name": "What languages does it support?", "acceptedAnswer": {"@type": "Answer", "text": "ReelScript supports transcription in Spanish, English, French, Portuguese, German, Italian and more — any language supported by Whisper."}}
+      {% else %}
+      {"@type": "Question", "name": "¿Cómo transcribir un reel de Instagram?", "acceptedAnswer": {"@type": "Answer", "text": "Pega la URL del reel en ReelScript y pulsa Transcribir. Tendrás el texto completo en menos de 10 segundos, gracias a Groq Whisper AI."}},
+      {"@type": "Question", "name": "¿Se puede transcribir un TikTok privado?", "acceptedAnswer": {"@type": "Answer", "text": "Solo se pueden transcribir TikToks y reels públicos. Si el vídeo es privado o restringido, ReelScript no podrá acceder al audio."}},
+      {"@type": "Question", "name": "¿Qué precisión tiene la transcripción?", "acceptedAnswer": {"@type": "Answer", "text": "ReelScript usa Groq Whisper, uno de los modelos de speech-to-text más precisos. La precisión suele superar el 95% en audio claro en los idiomas soportados."}},
+      {"@type": "Question", "name": "¿Puedo usarlo gratis?", "acceptedAnswer": {"@type": "Answer", "text": "Sí. Tienes 5 transcripciones y 5 adaptaciones gratis cada día, sin tarjeta de crédito. Los planes de pago están disponibles si necesitas más."}},
+      {"@type": "Question", "name": "¿Qué idiomas soporta?", "acceptedAnswer": {"@type": "Answer", "text": "ReelScript soporta transcripción en español, inglés, francés, portugués, alemán, italiano y más — cualquier idioma soportado por Whisper."}}
+      {% endif %}
+    ]
+  }
+  </script>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23f97316'/%3E%3Cstop offset='100%25' stop-color='%23fbbf24'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='7' fill='%230a0b0f'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='system-ui,sans-serif' font-weight='900' font-size='15' fill='url(%23g)'%3ERS%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,6 +116,7 @@
   <style>
     /* ── Reset & tokens ─────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    .sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
 
     :root {
       --bg:       #0a0b0f;
@@ -851,7 +957,7 @@
       padding: 4px 10px; border: none; background: none; cursor: pointer;
       font-size: .7rem; font-weight: 800; color: var(--text3);
       border-radius: 5px; transition: all .2s; letter-spacing: .8px;
-      text-transform: uppercase;
+      text-transform: uppercase; text-decoration: none; display: inline-block;
     }
     .lang-btn.active { background: var(--purple); color: #fff; }
 
@@ -2736,8 +2842,8 @@
       </div>
     </div>
     <div class="lang-switch">
-      <button class="lang-btn active" data-lang="es" onclick="setLang('es')">ES</button>
-      <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+      <a class="lang-btn{% if lang|default('es') == 'es' %} active{% endif %}" href="/es/">ES</a>
+      <a class="lang-btn{% if lang|default('es') == 'en' %} active{% endif %}" href="/en/">EN</a>
     </div>
     <a href="/affiliate" id="navAffiliate" style="display:none;color:var(--text3);font-size:.78rem;font-weight:500;text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--purple)'" onmouseout="this.style.color='var(--text3)'">Earn 30% &rarr;</a>
     <button class="btn-nav" id="btnLogin" onclick="openAuth('login')" data-i18n="nav.login">Log in</button>
@@ -2747,21 +2853,31 @@
 </nav>
 
 <!-- ── HERO ─────────────────────────────────────────────────────────────── -->
+<main>
 <section class="hero">
+
+  {% if lang == 'en' %}
+  <h1 class="sr-only">Transcribe Instagram and TikTok reels in seconds</h1>
+  {% else %}
+  <h1 class="sr-only">Transcribe reels de Instagram y TikTok en segundos</h1>
+  {% endif %}
 
   <div class="hero-badge">
     <div class="badge-dot"></div>
     <span data-i18n="hero.badge">3 free/day · No card · No subscription</span>
   </div>
 
-  <h1 class="hero-h1" data-i18n="hero.h1">
+  <p class="hero-h1" aria-hidden="true" data-i18n="hero.h1">
     Paste the URL.<br>
     <span class="grad-txt">Get the script.</span>
-  </h1>
+  </p>
 
   <p class="hero-sub" style="margin-bottom:28px" data-i18n="hero.sub">
-    Transcribe any reel in 10 seconds.<br>
-    Then turn it viral, LinkedIn, story, or 5 hooks — one click.
+    {% if lang == 'en' %}
+    Transcribe Instagram and TikTok reels instantly with AI. Paste the URL, get the script in seconds, and turn it into a viral post, LinkedIn article, story or 5 hooks with one click. Free, no card, no signup.
+    {% else %}
+    Transcribe reels de Instagram y TikTok al instante con IA. Pega la URL, obtén el guión en segundos y conviértelo en un post viral, artículo de LinkedIn, historia o 5 hooks con un solo click. Gratis, sin tarjeta, sin registro.
+    {% endif %}
   </p>
 
   <!-- Input + Results -->
@@ -3595,7 +3711,7 @@ const LANGS = {
     "nav.login": "Entrar", "nav.register": "Gratis →", "nav.profile": "Mi perfil", "nav.logout": "Cerrar sesión",
     "hero.badge": "3 gratis al día · Sin tarjeta · Sin suscripción",
     "hero.h1": 'Pega la URL.<br><span class="grad-txt">Obtén el guión.</span>',
-    "hero.sub": "En 10 segundos tienes el texto de cualquier reel.<br>Luego lo conviertes en viral, LinkedIn, historia o 5 hooks — con un click.",
+    "hero.sub": "Transcribe reels de Instagram y TikTok al instante con IA. Pega la URL, obtén el guión en segundos y conviértelo en un post viral, artículo de LinkedIn, historia o 5 hooks con un solo click. Gratis, sin tarjeta, sin registro.",
     "hero.btn": "✦ Transcribir ahora",
     "hero.counter_suffix": "reels transcritos hoy",
     "adapt.h2": 'Hazlo tuyo.<br><span style="background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Elige el estilo, transforma.</span>',
@@ -3847,7 +3963,7 @@ const LANGS = {
     "nav.login": "Log in", "nav.register": "Free →", "nav.profile": "My profile", "nav.logout": "Log out",
     "hero.badge": "3 free/day · No card · No subscription",
     "hero.h1": 'Paste the URL.<br><span class="grad-txt">Get the script.</span>',
-    "hero.sub": "Transcribe any reel in 10 seconds.<br>Then turn it viral, LinkedIn, story, or 5 hooks — one click.",
+    "hero.sub": "Transcribe Instagram and TikTok reels instantly with AI. Paste the URL, get the script in seconds, and turn it into a viral post, LinkedIn article, story or 5 hooks with one click. Free, no card, no signup.",
     "hero.btn": "✦ Transcribe now",
     "hero.counter_suffix": "reels transcribed today",
     "adapt.h2": 'Make it yours.<br><span style="background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Pick a style, transform.</span>',
@@ -4106,21 +4222,24 @@ function pickRandomError() {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-let currentLang = localStorage.getItem("rs-lang") || "en";
+let currentLang = (function() {
+  const m = window.location.pathname.match(/^\/(es|en)\//);
+  return m ? m[1] : "{{ lang|default('es') }}";
+})();
 
 function setLang(lang) {
+  if (lang !== currentLang) {
+    window.location.href = "/" + lang + "/";
+    return;
+  }
   currentLang = lang;
-  localStorage.setItem("rs-lang", lang);
-  document.querySelectorAll(".lang-btn").forEach(b => b.classList.toggle("active", b.dataset.lang === lang));
   const t = LANGS[lang] || LANGS.en;
   document.querySelectorAll("[data-i18n]").forEach(el => {
     const key = el.dataset.i18n;
     if (t[key] !== undefined) el.innerHTML = t[key];
   });
-  // placeholder
   const urlInput = document.getElementById("urlInput");
   if (urlInput) urlInput.placeholder = lang === "en" ? "🔗 Paste your Instagram or TikTok reel here..." : "🔗 Pega aquí tu reel de Instagram o TikTok...";
-  // translate select options
   document.querySelectorAll("[data-i18n-" + lang + "]").forEach(el => {
     el.textContent = el.getAttribute("data-i18n-" + lang);
   });
@@ -8161,6 +8280,56 @@ closeTutorial = function() {
     </div>
   </div>
 </div>
+
+<!-- ── FAQ ──────────────────────────────────────────────────────────── -->
+<section class="faq-section fade-in" style="max-width:720px;margin:60px auto 40px;padding:0 24px">
+  {% if lang == 'en' %}
+  <h2 class="s-title" style="text-align:center;margin-bottom:28px">Frequently Asked Questions</h2>
+  <details style="border-bottom:1px solid var(--border);padding:16px 0">
+    <summary style="cursor:pointer;font-weight:500;color:var(--text);font-size:.95rem">How do I transcribe an Instagram reel?</summary>
+    <p style="margin-top:10px;color:var(--text2);font-size:.88rem;line-height:1.6">Paste the reel URL into ReelScript and click Transcribe. You'll have the full text in under 10 seconds, powered by Groq Whisper AI. No downloads, no apps, no extensions needed.</p>
+  </details>
+  <details style="border-bottom:1px solid var(--border);padding:16px 0">
+    <summary style="cursor:pointer;font-weight:500;color:var(--text);font-size:.95rem">Can I transcribe a private TikTok?</summary>
+    <p style="margin-top:10px;color:var(--text2);font-size:.88rem;line-height:1.6">Only public TikToks and reels can be transcribed. If the video is private or restricted, ReelScript won't be able to access the audio.</p>
+  </details>
+  <details style="border-bottom:1px solid var(--border);padding:16px 0">
+    <summary style="cursor:pointer;font-weight:500;color:var(--text);font-size:.95rem">How accurate is the transcription?</summary>
+    <p style="margin-top:10px;color:var(--text2);font-size:.88rem;line-height:1.6">ReelScript uses Groq Whisper, one of the most accurate speech-to-text models available. Accuracy is typically above 95% for clear audio in supported languages.</p>
+  </details>
+  <details style="border-bottom:1px solid var(--border);padding:16px 0">
+    <summary style="cursor:pointer;font-weight:500;color:var(--text);font-size:.95rem">Can I use it for free?</summary>
+    <p style="margin-top:10px;color:var(--text2);font-size:.88rem;line-height:1.6">Yes. You get 5 free transcriptions and 5 free adaptations every day, no credit card required. Paid plans are available if you need more volume.</p>
+  </details>
+  <details style="border-bottom:1px solid var(--border);padding:16px 0">
+    <summary style="cursor:pointer;font-weight:500;color:var(--text);font-size:.95rem">What languages does it support?</summary>
+    <p style="margin-top:10px;color:var(--text2);font-size:.88rem;line-height:1.6">ReelScript supports transcription in Spanish, English, French, Portuguese, German, Italian and more — any language supported by Whisper.</p>
+  </details>
+  {% else %}
+  <h2 class="s-title" style="text-align:center;margin-bottom:28px">Preguntas frecuentes</h2>
+  <details style="border-bottom:1px solid var(--border);padding:16px 0">
+    <summary style="cursor:pointer;font-weight:500;color:var(--text);font-size:.95rem">¿Cómo transcribir un reel de Instagram?</summary>
+    <p style="margin-top:10px;color:var(--text2);font-size:.88rem;line-height:1.6">Pega la URL del reel en ReelScript y pulsa Transcribir. Tendrás el texto completo en menos de 10 segundos, gracias a Groq Whisper AI. Sin descargas, sin apps, sin extensiones.</p>
+  </details>
+  <details style="border-bottom:1px solid var(--border);padding:16px 0">
+    <summary style="cursor:pointer;font-weight:500;color:var(--text);font-size:.95rem">¿Se puede transcribir un TikTok privado?</summary>
+    <p style="margin-top:10px;color:var(--text2);font-size:.88rem;line-height:1.6">Solo se pueden transcribir TikToks y reels públicos. Si el vídeo es privado o restringido, ReelScript no podrá acceder al audio.</p>
+  </details>
+  <details style="border-bottom:1px solid var(--border);padding:16px 0">
+    <summary style="cursor:pointer;font-weight:500;color:var(--text);font-size:.95rem">¿Qué precisión tiene la transcripción?</summary>
+    <p style="margin-top:10px;color:var(--text2);font-size:.88rem;line-height:1.6">ReelScript usa Groq Whisper, uno de los modelos de speech-to-text más precisos. La precisión suele superar el 95% en audio claro en los idiomas soportados.</p>
+  </details>
+  <details style="border-bottom:1px solid var(--border);padding:16px 0">
+    <summary style="cursor:pointer;font-weight:500;color:var(--text);font-size:.95rem">¿Puedo usarlo gratis?</summary>
+    <p style="margin-top:10px;color:var(--text2);font-size:.88rem;line-height:1.6">Sí. Tienes 5 transcripciones y 5 adaptaciones gratis cada día, sin tarjeta de crédito. Los planes de pago están disponibles si necesitas más volumen.</p>
+  </details>
+  <details style="border-bottom:1px solid var(--border);padding:16px 0">
+    <summary style="cursor:pointer;font-weight:500;color:var(--text);font-size:.95rem">¿Qué idiomas soporta?</summary>
+    <p style="margin-top:10px;color:var(--text2);font-size:.88rem;line-height:1.6">ReelScript soporta transcripción en español, inglés, francés, portugués, alemán, italiano y más — cualquier idioma soportado por Whisper.</p>
+  </details>
+  {% endif %}
+</section>
+</main>
 
 <!-- ── FOOTER ────────────────────────────────────────────────────────── -->
 <footer style="border-top:1px solid var(--border);padding:32px 24px;text-align:center;color:var(--text2);font-size:.75rem">
