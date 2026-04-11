@@ -1965,22 +1965,338 @@ def index_en():
     return render_template("index.html", lang="en")
 
 
+# ── Pillar pages ─────────────────────────────────────────────────────────────
+
+PILLAR_PAGES = {
+    "es": {
+        "transcribir-reel-instagram": {
+            "title": "Transcribir reel de Instagram gratis · ReelScript",
+            "description": "Pega el link de cualquier reel de Instagram y saca el texto en 10 segundos. Gratis, sin tarjeta, sin registro.",
+            "canonical": "https://reelscript.net/es/transcribir-reel-instagram",
+            "alt": "en/instagram-reel-transcript",
+            "h2_seo": "Transcribe un reel de Instagram en 10 segundos",
+            "how_to_label": "Cómo hacerlo",
+            "faq_label": "Preguntas frecuentes",
+            "cta_label": "Probar ahora →",
+            "intro_paragraphs": [
+                "Grabas un reel que funciona. Lo subes. Fin. Mal. Ese audio vale para cinco cosas más y lo estás tirando: un post de LinkedIn, un hilo, cinco hooks para grabar mañana, o leerlo en el teleprompter para el siguiente video. Todo está ahí, en el audio que ya tienes.",
+                "ReelScript es un gestor de contenido para creadores. Transcribes el reel, lo reformateas con IA en el estilo que quieras y guardas todo en proyectos organizados. La transcripción la hace Whisper — el modelo de OpenAI, lo mejor que hay para esto. No vamos a ponernos medallas por algo que no hemos inventado nosotros. Jaja.",
+                "Pegas el link. Pulsas transcribir. En 10 segundos tienes el guión completo. Luego decides: viral, LinkedIn, historia, hooks, o leerlo en el teleprompter integrado para grabar el siguiente sin improvisar. Un click por cosa.",
+            ],
+            "how_to_steps": [
+                "Copia el link del reel de Instagram desde la app (Compartir → Copiar link) o desde el navegador.",
+                "Pégalo en el campo de arriba y pulsa «Transcribir».",
+                "En 10 segundos tienes el texto completo. Cópialo, reformatéalo con IA o ábrelo en el teleprompter.",
+            ],
+            "faq": [
+                {"q": "¿Funciona con reels privados o de cuentas privadas?", "a": "No. Solo reels públicos. Si el perfil o el reel están en privado, no podemos acceder al audio."},
+                {"q": "¿La transcripción tiene marca de agua o límite de caracteres?", "a": "No. El texto es tuyo. Sin marca de agua, sin cortes. Lo que devuelve Whisper es lo que ves."},
+                {"q": "¿Qué más puedo hacer con el texto, además de copiarlo?", "a": "Reformatearlo con IA (viral, LinkedIn, historia, 5 hooks), guardarlo en un proyecto, asignarle un asistente con tu estilo personal, añadir métricas de rendimiento o leerlo en el teleprompter integrado para grabar el siguiente video."},
+                {"q": "¿En qué idiomas funciona?", "a": "En los que soporta Whisper — más de 90. Español, inglés, francés, portugués, alemán, italiano, japonés... Si el reel está en ese idioma, lo transcribe."},
+                {"q": "¿Es gratis?", "a": "Sí. 5 transcripciones gratis al día sin registrarte. Con cuenta gratuita (sin tarjeta) sube a 250 al mes."},
+            ],
+            "closing": "Eso es todo. Arriba tienes el input.",
+        },
+        "transcribir-tiktok": {
+            "title": "Transcribir TikTok a texto gratis · ReelScript",
+            "description": "Pega el link de cualquier TikTok y obtén la transcripción completa en segundos. Sin registro, sin tarjeta.",
+            "canonical": "https://reelscript.net/es/transcribir-tiktok",
+            "alt": "en/tiktok-to-text",
+            "h2_seo": "Transcribe cualquier TikTok a texto en segundos",
+            "how_to_label": "Cómo hacerlo",
+            "faq_label": "Preguntas frecuentes",
+            "cta_label": "Probar ahora →",
+            "intro_paragraphs": [
+                "Hay TikToks que explican algo en 60 segundos que llevaría 600 palabras escribir. Ese texto existe — está en el audio. Lo que no tienes es tiempo para transcribirlo a mano. Nadie lo tiene, para ser honestos.",
+                "ReelScript no es solo una herramienta de transcripción — es donde gestionas todo tu contenido. Pegas el link del TikTok, en 10 segundos tienes el texto, y desde ahí decides qué hacer: copiarlo, reformatearlo con IA, guardarlo en un proyecto o cargarlo en el teleprompter para grabarte a ti mismo leyendo el guión sin tener que memorizar nada.",
+                "Funciona con cualquier TikTok público. La transcripción la hace Whisper, soporta más de 90 idiomas y la precisión es alta si el audio es claro.",
+            ],
+            "how_to_steps": [
+                "Abre el TikTok en la app o el navegador. Pulsa «Compartir» → «Copiar link».",
+                "Pega el link en el campo de arriba y pulsa «Transcribir».",
+                "Tienes el texto. Cópialo, reformatéalo con IA o ábrelo en el teleprompter.",
+            ],
+            "faq": [
+                {"q": "¿Funciona con TikToks privados?", "a": "No. Solo TikToks públicos. Si la cuenta o el video está en privado, no podemos acceder al audio."},
+                {"q": "¿Qué pasa si el TikTok no tiene voz, solo música?", "a": "La transcripción saldrá vacía o con ruido. Whisper transcribe voz humana — si no hay voz, no hay texto útil."},
+                {"q": "¿Puedo guardar los textos transcritos?", "a": "Sí. Si tienes cuenta, todos los textos se guardan en tu historial y puedes organizarlos en proyectos. Con cuenta gratuita ya tienes acceso a esto."},
+                {"q": "¿Hay límite de duración del video?", "a": "Los TikToks normalmente son cortos, así que no es un problema real. Para videos muy largos la transcripción puede tardar más."},
+                {"q": "¿Es gratis?", "a": "Sí. 5 transcripciones gratis al día sin cuenta. Con cuenta gratuita, 250 al mes."},
+            ],
+            "closing": "El input está arriba. Tarda menos en probarlo que en seguir leyendo esto.",
+        },
+        "reel-a-linkedin": {
+            "title": "Convertir reel a post de LinkedIn con IA · ReelScript",
+            "description": "Transcribe cualquier reel o video y conviértelo en un post de LinkedIn con un click. IA que escribe como tú.",
+            "canonical": "https://reelscript.net/es/reel-a-linkedin",
+            "alt": "en/reel-to-linkedin",
+            "h2_seo": "Del reel al post de LinkedIn en dos clicks",
+            "how_to_label": "Cómo hacerlo",
+            "faq_label": "Preguntas frecuentes",
+            "cta_label": "Probar ahora →",
+            "intro_paragraphs": [
+                "Grabas un video para Instagram o TikTok. Funciona. Y luego no lo reutilizas en LinkedIn porque convertir el audio en un post profesional lleva tiempo que no tienes. Es una pena, porque el mensaje ya lo validaste — solo cambia el canal.",
+                "ReelScript lo hace en dos pasos. Primero transcribe el reel — 10 segundos. Luego le dices «LinkedIn» y la IA lo reformatea: tono reflexivo, párrafos cortos, pregunta al final. El texto es tuyo, la IA solo lo ordena. Si tienes un asistente configurado con tu estilo, lo aplicará automáticamente.",
+                "Y si quieres leer el guión en cámara antes de publicarlo en LinkedIn, el teleprompter integrado te lo muestra a la velocidad que necesitas. Sin memorizar, sin improvisar.",
+            ],
+            "how_to_steps": [
+                "Pega el link del reel arriba y transcríbelo.",
+                "En el panel «Hazlo tuyo», selecciona el estilo «LinkedIn».",
+                "La IA reformatea el guión con tono profesional. Cópialo y publícalo, o ábrelo en el teleprompter.",
+            ],
+            "faq": [
+                {"q": "¿El post de LinkedIn suena a IA?", "a": "Depende de tu guión original. La IA reformatea lo que ya dijiste en el video — si tu voz es auténtica en el reel, el post también lo será."},
+                {"q": "¿Puedo guardar el resultado en un proyecto?", "a": "Sí. Puedes guardar cualquier guión en proyectos organizados, asignarle métricas de rendimiento y rastrear qué contenido funciona mejor."},
+                {"q": "¿Puedo ajustar el tono antes de publicar?", "a": "Sí. El texto que devuelve la IA es editable. Cópialo y ajusta lo que no encaje con tu estilo — o crea un asistente personalizado para que siempre salga como quieres."},
+                {"q": "¿Qué pasa si el reel es muy corto, de 15 segundos?", "a": "Sale un post corto. Un reel de 15 segundos bien grabado puede dar un post de LinkedIn perfectamente legible."},
+            ],
+            "closing": "El reel ya lo tienes. El post tarda 10 segundos más. Arriba el input.",
+        },
+        "hooks-desde-reel": {
+            "title": "Generar hooks desde un reel con IA · ReelScript",
+            "description": "Extrae 5 hooks de apertura de cualquier reel o video en un click. Para Instagram, TikTok, YouTube Shorts.",
+            "canonical": "https://reelscript.net/es/hooks-desde-reel",
+            "alt": "en/hooks-from-video",
+            "h2_seo": "5 hooks de apertura desde cualquier reel, en un click",
+            "how_to_label": "Cómo hacerlo",
+            "faq_label": "Preguntas frecuentes",
+            "cta_label": "Probar ahora →",
+            "intro_paragraphs": [
+                "El hook decide si alguien sigue viendo o no. Los primeros 2 segundos. Y la mayoría de creadores los improvisan, los repiten o los copian de otros sin entender por qué funcionan. Normal, es lo más difícil de escribir.",
+                "Si tienes un reel que funcionó — retención, comentarios, guardados — el hook ya está en el guión. ReelScript lo transcribe y genera 5 variaciones de apertura distintas: pregunta directa, dato, confesión, provocación, promesa concreta. Tú eliges cuál graba mañana. Y si quieres leerlo sin improvisar, lo abres en el teleprompter y listo.",
+                "No es escribir hooks desde cero. Es extraer los que ya funcionaron y multiplicarlos. ReelScript guarda todo en proyectos para que puedas ver qué hooks tienen mejor rendimiento a lo largo del tiempo.",
+            ],
+            "how_to_steps": [
+                "Transcribe el reel que quieras usar como base.",
+                "En «Hazlo tuyo», selecciona el estilo «5 hooks».",
+                "La IA te devuelve 5 aperturas distintas. Guarda las que quieras o ábrelas en el teleprompter.",
+            ],
+            "faq": [
+                {"q": "¿Los hooks son genéricos o específicos al video?", "a": "Específicos. La IA trabaja con el guión transcrito — si el reel habla de edición de video, los hooks hablan de edición de video."},
+                {"q": "¿Puedo usar hooks de un video de otra persona como referencia?", "a": "Puedes transcribir cualquier reel público y ver cómo estructura los hooks. Lo que hagas con ellos es tu responsabilidad."},
+                {"q": "¿Para qué formatos sirven?", "a": "Para cualquier video corto: Instagram Reels, TikTok, YouTube Shorts. También sirven como primera frase de un post o hilo."},
+                {"q": "¿Puedo grabarme leyendo los hooks?", "a": "Sí. Puedes abrir cualquier guión en el teleprompter integrado de ReelScript y grabarte leyéndolo a cámara, sin cortes ni improvisar."},
+                {"q": "¿Cuántos hooks genera?", "a": "5 por defecto. Suficientes para tener variedad sin saturarte."},
+            ],
+            "closing": "Los hooks de tus próximas grabaciones están en los reels que ya tienes. Arriba el input.",
+        },
+        "transcribir-audio-video": {
+            "title": "Transcribir audio de video a texto gratis · ReelScript",
+            "description": "Convierte el audio de cualquier reel o video a texto en segundos. Compatible con Instagram y TikTok. Sin instalar nada.",
+            "canonical": "https://reelscript.net/es/transcribir-audio-video",
+            "alt": "en/free-video-transcription",
+            "h2_seo": "Convierte el audio de cualquier video a texto",
+            "how_to_label": "Cómo hacerlo",
+            "faq_label": "Preguntas frecuentes",
+            "cta_label": "Probar ahora →",
+            "intro_paragraphs": [
+                "Transcribir audio de video a mano tarda lo que dura el video, más el tiempo de tipeo. Para un reel de 60 segundos, 5 minutos. Para varios al día, una tarde. Es tiempo que ningún creador tiene — ni debería gastar en esto.",
+                "ReelScript coge el link, extrae el audio y lo pasa por Whisper. En 10 segundos tienes el texto. Pero no es solo transcripción — es el punto de partida de tu gestión de contenido. Desde el texto puedes reformatear con IA, organizar en proyectos, crear guiones para futuras grabaciones y leerlos en el teleprompter integrado.",
+                "Compatible con Instagram Reels y TikTok. Sin instalar nada, sin subir archivos.",
+            ],
+            "how_to_steps": [
+                "Copia el link del reel o TikTok que quieres transcribir.",
+                "Pégalo en el campo de arriba y pulsa «Transcribir».",
+                "Tienes el texto del audio en segundos. Cópialo, trabájalo con IA o ábrelo en el teleprompter.",
+            ],
+            "faq": [
+                {"q": "¿Funciona con cualquier tipo de video?", "a": "Con reels de Instagram y TikToks públicos. No con YouTube (de momento), ni con archivos locales."},
+                {"q": "¿Qué precisión tiene la transcripción?", "a": "Alta, si el audio es claro. Whisper supera el 95% de precisión en condiciones normales. Con ruido de fondo o música alta puede cometer errores."},
+                {"q": "¿Puedo organizar los textos transcritos?", "a": "Sí. Con cuenta gratuita puedes guardarlos en proyectos, asignarles asistentes con tu estilo y rastrear métricas de rendimiento."},
+                {"q": "¿Necesito instalar algo?", "a": "No. Funciona en el navegador. Sin extensiones, sin apps."},
+                {"q": "¿Es gratis?", "a": "Sí. 5 transcripciones gratis al día sin cuenta. Con cuenta gratuita, 250 al mes sin tarjeta."},
+            ],
+            "closing": "Nada más que decir. El input está arriba.",
+        },
+    },
+    "en": {
+        "instagram-reel-transcript": {
+            "title": "Instagram Reel Transcript — Free Online · ReelScript",
+            "description": "Paste any Instagram reel URL and get the full transcript in 10 seconds. Free, no card, no signup.",
+            "canonical": "https://reelscript.net/en/instagram-reel-transcript",
+            "alt": "es/transcribir-reel-instagram",
+            "h2_seo": "Transcribe any Instagram reel in 10 seconds",
+            "how_to_label": "How to do it",
+            "faq_label": "Frequently asked questions",
+            "cta_label": "Try it now →",
+            "intro_paragraphs": [
+                "You record a reel that works. You post it. Done. That audio is worth five more things and you're throwing it away: a LinkedIn post, a thread, five hooks for tomorrow's recording, or reading it on the teleprompter to nail the next one without improvising.",
+                "ReelScript is a content manager for creators. You transcribe the reel, reformat it with AI in whatever style you want, and save everything in organized projects. The transcription runs on Whisper — OpenAI's model, the best thing out there for this. Not taking credit for that. Ha.",
+                "Paste the link. Hit transcribe. In 10 seconds you have the full script. Then pick: viral, LinkedIn, story, hooks, or load it into the built-in teleprompter to record the next video without winging it. One click per thing.",
+            ],
+            "how_to_steps": [
+                "Copy the Instagram reel link from the app (Share → Copy link) or your browser.",
+                "Paste it into the field above and hit «Transcribe».",
+                "In 10 seconds you have the full text. Copy it, reformat with AI, or open it in the teleprompter.",
+            ],
+            "faq": [
+                {"q": "Does it work with private reels or private accounts?", "a": "No. Public reels only. If the profile or reel is private, we can't access the audio."},
+                {"q": "Does the transcript have a watermark or character limit?", "a": "No. The text is yours. No watermark, no cuts. What Whisper returns is what you see."},
+                {"q": "What else can I do with the text besides copy it?", "a": "Reformat it with AI (viral, LinkedIn, story, 5 hooks), save it in a project, assign a custom assistant with your style, add performance metrics, or read it in the built-in teleprompter to record your next video."},
+                {"q": "What languages does it support?", "a": "Any language Whisper supports — over 90. Spanish, English, French, Portuguese, German, Italian, Japanese... If the reel is in that language, it transcribes it."},
+                {"q": "Is it free?", "a": "Yes. 5 free transcriptions per day without signing up. With a free account (no card) it goes up to 250 per month."},
+            ],
+            "closing": "That's it. The input is above.",
+        },
+        "tiktok-to-text": {
+            "title": "TikTok to Text — Free Transcript · ReelScript",
+            "description": "Paste any TikTok URL and get the full transcript in seconds. No signup, no credit card.",
+            "canonical": "https://reelscript.net/en/tiktok-to-text",
+            "alt": "es/transcribir-tiktok",
+            "h2_seo": "Convert any TikTok to text in seconds",
+            "how_to_label": "How to do it",
+            "faq_label": "Frequently asked questions",
+            "cta_label": "Try it now →",
+            "intro_paragraphs": [
+                "Some TikToks explain in 60 seconds what would take 600 words to write. That text exists — it's in the audio. What you don't have is time to transcribe it by hand. Nobody does, honestly.",
+                "ReelScript isn't just a transcription tool — it's where you manage your content. Paste the TikTok link, in 10 seconds you have the text, and from there: copy it, reformat with AI, save it in a project, or load it into the teleprompter to record yourself reading the script without memorizing a thing.",
+                "Works with any public TikTok. Transcription runs on Whisper, supports 90+ languages, high accuracy if the audio is clear.",
+            ],
+            "how_to_steps": [
+                "Open the TikTok in the app or browser. Tap Share → Copy link.",
+                "Paste the link in the field above and hit Transcribe.",
+                "You have the text. Copy it, reformat with AI, or open it in the teleprompter.",
+            ],
+            "faq": [
+                {"q": "Does it work with private TikToks?", "a": "No. Public TikToks only. If the account or video is private, we can't access the audio."},
+                {"q": "What if the TikTok has no voice, just music?", "a": "The transcript will be empty or garbled. Whisper transcribes human speech — no voice, no useful text."},
+                {"q": "Can I save the transcripts?", "a": "Yes. With an account, all texts are saved in your history and you can organize them in projects. Free account gets you this."},
+                {"q": "Is there a video length limit?", "a": "TikToks are usually short, not a real issue. Very long videos may take a bit longer to process."},
+                {"q": "Is it free?", "a": "Yes. 5 free transcriptions per day without an account. With a free account, 250 per month."},
+            ],
+            "closing": "The input is above. Faster to try than to keep reading.",
+        },
+        "reel-to-linkedin": {
+            "title": "Reel to LinkedIn Post with AI · ReelScript",
+            "description": "Transcribe any reel or video and turn it into a LinkedIn post in one click. AI that writes like you.",
+            "canonical": "https://reelscript.net/en/reel-to-linkedin",
+            "alt": "es/reel-a-linkedin",
+            "h2_seo": "From reel to LinkedIn post in two clicks",
+            "how_to_label": "How to do it",
+            "faq_label": "Frequently asked questions",
+            "cta_label": "Try it now →",
+            "intro_paragraphs": [
+                "You record a video for Instagram or TikTok. It works. Gets engagement. And then you don't repurpose it on LinkedIn because turning audio into a proper post takes time you don't have. Which is a shame — you already validated the message. Just changing the channel.",
+                "ReelScript does it in two steps. Transcribe the reel — 10 seconds. Tell it «LinkedIn» — the AI reformats it: reflective tone, short paragraphs, question at the end. Your words, the AI just structures them. If you have a custom assistant set up with your style, it applies it automatically.",
+                "And if you want to read the script on camera before publishing, the built-in teleprompter shows it at whatever speed you need. No memorizing, no winging it.",
+            ],
+            "how_to_steps": [
+                "Paste the reel link above and transcribe it.",
+                "In the «Make it yours» panel, select the «LinkedIn» style.",
+                "The AI reformats the script. Copy and publish, or open it in the teleprompter.",
+            ],
+            "faq": [
+                {"q": "Does the LinkedIn post sound like AI?", "a": "Depends on your original script. The AI reformats what you already said — if your voice is authentic in the reel, the post will be too."},
+                {"q": "Can I save the result in a project?", "a": "Yes. You can save any script in organized projects, add performance metrics, and track what content performs best over time."},
+                {"q": "Can I edit the tone before publishing?", "a": "Yes. The text the AI returns is fully editable. Or create a custom assistant so it always comes out how you want."},
+                {"q": "What if the reel is very short, like 15 seconds?", "a": "You get a short post. A well-recorded 15-second reel can produce a perfectly readable LinkedIn post."},
+            ],
+            "closing": "You already have the reel. The post takes 10 more seconds. Input is above.",
+        },
+        "hooks-from-video": {
+            "title": "Generate Video Hooks with AI · ReelScript",
+            "description": "Extract 5 opening hooks from any reel or video in one click. For Instagram, TikTok, YouTube Shorts.",
+            "canonical": "https://reelscript.net/en/hooks-from-video",
+            "alt": "es/hooks-desde-reel",
+            "h2_seo": "5 opening hooks from any reel, in one click",
+            "how_to_label": "How to do it",
+            "faq_label": "Frequently asked questions",
+            "cta_label": "Try it now →",
+            "intro_paragraphs": [
+                "The hook decides whether someone keeps watching or not. The first 2 seconds. Most creators improvise them, repeat them, or copy them from others without understanding why they work. Fair enough — it's the hardest thing to write.",
+                "If you have a reel that performed — good retention, comments, saves — the hook is already in the script. ReelScript transcribes it and generates 5 different opening variations: direct question, surprising stat, confession, provocation, concrete promise. You pick which one you record tomorrow. Want to read it without improvising? Open it in the teleprompter and go.",
+                "Not writing hooks from scratch. Extracting the ones that already worked and multiplying them. ReelScript saves everything in projects so you can track which hooks get the best results over time.",
+            ],
+            "how_to_steps": [
+                "Transcribe the reel you want to use as a base.",
+                "In «Make it yours», select the «5 hooks» style.",
+                "The AI returns 5 different openings. Save the ones you like or open them in the teleprompter.",
+            ],
+            "faq": [
+                {"q": "Are the hooks generic or specific to the video?", "a": "Specific. The AI works with your transcribed script — if the reel is about video editing, the hooks are about video editing."},
+                {"q": "Can I use hooks from someone else's video as reference?", "a": "You can transcribe any public reel and see how their hooks are structured. What you do with them is on you."},
+                {"q": "What formats are these hooks for?", "a": "Any short video: Instagram Reels, TikTok, YouTube Shorts. Also work as the first line of a post or thread."},
+                {"q": "Can I record myself reading the hooks?", "a": "Yes. Open any script in ReelScript's built-in teleprompter and record yourself reading it on camera. No cuts, no winging it."},
+                {"q": "How many hooks does it generate?", "a": "5 by default. Enough variety without overwhelming you."},
+            ],
+            "closing": "The hooks for your next recordings are in the reels you already have. Input is above.",
+        },
+        "free-video-transcription": {
+            "title": "Free Video Transcription Online · ReelScript",
+            "description": "Convert audio from any reel or video to text in seconds. Works with Instagram and TikTok. No install needed.",
+            "canonical": "https://reelscript.net/en/free-video-transcription",
+            "alt": "es/transcribir-audio-video",
+            "h2_seo": "Convert any video audio to text",
+            "how_to_label": "How to do it",
+            "faq_label": "Frequently asked questions",
+            "cta_label": "Try it now →",
+            "intro_paragraphs": [
+                "Transcribing video audio by hand takes as long as the video, plus typing time. For a 60-second reel, 5 minutes. For several a day, an afternoon. Time no creator has — or should spend on this.",
+                "ReelScript takes the link, pulls the audio, runs it through Whisper. In 10 seconds you have the text. But it's not just transcription — it's the starting point for your content management. From the text: reformat with AI, organize in projects, build scripts for future recordings, and read them in the built-in teleprompter.",
+                "Works with public Instagram Reels and TikTok. No install, no file uploads.",
+            ],
+            "how_to_steps": [
+                "Copy the reel or TikTok link you want to transcribe.",
+                "Paste it in the field above and hit Transcribe.",
+                "You have the audio text in seconds. Copy it, work it with AI, or open it in the teleprompter.",
+            ],
+            "faq": [
+                {"q": "Does it work with any video type?", "a": "With public Instagram Reels and TikToks. Not YouTube (for now), not local files."},
+                {"q": "How accurate is the transcription?", "a": "High, if the audio is clear. Whisper exceeds 95% accuracy under normal conditions. Heavy background noise or music can cause errors."},
+                {"q": "Can I organize the transcribed texts?", "a": "Yes. With a free account you can save them in projects, assign custom assistants, and track performance metrics."},
+                {"q": "Do I need to install anything?", "a": "No. Works in the browser. No extensions, no apps."},
+                {"q": "Is it free?", "a": "Yes. 5 free transcriptions per day without an account. With a free account, 250 per month, no card required."},
+            ],
+            "closing": "Nothing more to say. The input is above.",
+        },
+    },
+}
+
+
+@app.route("/<lang>/<slug>")
+def pillar_page(lang, slug):
+    if lang not in ("es", "en"):
+        abort(404)
+    page_data = PILLAR_PAGES.get(lang, {}).get(slug)
+    if not page_data:
+        abort(404)
+    return render_template("index.html", pillar=page_data, lang=lang)
+
+
 @app.route("/sitemap.xml")
 def sitemap():
+    BASE = "https://reelscript.net"
+    # Home pages
     urls = [
-        ("https://reelscript.net/es/", "1.0", "weekly"),
-        ("https://reelscript.net/en/", "1.0", "weekly"),
+        {"loc": f"{BASE}/es/", "priority": "1.0", "freq": "weekly",
+         "hreflang_es": f"{BASE}/es/", "hreflang_en": f"{BASE}/en/"},
+        {"loc": f"{BASE}/en/", "priority": "1.0", "freq": "weekly",
+         "hreflang_es": f"{BASE}/es/", "hreflang_en": f"{BASE}/en/"},
     ]
+    # Pillar pages with cross-language hreflang
+    for lang, pages in PILLAR_PAGES.items():
+        for slug, data in pages.items():
+            alt = data.get("alt", "")
+            alt_lang = "en" if lang == "es" else "es"
+            urls.append({
+                "loc": f"{BASE}/{lang}/{slug}",
+                "priority": "0.9",
+                "freq": "monthly",
+                "hreflang_es": f"{BASE}/es/{slug}" if lang == "es" else f"{BASE}/{alt}",
+                "hreflang_en": f"{BASE}/en/{slug}" if lang == "en" else f"{BASE}/{alt}",
+            })
+
     xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
     xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
     xml += 'xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
-    for url, priority, freq in urls:
+    for u in urls:
         xml += "  <url>\n"
-        xml += f"    <loc>{url}</loc>\n"
-        xml += f"    <changefreq>{freq}</changefreq>\n"
-        xml += f"    <priority>{priority}</priority>\n"
-        xml += '    <xhtml:link rel="alternate" hreflang="es" href="https://reelscript.net/es/"/>\n'
-        xml += '    <xhtml:link rel="alternate" hreflang="en" href="https://reelscript.net/en/"/>\n'
+        xml += f"    <loc>{u['loc']}</loc>\n"
+        xml += f"    <changefreq>{u['freq']}</changefreq>\n"
+        xml += f"    <priority>{u['priority']}</priority>\n"
+        xml += f'    <xhtml:link rel="alternate" hreflang="es" href="{u["hreflang_es"]}"/>\n'
+        xml += f'    <xhtml:link rel="alternate" hreflang="en" href="{u["hreflang_en"]}"/>\n'
+        xml += f'    <xhtml:link rel="alternate" hreflang="x-default" href="{BASE}/"/>\n'
         xml += "  </url>\n"
     xml += "</urlset>"
     return Response(xml, mimetype="application/xml")

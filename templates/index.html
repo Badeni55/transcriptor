@@ -5,6 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="index, follow, max-image-preview:large">
 
+  {% if pillar %}
+  <title>{{ pillar.title }}</title>
+  <meta name="description" content="{{ pillar.description }}">
+  <link rel="canonical" href="{{ pillar.canonical }}">
+  {% set alt_parts = pillar.alt.split('/') %}
+  {% set alt_lang = alt_parts[0] %}
+  {% set alt_slug = alt_parts[1] %}
+  <link rel="alternate" hreflang="{{ lang }}" href="{{ pillar.canonical }}">
+  <link rel="alternate" hreflang="{{ alt_lang }}" href="https://reelscript.net/{{ pillar.alt }}">
+  <link rel="alternate" hreflang="x-default" href="https://reelscript.net/">
+  <meta property="og:title" content="{{ pillar.title }}">
+  <meta property="og:description" content="{{ pillar.description }}">
+  <meta property="og:url" content="{{ pillar.canonical }}">
+  <meta name="twitter:title" content="{{ pillar.title }}">
+  <meta name="twitter:description" content="{{ pillar.description }}">
+  {% else %}
   {% if lang == 'en' %}
   <title>ReelScript · Transcribe Instagram and TikTok reels in seconds</title>
   <meta name="description" content="Paste an Instagram or TikTok reel and get the transcript instantly. Turn it into a viral post, LinkedIn article, story or hooks with one click. Free, no card required.">
@@ -12,13 +28,16 @@
   <title>ReelScript · Transcribe reels de Instagram y TikTok en segundos</title>
   <meta name="description" content="Pega un reel de Instagram o TikTok y obtén la transcripción al instante. Conviértela en post viral, LinkedIn, historia o hooks con un click. Gratis sin tarjeta.">
   {% endif %}
-
   <link rel="canonical" href="https://reelscript.net/{{ lang|default('es') }}/">
   <link rel="alternate" hreflang="es" href="https://reelscript.net/es/">
   <link rel="alternate" hreflang="en" href="https://reelscript.net/en/">
   <link rel="alternate" hreflang="x-default" href="https://reelscript.net/">
+  {% endif %}
 
-  <!-- Open Graph -->
+  <!-- Open Graph (shared) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ReelScript">
+  {% if not pillar %}
   {% if lang == 'en' %}
   <meta property="og:title" content="ReelScript · Transcribe Instagram and TikTok reels in seconds">
   <meta property="og:description" content="Paste an Instagram or TikTok reel and get the transcript instantly. Turn it into a viral post, LinkedIn article, story or hooks with one click. Free, no card required.">
@@ -36,12 +55,23 @@
   <meta property="og:image" content="https://reelscript.net/static/og-image-es.png">
   <meta property="og:image:alt" content="ReelScript — Transcribe reels en segundos">
   {% endif %}
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="ReelScript">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  {% else %}
+  {% if lang == 'en' %}
+  <meta property="og:locale" content="en_US">
+  <meta property="og:image" content="https://reelscript.net/static/og-image-en.png">
+  {% else %}
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:image" content="https://reelscript.net/static/og-image-es.png">
+  {% endif %}
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  {% endif %}
 
   <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  {% if not pillar %}
   {% if lang == 'en' %}
   <meta name="twitter:title" content="ReelScript · Transcribe Instagram and TikTok reels in seconds">
   <meta name="twitter:description" content="Paste an Instagram or TikTok reel and get the transcript instantly. Turn it into a viral post, LinkedIn article, story or hooks with one click. Free, no card required.">
@@ -51,7 +81,13 @@
   <meta name="twitter:description" content="Pega un reel de Instagram o TikTok y obtén la transcripción al instante. Conviértela en post viral, LinkedIn, historia o hooks con un click. Gratis sin tarjeta.">
   <meta name="twitter:image" content="https://reelscript.net/static/og-image-es.png">
   {% endif %}
-  <meta name="twitter:card" content="summary_large_image">
+  {% else %}
+  {% if lang == 'en' %}
+  <meta name="twitter:image" content="https://reelscript.net/static/og-image-en.png">
+  {% else %}
+  <meta name="twitter:image" content="https://reelscript.net/static/og-image-es.png">
+  {% endif %}
+  {% endif %}
 
   <!-- JSON-LD: WebApplication -->
   <script type="application/ld+json">
@@ -87,13 +123,17 @@
   }
   </script>
 
-  <!-- JSON-LD: FAQ -->
+  <!-- JSON-LD: FAQ (home or pillar) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
-      {% if lang == 'en' %}
+      {% if pillar %}
+      {% for item in pillar.faq %}
+      {"@type": "Question", "name": {{ item.q | tojson }}, "acceptedAnswer": {"@type": "Answer", "text": {{ item.a | tojson }}}}{% if not loop.last %},{% endif %}
+      {% endfor %}
+      {% elif lang == 'en' %}
       {"@type": "Question", "name": "How do I transcribe an Instagram reel?", "acceptedAnswer": {"@type": "Answer", "text": "Paste the reel URL into ReelScript and click Transcribe. You'll have the full text in under 10 seconds, powered by Groq Whisper AI."}},
       {"@type": "Question", "name": "Can I transcribe a private TikTok?", "acceptedAnswer": {"@type": "Answer", "text": "Only public TikToks and reels can be transcribed. If the video is private or restricted, ReelScript won't be able to access the audio."}},
       {"@type": "Question", "name": "How accurate is the transcription?", "acceptedAnswer": {"@type": "Answer", "text": "ReelScript uses Groq Whisper, one of the most accurate speech-to-text models available. Accuracy is typically above 95% for clear audio in supported languages."}},
@@ -957,6 +997,153 @@
       background: var(--surf2); border: 1px solid var(--border);
       border-radius: 8px; padding: 3px;
     }
+    /* ── Pillar SEO block ──────────────────────────────────────── */
+    .pillar-seo {
+      background: rgba(0,0,0,.35);
+      border-top: 1px solid var(--border);
+      padding: 72px 24px 80px;
+    }
+    .pillar-container {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+    .pillar-container h2 {
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 28px;
+      line-height: 1.25;
+    }
+    .pillar-container > p {
+      color: var(--text2);
+      font-size: .97rem;
+      line-height: 1.75;
+      margin-bottom: 18px;
+    }
+    .pillar-howto { margin: 40px 0; }
+    .pillar-howto h3, .pillar-faq h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      font-size: .78rem;
+      color: var(--text3);
+    }
+    .pillar-steps {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .pillar-steps li {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      color: var(--text2);
+      font-size: .93rem;
+      line-height: 1.6;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--orange), var(--amber, #fbbf24));
+      color: #000;
+      font-size: .72rem;
+      font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 2px;
+    }
+    .pillar-faq { margin: 40px 0; }
+    .pillar-faq details {
+      border-bottom: 1px solid var(--border);
+      padding: 14px 0;
+    }
+    .pillar-faq summary {
+      cursor: pointer;
+      font-weight: 500;
+      color: var(--text);
+      font-size: .93rem;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .pillar-faq summary::-webkit-details-marker { display: none; }
+    .pillar-faq summary::after {
+      content: '+';
+      color: var(--text3);
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      transition: transform .2s;
+    }
+    .pillar-faq details[open] summary::after { transform: rotate(45deg); }
+    .pillar-faq details p {
+      margin-top: 10px;
+      color: var(--text2);
+      font-size: .88rem;
+      line-height: 1.65;
+    }
+    .pillar-closing {
+      margin-top: 40px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .pillar-closing p {
+      color: var(--text2);
+      font-size: .95rem;
+      flex: 1;
+    }
+    .pillar-cta {
+      display: inline-block;
+      padding: 10px 22px;
+      background: linear-gradient(135deg, var(--orange), var(--amber, #fbbf24));
+      color: #000;
+      font-weight: 700;
+      font-size: .85rem;
+      border-radius: var(--rsm);
+      text-decoration: none;
+      white-space: nowrap;
+      transition: opacity .15s;
+    }
+    .pillar-cta:hover { opacity: .85; }
+    /* Footer use cases */
+    .footer-usecases {
+      margin-bottom: 24px;
+      display: flex;
+      gap: 48px;
+      justify-content: center;
+      flex-wrap: wrap;
+      text-align: left;
+    }
+    .footer-usecases-col h4 {
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text3);
+      margin-bottom: 10px;
+    }
+    .footer-usecases-col ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .footer-usecases-col a {
+      color: var(--text2);
+      text-decoration: none;
+      font-size: .78rem;
+      transition: color .15s;
+    }
+    .footer-usecases-col a:hover { color: var(--orange); }
     .lang-btn {
       padding: 4px 10px; border: none; background: none; cursor: pointer;
       font-size: .7rem; font-weight: 800; color: var(--text3);
@@ -8335,8 +8522,66 @@ closeTutorial = function() {
 </section>
 </main>
 
+{% if pillar %}
+<!-- ── PILLAR SEO BLOCK ──────────────────────────────────────────────── -->
+<section class="pillar-seo">
+  <div class="pillar-container">
+    <h2>{{ pillar.h2_seo }}</h2>
+    {% for para in pillar.intro_paragraphs %}
+    <p>{{ para }}</p>
+    {% endfor %}
+    <div class="pillar-howto">
+      <h3>{{ pillar.how_to_label }}</h3>
+      <ol class="pillar-steps">
+        {% for step in pillar.how_to_steps %}
+        <li><span class="step-num">{{ loop.index }}</span><span class="step-text">{{ step }}</span></li>
+        {% endfor %}
+      </ol>
+    </div>
+    <div class="pillar-faq">
+      <h3>{{ pillar.faq_label }}</h3>
+      {% for item in pillar.faq %}
+      <details>
+        <summary>{{ item.q }}</summary>
+        <p>{{ item.a }}</p>
+      </details>
+      {% endfor %}
+    </div>
+    <div class="pillar-closing">
+      <p>{{ pillar.closing }}</p>
+      <a href="#hero" class="pillar-cta" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">{{ pillar.cta_label }}</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
 <!-- ── FOOTER ────────────────────────────────────────────────────────── -->
 <footer style="border-top:1px solid var(--border);padding:32px 24px;text-align:center;color:var(--text2);font-size:.75rem">
+  <div class="footer-usecases">
+    {% if lang == 'en' %}
+    <div class="footer-usecases-col">
+      <h4>Use cases</h4>
+      <ul>
+        <li><a href="/en/instagram-reel-transcript">Instagram reel transcript</a></li>
+        <li><a href="/en/tiktok-to-text">TikTok to text</a></li>
+        <li><a href="/en/reel-to-linkedin">Reel to LinkedIn post</a></li>
+        <li><a href="/en/hooks-from-video">Hooks from video</a></li>
+        <li><a href="/en/free-video-transcription">Free video transcription</a></li>
+      </ul>
+    </div>
+    {% else %}
+    <div class="footer-usecases-col">
+      <h4>Casos de uso</h4>
+      <ul>
+        <li><a href="/es/transcribir-reel-instagram">Transcribir reel Instagram</a></li>
+        <li><a href="/es/transcribir-tiktok">Transcribir TikTok</a></li>
+        <li><a href="/es/reel-a-linkedin">Reel a post LinkedIn</a></li>
+        <li><a href="/es/hooks-desde-reel">Hooks desde reel</a></li>
+        <li><a href="/es/transcribir-audio-video">Audio de video a texto</a></li>
+      </ul>
+    </div>
+    {% endif %}
+  </div>
   <div style="display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin-bottom:12px">
     <a href="/privacy" style="color:var(--text2);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--purple)'" onmouseout="this.style.color='var(--text2)'">Privacy</a>
     <a href="/terms" style="color:var(--text2);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--purple)'" onmouseout="this.style.color='var(--text2)'">Terms</a>
