@@ -186,6 +186,30 @@
       font-size: .75rem; cursor: pointer; transition: color .2s; padding: 3px;
     }
     .btn-ghost:hover { color: #f87171; }
+    .user-menu-wrap { position: relative; }
+    .user-menu-chevron { font-size: .6rem; color: var(--text3); transition: transform .15s; line-height: 1; }
+    .user-pill.menu-open .user-menu-chevron { transform: rotate(180deg); }
+    .user-menu-dropdown {
+      display: none; position: absolute; top: calc(100% + 8px); right: 0;
+      background: var(--surf); border: 1px solid rgba(255,255,255,.08);
+      border-radius: 10px; min-width: 200px; padding: 6px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.25); z-index: 999;
+      animation: menuIn .15s ease;
+    }
+    [data-theme="light"] .user-menu-dropdown { border-color: rgba(0,0,0,.1); box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+    .user-menu-dropdown.on { display: block; }
+    @keyframes menuIn { from { opacity:0; transform:translateY(-6px) } to { opacity:1; transform:translateY(0) } }
+    .user-menu-item {
+      display: flex; align-items: center; gap: 8px; width: 100%;
+      padding: 8px 10px; border: none; background: none; color: var(--text2);
+      font-size: .83rem; border-radius: 7px; cursor: pointer; text-align: left; transition: background .15s, color .15s;
+    }
+    .user-menu-item:hover { background: rgba(255,255,255,.06); color: var(--text1); }
+    [data-theme="light"] .user-menu-item:hover { background: rgba(0,0,0,.05); }
+    .user-menu-logout { color: #f87171; }
+    .user-menu-logout:hover { background: rgba(248,113,113,.1) !important; color: #f87171 !important; }
+    .user-menu-divider { height: 1px; background: rgba(255,255,255,.08); margin: 4px 0; }
+    [data-theme="light"] .user-menu-divider { background: rgba(0,0,0,.08); }
 
     .btn-nav {
       padding: 7px 14px; border-radius: var(--rsm);
@@ -2699,9 +2723,17 @@
   </div>
   <div class="nav-r">
     <button class="badge-bal" id="balBadge" onclick="document.getElementById('pricingSection').scrollIntoView({behavior:'smooth'})">⚡ <span id="balDisp">0 usos</span></button>
-    <div class="user-pill" id="userPill" onclick="openProfile()" style="cursor:pointer" title="Ver perfil" data-tour="user-profile">
-      <div class="avatar" id="userAv" style="overflow:hidden;padding:0"></div>
-      <span id="userEmail" style="font-size:.82rem;color:var(--text2)"></span>
+    <div class="user-menu-wrap">
+      <div class="user-pill" id="userPill" onclick="toggleUserMenu(event)" style="cursor:pointer" data-tour="user-profile">
+        <div class="avatar" id="userAv" style="overflow:hidden;padding:0"></div>
+        <span id="userEmail" style="font-size:.82rem;color:var(--text2)"></span>
+        <span class="user-menu-chevron">▾</span>
+      </div>
+      <div class="user-menu-dropdown" id="userMenuDropdown">
+        <button class="user-menu-item" onclick="openProfile();closeUserMenu()">👤 <span data-i18n="nav.profile">Mi perfil</span></button>
+        <div class="user-menu-divider"></div>
+        <button class="user-menu-item user-menu-logout" onclick="logout();closeUserMenu()">🚪 <span data-i18n="nav.logout">Cerrar sesión</span></button>
+      </div>
     </div>
     <div class="lang-switch">
       <button class="lang-btn active" data-lang="es" onclick="setLang('es')">ES</button>
@@ -3560,7 +3592,7 @@
 // ── i18n ─────────────────────────────────────────────────────────────────
 const LANGS = {
   es: {
-    "nav.login": "Entrar", "nav.register": "Gratis →",
+    "nav.login": "Entrar", "nav.register": "Gratis →", "nav.profile": "Mi perfil", "nav.logout": "Cerrar sesión",
     "hero.badge": "3 gratis al día · Sin tarjeta · Sin suscripción",
     "hero.h1": 'Pega la URL.<br><span class="grad-txt">Obtén el guión.</span>',
     "hero.sub": "En 10 segundos tienes el texto de cualquier reel.<br>Luego lo conviertes en viral, LinkedIn, historia o 5 hooks — con un click.",
@@ -3812,7 +3844,7 @@ const LANGS = {
     "auth.forgot": "¿Olvidaste tu contraseña?",
   },
   en: {
-    "nav.login": "Log in", "nav.register": "Free →",
+    "nav.login": "Log in", "nav.register": "Free →", "nav.profile": "My profile", "nav.logout": "Log out",
     "hero.badge": "3 free/day · No card · No subscription",
     "hero.h1": 'Paste the URL.<br><span class="grad-txt">Get the script.</span>',
     "hero.sub": "Transcribe any reel in 10 seconds.<br>Then turn it viral, LinkedIn, story, or 5 hooks — one click.",
@@ -7499,7 +7531,22 @@ async function submitAuth() {
 
 document.addEventListener("keydown", e => {
   if (e.key === "Enter" && document.getElementById("authOverlay").classList.contains("on")) submitAuth();
+  if (e.key === "Escape") closeUserMenu();
 });
+document.addEventListener("click", () => closeUserMenu());
+
+function toggleUserMenu(e) {
+  e.stopPropagation();
+  const dd = document.getElementById("userMenuDropdown");
+  const pill = document.getElementById("userPill");
+  const isOpen = dd.classList.contains("on");
+  if (isOpen) { dd.classList.remove("on"); pill.classList.remove("menu-open"); }
+  else { dd.classList.add("on"); pill.classList.add("menu-open"); }
+}
+function closeUserMenu() {
+  document.getElementById("userMenuDropdown")?.classList.remove("on");
+  document.getElementById("userPill")?.classList.remove("menu-open");
+}
 
 async function logout() {
   await fetch("/auth/logout", { method: "POST" });
