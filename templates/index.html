@@ -3001,6 +3001,59 @@
     @media (max-width: 768px) {
       #tpPip { width: 120px; height: 90px; }
     }
+    /* ── Camera layout modes ──────────────────────────────────── */
+    #tpCamBg {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; z-index: 0; display: none;
+      transform: scaleX(-1);
+    }
+    #tpSplitCam {
+      width: 45%; flex-shrink: 0; display: none;
+      background: #000; overflow: hidden; position: relative; z-index: 1;
+    }
+    #tpSplitCam video {
+      width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);
+    }
+    /* OVERLAY — camera fills background, text on top */
+    #tpOverlay.layout-overlay #tpCamBg { display: block; }
+    #tpOverlay.layout-overlay #tpTextArea { background: rgba(0,0,0,.48); }
+    #tpOverlay.layout-overlay #tpPip { display: none !important; }
+    #tpOverlay.layout-overlay #tpSplitCam { display: none !important; }
+    /* SPLIT — camera left, text right */
+    #tpOverlay.layout-split { flex-direction: row !important; }
+    #tpOverlay.layout-split #tpSplitCam { display: flex; }
+    #tpOverlay.layout-split #tpTextArea { flex: 1; }
+    #tpOverlay.layout-split #tpPip { display: none !important; }
+    #tpOverlay.layout-split #tpCamBg { display: none !important; }
+    #tpOverlay.layout-split #tpControls { position: absolute; right: 0; width: 55%; }
+    #tpOverlay.layout-split #tpHeader { position: absolute; right: 0; width: 55%; }
+    /* PIP — floating draggable camera */
+    #tpOverlay.layout-pip #tpCamBg { display: none !important; }
+    #tpOverlay.layout-pip #tpSplitCam { display: none !important; }
+    /* Layout selector buttons */
+    .tp-layout-btns {
+      display: flex; gap: 6px;
+    }
+    .tp-layout-btn {
+      flex: 1; padding: 7px 4px; border-radius: 7px; border: 1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.06); color: rgba(255,255,255,.5); cursor: pointer;
+      font-size: .68rem; font-weight: 600; letter-spacing: .04em; transition: all .15s;
+      text-align: center;
+    }
+    .tp-layout-btn.on { background: rgba(249,115,22,.25); border-color: rgba(249,115,22,.5); color: #f97316; }
+    /* Save hint tooltip */
+    #tpSaveHint {
+      position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,.85); border: 1px solid rgba(255,255,255,.15);
+      color: rgba(255,255,255,.8); font-size: .75rem; line-height: 1.45;
+      padding: 8px 12px; border-radius: 8px; white-space: nowrap; max-width: 260px;
+      white-space: normal; text-align: center; z-index: 10; pointer-events: none;
+    }
+    #tpSaveHint::after {
+      content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+      border: 5px solid transparent; border-top-color: rgba(0,0,0,.85);
+    }
+    .tp-save-wrap { position: relative; display: inline-block; }
   </style>
 </head>
 <body>
@@ -7396,25 +7449,105 @@ const TPR = {
   chunks: [],
   blob: null,
   blobUrl: null,
+  mimeType: '',
   isRecording: false,
   isReady: false,
   startTime: 0,
   timerInterval: null,
-  maxDuration: 180, // 3 minutes in seconds
-  pipPos: null, // {x, y} for drag
+  maxDuration: 180,
+  pipPos: null,
+  layout: localStorage.getItem("tp_layout") || "overlay",
 };
+
+// ── Layout ────────────────────────────────────────────────────────────────
+function tpSetLayout(mode) {
+  TPR.layout = mode;
+  localStorage.setItem("tp_layout", mode);
+  const el = document.getElementById("tpOverlay");
+  el.classList.remove("layout-overlay", "layout-split", "layout-pip");
+  el.classList.add("layout-" + mode);
+  document.querySelectorAll(".tp-layout-btn").forEach(b =>
+    b.classList.toggle("on", b.dataset.layout === mode)
+  );
+  if (TPR.stream) tpRouteCameraToLayout();
+}
+
+function tpRouteCameraToLayout() {
+  const pipVideo   = document.getElementById("tpPipVideo");
+  const bgVideo    = document.getElementById("tpCamBg");
+  const splitVideo = document.getElementById("tpSplitVideo");
+  const pip        = document.getElementById("tpPip");
+
+  bgVideo.srcObject    = null;
+  splitVideo.srcObject = null;
+  pipVideo.srcObject   = null;
+  pip.classList.remove("on");
+
+  if (TPR.layout === "overlay") {
+    bgVideo.srcObject = TPR.stream;
+  } else if (TPR.layout === "split") {
+    splitVideo.srcObject = TPR.stream;
+  } else {
+    pipVideo.srcObject = TPR.stream;
+    pip.classList.add("on");
+    tpPipDrag();
+  }
+}
 
 function tpRecInit() {
   const btn = document.getElementById("tpRecBtn");
   if (btn) btn.style.display = TPR.supported ? "" : "none";
+  // Apply saved layout
+  const el = document.getElementById("tpOverlay");
+  el.classList.add("layout-" + TPR.layout);
+  document.querySelectorAll(".tp-layout-btn").forEach(b =>
+    b.classList.toggle("on", b.dataset.layout === TPR.layout)
+  );
 }
 
-// Show privacy modal first time, then request permissions
+// ── MIME type — MP4 first for iOS ─────────────────────────────────────────
+function pickMimeType() {
+  const types = [
+    "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
+    "video/mp4;codecs=h264,aac",
+    "video/mp4",
+    "video/webm;codecs=vp9,opus",
+    "video/webm;codecs=vp8,opus",
+    "video/webm",
+  ];
+  for (const t of types) {
+    if (window.MediaRecorder && MediaRecorder.isTypeSupported(t)) return t;
+  }
+  return "";
+}
+
+// ── Save with Web Share API (iOS → Fotos) or fallback download ────────────
+async function saveRecording(blob, mimeType) {
+  const ext = mimeType.startsWith("video/mp4") ? "mp4" : "webm";
+  const filename = `reelscript-${Date.now()}.${ext}`;
+  const file = new File([blob], filename, { type: mimeType });
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file] });
+      return { ok: true, via: "share" };
+    } catch (e) {
+      if (e.name === "AbortError") return { ok: false, via: "share", aborted: true };
+    }
+  }
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  return { ok: true, via: "download" };
+}
+
+// ── Privacy + permissions ─────────────────────────────────────────────────
 function tpRecToggle() {
   if (TPR.isRecording) { tpRecStop(); return; }
   if (TPR.isReady) { tpRecReady(); return; }
-
-  // First time? Show privacy notice
   if (!localStorage.getItem("tp_rec_privacy")) {
     document.getElementById("tpPrivacy").classList.add("on");
     return;
@@ -7432,33 +7565,23 @@ async function tpRecRequestPermissions() {
   try {
     const constraints = { video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }, audio: true };
     TPR.stream = await navigator.mediaDevices.getUserMedia(constraints);
-    const pip = document.getElementById("tpPip");
-    const video = document.getElementById("tpPipVideo");
-    video.srcObject = TPR.stream;
-    video.style.transform = "scaleX(-1)"; // mirror preview
-    pip.classList.add("on");
     TPR.isReady = true;
     document.getElementById("tpRecLabel").textContent = "Ready";
-    // PIP drag setup
-    tpPipDrag();
+    tpRouteCameraToLayout();
   } catch (e) {
     showToast(currentLang === "es" ? "Necesitas dar permiso a cámara y micrófono" : "Camera and microphone permission required");
   }
 }
 
 function tpRecReady() {
-  // Start recording — will actually begin when teleprompter plays
-  // But if already playing, start immediately
   if (TP.isPlaying) {
     tpRecStart();
   } else {
-    // Hook into play
     TPR._waitingForPlay = true;
     document.getElementById("tpRecLabel").textContent = "Press Play";
   }
 }
 
-// Hook: modify tpStartScroll to also start recording if waiting
 const _origTpStartScroll = tpStartScroll;
 tpStartScroll = function() {
   _origTpStartScroll();
@@ -7470,14 +7593,14 @@ tpStartScroll = function() {
 
 function tpRecStart() {
   if (!TPR.stream) return;
-  const mimeType = ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4']
-    .find(t => MediaRecorder.isTypeSupported(t)) || '';
+  TPR.mimeType = pickMimeType();
+  console.log("[TPR] mimeType selected:", TPR.mimeType || "(browser default)");
 
   TPR.chunks = [];
-  TPR.recorder = new MediaRecorder(TPR.stream, { mimeType: mimeType || undefined });
+  TPR.recorder = new MediaRecorder(TPR.stream, { mimeType: TPR.mimeType || undefined });
   TPR.recorder.ondataavailable = e => { if (e.data.size > 0) TPR.chunks.push(e.data); };
   TPR.recorder.onstop = () => tpRecFinished();
-  TPR.recorder.start(1000); // chunk every 1s
+  TPR.recorder.start(1000);
 
   TPR.isRecording = true;
   TPR.startTime = Date.now();
@@ -7485,15 +7608,13 @@ function tpRecStart() {
   document.getElementById("tpRecDot").classList.add("blink");
   document.getElementById("tpRecLabel").textContent = "REC";
   document.getElementById("tpRecTimer").style.display = "";
-  document.getElementById("tpPip").classList.add("recording");
+  if (TPR.layout === "pip") document.getElementById("tpPip").classList.add("recording");
 
-  // Timer
   TPR.timerInterval = setInterval(() => {
     const elapsed = Math.floor((Date.now() - TPR.startTime) / 1000);
     const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
     const ss = String(elapsed % 60).padStart(2, "0");
     document.getElementById("tpRecTimer").textContent = `${mm}:${ss}`;
-    // Max duration check
     if (elapsed >= TPR.maxDuration) {
       tpRecStop();
       showToast(currentLang === "es" ? "Límite de 3 minutos alcanzado" : "3 minute limit reached");
@@ -7502,9 +7623,7 @@ function tpRecStart() {
 }
 
 function tpRecStop() {
-  if (TPR.recorder && TPR.recorder.state !== "inactive") {
-    TPR.recorder.stop();
-  }
+  if (TPR.recorder && TPR.recorder.state !== "inactive") TPR.recorder.stop();
   clearInterval(TPR.timerInterval);
   TPR.isRecording = false;
   document.getElementById("tpRecBtn").classList.remove("recording");
@@ -7515,7 +7634,8 @@ function tpRecStop() {
 }
 
 function tpRecFinished() {
-  const mimeType = TPR.recorder?.mimeType || "video/webm";
+  const mimeType = TPR.recorder?.mimeType || TPR.mimeType || "video/webm";
+  TPR.mimeType = mimeType;
   TPR.blob = new Blob(TPR.chunks, { type: mimeType });
   if (TPR.blobUrl) URL.revokeObjectURL(TPR.blobUrl);
   TPR.blobUrl = URL.createObjectURL(TPR.blob);
@@ -7527,21 +7647,42 @@ function tpRecFinished() {
   const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
   const ss = String(elapsed % 60).padStart(2, "0");
   document.getElementById("tpRecDuration").textContent = `${mm}:${ss}`;
-  const sizeMB = (TPR.blob.size / (1024 * 1024)).toFixed(1);
-  document.getElementById("tpRecSize").textContent = `${sizeMB} MB`;
+  document.getElementById("tpRecSize").textContent = `${(TPR.blob.size / (1024 * 1024)).toFixed(1)} MB`;
+
+  // Update save button label based on share capability
+  const ext = mimeType.startsWith("video/mp4") ? "mp4" : "webm";
+  const testFile = new File([new Blob([], { type: mimeType })], `test.${ext}`, { type: mimeType });
+  const canShare = !!(navigator.canShare && navigator.canShare({ files: [testFile] }));
+  const saveBtn = document.getElementById("tpSaveBtn");
+  saveBtn.textContent = canShare
+    ? (currentLang === "es" ? "Guardar en Fotos" : "Save to Photos")
+    : (currentLang === "es" ? "Descargar" : "Download");
+
+  // First-use iOS hint
+  if (canShare && !localStorage.getItem("tp_save_hint_shown")) {
+    const hint = document.getElementById("tpSaveHint");
+    hint.textContent = currentLang === "es"
+      ? "En iPhone, elige «Guardar vídeo» en el menú que aparece para enviarlo directamente a Fotos."
+      : "On iPhone, tap «Save Video» in the share sheet to save directly to Photos.";
+    hint.style.display = "block";
+    setTimeout(() => { hint.style.display = "none"; localStorage.setItem("tp_save_hint_shown", "1"); }, 6000);
+  }
 
   document.getElementById("tpRecResult").classList.add("on");
-  tpPause(); // pause teleprompter
+  tpPause();
 }
 
-function tpRecDownload() {
+// Save button handler — must be direct (no await before navigator.share)
+document.getElementById("tpSaveBtn").addEventListener("click", () => {
   if (!TPR.blob) return;
-  const ext = TPR.blob.type.includes("mp4") ? "mp4" : "webm";
-  const a = document.createElement("a");
-  a.href = TPR.blobUrl;
-  a.download = `reelscript-${Date.now()}.${ext}`;
-  a.click();
-}
+  document.getElementById("tpSaveHint").style.display = "none";
+  localStorage.setItem("tp_save_hint_shown", "1");
+  saveRecording(TPR.blob, TPR.mimeType).then(result => {
+    if (result.ok && result.via === "share") {
+      showToast(currentLang === "es" ? "Vídeo compartido" : "Video shared");
+    }
+  });
+});
 
 function tpRecRetake() {
   tpRecResultClose();
@@ -7549,7 +7690,6 @@ function tpRecRetake() {
   TPR.chunks = [];
   if (TPR.blobUrl) { URL.revokeObjectURL(TPR.blobUrl); TPR.blobUrl = null; }
   tpReset();
-  // Go back to ready state
   document.getElementById("tpRecLabel").textContent = "Ready";
 }
 
@@ -7574,6 +7714,8 @@ function tpRecCleanup() {
   clearInterval(TPR.timerInterval);
   document.getElementById("tpPip").classList.remove("on", "recording");
   document.getElementById("tpPipVideo").srcObject = null;
+  document.getElementById("tpCamBg").srcObject = null;
+  document.getElementById("tpSplitVideo").srcObject = null;
   document.getElementById("tpRecBtn").classList.remove("recording");
   document.getElementById("tpRecDot").classList.remove("blink");
   document.getElementById("tpRecLabel").textContent = "Record";
@@ -8369,6 +8511,8 @@ closeTutorial = function() {
 
 <!-- ── TELEPROMPTER ──────────────────────────────────────────────────── -->
 <div id="tpOverlay">
+  <video id="tpCamBg" autoplay muted playsinline></video>
+  <div id="tpSplitCam"><video id="tpSplitVideo" autoplay muted playsinline></video></div>
   <div id="tpHeader">
     <button class="tp-btn" onclick="tpClose()" title="Close">✕</button>
     <button id="tpRecBtn" onclick="tpRecToggle()" style="display:none">
@@ -8444,6 +8588,14 @@ closeTutorial = function() {
       <label>Line position</label>
       <input type="range" id="tpLinePosSlider" min="20" max="60" value="40" oninput="tpSetLinePos(this.value)">
     </div>
+    <div class="tp-setting">
+      <label>Camera layout</label>
+      <div class="tp-layout-btns">
+        <button class="tp-layout-btn on" data-layout="overlay" onclick="tpSetLayout('overlay')">Overlay</button>
+        <button class="tp-layout-btn" data-layout="split" onclick="tpSetLayout('split')">Split</button>
+        <button class="tp-layout-btn" data-layout="pip" onclick="tpSetLayout('pip')">PIP</button>
+      </div>
+    </div>
   </div>
   <div class="tp-landscape-hint" id="tpLandscapeHint">Better in landscape</div>
   <div id="tpPip" style="bottom:80px;right:20px;width:200px;height:150px">
@@ -8457,8 +8609,11 @@ closeTutorial = function() {
       <span id="tpRecDuration"></span>
       <span id="tpRecSize"></span>
     </div>
-    <div style="display:flex;gap:12px">
-      <button class="tp-btn" onclick="tpRecDownload()" style="width:auto;border-radius:8px;padding:10px 24px;font-size:.85rem;background:rgba(249,115,22,.3);border-color:rgba(249,115,22,.5)">Download</button>
+    <div style="display:flex;gap:12px;position:relative">
+      <div class="tp-save-wrap">
+        <div id="tpSaveHint" style="display:none"></div>
+        <button id="tpSaveBtn" class="tp-btn" style="width:auto;border-radius:8px;padding:10px 24px;font-size:.85rem;background:rgba(249,115,22,.3);border-color:rgba(249,115,22,.5)">Save</button>
+      </div>
       <button class="tp-btn" onclick="tpRecRetake()" style="width:auto;border-radius:8px;padding:10px 20px;font-size:.85rem">Retake</button>
       <button class="tp-btn" onclick="tpRecResultClose()" style="width:auto;border-radius:8px;padding:10px 20px;font-size:.85rem">Close</button>
     </div>
