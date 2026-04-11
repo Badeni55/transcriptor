@@ -8129,20 +8129,20 @@ function showToast(msg) {
 
   const isMobile = window.innerWidth < 640;
   const darkWaves = [
-    { yRatio: 0.20, color: "rgba(249,115,22,0.10)", amp: 40, freq: 0.016, speed: 0.0005 },
-    { yRatio: 0.40, color: "rgba(139,92,246,0.06)", amp: 30, freq: 0.020, speed: 0.0007 },
-    { yRatio: 0.60, color: "rgba(249,115,22,0.07)", amp: 50, freq: 0.013, speed: 0.0004 },
-    { yRatio: 0.78, color: "rgba(180,60,0,0.05)",   amp: 25, freq: 0.018, speed: 0.0006 },
-    { yRatio: 0.92, color: "rgba(139,92,246,0.04)", amp: 35, freq: 0.015, speed: 0.0005 },
+    { yRatio: 0.18, color: "rgba(249,115,22,0.28)", amp: 65, freq: 0.014, speed: 0.0005, blur: 28 },
+    { yRatio: 0.38, color: "rgba(139,92,246,0.22)", amp: 50, freq: 0.018, speed: 0.0007, blur: 22 },
+    { yRatio: 0.58, color: "rgba(249,115,22,0.20)", amp: 75, freq: 0.011, speed: 0.0004, blur: 30 },
+    { yRatio: 0.76, color: "rgba(180,60,220,0.18)", amp: 45, freq: 0.016, speed: 0.0006, blur: 20 },
+    { yRatio: 0.91, color: "rgba(139,92,246,0.16)", amp: 55, freq: 0.013, speed: 0.0005, blur: 24 },
   ];
   const lightWaves = [
-    { yRatio: 0.20, color: "rgba(249,115,22,0.13)", amp: 40, freq: 0.016, speed: 0.0005 },
-    { yRatio: 0.40, color: "rgba(180,120,60,0.08)", amp: 30, freq: 0.020, speed: 0.0007 },
-    { yRatio: 0.60, color: "rgba(249,115,22,0.10)", amp: 50, freq: 0.013, speed: 0.0004 },
-    { yRatio: 0.78, color: "rgba(200,100,30,0.07)", amp: 25, freq: 0.018, speed: 0.0006 },
-    { yRatio: 0.92, color: "rgba(180,120,60,0.06)", amp: 35, freq: 0.015, speed: 0.0005 },
+    { yRatio: 0.18, color: "rgba(249,115,22,0.22)", amp: 65, freq: 0.014, speed: 0.0005, blur: 24 },
+    { yRatio: 0.38, color: "rgba(180,120,60,0.18)",  amp: 50, freq: 0.018, speed: 0.0007, blur: 18 },
+    { yRatio: 0.58, color: "rgba(249,115,22,0.18)", amp: 75, freq: 0.011, speed: 0.0004, blur: 26 },
+    { yRatio: 0.76, color: "rgba(200,100,30,0.16)",  amp: 45, freq: 0.016, speed: 0.0006, blur: 16 },
+    { yRatio: 0.91, color: "rgba(180,80,200,0.14)",  amp: 55, freq: 0.013, speed: 0.0005, blur: 20 },
   ];
-  const step = isMobile ? 12 : 6;
+  const step = isMobile ? 10 : 5;
 
   function isLight() { return document.documentElement.getAttribute("data-theme") === "light"; }
 
@@ -8159,31 +8159,35 @@ function showToast(msg) {
     }
 
     // Top glow
-    const topGlow = ctx.createRadialGradient(w * 0.5, 0, 0, w * 0.5, 0, w * 0.6);
-    topGlow.addColorStop(0, light ? "rgba(249,115,22,0.12)" : "rgba(249,115,22,0.06)");
+    const topGlow = ctx.createRadialGradient(w * 0.5, 0, 0, w * 0.5, 0, w * 0.65);
+    topGlow.addColorStop(0, light ? "rgba(249,115,22,0.18)" : "rgba(249,115,22,0.12)");
     topGlow.addColorStop(1, "transparent");
     ctx.fillStyle = topGlow;
     ctx.fillRect(0, 0, w, h);
 
     waves.forEach((wave, i) => {
       const baseY = h * wave.yRatio;
-      const grad = ctx.createLinearGradient(0, baseY - 80, 0, baseY + 80);
+      const grad = ctx.createLinearGradient(0, baseY - 100, 0, baseY + 100);
       grad.addColorStop(0, "transparent");
       grad.addColorStop(0.5, wave.color);
       grad.addColorStop(1, "transparent");
 
+      ctx.save();
+      ctx.shadowBlur = wave.blur;
+      ctx.shadowColor = wave.color;
       ctx.beginPath();
       ctx.moveTo(0, h);
       for (let x = 0; x <= w; x += step) {
         const y = baseY
           + Math.sin(x * wave.freq + t * wave.speed * 60 + i * 1.2) * wave.amp
-          + Math.sin(x * wave.freq * 0.5 + t * wave.speed * 35 + i) * (wave.amp * 0.35);
+          + Math.sin(x * wave.freq * 0.5 + t * wave.speed * 35 + i) * (wave.amp * 0.4);
         ctx.lineTo(x, y);
       }
       ctx.lineTo(w, h);
       ctx.closePath();
       ctx.fillStyle = grad;
       ctx.fill();
+      ctx.restore();
     });
 
     t++;
