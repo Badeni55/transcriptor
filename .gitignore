@@ -3,3 +3,11 @@ __pycache__/
 *.db
 .env
 .env
+
+# Local only
+.DS_Store
+carousel-claude-skills/
+carousel-crear-skill/
+venv/
+__pycache__/
+*.pyc
