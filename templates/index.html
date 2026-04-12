@@ -4733,6 +4733,9 @@ const LANGS = {
     "freebar.monthly_used": "usados este mes",
     "freebar.limit_reached": "Límite mensual alcanzado",
     "freebar.upgrade": "Mejorar plan",
+    "freebar.anon": "Regístrate gratis para guardar historial, proyectos e ideas",
+    "freebar.anon_link": "Crear cuenta gratis",
+    "card.register_cta": "Regístrate gratis para guardar",
     // Adapt section
     "adapt.your_result": "Tu resultado",
     "adapt.example": "Ejemplo",
@@ -5005,6 +5008,9 @@ const LANGS = {
     "freebar.monthly_used": "used this month",
     "freebar.limit_reached": "Monthly limit reached",
     "freebar.upgrade": "Upgrade plan",
+    "freebar.anon": "Sign up free to save history, projects & ideas",
+    "freebar.anon_link": "Create free account",
+    "card.register_cta": "Sign up free to save",
     // Adapt section
     "adapt.your_result": "Your result",
     "adapt.example": "Example",
@@ -5230,7 +5236,7 @@ async function runAdaptWithAssistant(id) {
       previewLabel.textContent = t("adapt.your_result");
       pfCopyBtn.style.display = "block";
       document.getElementById("pfTpBtn").style.display = "block";
-      if (st.user) document.getElementById("pfSaveBtn").style.display = "block";
+      document.getElementById("pfSaveBtn").style.display = "block";
       previewFooterTxt.textContent = t("adapt.generated");
       if (d.credits_cents !== undefined) {
         st.credits = d.credits_cents; st.freeUsed = d.free_used_today;
@@ -6926,7 +6932,7 @@ function renderFreeBar() {
   const rem = limit - used;
   document.getElementById("freeBarTxt").innerHTML = st.user
     ? (rem > 0 ? `${rem} de ${limit} ${t("drawer.free_today")}` : `${t("freebar.limit_reached")} · Recarga saldo para continuar`)
-    : `${st.freeDailyAnon} free/day · <a href="#" onclick="openAuth('register');return false" style="color:#fed7aa;font-weight:700;text-decoration:none">Sign up for ${st.freeLimit}/day</a>`;
+    : `${t("freebar.anon")} · <a href="#" onclick="openAuth('register');return false" style="color:#fed7aa;font-weight:700;text-decoration:none">${t("freebar.anon_link")}</a>`;
 }
 
 // ── Platform icon on URL input ────────────────────────────────────────────
@@ -7141,7 +7147,7 @@ async function rsTranscribeOne(url) {
       <div class="rs-card-body">${esc(result.text)}</div>
       <div class="rs-card-actions">
         <button class="rs-card-act" onclick="rsToggleTransform(${idx})">${t("act.transform")}</button>
-        ${st.user ? `<button class="rs-card-act" onclick="rsSaveToProject(${idx})">${t("view.save_project")}</button>` : ""}
+        ${st.user ? `<button class="rs-card-act" onclick="rsSaveToProject(${idx})">${t("view.save_project")}</button>` : `<button class="rs-card-act" onclick="openAuth('register')" style="color:#fed7aa;border-color:rgba(249,115,22,.3)">✦ ${t("card.register_cta")}</button>`}
       </div>
       <div class="rs-card-transform" id="rsTransform-${idx}">
         <div class="rs-card-transform-chips">
@@ -7438,7 +7444,7 @@ async function runAdapt() {
       previewLabel.textContent = t("adapt.your_result");
       pfCopyBtn.style.display = "block";
       document.getElementById("pfTpBtn").style.display = "block";
-      if (st.user) document.getElementById("pfSaveBtn").style.display = "block";
+      document.getElementById("pfSaveBtn").style.display = "block";
       // Mobile: show result inline
       const mobileRes = document.getElementById("mobileAdaptResult");
       document.getElementById("mobileAdaptResultTxt").textContent = d.result;
@@ -8771,7 +8777,7 @@ function copyPreviewResult() {
 }
 
 async function saveScript() {
-  if (!st.user) return;
+  if (!st.user) { openAuth("register"); return; }
   const content = document.getElementById("previewResultText").textContent;
   if (!content) return;
   const res = await fetch("/save-script", {
@@ -8869,7 +8875,7 @@ let _pendingSaveText = "";
 let _pendingSaveTitle = "";
 
 async function saveTextToProject(text, title) {
-  if (!st.user) { showToast(t("toast.login_required")); return; }
+  if (!st.user) { openAuth("register"); return; }
   if (!projectsCache.length) {
     await loadProjects();
     if (!projectsCache.length) { showToast(t("toast.create_project_first")); return; }
@@ -9103,10 +9109,17 @@ function renderPlanCards() {
       btn.classList.add("active");
       btn.onclick = null;
     } else if (p === "free") {
-      btn.textContent = plan === "free" ? t("sub.current_plan") : "Plan Free";
-      btn.disabled = plan === "free";
-      btn.classList.toggle("active", plan === "free");
-      btn.onclick = null;
+      if (!st.user) {
+        btn.textContent = t("freebar.anon_link");
+        btn.disabled = false;
+        btn.classList.remove("active");
+        btn.onclick = () => openAuth("register");
+      } else {
+        btn.textContent = plan === "free" ? t("sub.current_plan") : "Plan Free";
+        btn.disabled = plan === "free";
+        btn.classList.toggle("active", plan === "free");
+        btn.onclick = null;
+      }
     } else {
       const labels = { basic: t("pricing.choose_basic"), pro: t("pricing.choose_pro"), agency: t("pricing.choose_agency") };
       btn.textContent = labels[p];
