@@ -2629,27 +2629,49 @@
       overflow-y: auto;
     }
     .nav-mob-menu.on .nav-mob-panel { transform: translateX(0); }
+    /* Hamburger header */
+    .nav-mob-header {
+      display: flex; align-items: center; gap: 10px; padding: 16px 18px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-mob-header .avatar { width: 36px; height: 36px; flex-shrink: 0; }
+    .nav-mob-header-info { flex: 1; min-width: 0; }
+    .nav-mob-header-email { font-size: .82rem; color: var(--text); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .nav-mob-header-plan { font-size: .7rem; color: var(--text3); margin-top: 2px; }
+    .nav-mob-header-plan b { color: var(--purple); text-transform: uppercase; font-weight: 800; letter-spacing: .3px; }
     .nav-mob-close {
-      align-self: flex-end; margin: 16px 16px 8px;
       background: none; border: 1px solid var(--border); border-radius: 8px;
-      color: var(--text2); width: 36px; height: 36px; font-size: 1rem;
+      color: var(--text2); width: 36px; height: 36px; font-size: 1rem; flex-shrink: 0;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
       transition: border-color .15s;
     }
     .nav-mob-close:hover { border-color: var(--purple); }
-    .nav-mob-items { display: flex; flex-direction: column; padding: 4px 12px; }
+    /* Section labels */
+    .nav-mob-section {
+      font-size: .68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--text3); padding: 18px 18px 8px;
+    }
+    /* Items */
+    .nav-mob-items { display: flex; flex-direction: column; padding: 0; }
     .nav-mob-items a, .nav-mob-items button {
-      display: flex; align-items: center; gap: 12px;
-      padding: 14px 18px; border-radius: 10px;
-      background: none; border: none; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 14px; height: 52px;
+      padding: 0 18px; background: none; border: none;
+      border-bottom: 1px solid var(--border);
       color: var(--text2); font-size: .88rem; font-weight: 500;
       font-family: var(--font-body); cursor: pointer; text-decoration: none;
       transition: background .12s; width: 100%; text-align: left;
     }
     .nav-mob-items a:last-child, .nav-mob-items button:last-child { border-bottom: none; }
     .nav-mob-items a:active, .nav-mob-items button:active { background: rgba(255,255,255,.06); }
+    .nav-mob-items .mob-active {
+      background: rgba(249,115,22,.08); border-left: 3px solid var(--purple); color: var(--purple);
+    }
+    .nav-mob-items .mob-logout { color: #dc2626; }
+    .nav-mob-items .mob-logout:active { background: rgba(220,38,38,.08); }
+    .nav-mob-items svg { flex-shrink: 0; opacity: .7; }
+    /* Lang row */
     .nav-mob-items .mob-lang-row {
-      display: flex; gap: 8px; padding: 14px 18px;
+      display: flex; gap: 8px; padding: 10px 18px; height: auto;
       border-bottom: 1px solid var(--border);
     }
     .nav-mob-items .mob-lang-btn {
@@ -2664,11 +2686,19 @@
 
     @media (max-width: 640px) {
       .logo span { display: none; }
+      .nav-r { gap: 8px; }
       .nav-r .lang-switch { display: none; }
       .nav-r #navAffiliate { display: none !important; }
-      .nav-r #themeBtn { display: none; }
+      .nav-r .btn-nav { display: none; }
+      .nav-r .user-menu-chevron { display: none; }
+      .nav-r #userEmail { display: none; }
+      .user-menu-dropdown { display: none !important; }
+      .bal-unit { display: none; }
       .nav-hamburger { display: flex; }
       .btn-tutorial { display: none; }
+    }
+    @media (max-width: 360px) {
+      .nav-r { gap: 6px; }
     }
 
     /* Tablet + mobile */
@@ -3393,7 +3423,15 @@
     <span class="logo">RS<span>ReelScript</span></span>
   </div>
   <div class="nav-r">
-    <button class="badge-bal" id="balBadge" onclick="document.getElementById('pricingSection').scrollIntoView({behavior:'smooth'})">⚡ <span id="balDisp">0 usos</span></button>
+    <button class="badge-bal" id="balBadge" onclick="document.getElementById('pricingSection').scrollIntoView({behavior:'smooth'})">⚡ <span id="balDisp">0</span><span class="bal-unit"> usos</span></button>
+    <div class="lang-switch">
+      <a class="lang-btn{% if lang|default('es') == 'es' %} active{% endif %}" href="/es/">ES</a>
+      <a class="lang-btn{% if lang|default('es') == 'en' %} active{% endif %}" href="/en/">EN</a>
+    </div>
+    <a href="/affiliate" id="navAffiliate" style="display:none;color:var(--text3);font-size:.78rem;font-weight:500;text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--purple)'" onmouseout="this.style.color='var(--text3)'">Earn 30% &rarr;</a>
+    <button class="btn-nav" id="btnLogin" onclick="openAuth('login')" data-i18n="nav.login">Log in</button>
+    <button class="btn-nav hi" id="btnReg" onclick="openAuth('register')" data-i18n="nav.register">Free →</button>
+    <button class="theme-btn" id="themeBtn" title="Theme: System">💻</button>
     <div class="user-menu-wrap">
       <div class="user-pill" id="userPill" onclick="toggleUserMenu(event)" style="cursor:pointer" data-tour="user-profile">
         <div class="avatar" id="userAv" style="overflow:hidden;padding:0"></div>
@@ -3406,14 +3444,6 @@
         <button class="user-menu-item user-menu-logout" onclick="logout();closeUserMenu()">🚪 <span data-i18n="nav.logout">Cerrar sesión</span></button>
       </div>
     </div>
-    <div class="lang-switch">
-      <a class="lang-btn{% if lang|default('es') == 'es' %} active{% endif %}" href="/es/">ES</a>
-      <a class="lang-btn{% if lang|default('es') == 'en' %} active{% endif %}" href="/en/">EN</a>
-    </div>
-    <a href="/affiliate" id="navAffiliate" style="display:none;color:var(--text3);font-size:.78rem;font-weight:500;text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--purple)'" onmouseout="this.style.color='var(--text3)'">Earn 30% &rarr;</a>
-    <button class="btn-nav" id="btnLogin" onclick="openAuth('login')" data-i18n="nav.login">Log in</button>
-    <button class="btn-nav hi" id="btnReg" onclick="openAuth('register')" data-i18n="nav.register">Free →</button>
-    <button class="theme-btn" id="themeBtn" title="Theme: System">💻</button>
     <button class="nav-hamburger" id="navHamburger" onclick="toggleNavMob()" aria-label="Menu">☰</button>
   </div>
 </nav>
@@ -3421,23 +3451,76 @@
 <div class="nav-mob-menu" id="navMobMenu">
   <div class="nav-mob-backdrop" onclick="closeNavMob()"></div>
   <div class="nav-mob-panel">
-    <button class="nav-mob-close" onclick="closeNavMob()" aria-label="Close">✕</button>
+    <!-- Header -->
+    <div class="nav-mob-header">
+      <div class="avatar" id="navMobAvatar" style="overflow:hidden;padding:0"></div>
+      <div class="nav-mob-header-info">
+        <div class="nav-mob-header-email" id="navMobEmail"></div>
+        <div class="nav-mob-header-plan"><b id="navMobPlan">FREE</b> · <span id="navMobCredits">0 usos</span></div>
+      </div>
+      <button class="nav-mob-close" onclick="closeNavMob()" aria-label="Close">✕</button>
+    </div>
+    <!-- Lang -->
     <div class="nav-mob-items">
       <div class="mob-lang-row">
         <a class="mob-lang-btn{% if lang|default('es') == 'es' %} active{% endif %}" href="/es/">ES</a>
         <a class="mob-lang-btn{% if lang|default('es') == 'en' %} active{% endif %}" href="/en/">EN</a>
       </div>
+    </div>
+    <!-- Navigation -->
+    <div class="nav-mob-section" data-i18n="nav.navigation">Navigation</div>
+    <div class="nav-mob-items" id="navMobNav">
+      <button onclick="closeNavMob();window.scrollTo({top:0,behavior:'smooth'})">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span data-i18n="nav.home">Home</span>
+      </button>
+      <button onclick="closeNavMob();openProfile();profTab('overview')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <span data-i18n="prof.overview">Overview</span>
+      </button>
+      <button onclick="closeNavMob();openProfile();profTab('scripts')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span data-i18n="prof.saved_scripts">Saved scripts</span>
+      </button>
+      <button onclick="closeNavMob();openProfile();profTab('transc')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+        <span data-i18n="prof.transcriptions">Transcriptions</span>
+      </button>
+      <button class="mob-nav-paid" onclick="closeNavMob();openProfile();profTab('projects')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span data-i18n="prof.projects">Projects</span>
+      </button>
+      <button class="mob-nav-paid" onclick="closeNavMob();openProfile();profTab('ideas')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>
+        <span data-i18n="prof.ideas">Ideas</span>
+      </button>
+      <button class="mob-nav-paid" onclick="closeNavMob();openTeleprompterPicker()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <span data-i18n="prof.teleprompter">Teleprompter</span>
+      </button>
+      <button class="mob-nav-paid" onclick="closeNavMob();openProfile();profTab('metrics')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span data-i18n="prof.metrics">Metrics</span>
+      </button>
+    </div>
+    <!-- Account -->
+    <div class="nav-mob-section" data-i18n="nav.account">Account</div>
+    <div class="nav-mob-items">
       <a href="/affiliate" id="navAffMob" style="display:none" onclick="closeNavMob()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
         <span data-i18n="nav.earn">Earn 30%</span>
       </a>
+      <button onclick="closeNavMob();openTopup()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span data-i18n="nav.buy_credits">Buy credits</span>
+      </button>
       <button onclick="closeNavMob();openTutorial()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         Tutorial
       </button>
-      <button onclick="cycleTheme();closeNavMob()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        <span data-i18n="nav.theme">Theme</span>
+      <button class="mob-logout" onclick="closeNavMob();logout()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span data-i18n="nav.logout">Log out</span>
       </button>
     </div>
   </div>
@@ -4299,7 +4382,7 @@
 // ── i18n ─────────────────────────────────────────────────────────────────
 const LANGS = {
   es: {
-    "nav.login": "Entrar", "nav.register": "Gratis →", "nav.profile": "Mi perfil", "nav.logout": "Cerrar sesión", "nav.earn": "Ganar 30%", "nav.theme": "Tema",
+    "nav.login": "Entrar", "nav.register": "Gratis →", "nav.profile": "Mi perfil", "nav.logout": "Cerrar sesión", "nav.earn": "Ganar 30%", "nav.theme": "Tema", "nav.navigation": "Navegación", "nav.account": "Cuenta", "nav.home": "Inicio", "nav.buy_credits": "Comprar créditos",
     "hero.badge": "5 gratis al día · Sin tarjeta · Sin suscripción",
     "hero.h1": 'Pega la URL.<br><span class="grad-txt">Obtén el guión.</span>',
     "hero.sub": "Transcribe reels de Instagram y TikTok al instante con IA.",
@@ -4568,7 +4651,7 @@ const LANGS = {
     "auth.forgot": "¿Olvidaste tu contraseña?",
   },
   en: {
-    "nav.login": "Log in", "nav.register": "Free →", "nav.profile": "My profile", "nav.logout": "Log out", "nav.earn": "Earn 30%", "nav.theme": "Theme",
+    "nav.login": "Log in", "nav.register": "Free →", "nav.profile": "My profile", "nav.logout": "Log out", "nav.earn": "Earn 30%", "nav.theme": "Theme", "nav.navigation": "Navigation", "nav.account": "Account", "nav.home": "Home", "nav.buy_credits": "Buy credits",
     "hero.badge": "5 free/day · No card · No subscription",
     "hero.h1": 'Paste the URL.<br><span class="grad-txt">Get the script.</span>',
     "hero.sub": "Transcribe Instagram and TikTok reels instantly with AI.",
@@ -5051,7 +5134,7 @@ async function runAdaptWithAssistant(id) {
       previewFooterTxt.textContent = t("adapt.generated");
       if (d.credits_cents !== undefined) {
         st.credits = d.credits_cents; st.freeUsed = d.free_used_today;
-        document.getElementById("balDisp").textContent = usos(d.credits_cents);
+        document.getElementById("balDisp").textContent = usosNum(d.credits_cents);
         renderFreeBar();
       }
     }
@@ -5353,7 +5436,7 @@ function renderLoggedIn() {
   document.getElementById("userPill").classList.add("on");
   document.getElementById("userEmail").textContent = st.user.email;
   document.getElementById("balBadge").classList.add("on");
-  document.getElementById("balDisp").textContent = usos(st.credits);
+  document.getElementById("balDisp").textContent = usosNum(st.credits);
   // Drawer
   document.getElementById("drawerEmail").textContent = st.user.email;
   document.getElementById("drawerBal").textContent = usos(st.credits);
@@ -6817,7 +6900,7 @@ async function rsQuickTransform(idx, style, btn) {
 
     if (d.credits_cents !== undefined) {
       st.credits = d.credits_cents;
-      document.getElementById("balDisp").textContent = usos(d.credits_cents);
+      document.getElementById("balDisp").textContent = usosNum(d.credits_cents);
     }
   } catch {
     chips.forEach(c => c.classList.remove("loading"));
@@ -6978,7 +7061,7 @@ async function rsTranscribeOne(url) {
     if (result.credits_cents !== undefined) {
       st.credits = result.credits_cents;
       st.freeUsed = result.free_used_today;
-      document.getElementById("balDisp").textContent = usos(result.credits_cents);
+      document.getElementById("balDisp").textContent = usosNum(result.credits_cents);
     }
     if (st.monthlyLimit) st.monthlyUsage++;
     renderFreeBar();
@@ -7113,7 +7196,7 @@ async function runInlineAdapt() {
       result.classList.add("on");
       if (d.credits_cents !== undefined) {
         st.credits = d.credits_cents; st.freeUsed = d.free_used_today;
-        document.getElementById("balDisp").textContent = usos(d.credits_cents);
+        document.getElementById("balDisp").textContent = usosNum(d.credits_cents);
         renderFreeBar();
       }
     }
@@ -7263,7 +7346,7 @@ async function runAdapt() {
       previewFooterTxt.textContent = t("adapt.generated");
       if (d.credits_cents !== undefined) {
         st.credits = d.credits_cents; st.freeUsed = d.free_used_today;
-        document.getElementById("balDisp").textContent = usos(d.credits_cents);
+        document.getElementById("balDisp").textContent = usosNum(d.credits_cents);
         renderFreeBar();
       }
     }
@@ -8750,6 +8833,7 @@ document.addEventListener("click", () => closeUserMenu());
 
 function toggleUserMenu(e) {
   e.stopPropagation();
+  if (window.innerWidth <= 640) { openProfile(); return; }
   const dd = document.getElementById("userMenuDropdown");
   const pill = document.getElementById("userPill");
   const isOpen = dd.classList.contains("on");
@@ -8764,12 +8848,26 @@ function closeUserMenu() {
 function toggleNavMob() {
   const menu = document.getElementById("navMobMenu");
   const opening = !menu.classList.contains("on");
+  if (opening) syncNavMob();
   menu.classList.toggle("on");
   document.body.style.overflow = opening ? "hidden" : "";
 }
 function closeNavMob() {
   document.getElementById("navMobMenu").classList.remove("on");
   document.body.style.overflow = "";
+}
+function syncNavMob() {
+  const email = st.user ? st.user.email : "";
+  document.getElementById("navMobEmail").textContent = email;
+  document.getElementById("navMobPlan").textContent = (st.plan || "free").toUpperCase();
+  document.getElementById("navMobCredits").textContent = usos(st.credits || 0);
+  const av = document.getElementById("navMobAvatar");
+  const srcAv = document.getElementById("userAv");
+  if (srcAv && av) av.innerHTML = srcAv.innerHTML;
+  const hasPaid = ["basic","pro","agency"].includes(st.plan);
+  document.querySelectorAll(".mob-nav-paid").forEach(el => el.style.display = hasPaid ? "" : "none");
+  const affMob = document.getElementById("navAffMob");
+  if (affMob) affMob.style.display = st.user ? "" : "none";
 }
 
 async function logout() {
@@ -8872,6 +8970,7 @@ function backdropClose(e, id) { if (e.target === document.getElementById(id)) cl
 // ── Utils ──────────────────────────────────────────────────────────────────
 function eur(c)  { return curr(c); }
 function usos(c) { return `${Math.floor(c / 18)} usos`; }
+function usosNum(c) { return `${Math.floor(c / 18)}`; }
 function fmtDate(iso) {
   return new Date(iso).toLocaleDateString("es-ES", { day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" });
 }
