@@ -66,8 +66,58 @@ COST_CENTS       = 18   # $0.18 por uso de pago (~7 usos por $1.29)
 
 UNLIMITED_EMAILS = {"davidmiragito@gmail.com"}  # sin límite ni coste
 
-# Límites mensuales por plan (None = usa créditos/gratis diarios)
-PLAN_LIMITS = {"free": None, "basic": 30, "pro": 100, "agency": 250}
+# ── Matriz de planes (fuente de verdad) ──────────────────────────────────────
+PLANS = {
+    "free": {
+        "monthly_uses": 0,            # usa daily_free
+        "daily_free": 5,
+        "scripts_max": 5,
+        "projects_max": 1,
+        "assistants_max": 0,
+        "history_days": None,          # persistente
+        "seats": 1,
+        "priority": False,
+        "support": None,
+    },
+    "basic": {
+        "monthly_uses": 30,
+        "daily_free": 0,
+        "scripts_max": None,           # ilimitado
+        "projects_max": None,
+        "assistants_max": 1,
+        "history_days": None,
+        "seats": 1,
+        "priority": False,
+        "support": "email",
+    },
+    "pro": {
+        "monthly_uses": 100,
+        "daily_free": 0,
+        "scripts_max": None,
+        "projects_max": None,
+        "assistants_max": 5,
+        "history_days": None,
+        "seats": 1,
+        "priority": False,
+        "support": "email",
+    },
+    "agency": {
+        "monthly_uses": 250,           # base, +50 por asiento extra
+        "daily_free": 0,
+        "scripts_max": None,
+        "projects_max": None,
+        "assistants_max": None,
+        "history_days": None,
+        "seats": 2,                    # 2 asientos incluidos
+        "uses_per_seat": 50,
+        "priority": True,
+        "support": "email+chat",
+    },
+}
+
+# Derivados para compatibilidad con código existente
+PLAN_LIMITS = {p: v["monthly_uses"] or None for p, v in PLANS.items()}
+ASSISTANT_LIMITS = {p: v["assistants_max"] for p, v in PLANS.items()}
 
 # Topup: price ID de Stripe (one-time, multi-currency)
 STRIPE_TOPUP_PRICE = os.environ.get("STRIPE_TOPUP_PRICE", "")
@@ -1109,8 +1159,6 @@ def adapt():
 
 # ── Assistants ────────────────────────────────────────────────────────────────
 
-ASSISTANT_LIMITS = {"free": 0, "basic": 1, "pro": 5, "agency": None}
-
 
 @app.route("/assistants", methods=["GET"])
 @require_auth
@@ -1227,8 +1275,13 @@ def list_projects():
 def create_project():
     user = current_user()
     profile = get_profile(user["id"])
-    if profile.get("plan", "free") not in ("pro", "agency"):
-        return jsonify({"error": "Tu plan no incluye proyectos. Mejora a Pro."}), 403
+    plan = profile.get("plan", "free")
+    max_proj = PLANS.get(plan, PLANS["free"])["projects_max"]
+    if max_proj is not None:
+        count = db.table("projects").select("id", count="exact").eq("user_id", user["id"]).execute()
+        current = count.count if hasattr(count, "count") else len(count.data)
+        if current >= max_proj:
+            return jsonify({"error": f"Has alcanzado el límite de {max_proj} proyecto(s) en tu plan. Sube de plan para tener ilimitados."}), 403
     body = request.get_json()
     row = db.table("projects").insert({
         "user_id": user["id"],
@@ -1401,16 +1454,15 @@ def profile_data():
         "monthly_limit": PLAN_LIMITS.get(plan),
     }
 
-    # Projects + script counts (pro/agency)
-    if plan in ("pro", "agency"):
-        projects = db.table("projects").select("*").eq("user_id", user["id"]).order("created_at", desc=True).execute()
-        for p in projects.data:
-            count = db.table("scripts").select("id", count="exact").eq("project_id", p["id"]).execute()
-            p["script_count"] = count.count if hasattr(count, "count") else 0
-        data["projects"] = projects.data
+    # Projects + script counts (all plans)
+    projects = db.table("projects").select("*").eq("user_id", user["id"]).order("created_at", desc=True).execute()
+    for p in projects.data:
+        count = db.table("scripts").select("id", count="exact").eq("project_id", p["id"]).execute()
+        p["script_count"] = count.count if hasattr(count, "count") else 0
+    data["projects"] = projects.data
 
-        recent = db.table("scripts").select("id, title, project_id, created_at").eq("user_id", user["id"]).order("created_at", desc=True).limit(5).execute()
-        data["recent_scripts"] = recent.data
+    recent = db.table("scripts").select("id, title, project_id, created_at").eq("user_id", user["id"]).order("created_at", desc=True).limit(5).execute()
+    data["recent_scripts"] = recent.data
 
     return jsonify(data)
 

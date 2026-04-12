@@ -1310,6 +1310,16 @@
     }
     .price-title { font-family: var(--font-display); font-size: 1.2rem; font-weight: 400; margin-bottom: 2px; }
     .price-desc  { font-size: .82rem; color: var(--text2); line-height: 1.6; font-weight: 300; }
+    .price-features {
+      list-style: none; padding: 0; margin: 10px 0 16px; text-align: left; font-size: .8rem;
+      color: var(--text2); line-height: 1.7;
+    }
+    .price-features li::before { content: "✓ "; color: var(--purple); font-weight: 700; }
+    .price-badge {
+      font-size: .65rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em;
+      background: var(--grad); color: #fff; padding: 4px 10px; border-radius: 20px;
+      display: inline-block; margin-bottom: 8px;
+    }
     .price-amount { font-family: var(--font-display); font-size: 2.1rem; font-weight: 400; margin-bottom: 4px; }
     .price-amount span { font-family: var(--font-body); }
     .btn-plan {
@@ -3870,35 +3880,73 @@
   <div style="text-align:center;margin-bottom:8px;position:relative;z-index:1">
     <div class="s-label" data-i18n="pricing.tag">PLANS</div>
     <h2 class="s-title" data-i18n="pricing.h2">Choose your plan.<br><span class="grad-txt" style="font-style:italic">Start free, scale when ready.</span></h2>
+    <p style="color:var(--text3);font-size:.85rem;margin-top:8px" data-i18n="pricing.all_included">Teleprompter, Projects and Ideas included in all plans.</p>
   </div>
   <div class="pricing-cards" style="grid-template-columns:repeat(4,1fr)">
+    <!-- FREE -->
     <div class="price-card" id="planCard-free">
       <div class="price-icon">✅</div>
       <div class="price-title">Free</div>
       <div class="price-amount" data-price-eur="0" data-price-usd="0"></div>
-      <div class="price-desc" data-i18n="pricing.free.desc">5 transcripciones + 5 adaptaciones/día. Sin tarjeta.</div>
+      <ul class="price-features">
+        <li data-i18n="pricing.free.f1">5 uses/day</li>
+        <li data-i18n="pricing.free.f2">5 saved scripts</li>
+        <li data-i18n="pricing.free.f3">1 project</li>
+        <li data-i18n="pricing.free.f4">Teleprompter + recording</li>
+        <li data-i18n="pricing.free.f5">Ideas with AI</li>
+        <li data-i18n="pricing.free.f6">Persistent history</li>
+      </ul>
       <button class="btn-plan" id="btnPlanFree" disabled style="opacity:.5">Plan actual</button>
     </div>
+    <!-- BASIC -->
     <div class="price-card" id="planCard-basic">
       <div class="price-icon">⚡</div>
-      <div class="price-title">Básico</div>
+      <div class="price-title" data-i18n="pricing.basic.title">Basic</div>
       <div class="price-amount" data-price-eur="499" data-price-usd="599"></div>
-      <div class="price-desc" data-i18n="pricing.basic.desc">Transcripciones y adaptaciones ilimitadas.</div>
-      <button class="btn-plan" onclick="subscribePlan(PLAN_PRICES.basic)">Elegir Básico</button>
+      <ul class="price-features">
+        <li data-i18n="pricing.basic.f1">30 uses/month</li>
+        <li data-i18n="pricing.basic.f2">Unlimited scripts</li>
+        <li data-i18n="pricing.basic.f3">Unlimited projects</li>
+        <li data-i18n="pricing.basic.f4">Teleprompter + recording</li>
+        <li data-i18n="pricing.basic.f5">Ideas with AI</li>
+        <li data-i18n="pricing.basic.f6">1 custom assistant</li>
+        <li data-i18n="pricing.basic.f7">Email support</li>
+      </ul>
+      <button class="btn-plan" onclick="subscribePlan(PLAN_PRICES.basic)" data-i18n="pricing.choose_basic">Get Basic</button>
     </div>
+    <!-- PRO -->
     <div class="price-card featured" id="planCard-pro">
+      <div class="price-badge" data-i18n="pricing.popular">Most popular</div>
       <div class="price-icon">🚀</div>
       <div class="price-title">Pro</div>
       <div class="price-amount" data-price-eur="999" data-price-usd="1199"></div>
-      <div class="price-desc" data-i18n="pricing.pro.desc">Todo lo del Básico + prioridad + próximas funciones.</div>
-      <button class="btn-plan" onclick="subscribePlan(PLAN_PRICES.pro)">Elegir Pro</button>
+      <ul class="price-features">
+        <li data-i18n="pricing.pro.f1">100 uses/month</li>
+        <li data-i18n="pricing.pro.f2">Unlimited scripts</li>
+        <li data-i18n="pricing.pro.f3">Unlimited projects</li>
+        <li data-i18n="pricing.pro.f4">Teleprompter + recording</li>
+        <li data-i18n="pricing.pro.f5">Ideas with AI</li>
+        <li data-i18n="pricing.pro.f6">5 custom assistants</li>
+        <li data-i18n="pricing.pro.f7">Email support</li>
+      </ul>
+      <button class="btn-plan" onclick="subscribePlan(PLAN_PRICES.pro)" data-i18n="pricing.choose_pro">Get Pro</button>
     </div>
+    <!-- AGENCY -->
     <div class="price-card" id="planCard-agency">
       <div class="price-icon">🏢</div>
-      <div class="price-title">Agencia</div>
+      <div class="price-title" data-i18n="pricing.agency.title">Agency</div>
       <div class="price-amount" data-price-eur="1999" data-price-usd="2499"></div>
-      <div class="price-desc" data-i18n="pricing.agency.desc">Todo lo del Pro + asientos para tu equipo.</div>
-      <button class="btn-plan" onclick="subscribePlan(PLAN_PRICES.agency)">Elegir Agencia</button>
+      <ul class="price-features">
+        <li data-i18n="pricing.agency.f1">250 uses/month + 50/seat</li>
+        <li data-i18n="pricing.agency.f2">Unlimited scripts</li>
+        <li data-i18n="pricing.agency.f3">Unlimited projects</li>
+        <li data-i18n="pricing.agency.f4">Teleprompter + recording</li>
+        <li data-i18n="pricing.agency.f5">Unlimited assistants</li>
+        <li data-i18n="pricing.agency.f6">2 team seats included</li>
+        <li data-i18n="pricing.agency.f7">Priority processing</li>
+        <li data-i18n="pricing.agency.f8">Email + chat support</li>
+      </ul>
+      <button class="btn-plan" onclick="subscribePlan(PLAN_PRICES.agency)" data-i18n="pricing.choose_agency">Get Agency</button>
     </div>
   </div>
   <p style="text-align:center;margin-top:20px;color:var(--text3);font-size:.82rem" id="topupCta"></p>
@@ -4405,10 +4453,13 @@ const LANGS = {
     "flow.n4.title": "Contenido listo", "flow.n4.desc": "Copia, pega y publica. Ya está.",
     "pricing.tag": "PLANES",
     "pricing.h2": 'Elige tu plan.<br><span class="grad-txt" style="font-style:italic">Empieza gratis, escala cuando quieras.</span>',
-    "pricing.free.desc": "5 transcripciones + 5 adaptaciones/día. Sin tarjeta.",
-    "pricing.basic.desc": "Transcripciones y adaptaciones ilimitadas.",
-    "pricing.pro.desc": "Todo lo del Básico + prioridad + próximas funciones.",
-    "pricing.agency.desc": "Todo lo del Pro + asientos para tu equipo.",
+    "pricing.all_included": "Teleprompter, Proyectos e Ideas incluidos en todos los planes.",
+    "pricing.popular": "Más popular",
+    "pricing.basic.title": "Básico", "pricing.agency.title": "Agencia",
+    "pricing.free.f1": "5 usos/día", "pricing.free.f2": "5 guiones guardados", "pricing.free.f3": "1 proyecto", "pricing.free.f4": "Teleprompter + grabación", "pricing.free.f5": "Ideas con IA", "pricing.free.f6": "Historial persistente",
+    "pricing.basic.f1": "30 usos/mes", "pricing.basic.f2": "Guiones ilimitados", "pricing.basic.f3": "Proyectos ilimitados", "pricing.basic.f4": "Teleprompter + grabación", "pricing.basic.f5": "Ideas con IA", "pricing.basic.f6": "1 asistente personalizado", "pricing.basic.f7": "Soporte por email",
+    "pricing.pro.f1": "100 usos/mes", "pricing.pro.f2": "Guiones ilimitados", "pricing.pro.f3": "Proyectos ilimitados", "pricing.pro.f4": "Teleprompter + grabación", "pricing.pro.f5": "Ideas con IA", "pricing.pro.f6": "5 asistentes personalizados", "pricing.pro.f7": "Soporte por email",
+    "pricing.agency.f1": "250 usos/mes + 50/asiento", "pricing.agency.f2": "Guiones ilimitados", "pricing.agency.f3": "Proyectos ilimitados", "pricing.agency.f4": "Teleprompter + grabación", "pricing.agency.f5": "Asistentes ilimitados", "pricing.agency.f6": "2 asientos de equipo incluidos", "pricing.agency.f7": "Procesamiento prioritario", "pricing.agency.f8": "Soporte email + chat",
     "cta.h2": 'Empieza ahora.<br><span class="grad-txt">Es gratis.</span>',
     "cta.sub": "Tu primer reel transcrito en menos de 10 segundos.",
     "cta.pill1": "5 gratis al día", "cta.pill2": "Sin suscripción", "cta.pill3": "Saldo sin caducidad",
@@ -4674,10 +4725,13 @@ const LANGS = {
     "flow.n4.title": "Content ready", "flow.n4.desc": "Copy, paste and publish. Done.",
     "pricing.tag": "PLANS",
     "pricing.h2": 'Choose your plan.<br><span class="grad-txt" style="font-style:italic">Start free, scale when ready.</span>',
-    "pricing.free.desc": "5 transcriptions + 5 adaptations/day. No card required.",
-    "pricing.basic.desc": "Unlimited transcriptions and adaptations.",
-    "pricing.pro.desc": "Everything in Basic + priority + upcoming features.",
-    "pricing.agency.desc": "Everything in Pro + team seats.",
+    "pricing.all_included": "Teleprompter, Projects and Ideas included in all plans.",
+    "pricing.popular": "Most popular",
+    "pricing.basic.title": "Basic", "pricing.agency.title": "Agency",
+    "pricing.free.f1": "5 uses/day", "pricing.free.f2": "5 saved scripts", "pricing.free.f3": "1 project", "pricing.free.f4": "Teleprompter + recording", "pricing.free.f5": "Ideas with AI", "pricing.free.f6": "Persistent history",
+    "pricing.basic.f1": "30 uses/month", "pricing.basic.f2": "Unlimited scripts", "pricing.basic.f3": "Unlimited projects", "pricing.basic.f4": "Teleprompter + recording", "pricing.basic.f5": "Ideas with AI", "pricing.basic.f6": "1 custom assistant", "pricing.basic.f7": "Email support",
+    "pricing.pro.f1": "100 uses/month", "pricing.pro.f2": "Unlimited scripts", "pricing.pro.f3": "Unlimited projects", "pricing.pro.f4": "Teleprompter + recording", "pricing.pro.f5": "Ideas with AI", "pricing.pro.f6": "5 custom assistants", "pricing.pro.f7": "Email support",
+    "pricing.agency.f1": "250 uses/month + 50/seat", "pricing.agency.f2": "Unlimited scripts", "pricing.agency.f3": "Unlimited projects", "pricing.agency.f4": "Teleprompter + recording", "pricing.agency.f5": "Unlimited assistants", "pricing.agency.f6": "2 team seats included", "pricing.agency.f7": "Priority processing", "pricing.agency.f8": "Email + chat support",
     "cta.h2": 'Start now.<br><span class="grad-txt">It\'s free.</span>',
     "cta.sub": "Your first reel transcribed in under 10 seconds.",
     "cta.pill1": "5 free/day", "cta.pill2": "No subscription", "cta.pill3": "Balance never expires",
@@ -5556,15 +5610,14 @@ function renderProfileHub() {
   document.getElementById("profStatScripts").textContent = scriptsCache.length;
   document.getElementById("profStatUsos").textContent = Math.floor(st.credits / 18);
 
-  // Show nav items based on plan
+  // Show nav items — all features available to all plans
   const hasPaidPlan = ["basic","pro","agency"].includes(plan);
-  const isPro = plan === "pro" || plan === "agency";
   const isAgency = plan === "agency";
-  document.getElementById("profNavProjects").style.display = hasPaidPlan ? "" : "none";
+  document.getElementById("profNavProjects").style.display = "";
   document.getElementById("profNavAssistants").style.display = hasPaidPlan ? "" : "none";
-  document.getElementById("profNavMetrics").style.display = hasPaidPlan ? "" : "none";
-  document.getElementById("profNavIdeas").style.display = hasPaidPlan ? "" : "none";
-  document.getElementById("profNavTeleprompter").style.display = hasPaidPlan ? "" : "none";
+  document.getElementById("profNavMetrics").style.display = "";
+  document.getElementById("profNavIdeas").style.display = "";
+  document.getElementById("profNavTeleprompter").style.display = "";
   document.getElementById("profNavTeam").style.display = isAgency ? "" : "none";
   document.getElementById("profNavPrivacy").style.display = "";
 
@@ -5573,7 +5626,8 @@ function renderProfileHub() {
 
   // Load data
   loadSavedScripts();
-  if (hasPaidPlan) { loadProjects(); loadAssistants(); }
+  loadProjects();
+  if (hasPaidPlan) loadAssistants();
   if (isAgency) loadTeamMembers();
   renderProfTransc();
   renderProfOverview();
@@ -5952,8 +6006,8 @@ async function loadSavedScripts() {
       const legacy = await r.json();
       scriptsCache = legacy.map(s => ({ ...s, _src: "saved" }));
     }
-    // Para pro/agency, también cargar scripts (transcripciones guardadas)
-    if (st.plan === "pro" || st.plan === "agency") {
+    // Cargar scripts (transcripciones guardadas) para todos
+    if (st.user) {
       const r2 = await fetch("/scripts");
       if (r2.ok) {
         const newer = await r2.json();
@@ -8864,8 +8918,7 @@ function syncNavMob() {
   const av = document.getElementById("navMobAvatar");
   const srcAv = document.getElementById("userAv");
   if (srcAv && av) av.innerHTML = srcAv.innerHTML;
-  const hasPaid = ["basic","pro","agency"].includes(st.plan);
-  document.querySelectorAll(".mob-nav-paid").forEach(el => el.style.display = hasPaid ? "" : "none");
+  document.querySelectorAll(".mob-nav-paid").forEach(el => el.style.display = "");
   const affMob = document.getElementById("navAffMob");
   if (affMob) affMob.style.display = st.user ? "" : "none";
 }
