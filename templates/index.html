@@ -368,8 +368,13 @@
       color: var(--text2); transition: all .2s;
     }
     .btn-nav:hover { border-color: var(--purple); color: var(--text); }
-    .btn-nav.hi { background: var(--grad); color: #fff; border-color: transparent; }
-    .btn-nav.hi:hover { opacity: .85; }
+    .btn-nav.hi {
+      background: var(--grad); color: #fff; border-color: transparent;
+      box-shadow: 0 4px 0 #92400e; transform: translateY(0);
+      transition: transform .12s, box-shadow .12s, opacity .2s;
+    }
+    .btn-nav.hi:hover { transform: translateY(-1px); box-shadow: 0 5px 0 #92400e; }
+    .btn-nav.hi:active { transform: translateY(3px); box-shadow: 0 1px 0 #92400e; }
 
     /* ── Hero ─────────────────────────────────────────────────── */
     .hero {
@@ -543,10 +548,11 @@
       font-family: var(--font-display);
       font-size: .95rem; font-weight: 700; cursor: pointer;
       letter-spacing: .3px; transition: all .2s;
-      box-shadow: 0 4px 16px rgba(249,115,22,.25);
+      box-shadow: 0 5px 0 #92400e, 0 4px 16px rgba(249,115,22,.25);
+      transform: translateY(0);
     }
-    .btn-shimmer:hover { opacity: .9; box-shadow: 0 4px 24px rgba(249,115,22,.35); }
-    .btn-shimmer:active { transform: scale(.98); }
+    .btn-shimmer:hover { opacity: .9; box-shadow: 0 6px 0 #92400e, 0 4px 24px rgba(249,115,22,.35); }
+    .btn-shimmer:active { transform: translateY(4px) !important; box-shadow: 0 1px 0 #92400e !important; }
     .btn-shimmer:disabled { animation: none; background: var(--surf2); color: var(--text3); cursor: not-allowed; box-shadow: none; opacity: .6; }
     @keyframes shimmer { to { background-position: 250% center; } }
 
@@ -591,15 +597,20 @@
     /* ── 3D raised buttons ─────────────────────────────── */
     .btn-3d {
       position: relative; transform: translateY(0);
-      transition: transform .1s ease, box-shadow .1s ease, opacity .2s;
-      box-shadow: 0 4px 0 rgba(0,0,0,.25);
+      transition: transform .12s ease, box-shadow .12s ease, opacity .2s;
+      box-shadow: 0 5px 0 rgba(0,0,0,.3);
+      border-bottom: none;
     }
-    .btn-3d:active { transform: translateY(3px) !important; box-shadow: 0 1px 0 rgba(0,0,0,.25) !important; }
-    .btn-3d-primary { box-shadow: 0 4px 0 #b45309; }
-    .btn-3d-primary:active { box-shadow: 0 1px 0 #b45309 !important; }
-    .btn-3d-secondary { box-shadow: 0 4px 0 rgba(255,255,255,.06); }
-    .btn-3d-secondary:active { box-shadow: 0 1px 0 rgba(255,255,255,.06) !important; }
-    .btn-3d-danger { box-shadow: 0 4px 0 #991b1b; }
+    .btn-3d:hover { transform: translateY(-1px); box-shadow: 0 6px 0 rgba(0,0,0,.3); }
+    .btn-3d:active { transform: translateY(4px) !important; box-shadow: 0 1px 0 rgba(0,0,0,.3) !important; }
+    .btn-3d-primary { box-shadow: 0 5px 0 #92400e; }
+    .btn-3d-primary:hover { box-shadow: 0 6px 0 #92400e; }
+    .btn-3d-primary:active { box-shadow: 0 1px 0 #92400e !important; }
+    .btn-3d-secondary { box-shadow: 0 5px 0 rgba(255,255,255,.08); }
+    .btn-3d-secondary:hover { box-shadow: 0 6px 0 rgba(255,255,255,.1); }
+    .btn-3d-secondary:active { box-shadow: 0 1px 0 rgba(255,255,255,.08) !important; }
+    .btn-3d-danger { box-shadow: 0 5px 0 #991b1b; }
+    .btn-3d-danger:hover { box-shadow: 0 6px 0 #991b1b; }
     .btn-3d-danger:active { box-shadow: 0 1px 0 #991b1b !important; }
     .btn-3d-circle { border-radius: 50%; }
 
@@ -1301,7 +1312,7 @@
       transition: all .2s ease;
       display: flex; flex-direction: column; gap: 6px; position: relative;
     }
-    .price-card:hover { border-color: rgba(255,255,255,.12); transform: translateY(-2px); }
+    .price-card:hover { border-color: rgba(255,255,255,.12); transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,.3); }
     .price-icon {
       width: 44px; height: 44px; border-radius: 12px;
       background: rgba(249,115,22,.1);
@@ -1326,12 +1337,14 @@
       margin-top: auto; width: 100%; padding: 12px; border: none; border-radius: var(--rsm);
       background: var(--purple); color: #fff; font-family: var(--font-body);
       font-weight: 600; font-size: .84rem;
-      cursor: pointer; transition: all .2s;
+      box-shadow: 0 5px 0 #92400e; transform: translateY(0);
+      cursor: pointer; transition: transform .12s, box-shadow .12s, opacity .2s;
     }
-    .btn-plan:hover { opacity: .88; box-shadow: 0 4px 16px rgba(249,115,22,.3); }
+    .btn-plan:hover { transform: translateY(-1px); box-shadow: 0 6px 0 #92400e, 0 4px 16px rgba(249,115,22,.3); opacity: .95; }
+    .btn-plan:active { transform: translateY(4px); box-shadow: 0 1px 0 #92400e; }
     .btn-plan:disabled { cursor: default; background: transparent; border: 1px solid var(--border); color: var(--text3); box-shadow: none; }
-    .btn-plan.active { background: transparent; border: 1px solid var(--purple); color: var(--purple); }
-    .btn-plan.active:disabled { background: transparent; border: 1px solid var(--purple); color: var(--purple); opacity: .9; }
+    .btn-plan.active { background: transparent; border: 1px solid var(--purple); color: var(--purple); box-shadow: none; transform: none; }
+    .btn-plan.active:disabled { background: transparent; border: 1px solid var(--purple); color: var(--purple); opacity: .9; box-shadow: none; }
     .price-card.featured {
       border-color: var(--purple);
       background: var(--surf2);
@@ -1490,10 +1503,13 @@
     .btn-full {
       width: 100%; padding: 13px; background: var(--grad);
       color: #fff; border: none; border-radius: var(--rsm);
-      font-size: .95rem; font-weight: 800; cursor: pointer; transition: opacity .2s; margin-top: 4px;
+      font-size: .95rem; font-weight: 800; cursor: pointer; margin-top: 4px;
+      box-shadow: 0 5px 0 #92400e; transform: translateY(0);
+      transition: transform .12s, box-shadow .12s, opacity .2s;
     }
-    .btn-full:hover { opacity: .85; }
-    .btn-full:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-full:hover { transform: translateY(-1px); box-shadow: 0 6px 0 #92400e; opacity: .9; }
+    .btn-full:active { transform: translateY(4px); box-shadow: 0 1px 0 #92400e; }
+    .btn-full:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; transform: none; }
     .form-err { color: #f87171; font-size: .78rem; margin-top: 10px; display: none; }
     .form-err.on { display: block; }
 
@@ -1502,9 +1518,11 @@
     .topup-opt {
       border: 2px solid var(--border); border-radius: var(--rsm);
       padding: 16px 10px; text-align: center; cursor: pointer;
-      background: var(--surf2); transition: all .2s;
+      background: var(--surf2); transition: transform .12s, box-shadow .12s, border-color .2s, background .2s;
+      box-shadow: 0 4px 0 rgba(0,0,0,.2); transform: translateY(0);
     }
     .topup-opt:hover, .topup-opt.on { border-color: var(--purple); background: rgba(249,115,22,.1); }
+    .topup-opt:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.2); }
     .topup-amt { font-size: 1.4rem; font-weight: 900; }
     .topup-cred { font-size: .7rem; color: var(--text3); margin-top: 3px; }
     .topup-note { font-size: .77rem; color: var(--text3); text-align: center; margin-bottom: 14px; }
@@ -3278,7 +3296,7 @@
       border: none !important; border-radius: 0 !important;
       box-shadow: none !important; backdrop-filter: none !important;
       -webkit-backdrop-filter: none !important;
-      z-index: 2 !important; max-height: 45vh;
+      z-index: 2 !important;
     }
     #tpOverlay.tp-fullcam .tp-text-box .tp-box-bar,
     #tpOverlay.tp-fullcam .tp-text-box .tp-resize-handle { display: none !important; }
@@ -3966,7 +3984,7 @@
     <span style="color:var(--text3)">·</span>
     <span class="cta-pill"><span class="ck">✓</span> <span data-i18n="cta.pill3">Saldo sin caducidad</span></span>
   </div>
-  <button class="btn-shimmer" style="max-width:320px;margin:0 auto;display:block" onclick="document.getElementById('urlInput').focus();window.scrollTo({top:0,behavior:'smooth'})" data-i18n="cta.btn">
+  <button class="btn-shimmer btn-3d btn-3d-primary" style="max-width:320px;margin:0 auto;display:block" onclick="document.getElementById('urlInput').focus();window.scrollTo({top:0,behavior:'smooth'})" data-i18n="cta.btn">
     ✦ Probar gratis ahora
   </button>
 </div>
@@ -4534,7 +4552,7 @@ const LANGS = {
     "tp.layout": "Modo",
     "tp.layout_free": "Cajas",
     "tp.layout_fullcam": "Cámara completa",
-    "tp.text_pos": "Posición del texto",
+    "tp.text_pos": "Posición del texto", "tp.text_height": "Altura del texto",
     "tp.reset_pos": "Resetear posiciones",
     "tp.close_tp": "Cerrar teleprompter",
     "prof.privacy": "Privacidad y datos",
@@ -4806,7 +4824,7 @@ const LANGS = {
     "tp.layout": "Mode",
     "tp.layout_free": "Boxes",
     "tp.layout_fullcam": "Full camera",
-    "tp.text_pos": "Text position",
+    "tp.text_pos": "Text position", "tp.text_height": "Text height",
     "tp.reset_pos": "Reset positions",
     "tp.close_tp": "Close teleprompter",
     "prof.privacy": "Privacy & Data",
@@ -7813,7 +7831,7 @@ const TP = {
   isOpen: false, isPlaying: false, currentY: 0, speed: 60,
   fontSize: 48, mirrorX: false, textColor: "#fff",
   countdown: true, countdownSec: 3,
-  layout: "free", textY: 5,
+  layout: "free", textY: 5, textH: 40,
   rafId: null, lastTime: 0, totalHeight: 0, autoHideTimer: null,
   _boxesInitialized: false, settingsOpen: false,
 };
@@ -7829,7 +7847,7 @@ function tpSaveSettings() {
   clearTimeout(_tpSaveTimer);
   _tpSaveTimer = setTimeout(() => {
     const save = {};
-    for (const k of ["speed","fontSize","mirrorX","textColor","countdown","countdownSec","layout","textY"])
+    for (const k of ["speed","fontSize","mirrorX","textColor","countdown","countdownSec","layout","textY","textH"])
       save[k] = TP[k];
     localStorage.setItem("teleprompter_settings", JSON.stringify(save));
   }, 200);
@@ -8018,6 +8036,7 @@ function tpApplyLayout() {
   if (TP.layout === "fullcam") {
     overlay.classList.add("tp-fullcam");
     textBox.style.top = TP.textY + "%";
+    textBox.style.maxHeight = TP.textH + "vh";
     textBox.style.height = "";
   } else {
     overlay.classList.remove("tp-fullcam");
@@ -8040,12 +8059,24 @@ function tpSetTextY(val) {
   document.getElementById("tpTextBox").style.top = TP.textY + "%";
   tpSaveSettings();
 }
+function tpSetTextH(val) {
+  TP.textH = parseInt(val);
+  document.getElementById("tpTextHLabel").textContent = TP.textH + "%";
+  document.getElementById("tpTextBox").style.maxHeight = TP.textH + "vh";
+  requestAnimationFrame(() => {
+    const inner = document.getElementById("tpTextInner");
+    if (inner) TP.totalHeight = inner.scrollHeight;
+  });
+  tpSaveSettings();
+}
 
 function tpSyncSettingsUI() {
   document.querySelectorAll(".tp-layout-pill").forEach(p => p.classList.toggle("on", p.dataset.layout === TP.layout));
   document.getElementById("tpSettings").classList.toggle("tp-mode-fullcam", TP.layout === "fullcam");
   document.getElementById("tpTextYSlider").value = TP.textY;
   document.getElementById("tpTextYLabel").textContent = TP.textY + "%";
+  document.getElementById("tpTextHSlider").value = TP.textH;
+  document.getElementById("tpTextHLabel").textContent = TP.textH + "%";
   document.getElementById("tpFontSlider").value = TP.fontSize;
   document.getElementById("tpFontLabel").textContent = TP.fontSize + "px";
   document.getElementById("tpSpeedSlider").value = TP.speed;
@@ -8519,6 +8550,13 @@ function tpRecFinished() {
     setTimeout(() => { hint.style.display = "none"; localStorage.setItem("tp_save_hint_shown", "1"); }, 6000);
   }
 
+  // Show download button as alternative on iOS or when share unavailable
+  const dlBtn = document.getElementById("tpDownloadBtn");
+  if (dlBtn) {
+    dlBtn.style.display = _isIOS || !canShare ? "" : "none";
+    dlBtn.textContent = currentLang === "es" ? "Descargar" : "Download";
+  }
+
   document.getElementById("tpRecResult").classList.add("on");
   tpPause();
 }
@@ -8534,6 +8572,17 @@ document.getElementById("tpSaveBtn")?.addEventListener("click", () => {
     }
   });
 });
+
+function tpForceDownload() {
+  if (!TPR.blob) return;
+  const ext = (TPR.mimeType || "").includes("mp4") ? "mp4" : "webm";
+  const url = URL.createObjectURL(TPR.blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `reelscript-${Date.now()}.${ext}`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  showToast(currentLang === "es" ? "Descargando vídeo..." : "Downloading video...");
+}
 
 function tpRecRetake() {
   tpRecResultClose();
@@ -9472,14 +9521,21 @@ closeTutorial = function() {
       <button class="tp-layout-pill on" onclick="tpSetLayout('free',this)" data-layout="free" data-i18n="tp.layout_free">Boxes</button>
       <button class="tp-layout-pill" onclick="tpSetLayout('fullcam',this)" data-layout="fullcam" data-i18n="tp.layout_fullcam">Full camera</button>
     </div>
-    <!-- Text position (fullcam only) -->
+    <!-- Text position + height (fullcam only) -->
     <div class="tp-fullcam-only">
       <div class="tp-s-row">
         <label data-i18n="tp.text_pos">Text position</label>
         <span class="tp-s-val" id="tpTextYLabel">5%</span>
       </div>
-      <div class="tp-s-slider-wrap" style="margin-bottom:14px">
+      <div class="tp-s-slider-wrap" style="margin-bottom:10px">
         <input type="range" id="tpTextYSlider" min="0" max="55" value="5" oninput="tpSetTextY(this.value)">
+      </div>
+      <div class="tp-s-row">
+        <label data-i18n="tp.text_height">Text height</label>
+        <span class="tp-s-val" id="tpTextHLabel">40%</span>
+      </div>
+      <div class="tp-s-slider-wrap" style="margin-bottom:14px">
+        <input type="range" id="tpTextHSlider" min="15" max="80" value="40" oninput="tpSetTextH(this.value)">
       </div>
     </div>
     <!-- Text -->
@@ -9546,11 +9602,12 @@ closeTutorial = function() {
       <span id="tpRecSize"></span>
     </div>
     <div id="tpWebmWarning" style="display:none;background:rgba(234,179,8,.15);border:1px solid rgba(234,179,8,.3);border-radius:10px;padding:10px 14px;font-size:.78rem;color:rgba(255,255,255,.8);line-height:1.45;max-width:400px;text-align:center"></div>
-    <div style="display:flex;gap:12px;position:relative">
+    <div style="display:flex;gap:12px;position:relative;flex-wrap:wrap;justify-content:center">
       <div class="tp-save-wrap">
         <div id="tpSaveHint" style="display:none"></div>
         <button id="tpSaveBtn" class="tp-btn btn-3d btn-3d-primary" style="width:auto;border-radius:8px;padding:10px 24px;font-size:.85rem;background:rgba(249,115,22,.3);border-color:rgba(249,115,22,.5)">Save</button>
       </div>
+      <button id="tpDownloadBtn" class="tp-btn btn-3d btn-3d-secondary" onclick="tpForceDownload()" style="display:none;width:auto;border-radius:8px;padding:10px 20px;font-size:.85rem">Download</button>
       <button class="tp-btn btn-3d btn-3d-secondary" onclick="tpRecRetake()" style="width:auto;border-radius:8px;padding:10px 20px;font-size:.85rem">Retake</button>
       <button class="tp-btn btn-3d btn-3d-secondary" onclick="tpRecResultClose()" style="width:auto;border-radius:8px;padding:10px 20px;font-size:.85rem">Close</button>
     </div>
