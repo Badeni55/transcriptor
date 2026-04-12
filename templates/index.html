@@ -801,9 +801,10 @@
       gap: 10px; padding: 20px 18px;
       border-radius: var(--r); border: 1px solid var(--border);
       background: var(--surf); cursor: pointer;
-      transition: all .18s ease;
       text-align: left; min-height: 110px;
       position: relative; overflow: hidden;
+      box-shadow: 0 4px 0 rgba(0,0,0,.15); transform: translateY(0);
+      transition: transform .12s, box-shadow .12s, border-color .18s, background .18s;
     }
     .style-pill[data-s="viral"]        { --sc: #ef4444; --scr: 239,68,68; }
     .style-pill[data-s="divertido"]    { --sc: #eab308; --scr: 234,179,8; }
@@ -814,13 +815,13 @@
     .style-pill:hover {
       border-color: rgba(var(--scr), .3);
       background: var(--surf2);
-      transform: translateY(-3px) scale(1.02);
-      box-shadow: var(--sh);
+      transform: translateY(-2px); box-shadow: 0 6px 0 rgba(0,0,0,.15), var(--sh);
     }
+    .style-pill:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.15); }
     .style-pill.act {
       border-color: var(--sc);
       background: var(--surf2);
-      box-shadow: 0 0 20px rgba(var(--scr), .15);
+      box-shadow: 0 4px 0 rgba(var(--scr), .25), 0 0 20px rgba(var(--scr), .15);
     }
     .style-pill.act::after {
       content: ""; position: absolute; top: 0; right: 0;
@@ -853,26 +854,31 @@
     .btn-grad {
       padding: 10px 20px; background: var(--grad);
       color: #fff; border: none; border-radius: var(--rsm);
-      font-size: .9rem; font-weight: 700; cursor: pointer; transition: opacity .2s;
+      font-size: .9rem; font-weight: 700; cursor: pointer;
       white-space: nowrap;
+      box-shadow: 0 4px 0 #92400e; transform: translateY(0);
+      transition: transform .12s, box-shadow .12s, opacity .2s;
     }
-    .btn-grad:hover { opacity: .85; }
+    .btn-grad:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 5px 0 #92400e; }
+    .btn-grad:active { transform: translateY(3px); box-shadow: 0 1px 0 #92400e; }
 
     .adapt-run-btn {
       margin-top: 16px; width: 100%; padding: 16px;
       background: var(--grad); color: #fff; border: none;
       border-radius: var(--r); font-size: 1rem; font-weight: 800;
-      cursor: pointer; transition: opacity .2s, transform .2s;
-      letter-spacing: .3px;
+      cursor: pointer; letter-spacing: .3px;
+      box-shadow: 0 5px 0 #92400e; transform: translateY(0);
+      transition: transform .12s, box-shadow .12s, opacity .2s;
     }
-    .adapt-run-btn:hover { opacity: .88; transform: translateY(-2px); }
+    .adapt-run-btn:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 6px 0 #92400e; }
+    .adapt-run-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #92400e; }
     /* Desktop: hide left button, show right. Mobile: opposite */
     .adapt-run-desktop { display: none !important; }
     @media (min-width: 769px) {
       #btnRunAdapt { display: none !important; }
       .adapt-run-desktop { display: block !important; }
     }
-    .adapt-run-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .adapt-run-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
 
     /* Mobile inline result */
     .mobile-adapt-result {
@@ -1305,7 +1311,7 @@
     .style-card-txt { color: var(--text2); }
 
     /* ── Pricing ──────────────────────────────────────────────── */
-    .pricing-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-top: 40px; }
+    .pricing-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-top: 40px; padding-bottom: 6px; }
     .price-card {
       background: var(--surf); border: 1px solid var(--border);
       border-radius: 16px; padding: 28px 24px;
@@ -1512,6 +1518,16 @@
     .btn-full:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; transform: none; }
     .form-err { color: #f87171; font-size: .78rem; margin-top: 10px; display: none; }
     .form-err.on { display: block; }
+    .btn-google-auth {
+      width: 100%; padding: 12px 16px; background: #fff; border: 1px solid #dadce0;
+      border-radius: 8px; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; gap: 12px; font-size: .9rem; color: #3c4043;
+      font-family: var(--font-body); margin-bottom: 4px;
+      box-shadow: 0 4px 0 #c4c4c4; transform: translateY(0);
+      transition: transform .12s, box-shadow .12s;
+    }
+    .btn-google-auth:hover { transform: translateY(-1px); box-shadow: 0 5px 0 #c4c4c4; }
+    .btn-google-auth:active { transform: translateY(3px); box-shadow: 0 1px 0 #c4c4c4; }
 
     /* Topup */
     .topup-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin: 20px 0; }
@@ -1579,17 +1595,20 @@
       padding: 8px 16px; border-radius: 20px;
       border: 1.5px solid var(--border); background: var(--surf2);
       color: var(--text2); font-size: .82rem; font-weight: 700;
-      cursor: pointer; transition: all .2s;
-      white-space: nowrap;
+      cursor: pointer; white-space: nowrap;
+      box-shadow: 0 3px 0 rgba(0,0,0,.2); transform: translateY(0);
+      transition: transform .12s, box-shadow .12s, border-color .2s, color .2s, background .2s;
     }
     .style-chip:hover {
       border-color: var(--purple); color: #fed7aa;
       background: rgba(249,115,22,.1);
-      transform: translateY(-2px);
+      transform: translateY(-1px); box-shadow: 0 4px 0 rgba(0,0,0,.2);
     }
+    .style-chip:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,.2); }
     .style-chip.act {
       border-color: var(--purple); color: #fed7aa;
       background: rgba(249,115,22,.15);
+      box-shadow: 0 3px 0 rgba(249,115,22,.3);
     }
 
     /* Tooltip preview on hover */
@@ -1832,9 +1851,12 @@
       margin-left: auto; padding: 8px 16px;
       background: var(--grad); color: #fff; border: none;
       border-radius: var(--rsm); font-size: .8rem; font-weight: 700;
-      cursor: pointer; transition: opacity .2s; white-space: nowrap;
+      cursor: pointer; white-space: nowrap;
+      box-shadow: 0 4px 0 #92400e; transform: translateY(0);
+      transition: transform .12s, box-shadow .12s, opacity .2s;
     }
-    .btn-topup-sm:hover { opacity: .85; }
+    .btn-topup-sm:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 5px 0 #92400e; }
+    .btn-topup-sm:active { transform: translateY(3px); box-shadow: 0 1px 0 #92400e; }
 
     .drawer-stats {
       margin: 0 16px 16px; display: grid; grid-template-columns: 1fr 1fr;
@@ -2870,7 +2892,13 @@
     }
     .tour-btn-skip { background: transparent; color: var(--text3); padding: 10px 12px; }
     .tour-btn-prev { background: var(--surf2); color: var(--text); border: 1px solid var(--border); }
-    .tour-btn-next { background: var(--grad); color: #fff; box-shadow: 0 2px 10px rgba(249,115,22,.25); }
+    .tour-btn-next {
+      background: var(--grad); color: #fff;
+      box-shadow: 0 4px 0 #92400e, 0 2px 10px rgba(249,115,22,.25);
+      transform: translateY(0); transition: transform .12s, box-shadow .12s;
+    }
+    .tour-btn-next:hover { transform: translateY(-1px); box-shadow: 0 5px 0 #92400e, 0 2px 10px rgba(249,115,22,.3); }
+    .tour-btn-next:active { transform: translateY(3px); box-shadow: 0 1px 0 #92400e; }
     .tour-progress { display: flex; gap: 6px; margin-right: auto; }
     .tour-dot {
       width: 8px; height: 8px; border-radius: 50%;
@@ -4396,7 +4424,7 @@
       <button class="tab"    id="tabReg"   onclick="switchTab('register')" data-i18n="auth.register">Create account</button>
     </div>
     <!-- Google OAuth button -->
-    <button onclick="loginWithGoogle()" type="button" style="width:100%;padding:12px 16px;background:#fff;border:1px solid #dadce0;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;font-size:.9rem;color:#3c4043;font-family:var(--font-body);transition:all .2s;margin-bottom:4px">
+    <button onclick="loginWithGoogle()" type="button" class="btn-google-auth">
       <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
       <span data-i18n="auth.google_button">Continue with Google</span>
     </button>
@@ -8352,6 +8380,7 @@ function tpRecInit() {
 // ── MIME type — MP4 first for iOS ─────────────────────────────────────────
 const _isIOS = /iPad|iPhone|iPod/.test(navigator.platform) ||
   (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+const _isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 function pickMimeType() {
   const types = [
@@ -8391,11 +8420,16 @@ async function saveRecording(blob, mimeType) {
     }
   }
 
+  // Fallback: <a download> works on Chrome/Firefox, but Safari ignores it for blobs
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  if (_isSafari || _isIOS) {
+    window.open(url, "_blank");
+  } else {
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+  }
   return { ok: true, via: "download" };
 }
 
@@ -8550,11 +8584,13 @@ function tpRecFinished() {
     setTimeout(() => { hint.style.display = "none"; localStorage.setItem("tp_save_hint_shown", "1"); }, 6000);
   }
 
-  // Show download button as alternative on iOS or when share unavailable
+  // Show download button — always visible as alternative save method
   const dlBtn = document.getElementById("tpDownloadBtn");
   if (dlBtn) {
-    dlBtn.style.display = _isIOS || !canShare ? "" : "none";
-    dlBtn.textContent = currentLang === "es" ? "Descargar" : "Download";
+    dlBtn.style.display = "";
+    dlBtn.textContent = (_isIOS || _isSafari)
+      ? (currentLang === "es" ? "Abrir vídeo" : "Open video")
+      : (currentLang === "es" ? "Descargar" : "Download");
   }
 
   document.getElementById("tpRecResult").classList.add("on");
@@ -8569,6 +8605,8 @@ document.getElementById("tpSaveBtn")?.addEventListener("click", () => {
   saveRecording(TPR.blob, TPR.mimeType).then(result => {
     if (result.ok && result.via === "share") {
       showToast(currentLang === "es" ? "Vídeo compartido" : "Video shared");
+    } else if (result.ok && result.via === "download") {
+      showToast(currentLang === "es" ? "Descargando vídeo..." : "Downloading video...");
     }
   });
 });
@@ -8577,11 +8615,26 @@ function tpForceDownload() {
   if (!TPR.blob) return;
   const ext = (TPR.mimeType || "").includes("mp4") ? "mp4" : "webm";
   const url = URL.createObjectURL(TPR.blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = `reelscript-${Date.now()}.${ext}`;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1500);
-  showToast(currentLang === "es" ? "Descargando vídeo..." : "Downloading video...");
+  if (_isIOS) {
+    // Safari iOS ignores <a download>. Open blob in new tab → long-press to save
+    const w = window.open(url, "_blank");
+    if (!w) window.location.href = url;
+    showToast(currentLang === "es"
+      ? "Mantén pulsado el vídeo → Guardar en Fotos"
+      : "Long press the video → Save to Photos");
+  } else if (_isSafari) {
+    // Safari Mac also ignores <a download> for blobs — open in new tab
+    window.open(url, "_blank");
+    showToast(currentLang === "es"
+      ? "Clic derecho en el vídeo → Descargar"
+      : "Right-click the video → Download");
+  } else {
+    const a = document.createElement("a");
+    a.href = url; a.download = `reelscript-${Date.now()}.${ext}`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+    showToast(currentLang === "es" ? "Descargando vídeo..." : "Downloading video...");
+  }
 }
 
 function tpRecRetake() {
