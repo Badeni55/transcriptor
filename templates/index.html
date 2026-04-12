@@ -587,6 +587,22 @@
       cursor: pointer; transition: all .2s;
     }
     .btn-sm:hover { border-color: var(--purple); color: #fed7aa; }
+
+    /* ── 3D raised buttons ─────────────────────────────── */
+    .btn-3d {
+      position: relative; transform: translateY(0);
+      transition: transform .1s ease, box-shadow .1s ease, opacity .2s;
+      box-shadow: 0 4px 0 rgba(0,0,0,.25);
+    }
+    .btn-3d:active { transform: translateY(3px) !important; box-shadow: 0 1px 0 rgba(0,0,0,.25) !important; }
+    .btn-3d-primary { box-shadow: 0 4px 0 #b45309; }
+    .btn-3d-primary:active { box-shadow: 0 1px 0 #b45309 !important; }
+    .btn-3d-secondary { box-shadow: 0 4px 0 rgba(255,255,255,.06); }
+    .btn-3d-secondary:active { box-shadow: 0 1px 0 rgba(255,255,255,.06) !important; }
+    .btn-3d-danger { box-shadow: 0 4px 0 #991b1b; }
+    .btn-3d-danger:active { box-shadow: 0 1px 0 #991b1b !important; }
+    .btn-3d-circle { border-radius: 50%; }
+
     .cost-tag { margin-left: auto; font-size: .75rem; color: var(--text3); display: flex; align-items: center; }
 
     /* ── Result panel (appears beside input after transcription) ─ */
@@ -2130,7 +2146,7 @@
     .prof-card {
       padding: 16px 18px; background: rgba(17,19,24,.55); backdrop-filter: blur(12px);
       border: 1px solid var(--border); border-radius: 14px;
-      transition: border-color .2s;
+      transition: border-color .2s; min-width: 0; box-sizing: border-box;
     }
     .prof-card:hover { border-color: var(--purple); }
     .prof-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
@@ -2147,15 +2163,55 @@
       white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere;
     }
     .prof-card-text:hover { color: var(--text); }
-    .prof-card-acts { display: flex; gap: 6px; margin-top: 10px; }
+    .prof-card-acts { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
     .prof-card-acts button {
       padding: 5px 12px; border: 1px solid var(--border); background: none;
       border-radius: 7px; font-size: .72rem; font-weight: 600;
       color: var(--text3); cursor: pointer; transition: all .2s;
       font-family: var(--font-body);
     }
+    .prof-card-acts button {
+      box-shadow: 0 2px 0 rgba(0,0,0,.2); transform: translateY(0);
+      transition: transform .1s, box-shadow .1s, border-color .2s, color .2s;
+    }
+    .prof-card-acts button:active { transform: translateY(2px); box-shadow: 0 0 0 rgba(0,0,0,.2); }
     .prof-card-acts button:hover { border-color: var(--text2); color: var(--text2); }
     .prof-card-acts button.del:hover { border-color: #f87171; color: #f87171; }
+    @media (max-width: 640px) {
+      .prof-card-acts button.mob-hide { display: none; }
+      .prof-card-acts .btn-more-acts { display: inline-flex; }
+    }
+    @media (min-width: 641px) {
+      .prof-card-acts .btn-more-acts { display: none; }
+    }
+    /* Card actions bottom sheet */
+    #cardActionsSheet {
+      position: fixed; inset: 0; z-index: 600; display: none;
+    }
+    #cardActionsSheet.on { display: flex; flex-direction: column; justify-content: flex-end; }
+    .cas-backdrop {
+      position: absolute; inset: 0; background: rgba(0,0,0,.5);
+    }
+    .cas-panel {
+      position: relative; z-index: 1; background: var(--bg);
+      border-radius: 20px 20px 0 0; padding: 12px 16px 24px;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+      transform: translateY(100%); transition: transform .22s ease-out;
+      max-height: 70vh; overflow-y: auto;
+    }
+    #cardActionsSheet.on .cas-panel { transform: translateY(0); }
+    .cas-handle {
+      width: 40px; height: 4px; border-radius: 2px; background: var(--border);
+      margin: 0 auto 12px;
+    }
+    .cas-btn {
+      display: flex; align-items: center; gap: 12px; width: 100%;
+      padding: 14px 16px; background: none; border: none; border-radius: 12px;
+      font-size: .9rem; font-weight: 500; color: var(--text); cursor: pointer;
+      font-family: var(--font-body); transition: background .12s;
+    }
+    .cas-btn:hover, .cas-btn:active { background: rgba(255,255,255,.06); }
+    .cas-btn.danger { color: #f87171; }
     .prof-empty { text-align: center; padding: 40px 20px; color: var(--text3); font-size: .9rem; }
     .prof-empty-icon { font-size: 2rem; margin-bottom: 8px; }
 
@@ -2543,11 +2599,52 @@
       .pricing-cards { grid-template-columns: repeat(2,1fr) !important; }
     }
 
+    /* Nav hamburger (mobile) */
+    .nav-hamburger {
+      display: none; background: none; border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text2); font-size: 1.2rem; width: 36px; height: 36px; cursor: pointer;
+      align-items: center; justify-content: center; transition: border-color .2s;
+    }
+    .nav-hamburger:hover { border-color: var(--purple); }
+    .nav-mob-menu {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 199;
+    }
+    .nav-mob-menu.on { display: flex; flex-direction: column; }
+    .nav-mob-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.5); }
+    .nav-mob-panel {
+      position: relative; z-index: 1; background: var(--bg); border-bottom: 1px solid var(--border);
+      padding: 16px 20px; display: flex; flex-direction: column; gap: 4px;
+      animation: navMobIn .2s ease-out;
+    }
+    @keyframes navMobIn { from { transform: translateY(-10px); opacity: 0; } }
+    .nav-mob-panel a, .nav-mob-panel button {
+      display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 10px;
+      background: none; border: none; color: var(--text); font-size: .88rem; font-weight: 500;
+      font-family: var(--font-body); cursor: pointer; text-decoration: none; transition: background .12s;
+    }
+    .nav-mob-panel a:hover, .nav-mob-panel button:hover { background: rgba(255,255,255,.06); }
+    .nav-mob-panel .mob-lang-row { display: flex; gap: 8px; padding: 8px 16px; }
+    .nav-mob-panel .mob-lang-btn {
+      flex: 1; text-align: center; padding: 10px; border-radius: 10px;
+      border: 1px solid var(--border); background: none;
+      color: var(--text2); font-weight: 600; font-size: .85rem; cursor: pointer; transition: all .15s;
+      font-family: var(--font-body); text-decoration: none;
+    }
+    .nav-mob-panel .mob-lang-btn.active { background: rgba(249,115,22,.15); border-color: var(--purple); color: var(--purple); }
+
+    @media (max-width: 640px) {
+      .logo span { display: none; }
+      .nav-r .lang-switch { display: none; }
+      .nav-r #navAffiliate { display: none !important; }
+      .nav-r #themeBtn { display: none; }
+      .nav-hamburger { display: flex; }
+      .btn-tutorial { display: none; }
+    }
+
     /* Tablet + mobile */
     @media (max-width: 768px) {
       /* Nav */
       nav { padding: 0 12px; height: 52px; }
-      /* .lang-switch visible on all sizes */
       .user-pill span { display: none; }
       .badge-bal { padding: 4px 10px; font-size: .72rem; }
 
@@ -2717,14 +2814,15 @@
       border: none; cursor: pointer; display: none;
       align-items: center; justify-content: center; gap: 8px;
       padding: 0 20px;
-      box-shadow: 0 4px 16px rgba(249,115,22,.4);
+      box-shadow: 0 4px 16px rgba(249,115,22,.4), 0 4px 0 #b45309;
       transition: transform .2s, box-shadow .2s;
       animation: fabIn .4s cubic-bezier(.34,1.56,.64,1) 1s both;
       font-family: var(--font-body); font-size: .85rem; font-weight: 600;
       color: #fff; white-space: nowrap;
     }
     .idea-fab.on { display: flex; }
-    .idea-fab:hover { transform: scale(1.03); box-shadow: 0 6px 24px rgba(249,115,22,.5); }
+    .idea-fab:hover { transform: scale(1.03); box-shadow: 0 6px 24px rgba(249,115,22,.5), 0 4px 0 #b45309; }
+    .idea-fab:active { transform: translateY(3px) scale(1); box-shadow: 0 2px 8px rgba(249,115,22,.3), 0 1px 0 #b45309; }
     .idea-fab svg { width: 20px; height: 20px; flex-shrink: 0; }
     .idea-fab-label { }
     @keyframes fabIn { from { transform: scale(0); } to { transform: scale(1); } }
@@ -2863,27 +2961,34 @@
     }
     #tpOverlay.on { display: flex; }
     #tpHeader {
-      position: absolute; top: 0; left: 0; right: 0; z-index: 2;
+      position: absolute; top: 0; left: 0; right: 0; z-index: 10;
       display: flex; justify-content: space-between; align-items: center;
-      padding: 16px 20px; transition: opacity .3s;
+      padding: 16px 20px; padding-top: calc(16px + env(safe-area-inset-top, 0px));
+      min-height: 64px; transition: opacity .3s;
+      background: linear-gradient(rgba(0,0,0,.75) 0%, rgba(0,0,0,.4) 60%, transparent 100%);
     }
     #tpHeader.hide { opacity: 0; pointer-events: none; }
     #tpControls {
-      position: absolute; bottom: 0; left: 0; right: 0; z-index: 2;
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
       display: flex; align-items: center; justify-content: center; gap: 16px;
-      padding: 16px 20px; transition: opacity .3s;
-      background: linear-gradient(transparent, rgba(0,0,0,.8));
+      padding: 20px 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+      min-height: 96px; transition: opacity .3s;
+      background: linear-gradient(transparent 0%, rgba(0,0,0,.4) 30%, rgba(0,0,0,.75) 100%);
     }
     #tpControls.hide { opacity: 0; pointer-events: none; }
     .tp-btn {
       background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
       color: #fff; width: 44px; height: 44px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: all .2s; font-size: 1.1rem;
+      cursor: pointer; font-size: 1.1rem;
+      box-shadow: 0 3px 0 rgba(0,0,0,.35);
+      transform: translateY(0); transition: all .2s, transform .1s, box-shadow .1s;
     }
     .tp-btn:hover { background: rgba(255,255,255,.2); }
-    .tp-btn-play { width: 56px; height: 56px; font-size: 1.3rem; background: rgba(249,115,22,.3); border-color: rgba(249,115,22,.5); }
+    .tp-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,.35); }
+    .tp-btn-play { width: 56px; height: 56px; font-size: 1.3rem; background: rgba(249,115,22,.3); border-color: rgba(249,115,22,.5); box-shadow: 0 4px 0 #b45309; }
     .tp-btn-play:hover { background: rgba(249,115,22,.5); }
+    .tp-btn-play:active { box-shadow: 0 1px 0 #b45309; }
     .tp-countdown {
       position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
       font-size: 120px; font-family: var(--font-display); color: #fff; z-index: 3;
@@ -3279,8 +3384,22 @@
     <button class="btn-nav" id="btnLogin" onclick="openAuth('login')" data-i18n="nav.login">Log in</button>
     <button class="btn-nav hi" id="btnReg" onclick="openAuth('register')" data-i18n="nav.register">Free →</button>
     <button class="theme-btn" id="themeBtn" title="Theme: System">💻</button>
+    <button class="nav-hamburger" id="navHamburger" onclick="toggleNavMob()" aria-label="Menu">☰</button>
   </div>
 </nav>
+<!-- Mobile nav menu -->
+<div class="nav-mob-menu" id="navMobMenu">
+  <div class="nav-mob-backdrop" onclick="closeNavMob()"></div>
+  <div class="nav-mob-panel">
+    <div class="mob-lang-row">
+      <a class="mob-lang-btn{% if lang|default('es') == 'es' %} active{% endif %}" href="/es/">🇪🇸 ES</a>
+      <a class="mob-lang-btn{% if lang|default('es') == 'en' %} active{% endif %}" href="/en/">🇬🇧 EN</a>
+    </div>
+    <a href="/affiliate" id="navAffMob" style="display:none" onclick="closeNavMob()">💰 <span data-i18n="nav.earn">Earn 30%</span></a>
+    <button onclick="closeNavMob();openTutorial()">❓ Tutorial</button>
+    <button id="navThemeMob" onclick="cycleTheme();closeNavMob()">💻 <span data-i18n="nav.theme">Theme</span></button>
+  </div>
+</div>
 
 <!-- ── HERO ─────────────────────────────────────────────────────────────── -->
 <main>
@@ -3320,7 +3439,7 @@
             autocomplete="off" spellcheck="false" />
           <span class="input-plat-icon" id="platIcon"></span>
         </div>
-        <button class="btn-queue-add" id="btnQueueAdd" onclick="addToQueue()" title="Add to queue">+</button>
+        <button class="btn-queue-add btn-3d btn-3d-secondary" id="btnQueueAdd" onclick="addToQueue()" title="Add to queue">+</button>
       </div>
 
       <!-- Queue list -->
@@ -3337,7 +3456,7 @@
           <option value="de" data-i18n-es="Alemán" data-i18n-en="German">German</option>
           <option value="it" data-i18n-es="Italiano" data-i18n-en="Italian">Italian</option>
         </select>
-        <button class="btn-shimmer inactive" id="btnTranscribe" style="flex:2" onclick="doTranscribe()" data-i18n="hero.btn">
+        <button class="btn-shimmer btn-3d btn-3d-primary inactive" id="btnTranscribe" style="flex:2" onclick="doTranscribe()" data-i18n="hero.btn">
           ✦ Transcribe now
         </button>
       </div>
@@ -4126,7 +4245,7 @@
       </div>
     </div>
     <p class="topup-note" data-i18n="topup.secure">Secure card payment via Stripe · No subscription</p>
-    <button class="btn-full" id="btnTopupOk" onclick="submitTopup()" data-i18n="topup.go">Go to payment →</button>
+    <button class="btn-full btn-3d btn-3d-primary" id="btnTopupOk" onclick="submitTopup()" data-i18n="topup.go">Go to payment →</button>
     <div class="form-err" id="topupErr"></div>
   </div>
 </div>
@@ -4138,7 +4257,7 @@
 // ── i18n ─────────────────────────────────────────────────────────────────
 const LANGS = {
   es: {
-    "nav.login": "Entrar", "nav.register": "Gratis →", "nav.profile": "Mi perfil", "nav.logout": "Cerrar sesión",
+    "nav.login": "Entrar", "nav.register": "Gratis →", "nav.profile": "Mi perfil", "nav.logout": "Cerrar sesión", "nav.earn": "Ganar 30%", "nav.theme": "Tema",
     "hero.badge": "5 gratis al día · Sin tarjeta · Sin suscripción",
     "hero.h1": 'Pega la URL.<br><span class="grad-txt">Obtén el guión.</span>',
     "hero.sub": "Transcribe reels de Instagram y TikTok al instante con IA.",
@@ -4407,7 +4526,7 @@ const LANGS = {
     "auth.forgot": "¿Olvidaste tu contraseña?",
   },
   en: {
-    "nav.login": "Log in", "nav.register": "Free →", "nav.profile": "My profile", "nav.logout": "Log out",
+    "nav.login": "Log in", "nav.register": "Free →", "nav.profile": "My profile", "nav.logout": "Log out", "nav.earn": "Earn 30%", "nav.theme": "Theme",
     "hero.badge": "5 free/day · No card · No subscription",
     "hero.h1": 'Paste the URL.<br><span class="grad-txt">Get the script.</span>',
     "hero.sub": "Transcribe Instagram and TikTok reels instantly with AI.",
@@ -4729,12 +4848,13 @@ function applyTheme(pref) {
 let themePref = localStorage.getItem("rs-theme") || "system";
 applyTheme(themePref);
 
-themeBtn.addEventListener("click", () => {
+function cycleTheme() {
   const idx = themeCycle.indexOf(themePref);
   themePref = themeCycle[(idx + 1) % themeCycle.length];
   localStorage.setItem("rs-theme", themePref);
   applyTheme(themePref);
-});
+}
+themeBtn.addEventListener("click", cycleTheme);
 
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
   if (themePref === "system") applyTheme("system");
@@ -5186,6 +5306,8 @@ function renderLoggedIn() {
   document.getElementById("btnReg").style.display = "none";
   updateIdeaFab();
   document.getElementById("navAffiliate").style.display = "";
+  const affMob = document.getElementById("navAffMob");
+  if (affMob) affMob.style.display = "";
   document.getElementById("userPill").classList.add("on");
   document.getElementById("userEmail").textContent = st.user.email;
   document.getElementById("balBadge").classList.add("on");
@@ -5671,11 +5793,12 @@ function renderProfTransc() {
       <div class="prof-card-text" onclick="viewItem(${it.id})">${esc(it.text.slice(0, 200))}${it.text.length > 200 ? "…" : ""}</div>
       <div class="prof-card-acts">
         <button onclick="cpHist(${it.id},this)">${t("act.copy")}</button>
-        <button onclick="viewItem(${it.id})">${t("act.view")}</button>
-        <button onclick="profAdaptFromTransc(${it.id})">${t("act.transform")}</button>
-        <button onclick="tpOpenFromTransc(${it.id})">${t("prof.teleprompter")}</button>
-        <button onclick="saveTranscToProject(${it.id})">${t("act.to_project")}</button>
-        <button class="del" onclick="delItem(${it.id},this);setTimeout(()=>{renderProfTransc();renderProfOverview();document.getElementById('profStatTransc').textContent=histCache.length},300)">${t("act.delete")}</button>
+        <button class="mob-hide" onclick="viewItem(${it.id})">${t("act.view")}</button>
+        <button class="mob-hide" onclick="profAdaptFromTransc(${it.id})">${t("act.transform")}</button>
+        <button class="mob-hide" onclick="tpOpenFromTransc(${it.id})">${t("prof.teleprompter")}</button>
+        <button class="mob-hide" onclick="saveTranscToProject(${it.id})">${t("act.to_project")}</button>
+        <button class="mob-hide del" onclick="delItem(${it.id},this);setTimeout(()=>{renderProfTransc();renderProfOverview();document.getElementById('profStatTransc').textContent=histCache.length},300)">${t("act.delete")}</button>
+        <button class="btn-more-acts" onclick="openCardActions(${it.id},'transc')">···</button>
       </div>
     </div>
   `).join("");
@@ -5735,11 +5858,12 @@ function renderProfScripts() {
       </div>
       <div class="prof-card-text" onclick="viewScript('${it.id}')">${esc(text.slice(0, 200))}${text.length > 200 ? "…" : ""}</div>
       <div class="prof-card-acts">
-        <button onclick="cpScript('${it.id}',this)">${t("act.copy")}</button>
-        <button onclick="viewScript('${it.id}')">${t("act.view")}</button>
         <button onclick="tpOpenFromScript('${it.id}')">${t("prof.teleprompter")}</button>
-        <button onclick="saveScriptCardToProject('${it.id}')">${t("act.to_project")}</button>
-        <button class="del" onclick="delScript('${it.id}',this)">${t("act.delete")}</button>
+        <button class="mob-hide" onclick="cpScript('${it.id}',this)">${t("act.copy")}</button>
+        <button class="mob-hide" onclick="viewScript('${it.id}')">${t("act.view")}</button>
+        <button class="mob-hide" onclick="saveScriptCardToProject('${it.id}')">${t("act.to_project")}</button>
+        <button class="mob-hide del" onclick="delScript('${it.id}',this)">${t("act.delete")}</button>
+        <button class="btn-more-acts" onclick="openCardActions('${it.id}')">···</button>
       </div>
     </div>`;
   }).join("");
@@ -5750,8 +5874,7 @@ function cpScript(id, btn) {
   if (!item) return;
   const text = item._src === "script" ? (item.script || item.transcription || "") : (item.content || "");
   navigator.clipboard.writeText(text);
-  btn.textContent = t("act.copied");
-  setTimeout(() => (btn.textContent = t("act.copy")), 1500);
+  if (btn) { btn.textContent = t("act.copied"); setTimeout(() => (btn.textContent = t("act.copy")), 1500); }
 }
 
 function viewScript(id) {
@@ -5766,11 +5889,54 @@ function viewScript(id) {
 
 async function delScript(id, btn) {
   if (!confirm(currentLang === "es" ? "¿Eliminar este guión?" : "Delete this script?")) return;
-  btn.disabled = true;
+  if (btn) btn.disabled = true;
   const item = scriptsCache.find(i => i.id === id);
   const endpoint = item && item._src === "script" ? `/scripts/${id}` : `/saved-scripts/${id}`;
   await fetch(endpoint, { method: "DELETE" });
   await loadSavedScripts();
+}
+
+/* ── Card actions bottom sheet (mobile) ────────────── */
+let _casCurrentId = null;
+let _casCurrentType = null; // "script" | "transc"
+
+function openCardActions(id, type) {
+  _casCurrentId = id;
+  _casCurrentType = type || "script";
+  const container = document.getElementById("casButtons");
+  let btns = "";
+
+  if (type === "transc") {
+    const it = histCache.find(i => i.id === Number(id));
+    if (!it) return;
+    btns = `
+      <button class="cas-btn" onclick="closeCardActions();cpHist(${id})">📋 ${t("act.copy")}</button>
+      <button class="cas-btn" onclick="closeCardActions();viewItem(${id})">👁 ${t("act.view")}</button>
+      <button class="cas-btn" onclick="closeCardActions();profAdaptFromTransc(${id})">✨ ${t("act.transform")}</button>
+      <button class="cas-btn" onclick="closeCardActions();tpOpenFromTransc(${id})">🎬 ${t("prof.teleprompter")}</button>
+      <button class="cas-btn" onclick="closeCardActions();saveTranscToProject(${id})">📁 ${t("act.to_project")}</button>
+      <button class="cas-btn danger" onclick="closeCardActions();delItem(${id});setTimeout(()=>{renderProfTransc();renderProfOverview();document.getElementById('profStatTransc').textContent=histCache.length},300)">🗑 ${t("act.delete")}</button>
+    `;
+  } else {
+    const it = scriptsCache.find(i => i.id === id);
+    if (!it) return;
+    btns = `
+      <button class="cas-btn" onclick="closeCardActions();tpOpenFromScript('${id}')">🎬 ${t("prof.teleprompter")}</button>
+      <button class="cas-btn" onclick="closeCardActions();cpScript('${id}')">📋 ${t("act.copy")}</button>
+      <button class="cas-btn" onclick="closeCardActions();viewScript('${id}')">👁 ${t("act.view")}</button>
+      <button class="cas-btn" onclick="closeCardActions();saveScriptCardToProject('${id}')">📁 ${t("act.to_project")}</button>
+      <button class="cas-btn danger" onclick="closeCardActions();delScript('${id}')">🗑 ${t("act.delete")}</button>
+    `;
+  }
+
+  container.innerHTML = btns;
+  document.getElementById("cardActionsSheet").classList.add("on");
+}
+
+function closeCardActions() {
+  document.getElementById("cardActionsSheet").classList.remove("on");
+  _casCurrentId = null;
+  _casCurrentType = null;
 }
 
 // ── Projects (pro/agency) ────────────────────────────────────────────────
@@ -7807,6 +7973,59 @@ document.addEventListener("keydown", e => {
   if (e.code === "Escape") { e.preventDefault(); if (TP.settingsOpen) { tpToggleSettings(); } else { tpClose(); } }
 });
 
+// ── Manual text drag (touch/mouse) ───────────────────────────────────────
+(function() {
+  let dragging = false, startY = 0, startCurrentY = 0, wasPlaying = false;
+
+  function isControl(el) {
+    while (el && el.id !== "tpOverlay") {
+      if (el.id === "tpHeader" || el.id === "tpControls" || el.id === "tpSettings" ||
+          el.tagName === "BUTTON" || el.tagName === "INPUT" || el.tagName === "SELECT" ||
+          el.classList?.contains("tp-box-bar") || el.classList?.contains("tp-resize-handle"))
+        return true;
+      el = el.parentElement;
+    }
+    return false;
+  }
+
+  function onStart(e) {
+    if (!TP.isOpen || isControl(e.target)) return;
+    dragging = true;
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    startCurrentY = TP.currentY;
+    wasPlaying = TP.isPlaying;
+    if (wasPlaying) tpPause();
+  }
+
+  function onMove(e) {
+    if (!dragging) return;
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const dy = startY - y;
+    TP.currentY = Math.max(0, startCurrentY + dy);
+    document.getElementById("tpTextInner").style.transform = `translateY(-${TP.currentY}px)`;
+  }
+
+  function onEnd() {
+    if (!dragging) return;
+    dragging = false;
+    if (wasPlaying) {
+      TP.lastTime = performance.now();
+      TP.isPlaying = true;
+      document.getElementById("tpPlayBtn").textContent = "⏸";
+      tpTick();
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const overlay = document.getElementById("tpOverlay");
+    if (!overlay) return;
+    overlay.addEventListener("pointerdown", onStart);
+    overlay.addEventListener("pointermove", onMove);
+    overlay.addEventListener("pointerup", onEnd);
+    overlay.addEventListener("pointercancel", onEnd);
+  });
+})();
+
 // Helper to open teleprompter from an idea
 function openTeleprompterPicker() {
   // Collect all available texts: scripts, ideas, recent transcriptions
@@ -8320,12 +8539,11 @@ function cpHist(id, btn) {
   const item = histCache.find(i => i.id === id);
   if (!item) return;
   navigator.clipboard.writeText(item.text);
-  btn.textContent = t("act.copied");
-  setTimeout(() => (btn.textContent = t("act.copy")), 2000);
+  if (btn) { btn.textContent = t("act.copied"); setTimeout(() => (btn.textContent = t("act.copy")), 2000); }
 }
 
 async function delItem(id, btn) {
-  btn.disabled = true;
+  if (btn) btn.disabled = true;
   await fetch(`/history/${id}`, { method: "DELETE" });
   loadHistory();
 }
@@ -8499,6 +8717,13 @@ function toggleUserMenu(e) {
 function closeUserMenu() {
   document.getElementById("userMenuDropdown")?.classList.remove("on");
   document.getElementById("userPill")?.classList.remove("menu-open");
+}
+
+function toggleNavMob() {
+  document.getElementById("navMobMenu").classList.toggle("on");
+}
+function closeNavMob() {
+  document.getElementById("navMobMenu").classList.remove("on");
 }
 
 async function logout() {
@@ -9126,10 +9351,10 @@ closeTutorial = function() {
     <div style="display:flex;gap:12px;position:relative">
       <div class="tp-save-wrap">
         <div id="tpSaveHint" style="display:none"></div>
-        <button id="tpSaveBtn" class="tp-btn" style="width:auto;border-radius:8px;padding:10px 24px;font-size:.85rem;background:rgba(249,115,22,.3);border-color:rgba(249,115,22,.5)">Save</button>
+        <button id="tpSaveBtn" class="tp-btn btn-3d btn-3d-primary" style="width:auto;border-radius:8px;padding:10px 24px;font-size:.85rem;background:rgba(249,115,22,.3);border-color:rgba(249,115,22,.5)">Save</button>
       </div>
-      <button class="tp-btn" onclick="tpRecRetake()" style="width:auto;border-radius:8px;padding:10px 20px;font-size:.85rem">Retake</button>
-      <button class="tp-btn" onclick="tpRecResultClose()" style="width:auto;border-radius:8px;padding:10px 20px;font-size:.85rem">Close</button>
+      <button class="tp-btn btn-3d btn-3d-secondary" onclick="tpRecRetake()" style="width:auto;border-radius:8px;padding:10px 20px;font-size:.85rem">Retake</button>
+      <button class="tp-btn btn-3d btn-3d-secondary" onclick="tpRecResultClose()" style="width:auto;border-radius:8px;padding:10px 20px;font-size:.85rem">Close</button>
     </div>
   </div>
   <div id="tpPrivacy">
@@ -9282,5 +9507,13 @@ closeTutorial = function() {
   </div>
   <div style="color:var(--text3)">© 2026 ReelScript</div>
 </footer>
+<!-- Card actions bottom sheet (mobile) -->
+<div id="cardActionsSheet">
+  <div class="cas-backdrop" onclick="closeCardActions()"></div>
+  <div class="cas-panel">
+    <div class="cas-handle"></div>
+    <div id="casButtons"></div>
+  </div>
+</div>
 </body>
 </html>
