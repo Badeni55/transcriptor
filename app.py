@@ -59,7 +59,7 @@ APIFY_TOKEN           = os.environ.get("APIFY_TOKEN", "")
 STRIPE_SECRET_KEY     = os.environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 
-FREE_DAILY_ANON  = 3   # transcripciones gratis para anónimos
+FREE_DAILY_ANON  = 5   # transcripciones gratis para anónimos
 FREE_DAILY_USER  = 5   # transcripciones gratis para registrados
 FREE_DAILY_ADAPT = 5   # adaptaciones gratis para registrados (hazlo tuyo)
 COST_CENTS       = 18   # $0.18 por uso de pago (~7 usos por $1.29)

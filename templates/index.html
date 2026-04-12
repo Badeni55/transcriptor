@@ -3294,7 +3294,7 @@
 
   <div class="hero-badge">
     <div class="badge-dot"></div>
-    <span data-i18n="hero.badge">3 free/day · No card · No subscription</span>
+    <span data-i18n="hero.badge">5 free/day · No card · No subscription</span>
   </div>
 
   <p class="hero-h1" aria-hidden="true" data-i18n="hero.h1">
@@ -3304,9 +3304,9 @@
 
   <p class="hero-sub" style="margin-bottom:28px" data-i18n="hero.sub">
     {% if lang == 'en' %}
-    Transcribe Instagram and TikTok reels instantly with AI. Paste the URL, get the script in seconds, and turn it into a viral post, LinkedIn article, story or 5 hooks with one click. Free, no card, no signup.
+    Transcribe Instagram and TikTok reels instantly with AI.
     {% else %}
-    Transcribe reels de Instagram y TikTok al instante con IA. Pega la URL, obtén el guión en segundos y conviértelo en un post viral, artículo de LinkedIn, historia o 5 hooks con un solo click. Gratis, sin tarjeta, sin registro.
+    Transcribe reels de Instagram y TikTok al instante con IA.
     {% endif %}
   </p>
 
@@ -3668,7 +3668,7 @@
   <h2 class="cta-h2" data-i18n="cta.h2">Empieza ahora.<br><span class="grad-txt">Es gratis.</span></h2>
   <p class="cta-sub" data-i18n="cta.sub">Tu primer reel transcrito en menos de 10 segundos.</p>
   <div class="cta-pills">
-    <span class="cta-pill"><span class="ck">✓</span> <span data-i18n="cta.pill1">3 free/day</span></span>
+    <span class="cta-pill"><span class="ck">✓</span> <span data-i18n="cta.pill1">5 free/day</span></span>
     <span style="color:var(--text3)">·</span>
     <span class="cta-pill"><span class="ck">✓</span> <span data-i18n="cta.pill2">Sin suscripción</span></span>
     <span style="color:var(--text3)">·</span>
@@ -4139,9 +4139,9 @@
 const LANGS = {
   es: {
     "nav.login": "Entrar", "nav.register": "Gratis →", "nav.profile": "Mi perfil", "nav.logout": "Cerrar sesión",
-    "hero.badge": "3 gratis al día · Sin tarjeta · Sin suscripción",
+    "hero.badge": "5 gratis al día · Sin tarjeta · Sin suscripción",
     "hero.h1": 'Pega la URL.<br><span class="grad-txt">Obtén el guión.</span>',
-    "hero.sub": "Transcribe reels de Instagram y TikTok al instante con IA. Pega la URL, obtén el guión en segundos y conviértelo en un post viral, artículo de LinkedIn, historia o 5 hooks con un solo click. Gratis, sin tarjeta, sin registro.",
+    "hero.sub": "Transcribe reels de Instagram y TikTok al instante con IA.",
     "hero.btn": "✦ Transcribir ahora",
     "hero.counter_suffix": "reels transcritos hoy",
     "adapt.h2": 'Hazlo tuyo.<br><span style="background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Elige el estilo, transforma.</span>',
@@ -4167,7 +4167,7 @@ const LANGS = {
     "pricing.agency.desc": "Todo lo del Pro + asientos para tu equipo.",
     "cta.h2": 'Empieza ahora.<br><span class="grad-txt">Es gratis.</span>',
     "cta.sub": "Tu primer reel transcrito en menos de 10 segundos.",
-    "cta.pill1": "3 gratis al día", "cta.pill2": "Sin suscripción", "cta.pill3": "Saldo sin caducidad",
+    "cta.pill1": "5 gratis al día", "cta.pill2": "Sin suscripción", "cta.pill3": "Saldo sin caducidad",
     "cta.btn": "✦ Probar gratis ahora",
     "auth.title": "Bienvenido a ReelScript",
     "auth.sub": "Regístrate gratis y consigue 5 transcripciones + 5 adaptaciones al día.",
@@ -4408,9 +4408,9 @@ const LANGS = {
   },
   en: {
     "nav.login": "Log in", "nav.register": "Free →", "nav.profile": "My profile", "nav.logout": "Log out",
-    "hero.badge": "3 free/day · No card · No subscription",
+    "hero.badge": "5 free/day · No card · No subscription",
     "hero.h1": 'Paste the URL.<br><span class="grad-txt">Get the script.</span>',
-    "hero.sub": "Transcribe Instagram and TikTok reels instantly with AI. Paste the URL, get the script in seconds, and turn it into a viral post, LinkedIn article, story or 5 hooks with one click. Free, no card, no signup.",
+    "hero.sub": "Transcribe Instagram and TikTok reels instantly with AI.",
     "hero.btn": "✦ Transcribe now",
     "hero.counter_suffix": "reels transcribed today",
     "adapt.h2": 'Make it yours.<br><span style="background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Pick a style, transform.</span>',
@@ -4436,7 +4436,7 @@ const LANGS = {
     "pricing.agency.desc": "Everything in Pro + team seats.",
     "cta.h2": 'Start now.<br><span class="grad-txt">It\'s free.</span>',
     "cta.sub": "Your first reel transcribed in under 10 seconds.",
-    "cta.pill1": "3 free/day", "cta.pill2": "No subscription", "cta.pill3": "Balance never expires",
+    "cta.pill1": "5 free/day", "cta.pill2": "No subscription", "cta.pill3": "Balance never expires",
     "cta.btn": "✦ Try it free now",
     "auth.title": "Welcome to ReelScript",
     "auth.sub": "Sign up free and get 5 transcriptions + 5 adaptations per day.",
@@ -7921,6 +7921,9 @@ function tpRecInit() {
 }
 
 // ── MIME type — MP4 first for iOS ─────────────────────────────────────────
+const _isIOS = /iPad|iPhone|iPod/.test(navigator.platform) ||
+  (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+
 function pickMimeType() {
   const types = [
     "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
@@ -7930,23 +7933,31 @@ function pickMimeType() {
     "video/webm;codecs=vp8,opus",
     "video/webm",
   ];
+  let picked = "";
   for (const t of types) {
-    if (window.MediaRecorder && MediaRecorder.isTypeSupported(t)) return t;
+    const ok = !!(window.MediaRecorder && MediaRecorder.isTypeSupported(t));
+    console.log("[MIME]", t, "→", ok);
+    if (ok && !picked) picked = t;
   }
-  return "";
+  console.log("[MIME] selected:", picked || "(none)");
+  return picked;
 }
 
 // ── Save with Web Share API (iOS → Fotos) or fallback download ────────────
 async function saveRecording(blob, mimeType) {
-  const ext = mimeType.startsWith("video/mp4") ? "mp4" : "webm";
+  const realType = blob.type || mimeType;
+  const ext = realType.includes("mp4") ? "mp4" : "webm";
   const filename = `reelscript-${Date.now()}.${ext}`;
-  const file = new File([blob], filename, { type: mimeType });
+  const file = new File([blob], filename, { type: realType });
+  const canShare = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+  console.log("[SAVE] file.type:", file.type, "canShare:", canShare, "blob.type:", blob.type);
 
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+  if (canShare) {
     try {
       await navigator.share({ files: [file] });
       return { ok: true, via: "share" };
     } catch (e) {
+      console.log("[SAVE] share error:", e.name, e.message);
       if (e.name === "AbortError") return { ok: false, via: "share", aborted: true };
     }
   }
@@ -8020,6 +8031,7 @@ function tpRecStart() {
 
   TPR.chunks = [];
   TPR.recorder = new MediaRecorder(TPR.stream, { mimeType: TPR.mimeType || undefined });
+  console.log("[REC] requested:", TPR.mimeType, "actual:", TPR.recorder.mimeType);
   TPR.recorder.ondataavailable = e => { if (e.data.size > 0) TPR.chunks.push(e.data); };
   TPR.recorder.onstop = () => tpRecFinished();
   TPR.recorder.start(1000);
@@ -8054,7 +8066,16 @@ function tpRecStop() {
 }
 
 function tpRecFinished() {
-  const mimeType = TPR.recorder?.mimeType || TPR.mimeType || "video/webm";
+  let mimeType = TPR.recorder?.mimeType;
+  if (!mimeType) {
+    mimeType = TPR.mimeType;
+    console.warn("[REC] recorder.mimeType empty, falling back to requested:", mimeType);
+  }
+  if (!mimeType) {
+    mimeType = "video/webm";
+    console.warn("[REC] no mimeType at all, last resort: video/webm");
+  }
+  console.log("[REC] final mimeType for blob:", mimeType);
   TPR.mimeType = mimeType;
   TPR.blob = new Blob(TPR.chunks, { type: mimeType });
   if (TPR.blobUrl) URL.revokeObjectURL(TPR.blobUrl);
@@ -8069,8 +8090,7 @@ function tpRecFinished() {
   document.getElementById("tpRecDuration").textContent = `${mm}:${ss}`;
   document.getElementById("tpRecSize").textContent = `${(TPR.blob.size / (1024 * 1024)).toFixed(1)} MB`;
 
-  // Update save button label based on share capability
-  const ext = mimeType.startsWith("video/mp4") ? "mp4" : "webm";
+  const ext = mimeType.includes("mp4") ? "mp4" : "webm";
   const testFile = new File([new Blob([], { type: mimeType })], `test.${ext}`, { type: mimeType });
   const canShare = !!(navigator.canShare && navigator.canShare({ files: [testFile] }));
   const saveBtn = document.getElementById("tpSaveBtn");
@@ -8078,8 +8098,21 @@ function tpRecFinished() {
     ? (currentLang === "es" ? "Guardar en Fotos" : "Save to Photos")
     : (currentLang === "es" ? "Descargar" : "Download");
 
-  // First-use iOS hint
-  if (canShare && !localStorage.getItem("tp_save_hint_shown")) {
+  // iOS + webm warning
+  const webmWarn = document.getElementById("tpWebmWarning");
+  if (_isIOS && !mimeType.includes("mp4")) {
+    if (webmWarn) {
+      webmWarn.textContent = currentLang === "es"
+        ? "Tu Safari grabó en WebM. iOS no puede guardarlo en Fotos directamente. Toca Compartir → Guardar en Archivos, o usa Safari actualizado."
+        : "Your Safari recorded WebM. iOS can't save it to Photos directly. Tap Share → Save to Files, or use an updated Safari.";
+      webmWarn.style.display = "block";
+    }
+  } else if (webmWarn) {
+    webmWarn.style.display = "none";
+  }
+
+  // First-use iOS hint (only for mp4)
+  if (canShare && mimeType.includes("mp4") && !localStorage.getItem("tp_save_hint_shown")) {
     const hint = document.getElementById("tpSaveHint");
     hint.textContent = currentLang === "es"
       ? "En iPhone, elige «Guardar vídeo» en el menú que aparece para enviarlo directamente a Fotos."
@@ -9089,6 +9122,7 @@ closeTutorial = function() {
       <span id="tpRecDuration"></span>
       <span id="tpRecSize"></span>
     </div>
+    <div id="tpWebmWarning" style="display:none;background:rgba(234,179,8,.15);border:1px solid rgba(234,179,8,.3);border-radius:10px;padding:10px 14px;font-size:.78rem;color:rgba(255,255,255,.8);line-height:1.45;max-width:400px;text-align:center"></div>
     <div style="display:flex;gap:12px;position:relative">
       <div class="tp-save-wrap">
         <div id="tpSaveHint" style="display:none"></div>
