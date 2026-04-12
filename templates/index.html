@@ -2606,31 +2606,61 @@
       align-items: center; justify-content: center; transition: border-color .2s;
     }
     .nav-hamburger:hover { border-color: var(--purple); }
+    /* Mobile slide-out menu */
     .nav-mob-menu {
-      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 199;
+      display: none; position: fixed; inset: 0; z-index: 250;
     }
-    .nav-mob-menu.on { display: flex; flex-direction: column; }
-    .nav-mob-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.5); }
+    .nav-mob-menu.on { display: block; }
+    .nav-mob-backdrop {
+      position: absolute; inset: 0; background: rgba(0,0,0,.5);
+      opacity: 0; transition: opacity .22s ease-out;
+    }
+    .nav-mob-menu.on .nav-mob-backdrop { opacity: 1; }
     .nav-mob-panel {
-      position: relative; z-index: 1; background: var(--bg); border-bottom: 1px solid var(--border);
-      padding: 16px 20px; display: flex; flex-direction: column; gap: 4px;
-      animation: navMobIn .2s ease-out;
+      position: absolute; top: 0; right: 0; bottom: 0; z-index: 1;
+      width: 75%; max-width: 320px; height: 100dvh;
+      background: var(--surf); border-left: 1px solid var(--border);
+      box-shadow: -12px 0 32px rgba(0,0,0,.5);
+      backdrop-filter: blur(12px);
+      padding: 0; display: flex; flex-direction: column;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-right: env(safe-area-inset-right, 0px);
+      transform: translateX(100%); transition: transform .22s ease-out;
+      overflow-y: auto;
     }
-    @keyframes navMobIn { from { transform: translateY(-10px); opacity: 0; } }
-    .nav-mob-panel a, .nav-mob-panel button {
-      display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 10px;
-      background: none; border: none; color: var(--text); font-size: .88rem; font-weight: 500;
-      font-family: var(--font-body); cursor: pointer; text-decoration: none; transition: background .12s;
+    .nav-mob-menu.on .nav-mob-panel { transform: translateX(0); }
+    .nav-mob-close {
+      align-self: flex-end; margin: 16px 16px 8px;
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text2); width: 36px; height: 36px; font-size: 1rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: border-color .15s;
     }
-    .nav-mob-panel a:hover, .nav-mob-panel button:hover { background: rgba(255,255,255,.06); }
-    .nav-mob-panel .mob-lang-row { display: flex; gap: 8px; padding: 8px 16px; }
-    .nav-mob-panel .mob-lang-btn {
+    .nav-mob-close:hover { border-color: var(--purple); }
+    .nav-mob-items { display: flex; flex-direction: column; padding: 4px 12px; }
+    .nav-mob-items a, .nav-mob-items button {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 18px; border-radius: 10px;
+      background: none; border: none; border-bottom: 1px solid var(--border);
+      color: var(--text2); font-size: .88rem; font-weight: 500;
+      font-family: var(--font-body); cursor: pointer; text-decoration: none;
+      transition: background .12s; width: 100%; text-align: left;
+    }
+    .nav-mob-items a:last-child, .nav-mob-items button:last-child { border-bottom: none; }
+    .nav-mob-items a:active, .nav-mob-items button:active { background: rgba(255,255,255,.06); }
+    .nav-mob-items .mob-lang-row {
+      display: flex; gap: 8px; padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-mob-items .mob-lang-btn {
       flex: 1; text-align: center; padding: 10px; border-radius: 10px;
       border: 1px solid var(--border); background: none;
-      color: var(--text2); font-weight: 600; font-size: .85rem; cursor: pointer; transition: all .15s;
-      font-family: var(--font-body); text-decoration: none;
+      color: var(--text2); font-weight: 600; font-size: .85rem; cursor: pointer;
+      transition: all .15s; font-family: var(--font-body); text-decoration: none;
     }
-    .nav-mob-panel .mob-lang-btn.active { background: rgba(249,115,22,.15); border-color: var(--purple); color: var(--purple); }
+    .nav-mob-items .mob-lang-btn.active {
+      background: rgba(249,115,22,.15); border-color: var(--purple); color: var(--purple);
+    }
 
     @media (max-width: 640px) {
       .logo span { display: none; }
@@ -3391,13 +3421,25 @@
 <div class="nav-mob-menu" id="navMobMenu">
   <div class="nav-mob-backdrop" onclick="closeNavMob()"></div>
   <div class="nav-mob-panel">
-    <div class="mob-lang-row">
-      <a class="mob-lang-btn{% if lang|default('es') == 'es' %} active{% endif %}" href="/es/">🇪🇸 ES</a>
-      <a class="mob-lang-btn{% if lang|default('es') == 'en' %} active{% endif %}" href="/en/">🇬🇧 EN</a>
+    <button class="nav-mob-close" onclick="closeNavMob()" aria-label="Close">✕</button>
+    <div class="nav-mob-items">
+      <div class="mob-lang-row">
+        <a class="mob-lang-btn{% if lang|default('es') == 'es' %} active{% endif %}" href="/es/">ES</a>
+        <a class="mob-lang-btn{% if lang|default('es') == 'en' %} active{% endif %}" href="/en/">EN</a>
+      </div>
+      <a href="/affiliate" id="navAffMob" style="display:none" onclick="closeNavMob()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+        <span data-i18n="nav.earn">Earn 30%</span>
+      </a>
+      <button onclick="closeNavMob();openTutorial()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Tutorial
+      </button>
+      <button onclick="cycleTheme();closeNavMob()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <span data-i18n="nav.theme">Theme</span>
+      </button>
     </div>
-    <a href="/affiliate" id="navAffMob" style="display:none" onclick="closeNavMob()">💰 <span data-i18n="nav.earn">Earn 30%</span></a>
-    <button onclick="closeNavMob();openTutorial()">❓ Tutorial</button>
-    <button id="navThemeMob" onclick="cycleTheme();closeNavMob()">💻 <span data-i18n="nav.theme">Theme</span></button>
   </div>
 </div>
 
@@ -8720,10 +8762,14 @@ function closeUserMenu() {
 }
 
 function toggleNavMob() {
-  document.getElementById("navMobMenu").classList.toggle("on");
+  const menu = document.getElementById("navMobMenu");
+  const opening = !menu.classList.contains("on");
+  menu.classList.toggle("on");
+  document.body.style.overflow = opening ? "hidden" : "";
 }
 function closeNavMob() {
   document.getElementById("navMobMenu").classList.remove("on");
+  document.body.style.overflow = "";
 }
 
 async function logout() {
