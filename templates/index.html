@@ -257,6 +257,8 @@
     [data-theme="light"] .preview-card { background: var(--surf); border-color: rgba(0,0,0,.08); }
     [data-theme="light"] .preview-content::after { background: linear-gradient(transparent, var(--surf)); }
     [data-theme="light"] .preview-text { color: #333; }
+    [data-theme="light"] .hook-card { background: #f9fafb; border-color: #e5e7eb; }
+    [data-theme="light"] .script-section.closing .script-section-content { color: #555; }
 
     /* Light mode — project detail */
     [data-theme="light"] .proj-detail-overlay { background: rgba(240,237,232,.97); }
@@ -1004,11 +1006,64 @@
 
     .preview-result-text {
       display: none; font-size: .93rem; line-height: 1.85;
-      color: var(--text); white-space: pre-wrap; word-break: break-word;
-      max-height: 320px; overflow-y: auto;
+      color: var(--text); word-break: break-word;
+      max-height: 380px; overflow-y: auto;
       animation: fadeSlideIn .35s ease;
     }
     .preview-result-text.on { display: block; }
+    .preview-result-text.plain { white-space: pre-wrap; }
+
+    /* Structured script sections */
+    .script-section { margin-bottom: 16px; }
+    .script-section:last-child { margin-bottom: 0; }
+    .script-section-label {
+      font-size: .65rem; font-weight: 700; letter-spacing: 1.2px;
+      text-transform: uppercase; margin-bottom: 6px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .script-section-label::before {
+      content: ""; display: inline-block; width: 3px; height: 12px; border-radius: 2px;
+    }
+    .script-section.hook .script-section-label { color: #f97316; }
+    .script-section.hook .script-section-label::before { background: #f97316; }
+    .script-section.body .script-section-label { color: var(--text3); }
+    .script-section.body .script-section-label::before { background: var(--text3); }
+    .script-section.closing .script-section-label { color: #a78bfa; }
+    .script-section.closing .script-section-label::before { background: #a78bfa; }
+    .script-section-content {
+      font-size: .9rem; line-height: 1.75; color: var(--text);
+    }
+    .script-section.hook .script-section-content {
+      font-weight: 600; font-size: .95rem;
+    }
+    .script-section.closing .script-section-content {
+      font-style: italic; color: var(--text2);
+    }
+    .script-section.body .script-section-content p {
+      margin: 0 0 6px;
+    }
+
+    /* Hook cards (for hooks style) */
+    .hook-card {
+      background: var(--surf2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
+      transition: border-color .2s;
+    }
+    .hook-card:last-child { margin-bottom: 0; }
+    .hook-card:hover { border-color: rgba(249,115,22,.3); }
+    .hook-card-type {
+      font-size: .62rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: #f97316; margin-bottom: 4px;
+    }
+    .hook-card-text {
+      font-size: .88rem; line-height: 1.6; color: var(--text);
+    }
+    .hook-card-copy {
+      background: none; border: none; color: var(--text3); cursor: pointer;
+      font-size: .72rem; padding: 2px 6px; float: right; margin-top: -2px;
+      transition: color .2s;
+    }
+    .hook-card-copy:hover { color: var(--purple); }
     @keyframes fadeSlideIn {
       from { opacity: 0; transform: translateY(8px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -3791,6 +3846,7 @@
         <div id="adaptActs"></div>
       </div>
 
+      <div id="styleDescLine" style="display:none;font-size:.82rem;color:var(--text3);margin-top:8px;line-height:1.5;font-weight:300"></div>
       <button class="adapt-run-btn" id="btnRunAdapt" onclick="runAdapt()" style="display:none">
         Transform
       </button>
@@ -3842,6 +3898,8 @@
         <div class="preview-footer" id="previewFooter">
           <div class="pf-dot"></div>
           <span id="previewFooterTxt">Ejemplo · El tuyo será único</span>
+          <button class="pf-copy" id="pfRegenBtn" style="display:none" onclick="runAdapt()" data-i18n="adapt.regen">Regenerar</button>
+          <button class="pf-copy" id="pfRegenHookBtn" style="display:none" onclick="regenHookOnly()" data-i18n="adapt.regen_hook">Nuevo hook</button>
           <button class="pf-copy" id="pfCopyBtn" style="display:none" onclick="copyPreviewResult()">Copiar</button>
           <button class="pf-copy" id="pfSaveBtn" style="display:none" onclick="saveScript()">💾 Guardar</button>
           <button class="pf-copy" id="pfTpBtn" style="display:none" onclick="tpOpenFromAdapt()">Teleprompter</button>
@@ -4741,6 +4799,14 @@ const LANGS = {
     "adapt.example": "Ejemplo",
     "adapt.example_footer": "Ejemplo · El tuyo será único",
     "adapt.generated": "Generado con IA · gratis",
+    "adapt.section_body": "DESARROLLO", "adapt.section_closing": "CIERRE",
+    "adapt.regen": "Regenerar", "adapt.regen_hook": "Nuevo hook",
+    "adapt.desc_viral": "Hook fuerte, frases cortas, cierre que ancla. Para máximo impacto.",
+    "adapt.desc_divertido": "Tono de audio de WhatsApp a un colega. Sin filtros.",
+    "adapt.desc_linkedin": "Profesional pero directo. Para publicar como post.",
+    "adapt.desc_storytelling": "Una historia con escena concreta y tensión narrativa.",
+    "adapt.desc_hooks": "5 hooks alternativos para el mismo guión.",
+    "adapt.desc_custom": "Tu estilo, tus reglas.",
     "adapt.result_label": "Resultado",
     // Empty states
     "empty.transc": "Sin transcripciones todavía",
@@ -5016,6 +5082,14 @@ const LANGS = {
     "adapt.example": "Example",
     "adapt.example_footer": "Example · Yours will be unique",
     "adapt.generated": "AI generated · free",
+    "adapt.section_body": "BODY", "adapt.section_closing": "CLOSING",
+    "adapt.regen": "Regenerate", "adapt.regen_hook": "New hook",
+    "adapt.desc_viral": "Strong hook, short lines, anchoring close. Maximum impact.",
+    "adapt.desc_divertido": "WhatsApp voice note to a friend. No filter.",
+    "adapt.desc_linkedin": "Professional but direct. Ready to publish as a post.",
+    "adapt.desc_storytelling": "A story with a concrete scene and narrative tension.",
+    "adapt.desc_hooks": "5 alternative hooks for the same script.",
+    "adapt.desc_custom": "Your style, your rules.",
     "adapt.result_label": "Result",
     // Empty states
     "empty.transc": "No transcriptions yet",
@@ -5216,6 +5290,8 @@ async function runAdaptWithAssistant(id) {
   pfCopyBtn.style.display = "none";
   document.getElementById("pfSaveBtn").style.display = "none";
   document.getElementById("pfTpBtn").style.display = "none";
+  document.getElementById("pfRegenBtn").style.display = "none";
+  document.getElementById("pfRegenHookBtn").style.display = "none";
   previewLabel.textContent = t("toast.generating");
 
   try {
@@ -5231,12 +5307,14 @@ async function runAdaptWithAssistant(id) {
       previewLabel.textContent = t("adapt.example");
     } else {
       document.querySelectorAll(".preview-slide").forEach(s => s.classList.remove("on"));
-      previewResult.textContent = d.result;
+      _lastAdaptText = text;
+      renderStructuredResult(d.result, "custom", previewResult);
       previewResult.classList.add("on");
       previewLabel.textContent = t("adapt.your_result");
-      pfCopyBtn.style.display = "block";
-      document.getElementById("pfTpBtn").style.display = "block";
-      document.getElementById("pfSaveBtn").style.display = "block";
+      pfCopyBtn.style.display = "";
+      document.getElementById("pfTpBtn").style.display = "";
+      document.getElementById("pfSaveBtn").style.display = "";
+      document.getElementById("pfRegenHookBtn").style.display = (d.result && d.result.hook) ? "" : "none";
       previewFooterTxt.textContent = t("adapt.generated");
       if (d.credits_cents !== undefined) {
         st.credits = d.credits_cents; st.freeUsed = d.free_used_today;
@@ -7001,8 +7079,9 @@ async function rsQuickTransform(idx, style, btn) {
 
     const resultEl = document.getElementById(`rsTransformResult-${idx}`);
     resultEl.style.display = "";
+    const plainText = getStructuredPlainText(d.result);
     const copyLbl = t("act.copy"); const copiedLbl = t("act.copied");
-    resultEl.innerHTML = `${esc(d.result)}<button class="rs-card-copy" onclick="navigator.clipboard.writeText(this.parentElement.textContent.replace('${copyLbl}','').trim());this.querySelector('.rs-tip').textContent='${copiedLbl}';setTimeout(()=>this.querySelector('.rs-tip').textContent='${copyLbl}',1500)" style="position:absolute;top:8px;right:8px"><span class="rs-tip">${copyLbl}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>`;
+    resultEl.innerHTML = renderStructuredInline(d.result, style) + `<button class="rs-card-copy" onclick="navigator.clipboard.writeText(${JSON.stringify(plainText)});this.querySelector('.rs-tip').textContent='${copiedLbl}';setTimeout(()=>this.querySelector('.rs-tip').textContent='${copyLbl}',1500)" style="position:absolute;top:8px;right:8px"><span class="rs-tip">${copyLbl}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>`;
 
     if (d.credits_cents !== undefined) {
       st.credits = d.credits_cents;
@@ -7394,10 +7473,92 @@ function selectStyle(btn) {
   activeStyle = s;
   previewStyle(s);
   document.getElementById("customRow").classList.toggle("on", s === "custom");
+  // Style description
+  const descLine = document.getElementById("styleDescLine");
+  const descKey = `adapt.desc_${s}`;
+  const desc = t(descKey);
+  if (desc && desc !== descKey) { descLine.textContent = desc; descLine.style.display = ""; }
+  else { descLine.style.display = "none"; }
   // Show Transform button (always visible once a style is picked, hidden for custom which has its own →)
   const showTransform = s !== "custom";
   document.getElementById("btnRunAdapt").style.display = showTransform ? "" : "none";
   document.getElementById("btnRunAdaptDesktop").style.display = showTransform ? "" : "none";
+}
+
+// ── Structured result rendering ─────────────────────────────────────────────
+let _lastStructuredResult = null;
+let _lastAdaptStyle = null;
+let _lastAdaptText = "";
+
+function renderStructuredResult(data, style, container) {
+  _lastStructuredResult = data;
+  _lastAdaptStyle = style;
+  container.innerHTML = "";
+  container.classList.remove("plain");
+
+  // If data is a plain string (legacy fallback), render as-is
+  if (typeof data === "string") {
+    container.textContent = data;
+    container.classList.add("plain");
+    return;
+  }
+
+  // Hooks style: array of hook cards
+  if (style === "hooks" && data.hooks) {
+    const copyLbl = t("act.copy");
+    data.hooks.forEach(h => {
+      const card = document.createElement("div");
+      card.className = "hook-card";
+      card.innerHTML = `<button class="hook-card-copy" onclick="navigator.clipboard.writeText('${esc(h.text).replace(/'/g, "\\'")}');this.textContent='✓';setTimeout(()=>this.textContent='${copyLbl}',1200)">${copyLbl}</button><div class="hook-card-type">${esc(h.type)}</div><div class="hook-card-text">${esc(h.text)}</div>`;
+      container.appendChild(card);
+    });
+    return;
+  }
+
+  // Script style: hook + body + closing
+  if (data.hook) {
+    const sec = document.createElement("div");
+    sec.className = "script-section hook";
+    sec.innerHTML = `<div class="script-section-label">HOOK</div><div class="script-section-content">${esc(data.hook)}</div>`;
+    container.appendChild(sec);
+  }
+
+  if (data.body && data.body.length) {
+    const sec = document.createElement("div");
+    sec.className = "script-section body";
+    const bodyHtml = data.body.map(line => `<p>${esc(line)}</p>`).join("");
+    sec.innerHTML = `<div class="script-section-label">${t("adapt.section_body")}</div><div class="script-section-content">${bodyHtml}</div>`;
+    container.appendChild(sec);
+  }
+
+  if (data.closing) {
+    const sec = document.createElement("div");
+    sec.className = "script-section closing";
+    sec.innerHTML = `<div class="script-section-label">${t("adapt.section_closing")}</div><div class="script-section-content">${esc(data.closing)}</div>`;
+    container.appendChild(sec);
+  }
+}
+
+function getStructuredPlainText(data) {
+  if (typeof data === "string") return data;
+  if (data.hooks) return data.hooks.map(h => `[${h.type}] ${h.text}`).join("\n\n");
+  let parts = [];
+  if (data.hook) parts.push(data.hook);
+  if (data.body) parts.push(...data.body);
+  if (data.closing) parts.push(data.closing);
+  return parts.join("\n");
+}
+
+function renderStructuredInline(data, style) {
+  if (typeof data === "string") return esc(data);
+  if (style === "hooks" && data.hooks) {
+    return data.hooks.map(h => `<div class="hook-card"><div class="hook-card-type">${esc(h.type)}</div><div class="hook-card-text">${esc(h.text)}</div></div>`).join("");
+  }
+  let html = "";
+  if (data.hook) html += `<div class="script-section hook"><div class="script-section-label">HOOK</div><div class="script-section-content">${esc(data.hook)}</div></div>`;
+  if (data.body && data.body.length) html += `<div class="script-section body"><div class="script-section-label">${t("adapt.section_body")}</div><div class="script-section-content">${data.body.map(l => `<p>${esc(l)}</p>`).join("")}</div></div>`;
+  if (data.closing) html += `<div class="script-section closing"><div class="script-section-label">${t("adapt.section_closing")}</div><div class="script-section-content">${esc(data.closing)}</div></div>`;
+  return html;
 }
 
 async function runAdapt() {
@@ -7421,9 +7582,11 @@ async function runAdapt() {
   pfCopyBtn.style.display = "none";
   document.getElementById("pfSaveBtn").style.display = "none";
   document.getElementById("pfTpBtn").style.display = "none";
+  document.getElementById("pfRegenBtn").style.display = "none";
+  document.getElementById("pfRegenHookBtn").style.display = "none";
   previewLabel.textContent = t("toast.generating");
 
-  let lastResult = "";
+  _lastAdaptText = text;
   try {
     const r = await fetch("/adapt", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -7436,18 +7599,20 @@ async function runAdapt() {
       showToast(d.error || t("toast.error_transform"));
       previewLabel.textContent = t("adapt.example");
     } else {
-      lastResult = d.result;
-      // Hide example slides, show AI result
+      // Hide example slides, show structured AI result
       document.querySelectorAll(".preview-slide").forEach(s => s.classList.remove("on"));
-      previewResult.textContent = d.result;
+      renderStructuredResult(d.result, activeStyle, previewResult);
       previewResult.classList.add("on");
       previewLabel.textContent = t("adapt.your_result");
-      pfCopyBtn.style.display = "block";
-      document.getElementById("pfTpBtn").style.display = "block";
-      document.getElementById("pfSaveBtn").style.display = "block";
+      pfCopyBtn.style.display = "";
+      document.getElementById("pfTpBtn").style.display = "";
+      document.getElementById("pfSaveBtn").style.display = "";
+      document.getElementById("pfRegenBtn").style.display = "";
+      document.getElementById("pfRegenHookBtn").style.display = (activeStyle !== "hooks" && d.result && d.result.hook) ? "" : "none";
       // Mobile: show result inline
       const mobileRes = document.getElementById("mobileAdaptResult");
-      document.getElementById("mobileAdaptResultTxt").textContent = d.result;
+      const mobTxt = document.getElementById("mobileAdaptResultTxt");
+      mobTxt.innerHTML = renderStructuredInline(d.result, activeStyle);
       mobileRes.classList.add("on");
       previewFooterTxt.textContent = t("adapt.generated");
       if (d.credits_cents !== undefined) {
@@ -7466,7 +7631,7 @@ async function runAdapt() {
 
 let _lastAdaptResult = "";
 function copyMobileResult() {
-  const text = document.getElementById("mobileAdaptResultTxt").textContent;
+  const text = _lastStructuredResult ? getStructuredPlainText(_lastStructuredResult) : document.getElementById("mobileAdaptResultTxt").textContent;
   navigator.clipboard.writeText(text);
   showToast(t("act.copied"));
 }
@@ -8353,7 +8518,7 @@ function tpOpenFromIdea(ideaId) {
 
 // Helper to open teleprompter from adapt result
 function tpOpenFromAdapt() {
-  const text = document.getElementById("previewResultText")?.textContent;
+  const text = _lastStructuredResult ? getStructuredPlainText(_lastStructuredResult) : document.getElementById("previewResultText")?.textContent;
   if (text) tpOpen(text);
 }
 
@@ -8767,8 +8932,37 @@ window.addEventListener("beforeunload", e => {
   }
 });
 
+async function regenHookOnly() {
+  if (!_lastStructuredResult || !_lastStructuredResult.hook) return;
+  const btn = document.getElementById("pfRegenHookBtn");
+  btn.disabled = true; btn.textContent = "...";
+  try {
+    const r = await fetch("/transform-hook", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: _lastAdaptText,
+        body: _lastStructuredResult.body || [],
+        closing: _lastStructuredResult.closing || "",
+      }),
+    });
+    const d = await r.json();
+    if (r.ok && d.hook) {
+      _lastStructuredResult.hook = d.hook;
+      renderStructuredResult(_lastStructuredResult, _lastAdaptStyle, document.getElementById("previewResultText"));
+      document.getElementById("previewResultText").classList.add("on");
+      // Update mobile too
+      const mobTxt = document.getElementById("mobileAdaptResultTxt");
+      if (mobTxt) mobTxt.innerHTML = renderStructuredInline(_lastStructuredResult, _lastAdaptStyle);
+      showToast(currentLang === "es" ? "Hook regenerado" : "Hook regenerated");
+    } else {
+      showToast(d.error || "Error");
+    }
+  } catch { showToast("Error"); }
+  btn.disabled = false; btn.textContent = t("adapt.regen_hook");
+}
+
 function copyPreviewResult() {
-  const txt = document.getElementById("previewResultText").textContent;
+  const txt = _lastStructuredResult ? getStructuredPlainText(_lastStructuredResult) : document.getElementById("previewResultText").textContent;
   if (!txt) return;
   navigator.clipboard.writeText(txt);
   const btn = document.getElementById("pfCopyBtn");
@@ -8778,7 +8972,7 @@ function copyPreviewResult() {
 
 async function saveScript() {
   if (!st.user) { openAuth("register"); return; }
-  const content = document.getElementById("previewResultText").textContent;
+  const content = _lastStructuredResult ? getStructuredPlainText(_lastStructuredResult) : document.getElementById("previewResultText").textContent;
   if (!content) return;
   const res = await fetch("/save-script", {
     method: "POST",

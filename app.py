@@ -1,5 +1,6 @@
 """Transcriptor — Flask app con Supabase, créditos y Apify."""
 
+import json
 import logging
 import os
 import re
@@ -917,6 +918,24 @@ def cancel_subscription():
 
 # ── Adapt route ───────────────────────────────────────────────────────────────
 
+_JSON_SCRIPT_SCHEMA = (
+    'Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura exacta: '
+    '{"hook": "las primeras 1-3 líneas que paran el scroll", '
+    '"body": ["línea 1 del desarrollo", "línea 2", "..."], '
+    '"closing": "la línea final que ancla"}. '
+    'Sin markdown, sin ```json, sin texto antes ni después. Solo el JSON.'
+)
+
+_JSON_HOOKS_SCHEMA = (
+    'Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura exacta: '
+    '{"hooks": [{"type": "TRANSFORMACIÓN", "text": "hook aquí"}, '
+    '{"type": "NEGATIVO", "text": "hook aquí"}, '
+    '{"type": "ENEMIGO", "text": "hook aquí"}, '
+    '{"type": "CURIOSIDAD", "text": "hook aquí"}, '
+    '{"type": "PROMESA", "text": "hook aquí"}]}. '
+    'Sin markdown, sin ```json, sin texto antes ni después. Solo el JSON.'
+)
+
 STYLE_PROMPTS = {
 
     "viral": (
@@ -929,7 +948,7 @@ STYLE_PROMPTS = {
         "'es fundamental entender que', 'descubre cómo', 'cree en ti'. "
         "El resultado tiene que poder leerse frase por frase con viñetas (▸). "
         "Si lo lees en voz alta y no para el scroll en los primeros 3 segundos, reescríbelo. "
-        "Devuelve ÚNICAMENTE el guión reescrito, nada más."
+        + _JSON_SCRIPT_SCHEMA
     ),
 
     "divertido": (
@@ -941,7 +960,7 @@ STYLE_PROMPTS = {
         "Nunca uses entusiasmo artificial, emojis, exclamaciones ni motivacional. "
         "El guión tiene que sonar exactamente igual que un audio de WhatsApp a un colega. "
         "Si lo lees en voz alta y suena raro o artificial, reescríbelo. "
-        "Devuelve ÚNICAMENTE el guión reescrito, nada más."
+        + _JSON_SCRIPT_SCHEMA
     ),
 
     "linkedin": (
@@ -952,7 +971,7 @@ STYLE_PROMPTS = {
         "Sin frases vacías ('en el panorama actual', 'es fundamental', 'cabe destacar', 'valor añadido', 'solución integral'). "
         "Sin motivacional. Cierre que deja una pregunta abierta o una afirmación que genera reacción — nunca una conclusión envuelta en papel de regalo. "
         "El lector tiene que terminar pensando, no sintiéndose inspirado. "
-        "Devuelve ÚNICAMENTE el texto listo para publicar, nada más."
+        + _JSON_SCRIPT_SCHEMA
     ),
 
     "storytelling": (
@@ -964,26 +983,28 @@ STYLE_PROMPTS = {
         "Sin 'y esto me enseñó que...', sin conclusiones explícitas, sin motivacional. "
         "El cierre es una frase corta que deja el peso de la historia caer. "
         "Si la historia no genera tensión, no es una historia — es un resumen. Reescríbela. "
-        "Devuelve ÚNICAMENTE la historia, nada más."
+        + _JSON_SCRIPT_SCHEMA
     ),
 
     "hooks": (
         "Eres un guionista de reels. Dame exactamente 5 hooks para este guión, uno de cada tipo. "
         "Reglas para todos: tienen que incluir términos específicos del nicho para filtrar a la audiencia correcta desde el primer segundo. "
         "Ningún hook puede dar el valor completo — si el viewer puede llevarse el insight sin ver el vídeo, el hook falla. "
-        "Formato: [TIPO] 'hook'. "
         "Los 5 tipos — "
         "TRANSFORMACIÓN: salto de A a B con dato concreto y creíble. "
         "NEGATIVO: ataca una creencia instalada en el nicho. "
         "ENEMIGO: el error que sigue cometiendo la audiencia. "
         "CURIOSIDAD: abre una puerta sin revelar nada, obliga a seguir para entender. "
         "PROMESA: resultado concreto y específico con condición real. "
-        "Devuelve ÚNICAMENTE los 5 hooks con su etiqueta, nada más."
+        + _JSON_HOOKS_SCHEMA
     ),
 
 }
 
-# Instrucciones base para el estilo Custom (se anteponen a las instrucciones del usuario)
+_JSON_CUSTOM_SUFFIX = (
+    " " + _JSON_SCRIPT_SCHEMA
+)
+
 CUSTOM_BASE = (
     "Eres un guionista de reels. "
     "Reglas que aplican siempre independientemente de las instrucciones custom: "
@@ -994,24 +1015,57 @@ CUSTOM_BASE = (
     "El valor empieza después del hook sin transición. "
     "Momentos personales van dentro del desarrollo, nunca al principio. "
     "Si lo lees en voz alta y suena a texto escrito, reescríbelo. "
-    "Devuelve ÚNICAMENTE el guión reescrito, nada más. "
     "Ahora aplica estas instrucciones adicionales:\n"
 )
 
 
-def adapt_with_ai(text: str, style: str, custom_prompt: str = "") -> str:
-    if style == "custom":
-        if not custom_prompt:
-            raise ValueError("Escribe tus instrucciones en el campo Custom")
-        system = CUSTOM_BASE + custom_prompt
-    else:
-        system = STYLE_PROMPTS.get(style)
-        if not system:
-            raise ValueError("Estilo no válido")
+def _parse_ai_json(raw: str, style: str) -> dict:
+    """Parse JSON from LLM response with robust fallback."""
+    text = raw.strip()
+    # Strip markdown fences
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\s*", "", text)
+        text = re.sub(r"\s*```$", "", text)
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        # Try to extract JSON object from surrounding text
+        match = re.search(r"\{[\s\S]*\}", text)
+        if match:
+            try:
+                data = json.loads(match.group())
+            except json.JSONDecodeError:
+                data = None
+        else:
+            data = None
 
+    if data is None:
+        app.logger.warning("[adapt] JSON parse failed for style=%s, raw=%s", style, raw[:200])
+        return {"hook": "", "body": [raw], "closing": ""}
+
+    # Validate structure
+    if style == "hooks":
+        if "hooks" not in data or not isinstance(data["hooks"], list):
+            app.logger.warning("[adapt] Invalid hooks structure for style=%s", style)
+            return {"hooks": [{"type": "RESULTADO", "text": raw}]}
+    else:
+        if "body" in data and isinstance(data["body"], str):
+            data["body"] = [data["body"]]
+        if "hook" not in data or "body" not in data:
+            app.logger.warning("[adapt] Missing keys for style=%s, keys=%s", style, list(data.keys()))
+            return {"hook": "", "body": [raw], "closing": ""}
+        if not isinstance(data["body"], list):
+            data["body"] = [str(data["body"])]
+        data.setdefault("closing", "")
+
+    return data
+
+
+def _call_llm(system: str, user_content: str, temperature: float = 0.8, max_tokens: int = 20000) -> str:
+    """Call OpenRouter/Groq and return raw text response."""
     api_key = OPENROUTER_API_KEY or GROQ_API_KEY
-    url     = OPENROUTER_URL if OPENROUTER_API_KEY else "https://api.groq.com/openai/v1/chat/completions"
-    model   = OPENROUTER_MODEL if OPENROUTER_API_KEY else "llama-3.3-70b-versatile"
+    url = OPENROUTER_URL if OPENROUTER_API_KEY else "https://api.groq.com/openai/v1/chat/completions"
+    model = OPENROUTER_MODEL if OPENROUTER_API_KEY else "llama-3.3-70b-versatile"
 
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -1022,14 +1076,28 @@ def adapt_with_ai(text: str, style: str, custom_prompt: str = "") -> str:
         "model": model,
         "messages": [
             {"role": "system", "content": system},
-            {"role": "user", "content": text},
+            {"role": "user", "content": user_content},
         ],
-        "temperature": 0.8,
-        "max_tokens": 20000,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
     }
     resp = requests.post(url, headers=headers, json=payload, timeout=60)
     resp.raise_for_status()
     return resp.json()["choices"][0]["message"]["content"].strip()
+
+
+def adapt_with_ai(text: str, style: str, custom_prompt: str = "") -> dict:
+    if style == "custom":
+        if not custom_prompt:
+            raise ValueError("Escribe tus instrucciones en el campo Custom")
+        system = CUSTOM_BASE + custom_prompt + _JSON_CUSTOM_SUFFIX
+    else:
+        system = STYLE_PROMPTS.get(style)
+        if not system:
+            raise ValueError("Estilo no válido")
+
+    raw = _call_llm(system, text)
+    return _parse_ai_json(raw, style)
 
 
 @app.route("/saved-scripts")
@@ -1155,6 +1223,41 @@ def adapt():
         payload["credits_cents"]   = updated["credits_cents"]
         payload["free_used_today"] = updated["free_used_today"]
     return jsonify(payload)
+
+
+_HOOK_REGEN_PROMPT = (
+    "Eres un guionista de reels. Se te da un guión ya escrito (body + closing). "
+    "Tu trabajo es escribir UN SOLO hook alternativo para este guión. "
+    "El hook tiene que parar el scroll en los primeros 3 segundos — sin preámbulo, sin 'hola', sin contexto. "
+    "Nunca uses: 'increíble', 'brutal', 'chicos', 'os va a flipar'. "
+    "Devuelve ÚNICAMENTE un objeto JSON: {\"hook\": \"tu nuevo hook aquí\"}. "
+    "Sin markdown, sin ```json, sin texto antes ni después. Solo el JSON."
+)
+
+
+@app.route("/transform-hook", methods=["POST"])
+def transform_hook():
+    """Regenerate only the hook, keeping body and closing intact."""
+    data = request.get_json() or {}
+    original_text = data.get("text", "").strip()
+    body = data.get("body", [])
+    closing = data.get("closing", "")
+
+    if not original_text and not body:
+        return jsonify({"error": "No text provided"}), 400
+
+    context = "\n".join(body) + ("\n" + closing if closing else "")
+    user_msg = f"Guión actual:\n{context}\n\nTexto original del que salió:\n{original_text}"
+
+    try:
+        raw = _call_llm(_HOOK_REGEN_PROMPT, user_msg, temperature=0.9)
+        parsed = _parse_ai_json(raw, "hook_regen")
+        new_hook = parsed.get("hook", raw)
+    except Exception as e:
+        logger.error(f"Hook regen failed: {e}", exc_info=True)
+        return jsonify({"error": "Failed to regenerate hook"}), 502
+
+    return jsonify({"hook": new_hook})
 
 
 # ── Assistants ────────────────────────────────────────────────────────────────
@@ -1786,6 +1889,11 @@ def idea_to_script(idea_id):
     except Exception as e:
         logger.error(f"Idea to script failed: {e}", exc_info=True)
         return jsonify({"error": "Failed to generate script. Try again."}), 502
+
+    # Flatten to text for ideas flow (ideas expects plain string)
+    if isinstance(result, dict) and "hook" in result:
+        flat = result["hook"] + "\n" + "\n".join(result.get("body", [])) + "\n" + result.get("closing", "")
+        result = flat.strip()
 
     db.table("ideas").update({
         "status": "scripted",
