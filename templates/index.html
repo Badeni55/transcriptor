@@ -4452,11 +4452,11 @@
 
 <!-- ASSISTANT MODAL -->
 <div class="overlay" id="assistantOverlay" onclick="backdropClose(event,'assistantOverlay')">
-  <div class="modal" style="max-width:460px">
+  <div class="modal" style="max-width:600px">
     <button class="modal-x" onclick="closeModal('assistantOverlay')">✕</button>
 
     <!-- Header with pixel art -->
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
       <svg width="44" height="54" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" style="flex-shrink:0">
         <rect x="24" y="4" width="24" height="4" fill="#f97316"/><rect x="20" y="8" width="32" height="4" fill="#f97316"/>
         <rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#92400e"/>
@@ -4472,12 +4472,24 @@
       </div>
     </div>
 
-    <!-- Help tooltip -->
-    <div style="display:flex;align-items:flex-start;gap:10px;background:rgba(249,115,22,.05);border:1px solid rgba(249,115,22,.12);border-radius:var(--rsm);padding:12px 14px;margin-bottom:18px">
-      <span style="font-size:1rem;flex-shrink:0;margin-top:1px">?</span>
-      <div style="font-size:.78rem;color:var(--text2);line-height:1.5" data-i18n="asst.help">
-        Write instructions like you'd tell a copywriter: tone, structure, words to avoid, how to open and close. The AI will follow your rules every time you generate a script with this assistant.
+    <!-- Base structure info -->
+    <div style="background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:18px">
+      <div style="font-size:.78rem;font-weight:600;color:var(--purple);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px" data-i18n="asst.base_title">Base structure (always applied)</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <span style="background:rgba(249,115,22,.15);color:#f97316;font-size:.6rem;font-weight:800;padding:3px 8px;border-radius:4px;letter-spacing:.05em;flex-shrink:0;margin-top:2px">HOOK</span>
+          <span style="font-size:.78rem;color:var(--text2);line-height:1.5" data-i18n="asst.base_hook">First 1-3 lines that stop the scroll. No greetings, no "in this video".</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <span style="background:rgba(139,92,246,.12);color:#a78bfa;font-size:.6rem;font-weight:800;padding:3px 8px;border-radius:4px;letter-spacing:.05em;flex-shrink:0;margin-top:2px">BODY</span>
+          <span style="font-size:.78rem;color:var(--text2);line-height:1.5" data-i18n="asst.base_body">Value starts right after the hook, no transitions. One idea per line (▸), max 15 words. If it sounds written, rewrite it.</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <span style="background:rgba(168,85,247,.12);color:#c084fc;font-size:.6rem;font-weight:800;padding:3px 8px;border-radius:4px;letter-spacing:.05em;flex-shrink:0;margin-top:2px">CLOSE</span>
+          <span style="font-size:.78rem;color:var(--text2);line-height:1.5" data-i18n="asst.base_close">Final line that anchors: CTA, reflection, or punchline.</span>
+        </div>
       </div>
+      <div style="margin-top:10px;font-size:.7rem;color:var(--text3);line-height:1.4;border-top:1px solid var(--border);padding-top:8px" data-i18n="asst.base_banned">Banned words: "chicos", "increíble", "brutal", "en el panorama actual", "descubre cómo", "cree en ti".</div>
     </div>
 
     <div class="field">
@@ -4485,11 +4497,8 @@
       <input type="text" id="asstName" placeholder="e.g. My viral style" />
     </div>
     <div class="field">
-      <label data-i18n="asst.instructions_label">Your instructions</label>
-      <textarea id="asstInstructions" rows="5" style="width:100%;padding:11px 14px;background:var(--surf2);border:1.5px solid var(--border);border-radius:var(--rsm);font-size:.88rem;color:var(--text);outline:none;resize:vertical;font-family:var(--font-body);line-height:1.6" placeholder="e.g. Always start with a question. Short sentences. No buzzwords. End with a save-worthy CTA."></textarea>
-    </div>
-    <div style="background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);padding:10px 14px;font-size:.72rem;color:var(--text3);margin-bottom:16px;line-height:1.5" data-i18n="asst.base_note">
-      Base structure rules are always applied automatically. Your instructions are added on top to define your personal style.
+      <label style="display:flex;justify-content:space-between;align-items:baseline"><span data-i18n="asst.instructions_label">Your instructions</span><span style="font-size:.68rem;color:var(--text3);font-weight:400" data-i18n="asst.instructions_hint">Added on top of the base structure</span></label>
+      <textarea id="asstInstructions" rows="8" style="width:100%;padding:11px 14px;background:var(--surf2);border:1.5px solid var(--border);border-radius:var(--rsm);font-size:.88rem;color:var(--text);outline:none;resize:vertical;font-family:var(--font-body);line-height:1.6" placeholder="Describe your style as if briefing a copywriter:&#10;&#10;• Tone: conversational, direct, zero fluff&#10;• Hook: always a bold question or a contrarian take&#10;• Structure: problem → insight → action&#10;• Closing: always end with a save-worthy line&#10;• Avoid: emojis, hashtags, generic motivation"></textarea>
     </div>
     <button class="btn-full" id="asstSaveBtn" onclick="saveAssistant()" data-i18n="asst.create">Create assistant</button>
     <div class="form-err" id="asstErr"></div>
@@ -4730,7 +4739,13 @@ const LANGS = {
     "asst.name_label": "Nombre del asistente",
     "asst.name_placeholder": "Ej. Mi estilo viral",
     "asst.instructions_label": "Tus instrucciones",
+    "asst.instructions_hint": "Se añaden encima de la estructura base",
     "asst.instructions_placeholder": "Describe cómo quieres tus guiones...",
+    "asst.base_title": "Estructura base (siempre se aplica)",
+    "asst.base_hook": "Primeras 1-3 líneas que paran el scroll. Sin saludos, sin \"en este vídeo\".",
+    "asst.base_body": "El valor empieza justo después del hook, sin transiciones. Una idea por línea (▸), máximo 15 palabras. Si suena a texto escrito, reescríbelo.",
+    "asst.base_close": "Línea final que ancla: CTA, reflexión o remate.",
+    "asst.base_banned": "Palabras prohibidas: \"chicos\", \"increíble\", \"brutal\", \"en el panorama actual\", \"descubre cómo\", \"cree en ti\".",
     "asst.base_note": "Las reglas de estructura base se aplican automáticamente. Tus instrucciones se añaden encima para definir tu estilo personal.",
     "asst.create": "Crear asistente",
     "asst.save": "Guardar cambios",
@@ -5014,7 +5029,13 @@ const LANGS = {
     "asst.name_label": "Assistant name",
     "asst.name_placeholder": "e.g. My viral style",
     "asst.instructions_label": "Your instructions",
+    "asst.instructions_hint": "Added on top of the base structure",
     "asst.instructions_placeholder": "Describe how you want your scripts...",
+    "asst.base_title": "Base structure (always applied)",
+    "asst.base_hook": "First 1-3 lines that stop the scroll. No greetings, no \"in this video\".",
+    "asst.base_body": "Value starts right after the hook, no transitions. One idea per line (▸), max 15 words. If it sounds written, rewrite it.",
+    "asst.base_close": "Final line that anchors: CTA, reflection, or punchline.",
+    "asst.base_banned": "Banned words: \"guys\", \"amazing\", \"incredible\", \"in today's landscape\", \"discover how\", \"believe in yourself\".",
     "asst.base_note": "Base structure rules are always applied automatically. Your instructions are added on top to define your personal style.",
     "asst.create": "Create assistant",
     "asst.save": "Save changes",
