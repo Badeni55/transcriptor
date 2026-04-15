@@ -204,7 +204,7 @@
     [data-theme="light"] ::selection { background: rgba(249,115,22,.15); color: #c2410c; }
 
     /* Light mode — surfaces, cards, profile */
-    [data-theme="light"] .profile-overlay { background: rgba(240,237,232,.97); }
+    /* .profile-overlay light mode — moved to "Light mode — profile" block below */
     [data-theme="light"] .prof-sidebar { background: rgba(247,245,241,.85); border-color: rgba(0,0,0,.06); }
     [data-theme="light"] .prof-stat-card,
     [data-theme="light"] .prof-card,
@@ -240,7 +240,7 @@
     /* Light mode — inputs */
     [data-theme="light"] .input-glow-wrap input { background: var(--surf); border-color: rgba(249,115,22,.3); }
     [data-theme="light"] .input-glow-wrap input::placeholder { color: #999; }
-    [data-theme="light"] .input-glow-wrap input:focus { background: #fff; }
+    [data-theme="light"] .input-glow-wrap input:focus { background: #fefefe; }
     [data-theme="light"] .script-ta { background: var(--surf); }
     [data-theme="light"] .script-ta:focus { background: #fff; }
     [data-theme="light"] .style-search { background: var(--surf); }
@@ -275,6 +275,23 @@
     [data-theme="light"] .style-chip { box-shadow: 0 3px 0 rgba(0,0,0,.1); }
     [data-theme="light"] .topup-opt { box-shadow: 0 4px 0 rgba(0,0,0,.1); }
     [data-theme="light"] .btn-google-auth { box-shadow: 0 4px 0 #d1d5db; }
+    [data-theme="light"] .rs-card-act:hover { color: #c2410c; }
+
+    /* Light mode — hover borders on cards */
+    [data-theme="light"] .prof-stat-card:hover,
+    [data-theme="light"] .proj-card-v2:hover,
+    [data-theme="light"] .rs-card:hover,
+    [data-theme="light"] .script-stripe-card:hover,
+    [data-theme="light"] .asst-card-v2:hover { border-color: rgba(0,0,0,.15); }
+
+    /* Light mode — profile */
+    [data-theme="light"] .profile-overlay {
+      background: var(--bg);
+      background-image:
+        radial-gradient(ellipse at 15% -5%, rgba(249,115,22,.06) 0%, transparent 45%),
+        radial-gradient(ellipse at 85% 95%, rgba(139,92,246,.04) 0%, transparent 45%);
+    }
+    [data-theme="light"] .prof-main::-webkit-scrollbar-thumb { background: rgba(0,0,0,.1); }
 
     /* Light mode — separators */
     [data-theme="light"] div[style*="linear-gradient(90deg,transparent,rgba(249"] {
@@ -484,14 +501,14 @@
       animation: input-pulse 3s ease-in-out infinite;
       transition: all .2s;
     }
-    [data-theme="light"] .input-glow-wrap input { background: #f0eeff; }
+    [data-theme="light"] .input-glow-wrap input { background: var(--surf); }
     .input-glow-wrap input::placeholder { color: var(--text3); font-size: .92rem; }
-    [data-theme="light"] .input-glow-wrap input::placeholder { color: #9988cc; }
+    [data-theme="light"] .input-glow-wrap input::placeholder { color: #999; }
     .input-glow-wrap input:focus {
       animation: none;
       border-color: var(--purple);
       box-shadow: 0 0 0 4px rgba(249,115,22,.35), 0 0 40px rgba(249,115,22,.25);
-      background: #16153a;
+      background: var(--surf2);
     }
     .btn-queue-add {
       width: 52px; flex-shrink: 0;
@@ -543,7 +560,7 @@
       cursor: pointer; font-size: .9rem; padding: 0 2px;
     }
     .queue-item-rm:hover { color: #ef4444; }
-    [data-theme="light"] .input-glow-wrap input:focus { background: #ede8ff; }
+    [data-theme="light"] .input-glow-wrap input:focus { background: #fefefe; }
     .input-plat-icon {
       position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
       font-size: 1.1rem; opacity: 0; transition: opacity .2s; pointer-events: none;
@@ -4183,9 +4200,9 @@
       </div>
 
       <div class="prof-sidebar-footer">
-        <button style="padding:9px;border-radius:8px;background:var(--purple);color:#fff;font-size:.8rem;font-weight:600;border:none;cursor:pointer" onclick="closeProfile();openTopup()" data-i18n="prof.topup">+ Top up</button>
-        <button id="profManageSubSidebar" style="display:none;padding:8px;border-radius:8px;background:transparent;color:var(--text3);font-size:.75rem;border:1px solid var(--border);cursor:pointer" onclick="manageSub()" data-i18n="prof.manage_sub">Manage subscription</button>
-        <button style="padding:8px;border-radius:8px;background:transparent;color:var(--text3);font-size:.75rem;border:1px solid var(--border);cursor:pointer" onclick="closeProfile()" data-i18n="prof.back">← Back to app</button>
+        <button class="btn-3d btn-3d-primary" style="padding:9px;border-radius:8px;background:var(--purple);color:#fff;font-size:.8rem;font-weight:600;border:none;cursor:pointer" onclick="closeProfile();openTopup()" data-i18n="prof.topup">+ Top up</button>
+        <button id="profManageSubSidebar" class="btn-3d btn-3d-secondary" style="display:none;padding:8px;border-radius:8px;background:transparent;color:var(--text3);font-size:.75rem;border:1px solid var(--border);cursor:pointer" onclick="manageSub()" data-i18n="prof.manage_sub">Manage subscription</button>
+        <button class="btn-3d btn-3d-secondary" style="padding:8px;border-radius:8px;background:transparent;color:var(--text3);font-size:.75rem;border:1px solid var(--border);cursor:pointer" onclick="closeProfile()" data-i18n="prof.back">← Back to app</button>
       </div>
     </div>
 
@@ -4234,7 +4251,7 @@
             <div class="prof-section-title" data-i18n="proj.title">Projects</div>
             <div class="prof-section-sub" id="profProjCount"></div>
           </div>
-          <button style="background:var(--purple);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openNewProjectModal()" data-i18n="proj.new">+ New project</button>
+          <button class="btn-3d btn-3d-primary" style="background:var(--purple);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openNewProjectModal()" data-i18n="proj.new">+ New project</button>
         </div>
         <div class="proj-cards-grid" id="profProjGrid"></div>
         <div class="prof-empty" id="profProjEmpty" style="display:none"><div class="prof-empty-icon"><svg width="32" height="32" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="3" width="14" height="12" rx="1" fill="var(--text3)" opacity=".3"/><rect x="1" y="1" width="6" height="3" fill="var(--text3)" opacity=".4"/></svg></div><span data-i18n="empty.projects">No projects yet.</span></div>
@@ -4247,7 +4264,7 @@
             <div class="prof-section-title" data-i18n="asst.title">Your assistants</div>
             <div class="prof-section-sub" id="profAsstCount"></div>
           </div>
-          <button id="profNewAsstBtn" style="background:var(--purple);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openAssistantModal()" data-i18n="asst.new">+ New assistant</button>
+          <button id="profNewAsstBtn" class="btn-3d btn-3d-primary" style="background:var(--purple);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openAssistantModal()" data-i18n="asst.new">+ New assistant</button>
         </div>
         <div class="asst-cards-grid" id="profListAssistants"></div>
       </div>
@@ -4256,7 +4273,7 @@
       <div id="profPanelMetrics" style="display:none">
         <div class="prof-section-head">
           <div><div class="prof-section-title" data-i18n="metrics.title">Metrics</div></div>
-          <button class="btn-sm" style="background:var(--purple);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openAddMetricsFlow()">+ Add metrics</button>
+          <button class="btn-sm btn-3d btn-3d-primary" style="background:var(--purple);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openAddMetricsFlow()">+ Add metrics</button>
         </div>
         <div class="metrics-summary-grid" id="metricsSummary"></div>
         <div class="prof-section-head" style="margin-top:24px">
@@ -4294,7 +4311,7 @@
             <select id="ideaProject" style="padding:8px 12px;background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text2);font-size:.8rem;font-family:var(--font-body);outline:none">
               <option value="">No project</option>
             </select>
-            <button id="ideaSubmitBtn" onclick="submitIdea()" style="margin-left:auto;padding:8px 20px;background:var(--purple);color:#fff;border:none;border-radius:var(--rsm);font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s">Develop</button>
+            <button id="ideaSubmitBtn" class="btn-3d btn-3d-primary" onclick="submitIdea()" style="margin-left:auto;padding:8px 20px;background:var(--purple);color:#fff;border:none;border-radius:var(--rsm);font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s">Develop</button>
           </div>
         </div>
 
@@ -4307,7 +4324,7 @@
         <div class="prof-section-head">
           <div><div class="prof-section-title" data-i18n="team.title">Team members</div></div>
           <div style="display:flex;gap:8px">
-            <button style="background:var(--purple);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openInviteModal()" data-i18n="team.invite">Invite member</button>
+            <button class="btn-3d btn-3d-primary" style="background:var(--purple);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openInviteModal()" data-i18n="team.invite">Invite member</button>
           </div>
         </div>
         <div id="profTeamList"></div>
@@ -4324,7 +4341,7 @@
             <div style="font-family:var(--font-display);font-size:1rem;margin-bottom:4px">Export your data</div>
             <div style="font-size:.82rem;color:var(--text2);font-weight:300">Download all your data as a JSON file — transcriptions, scripts, projects, profile.</div>
           </div>
-          <button class="btn-sm" style="background:var(--purple);color:#fff;border:none;padding:8px 16px" onclick="exportMyData()">Download my data</button>
+          <button class="btn-sm btn-3d btn-3d-primary" style="background:var(--purple);color:#fff;border:none;padding:8px 16px" onclick="exportMyData()">Download my data</button>
         </div>
 
         <div class="prof-card" style="border-color:rgba(239,68,68,.2)">
@@ -4332,7 +4349,7 @@
             <div style="font-family:var(--font-display);font-size:1rem;margin-bottom:4px;color:#f87171">Delete account</div>
             <div style="font-size:.82rem;color:var(--text2);font-weight:300">Permanently delete your account, all projects, scripts, and transcriptions. Your active subscription will be cancelled. This cannot be undone.</div>
           </div>
-          <button class="btn-sm" style="background:transparent;border:1px solid rgba(239,68,68,.3);color:#f87171;padding:8px 16px" onclick="openDeleteAccountModal()">Delete my account</button>
+          <button class="btn-sm btn-3d btn-3d-danger" style="background:transparent;border:1px solid rgba(239,68,68,.3);color:#f87171;padding:8px 16px" onclick="openDeleteAccountModal()">Delete my account</button>
         </div>
       </div>
 
