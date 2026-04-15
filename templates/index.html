@@ -3710,7 +3710,6 @@
             autocomplete="off" spellcheck="false" />
           <span class="input-plat-icon" id="platIcon"></span>
         </div>
-        <button class="btn-queue-add btn-3d btn-3d-secondary" id="btnQueueAdd" onclick="addToQueue()" title="Add to queue">+</button>
       </div>
 
       <!-- Queue list -->
@@ -3727,8 +3726,8 @@
           <option value="de" data-i18n-es="Alemán" data-i18n-en="German">German</option>
           <option value="it" data-i18n-es="Italiano" data-i18n-en="Italian">Italian</option>
         </select>
-        <button class="btn-shimmer btn-3d btn-3d-primary inactive" id="btnTranscribe" style="flex:2" onclick="doTranscribe()" data-i18n="hero.btn">
-          ✦ Transcribe now
+        <button class="btn-shimmer btn-3d btn-3d-primary" id="btnTranscribe" style="flex:2" onclick="doTranscribe()" data-i18n="hero.btn">
+          ✦ Transcribir ahora
         </button>
       </div>
 
@@ -4574,6 +4573,7 @@ const LANGS = {
     "hero.h1": 'Pega la URL.<br><span class="grad-txt">Obtén el guión.</span>',
     "hero.sub": "Transcribe reels de Instagram y TikTok al instante con IA.",
     "hero.btn": "✦ Transcribir ahora",
+    "hero.add_queue": "Añadir a la cola",
     "hero.counter_suffix": "reels transcritos hoy",
     "adapt.h2": 'Hazlo tuyo.<br><span style="background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Elige el estilo, transforma.</span>',
     "adapt.p": "El guión ya lo tienes. Ahora dile a la IA cómo lo quieres — viral, profesional, gracioso o lo que necesites.",
@@ -4857,6 +4857,7 @@ const LANGS = {
     "hero.h1": 'Paste the URL.<br><span class="grad-txt">Get the script.</span>',
     "hero.sub": "Transcribe Instagram and TikTok reels instantly with AI.",
     "hero.btn": "✦ Transcribe now",
+    "hero.add_queue": "Add to queue",
     "hero.counter_suffix": "reels transcribed today",
     "adapt.h2": 'Make it yours.<br><span style="background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Pick a style, transform.</span>',
     "adapt.p": "You've got the script. Now tell the AI how you want it — viral, professional, funny, whatever.",
@@ -5536,16 +5537,12 @@ window.addEventListener("DOMContentLoaded", async () => {
   const _urlValidRx = /^https?:\/\/(www\.)?(instagram\.com\/(reel|p|tv)\/[\w-]+|((vm|vt)\.)?tiktok\.com\/)/i;
 
   function validateUrlInput() {
-    const val = _urlInput.value.trim();
-    const valid = val && _urlValidRx.test(val);
-    _btnTranscribe.disabled = !valid;
     // Clear validation error card if user is typing
     if (_validationErrCard) { _validationErrCard.remove(); _validationErrCard = null; }
     if (_validationErrTimer) { clearTimeout(_validationErrTimer); _validationErrTimer = null; }
   }
   _urlInput.addEventListener("input", validateUrlInput);
   _urlInput.addEventListener("paste", () => setTimeout(validateUrlInput, 50));
-  validateUrlInput();
 
   // Enter to transcribe
   _urlInput.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); doTranscribe(); } });
@@ -7164,21 +7161,31 @@ function rsRemovePending(idx) {
   rsRenderQueue();
 }
 
+function _updateTranscribeBtn() {
+  const btn = document.getElementById("btnTranscribe");
+  if (rsProcessing) {
+    btn.textContent = `+ ${t("hero.add_queue")}`;
+  } else {
+    btn.textContent = t("hero.btn");
+  }
+}
+
 async function rsProcessQueue() {
   if (rsProcessing || !rsPending.length) return;
   rsProcessing = true;
+  _updateTranscribeBtn();
   while (rsPending.length) {
     const url = rsPending.shift();
     rsRenderQueue();
     try {
       await rsTranscribeOne(url);
     } catch (e) {
-      // Individual item failed — show error but continue queue
       console.error("Queue item failed:", url, e);
       showUrlError(t("toast.error_connection"));
     }
   }
   rsProcessing = false;
+  _updateTranscribeBtn();
   if (st.user) loadHistory();
 }
 
