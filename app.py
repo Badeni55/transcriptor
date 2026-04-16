@@ -59,6 +59,8 @@ SUPABASE_SERVICE_KEY  = os.environ.get("SUPABASE_SERVICE_KEY", "")
 APIFY_TOKEN           = os.environ.get("APIFY_TOKEN", "")
 STRIPE_SECRET_KEY     = os.environ.get("STRIPE_SECRET_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+CLARITY_PROJECT_ID    = os.environ.get("CLARITY_PROJECT_ID", "")
+POSTHOG_API_KEY       = os.environ.get("POSTHOG_API_KEY", "")
 
 FREE_DAILY_ANON  = 5   # transcripciones gratis para anónimos
 FREE_DAILY_USER  = 5   # transcripciones gratis para registrados
@@ -138,6 +140,14 @@ from flask_limiter import Limiter  # noqa: E402
 from flask_limiter.util import get_remote_address  # noqa: E402
 
 limiter = Limiter(app=app, key_func=get_remote_address, default_limits=["200 per hour"], storage_uri="memory://")
+
+
+@app.context_processor
+def inject_analytics():
+    return dict(
+        clarity_project_id=CLARITY_PROJECT_ID,
+        posthog_api_key=POSTHOG_API_KEY,
+    )
 
 
 @app.errorhandler(429)

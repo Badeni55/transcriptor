@@ -3648,6 +3648,28 @@
       .tp-box-grabber { width: 32px; height: 16px; }
     }
   </style>
+
+  {% if clarity_project_id %}
+  <script type="text/javascript">
+  (function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+  t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+  y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+  })(window,document,"clarity","script","{{ clarity_project_id }}");
+  </script>
+  {% endif %}
+
+  {% if posthog_api_key %}
+  <script>
+  !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+  posthog.init("{{ posthog_api_key }}", {
+    api_host: "https://eu.i.posthog.com",
+    ui_host: "https://eu.posthog.com",
+    person_profiles: "identified_only",
+    autocapture: { css_selector_allowlist: [".btn-grad", ".style-chip", ".plan-card", "[data-tour]"] },
+    session_recording: { maskTextSelector: ".ph-no-capture", maskInputSelector: ".ph-no-capture input, .ph-no-capture textarea" }
+  });
+  </script>
+  {% endif %}
 </head>
 <body>
 
@@ -3677,7 +3699,7 @@
     <div class="user-menu-wrap">
       <div class="user-pill" id="userPill" onclick="toggleUserMenu(event)" style="cursor:pointer" data-tour="user-profile">
         <div class="avatar" id="userAv" style="overflow:hidden;padding:0"></div>
-        <span id="userEmail" style="font-size:.82rem;color:var(--text2)"></span>
+        <span id="userEmail" class="ph-no-capture" data-clarity-mask="true" style="font-size:.82rem;color:var(--text2)"></span>
         <span class="user-menu-chevron">▾</span>
       </div>
       <div class="user-menu-dropdown" id="userMenuDropdown">
@@ -3697,7 +3719,7 @@
     <div class="nav-mob-header">
       <div class="avatar" id="navMobAvatar" style="overflow:hidden;padding:0"></div>
       <div class="nav-mob-header-info">
-        <div class="nav-mob-header-email" id="navMobEmail"></div>
+        <div class="nav-mob-header-email ph-no-capture" id="navMobEmail" data-clarity-mask="true"></div>
         <div class="nav-mob-header-plan"><b id="navMobPlan">FREE</b> · <span id="navMobCredits">0 usos</span></div>
       </div>
       <button class="nav-mob-close" onclick="closeNavMob()" aria-label="Close">✕</button>
@@ -3801,7 +3823,7 @@
     <div class="hero-input-left">
       <div style="display:flex;gap:8px;align-items:stretch">
         <div class="input-glow-wrap" style="flex:1">
-          <input id="urlInput" type="url" data-tour="url-input"
+          <input id="urlInput" type="url" data-tour="url-input" class="ph-no-capture" data-clarity-mask="true"
             placeholder="🔗 Pega aquí tu reel de Instagram o TikTok..."
             autocomplete="off" spellcheck="false" />
           <span class="input-plat-icon" id="platIcon"></span>
@@ -3850,11 +3872,11 @@
     </div>
 
     <!-- Result panel (right side) -->
-    <div class="hero-result-panel" id="resultPanel"></div>
+    <div class="hero-result-panel ph-no-capture" id="resultPanel" data-clarity-mask="true"></div>
   </div>
 
   <!-- Legacy result box (hidden, used by adapt section) -->
-  <div class="result-box" id="resultBox" data-tour="transcription-output" style="display:none">
+  <div class="result-box ph-no-capture" id="resultBox" data-tour="transcription-output" data-clarity-mask="true" style="display:none">
     <div class="result-text" id="resultTxt"></div>
     <div class="result-actions" id="resultActs"></div>
     <div class="transform-section" id="transformSection" style="display:none">
@@ -3868,7 +3890,7 @@
         <button class="style-chip" data-s="custom" data-preview="Tú decides el tono y el estilo" onclick="pickChip(this)">✍️ Custom</button>
       </div>
       <div class="custom-chip-row" id="customChipRow">
-        <input type="text" id="customChipPrompt" placeholder="¿Cómo quieres que suene?" />
+        <input type="text" id="customChipPrompt" class="ph-no-capture" data-clarity-mask="true" placeholder="¿Cómo quieres que suene?" />
         <button class="btn-grad" onclick="runInlineAdapt()">→</button>
       </div>
       <div class="inline-spinner" id="inlineSpinner">
@@ -3953,12 +3975,12 @@
       <div class="style-dots" id="styleDots"></div>
 
       <div class="custom-row" id="customRow">
-        <input type="text" id="customPrompt" placeholder="Ej: Escríbelo como una carta de ventas…" />
+        <input type="text" id="customPrompt" class="ph-no-capture" data-clarity-mask="true" placeholder="Ej: Escríbelo como una carta de ventas…" />
         <button class="btn-grad" onclick="runAdapt()">→</button>
       </div>
 
       <!-- Mobile result (shown inline after transform on mobile) -->
-      <div id="mobileAdaptResult" class="mobile-adapt-result" style="display:none">
+      <div id="mobileAdaptResult" class="mobile-adapt-result ph-no-capture" data-clarity-mask="true" style="display:none">
         <div class="mobile-adapt-result-head">
           <span class="mobile-adapt-result-label">Result</span>
           <button class="rs-card-copy" onclick="copyMobileResult()">
@@ -4211,7 +4233,7 @@
   <div class="drawer-head">
     <div class="drawer-av" id="drawerAv" style="overflow:hidden;padding:0"></div>
     <div class="drawer-user-info">
-      <div class="drawer-email" id="drawerEmail">—</div>
+      <div class="drawer-email ph-no-capture" id="drawerEmail" data-clarity-mask="true">—</div>
       <div class="drawer-since" data-i18n="drawer.account">ReelScript Account</div>
     </div>
     <button class="drawer-close" onclick="closeDrawer()">✕</button>
@@ -4266,7 +4288,7 @@
           <div class="avatar-picker-grid" id="avatarPickerGrid"></div>
         </div>
         <div>
-          <div class="prof-email" id="profEmail" style="font-family:var(--font-display);font-size:.9rem">—</div>
+          <div class="prof-email ph-no-capture" id="profEmail" data-clarity-mask="true" style="font-family:var(--font-display);font-size:.9rem">—</div>
           <div style="margin-top:6px"><span class="plan-badge free" id="profPlanBadge">Free</span></div>
           <!-- Usage bar -->
           <div id="profUsageWrap" style="display:none;margin-top:10px">
@@ -4523,7 +4545,7 @@
     <p data-i18n="team.invite_desc">Send an invitation to join your agency workspace.</p>
     <div class="field">
       <label data-i18n="team.email_label">Email address</label>
-      <input type="email" id="inviteEmail" placeholder="colleague@email.com" />
+      <input type="email" id="inviteEmail" class="ph-no-capture" data-clarity-mask="true" placeholder="colleague@email.com" />
     </div>
     <div class="form-err" id="inviteErr"></div>
     <button class="btn-full" onclick="submitInvite()" data-i18n="team.send_invite">Send invitation</button>
@@ -4663,8 +4685,8 @@
       <div style="flex:1;height:1px;background:var(--border)"></div>
     </div>
     <form id="authForm" autocomplete="on" onsubmit="event.preventDefault();submitAuth()">
-      <div class="field"><label data-i18n="auth.email">Email</label><input type="email" id="authEmail" name="email" autocomplete="email" placeholder="you@email.com" required /></div>
-      <div class="field"><label data-i18n="auth.pass">Password</label><input type="password" id="authPass" name="password" autocomplete="current-password" placeholder="Min 6 characters" required /></div>
+      <div class="field"><label data-i18n="auth.email">Email</label><input type="email" id="authEmail" name="email" autocomplete="email" class="ph-no-capture" data-clarity-mask="true" placeholder="you@email.com" required /></div>
+      <div class="field"><label data-i18n="auth.pass">Password</label><input type="password" id="authPass" name="password" autocomplete="current-password" class="ph-no-capture" data-clarity-mask="true" placeholder="Min 6 characters" required /></div>
       <div id="forgotLink" style="text-align:right;margin:-8px 0 12px"><a href="/forgot-password" style="font-size:.75rem;color:var(--text3);text-decoration:underline" data-i18n="auth.forgot">Forgot password?</a></div>
       <div class="form-err" id="authErr"></div>
       <div id="termsConsent" style="display:none;margin-bottom:14px">
@@ -5822,6 +5844,7 @@ function renderLoggedIn() {
   if (affMob) affMob.style.display = "";
   document.getElementById("userPill").classList.add("on");
   document.getElementById("userEmail").textContent = st.user.email;
+  if (window.posthog) posthog.identify(st.user.id, { email: st.user.email, plan: st.plan });
   document.getElementById("balBadge").classList.add("on");
   document.getElementById("balDisp").textContent = usosNum(st.credits);
   // Drawer
@@ -9456,6 +9479,7 @@ function syncNavMob() {
 
 async function logout() {
   await fetch("/auth/logout", { method: "POST" });
+  if (window.posthog) posthog.reset();
   st = { user: null, credits: 0, freeUsed: 0, freeLimit: 5, freeDailyAnon: 3, plan: "free" };
   renderLoggedOut(); renderFreeBar(); renderPlanCards(); showToast(t("toast.session_closed"));
 }
@@ -9925,7 +9949,7 @@ function startTourFromModal() {
     <p style="font-size:.84rem;color:var(--text2);margin-bottom:20px;font-weight:300">This will permanently delete your account and all data. Type your email to confirm:</p>
     <div class="field">
       <label>YOUR EMAIL</label>
-      <input type="email" id="deleteConfirmEmail" placeholder="Type your email to confirm" />
+      <input type="email" id="deleteConfirmEmail" class="ph-no-capture" data-clarity-mask="true" placeholder="Type your email to confirm" />
     </div>
     <button class="btn-full" id="btnDeleteAccount" onclick="confirmDeleteAccount()" disabled style="background:#ef4444;opacity:.5">Delete permanently</button>
     <div class="form-err" id="deleteErr"></div>
