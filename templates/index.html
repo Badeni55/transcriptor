@@ -795,12 +795,16 @@
     .adapt-inner {
       max-width: 1200px; width: 100%; margin: 0 auto;
       display: grid; grid-template-columns: 1fr 1fr;
-      gap: 64px; align-items: stretch;
+      grid-template-rows: auto 1fr;
+      gap: 0 64px; align-items: stretch;
       position: relative; z-index: 1;
     }
 
-    /* Left column */
-    .adapt-header { margin-bottom: 28px; }
+    /* Grid areas */
+    .adapt-header { grid-column: 1; grid-row: 1; margin-bottom: 28px; }
+    .preview-label-wrap { grid-column: 2; grid-row: 1; display: flex; align-items: flex-end; padding-bottom: 28px; }
+    .adapt-left { grid-column: 1; grid-row: 2; }
+    .adapt-right { grid-column: 2; grid-row: 2; }
     .adapt-header h2 { font-family: var(--font-display); font-size: clamp(1.8rem,3.5vw,2.6rem); font-weight: 400; letter-spacing: -.5px; margin-bottom: 10px; line-height: 1.1; }
     .adapt-header h2 span { font-style: italic; }
     .adapt-header p  { color: var(--text2); font-size: .92rem; line-height: 1.6; font-weight: 300; max-width: 420px; }
@@ -940,7 +944,7 @@
     .preview-label {
       font-family: var(--font-body); font-size: .68rem; font-weight: 500; color: var(--text3);
       text-transform: uppercase; letter-spacing: .1em;
-      margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+      margin-bottom: 0; display: flex; align-items: center; gap: 10px;
     }
     .preview-label::after { content: ""; flex: 1; height: 1px; background: var(--border); }
 
@@ -1107,8 +1111,11 @@
     }
 
     @media (max-width: 900px) {
-      .adapt-inner { grid-template-columns: 1fr; gap: 36px; }
-      .adapt-right { display: block; }
+      .adapt-inner { grid-template-columns: 1fr; grid-template-rows: auto auto auto auto; gap: 24px; }
+      .adapt-header { grid-column: 1; grid-row: 1; margin-bottom: 0; }
+      .preview-label-wrap { grid-column: 1; grid-row: 3; padding-bottom: 0; }
+      .adapt-left { grid-column: 1; grid-row: 2; }
+      .adapt-right { grid-column: 1; grid-row: 4; display: block; }
       .preview-card { min-height: 0; flex: none; }
     }
     @media (max-width: 520px) {
@@ -2911,6 +2918,23 @@
     }
     .nav-mob-items .mob-logout { color: #dc2626; }
     .nav-mob-items .mob-logout:active { background: rgba(220,38,38,.08); }
+    .nav-mob-auth {
+      display: flex; gap: 10px; padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-mob-auth-btn {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px; border-radius: 10px; font-size: .88rem; font-weight: 600;
+      font-family: var(--font-body); cursor: pointer; transition: background .15s;
+      background: var(--surf2); border: 1px solid var(--border); color: var(--text2);
+    }
+    .nav-mob-auth-btn:active { background: rgba(255,255,255,.06); }
+    .nav-mob-auth-primary {
+      background: #f97316; border-color: #f97316; color: #fff;
+    }
+    .nav-mob-auth-primary:active { background: #ea680c; }
+    [data-theme="light"] .nav-mob-auth-btn { background: var(--surf2); }
+    [data-theme="light"] .nav-mob-auth-primary { background: #f97316; color: #fff; }
     .nav-mob-items svg { flex-shrink: 0; opacity: .7; }
     /* Lang row */
     .nav-mob-items .mob-lang-row {
@@ -2961,7 +2985,7 @@
 
       /* Adapt — mobile compact layout */
       .adapt-section { padding: 40px 16px; min-height: auto; overflow: visible; }
-      .adapt-inner { grid-template-columns: 1fr; gap: 20px; min-width: 0; }
+      .adapt-inner { grid-template-columns: 1fr; gap: 16px; min-width: 0; }
       .adapt-left { min-width: 0; }
       .adapt-header h2 { font-size: 1.6rem; }
       .adapt-header p { display: none; }
@@ -3778,6 +3802,18 @@
         <span data-i18n="prof.metrics">Metrics</span>
       </button>
     </div>
+    <!-- Auth (only visible when logged out) -->
+    <div class="nav-mob-auth" id="navMobAuth">
+      <button class="nav-mob-auth-btn" onclick="closeNavMob();openAuth('login')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        <span data-i18n="nav.login">Log in</span>
+      </button>
+      <button class="nav-mob-auth-btn nav-mob-auth-primary" onclick="closeNavMob();openAuth('register')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+        <span data-i18n="nav.register_free">Sign up free</span>
+      </button>
+    </div>
+
     <!-- Account -->
     <div class="nav-mob-section" data-i18n="nav.account">Account</div>
     <div class="nav-mob-items">
@@ -3931,16 +3967,17 @@
 <div class="adapt-section">
   <div class="adapt-inner fade-in" id="adaptCard">
 
-    <!-- LEFT: input + style grid -->
-    <div class="adapt-left">
-      <div class="adapt-header">
-        <h2 data-i18n="adapt.h2">
-          Hazlo tuyo.<br>
-          <span class="grad-txt">Elige el estilo, transforma.</span>
-        </h2>
-        <p style="margin-top:10px" data-i18n="adapt.p">El guión ya lo tienes. Ahora dile a la IA cómo lo quieres — viral, profesional, gracioso o lo que necesites.</p>
-      </div>
+    <!-- ROW 1: headers -->
+    <div class="adapt-header">
+      <h2 data-i18n="adapt.h2">
+        Hazlo tuyo.<br>
+        <span class="grad-txt">Elige el estilo, transforma.</span>
+      </h2>
+      <p style="margin-top:10px" data-i18n="adapt.p">El guión ya lo tienes. Ahora dile a la IA cómo lo quieres — viral, profesional, gracioso o lo que necesites.</p>
+    </div>
 
+    <!-- ROW 2: input + style grid -->
+    <div class="adapt-left">
       <textarea id="adaptInput" class="script-ta"
         placeholder="Pega aquí el guión o la transcripción que quieres transformar…"></textarea>
 
@@ -4015,9 +4052,13 @@
       </button>
     </div>
 
-    <!-- RIGHT: live preview -->
-    <div class="adapt-right">
+    <!-- ROW 1 right: preview label -->
+    <div class="preview-label-wrap">
       <div class="preview-label" data-i18n="preview.label">This is how your script would look →</div>
+    </div>
+
+    <!-- ROW 2 right: live preview -->
+    <div class="adapt-right">
       <div class="preview-card" id="previewCard" data-active="viral">
         <div class="preview-top-bar"></div>
 
@@ -5849,6 +5890,8 @@ function renderLoggedIn() {
   const initial = st.user.email[0].toUpperCase();
   document.getElementById("btnLogin").style.display = "none";
   document.getElementById("btnReg").style.display = "none";
+  const navMobAuth = document.getElementById("navMobAuth");
+  if (navMobAuth) navMobAuth.style.display = "none";
   updateIdeaFab();
   document.getElementById("navAffiliate").style.display = "";
   const affMob = document.getElementById("navAffMob");
@@ -7233,6 +7276,8 @@ function profAdaptFromTransc(id) {
 function renderLoggedOut() {
   document.getElementById("btnLogin").style.display = "";
   document.getElementById("btnReg").style.display = "";
+  const navMobAuth = document.getElementById("navMobAuth");
+  if (navMobAuth) navMobAuth.style.display = "";
   document.getElementById("userPill").classList.remove("on");
   document.getElementById("balBadge").classList.remove("on");
   document.getElementById("ideaFab").classList.remove("on");
