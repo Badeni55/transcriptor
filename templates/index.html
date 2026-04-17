@@ -5900,10 +5900,20 @@ function renderLoggedIn() {
   document.getElementById("userEmail").textContent = st.user.email;
   if (window.posthog) posthog.identify(st.user.id, { email: st.user.email, plan: st.plan });
   document.getElementById("balBadge").classList.add("on");
-  document.getElementById("balDisp").textContent = usosNum(st.credits);
+  if (st.monthlyLimit) {
+    const rem = st.monthlyLimit - st.monthlyUsage;
+    document.getElementById("balDisp").textContent = `${rem}/${st.monthlyLimit}`;
+  } else {
+    document.getElementById("balDisp").textContent = usosNum(st.credits);
+  }
   // Drawer
   document.getElementById("drawerEmail").textContent = st.user.email;
-  document.getElementById("drawerBal").textContent = usos(st.credits);
+  if (st.monthlyLimit) {
+    const rem = st.monthlyLimit - st.monthlyUsage;
+    document.getElementById("drawerBal").textContent = `${rem}/${st.monthlyLimit} usos`;
+  } else {
+    document.getElementById("drawerBal").textContent = usos(st.credits);
+  }
   document.getElementById("statToday").textContent = `${st.freeUsed}/${st.freeLimit}`;
 
   // Avatar: DiceBear if seed, else initial letter
@@ -7554,9 +7564,15 @@ async function rsTranscribeOne(url) {
     if (result.credits_cents !== undefined) {
       st.credits = result.credits_cents;
       st.freeUsed = result.free_used_today;
-      document.getElementById("balDisp").textContent = usosNum(result.credits_cents);
     }
-    if (st.monthlyLimit) st.monthlyUsage++;
+    if (st.monthlyLimit) {
+      st.monthlyUsage++;
+      const rem = st.monthlyLimit - st.monthlyUsage;
+      document.getElementById("balDisp").textContent = `${rem}/${st.monthlyLimit}`;
+      document.getElementById("drawerBal").textContent = `${rem}/${st.monthlyLimit} usos`;
+    } else {
+      document.getElementById("balDisp").textContent = usosNum(st.credits);
+    }
     renderFreeBar();
 
   } catch {
