@@ -6623,7 +6623,10 @@ function renderIgGrid() {
           <span>❤ ${fmtNum(v.likes)}</span>
           <span>💬 ${fmtNum(v.comments)}</span>
         </div>
-        ${date ? `<div style="font-size:.68rem;color:var(--text3);margin-bottom:8px">${date}</div>` : ""}
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+          ${date ? `<span style="font-size:.68rem;color:var(--text3)">${date}</span>` : ""}
+          ${v.note ? `<span style="font-size:.65rem;color:var(--purple);display:flex;align-items:center;gap:2px" title="${esc(v.note)}">📝 <span style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(v.note.slice(0, 30))}</span></span>` : ""}
+        </div>
         <div class="ig-card-eng-bar" title="${engPct}% vs best reel"><div class="ig-card-eng-fill" style="width:${engPct}%;background:${engColor}"></div><span class="ig-card-eng-label">${engPct}%</span></div>
         <div class="ig-card-actions" onclick="event.stopPropagation()">
           ${hasTranscript
@@ -6793,6 +6796,13 @@ function igShowDetail(vid) {
         <div class="ig-detail-metric"><div class="ig-detail-metric-val">${dur}</div><div class="ig-detail-metric-label">${t("metrics.duration")}</div></div>
         <div class="ig-detail-metric"><div class="ig-detail-metric-val">${engRate}</div><div class="ig-detail-metric-label">${t("metrics.engagement")}</div></div>
       </div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:.75rem;font-weight:600;margin-bottom:6px;color:var(--text2);display:flex;align-items:center;gap:4px">📝 Nota</div>
+        <div style="position:relative">
+          <textarea id="igNote-${v.ig_video_id}" style="width:100%;padding:10px 12px;background:var(--surf2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:.8rem;line-height:1.5;resize:vertical;min-height:50px;max-height:120px;outline:none;box-sizing:border-box" placeholder="Añade una nota sobre este vídeo..." maxlength="500">${esc(v.note || "")}</textarea>
+          <button onclick="igSaveNote('${v.ig_video_id}')" style="position:absolute;bottom:8px;right:8px;padding:4px 12px;border-radius:6px;border:none;background:var(--purple);color:#fff;font-size:.68rem;font-weight:600;cursor:pointer;opacity:.85;transition:opacity .15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.85'">Guardar</button>
+        </div>
+      </div>
       ${v.transcription
         ? `<div style="font-size:.75rem;font-weight:600;margin-bottom:6px;color:var(--text2)">${t("metrics.view_transcript")}</div><div class="ig-detail-transcript">${esc(v.transcription)}</div>`
         : `<div style="font-size:.8rem;color:var(--text3);font-style:italic;padding:14px;background:var(--surf2);border-radius:10px;text-align:center">${t("metrics.no_transcript")}</div>`}
@@ -6803,6 +6813,23 @@ function igShowDetail(vid) {
     </div>
   </div>`;
   document.body.appendChild(overlay);
+}
+
+async function igSaveNote(vid) {
+  const el = document.getElementById("igNote-" + vid);
+  if (!el) return;
+  const note = el.value.trim();
+  try {
+    const r = await fetch(`/metrics/video/${vid}/note`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ note }),
+    });
+    if (!r.ok) { showToast("Error"); return; }
+    const v = igVideosCache.find(x => x.ig_video_id === vid);
+    if (v) v.note = note || null;
+    renderIgGrid();
+    showToast("Nota guardada ✓");
+  } catch { showToast("Error"); }
 }
 
 document.addEventListener("keydown", e => { if (e.key === "Escape") document.querySelector(".ig-detail-overlay")?.remove(); });

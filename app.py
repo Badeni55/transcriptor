@@ -2844,6 +2844,21 @@ def metrics_tag_video(ig_video_id):
     return jsonify({"ok": True, "tag": tag})
 
 
+@app.route("/metrics/video/<ig_video_id>/note", methods=["PATCH"])
+@require_auth
+def metrics_note_video(ig_video_id):
+    user = current_user()
+    body = request.get_json() or {}
+    note = (body.get("note") or "").strip()
+    if len(note) > 500:
+        return jsonify({"error": "Note too long (max 500)"}), 400
+    row = db.table("ig_videos").select("id").eq("user_id", user["id"]).eq("ig_video_id", ig_video_id).execute()
+    if not row.data:
+        return jsonify({"error": "Video not found"}), 404
+    db.table("ig_videos").update({"note": note or None}).eq("id", row.data[0]["id"]).execute()
+    return jsonify({"ok": True, "note": note or None})
+
+
 @app.route("/robots.txt")
 def robots():
     txt = (
