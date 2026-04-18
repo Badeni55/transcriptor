@@ -2542,6 +2542,8 @@ def _scrape_ig_reels(username_or_urls: list[str], limit: int = 10) -> list[dict]
     logger.info(f"[IG-METRICS] Apify response — status: {resp.status_code}, body (first 1000): {resp.text[:1000]}")
     resp.raise_for_status()
     items = resp.json()
+    if items:
+        logger.info(f"[IG-METRICS] RAW first item from Apify:\n{json.dumps(items[0], indent=2, default=str)}")
     results = []
     for item in items:
         sc = item.get("shortCode") or item.get("id", "")
