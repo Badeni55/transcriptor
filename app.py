@@ -2572,52 +2572,19 @@ def metrics_link_profile():
     username = (body.get("username") or "").strip().lstrip("@")
     if not username or len(username) > 60:
         return jsonify({"error": "Username inválido"}), 400
+    if not re.match(r"^[a-zA-Z0-9._]+$", username):
+        return jsonify({"error": "Username contiene caracteres inválidos"}), 400
 
     existing = db.table("ig_profiles").select("id").eq("user_id", user["id"]).execute()
     if existing.data:
         return jsonify({"error": "Ya tienes un perfil de Instagram vinculado"}), 409
 
-    profile = get_profile(user["id"])
-    ok, err = _check_metrics_limit(profile)
-    if not ok:
-        return jsonify({"error": err}), 429
-
-    plan = profile.get("plan", "free")
-    limits = METRICS_LIMITS.get(plan, METRICS_LIMITS["free"])
-    max_videos = limits["videos_per_analysis"]
-
-    logger.info(f"[IG-METRICS] Link profile — username: '{username}', plan: {plan}, max_videos: {max_videos}")
-    try:
-        videos = _scrape_ig_reels([username], limit=max_videos)
-        logger.info(f"[IG-METRICS] Scrape result — {len(videos)} videos returned for @{username}")
-    except Exception as e:
-        logger.error(f"[IG-METRICS] Apify scrape FAILED for @{username}: {type(e).__name__}: {e}", exc_info=True)
-        return jsonify({"error": "No se pudo analizar el perfil. Verifica que el usuario existe y tiene reels públicos."}), 400
-
-    if not videos:
-        return jsonify({"error": "No se encontraron reels para este perfil."}), 400
-
     row = db.table("ig_profiles").insert({
         "user_id": user["id"],
         "ig_username": username,
     }).execute()
-    ig_profile_id = row.data[0]["id"]
 
-    try:
-        for v in videos:
-            v["user_id"] = user["id"]
-            v["ig_profile_id"] = ig_profile_id
-        db.table("ig_videos").upsert(videos, on_conflict="user_id,ig_video_id").execute()
-    except Exception as e:
-        logger.error(f"[IG-METRICS] Video upsert FAILED: {e}", exc_info=True)
-        db.table("ig_profiles").delete().eq("id", ig_profile_id).execute()
-        return jsonify({"error": "Error al guardar los vídeos. Inténtalo de nuevo."}), 500
-
-    db.table("profiles").update({
-        "metrics_analyses_this_week": profile.get("metrics_analyses_this_week", 0) + 1,
-    }).eq("id", user["id"]).execute()
-
-    return jsonify({"ok": True, "ig_profile_id": ig_profile_id, "videos_found": len(videos)})
+    return jsonify({"ok": True, "ig_profile_id": row.data[0]["id"], "ig_username": username})
 
 
 @app.route("/metrics/analyze", methods=["POST"])

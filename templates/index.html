@@ -2702,8 +2702,30 @@
     }
 
     @media (max-width: 768px) {
-      .ig-stats-row { grid-template-columns: repeat(2, 1fr); }
+      .ig-stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .ig-stat-card { padding: 10px; }
+      .ig-stat-val { font-size: 1.1rem; }
+      .ig-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .ig-card-thumb { max-height: 160px; }
+      .ig-card-body { padding: 10px 12px; }
+      .ig-card-caption { font-size: .72rem; -webkit-line-clamp: 1; min-height: 1em; }
+      .ig-card-stats { gap: 8px; font-size: .65rem; flex-wrap: wrap; }
+      .ig-card-actions { flex-direction: column; }
+      .ig-card-btn { font-size: .7rem; padding: 6px 0; }
+      .ig-linked-header { gap: 8px; }
+      .ig-linked-user { font-size: .95rem; }
+      .ig-linked-actions { margin-left: 0; width: 100%; }
+      .ig-linked-actions .ig-card-btn { flex: 1; text-align: center; }
+      .ig-sort-bar { gap: 6px; }
+      .ig-sort-btn { padding: 4px 8px; font-size: .7rem; }
+      .ig-link-box { padding: 24px 18px; margin: 20px auto; }
+      #igAnalyzeBar { flex-direction: column; align-items: stretch; gap: 8px; }
+      #igAnalyzeBar .ig-card-btn { width: 100%; }
+      #igAnalyzeBar select { width: 100%; }
+    }
+    @media (max-width: 420px) {
       .ig-grid { grid-template-columns: 1fr; }
+      .ig-card-caption { -webkit-line-clamp: 2; min-height: 2.1em; }
     }
 
     /* Idea cards */
@@ -4613,7 +4635,7 @@
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5.5"/><circle cx="18" cy="6" r="1.5" fill="var(--text3)" stroke="none"/></svg>
             <div style="font-family:var(--font-display);font-size:1.15rem;margin-bottom:4px" data-i18n="metrics.link_title">Connect your Instagram</div>
             <div style="font-size:.82rem;color:var(--text3);line-height:1.5" data-i18n="metrics.link_desc">Link your username to analyze your reels' performance — views, likes, comments & shares.</div>
-            <input type="text" id="igUsernameInput" placeholder="@username" autocomplete="off" autocapitalize="off" spellcheck="false" />
+            <input type="text" id="igUsernameInput" placeholder="@username" autocomplete="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter'){event.preventDefault();igLink()}" />
             <button class="ig-card-btn primary" style="width:100%;padding:11px 0;font-size:.88rem;font-weight:600" onclick="igLink()" id="igLinkBtn" data-i18n="metrics.link_btn">Analyze profile</button>
             <div class="form-err" id="igLinkErr" style="margin-top:8px"></div>
           </div>
@@ -5116,7 +5138,7 @@ const LANGS = {
     "metrics.title": "Métricas",
     "metrics.link_title": "Conecta tu Instagram",
     "metrics.link_desc": "Vincula tu usuario para analizar el rendimiento de tus reels — vistas, likes, comentarios y compartidos.",
-    "metrics.link_btn": "Analizar perfil",
+    "metrics.link_btn": "Vincular perfil",
     "metrics.refresh": "Actualizar",
     "metrics.unlink": "Desvincular",
     "metrics.sort_by": "Ordenar por:",
@@ -5439,7 +5461,7 @@ const LANGS = {
     "metrics.title": "Metrics",
     "metrics.link_title": "Connect your Instagram",
     "metrics.link_desc": "Link your username to analyze your reels' performance — views, likes, comments & shares.",
-    "metrics.link_btn": "Analyze profile",
+    "metrics.link_btn": "Link profile",
     "metrics.refresh": "Refresh",
     "metrics.unlink": "Unlink",
     "metrics.sort_by": "Sort by:",
@@ -6254,7 +6276,7 @@ async function igLink() {
   const username = input.value.trim().replace(/^@/, "");
   if (!username) { err.textContent = t("metrics.link_desc"); err.style.display = "block"; return; }
   err.style.display = "none";
-  btn.textContent = t("metrics.analyzing");
+  btn.textContent = "...";
   btn.disabled = true;
   try {
     const r = await fetch("/metrics/ig-profile", {
@@ -6263,7 +6285,7 @@ async function igLink() {
     });
     const d = await r.json();
     if (!r.ok) { err.textContent = d.error; err.style.display = "block"; return; }
-    showToast(`@${username} — ${d.videos_found} reels`);
+    showToast(`@${username} vinculado`);
     loadMetricsPanel();
   } catch { err.textContent = "Error"; err.style.display = "block"; }
   finally { btn.textContent = t("metrics.link_btn"); btn.disabled = false; }
