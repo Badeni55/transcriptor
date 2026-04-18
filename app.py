@@ -2844,19 +2844,45 @@ def metrics_tag_video(ig_video_id):
     return jsonify({"ok": True, "tag": tag})
 
 
-@app.route("/metrics/video/<ig_video_id>/note", methods=["PATCH"])
+@app.route("/metrics/video/<ig_video_id>/manual", methods=["PATCH"])
 @require_auth
-def metrics_note_video(ig_video_id):
+def metrics_manual_video(ig_video_id):
     user = current_user()
     body = request.get_json() or {}
-    note = (body.get("note") or "").strip()
-    if len(note) > 500:
-        return jsonify({"error": "Note too long (max 500)"}), 400
     row = db.table("ig_videos").select("id").eq("user_id", user["id"]).eq("ig_video_id", ig_video_id).execute()
     if not row.data:
         return jsonify({"error": "Video not found"}), 404
-    db.table("ig_videos").update({"note": note or None}).eq("id", row.data[0]["id"]).execute()
-    return jsonify({"ok": True, "note": note or None})
+    update = {}
+    if "note" in body:
+        note = (body["note"] or "").strip()
+        if len(note) > 500:
+            return jsonify({"error": "Note too long (max 500)"}), 400
+        update["note"] = note or None
+    if "retention_seconds" in body:
+        val = body["retention_seconds"]
+        if val is not None:
+            val = int(val)
+            if val < 0 or val > 300:
+                return jsonify({"error": "retention_seconds must be 0-300"}), 400
+        update["retention_seconds"] = val
+    if "saves" in body:
+        val = body["saves"]
+        if val is not None:
+            val = int(val)
+            if val < 0:
+                return jsonify({"error": "saves must be >= 0"}), 400
+        update["saves"] = val
+    if "reach" in body:
+        val = body["reach"]
+        if val is not None:
+            val = int(val)
+            if val < 0:
+                return jsonify({"error": "reach must be >= 0"}), 400
+        update["reach"] = val
+    if not update:
+        return jsonify({"error": "No fields to update"}), 400
+    db.table("ig_videos").update(update).eq("id", row.data[0]["id"]).execute()
+    return jsonify({"ok": True, **update})
 
 
 @app.route("/robots.txt")
