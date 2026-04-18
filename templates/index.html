@@ -2610,7 +2610,7 @@
       padding: 0 16px 14px;
     }
     .metrics-fields {
-      display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
     }
     .metric-field label {
       display: block; font-size: .65rem; font-weight: 600; color: var(--text3);
@@ -2625,54 +2625,85 @@
     .metric-field input:focus, .metric-field textarea:focus { border-color: var(--purple); }
     .metric-field textarea { resize: vertical; min-height: 40px; }
 
-    .metrics-summary-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;
+    .ig-link-box {
+      background: var(--surf); border: 1px solid var(--border); border-radius: 14px;
+      padding: 32px; text-align: center; max-width: 420px; margin: 40px auto;
     }
-    .metrics-summary-card {
-      background: var(--surf);
-      border: 1px solid var(--border); border-radius: 14px;
-      padding: 18px; text-align: center;
+    .ig-link-box input {
+      width: 100%; padding: 12px 14px; background: var(--surf2); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-size: .9rem; font-family: var(--font-body);
+      outline: none; box-sizing: border-box; margin: 16px 0 12px;
     }
-    .metrics-summary-val {
-      font-family: var(--font-display); font-size: 1.6rem; font-weight: 400;
-      margin-bottom: 4px;
+    .ig-link-box input:focus { border-color: var(--purple); }
+    .ig-linked-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
     }
-    .metrics-summary-label {
-      font-size: .68rem; color: var(--text3); text-transform: uppercase; letter-spacing: .05em;
+    .ig-linked-user {
+      font-family: var(--font-display); font-size: 1.1rem;
     }
-    .metrics-winner-card {
-      background: var(--surf);
-      border: 1px solid var(--border); border-radius: 12px;
-      padding: 14px 16px; margin-bottom: 10px; display: flex; gap: 14px; align-items: flex-start;
-      transition: border-color .2s; cursor: pointer;
+    .ig-linked-actions { display: flex; gap: 8px; margin-left: auto; }
+    .ig-stats-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;
     }
-    .metrics-winner-card:hover { border-color: rgba(249,115,22,.25); }
-    .metrics-winner-rank {
-      width: 28px; height: 28px; border-radius: 8px; background: var(--surf2);
-      display: flex; align-items: center; justify-content: center;
-      font-family: var(--font-display); font-size: .85rem; color: var(--text3);
-      flex-shrink: 0;
+    .ig-stat-card {
+      background: var(--surf); border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px; text-align: center;
     }
-    .metrics-winner-rank.top { background: rgba(249,115,22,.15); color: var(--purple); }
-    .metrics-winner-body { flex: 1; min-width: 0; }
-    .metrics-winner-title {
-      font-family: var(--font-display); font-size: .88rem; margin-bottom: 4px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    .ig-stat-val {
+      font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 2px;
     }
-    .metrics-winner-preview {
+    .ig-stat-label {
+      font-size: .65rem; color: var(--text3); text-transform: uppercase; letter-spacing: .04em;
+    }
+    .ig-sort-bar {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;
+    }
+    .ig-sort-btn {
+      padding: 5px 12px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--surf); color: var(--text2); font-size: .75rem;
+      cursor: pointer; transition: all .15s; font-family: var(--font-body);
+    }
+    .ig-sort-btn.on { background: var(--purple); color: #fff; border-color: var(--purple); }
+    .ig-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;
+    }
+    .ig-card {
+      background: var(--surf); border: 1px solid var(--border); border-radius: 12px;
+      overflow: hidden; transition: border-color .2s;
+    }
+    .ig-card:hover { border-color: rgba(249,115,22,.3); }
+    .ig-card-thumb {
+      width: 100%; aspect-ratio: 9/16; object-fit: cover; display: block;
+      background: var(--surf2); max-height: 200px;
+    }
+    .ig-card-body { padding: 12px 14px; }
+    .ig-card-caption {
       font-size: .78rem; color: var(--text2); line-height: 1.4;
-      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-      margin-bottom: 8px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden; margin-bottom: 10px; min-height: 2.1em;
     }
-    .metrics-winner-stats { display: flex; gap: 10px; font-size: .72rem; color: var(--text3); }
-    .metrics-winner-highlight {
-      font-family: var(--font-display); font-size: 1.2rem; color: var(--purple);
-      flex-shrink: 0; text-align: right;
+    .ig-card-stats {
+      display: flex; gap: 12px; font-size: .72rem; color: var(--text3); margin-bottom: 10px;
+    }
+    .ig-card-stats span { display: flex; align-items: center; gap: 3px; }
+    .ig-card-actions { display: flex; gap: 6px; }
+    .ig-card-btn {
+      flex: 1; padding: 7px 0; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--surf); color: var(--text2); font-size: .74rem; cursor: pointer;
+      transition: all .15s; font-family: var(--font-body);
+    }
+    .ig-card-btn:hover { border-color: var(--purple); color: var(--purple); }
+    .ig-card-btn.primary { background: var(--purple); color: #fff; border-color: var(--purple); }
+    .ig-card-btn.primary:hover { opacity: .85; }
+    .ig-card-transcript {
+      margin-top: 10px; padding: 10px 12px; background: var(--surf2); border-radius: 8px;
+      font-size: .78rem; color: var(--text2); line-height: 1.5; max-height: 120px;
+      overflow-y: auto; white-space: pre-wrap;
     }
 
     @media (max-width: 768px) {
-      .metrics-fields { grid-template-columns: repeat(2, 1fr); }
-      .metrics-summary-grid { grid-template-columns: repeat(2, 1fr); }
+      .ig-stats-row { grid-template-columns: repeat(2, 1fr); }
+      .ig-grid { grid-template-columns: 1fr; }
     }
 
     /* Idea cards */
@@ -2790,8 +2821,6 @@
       .proj-cards-grid { grid-template-columns: 1fr; }
       .asst-cards-grid { grid-template-columns: 1fr; }
       .prof-bottom-bar { display: block; }
-      .metrics-summary-grid { grid-template-columns: repeat(2, 1fr); }
-
       /* View modal on mobile */
       .view-overlay { align-items: flex-end; padding: 0; }
       .view-modal {
@@ -4549,22 +4578,37 @@
 
       <!-- Metrics panel -->
       <div id="profPanelMetrics" style="display:none">
-        <div class="prof-section-head">
-          <div><div class="prof-section-title" data-i18n="metrics.title">Metrics</div></div>
-          <button class="btn-sm btn-3d btn-3d-primary" style="background:var(--purple);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openAddMetricsFlow()">+ Add metrics</button>
+        <div id="igLinkedView" style="display:none">
+          <div class="ig-linked-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5.5"/><circle cx="18" cy="6" r="1.5" fill="currentColor" stroke="none"/></svg>
+            <span class="ig-linked-user" id="igUsername"></span>
+            <div class="ig-linked-actions">
+              <button class="ig-card-btn" onclick="igRefresh()" id="igRefreshBtn" data-i18n="metrics.refresh">Refresh</button>
+              <button class="ig-card-btn" onclick="igUnlink()" style="color:#f87171;border-color:rgba(248,113,113,.3)" data-i18n="metrics.unlink">Unlink</button>
+            </div>
+          </div>
+          <div class="ig-stats-row" id="igStatsRow"></div>
+          <div class="ig-sort-bar">
+            <span style="font-size:.75rem;color:var(--text3);margin-right:4px" data-i18n="metrics.sort_by">Sort by:</span>
+            <button class="ig-sort-btn on" onclick="igSort('published_at')" data-i18n="metrics.recent">Recent</button>
+            <button class="ig-sort-btn" onclick="igSort('views')" data-i18n="metrics.views">Views</button>
+            <button class="ig-sort-btn" onclick="igSort('likes')" data-i18n="metrics.likes">Likes</button>
+            <button class="ig-sort-btn" onclick="igSort('comments')" data-i18n="metrics.comments">Comments</button>
+            <button class="ig-sort-btn" onclick="igSort('shares')" data-i18n="metrics.shares">Shares</button>
+            <span style="margin-left:auto;font-size:.7rem;color:var(--text3)" id="igLimitsInfo"></span>
+          </div>
+          <div class="ig-grid" id="igGrid"></div>
         </div>
-        <div class="metrics-summary-grid" id="metricsSummary"></div>
-        <div class="prof-section-head" style="margin-top:24px">
-          <div><div class="prof-section-title" style="font-size:1rem" data-i18n="metrics.winners">Top performers</div></div>
-          <select id="metricsRankBy" onchange="loadMetricsWinners()" style="padding:6px 12px;background:var(--surf);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text2);font-size:.8rem;outline:none">
-            <option value="views_count">Views</option>
-            <option value="likes">Likes</option>
-            <option value="comments">Comments</option>
-            <option value="saves">Saves</option>
-            <option value="engagement_rate">Engagement %</option>
-          </select>
+        <div id="igEmptyView">
+          <div class="ig-link-box">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5.5"/><circle cx="18" cy="6" r="1.5" fill="var(--text3)" stroke="none"/></svg>
+            <div style="font-family:var(--font-display);font-size:1.15rem;margin-bottom:4px" data-i18n="metrics.link_title">Connect your Instagram</div>
+            <div style="font-size:.82rem;color:var(--text3);line-height:1.5" data-i18n="metrics.link_desc">Link your username to analyze your reels' performance — views, likes, comments & shares.</div>
+            <input type="text" id="igUsernameInput" placeholder="@username" autocomplete="off" autocapitalize="off" spellcheck="false" />
+            <button class="ig-card-btn primary" style="width:100%;padding:11px 0;font-size:.88rem;font-weight:600" onclick="igLink()" id="igLinkBtn" data-i18n="metrics.link_btn">Analyze profile</button>
+            <div class="form-err" id="igLinkErr" style="margin-top:8px"></div>
+          </div>
         </div>
-        <div id="metricsWinners"></div>
       </div>
 
       <!-- Ideas panel -->
@@ -5061,8 +5105,28 @@ const LANGS = {
     "team.copied": "¡Enlace de invitación copiado!",
     // Metrics
     "metrics.title": "Métricas",
-    "metrics.winners": "Mejor rendimiento",
-    "metrics.empty": "Sin métricas todavía. Añade datos de rendimiento a tus guiones para ver tus ganadores aquí.",
+    "metrics.link_title": "Conecta tu Instagram",
+    "metrics.link_desc": "Vincula tu usuario para analizar el rendimiento de tus reels — vistas, likes, comentarios y compartidos.",
+    "metrics.link_btn": "Analizar perfil",
+    "metrics.refresh": "Actualizar",
+    "metrics.unlink": "Desvincular",
+    "metrics.sort_by": "Ordenar por:",
+    "metrics.recent": "Recientes",
+    "metrics.views": "Vistas",
+    "metrics.likes": "Likes",
+    "metrics.comments": "Comentarios",
+    "metrics.shares": "Compartidos",
+    "metrics.transcribe": "Transcribir",
+    "metrics.view_transcript": "Ver transcripción",
+    "metrics.open_reel": "Abrir reel",
+    "metrics.analyzing": "Analizando...",
+    "metrics.transcribing": "Transcribiendo...",
+    "metrics.total_views": "Vistas totales",
+    "metrics.total_likes": "Total likes",
+    "metrics.total_comments": "Total comentarios",
+    "metrics.total_shares": "Total compartidos",
+    "metrics.analyses_left": "análisis restantes esta semana",
+    "metrics.unlimited": "análisis ilimitados",
     // View modal
     "view.title": "Transcripción",
     "view.copy": "Copiar",
@@ -5363,8 +5427,28 @@ const LANGS = {
     "team.copied": "Invite link copied!",
     // Metrics
     "metrics.title": "Metrics",
-    "metrics.winners": "Top performers",
-    "metrics.empty": "No metrics yet. Add performance data to your scripts to see your winners here.",
+    "metrics.link_title": "Connect your Instagram",
+    "metrics.link_desc": "Link your username to analyze your reels' performance — views, likes, comments & shares.",
+    "metrics.link_btn": "Analyze profile",
+    "metrics.refresh": "Refresh",
+    "metrics.unlink": "Unlink",
+    "metrics.sort_by": "Sort by:",
+    "metrics.recent": "Recent",
+    "metrics.views": "Views",
+    "metrics.likes": "Likes",
+    "metrics.comments": "Comments",
+    "metrics.shares": "Shares",
+    "metrics.transcribe": "Transcribe",
+    "metrics.view_transcript": "View transcript",
+    "metrics.open_reel": "Open reel",
+    "metrics.analyzing": "Analyzing...",
+    "metrics.transcribing": "Transcribing...",
+    "metrics.total_views": "Total views",
+    "metrics.total_likes": "Total likes",
+    "metrics.total_comments": "Total comments",
+    "metrics.total_shares": "Total shares",
+    "metrics.analyses_left": "analyses left this week",
+    "metrics.unlimited": "unlimited analyses",
     // View modal
     "view.title": "Transcription",
     "view.copy": "Copy",
@@ -6145,129 +6229,163 @@ function closeProfile() {
 // ── Privacy & Data ────────────────────────────────────────────────────────
 
 // Export data
-// ── Add Metrics flow ──────────────────────────────────────────────────────
-let amSelectedProject = null;
-let amSelectedScript = null;
-let amScriptsData = [];
+// ── Instagram Metrics ────────────────────────────────────────────────────
+let igVideosCache = [];
+let igCurrentSort = "published_at";
 
 const PROJECT_COLORS = ["#f97316","#a78bfa","#22c55e","#3b82f6","#ec4899","#14b8a6","#f59e0b"];
 function getProjectColor(name) { return PROJECT_COLORS[(name || "").charCodeAt(0) % PROJECT_COLORS.length]; }
 
-async function openAddMetricsFlow() {
-  if (!projectsCache.length) await loadProjects();
-  if (!projectsCache.length) { showToast(t("toast.create_project_first")); return; }
-
-  // Reset steps
-  document.getElementById("amStep1").style.display = "";
-  document.getElementById("amStep2").style.display = "none";
-  document.getElementById("amStep3").style.display = "none";
-  document.getElementById("amErr").classList.remove("on");
-
-  // Render project list
-  const list = document.getElementById("amProjectList");
-  list.innerHTML = projectsCache.map(p => {
-    const color = getProjectColor(p.name);
-    const initial = (p.name || "?")[0].toUpperCase();
-    return `<button onclick="amPickProject('${p.id}')" style="display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:var(--surf);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s;text-align:left;color:var(--text);font-family:var(--font-body);font-size:.88rem">
-      <div style="width:32px;height:32px;border-radius:8px;background:${color}20;border:1px solid ${color}35;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);color:${color};font-size:.9rem;flex-shrink:0">${initial}</div>
-      <div><div style="font-weight:500">${esc(p.name)}</div><div style="font-size:.72rem;color:var(--text3)">${p.script_count || 0} scripts</div></div>
-    </button>`;
-  }).join("");
-
-  openModal("addMetricsOverlay");
+async function igLink() {
+  const input = document.getElementById("igUsernameInput");
+  const btn = document.getElementById("igLinkBtn");
+  const err = document.getElementById("igLinkErr");
+  const username = input.value.trim().replace(/^@/, "");
+  if (!username) { err.textContent = t("metrics.link_desc"); err.style.display = "block"; return; }
+  err.style.display = "none";
+  btn.textContent = t("metrics.analyzing");
+  btn.disabled = true;
+  try {
+    const r = await fetch("/metrics/ig-profile", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username }),
+    });
+    const d = await r.json();
+    if (!r.ok) { err.textContent = d.error; err.style.display = "block"; return; }
+    showToast(`@${username} — ${d.videos_found} reels`);
+    loadMetricsPanel();
+  } catch { err.textContent = "Error"; err.style.display = "block"; }
+  finally { btn.textContent = t("metrics.link_btn"); btn.disabled = false; }
 }
 
-async function amPickProject(projectId) {
-  amSelectedProject = projectsCache.find(p => p.id === projectId);
-  if (!amSelectedProject) return;
-
-  document.getElementById("amProjectName").textContent = amSelectedProject.name;
-  document.getElementById("amStep1").style.display = "none";
-  document.getElementById("amStep2").style.display = "";
-
-  // Load scripts for this project
-  const list = document.getElementById("amScriptList");
-  list.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3);font-size:.82rem">Loading...</div>';
-
+async function loadMetricsPanel() {
   try {
-    const r = await fetch(`/scripts?project_id=${projectId}`);
-    if (r.ok) amScriptsData = await r.json();
-    else amScriptsData = [];
-  } catch { amScriptsData = []; }
+    const r = await fetch("/metrics/videos");
+    if (!r.ok) return;
+    const d = await r.json();
+    if (!d.ig_profile) {
+      document.getElementById("igEmptyView").style.display = "";
+      document.getElementById("igLinkedView").style.display = "none";
+      return;
+    }
+    document.getElementById("igEmptyView").style.display = "none";
+    document.getElementById("igLinkedView").style.display = "";
+    document.getElementById("igUsername").textContent = "@" + d.ig_profile.ig_username;
+    igVideosCache = d.videos || [];
 
-  if (!amScriptsData.length) {
-    list.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3);font-size:.82rem">No scripts in this project yet.</div>';
+    // Stats row
+    const totals = igVideosCache.reduce((a, v) => {
+      a.views += v.views || 0; a.likes += v.likes || 0;
+      a.comments += v.comments || 0; a.shares += v.shares || 0;
+      return a;
+    }, { views: 0, likes: 0, comments: 0, shares: 0 });
+    document.getElementById("igStatsRow").innerHTML = [
+      { val: totals.views, label: t("metrics.total_views") },
+      { val: totals.likes, label: t("metrics.total_likes") },
+      { val: totals.comments, label: t("metrics.total_comments") },
+      { val: totals.shares, label: t("metrics.total_shares") },
+    ].map(s => `<div class="ig-stat-card"><div class="ig-stat-val">${fmtNum(s.val)}</div><div class="ig-stat-label">${s.label}</div></div>`).join("");
+
+    // Limits info
+    const lim = d.limits || {};
+    const limEl = document.getElementById("igLimitsInfo");
+    if (lim.analyses_per_week === null) limEl.textContent = t("metrics.unlimited");
+    else limEl.textContent = `${Math.max(0, lim.analyses_per_week - lim.analyses_used)}/${lim.analyses_per_week} ${t("metrics.analyses_left")}`;
+
+    renderIgGrid();
+  } catch {}
+}
+
+function renderIgGrid() {
+  const grid = document.getElementById("igGrid");
+  if (!igVideosCache.length) {
+    grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);font-size:.85rem">No reels found</div>';
     return;
   }
-
-  list.innerHTML = amScriptsData.map(s => {
-    const text = (s.script || s.transcription || "").slice(0, 60);
-    const hasMetrics = s.views_count || s.likes;
-    return `<button onclick="amPickScript('${s.id}')" style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;background:var(--surf);border:1px solid var(--border);border-radius:8px;cursor:pointer;text-align:left;color:var(--text);font-family:var(--font-body);font-size:.84rem;transition:all .15s">
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:500;margin-bottom:2px">${esc(s.title || "Untitled")}</div>
-        <div style="font-size:.72rem;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(text)}</div>
+  grid.innerHTML = igVideosCache.map(v => {
+    const hasTranscript = !!v.transcript;
+    const date = v.published_at ? new Date(v.published_at).toLocaleDateString() : "";
+    return `<div class="ig-card" id="igc-${v.ig_video_id}">
+      ${v.thumbnail_url ? `<img class="ig-card-thumb" src="${esc(v.thumbnail_url)}" alt="" loading="lazy" onerror="this.style.display='none'"/>` : '<div class="ig-card-thumb"></div>'}
+      <div class="ig-card-body">
+        <div class="ig-card-caption">${esc(v.caption || "—")}</div>
+        <div class="ig-card-stats">
+          <span>👁 ${fmtNum(v.views)}</span>
+          <span>❤ ${fmtNum(v.likes)}</span>
+          <span>💬 ${fmtNum(v.comments)}</span>
+          <span>↗ ${fmtNum(v.shares)}</span>
+        </div>
+        ${date ? `<div style="font-size:.68rem;color:var(--text3);margin-bottom:8px">${date}</div>` : ""}
+        <div class="ig-card-actions">
+          ${hasTranscript
+            ? `<button class="ig-card-btn" onclick="igShowTranscript('${v.ig_video_id}')">${t("metrics.view_transcript")}</button>`
+            : `<button class="ig-card-btn primary" onclick="igTranscribe('${v.ig_video_id}')" id="igtr-${v.ig_video_id}">${t("metrics.transcribe")}</button>`}
+          ${v.ig_url ? `<a class="ig-card-btn" href="${esc(v.ig_url)}" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">${t("metrics.open_reel")}</a>` : ""}
+        </div>
+        ${hasTranscript ? `<div class="ig-card-transcript" id="igt-${v.ig_video_id}" style="display:none">${esc(v.transcript)}</div>` : ""}
       </div>
-      ${hasMetrics ? '<span style="font-size:.65rem;padding:2px 6px;border-radius:4px;background:rgba(34,197,94,.15);color:#22c55e;flex-shrink:0">Has data</span>' : ''}
-    </button>`;
+    </div>`;
   }).join("");
 }
 
-function amBackToProjects() {
-  document.getElementById("amStep1").style.display = "";
-  document.getElementById("amStep2").style.display = "none";
-}
-
-function amPickScript(scriptId) {
-  amSelectedScript = amScriptsData.find(s => s.id === scriptId);
-  if (!amSelectedScript) return;
-
-  document.getElementById("amScriptName").textContent = amSelectedScript.title || "Untitled";
-  document.getElementById("amStep2").style.display = "none";
-  document.getElementById("amStep3").style.display = "";
-
-  // Pre-fill existing data
-  document.getElementById("am-views").value = amSelectedScript.views_count || "";
-  document.getElementById("am-likes").value = amSelectedScript.likes || "";
-  document.getElementById("am-comments").value = amSelectedScript.comments || "";
-  document.getElementById("am-saves").value = amSelectedScript.saves || "";
-  document.getElementById("am-eng").value = amSelectedScript.engagement_rate || "";
-  document.getElementById("am-notes").value = amSelectedScript.performance_notes || "";
-}
-
-function amBackToScripts() {
-  document.getElementById("amStep2").style.display = "";
-  document.getElementById("amStep3").style.display = "none";
-}
-
-async function amSaveMetrics() {
-  if (!amSelectedScript) return;
-  const err = document.getElementById("amErr");
-  err.classList.remove("on");
-
-  const body = {
-    views_count: parseInt(document.getElementById("am-views").value) || null,
-    likes: parseInt(document.getElementById("am-likes").value) || null,
-    comments: parseInt(document.getElementById("am-comments").value) || null,
-    saves: parseInt(document.getElementById("am-saves").value) || null,
-    engagement_rate: parseFloat(document.getElementById("am-eng").value) || null,
-    performance_notes: document.getElementById("am-notes").value.trim() || null,
-  };
-
-  const res = await fetch(`/scripts/${amSelectedScript.id}`, {
-    method: "PATCH", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  if (res.ok) {
-    closeModal("addMetricsOverlay");
-    showToast(t("toast.perf_saved"));
-    loadMetricsSummary();
-  } else {
-    err.textContent = "Error saving";
-    err.classList.add("on");
+function igSort(field) {
+  igCurrentSort = field;
+  document.querySelectorAll(".ig-sort-btn").forEach(b => b.classList.remove("on"));
+  document.querySelector(`.ig-sort-btn[onclick="igSort('${field}')"]`).classList.add("on");
+  igVideosCache.sort((a, b) => (b[field] || 0) - (a[field] || 0));
+  if (field === "published_at") {
+    igVideosCache.sort((a, b) => new Date(b.published_at || 0) - new Date(a.published_at || 0));
   }
+  renderIgGrid();
 }
+
+function igShowTranscript(vid) {
+  const el = document.getElementById("igt-" + vid);
+  if (el) el.style.display = el.style.display === "none" ? "" : "none";
+}
+
+async function igTranscribe(vid) {
+  const btn = document.getElementById("igtr-" + vid);
+  if (!btn) return;
+  btn.textContent = t("metrics.transcribing");
+  btn.disabled = true;
+  try {
+    const r = await fetch("/metrics/transcribe-video", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ig_video_id: vid }),
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.error || "Error"); btn.textContent = t("metrics.transcribe"); btn.disabled = false; return; }
+    const v = igVideosCache.find(x => x.ig_video_id === vid);
+    if (v) v.transcript = d.transcript;
+    renderIgGrid();
+    showToast("Transcription done");
+  } catch { btn.textContent = t("metrics.transcribe"); btn.disabled = false; }
+}
+
+async function igRefresh() {
+  const btn = document.getElementById("igRefreshBtn");
+  btn.textContent = t("metrics.analyzing");
+  btn.disabled = true;
+  try {
+    const r = await fetch("/metrics/analyze", { method: "POST" });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.error || "Error"); return; }
+    showToast(`${d.videos_updated} reels updated`);
+    loadMetricsPanel();
+  } catch { showToast("Error"); }
+  finally { btn.textContent = t("metrics.refresh"); btn.disabled = false; }
+}
+
+async function igUnlink() {
+  if (!confirm("Unlink Instagram profile? All metrics data will be deleted.")) return;
+  try {
+    const r = await fetch("/metrics/ig-profile", { method: "DELETE" });
+    if (r.ok) { igVideosCache = []; loadMetricsPanel(); showToast("Profile unlinked"); }
+  } catch {}
+}
+
+function loadMetricsSummary() { loadMetricsPanel(); }
 
 // ── Export & Delete ──────────────────────────────────────────────────────
 async function exportMyData() {
@@ -6995,66 +7113,7 @@ async function saveMetrics(scriptId, idx) {
   } else showToast(t('toast.error_save'));
 }
 
-async function loadMetricsSummary() {
-  try {
-    const r = await fetch('/metrics/summary');
-    if (!r.ok) return;
-    const d = await r.json();
-    document.getElementById('metricsSummary').innerHTML = `
-      <div class="metrics-summary-card">
-        <div class="metrics-summary-val">${fmtNum(d.total_views)}</div>
-        <div class="metrics-summary-label">Total Views</div>
-      </div>
-      <div class="metrics-summary-card">
-        <div class="metrics-summary-val">${fmtNum(d.total_likes)}</div>
-        <div class="metrics-summary-label">Total Likes</div>
-      </div>
-      <div class="metrics-summary-card">
-        <div class="metrics-summary-val">${fmtNum(d.total_comments)}</div>
-        <div class="metrics-summary-label">Total Comments</div>
-      </div>
-      <div class="metrics-summary-card">
-        <div class="metrics-summary-val">${fmtNum(d.total_saves)}</div>
-        <div class="metrics-summary-label">Total Saves</div>
-      </div>
-    `;
-    loadMetricsWinners();
-  } catch {}
-}
-
-async function loadMetricsWinners() {
-  const rankBy = document.getElementById('metricsRankBy').value;
-  try {
-    const r = await fetch('/metrics/winners?rank_by=' + rankBy + '&limit=5');
-    if (!r.ok) return;
-    const data = await r.json();
-    const el = document.getElementById('metricsWinners');
-
-    if (!data.length) {
-      el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">${EMPTY_ICON}</div>${t('metrics.empty')}<br><button class="btn-sm" style="margin-top:12px;background:var(--purple);color:#fff;border:none;padding:8px 16px" onclick="openAddMetricsFlow()">+ Add metrics</button></div>`;
-      return;
-    }
-
-    el.innerHTML = data.map((s, i) => {
-      const text = s.script || s.transcription || '';
-      const val = s[rankBy] || 0;
-      return `
-      <div class="metrics-winner-card" onclick="openProjDetail('${s.project_id}')">
-        <div class="metrics-winner-rank ${i === 0 ? 'top' : ''}">${i + 1}</div>
-        <div class="metrics-winner-body">
-          <div class="metrics-winner-title">${esc(s.title || 'Untitled')}</div>
-          <div class="metrics-winner-preview">${esc(text.slice(0, 120))}</div>
-          <div class="metrics-winner-stats">
-            ${s.views_count ? '👁 ' + fmtNum(s.views_count) : ''}
-            ${s.likes ? ' · ❤ ' + fmtNum(s.likes) : ''}
-            ${s.comments ? ' · 💬 ' + fmtNum(s.comments) : ''}
-          </div>
-        </div>
-        <div class="metrics-winner-highlight">${rankBy === 'engagement_rate' ? val + '%' : fmtNum(val)}</div>
-      </div>`;
-    }).join('');
-  } catch {}
-}
+// (old loadMetricsSummary/loadMetricsWinners replaced — now using loadMetricsPanel above)
 
 function viewProjScript(idx) {
   const s = projScripts[idx];
@@ -10032,47 +10091,7 @@ window.addEventListener("DOMContentLoaded", () => {
 </div>
 
 <!-- ADD METRICS MODAL -->
-<div class="overlay" id="addMetricsOverlay" onclick="backdropClose(event,'addMetricsOverlay')" style="z-index:400">
-  <div class="modal" style="max-width:480px;padding:28px 24px">
-    <button class="modal-x" onclick="closeModal('addMetricsOverlay')">&#10005;</button>
-    <h2 style="font-size:1.1rem;margin-bottom:4px">Add metrics to a script</h2>
-    <p style="color:var(--text2);font-size:.82rem;margin-bottom:20px;font-weight:300">Pick a project and script, then enter performance data.</p>
-
-    <!-- Step 1: pick project -->
-    <div id="amStep1">
-      <label style="display:block;font-size:.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Project</label>
-      <div id="amProjectList" style="display:flex;flex-direction:column;gap:6px"></div>
-    </div>
-
-    <!-- Step 2: pick script -->
-    <div id="amStep2" style="display:none">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-        <button class="btn-sm" onclick="amBackToProjects()" style="padding:4px 8px">←</button>
-        <span style="font-size:.85rem;font-weight:600" id="amProjectName"></span>
-      </div>
-      <label style="display:block;font-size:.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Script</label>
-      <div id="amScriptList" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto"></div>
-    </div>
-
-    <!-- Step 3: metrics form -->
-    <div id="amStep3" style="display:none">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-        <button class="btn-sm" onclick="amBackToScripts()" style="padding:4px 8px">←</button>
-        <span style="font-size:.85rem;font-weight:600" id="amScriptName"></span>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
-        <div class="metric-field"><label>Views</label><input type="number" id="am-views" placeholder="0" /></div>
-        <div class="metric-field"><label>Likes</label><input type="number" id="am-likes" placeholder="0" /></div>
-        <div class="metric-field"><label>Comments</label><input type="number" id="am-comments" placeholder="0" /></div>
-        <div class="metric-field"><label>Saves</label><input type="number" id="am-saves" placeholder="0" /></div>
-        <div class="metric-field"><label>Engagement %</label><input type="number" step="0.01" id="am-eng" placeholder="0.00" /></div>
-      </div>
-      <div class="metric-field" style="margin-top:8px"><label>Notes</label><textarea id="am-notes" rows="2" placeholder="Performance notes..." style="width:100%;padding:7px 10px;background:var(--surf2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.82rem;font-family:var(--font-body);outline:none;resize:vertical"></textarea></div>
-      <button class="btn-full" style="margin-top:14px;background:var(--purple)" onclick="amSaveMetrics()">Save metrics</button>
-      <div class="form-err" id="amErr"></div>
-    </div>
-  </div>
-</div>
+<!-- (metrics overlay removed — now inline in profPanelMetrics) -->
 
 <!-- DELETE ACCOUNT MODAL -->
 <div class="overlay" id="deleteAccountOverlay" onclick="backdropClose(event,'deleteAccountOverlay')" style="z-index:400">

@@ -2472,6 +2472,336 @@ def sitemap():
     return Response(xml, mimetype="application/xml")
 
 
+# ── Metrics (Instagram analytics) ────────────────────────────────────────────
+
+METRICS_LIMITS = {
+    "free":   {"analyses_per_week": 1, "videos_per_analysis": 5},
+    "basic":  {"analyses_per_week": 2, "videos_per_analysis": 10},
+    "pro":    {"analyses_per_week": 5, "videos_per_analysis": 20},
+    "agency": {"analyses_per_week": None, "videos_per_analysis": 20},
+}
+
+
+def _metrics_week_reset(profile: dict) -> dict:
+    """Reset weekly metrics counter if current Monday UTC has passed."""
+    now = datetime.now(timezone.utc)
+    monday = now - timedelta(days=now.weekday())
+    monday = monday.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    reset_at = profile.get("metrics_week_reset_at")
+    if reset_at:
+        if isinstance(reset_at, str):
+            try:
+                reset_dt = datetime.fromisoformat(reset_at.replace("Z", "+00:00"))
+            except ValueError:
+                reset_dt = monday
+        else:
+            reset_dt = reset_at
+        if reset_dt >= monday:
+            return profile
+    next_monday = monday + timedelta(days=7)
+    db.table("profiles").update({
+        "metrics_analyses_this_week": 0,
+        "metrics_week_reset_at": next_monday.isoformat(),
+    }).eq("id", profile["id"]).execute()
+    profile["metrics_analyses_this_week"] = 0
+    profile["metrics_week_reset_at"] = next_monday.isoformat()
+    return profile
+
+
+def _check_metrics_limit(profile: dict) -> tuple[bool, str | None]:
+    plan = profile.get("plan", "free")
+    limits = METRICS_LIMITS.get(plan, METRICS_LIMITS["free"])
+    max_per_week = limits["analyses_per_week"]
+    if max_per_week is None:
+        return True, None
+    profile = _metrics_week_reset(profile)
+    used = profile.get("metrics_analyses_this_week", 0)
+    if used >= max_per_week:
+        return False, f"Has alcanzado el límite de {max_per_week} análisis/semana de tu plan."
+    return True, None
+
+
+def _scrape_ig_reels(username_or_urls: list[str], limit: int = 10) -> list[dict]:
+    """Call Apify instagram-reel-scraper and return normalized items."""
+    actor_url = (
+        f"https://api.apify.com/v2/acts/xMc5Ga1oCONPmWJIa"
+        f"/run-sync-get-dataset-items?token={APIFY_TOKEN}&memory=512"
+    )
+    resp = requests.post(
+        actor_url,
+        json={
+            "username": username_or_urls,
+            "resultsLimit": limit,
+            "includeSharesCount": True,
+        },
+        timeout=180,
+    )
+    resp.raise_for_status()
+    items = resp.json()
+    results = []
+    for item in items:
+        sc = item.get("shortCode") or item.get("id", "")
+        if not sc:
+            continue
+        results.append({
+            "ig_video_id": sc,
+            "ig_url": item.get("url", ""),
+            "caption": (item.get("caption") or "")[:2000],
+            "thumbnail_url": item.get("displayUrl", ""),
+            "views": item.get("videoViewCount", 0) or 0,
+            "likes": item.get("likesCount", 0) or 0,
+            "comments": item.get("commentsCount", 0) or 0,
+            "shares": item.get("sharesCount", 0) or 0,
+            "published_at": item.get("timestamp"),
+        })
+    return results
+
+
+@app.route("/metrics/ig-profile", methods=["POST"])
+@require_auth
+@limiter.limit("5 per minute")
+def metrics_link_profile():
+    user = current_user()
+    body = request.get_json() or {}
+    username = (body.get("username") or "").strip().lstrip("@")
+    if not username or len(username) > 60:
+        return jsonify({"error": "Username inválido"}), 400
+
+    existing = db.table("ig_profiles").select("id").eq("user_id", user["id"]).execute()
+    if existing.data:
+        return jsonify({"error": "Ya tienes un perfil de Instagram vinculado"}), 409
+
+    profile = get_profile(user["id"])
+    ok, err = _check_metrics_limit(profile)
+    if not ok:
+        return jsonify({"error": err}), 429
+
+    plan = profile.get("plan", "free")
+    limits = METRICS_LIMITS.get(plan, METRICS_LIMITS["free"])
+    max_videos = limits["videos_per_analysis"]
+
+    try:
+        videos = _scrape_ig_reels([username], limit=max_videos)
+    except Exception as e:
+        logger.error(f"Apify scrape failed for @{username}: {e}", exc_info=True)
+        return jsonify({"error": "No se pudo analizar el perfil. Verifica que el usuario existe y tiene reels públicos."}), 400
+
+    row = db.table("ig_profiles").insert({
+        "user_id": user["id"],
+        "ig_username": username,
+    }).execute()
+    ig_profile_id = row.data[0]["id"]
+
+    if videos:
+        for v in videos:
+            v["ig_profile_id"] = ig_profile_id
+        db.table("ig_videos").upsert(videos, on_conflict="ig_video_id").execute()
+
+    db.table("profiles").update({
+        "metrics_analyses_this_week": profile.get("metrics_analyses_this_week", 0) + 1,
+    }).eq("id", user["id"]).execute()
+
+    return jsonify({"ok": True, "ig_profile_id": ig_profile_id, "videos_found": len(videos)})
+
+
+@app.route("/metrics/analyze", methods=["POST"])
+@require_auth
+@limiter.limit("5 per minute")
+def metrics_analyze():
+    user = current_user()
+    ig_prof = db.table("ig_profiles").select("*").eq("user_id", user["id"]).execute()
+    if not ig_prof.data:
+        return jsonify({"error": "No tienes un perfil de Instagram vinculado"}), 404
+
+    profile = get_profile(user["id"])
+    ok, err = _check_metrics_limit(profile)
+    if not ok:
+        return jsonify({"error": err}), 429
+
+    plan = profile.get("plan", "free")
+    limits = METRICS_LIMITS.get(plan, METRICS_LIMITS["free"])
+    max_videos = limits["videos_per_analysis"]
+    username = ig_prof.data[0]["ig_username"]
+    ig_profile_id = ig_prof.data[0]["id"]
+
+    try:
+        videos = _scrape_ig_reels([username], limit=max_videos)
+    except Exception as e:
+        logger.error(f"Apify re-scrape failed for @{username}: {e}", exc_info=True)
+        return jsonify({"error": "Error al analizar el perfil"}), 500
+
+    if videos:
+        for v in videos:
+            v["ig_profile_id"] = ig_profile_id
+        db.table("ig_videos").upsert(videos, on_conflict="ig_video_id").execute()
+
+    db.table("ig_profiles").update({
+        "last_scraped_at": datetime.now(timezone.utc).isoformat(),
+    }).eq("id", ig_profile_id).execute()
+
+    db.table("profiles").update({
+        "metrics_analyses_this_week": profile.get("metrics_analyses_this_week", 0) + 1,
+    }).eq("id", user["id"]).execute()
+
+    return jsonify({"ok": True, "videos_updated": len(videos)})
+
+
+@app.route("/metrics/analyze-one", methods=["POST"])
+@require_auth
+@limiter.limit("10 per minute")
+def metrics_analyze_one():
+    user = current_user()
+    body = request.get_json() or {}
+    reel_url = (body.get("url") or "").strip()
+    if not reel_url or "instagram.com" not in reel_url:
+        return jsonify({"error": "URL de reel inválida"}), 400
+
+    ig_prof = db.table("ig_profiles").select("*").eq("user_id", user["id"]).execute()
+    if not ig_prof.data:
+        return jsonify({"error": "No tienes un perfil de Instagram vinculado"}), 404
+    ig_profile_id = ig_prof.data[0]["id"]
+
+    try:
+        videos = _scrape_ig_reels([reel_url], limit=1)
+    except Exception as e:
+        logger.error(f"Apify single scrape failed: {e}", exc_info=True)
+        return jsonify({"error": "No se pudo analizar el reel"}), 500
+
+    if not videos:
+        return jsonify({"error": "No se encontraron datos para este reel"}), 404
+
+    video = videos[0]
+    video["ig_profile_id"] = ig_profile_id
+    db.table("ig_videos").upsert([video], on_conflict="ig_video_id").execute()
+
+    return jsonify({"ok": True, "video": video})
+
+
+@app.route("/metrics/transcribe-video", methods=["POST"])
+@require_auth
+@limiter.limit("10 per minute")
+def metrics_transcribe_video():
+    user = current_user()
+    body = request.get_json() or {}
+    ig_video_id = (body.get("ig_video_id") or "").strip()
+    if not ig_video_id:
+        return jsonify({"error": "ig_video_id requerido"}), 400
+
+    ig_prof = db.table("ig_profiles").select("id").eq("user_id", user["id"]).execute()
+    if not ig_prof.data:
+        return jsonify({"error": "No tienes un perfil vinculado"}), 404
+    ig_profile_id = ig_prof.data[0]["id"]
+
+    vid = db.table("ig_videos").select("*").eq("ig_video_id", ig_video_id).eq("ig_profile_id", ig_profile_id).execute()
+    if not vid.data:
+        return jsonify({"error": "Vídeo no encontrado"}), 404
+    video = vid.data[0]
+
+    if video.get("transcript"):
+        return jsonify({"ok": True, "transcript": video["transcript"], "cached": True})
+
+    profile = get_profile(user["id"])
+    is_unlimited = user.get("email", "").lower() in UNLIMITED_EMAILS
+    if not is_unlimited:
+        user_plan = profile.get("plan", "free")
+        if user_plan in ("basic", "pro", "agency"):
+            ok, err_msg = check_monthly_limit(profile)
+            if not ok:
+                return jsonify({"error": err_msg}), 429
+        elif profile["credits_cents"] >= COST_CENTS:
+            pass
+        elif profile["free_used_today"] < FREE_DAILY_USER:
+            pass
+        else:
+            return jsonify({"error": "Sin usos disponibles para transcribir"}), 429
+
+    reel_url = video.get("ig_url")
+    if not reel_url:
+        return jsonify({"error": "No hay URL del reel para transcribir"}), 400
+
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            audio_path = download_audio(reel_url, tmp, "instagram")
+            language = (body.get("language") or "").strip() or None
+            text = transcribe_with_groq(audio_path, language)
+    except Exception as e:
+        logger.error(f"Metrics transcribe failed for {ig_video_id}: {e}", exc_info=True)
+        return jsonify({"error": "Error al transcribir el vídeo"}), 500
+
+    db.table("ig_videos").update({"transcript": text}).eq("ig_video_id", ig_video_id).execute()
+
+    if not is_unlimited:
+        user_plan = profile.get("plan", "free")
+        if user_plan in ("basic", "pro", "agency"):
+            db.table("profiles").update({
+                "monthly_usage": profile.get("monthly_usage", 0) + 1
+            }).eq("id", user["id"]).execute()
+        elif profile["credits_cents"] >= COST_CENTS:
+            db.table("profiles").update({
+                "credits_cents": profile["credits_cents"] - COST_CENTS
+            }).eq("id", user["id"]).execute()
+        else:
+            db.table("profiles").update({
+                "free_used_today": profile["free_used_today"] + 1
+            }).eq("id", user["id"]).execute()
+
+    return jsonify({"ok": True, "transcript": text})
+
+
+@app.route("/metrics/videos")
+@require_auth
+def metrics_list_videos():
+    user = current_user()
+    ig_prof = db.table("ig_profiles").select("*").eq("user_id", user["id"]).execute()
+    if not ig_prof.data:
+        return jsonify({"ig_profile": None, "videos": []})
+
+    ig_profile = ig_prof.data[0]
+    sort_by = request.args.get("sort", "published_at")
+    allowed_sorts = {"published_at", "views", "likes", "comments", "shares"}
+    if sort_by not in allowed_sorts:
+        sort_by = "published_at"
+
+    videos = db.table("ig_videos").select("*").eq(
+        "ig_profile_id", ig_profile["id"]
+    ).order(sort_by, desc=True).execute()
+
+    profile = get_profile(user["id"])
+    plan = profile.get("plan", "free")
+    limits = METRICS_LIMITS.get(plan, METRICS_LIMITS["free"])
+    profile = _metrics_week_reset(profile)
+
+    return jsonify({
+        "ig_profile": {
+            "id": ig_profile["id"],
+            "ig_username": ig_profile["ig_username"],
+            "last_scraped_at": ig_profile.get("last_scraped_at"),
+        },
+        "videos": videos.data,
+        "limits": {
+            "analyses_per_week": limits["analyses_per_week"],
+            "analyses_used": profile.get("metrics_analyses_this_week", 0),
+            "videos_per_analysis": limits["videos_per_analysis"],
+        },
+    })
+
+
+@app.route("/metrics/ig-profile", methods=["DELETE"])
+@require_auth
+def metrics_unlink_profile():
+    user = current_user()
+    ig_prof = db.table("ig_profiles").select("id").eq("user_id", user["id"]).execute()
+    if not ig_prof.data:
+        return jsonify({"error": "No hay perfil vinculado"}), 404
+
+    ig_profile_id = ig_prof.data[0]["id"]
+    db.table("ig_videos").delete().eq("ig_profile_id", ig_profile_id).execute()
+    db.table("ig_profiles").delete().eq("id", ig_profile_id).execute()
+
+    return jsonify({"ok": True})
+
+
 @app.route("/robots.txt")
 def robots():
     txt = (
