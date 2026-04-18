@@ -2528,15 +2528,18 @@ def _scrape_ig_reels(username_or_urls: list[str], limit: int = 10) -> list[dict]
         f"https://api.apify.com/v2/acts/xMc5Ga1oCONPmWJIa"
         f"/run-sync-get-dataset-items?token={APIFY_TOKEN}&memory=512"
     )
+    payload = {
+        "username": username_or_urls,
+        "resultsLimit": limit,
+        "includeSharesCount": True,
+    }
+    logger.info(f"[IG-METRICS] Apify request — url: {actor_url.split('?')[0]}, payload: {payload}")
     resp = requests.post(
         actor_url,
-        json={
-            "username": username_or_urls,
-            "resultsLimit": limit,
-            "includeSharesCount": True,
-        },
+        json=payload,
         timeout=180,
     )
+    logger.info(f"[IG-METRICS] Apify response — status: {resp.status_code}, body (first 1000): {resp.text[:1000]}")
     resp.raise_for_status()
     items = resp.json()
     results = []
@@ -2581,11 +2584,16 @@ def metrics_link_profile():
     limits = METRICS_LIMITS.get(plan, METRICS_LIMITS["free"])
     max_videos = limits["videos_per_analysis"]
 
+    logger.info(f"[IG-METRICS] Link profile — username: '{username}', plan: {plan}, max_videos: {max_videos}")
     try:
         videos = _scrape_ig_reels([username], limit=max_videos)
+        logger.info(f"[IG-METRICS] Scrape result — {len(videos)} videos returned for @{username}")
     except Exception as e:
-        logger.error(f"Apify scrape failed for @{username}: {e}", exc_info=True)
+        logger.error(f"[IG-METRICS] Apify scrape FAILED for @{username}: {type(e).__name__}: {e}", exc_info=True)
         return jsonify({"error": "No se pudo analizar el perfil. Verifica que el usuario existe y tiene reels públicos."}), 400
+
+    if not videos:
+        return jsonify({"error": "No se encontraron reels para este perfil."}), 400
 
     row = db.table("ig_profiles").insert({
         "user_id": user["id"],
@@ -2593,10 +2601,14 @@ def metrics_link_profile():
     }).execute()
     ig_profile_id = row.data[0]["id"]
 
-    if videos:
+    try:
         for v in videos:
             v["ig_profile_id"] = ig_profile_id
         db.table("ig_videos").upsert(videos, on_conflict="ig_video_id").execute()
+    except Exception as e:
+        logger.error(f"[IG-METRICS] Video upsert FAILED: {e}", exc_info=True)
+        db.table("ig_profiles").delete().eq("id", ig_profile_id).execute()
+        return jsonify({"error": "Error al guardar los vídeos. Inténtalo de nuevo."}), 500
 
     db.table("profiles").update({
         "metrics_analyses_this_week": profile.get("metrics_analyses_this_week", 0) + 1,
@@ -2622,13 +2634,17 @@ def metrics_analyze():
     plan = profile.get("plan", "free")
     limits = METRICS_LIMITS.get(plan, METRICS_LIMITS["free"])
     max_videos = limits["videos_per_analysis"]
+    body = request.get_json(silent=True) or {}
+    requested = body.get("count")
+    if requested and isinstance(requested, int) and 1 <= requested <= max_videos:
+        max_videos = requested
     username = ig_prof.data[0]["ig_username"]
     ig_profile_id = ig_prof.data[0]["id"]
 
     try:
         videos = _scrape_ig_reels([username], limit=max_videos)
     except Exception as e:
-        logger.error(f"Apify re-scrape failed for @{username}: {e}", exc_info=True)
+        logger.error(f"[IG-METRICS] Re-scrape FAILED for @{username}: {e}", exc_info=True)
         return jsonify({"error": "Error al analizar el perfil"}), 500
 
     if videos:

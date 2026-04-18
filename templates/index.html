@@ -4587,6 +4587,16 @@
               <button class="ig-card-btn" onclick="igUnlink()" style="color:#f87171;border-color:rgba(248,113,113,.3)" data-i18n="metrics.unlink">Unlink</button>
             </div>
           </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap" id="igAnalyzeBar">
+            <button class="ig-card-btn primary" style="padding:10px 20px;font-size:.88rem;font-weight:600" onclick="igAnalyze()" id="igAnalyzeBtn" data-i18n="metrics.analyze_btn">Analyze reels</button>
+            <select id="igAnalyzeCount" onchange="localStorage.setItem('ig_count',this.value)" style="padding:8px 12px;background:var(--surf);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:.82rem;font-family:var(--font-body);outline:none;cursor:pointer">
+              <option value="5">5 reels</option>
+              <option value="10">10 reels</option>
+              <option value="15">15 reels</option>
+              <option value="20">20 reels</option>
+            </select>
+            <span style="font-size:.7rem;color:var(--text3)" id="igLimitsInfo"></span>
+          </div>
           <div class="ig-stats-row" id="igStatsRow"></div>
           <div class="ig-sort-bar">
             <span style="font-size:.75rem;color:var(--text3);margin-right:4px" data-i18n="metrics.sort_by">Sort by:</span>
@@ -4595,7 +4605,6 @@
             <button class="ig-sort-btn" onclick="igSort('likes')" data-i18n="metrics.likes">Likes</button>
             <button class="ig-sort-btn" onclick="igSort('comments')" data-i18n="metrics.comments">Comments</button>
             <button class="ig-sort-btn" onclick="igSort('shares')" data-i18n="metrics.shares">Shares</button>
-            <span style="margin-left:auto;font-size:.7rem;color:var(--text3)" id="igLimitsInfo"></span>
           </div>
           <div class="ig-grid" id="igGrid"></div>
         </div>
@@ -5125,6 +5134,7 @@ const LANGS = {
     "metrics.total_likes": "Total likes",
     "metrics.total_comments": "Total comentarios",
     "metrics.total_shares": "Total compartidos",
+    "metrics.analyze_btn": "Analizar reels",
     "metrics.analyses_left": "análisis restantes esta semana",
     "metrics.unlimited": "análisis ilimitados",
     // View modal
@@ -5447,6 +5457,7 @@ const LANGS = {
     "metrics.total_likes": "Total likes",
     "metrics.total_comments": "Total comments",
     "metrics.total_shares": "Total shares",
+    "metrics.analyze_btn": "Analyze reels",
     "metrics.analyses_left": "analyses left this week",
     "metrics.unlimited": "unlimited analyses",
     // View modal
@@ -6259,6 +6270,8 @@ async function igLink() {
 }
 
 async function loadMetricsPanel() {
+  const countSel = document.getElementById("igAnalyzeCount");
+  if (countSel) countSel.value = localStorage.getItem("ig_count") || "10";
   try {
     const r = await fetch("/metrics/videos");
     if (!r.ok) return;
@@ -6363,18 +6376,27 @@ async function igTranscribe(vid) {
   } catch { btn.textContent = t("metrics.transcribe"); btn.disabled = false; }
 }
 
-async function igRefresh() {
-  const btn = document.getElementById("igRefreshBtn");
+function igGetCount() {
+  return parseInt(localStorage.getItem("ig_count") || "10");
+}
+
+async function igAnalyze() {
+  const btn = document.getElementById("igAnalyzeBtn");
+  const count = igGetCount();
   btn.textContent = t("metrics.analyzing");
   btn.disabled = true;
   try {
-    const r = await fetch("/metrics/analyze", { method: "POST" });
+    const r = await fetch("/metrics/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ count }) });
     const d = await r.json();
     if (!r.ok) { showToast(d.error || "Error"); return; }
     showToast(`${d.videos_updated} reels updated`);
     loadMetricsPanel();
   } catch { showToast("Error"); }
-  finally { btn.textContent = t("metrics.refresh"); btn.disabled = false; }
+  finally { btn.textContent = t("metrics.analyze_btn"); btn.disabled = false; }
+}
+
+async function igRefresh() {
+  igAnalyze();
 }
 
 async function igUnlink() {
