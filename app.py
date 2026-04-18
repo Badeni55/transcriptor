@@ -2603,8 +2603,9 @@ def metrics_link_profile():
 
     try:
         for v in videos:
+            v["user_id"] = user["id"]
             v["ig_profile_id"] = ig_profile_id
-        db.table("ig_videos").upsert(videos, on_conflict="ig_video_id").execute()
+        db.table("ig_videos").upsert(videos, on_conflict="user_id,ig_video_id").execute()
     except Exception as e:
         logger.error(f"[IG-METRICS] Video upsert FAILED: {e}", exc_info=True)
         db.table("ig_profiles").delete().eq("id", ig_profile_id).execute()
@@ -2649,8 +2650,9 @@ def metrics_analyze():
 
     if videos:
         for v in videos:
+            v["user_id"] = user["id"]
             v["ig_profile_id"] = ig_profile_id
-        db.table("ig_videos").upsert(videos, on_conflict="ig_video_id").execute()
+        db.table("ig_videos").upsert(videos, on_conflict="user_id,ig_video_id").execute()
 
     db.table("ig_profiles").update({
         "last_scraped_at": datetime.now(timezone.utc).isoformat(),
@@ -2688,8 +2690,9 @@ def metrics_analyze_one():
         return jsonify({"error": "No se encontraron datos para este reel"}), 404
 
     video = videos[0]
+    video["user_id"] = user["id"]
     video["ig_profile_id"] = ig_profile_id
-    db.table("ig_videos").upsert([video], on_conflict="ig_video_id").execute()
+    db.table("ig_videos").upsert([video], on_conflict="user_id,ig_video_id").execute()
 
     return jsonify({"ok": True, "video": video})
 
