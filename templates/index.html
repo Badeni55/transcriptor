@@ -6316,7 +6316,7 @@ function renderIgGrid() {
     return;
   }
   grid.innerHTML = igVideosCache.map(v => {
-    const hasTranscript = !!v.transcript;
+    const hasTranscript = !!v.transcription;
     const date = v.published_at ? new Date(v.published_at).toLocaleDateString() : "";
     return `<div class="ig-card" id="igc-${v.ig_video_id}">
       ${v.thumbnail_url ? `<img class="ig-card-thumb" src="${esc(v.thumbnail_url)}" alt="" loading="lazy" onerror="this.style.display='none'"/>` : '<div class="ig-card-thumb"></div>'}
@@ -6335,7 +6335,7 @@ function renderIgGrid() {
             : `<button class="ig-card-btn primary" onclick="igTranscribe('${v.ig_video_id}')" id="igtr-${v.ig_video_id}">${t("metrics.transcribe")}</button>`}
           ${v.ig_url ? `<a class="ig-card-btn" href="${esc(v.ig_url)}" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">${t("metrics.open_reel")}</a>` : ""}
         </div>
-        ${hasTranscript ? `<div class="ig-card-transcript" id="igt-${v.ig_video_id}" style="display:none">${esc(v.transcript)}</div>` : ""}
+        ${hasTranscript ? `<div class="ig-card-transcript" id="igt-${v.ig_video_id}" style="display:none">${esc(v.transcription)}</div>` : ""}
       </div>
     </div>`;
   }).join("");
@@ -6370,7 +6370,7 @@ async function igTranscribe(vid) {
     const d = await r.json();
     if (!r.ok) { showToast(d.error || "Error"); btn.textContent = t("metrics.transcribe"); btn.disabled = false; return; }
     const v = igVideosCache.find(x => x.ig_video_id === vid);
-    if (v) v.transcript = d.transcript;
+    if (v) v.transcription = d.transcript;
     renderIgGrid();
     showToast("Transcription done");
   } catch { btn.textContent = t("metrics.transcribe"); btn.disabled = false; }

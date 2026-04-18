@@ -13,7 +13,7 @@ from functools import wraps
 import requests
 import yt_dlp
 from dotenv import load_dotenv
-from flask import Flask, Response, jsonify, redirect, render_template, request, session
+from flask import Flask, Response, abort, jsonify, redirect, render_template, request, session
 
 load_dotenv()
 
@@ -2719,8 +2719,8 @@ def metrics_transcribe_video():
         return jsonify({"error": "Vídeo no encontrado"}), 404
     video = vid.data[0]
 
-    if video.get("transcript"):
-        return jsonify({"ok": True, "transcript": video["transcript"], "cached": True})
+    if video.get("transcription"):
+        return jsonify({"ok": True, "transcript": video["transcription"], "cached": True})
 
     profile = get_profile(user["id"])
     is_unlimited = user.get("email", "").lower() in UNLIMITED_EMAILS
@@ -2750,7 +2750,10 @@ def metrics_transcribe_video():
         logger.error(f"Metrics transcribe failed for {ig_video_id}: {e}", exc_info=True)
         return jsonify({"error": "Error al transcribir el vídeo"}), 500
 
-    db.table("ig_videos").update({"transcript": text}).eq("ig_video_id", ig_video_id).execute()
+    db.table("ig_videos").update({
+        "transcription": text,
+        "transcribed_at": datetime.now(timezone.utc).isoformat(),
+    }).eq("ig_video_id", ig_video_id).execute()
 
     if not is_unlimited:
         user_plan = profile.get("plan", "free")
