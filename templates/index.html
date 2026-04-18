@@ -2643,18 +2643,25 @@
     }
     .ig-linked-actions { display: flex; gap: 8px; margin-left: auto; }
     .ig-stats-row {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;
+      display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 14px;
     }
     .ig-stat-card {
       background: var(--surf); border: 1px solid var(--border); border-radius: 12px;
       padding: 14px; text-align: center;
     }
     .ig-stat-val {
-      font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 2px;
+      font-family: var(--font-display); font-size: 1.3rem; font-weight: 600; margin-bottom: 2px;
     }
     .ig-stat-label {
-      font-size: .65rem; color: var(--text3); text-transform: uppercase; letter-spacing: .04em;
+      font-size: .6rem; color: var(--text3); text-transform: uppercase; letter-spacing: .04em;
     }
+    .ig-best-reel {
+      font-size: .78rem; color: var(--text2); margin-bottom: 18px; padding: 10px 14px;
+      background: var(--surf); border: 1px solid var(--border); border-radius: 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .ig-best-reel a { color: var(--purple); text-decoration: none; }
+    .ig-best-reel a:hover { text-decoration: underline; }
     .ig-sort-bar {
       display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;
     }
@@ -2673,14 +2680,27 @@
     }
     .ig-card:hover { border-color: rgba(249,115,22,.3); }
     .ig-card-thumb {
-      width: 100%; aspect-ratio: 9/16; object-fit: cover; display: block;
-      background: var(--surf2); max-height: 200px;
+      width: 100%; aspect-ratio: 4/5; object-fit: cover; display: block;
+      background: var(--surf2); max-height: 180px;
+      border-radius: 12px 12px 0 0;
+    }
+    .ig-thumb-placeholder {
+      width: 100%; aspect-ratio: 4/5; max-height: 180px;
+      background: linear-gradient(135deg, rgba(249,115,22,.15), rgba(249,115,22,.05));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; color: var(--text3); opacity: .5;
     }
     .ig-card-body { padding: 12px 14px; }
     .ig-card-caption {
-      font-size: .78rem; color: var(--text2); line-height: 1.4;
+      font-size: .78rem; color: var(--text); line-height: 1.4; font-weight: 500;
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
       overflow: hidden; margin-bottom: 10px; min-height: 2.1em;
+    }
+    .ig-card-eng-bar {
+      height: 4px; border-radius: 2px; background: var(--surf2); margin-bottom: 10px; overflow: hidden;
+    }
+    .ig-card-eng-fill {
+      height: 100%; border-radius: 2px; transition: width .4s ease;
     }
     .ig-card-stats {
       display: flex; gap: 12px; font-size: .72rem; color: var(--text3); margin-bottom: 10px;
@@ -2702,9 +2722,9 @@
     }
 
     @media (max-width: 768px) {
-      .ig-stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .ig-stats-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
       .ig-stat-card { padding: 10px; }
-      .ig-stat-val { font-size: 1.1rem; }
+      .ig-stat-val { font-size: 1rem; }
       .ig-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
       .ig-card-thumb { max-height: 160px; }
       .ig-card-body { padding: 10px 12px; }
@@ -4620,6 +4640,8 @@
             <span style="font-size:.7rem;color:var(--text3)" id="igLimitsInfo"></span>
           </div>
           <div class="ig-stats-row" id="igStatsRow"></div>
+          <div id="igBestReel"></div>
+          <div id="igChartWrap" style="margin-bottom:18px"></div>
           <div class="ig-sort-bar">
             <span style="font-size:.75rem;color:var(--text3);margin-right:4px" data-i18n="metrics.sort_by">Sort by:</span>
             <button class="ig-sort-btn on" onclick="igSort('published_at')" data-i18n="metrics.recent">Recent</button>
@@ -6309,17 +6331,28 @@ async function loadMetricsPanel() {
     igVideosCache = d.videos || [];
 
     // Stats row
+    const n = igVideosCache.length || 1;
     const totals = igVideosCache.reduce((a, v) => {
       a.views += v.views || 0; a.likes += v.likes || 0;
       a.comments += v.comments || 0; a.shares += v.shares || 0;
       return a;
     }, { views: 0, likes: 0, comments: 0, shares: 0 });
+    const engRate = totals.views ? ((totals.likes + totals.comments + totals.shares) / totals.views * 100).toFixed(1) : "0.0";
     document.getElementById("igStatsRow").innerHTML = [
-      { val: totals.views, label: t("metrics.total_views") },
-      { val: totals.likes, label: t("metrics.total_likes") },
-      { val: totals.comments, label: t("metrics.total_comments") },
-      { val: totals.shares, label: t("metrics.total_shares") },
-    ].map(s => `<div class="ig-stat-card"><div class="ig-stat-val">${fmtNum(s.val)}</div><div class="ig-stat-label">${s.label}</div></div>`).join("");
+      { val: fmtNum(totals.views), label: t("metrics.total_views") },
+      { val: fmtNum(Math.round(totals.views / n)), label: "Avg views" },
+      { val: fmtNum(totals.likes), label: t("metrics.total_likes") },
+      { val: fmtNum(Math.round(totals.likes / n)), label: "Avg likes" },
+      { val: fmtNum(totals.comments), label: t("metrics.total_comments") },
+      { val: engRate + "%", label: "Engagement" },
+    ].map(s => `<div class="ig-stat-card"><div class="ig-stat-val">${s.val}</div><div class="ig-stat-label">${s.label}</div></div>`).join("");
+
+    // Best reel
+    const bestEl = document.getElementById("igBestReel");
+    if (igVideosCache.length) {
+      const best = [...igVideosCache].sort((a, b) => (b.views || 0) - (a.views || 0))[0];
+      bestEl.innerHTML = `<div class="ig-best-reel">🏆 <span style="color:var(--text3)">Top:</span> <strong>${esc((best.caption || "").slice(0, 50))}</strong> — ${fmtNum(best.views)} views ${best.ig_url ? `<a href="${esc(best.ig_url)}" target="_blank" rel="noopener">↗</a>` : ""}</div>`;
+    } else { bestEl.innerHTML = ""; }
 
     // Limits info
     const lim = d.limits || {};
@@ -6328,6 +6361,7 @@ async function loadMetricsPanel() {
     else limEl.textContent = `${Math.max(0, lim.analyses_per_week - lim.analyses_used)}/${lim.analyses_per_week} ${t("metrics.analyses_left")}`;
 
     renderIgGrid();
+    renderIgChart();
   } catch {}
 }
 
@@ -6337,11 +6371,17 @@ function renderIgGrid() {
     grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);font-size:.85rem">No reels found</div>';
     return;
   }
+  const maxViews = Math.max(...igVideosCache.map(v => v.views || 0), 1);
+  const avgEng = igVideosCache.reduce((s, v) => s + (v.views ? (v.likes + v.comments + (v.shares || 0)) / v.views : 0), 0) / (igVideosCache.length || 1);
+
   grid.innerHTML = igVideosCache.map(v => {
     const hasTranscript = !!v.transcription;
     const date = v.published_at ? new Date(v.published_at).toLocaleDateString() : "";
+    const engPct = Math.min(100, Math.round(((v.views || 0) / maxViews) * 100));
+    const vEng = v.views ? (v.likes + v.comments + (v.shares || 0)) / v.views : 0;
+    const engColor = vEng > avgEng * 1.1 ? "#22c55e" : vEng < avgEng * 0.9 ? "#ef4444" : "#f97316";
     return `<div class="ig-card" id="igc-${v.ig_video_id}">
-      ${v.thumbnail_url ? `<img class="ig-card-thumb" src="${esc(v.thumbnail_url)}" alt="" loading="lazy" onerror="this.style.display='none'"/>` : '<div class="ig-card-thumb"></div>'}
+      ${v.thumbnail_url ? `<img class="ig-card-thumb" src="${esc(v.thumbnail_url)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="ig-thumb-placeholder" style="display:none">▶</div>` : '<div class="ig-thumb-placeholder">▶</div>'}
       <div class="ig-card-body">
         <div class="ig-card-caption">${esc(v.caption || "—")}</div>
         <div class="ig-card-stats">
@@ -6351,6 +6391,7 @@ function renderIgGrid() {
           <span>↗ ${fmtNum(v.shares)}</span>
         </div>
         ${date ? `<div style="font-size:.68rem;color:var(--text3);margin-bottom:8px">${date}</div>` : ""}
+        <div class="ig-card-eng-bar"><div class="ig-card-eng-fill" style="width:${engPct}%;background:${engColor}"></div></div>
         <div class="ig-card-actions">
           ${hasTranscript
             ? `<button class="ig-card-btn" onclick="igShowTranscript('${v.ig_video_id}')">${t("metrics.view_transcript")}</button>`
@@ -6361,6 +6402,34 @@ function renderIgGrid() {
       </div>
     </div>`;
   }).join("");
+}
+
+let igChartMetric = "views";
+function renderIgChart() {
+  const wrap = document.getElementById("igChartWrap");
+  if (!igVideosCache.length) { wrap.innerHTML = ""; return; }
+  const sorted = [...igVideosCache].sort((a, b) => (b[igChartMetric] || 0) - (a[igChartMetric] || 0));
+  const shown = sorted.slice(0, 10);
+  const maxVal = Math.max(...shown.map(v => v[igChartMetric] || 0), 1);
+  const tabs = ["views", "likes", "comments"].map(m =>
+    `<button class="ig-sort-btn${igChartMetric === m ? " on" : ""}" onclick="igChartMetric='${m}';renderIgChart()">${m[0].toUpperCase() + m.slice(1)}</button>`
+  ).join("");
+  const bars = shown.map((v, i) => {
+    const val = v[igChartMetric] || 0;
+    const pct = Math.round(val / maxVal * 100);
+    const opacity = 1 - (i * 0.06);
+    const label = (v.caption || "").slice(0, 30) || "Reel";
+    const isTop = i === 0;
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <div style="width:120px;flex-shrink:0;font-size:.7rem;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right" title="${esc(v.caption || "")}">${esc(label)}</div>
+      <div style="flex:1;height:22px;background:var(--surf2);border-radius:4px;overflow:hidden;position:relative">
+        <div style="height:100%;width:${pct}%;background:var(--purple);opacity:${opacity};border-radius:4px;transition:width .4s ease"></div>
+        ${isTop ? '<span style="position:absolute;left:4px;top:2px;font-size:.6rem;font-weight:700;color:#fff;background:rgba(249,115,22,.8);padding:1px 5px;border-radius:3px">TOP</span>' : ""}
+      </div>
+      <div style="width:50px;font-size:.72rem;color:var(--text3);font-family:var(--font-display)">${fmtNum(val)}</div>
+    </div>`;
+  }).join("");
+  wrap.innerHTML = `<div style="display:flex;gap:6px;margin-bottom:10px">${tabs}</div><div style="max-height:300px;overflow-y:auto">${bars}</div>${sorted.length > 10 ? '<div style="text-align:center;font-size:.72rem;color:var(--text3);margin-top:8px">+' + (sorted.length - 10) + ' more</div>' : ""}`;
 }
 
 function igSort(field) {
