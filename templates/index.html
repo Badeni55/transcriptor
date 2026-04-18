@@ -218,7 +218,7 @@
     [data-theme="light"] .ig-perf-badge { box-shadow: 0 1px 4px rgba(0,0,0,.15); }
     [data-theme="light"] .ig-card-eng-label { color: var(--text3); }
     [data-theme="light"] .ig-chart-tab { background: #fff; }
-    [data-theme="light"] .ig-card-overlay { background: linear-gradient(transparent 55%, rgba(0,0,0,.35)); }
+    [data-theme="light"] .ig-card-overlay { background: linear-gradient(transparent 70%, rgba(0,0,0,.25)); }
     [data-theme="light"] .prof-tabs,
     [data-theme="light"] .prof-nav-item.on { background: rgba(249,115,22,.08); }
     [data-theme="light"] .avatar-picker { background: var(--surf); border-color: rgba(0,0,0,.1); }
@@ -2658,10 +2658,11 @@
       padding: 14px; text-align: center;
     }
     .ig-stat-val {
-      font-family: var(--font-display); font-size: 1.3rem; font-weight: 600; margin-bottom: 2px;
+      font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; margin-bottom: 2px;
+      color: var(--text);
     }
     .ig-stat-label {
-      font-size: .6rem; color: var(--text3); text-transform: uppercase; letter-spacing: .04em;
+      font-size: .7rem; color: var(--text3); text-transform: uppercase; letter-spacing: .5px;
     }
     .ig-best-reel {
       font-size: .78rem; color: var(--text2); margin-bottom: 18px; padding: 10px 14px;
@@ -2701,7 +2702,7 @@
     }
     .ig-card-overlay {
       position: absolute; inset: 0; border-radius: 12px 12px 0 0;
-      background: linear-gradient(transparent 50%, rgba(0,0,0,.45));
+      background: linear-gradient(transparent 70%, rgba(0,0,0,.3));
       pointer-events: none;
     }
     .ig-card-body { padding: 12px 14px; }
@@ -2740,18 +2741,14 @@
       font-size: .78rem; color: var(--text2); line-height: 1.5; max-height: 120px;
       overflow-y: auto; white-space: pre-wrap;
     }
-    .ig-card-top-bar {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 6px 8px; position: relative;
-    }
     .ig-tag-btn {
-      height: 26px; border-radius: 6px; border: none;
-      background: rgba(0,0,0,.4); backdrop-filter: blur(4px);
-      color: #fff; font-size: .65rem; cursor: pointer; padding: 0 8px;
-      display: flex; align-items: center; gap: 3px;
-      transition: transform .15s; z-index: 2;
+      height: 24px; border-radius: 6px; border: none;
+      background: var(--surf2); color: var(--text2); font-size: .65rem;
+      cursor: pointer; padding: 0 8px;
+      display: inline-flex; align-items: center; gap: 3px;
+      transition: all .15s;
     }
-    .ig-tag-btn:hover { transform: scale(1.05); }
+    .ig-tag-btn:hover { border-color: var(--purple); }
     .ig-delete-btn {
       width: 26px; height: 26px; border-radius: 6px; border: none;
       background: rgba(0,0,0,.4); backdrop-filter: blur(4px);
@@ -2786,10 +2783,12 @@
     }
     @keyframes igTagPop { from { transform: scale(0); } to { transform: scale(1); } }
     .ig-perf-badge {
-      position: absolute; bottom: 6px; left: 6px;
-      border-radius: 6px; font-size: .55rem; font-weight: 700;
-      padding: 2px 7px; letter-spacing: .03em; text-transform: uppercase;
-      backdrop-filter: blur(4px); z-index: 3;
+      border-radius: 4px; font-size: .6rem; font-weight: 700;
+      padding: 2px 8px; letter-spacing: .03em; text-transform: uppercase;
+      display: inline-block;
+    }
+    .ig-badges-row {
+      display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px;
     }
     .ig-chart-tabs {
       display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap;
@@ -4812,7 +4811,7 @@
               <button class="ig-card-btn" onclick="igUnlink()" style="color:#f87171;border-color:rgba(248,113,113,.3)" data-i18n="metrics.unlink">Unlink</button>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap" id="igAnalyzeBar">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap;max-width:400px" id="igAnalyzeBar">
             <button class="ig-card-btn primary" style="padding:10px 20px;font-size:.88rem;font-weight:600" onclick="igAnalyze()" id="igAnalyzeBtn" data-i18n="metrics.analyze_btn">Analyze reels</button>
             <select id="igAnalyzeCount" onchange="localStorage.setItem('ig_count',this.value)" style="padding:8px 12px;background:var(--surf);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:.82rem;font-family:var(--font-body);outline:none;cursor:pointer">
               <option value="5">5 reels</option>
@@ -6558,7 +6557,7 @@ async function loadMetricsPanel() {
     const statCols = Math.min(stats.length, 6);
     document.getElementById("igStatsRow").style.gridTemplateColumns = `repeat(${statCols}, 1fr)`;
     document.getElementById("igStatsRow").innerHTML = stats.map(s =>
-      `<div class="ig-stat-card" style="border-top:2px solid ${s.accent}"><div class="ig-stat-val">${s.val}</div><div class="ig-stat-label">${s.label}</div></div>`
+      `<div class="ig-stat-card"><div class="ig-stat-val">${s.val}</div><div class="ig-stat-label">${s.label}</div></div>`
     ).join("");
 
     // Best reel
@@ -6600,13 +6599,13 @@ function igGetPerfBadges(v, avgViews, avgEng, topVid) {
   const vEng = v.views ? (v.likes + v.comments + (v.shares || 0)) / v.views : 0;
   const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   if (v.ig_video_id === topVid)
-    badges.push({ label: "🏆 TOP", bg: "rgba(234,179,8,.9)", color: "#fff" });
+    badges.push({ label: "TOP", bg: "rgba(234,179,8,.15)", color: "#92400e" });
   if ((v.views || 0) > avgViews * 2)
-    badges.push({ label: "🔥 VIRAL", bg: "rgba(239,68,68,.9)", color: "#fff" });
+    badges.push({ label: "VIRAL", bg: "rgba(249,115,22,.15)", color: "#c2410c" });
   if (vEng > avgEng * 1.2 && v.ig_video_id !== topVid)
-    badges.push({ label: "💬 ENGAGED", bg: "rgba(34,197,94,.9)", color: "#fff" });
+    badges.push({ label: "ENGAGED", bg: "rgba(34,197,94,.15)", color: "#166534" });
   if (v.published_at && new Date(v.published_at).getTime() > sevenDaysAgo && (v.views || 0) > avgViews)
-    badges.push({ label: "📈 GROWING", bg: "rgba(59,130,246,.9)", color: "#fff" });
+    badges.push({ label: "GROWING", bg: "rgba(59,130,246,.15)", color: "#1e40af" });
   return badges;
 }
 
@@ -6655,16 +6654,14 @@ function renderIgGrid() {
     const vEng = v.views ? (v.likes + v.comments + (v.shares || 0)) / v.views : 0;
     const engColor = vEng > avgEng * 1.1 ? "#22c55e" : vEng < avgEng * 0.9 ? "#ef4444" : "#f97316";
     const badges = igGetPerfBadges(v, avgViews, avgEng, topVid);
-    const badgesHtml = badges.length ? `<div style="position:absolute;bottom:6px;left:6px;display:flex;gap:3px;z-index:3">${badges.map(b => `<span class="ig-perf-badge" style="background:${b.bg};color:${b.color};position:static">${b.label}</span>`).join("")}</div>` : "";
+    const badgesHtml = badges.length ? `<div class="ig-badges-row">${badges.map(b => `<span class="ig-perf-badge" style="background:${b.bg};color:${b.color}">${b.label}</span>`).join("")}</div>` : "";
     const dur = v.duration ? `${Math.floor(v.duration / 60)}:${String(Math.floor(v.duration % 60)).padStart(2, "0")}` : "";
     const tagObj = IG_TAGS.find(t => t.id === v.tag);
     return `<div class="ig-card" id="igc-${v.ig_video_id}" style="position:relative">
       <div style="position:relative">
         ${(v.thumbnail_b64 || v.thumbnail_url) ? `<img class="ig-card-thumb" src="${v.thumbnail_b64 || esc(v.thumbnail_url)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="ig-thumb-placeholder" style="display:none"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><polygon points="5 3 19 12 5 21"/></svg></div>` : '<div class="ig-thumb-placeholder"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><polygon points="5 3 19 12 5 21"/></svg></div>'}
         <div class="ig-card-overlay"></div>
-        ${badgesHtml}
-        <div class="ig-card-top-bar" style="position:absolute;top:0;left:0;right:0">
-          <button class="ig-tag-btn" onclick="event.stopPropagation();igToggleTagPicker('${v.ig_video_id}')" title="${t("metrics.tag_label")}">${tagObj ? `${tagObj.icon}` : "🏷"}</button>
+        <div style="position:absolute;top:0;right:0;padding:6px 8px;z-index:2">
           <button class="ig-delete-btn" onclick="event.stopPropagation();igDeleteVideo('${v.ig_video_id}')" title="${t("metrics.delete")}">✕</button>
         </div>
         ${dur ? `<div style="position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.65);color:#fff;font-size:.6rem;padding:2px 6px;border-radius:4px;font-family:var(--font-display);backdrop-filter:blur(4px)">${dur}</div>` : ""}
@@ -6674,6 +6671,8 @@ function renderIgGrid() {
         </div>
       </div>
       <div class="ig-card-body" style="cursor:pointer" onclick="igShowDetail('${v.ig_video_id}')">
+        ${badgesHtml}
+        <div style="margin-bottom:6px"><button class="ig-tag-btn" onclick="event.stopPropagation();igToggleTagPicker('${v.ig_video_id}')" ${tagObj ? `style="background:${tagObj.bg};color:${tagObj.color};border:1px solid ${tagObj.color}25"` : ""}>${tagObj ? `${tagObj.icon} ${tagObj.label}` : "🏷 Tag"}</button></div>
         <div class="ig-card-caption">${esc(v.caption || "—")}</div>
         <div class="ig-card-stats">
           <span>👁 ${fmtNum(v.views)}</span>
@@ -6726,53 +6725,58 @@ function renderIgChart() {
   const maxVal = Math.max(...byDate.map(v => v[igChartMetric] || 0), 1);
   const avgVal = byDate.reduce((s, v) => s + (v[igChartMetric] || 0), 0) / byDate.length;
   const topId = [...byDate].sort((a, b) => (b[igChartMetric] || 0) - (a[igChartMetric] || 0))[0]?.ig_video_id;
-  const h = 200, padTop = 20, padBot = 40, padLeft = 45, padRight = 10;
+
+  // Sqrt scale for better distribution when one bar dominates
+  const sqrtMax = Math.sqrt(maxVal);
+  const scaleY = val => Math.max(0.08, Math.sqrt(val) / sqrtMax);
+
+  const h = 220, padTop = 22, padBot = 45, padLeft = 42, padRight = 14;
   const chartW = 100 - padLeft - padRight;
   const chartH = h - padTop - padBot;
-  const barGap = 2;
-  const barW = Math.max(6, Math.min(32, (chartW - barGap * byDate.length) / byDate.length));
-  const totalBarsW = byDate.length * (barW + barGap) - barGap;
-  const offsetX = padLeft + (chartW - totalBarsW) / 2;
+  const n = byDate.length;
+  const barW = Math.max(4, Math.min(14, (chartW * 0.8) / n));
+  const gap = n > 1 ? (chartW - barW * n) / (n - 1) : 0;
 
-  // Y-axis grid
+  // Y-axis grid (linear labels but sqrt positioning)
   const gridSteps = 4;
   const gridLines = Array.from({length: gridSteps + 1}, (_, i) => {
     const pct = i / gridSteps;
-    const y = padTop + chartH - pct * chartH;
     const val = Math.round(maxVal * pct);
-    return `<line x1="${padLeft}" y1="${y}" x2="${100 - padRight}" y2="${y}" stroke="var(--border)" stroke-width="0.2" stroke-dasharray="1.5"/>
-      <text x="${padLeft - 2}" y="${y + 1.2}" fill="var(--text3)" font-size="2.8" text-anchor="end" font-family="var(--font-display)">${fmtNum(val)}</text>`;
+    const y = padTop + chartH - scaleY(val) * chartH;
+    return `<line x1="${padLeft}" y1="${y}" x2="${100 - padRight}" y2="${y}" stroke="var(--border)" stroke-width="0.15" stroke-dasharray="1.5"/>
+      <text x="${padLeft - 2}" y="${y + 1.2}" fill="var(--text3)" font-size="2.5" text-anchor="end" font-family="var(--font-display)">${fmtNum(val)}</text>`;
   }).join("");
 
   // Average line
-  const avgY = padTop + chartH - (avgVal / maxVal) * chartH;
-  const avgLine = `<line x1="${padLeft}" y1="${avgY}" x2="${100 - padRight}" y2="${avgY}" stroke="var(--purple)" stroke-width="0.4" stroke-dasharray="2" opacity=".6"/>
-    <text x="${100 - padRight + 1}" y="${avgY + 1.2}" fill="var(--purple)" font-size="2.5" font-family="var(--font-display)" opacity=".8">Media: ${fmtNum(Math.round(avgVal))}</text>`;
+  const avgY = padTop + chartH - scaleY(avgVal) * chartH;
+  const avgLine = `<line x1="${padLeft}" y1="${avgY}" x2="${100 - padRight}" y2="${avgY}" stroke="var(--purple)" stroke-width="0.35" stroke-dasharray="2" opacity=".5"/>
+    <text x="${100 - padRight + 1}" y="${avgY + 1}" fill="var(--purple)" font-size="2.3" font-family="var(--font-display)" opacity=".7">Media: ${fmtNum(Math.round(avgVal))}</text>`;
 
   // Bars
   const bars = byDate.map((v, i) => {
     const val = v[igChartMetric] || 0;
-    const barH = Math.max(1, (val / maxVal) * chartH);
-    const x = offsetX + i * (barW + barGap);
+    const barH = Math.max(2, scaleY(val) * chartH);
+    const x = padLeft + i * (barW + gap);
     const y = padTop + chartH - barH;
     const isTop = v.ig_video_id === topId;
-    const fill = isTop ? "#f97316" : "var(--purple)";
-    const opacity = isTop ? "1" : "0.75";
+    const fill = isTop ? "var(--accent, #f97316)" : "var(--purple)";
     const d = new Date(v.published_at);
     const dateStr = `${d.getDate()}/${d.getMonth() + 1}`;
     const caption = (v.caption || "").slice(0, 35) || "Reel";
     return `<g>
-      <rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="1.5" fill="${fill}" opacity="${opacity}" style="cursor:pointer;transition:opacity .15s">
-        <title>${esc(caption)}\n${fmtNum(val)} ${igChartMetric} · ❤ ${fmtNum(v.likes)} · 💬 ${fmtNum(v.comments)}</title>
+      <rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="${Math.min(2, barW / 3)}" fill="${fill}" opacity="${isTop ? 1 : .7}" style="cursor:pointer">
+        <title>${esc(caption)}\n${fmtNum(val)} ${metricLabels[igChartMetric]} · ❤ ${fmtNum(v.likes)} · 💬 ${fmtNum(v.comments)}</title>
       </rect>
-      ${isTop ? `<rect x="${x - 0.3}" y="${y - 0.3}" width="${barW + 0.6}" height="${barH + 0.6}" rx="1.8" fill="none" stroke="#eab308" stroke-width="0.5"/>` : ""}
-      ${(i % Math.max(1, Math.floor(byDate.length / 8)) === 0 || i === byDate.length - 1) ? `<text x="${x + barW / 2}" y="${padTop + chartH + 5}" fill="var(--text3)" font-size="2.3" text-anchor="middle" font-family="var(--font-body)">${dateStr}</text>` : ""}
+      ${isTop ? `<rect x="${x - 0.3}" y="${y - 0.3}" width="${barW + 0.6}" height="${barH + 0.6}" rx="${Math.min(2.3, barW / 3 + 0.3)}" fill="none" stroke="#eab308" stroke-width="0.4"/>` : ""}
+      <text x="${x + barW / 2}" y="${y - 1.5}" fill="var(--text3)" font-size="2.2" text-anchor="middle" font-family="var(--font-display)">${fmtNum(val)}</text>
+      <text x="${x + barW / 2}" y="${padTop + chartH + 5}" fill="var(--text3)" font-size="2.2" text-anchor="middle" font-family="var(--font-body)" transform="rotate(-45 ${x + barW / 2} ${padTop + chartH + 5})">${dateStr}</text>
     </g>`;
   }).join("");
 
+  const svgW = Math.max(100, padLeft + n * (barW + gap) + padRight);
   wrap.innerHTML = `<div class="ig-chart-tabs">${metricTabs}</div>
-    <div style="overflow-x:auto">
-      <svg viewBox="0 0 ${Math.max(100, offsetX + totalBarsW + padRight + 20)} ${h}" style="width:100%;max-height:250px;min-width:300px">
+    <div style="background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:16px;overflow-x:auto">
+      <svg viewBox="0 0 ${svgW} ${h}" style="width:100%;max-height:250px;min-width:280px" preserveAspectRatio="xMidYMid meet">
         ${gridLines}${avgLine}${bars}
       </svg>
     </div>`;
