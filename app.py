@@ -2522,6 +2522,28 @@ def _check_metrics_limit(profile: dict) -> tuple[bool, str | None]:
     return True, None
 
 
+def _download_thumbnail_b64(url: str) -> str | None:
+    """Download image URL and return as small base64 JPEG (~5-10KB)."""
+    if not url:
+        return None
+    try:
+        from PIL import Image
+        from io import BytesIO
+        import base64
+        r = requests.get(url, timeout=10)
+        r.raise_for_status()
+        img = Image.open(BytesIO(r.content))
+        img.thumbnail((160, 200))
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+        buf = BytesIO()
+        img.save(buf, format="JPEG", quality=50, optimize=True)
+        return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
+    except Exception as e:
+        logger.warning(f"[IG-METRICS] Thumbnail download failed: {e}")
+        return None
+
+
 def _scrape_ig_reels(username_or_urls: list[str], limit: int = 10) -> list[dict]:
     """Call Apify instagram-reel-scraper and return normalized items."""
     actor_url = (
@@ -2549,11 +2571,13 @@ def _scrape_ig_reels(username_or_urls: list[str], limit: int = 10) -> list[dict]
         sc = item.get("shortCode") or item.get("id", "")
         if not sc:
             continue
+        display_url = item.get("displayUrl", "")
         results.append({
             "ig_video_id": sc,
             "ig_url": item.get("url", ""),
             "caption": (item.get("caption") or "")[:2000],
-            "thumbnail_url": item.get("displayUrl", ""),
+            "thumbnail_url": display_url,
+            "thumbnail_b64": _download_thumbnail_b64(display_url),
             "views": item.get("videoPlayCount") or item.get("videoViewCount") or 0,
             "likes": item.get("likesCount", 0) or 0,
             "comments": item.get("commentsCount", 0) or 0,

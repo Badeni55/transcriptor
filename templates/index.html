@@ -6592,7 +6592,7 @@ function renderIgGrid() {
     const dur = v.duration ? `${Math.floor(v.duration / 60)}:${String(Math.floor(v.duration % 60)).padStart(2, "0")}` : "";
     return `<div class="ig-card" id="igc-${v.ig_video_id}" style="position:relative">
       <div style="position:relative">
-        ${v.thumbnail_url ? `<img class="ig-card-thumb" src="${esc(v.thumbnail_url)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="ig-thumb-placeholder" style="display:none"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><polygon points="5 3 19 12 5 21"/></svg></div>` : '<div class="ig-thumb-placeholder"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><polygon points="5 3 19 12 5 21"/></svg></div>'}
+        ${(v.thumbnail_b64 || v.thumbnail_url) ? `<img class="ig-card-thumb" src="${v.thumbnail_b64 || esc(v.thumbnail_url)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="ig-thumb-placeholder" style="display:none"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><polygon points="5 3 19 12 5 21"/></svg></div>` : '<div class="ig-thumb-placeholder"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><polygon points="5 3 19 12 5 21"/></svg></div>'}
         ${tagBadge}
         ${perfBadge}
         <div class="ig-card-top-bar" style="position:absolute;top:0;left:0;right:0">
@@ -6825,7 +6825,7 @@ function igShowDetail(vid) {
   overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
   overlay.innerHTML = `<div class="ig-detail-modal">
     <div class="ig-detail-header">
-      ${v.thumbnail_url ? `<img src="${esc(v.thumbnail_url)}" alt="" onerror="this.parentElement.style.minHeight='60px'"/>` : ""}
+      ${(v.thumbnail_b64 || v.thumbnail_url) ? `<img src="${v.thumbnail_b64 || esc(v.thumbnail_url)}" alt="" onerror="this.parentElement.style.minHeight='60px'"/>` : ""}
       <button class="ig-detail-close" onclick="this.closest('.ig-detail-overlay').remove()">✕</button>
       ${tagObj ? `<div style="position:absolute;top:10px;left:10px;background:${tagObj.bg};border:1px solid ${tagObj.color}30;backdrop-filter:blur(6px);border-radius:8px;padding:4px 12px;font-size:.75rem;font-weight:600;color:${tagObj.color};display:flex;align-items:center;gap:4px">${tagObj.icon} ${tagObj.label}</div>` : ""}
       ${dur !== "—" ? `<div style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.6);color:#fff;font-size:.7rem;padding:3px 8px;border-radius:5px;font-family:var(--font-display);backdrop-filter:blur(4px)">${dur}</div>` : ""}
