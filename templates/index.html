@@ -2720,6 +2720,134 @@
       font-size: .78rem; color: var(--text2); line-height: 1.5; max-height: 120px;
       overflow-y: auto; white-space: pre-wrap;
     }
+    .ig-card-top-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 8px; position: relative;
+    }
+    .ig-tag-btn {
+      height: 26px; border-radius: 6px; border: none;
+      background: rgba(0,0,0,.4); backdrop-filter: blur(4px);
+      color: #fff; font-size: .65rem; cursor: pointer; padding: 0 8px;
+      display: flex; align-items: center; gap: 3px;
+      transition: transform .15s; z-index: 2;
+    }
+    .ig-tag-btn:hover { transform: scale(1.05); }
+    .ig-delete-btn {
+      width: 26px; height: 26px; border-radius: 6px; border: none;
+      background: rgba(0,0,0,.4); backdrop-filter: blur(4px);
+      color: #fff; font-size: .7rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity .2s, transform .15s; z-index: 2;
+    }
+    .ig-card:hover .ig-delete-btn { opacity: 1; }
+    .ig-delete-btn:hover { background: rgba(239,68,68,.8); transform: scale(1.1); }
+    .ig-tag-picker {
+      position: absolute; top: 36px; left: 6px; z-index: 10;
+      background: var(--surf); border: 1px solid var(--border); border-radius: 12px;
+      padding: 8px; display: flex; flex-wrap: wrap; gap: 4px; width: 220px;
+      box-shadow: 0 6px 24px rgba(0,0,0,.22);
+    }
+    .ig-tag-opt {
+      padding: 4px 10px; border-radius: 6px; border: 1.5px solid transparent;
+      background: var(--surf2); font-size: .68rem; cursor: pointer;
+      display: flex; align-items: center; gap: 4px;
+      transition: all .12s; color: var(--text2);
+    }
+    .ig-tag-opt:hover { border-color: var(--purple); }
+    .ig-tag-opt.on { border-color: var(--purple); background: rgba(168,85,247,.1); }
+    .ig-card-tag {
+      position: absolute; top: 6px; right: 6px;
+      border-radius: 6px; font-size: .6rem; font-weight: 600;
+      padding: 3px 8px; letter-spacing: .02em;
+      display: flex; align-items: center; gap: 3px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.15); z-index: 3;
+      animation: igTagPop .3s cubic-bezier(.34,1.56,.64,1);
+      text-transform: uppercase;
+    }
+    @keyframes igTagPop { from { transform: scale(0); } to { transform: scale(1); } }
+    .ig-perf-badge {
+      position: absolute; bottom: 6px; left: 6px;
+      border-radius: 6px; font-size: .55rem; font-weight: 700;
+      padding: 2px 7px; letter-spacing: .03em; text-transform: uppercase;
+      backdrop-filter: blur(4px); z-index: 3;
+    }
+    .ig-chart-tabs {
+      display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap;
+    }
+    .ig-chart-tab {
+      padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--surf); color: var(--text2); font-size: .72rem;
+      cursor: pointer; transition: all .15s; font-family: var(--font-body);
+    }
+    .ig-chart-tab.on { background: var(--purple); color: #fff; border-color: var(--purple); }
+    .ig-chart-type-toggle {
+      display: flex; gap: 2px; margin-left: auto; background: var(--surf2);
+      border-radius: 8px; padding: 2px;
+    }
+    .ig-chart-type-btn {
+      padding: 5px 10px; border-radius: 6px; border: none;
+      background: transparent; color: var(--text3); font-size: .7rem;
+      cursor: pointer; transition: all .15s;
+    }
+    .ig-chart-type-btn.on { background: var(--surf); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+    .ig-filter-bar {
+      display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; align-items: center;
+    }
+    .ig-filter-chip {
+      padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border);
+      background: var(--surf); color: var(--text3); font-size: .68rem;
+      cursor: pointer; transition: all .15s; display: flex; align-items: center; gap: 3px;
+    }
+    .ig-filter-chip:hover { border-color: var(--purple); }
+    .ig-filter-chip.on { border-color: var(--purple); color: var(--purple); background: rgba(168,85,247,.08); }
+    .ig-detail-overlay {
+      position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.6);
+      backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center;
+      animation: fadeIn .2s ease;
+    }
+    .ig-detail-modal {
+      background: var(--surf); border: 1px solid var(--border); border-radius: 16px;
+      max-width: 520px; width: 92vw; max-height: 85vh; overflow-y: auto;
+      box-shadow: 0 8px 40px rgba(0,0,0,.25); animation: slideUp .25s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .ig-detail-header {
+      position: relative; overflow: hidden; border-radius: 16px 16px 0 0;
+    }
+    .ig-detail-header img {
+      width: 100%; max-height: 280px; object-fit: cover; display: block;
+    }
+    .ig-detail-close {
+      position: absolute; top: 10px; right: 10px; width: 32px; height: 32px;
+      border-radius: 50%; border: none; background: rgba(0,0,0,.5); color: #fff;
+      font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .ig-detail-close:hover { background: rgba(0,0,0,.7); }
+    .ig-detail-body { padding: 20px; }
+    .ig-detail-caption {
+      font-size: .88rem; color: var(--text); line-height: 1.5; margin-bottom: 16px;
+      white-space: pre-wrap;
+    }
+    .ig-detail-metrics {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px;
+    }
+    .ig-detail-metric {
+      background: var(--surf2); border-radius: 10px; padding: 12px; text-align: center;
+    }
+    .ig-detail-metric-val {
+      font-family: var(--font-display); font-size: 1.2rem; font-weight: 600;
+    }
+    .ig-detail-metric-label {
+      font-size: .65rem; color: var(--text3); text-transform: uppercase; letter-spacing: .03em;
+    }
+    .ig-detail-transcript {
+      background: var(--surf2); border-radius: 10px; padding: 14px;
+      font-size: .82rem; color: var(--text2); line-height: 1.6;
+      max-height: 200px; overflow-y: auto; white-space: pre-wrap;
+    }
+    .ig-detail-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .ig-detail-actions .ig-card-btn { flex: 1; padding: 10px; font-size: .8rem; }
 
     @media (max-width: 768px) {
       .ig-stats-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -2742,10 +2870,14 @@
       #igAnalyzeBar { flex-direction: column; align-items: stretch; gap: 8px; }
       #igAnalyzeBar .ig-card-btn { width: 100%; }
       #igAnalyzeBar select { width: 100%; }
+      .ig-delete-btn { opacity: 1; }
+      .ig-detail-metrics { grid-template-columns: repeat(2, 1fr); }
+      .ig-detail-modal { max-width: 95vw; }
     }
     @media (max-width: 420px) {
       .ig-grid { grid-template-columns: 1fr; }
       .ig-card-caption { -webkit-line-clamp: 2; min-height: 2.1em; }
+      .ig-detail-metrics { grid-template-columns: repeat(2, 1fr); }
     }
 
     /* Idea cards */
@@ -4650,6 +4782,7 @@
             <button class="ig-sort-btn" onclick="igSort('comments')" data-i18n="metrics.comments">Comments</button>
             <button class="ig-sort-btn" onclick="igSort('shares')" data-i18n="metrics.shares">Shares</button>
           </div>
+          <div class="ig-filter-bar" id="igFilterBar" style="display:none"></div>
           <div class="ig-grid" id="igGrid"></div>
         </div>
         <div id="igEmptyView">
@@ -5181,6 +5314,14 @@ const LANGS = {
     "metrics.analyze_btn": "Analizar reels",
     "metrics.analyses_left": "análisis restantes esta semana",
     "metrics.unlimited": "análisis ilimitados",
+    "metrics.delete": "Eliminar",
+    "metrics.delete_confirm": "¿Eliminar este vídeo?",
+    "metrics.details": "Detalles",
+    "metrics.duration": "Duración",
+    "metrics.no_transcript": "Sin transcripción aún. Pulsa Transcribir para obtenerla.",
+    "metrics.tag_label": "Etiqueta",
+    "metrics.engagement": "Engagement",
+    "metrics.published": "Publicado",
     // View modal
     "view.title": "Transcripción",
     "view.copy": "Copiar",
@@ -5504,6 +5645,14 @@ const LANGS = {
     "metrics.analyze_btn": "Analyze reels",
     "metrics.analyses_left": "analyses left this week",
     "metrics.unlimited": "unlimited analyses",
+    "metrics.delete": "Delete",
+    "metrics.delete_confirm": "Delete this video?",
+    "metrics.details": "Details",
+    "metrics.duration": "Duration",
+    "metrics.no_transcript": "No transcript yet. Tap Transcribe to get it.",
+    "metrics.tag_label": "Tag",
+    "metrics.engagement": "Engagement",
+    "metrics.published": "Published",
     // View modal
     "view.title": "Transcription",
     "view.copy": "Copy",
@@ -6335,17 +6484,20 @@ async function loadMetricsPanel() {
     const totals = igVideosCache.reduce((a, v) => {
       a.views += v.views || 0; a.likes += v.likes || 0;
       a.comments += v.comments || 0; a.shares += v.shares || 0;
+      if (v.duration) { a.durSum += v.duration; a.durCount++; }
       return a;
-    }, { views: 0, likes: 0, comments: 0, shares: 0 });
+    }, { views: 0, likes: 0, comments: 0, shares: 0, durSum: 0, durCount: 0 });
     const engRate = totals.views ? ((totals.likes + totals.comments + totals.shares) / totals.views * 100).toFixed(1) : "0.0";
+    const avgDur = totals.durCount ? totals.durSum / totals.durCount : 0;
+    const avgDurStr = avgDur ? `${Math.floor(avgDur / 60)}:${String(Math.floor(avgDur % 60)).padStart(2, "0")}` : "—";
     document.getElementById("igStatsRow").innerHTML = [
-      { val: fmtNum(totals.views), label: t("metrics.total_views") },
-      { val: fmtNum(Math.round(totals.views / n)), label: "Avg views" },
-      { val: fmtNum(totals.likes), label: t("metrics.total_likes") },
-      { val: fmtNum(Math.round(totals.likes / n)), label: "Avg likes" },
-      { val: fmtNum(totals.comments), label: t("metrics.total_comments") },
-      { val: engRate + "%", label: "Engagement" },
-    ].map(s => `<div class="ig-stat-card"><div class="ig-stat-val">${s.val}</div><div class="ig-stat-label">${s.label}</div></div>`).join("");
+      { val: fmtNum(totals.views), label: t("metrics.total_views"), accent: "#f97316" },
+      { val: fmtNum(Math.round(totals.views / n)), label: "Avg views", accent: "#f97316" },
+      { val: fmtNum(totals.likes), label: t("metrics.total_likes"), accent: "#ef4444" },
+      { val: fmtNum(totals.shares), label: t("metrics.total_shares"), accent: "#3b82f6" },
+      { val: engRate + "%", label: "Engagement", accent: "#22c55e" },
+      { val: avgDurStr, label: t("metrics.duration") + " avg", accent: "#a78bfa" },
+    ].map(s => `<div class="ig-stat-card" style="border-top:2px solid ${s.accent}"><div class="ig-stat-val">${s.val}</div><div class="ig-stat-label">${s.label}</div></div>`).join("");
 
     // Best reel
     const bestEl = document.getElementById("igBestReel");
@@ -6365,24 +6517,95 @@ async function loadMetricsPanel() {
   } catch {}
 }
 
+const IG_TAGS = [
+  { id: "viral",    label: "Viral",     icon: "⚡", color: "#ef4444", bg: "rgba(239,68,68,.12)" },
+  { id: "tutorial", label: "Tutorial",  icon: "📖", color: "#3b82f6", bg: "rgba(59,130,246,.12)" },
+  { id: "bts",      label: "BTS",       icon: "🎬", color: "#a78bfa", bg: "rgba(167,139,250,.12)" },
+  { id: "promo",    label: "Promo",     icon: "📢", color: "#f97316", bg: "rgba(249,115,22,.12)" },
+  { id: "hook",     label: "Hook",      icon: "🪝", color: "#eab308", bg: "rgba(234,179,8,.12)" },
+  { id: "story",    label: "Story",     icon: "💬", color: "#22c55e", bg: "rgba(34,197,94,.12)" },
+  { id: "edu",      label: "Educativo", icon: "🎓", color: "#06b6d4", bg: "rgba(6,182,212,.12)" },
+  { id: "collab",   label: "Collab",    icon: "🤝", color: "#ec4899", bg: "rgba(236,72,153,.12)" },
+  { id: "trend",    label: "Trend",     icon: "📈", color: "#8b5cf6", bg: "rgba(139,92,246,.12)" },
+  { id: "save",     label: "Guardado",  icon: "⭐", color: "#eab308", bg: "rgba(234,179,8,.12)" },
+];
+let igActiveTagFilter = null;
+
+function igGetPerfBadge(v, avgViews, avgEng) {
+  const vEng = v.views ? (v.likes + v.comments + (v.shares || 0)) / v.views : 0;
+  if ((v.views || 0) > avgViews * 2 && vEng > avgEng)
+    return { label: "VIRAL", bg: "rgba(239,68,68,.85)", color: "#fff" };
+  if ((v.views || 0) > avgViews * 1.3)
+    return { label: "TOP", bg: "rgba(249,115,22,.85)", color: "#fff" };
+  if (vEng > avgEng * 1.5)
+    return { label: "HIGH ENG", bg: "rgba(34,197,94,.85)", color: "#fff" };
+  return null;
+}
+
 function renderIgGrid() {
   const grid = document.getElementById("igGrid");
   if (!igVideosCache.length) {
     grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);font-size:.85rem">No reels found</div>';
     return;
   }
+
+  const filtered = igActiveTagFilter
+    ? igVideosCache.filter(v => v.tag === igActiveTagFilter)
+    : igVideosCache;
+
+  // Tag filter chips
+  const usedTags = [...new Set(igVideosCache.map(v => v.tag).filter(Boolean))];
+  const filterBar = document.getElementById("igFilterBar");
+  if (filterBar) {
+    if (usedTags.length) {
+      filterBar.style.display = "flex";
+      filterBar.innerHTML = `<span style="font-size:.7rem;color:var(--text3);margin-right:2px">Filter:</span>
+        <button class="ig-filter-chip${!igActiveTagFilter ? " on" : ""}" onclick="igActiveTagFilter=null;renderIgGrid()">All (${igVideosCache.length})</button>
+        ${usedTags.map(tid => {
+          const tg = IG_TAGS.find(t => t.id === tid);
+          if (!tg) return "";
+          const cnt = igVideosCache.filter(v => v.tag === tid).length;
+          return `<button class="ig-filter-chip${igActiveTagFilter === tid ? " on" : ""}" onclick="igActiveTagFilter='${tid}';renderIgGrid()" style="${igActiveTagFilter === tid ? `border-color:${tg.color};color:${tg.color}` : ""}">${tg.icon} ${tg.label} (${cnt})</button>`;
+        }).join("")}`;
+    } else { filterBar.style.display = "none"; }
+  }
+
+  if (!filtered.length) {
+    grid.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text3);font-size:.82rem">No videos match this filter</div>';
+    return;
+  }
+
   const maxViews = Math.max(...igVideosCache.map(v => v.views || 0), 1);
+  const avgViews = igVideosCache.reduce((s, v) => s + (v.views || 0), 0) / (igVideosCache.length || 1);
   const avgEng = igVideosCache.reduce((s, v) => s + (v.views ? (v.likes + v.comments + (v.shares || 0)) / v.views : 0), 0) / (igVideosCache.length || 1);
 
-  grid.innerHTML = igVideosCache.map(v => {
+  grid.innerHTML = filtered.map(v => {
     const hasTranscript = !!v.transcription;
     const date = v.published_at ? new Date(v.published_at).toLocaleDateString() : "";
     const engPct = Math.min(100, Math.round(((v.views || 0) / maxViews) * 100));
     const vEng = v.views ? (v.likes + v.comments + (v.shares || 0)) / v.views : 0;
     const engColor = vEng > avgEng * 1.1 ? "#22c55e" : vEng < avgEng * 0.9 ? "#ef4444" : "#f97316";
-    return `<div class="ig-card" id="igc-${v.ig_video_id}">
-      ${v.thumbnail_url ? `<img class="ig-card-thumb" src="${esc(v.thumbnail_url)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="ig-thumb-placeholder" style="display:none">▶</div>` : '<div class="ig-thumb-placeholder">▶</div>'}
-      <div class="ig-card-body">
+    const tagObj = IG_TAGS.find(t => t.id === v.tag);
+    const tagBadge = tagObj ? `<div class="ig-card-tag" style="background:${tagObj.bg};color:${tagObj.color};border:1px solid ${tagObj.color}30">${tagObj.icon} ${tagObj.label}</div>` : "";
+    const perf = igGetPerfBadge(v, avgViews, avgEng);
+    const perfBadge = perf ? `<div class="ig-perf-badge" style="background:${perf.bg};color:${perf.color}">${perf.label}</div>` : "";
+    const dur = v.duration ? `${Math.floor(v.duration / 60)}:${String(Math.floor(v.duration % 60)).padStart(2, "0")}` : "";
+    return `<div class="ig-card" id="igc-${v.ig_video_id}" style="position:relative">
+      <div style="position:relative">
+        ${v.thumbnail_url ? `<img class="ig-card-thumb" src="${esc(v.thumbnail_url)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="ig-thumb-placeholder" style="display:none"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><polygon points="5 3 19 12 5 21"/></svg></div>` : '<div class="ig-thumb-placeholder"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><polygon points="5 3 19 12 5 21"/></svg></div>'}
+        ${tagBadge}
+        ${perfBadge}
+        <div class="ig-card-top-bar" style="position:absolute;top:0;left:0;right:0">
+          <button class="ig-tag-btn" onclick="event.stopPropagation();igToggleTagPicker('${v.ig_video_id}')" title="${t("metrics.tag_label")}">${tagObj ? `${tagObj.icon}` : "🏷"}<span style="font-size:.6rem">${tagObj ? "" : " Tag"}</span></button>
+          <button class="ig-delete-btn" onclick="event.stopPropagation();igDeleteVideo('${v.ig_video_id}')" title="${t("metrics.delete")}">✕</button>
+        </div>
+        ${dur ? `<div style="position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;font-size:.6rem;padding:2px 6px;border-radius:4px;font-family:var(--font-display);backdrop-filter:blur(4px)">${dur}</div>` : ""}
+        <div class="ig-tag-picker" id="igtp-${v.ig_video_id}" style="display:none" onclick="event.stopPropagation()">
+          ${IG_TAGS.map(tg => `<button class="ig-tag-opt${v.tag === tg.id ? " on" : ""}" onclick="igSetTag('${v.ig_video_id}','${tg.id}')" style="${v.tag === tg.id ? `border-color:${tg.color}` : ""}">${tg.icon} <span style="font-size:.65rem">${tg.label}</span></button>`).join("")}
+          ${v.tag ? `<button class="ig-tag-opt" onclick="igSetTag('${v.ig_video_id}',null)" style="color:var(--text3)">✕ <span style="font-size:.65rem">Quitar</span></button>` : ""}
+        </div>
+      </div>
+      <div class="ig-card-body" style="cursor:pointer" onclick="igShowDetail('${v.ig_video_id}')">
         <div class="ig-card-caption">${esc(v.caption || "—")}</div>
         <div class="ig-card-stats">
           <span>👁 ${fmtNum(v.views)}</span>
@@ -6392,44 +6615,146 @@ function renderIgGrid() {
         </div>
         ${date ? `<div style="font-size:.68rem;color:var(--text3);margin-bottom:8px">${date}</div>` : ""}
         <div class="ig-card-eng-bar"><div class="ig-card-eng-fill" style="width:${engPct}%;background:${engColor}"></div></div>
-        <div class="ig-card-actions">
+        <div class="ig-card-actions" onclick="event.stopPropagation()">
           ${hasTranscript
             ? `<button class="ig-card-btn" onclick="igShowTranscript('${v.ig_video_id}')">${t("metrics.view_transcript")}</button>`
             : `<button class="ig-card-btn primary" onclick="igTranscribe('${v.ig_video_id}')" id="igtr-${v.ig_video_id}">${t("metrics.transcribe")}</button>`}
           ${v.ig_url ? `<a class="ig-card-btn" href="${esc(v.ig_url)}" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">${t("metrics.open_reel")}</a>` : ""}
         </div>
-        ${hasTranscript ? `<div class="ig-card-transcript" id="igt-${v.ig_video_id}" style="display:none">${esc(v.transcription)}</div>` : ""}
+        ${hasTranscript ? `<div class="ig-card-transcript" id="igt-${v.ig_video_id}" style="display:none" onclick="event.stopPropagation()">${esc(v.transcription)}</div>` : ""}
       </div>
     </div>`;
   }).join("");
 }
 
 let igChartMetric = "views";
+let igChartType = "bar";
+
 function renderIgChart() {
   const wrap = document.getElementById("igChartWrap");
   if (!igVideosCache.length) { wrap.innerHTML = ""; return; }
+
+  const metrics = ["views", "likes", "comments", "shares"];
+  const metricTabs = metrics.map(m =>
+    `<button class="ig-chart-tab${igChartMetric === m ? " on" : ""}" onclick="igChartMetric='${m}';renderIgChart()">${m[0].toUpperCase() + m.slice(1)}</button>`
+  ).join("");
+
+  const types = [
+    { id: "bar", label: "Ranking" },
+    { id: "timeline", label: "Timeline" },
+    { id: "bubble", label: "Engagement" },
+  ];
+  const typeToggle = types.map(t =>
+    `<button class="ig-chart-type-btn${igChartType === t.id ? " on" : ""}" onclick="igChartType='${t.id}';renderIgChart()">${t.label}</button>`
+  ).join("");
+
+  let chartContent = "";
+  if (igChartType === "bar") {
+    chartContent = renderIgBarChart();
+  } else if (igChartType === "timeline") {
+    chartContent = renderIgTimelineChart();
+  } else if (igChartType === "bubble") {
+    chartContent = renderIgBubbleChart();
+  }
+
+  wrap.innerHTML = `<div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+    <div class="ig-chart-tabs" style="margin-bottom:0">${metricTabs}</div>
+    <div class="ig-chart-type-toggle">${typeToggle}</div>
+  </div>${chartContent}`;
+}
+
+function renderIgBarChart() {
   const sorted = [...igVideosCache].sort((a, b) => (b[igChartMetric] || 0) - (a[igChartMetric] || 0));
   const shown = sorted.slice(0, 10);
   const maxVal = Math.max(...shown.map(v => v[igChartMetric] || 0), 1);
-  const tabs = ["views", "likes", "comments"].map(m =>
-    `<button class="ig-sort-btn${igChartMetric === m ? " on" : ""}" onclick="igChartMetric='${m}';renderIgChart()">${m[0].toUpperCase() + m.slice(1)}</button>`
-  ).join("");
   const bars = shown.map((v, i) => {
     const val = v[igChartMetric] || 0;
     const pct = Math.round(val / maxVal * 100);
-    const opacity = 1 - (i * 0.06);
-    const label = (v.caption || "").slice(0, 30) || "Reel";
+    const opacity = 1 - (i * 0.05);
+    const label = (v.caption || "").slice(0, 28) || "Reel";
     const isTop = i === 0;
+    const tagObj = IG_TAGS.find(t => t.id === v.tag);
     return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-      <div style="width:120px;flex-shrink:0;font-size:.7rem;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right" title="${esc(v.caption || "")}">${esc(label)}</div>
-      <div style="flex:1;height:22px;background:var(--surf2);border-radius:4px;overflow:hidden;position:relative">
-        <div style="height:100%;width:${pct}%;background:var(--purple);opacity:${opacity};border-radius:4px;transition:width .4s ease"></div>
-        ${isTop ? '<span style="position:absolute;left:4px;top:2px;font-size:.6rem;font-weight:700;color:#fff;background:rgba(249,115,22,.8);padding:1px 5px;border-radius:3px">TOP</span>' : ""}
+      <div style="width:130px;flex-shrink:0;font-size:.68rem;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:4px" title="${esc(v.caption || "")}">
+        ${tagObj ? `<span style="font-size:.6rem;background:${tagObj.bg};color:${tagObj.color};padding:1px 4px;border-radius:3px">${tagObj.icon}</span>` : ""}
+        ${esc(label)}
       </div>
-      <div style="width:50px;font-size:.72rem;color:var(--text3);font-family:var(--font-display)">${fmtNum(val)}</div>
+      <div style="flex:1;height:24px;background:var(--surf2);border-radius:5px;overflow:hidden;position:relative">
+        <div style="height:100%;width:${pct}%;background:var(--purple);opacity:${opacity};border-radius:5px;transition:width .5s ease"></div>
+        ${isTop ? '<span style="position:absolute;left:4px;top:3px;font-size:.55rem;font-weight:700;color:#fff;background:rgba(249,115,22,.85);padding:1px 6px;border-radius:3px;letter-spacing:.03em">TOP</span>' : ""}
+      </div>
+      <div style="width:52px;font-size:.72rem;color:var(--text3);font-family:var(--font-display);text-align:right">${fmtNum(val)}</div>
     </div>`;
   }).join("");
-  wrap.innerHTML = `<div style="display:flex;gap:6px;margin-bottom:10px">${tabs}</div><div style="max-height:300px;overflow-y:auto">${bars}</div>${sorted.length > 10 ? '<div style="text-align:center;font-size:.72rem;color:var(--text3);margin-top:8px">+' + (sorted.length - 10) + ' more</div>' : ""}`;
+  return `<div style="max-height:300px;overflow-y:auto">${bars}</div>${sorted.length > 10 ? '<div style="text-align:center;font-size:.7rem;color:var(--text3);margin-top:8px">+' + (sorted.length - 10) + ' more</div>' : ""}`;
+}
+
+function renderIgTimelineChart() {
+  const byDate = [...igVideosCache].filter(v => v.published_at).sort((a, b) => new Date(a.published_at) - new Date(b.published_at));
+  if (!byDate.length) return '<div style="text-align:center;padding:20px;color:var(--text3);font-size:.8rem">No dated posts</div>';
+  const maxVal = Math.max(...byDate.map(v => v[igChartMetric] || 0), 1);
+  const h = 160, w = 100;
+  const points = byDate.map((v, i) => {
+    const x = byDate.length > 1 ? (i / (byDate.length - 1)) * w : 50;
+    const y = h - ((v[igChartMetric] || 0) / maxVal) * (h - 20) - 10;
+    return { x, y, v };
+  });
+  const line = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+  const area = `${line} L ${w} ${h} L 0 ${h} Z`;
+  const dots = points.map((p, i) => {
+    const date = new Date(p.v.published_at).toLocaleDateString();
+    return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="var(--purple)" stroke="var(--surf)" stroke-width="1.5" style="cursor:pointer">
+      <title>${date}: ${fmtNum(p.v[igChartMetric] || 0)} ${igChartMetric}</title>
+    </circle>`;
+  }).join("");
+  const gridLines = [0, 0.25, 0.5, 0.75, 1].map(pct => {
+    const y = h - pct * (h - 20) - 10;
+    const val = Math.round(maxVal * pct);
+    return `<line x1="0" y1="${y}" x2="${w}" y2="${y}" stroke="var(--border)" stroke-width="0.3" stroke-dasharray="2"/>
+      <text x="-2" y="${y + 2}" fill="var(--text3)" font-size="3" text-anchor="end" font-family="var(--font-display)">${fmtNum(val)}</text>`;
+  }).join("");
+  const dateLabels = [0, Math.floor(byDate.length / 2), byDate.length - 1].filter((v, i, a) => a.indexOf(v) === i).map(i => {
+    const x = byDate.length > 1 ? (i / (byDate.length - 1)) * w : 50;
+    const d = new Date(byDate[i].published_at);
+    return `<text x="${x}" y="${h + 8}" fill="var(--text3)" font-size="3" text-anchor="middle" font-family="var(--font-body)">${d.getDate()}/${d.getMonth() + 1}</text>`;
+  }).join("");
+  return `<div style="overflow-x:auto"><svg viewBox="-12 -5 ${w + 16} ${h + 18}" style="width:100%;max-height:220px">
+    ${gridLines}
+    <path d="${area}" fill="url(#igGrad)" opacity=".3"/>
+    <path d="${line}" fill="none" stroke="var(--purple)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    ${dots}${dateLabels}
+    <defs><linearGradient id="igGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--purple)"/><stop offset="1" stop-color="var(--purple)" stop-opacity="0"/></linearGradient></defs>
+  </svg></div>`;
+}
+
+function renderIgBubbleChart() {
+  const data = igVideosCache.filter(v => v.views > 0);
+  if (!data.length) return '<div style="text-align:center;padding:20px;color:var(--text3);font-size:.8rem">No data</div>';
+  const maxViews = Math.max(...data.map(v => v.views));
+  const maxEng = Math.max(...data.map(v => (v.likes + v.comments + (v.shares || 0)) / v.views), 0.01);
+  const avgEng = data.reduce((s, v) => s + (v.likes + v.comments + (v.shares || 0)) / v.views, 0) / data.length;
+  const h = 160, w = 100;
+  const bubbles = data.map(v => {
+    const eng = (v.likes + v.comments + (v.shares || 0)) / v.views;
+    const x = (v.views / maxViews) * (w - 10) + 5;
+    const y = h - (eng / maxEng) * (h - 20) - 10;
+    const r = Math.max(2.5, Math.min(6, (v[igChartMetric] || 0) / maxViews * 8));
+    const tagObj = IG_TAGS.find(t => t.id === v.tag);
+    const color = tagObj ? tagObj.color : "var(--purple)";
+    const caption = (v.caption || "").slice(0, 30);
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${color}" opacity=".7" stroke="${color}" stroke-width=".5" style="cursor:pointer;transition:all .2s" onmouseover="this.setAttribute('r','${(r+2).toFixed(1)}')" onmouseout="this.setAttribute('r','${r.toFixed(1)}')">
+      <title>${caption}\n${fmtNum(v.views)} views · ${(eng * 100).toFixed(1)}% eng</title>
+    </circle>`;
+  }).join("");
+  const avgLine = h - (avgEng / maxEng) * (h - 20) - 10;
+  return `<div style="overflow-x:auto;position:relative">
+    <div style="font-size:.6rem;color:var(--text3);display:flex;justify-content:space-between;margin-bottom:4px"><span>↑ Engagement rate</span><span>Views →</span></div>
+    <svg viewBox="-12 -5 ${w + 16} ${h + 12}" style="width:100%;max-height:220px">
+      <line x1="0" y1="${avgLine}" x2="${w}" y2="${avgLine}" stroke="var(--purple)" stroke-width=".4" stroke-dasharray="3" opacity=".5"/>
+      <text x="${w + 1}" y="${avgLine + 2}" fill="var(--purple)" font-size="2.8" opacity=".7">avg</text>
+      ${bubbles}
+    </svg>
+  </div>`;
 }
 
 function igSort(field) {
@@ -6447,6 +6772,92 @@ function igShowTranscript(vid) {
   const el = document.getElementById("igt-" + vid);
   if (el) el.style.display = el.style.display === "none" ? "" : "none";
 }
+
+async function igDeleteVideo(vid) {
+  if (!confirm(t("metrics.delete_confirm"))) return;
+  try {
+    const r = await fetch(`/metrics/video/${vid}`, { method: "DELETE" });
+    if (!r.ok) { const d = await r.json(); showToast(d.error || "Error"); return; }
+    igVideosCache = igVideosCache.filter(v => v.ig_video_id !== vid);
+    renderIgGrid();
+    renderIgChart();
+    showToast(t("metrics.delete") + " ✓");
+  } catch { showToast("Error"); }
+}
+
+function igToggleTagPicker(vid) {
+  const el = document.getElementById("igtp-" + vid);
+  if (!el) return;
+  document.querySelectorAll(".ig-tag-picker").forEach(p => { if (p !== el) p.style.display = "none"; });
+  el.style.display = el.style.display === "none" ? "flex" : "none";
+}
+
+async function igSetTag(vid, tag) {
+  document.querySelectorAll(".ig-tag-picker").forEach(p => p.style.display = "none");
+  try {
+    const r = await fetch(`/metrics/video/${vid}/tag`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tag }),
+    });
+    if (!r.ok) return;
+    const v = igVideosCache.find(x => x.ig_video_id === vid);
+    if (v) v.tag = tag;
+    renderIgGrid();
+  } catch {}
+}
+
+function igShowDetail(vid) {
+  const v = igVideosCache.find(x => x.ig_video_id === vid);
+  if (!v) return;
+  const tagObj = IG_TAGS.find(tg => tg.id === v.tag);
+  const date = v.published_at ? new Date(v.published_at).toLocaleDateString() : "—";
+  const dur = v.duration ? `${Math.floor(v.duration / 60)}:${String(Math.floor(v.duration % 60)).padStart(2, "0")}` : "—";
+  const engRate = v.views ? ((v.likes + v.comments + (v.shares || 0)) / v.views * 100).toFixed(2) + "%" : "—";
+
+  // Performance comparison vs average
+  const avgViews = igVideosCache.reduce((s, x) => s + (x.views || 0), 0) / (igVideosCache.length || 1);
+  const viewsDiff = avgViews > 0 ? (((v.views || 0) - avgViews) / avgViews * 100).toFixed(0) : 0;
+  const viewsDiffLabel = viewsDiff > 0 ? `+${viewsDiff}%` : `${viewsDiff}%`;
+  const viewsDiffColor = viewsDiff > 0 ? "#22c55e" : viewsDiff < -10 ? "#ef4444" : "var(--text3)";
+
+  const overlay = document.createElement("div");
+  overlay.className = "ig-detail-overlay";
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+  overlay.innerHTML = `<div class="ig-detail-modal">
+    <div class="ig-detail-header">
+      ${v.thumbnail_url ? `<img src="${esc(v.thumbnail_url)}" alt="" onerror="this.parentElement.style.minHeight='60px'"/>` : ""}
+      <button class="ig-detail-close" onclick="this.closest('.ig-detail-overlay').remove()">✕</button>
+      ${tagObj ? `<div style="position:absolute;top:10px;left:10px;background:${tagObj.bg};border:1px solid ${tagObj.color}30;backdrop-filter:blur(6px);border-radius:8px;padding:4px 12px;font-size:.75rem;font-weight:600;color:${tagObj.color};display:flex;align-items:center;gap:4px">${tagObj.icon} ${tagObj.label}</div>` : ""}
+      ${dur !== "—" ? `<div style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.6);color:#fff;font-size:.7rem;padding:3px 8px;border-radius:5px;font-family:var(--font-display);backdrop-filter:blur(4px)">${dur}</div>` : ""}
+    </div>
+    <div class="ig-detail-body">
+      <div class="ig-detail-caption">${esc(v.caption || "—")}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+        <span style="font-size:.72rem;color:var(--text3)">${t("metrics.published")}: ${date}</span>
+        <span style="font-size:.68rem;font-weight:600;color:${viewsDiffColor};background:${viewsDiffColor}15;padding:2px 8px;border-radius:4px">${viewsDiffLabel} vs avg</span>
+      </div>
+      <div class="ig-detail-metrics">
+        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${fmtNum(v.views)}</div><div class="ig-detail-metric-label">${t("metrics.views")}</div></div>
+        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${fmtNum(v.likes)}</div><div class="ig-detail-metric-label">${t("metrics.likes")}</div></div>
+        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${fmtNum(v.comments)}</div><div class="ig-detail-metric-label">${t("metrics.comments")}</div></div>
+        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${fmtNum(v.shares || 0)}</div><div class="ig-detail-metric-label">${t("metrics.shares")}</div></div>
+        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${dur}</div><div class="ig-detail-metric-label">${t("metrics.duration")}</div></div>
+        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${engRate}</div><div class="ig-detail-metric-label">${t("metrics.engagement")}</div></div>
+      </div>
+      ${v.transcription
+        ? `<div style="font-size:.75rem;font-weight:600;margin-bottom:6px;color:var(--text2)">${t("metrics.view_transcript")}</div><div class="ig-detail-transcript">${esc(v.transcription)}</div>`
+        : `<div style="font-size:.8rem;color:var(--text3);font-style:italic;padding:14px;background:var(--surf2);border-radius:10px;text-align:center">${t("metrics.no_transcript")}</div>`}
+      <div class="ig-detail-actions">
+        ${!v.transcription ? `<button class="ig-card-btn primary" onclick="igTranscribe('${v.ig_video_id}');this.closest('.ig-detail-overlay').remove()">${t("metrics.transcribe")}</button>` : ""}
+        ${v.ig_url ? `<a class="ig-card-btn" href="${esc(v.ig_url)}" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">${t("metrics.open_reel")}</a>` : ""}
+      </div>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+document.addEventListener("keydown", e => { if (e.key === "Escape") document.querySelector(".ig-detail-overlay")?.remove(); });
+document.addEventListener("click", () => document.querySelectorAll(".ig-tag-picker").forEach(p => p.style.display = "none"));
 
 async function igTranscribe(vid) {
   const btn = document.getElementById("igtr-" + vid);

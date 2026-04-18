@@ -2559,6 +2559,7 @@ def _scrape_ig_reels(username_or_urls: list[str], limit: int = 10) -> list[dict]
             "comments": item.get("commentsCount", 0) or 0,
             "shares": item.get("sharesCount", 0) or 0,
             "published_at": item.get("timestamp"),
+            "duration": item.get("videoDuration"),
         })
     return results
 
@@ -2791,6 +2792,32 @@ def metrics_unlink_profile():
     db.table("ig_profiles").delete().eq("id", ig_profile_id).execute()
 
     return jsonify({"ok": True})
+
+
+@app.route("/metrics/video/<ig_video_id>", methods=["DELETE"])
+@require_auth
+def metrics_delete_video(ig_video_id):
+    user = current_user()
+    row = db.table("ig_videos").select("id").eq("user_id", user["id"]).eq("ig_video_id", ig_video_id).execute()
+    if not row.data:
+        return jsonify({"error": "Video not found"}), 404
+    db.table("ig_videos").delete().eq("id", row.data[0]["id"]).execute()
+    return jsonify({"ok": True})
+
+
+@app.route("/metrics/video/<ig_video_id>/tag", methods=["PATCH"])
+@require_auth
+def metrics_tag_video(ig_video_id):
+    user = current_user()
+    body = request.get_json() or {}
+    tag = body.get("tag")
+    if tag and len(tag) > 20:
+        return jsonify({"error": "Tag too long"}), 400
+    row = db.table("ig_videos").select("id").eq("user_id", user["id"]).eq("ig_video_id", ig_video_id).execute()
+    if not row.data:
+        return jsonify({"error": "Video not found"}), 404
+    db.table("ig_videos").update({"tag": tag}).eq("id", row.data[0]["id"]).execute()
+    return jsonify({"ok": True, "tag": tag})
 
 
 @app.route("/robots.txt")
