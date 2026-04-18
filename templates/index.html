@@ -2763,7 +2763,7 @@
     .ig-tag-picker {
       position: absolute; top: 36px; left: 6px; z-index: 10;
       background: var(--surf); border: 1px solid var(--border); border-radius: 12px;
-      padding: 8px; display: flex; flex-wrap: wrap; gap: 4px; width: 220px;
+      padding: 8px; display: flex; flex-wrap: wrap; gap: 4px; width: 240px;
       box-shadow: 0 6px 24px rgba(0,0,0,.22);
     }
     .ig-tag-opt {
@@ -6523,16 +6523,18 @@ async function loadMetricsPanel() {
 }
 
 const IG_TAGS = [
-  { id: "viral",    label: "Viral",     icon: "⚡", color: "#ef4444", bg: "rgba(239,68,68,.12)" },
-  { id: "tutorial", label: "Tutorial",  icon: "📖", color: "#3b82f6", bg: "rgba(59,130,246,.12)" },
-  { id: "bts",      label: "BTS",       icon: "🎬", color: "#a78bfa", bg: "rgba(167,139,250,.12)" },
-  { id: "promo",    label: "Promo",     icon: "📢", color: "#f97316", bg: "rgba(249,115,22,.12)" },
-  { id: "hook",     label: "Hook",      icon: "🪝", color: "#eab308", bg: "rgba(234,179,8,.12)" },
-  { id: "story",    label: "Story",     icon: "💬", color: "#22c55e", bg: "rgba(34,197,94,.12)" },
-  { id: "edu",      label: "Educativo", icon: "🎓", color: "#06b6d4", bg: "rgba(6,182,212,.12)" },
-  { id: "collab",   label: "Collab",    icon: "🤝", color: "#ec4899", bg: "rgba(236,72,153,.12)" },
-  { id: "trend",    label: "Trend",     icon: "📈", color: "#8b5cf6", bg: "rgba(139,92,246,.12)" },
-  { id: "save",     label: "Guardado",  icon: "⭐", color: "#eab308", bg: "rgba(234,179,8,.12)" },
+  { id: "gold",     label: "Oro puro",    icon: "🥇", color: "#eab308", bg: "rgba(234,179,8,.12)" },
+  { id: "poop",     label: "Caquita",     icon: "💩", color: "#92400e", bg: "rgba(146,64,14,.12)" },
+  { id: "brain",    label: "Genialidad",  icon: "🧠", color: "#ec4899", bg: "rgba(236,72,153,.12)" },
+  { id: "clown",    label: "Payasada",    icon: "🤡", color: "#ef4444", bg: "rgba(239,68,68,.12)" },
+  { id: "pepper",   label: "Picante",     icon: "🌶️", color: "#f97316", bg: "rgba(249,115,22,.12)" },
+  { id: "sleep",    label: "Dormilón",    icon: "😴", color: "#6b7280", bg: "rgba(107,114,128,.12)" },
+  { id: "alien",    label: "Alien",       icon: "👽", color: "#22c55e", bg: "rgba(34,197,94,.12)" },
+  { id: "diamond",  label: "Diamante",    icon: "💎", color: "#06b6d4", bg: "rgba(6,182,212,.12)" },
+  { id: "skull",    label: "Muerto",      icon: "💀", color: "#a78bfa", bg: "rgba(167,139,250,.12)" },
+  { id: "rocket",   label: "Cohete",      icon: "🚀", color: "#3b82f6", bg: "rgba(59,130,246,.12)" },
+  { id: "cactus",   label: "Cactus",      icon: "🌵", color: "#16a34a", bg: "rgba(22,163,74,.12)" },
+  { id: "eyes",     label: "Ojo ojo",     icon: "👀", color: "#8b5cf6", bg: "rgba(139,92,246,.12)" },
 ];
 let igActiveTagFilter = null;
 
