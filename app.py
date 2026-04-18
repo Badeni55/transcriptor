@@ -2554,7 +2554,7 @@ def _scrape_ig_reels(username_or_urls: list[str], limit: int = 10) -> list[dict]
             "ig_url": item.get("url", ""),
             "caption": (item.get("caption") or "")[:2000],
             "thumbnail_url": item.get("displayUrl", ""),
-            "views": item.get("videoViewCount", 0) or 0,
+            "views": item.get("videoPlayCount") or item.get("videoViewCount") or 0,
             "likes": item.get("likesCount", 0) or 0,
             "comments": item.get("commentsCount", 0) or 0,
             "shares": item.get("sharesCount", 0) or 0,
