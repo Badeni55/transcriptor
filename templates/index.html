@@ -212,6 +212,13 @@
     [data-theme="light"] .asst-card-v2,
     [data-theme="light"] .script-stripe-card { background: var(--surf); }
     [data-theme="light"] .prof-header { background: var(--surf); backdrop-filter: none; }
+    [data-theme="light"] .ig-card { border: 1px solid rgba(0,0,0,.1); box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    [data-theme="light"] .ig-card:hover { border-color: rgba(249,115,22,.35); box-shadow: 0 2px 8px rgba(249,115,22,.1); }
+    [data-theme="light"] .ig-stat-card { background: #fff; border-color: rgba(0,0,0,.08); }
+    [data-theme="light"] .ig-perf-badge { box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+    [data-theme="light"] .ig-card-eng-label { color: var(--text3); }
+    [data-theme="light"] .ig-chart-tab { background: #fff; }
+    [data-theme="light"] .ig-card-overlay { background: linear-gradient(transparent 55%, rgba(0,0,0,.35)); }
     [data-theme="light"] .prof-tabs,
     [data-theme="light"] .prof-nav-item.on { background: rgba(249,115,22,.08); }
     [data-theme="light"] .avatar-picker { background: var(--surf); border-color: rgba(0,0,0,.1); }
@@ -2643,7 +2650,7 @@
     }
     .ig-linked-actions { display: flex; gap: 8px; margin-left: auto; }
     .ig-stats-row {
-      display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 14px;
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 14px;
     }
     .ig-stat-card {
       background: var(--surf); border: 1px solid var(--border); border-radius: 12px;
@@ -2681,14 +2688,20 @@
     .ig-card:hover { border-color: rgba(249,115,22,.3); }
     .ig-card-thumb {
       width: 100%; aspect-ratio: 4/5; object-fit: cover; display: block;
-      background: var(--surf2); max-height: 180px;
+      background: var(--surf2); max-height: 200px;
       border-radius: 12px 12px 0 0;
     }
     .ig-thumb-placeholder {
-      width: 100%; aspect-ratio: 4/5; max-height: 180px;
+      width: 100%; aspect-ratio: 4/5; max-height: 200px;
       background: linear-gradient(135deg, rgba(249,115,22,.15), rgba(249,115,22,.05));
       display: flex; align-items: center; justify-content: center;
       font-size: 2rem; color: var(--text3); opacity: .5;
+      border-radius: 12px 12px 0 0;
+    }
+    .ig-card-overlay {
+      position: absolute; inset: 0; border-radius: 12px 12px 0 0;
+      background: linear-gradient(transparent 50%, rgba(0,0,0,.45));
+      pointer-events: none;
     }
     .ig-card-body { padding: 12px 14px; }
     .ig-card-caption {
@@ -2697,10 +2710,16 @@
       overflow: hidden; margin-bottom: 10px; min-height: 2.1em;
     }
     .ig-card-eng-bar {
-      height: 4px; border-radius: 2px; background: var(--surf2); margin-bottom: 10px; overflow: hidden;
+      height: 14px; border-radius: 4px; background: var(--surf2); margin-bottom: 10px;
+      overflow: hidden; position: relative; cursor: default;
     }
     .ig-card-eng-fill {
-      height: 100%; border-radius: 2px; transition: width .4s ease;
+      height: 100%; border-radius: 4px; transition: width .4s ease;
+    }
+    .ig-card-eng-label {
+      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+      font-size: .58rem; font-weight: 700; color: var(--text2);
+      font-family: var(--font-display); letter-spacing: .02em;
     }
     .ig-card-stats {
       display: flex; gap: 12px; font-size: .72rem; color: var(--text3); margin-bottom: 10px;
@@ -2780,16 +2799,6 @@
       cursor: pointer; transition: all .15s; font-family: var(--font-body);
     }
     .ig-chart-tab.on { background: var(--purple); color: #fff; border-color: var(--purple); }
-    .ig-chart-type-toggle {
-      display: flex; gap: 2px; margin-left: auto; background: var(--surf2);
-      border-radius: 8px; padding: 2px;
-    }
-    .ig-chart-type-btn {
-      padding: 5px 10px; border-radius: 6px; border: none;
-      background: transparent; color: var(--text3); font-size: .7rem;
-      cursor: pointer; transition: all .15s;
-    }
-    .ig-chart-type-btn.on { background: var(--surf); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
     .ig-filter-bar {
       display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; align-items: center;
     }
@@ -2854,7 +2863,7 @@
       .ig-stat-card { padding: 10px; }
       .ig-stat-val { font-size: 1rem; }
       .ig-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-      .ig-card-thumb { max-height: 160px; }
+      .ig-card-thumb { max-height: 180px; }
       .ig-card-body { padding: 10px 12px; }
       .ig-card-caption { font-size: .72rem; -webkit-line-clamp: 1; min-height: 1em; }
       .ig-card-stats { gap: 8px; font-size: .65rem; flex-wrap: wrap; }
@@ -6484,19 +6493,15 @@ async function loadMetricsPanel() {
     const totals = igVideosCache.reduce((a, v) => {
       a.views += v.views || 0; a.likes += v.likes || 0;
       a.comments += v.comments || 0; a.shares += v.shares || 0;
-      if (v.duration) { a.durSum += v.duration; a.durCount++; }
       return a;
-    }, { views: 0, likes: 0, comments: 0, shares: 0, durSum: 0, durCount: 0 });
+    }, { views: 0, likes: 0, comments: 0, shares: 0 });
     const engRate = totals.views ? ((totals.likes + totals.comments + totals.shares) / totals.views * 100).toFixed(1) : "0.0";
-    const avgDur = totals.durCount ? totals.durSum / totals.durCount : 0;
-    const avgDurStr = avgDur ? `${Math.floor(avgDur / 60)}:${String(Math.floor(avgDur % 60)).padStart(2, "0")}` : "—";
     document.getElementById("igStatsRow").innerHTML = [
       { val: fmtNum(totals.views), label: t("metrics.total_views"), accent: "#f97316" },
       { val: fmtNum(Math.round(totals.views / n)), label: "Avg views", accent: "#f97316" },
       { val: fmtNum(totals.likes), label: t("metrics.total_likes"), accent: "#ef4444" },
-      { val: fmtNum(totals.shares), label: t("metrics.total_shares"), accent: "#3b82f6" },
+      { val: fmtNum(totals.comments), label: t("metrics.total_comments"), accent: "#3b82f6" },
       { val: engRate + "%", label: "Engagement", accent: "#22c55e" },
-      { val: avgDurStr, label: t("metrics.duration") + " avg", accent: "#a78bfa" },
     ].map(s => `<div class="ig-stat-card" style="border-top:2px solid ${s.accent}"><div class="ig-stat-val">${s.val}</div><div class="ig-stat-label">${s.label}</div></div>`).join("");
 
     // Best reel
@@ -6531,15 +6536,19 @@ const IG_TAGS = [
 ];
 let igActiveTagFilter = null;
 
-function igGetPerfBadge(v, avgViews, avgEng) {
+function igGetPerfBadges(v, avgViews, avgEng, topVid) {
+  const badges = [];
   const vEng = v.views ? (v.likes + v.comments + (v.shares || 0)) / v.views : 0;
-  if ((v.views || 0) > avgViews * 2 && vEng > avgEng)
-    return { label: "VIRAL", bg: "rgba(239,68,68,.85)", color: "#fff" };
-  if ((v.views || 0) > avgViews * 1.3)
-    return { label: "TOP", bg: "rgba(249,115,22,.85)", color: "#fff" };
-  if (vEng > avgEng * 1.5)
-    return { label: "HIGH ENG", bg: "rgba(34,197,94,.85)", color: "#fff" };
-  return null;
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  if (v.ig_video_id === topVid)
+    badges.push({ label: "🏆 TOP", bg: "rgba(234,179,8,.9)", color: "#fff" });
+  if ((v.views || 0) > avgViews * 2)
+    badges.push({ label: "🔥 VIRAL", bg: "rgba(239,68,68,.9)", color: "#fff" });
+  if (vEng > avgEng * 1.2 && v.ig_video_id !== topVid)
+    badges.push({ label: "💬 ENGAGED", bg: "rgba(34,197,94,.9)", color: "#fff" });
+  if (v.published_at && new Date(v.published_at).getTime() > sevenDaysAgo && (v.views || 0) > avgViews)
+    badges.push({ label: "📈 GROWING", bg: "rgba(59,130,246,.9)", color: "#fff" });
+  return badges;
 }
 
 function renderIgGrid() {
@@ -6578,6 +6587,7 @@ function renderIgGrid() {
   const maxViews = Math.max(...igVideosCache.map(v => v.views || 0), 1);
   const avgViews = igVideosCache.reduce((s, v) => s + (v.views || 0), 0) / (igVideosCache.length || 1);
   const avgEng = igVideosCache.reduce((s, v) => s + (v.views ? (v.likes + v.comments + (v.shares || 0)) / v.views : 0), 0) / (igVideosCache.length || 1);
+  const topVid = [...igVideosCache].sort((a, b) => (b.views || 0) - (a.views || 0))[0]?.ig_video_id;
 
   grid.innerHTML = filtered.map(v => {
     const hasTranscript = !!v.transcription;
@@ -6585,21 +6595,20 @@ function renderIgGrid() {
     const engPct = Math.min(100, Math.round(((v.views || 0) / maxViews) * 100));
     const vEng = v.views ? (v.likes + v.comments + (v.shares || 0)) / v.views : 0;
     const engColor = vEng > avgEng * 1.1 ? "#22c55e" : vEng < avgEng * 0.9 ? "#ef4444" : "#f97316";
-    const tagObj = IG_TAGS.find(t => t.id === v.tag);
-    const tagBadge = tagObj ? `<div class="ig-card-tag" style="background:${tagObj.bg};color:${tagObj.color};border:1px solid ${tagObj.color}30">${tagObj.icon} ${tagObj.label}</div>` : "";
-    const perf = igGetPerfBadge(v, avgViews, avgEng);
-    const perfBadge = perf ? `<div class="ig-perf-badge" style="background:${perf.bg};color:${perf.color}">${perf.label}</div>` : "";
+    const badges = igGetPerfBadges(v, avgViews, avgEng, topVid);
+    const badgesHtml = badges.length ? `<div style="position:absolute;bottom:6px;left:6px;display:flex;gap:3px;z-index:3">${badges.map(b => `<span class="ig-perf-badge" style="background:${b.bg};color:${b.color};position:static">${b.label}</span>`).join("")}</div>` : "";
     const dur = v.duration ? `${Math.floor(v.duration / 60)}:${String(Math.floor(v.duration % 60)).padStart(2, "0")}` : "";
+    const tagObj = IG_TAGS.find(t => t.id === v.tag);
     return `<div class="ig-card" id="igc-${v.ig_video_id}" style="position:relative">
       <div style="position:relative">
         ${(v.thumbnail_b64 || v.thumbnail_url) ? `<img class="ig-card-thumb" src="${v.thumbnail_b64 || esc(v.thumbnail_url)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="ig-thumb-placeholder" style="display:none"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><polygon points="5 3 19 12 5 21"/></svg></div>` : '<div class="ig-thumb-placeholder"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><polygon points="5 3 19 12 5 21"/></svg></div>'}
-        ${tagBadge}
-        ${perfBadge}
+        <div class="ig-card-overlay"></div>
+        ${badgesHtml}
         <div class="ig-card-top-bar" style="position:absolute;top:0;left:0;right:0">
-          <button class="ig-tag-btn" onclick="event.stopPropagation();igToggleTagPicker('${v.ig_video_id}')" title="${t("metrics.tag_label")}">${tagObj ? `${tagObj.icon}` : "🏷"}<span style="font-size:.6rem">${tagObj ? "" : " Tag"}</span></button>
+          <button class="ig-tag-btn" onclick="event.stopPropagation();igToggleTagPicker('${v.ig_video_id}')" title="${t("metrics.tag_label")}">${tagObj ? `${tagObj.icon}` : "🏷"}</button>
           <button class="ig-delete-btn" onclick="event.stopPropagation();igDeleteVideo('${v.ig_video_id}')" title="${t("metrics.delete")}">✕</button>
         </div>
-        ${dur ? `<div style="position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;font-size:.6rem;padding:2px 6px;border-radius:4px;font-family:var(--font-display);backdrop-filter:blur(4px)">${dur}</div>` : ""}
+        ${dur ? `<div style="position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.65);color:#fff;font-size:.6rem;padding:2px 6px;border-radius:4px;font-family:var(--font-display);backdrop-filter:blur(4px)">${dur}</div>` : ""}
         <div class="ig-tag-picker" id="igtp-${v.ig_video_id}" style="display:none" onclick="event.stopPropagation()">
           ${IG_TAGS.map(tg => `<button class="ig-tag-opt${v.tag === tg.id ? " on" : ""}" onclick="igSetTag('${v.ig_video_id}','${tg.id}')" style="${v.tag === tg.id ? `border-color:${tg.color}` : ""}">${tg.icon} <span style="font-size:.65rem">${tg.label}</span></button>`).join("")}
           ${v.tag ? `<button class="ig-tag-opt" onclick="igSetTag('${v.ig_video_id}',null)" style="color:var(--text3)">✕ <span style="font-size:.65rem">Quitar</span></button>` : ""}
@@ -6611,10 +6620,9 @@ function renderIgGrid() {
           <span>👁 ${fmtNum(v.views)}</span>
           <span>❤ ${fmtNum(v.likes)}</span>
           <span>💬 ${fmtNum(v.comments)}</span>
-          <span>↗ ${fmtNum(v.shares)}</span>
         </div>
         ${date ? `<div style="font-size:.68rem;color:var(--text3);margin-bottom:8px">${date}</div>` : ""}
-        <div class="ig-card-eng-bar"><div class="ig-card-eng-fill" style="width:${engPct}%;background:${engColor}"></div></div>
+        <div class="ig-card-eng-bar" title="${engPct}% vs best reel"><div class="ig-card-eng-fill" style="width:${engPct}%;background:${engColor}"></div><span class="ig-card-eng-label">${engPct}%</span></div>
         <div class="ig-card-actions" onclick="event.stopPropagation()">
           ${hasTranscript
             ? `<button class="ig-card-btn" onclick="igShowTranscript('${v.ig_video_id}')">${t("metrics.view_transcript")}</button>`
@@ -6628,133 +6636,72 @@ function renderIgGrid() {
 }
 
 let igChartMetric = "views";
-let igChartType = "bar";
 
 function renderIgChart() {
   const wrap = document.getElementById("igChartWrap");
   if (!igVideosCache.length) { wrap.innerHTML = ""; return; }
 
-  const metrics = ["views", "likes", "comments", "shares"];
+  const metrics = ["views", "likes", "comments"];
   const metricTabs = metrics.map(m =>
     `<button class="ig-chart-tab${igChartMetric === m ? " on" : ""}" onclick="igChartMetric='${m}';renderIgChart()">${m[0].toUpperCase() + m.slice(1)}</button>`
   ).join("");
 
-  const types = [
-    { id: "bar", label: "Ranking" },
-    { id: "timeline", label: "Timeline" },
-    { id: "bubble", label: "Engagement" },
-  ];
-  const typeToggle = types.map(t =>
-    `<button class="ig-chart-type-btn${igChartType === t.id ? " on" : ""}" onclick="igChartType='${t.id}';renderIgChart()">${t.label}</button>`
-  ).join("");
-
-  let chartContent = "";
-  if (igChartType === "bar") {
-    chartContent = renderIgBarChart();
-  } else if (igChartType === "timeline") {
-    chartContent = renderIgTimelineChart();
-  } else if (igChartType === "bubble") {
-    chartContent = renderIgBubbleChart();
-  }
-
-  wrap.innerHTML = `<div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap">
-    <div class="ig-chart-tabs" style="margin-bottom:0">${metricTabs}</div>
-    <div class="ig-chart-type-toggle">${typeToggle}</div>
-  </div>${chartContent}`;
-}
-
-function renderIgBarChart() {
-  const sorted = [...igVideosCache].sort((a, b) => (b[igChartMetric] || 0) - (a[igChartMetric] || 0));
-  const shown = sorted.slice(0, 10);
-  const maxVal = Math.max(...shown.map(v => v[igChartMetric] || 0), 1);
-  const bars = shown.map((v, i) => {
-    const val = v[igChartMetric] || 0;
-    const pct = Math.round(val / maxVal * 100);
-    const opacity = 1 - (i * 0.05);
-    const label = (v.caption || "").slice(0, 28) || "Reel";
-    const isTop = i === 0;
-    const tagObj = IG_TAGS.find(t => t.id === v.tag);
-    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-      <div style="width:130px;flex-shrink:0;font-size:.68rem;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:4px" title="${esc(v.caption || "")}">
-        ${tagObj ? `<span style="font-size:.6rem;background:${tagObj.bg};color:${tagObj.color};padding:1px 4px;border-radius:3px">${tagObj.icon}</span>` : ""}
-        ${esc(label)}
-      </div>
-      <div style="flex:1;height:24px;background:var(--surf2);border-radius:5px;overflow:hidden;position:relative">
-        <div style="height:100%;width:${pct}%;background:var(--purple);opacity:${opacity};border-radius:5px;transition:width .5s ease"></div>
-        ${isTop ? '<span style="position:absolute;left:4px;top:3px;font-size:.55rem;font-weight:700;color:#fff;background:rgba(249,115,22,.85);padding:1px 6px;border-radius:3px;letter-spacing:.03em">TOP</span>' : ""}
-      </div>
-      <div style="width:52px;font-size:.72rem;color:var(--text3);font-family:var(--font-display);text-align:right">${fmtNum(val)}</div>
-    </div>`;
-  }).join("");
-  return `<div style="max-height:300px;overflow-y:auto">${bars}</div>${sorted.length > 10 ? '<div style="text-align:center;font-size:.7rem;color:var(--text3);margin-top:8px">+' + (sorted.length - 10) + ' more</div>' : ""}`;
-}
-
-function renderIgTimelineChart() {
   const byDate = [...igVideosCache].filter(v => v.published_at).sort((a, b) => new Date(a.published_at) - new Date(b.published_at));
-  if (!byDate.length) return '<div style="text-align:center;padding:20px;color:var(--text3);font-size:.8rem">No dated posts</div>';
-  const maxVal = Math.max(...byDate.map(v => v[igChartMetric] || 0), 1);
-  const h = 160, w = 100;
-  const points = byDate.map((v, i) => {
-    const x = byDate.length > 1 ? (i / (byDate.length - 1)) * w : 50;
-    const y = h - ((v[igChartMetric] || 0) / maxVal) * (h - 20) - 10;
-    return { x, y, v };
-  });
-  const line = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
-  const area = `${line} L ${w} ${h} L 0 ${h} Z`;
-  const dots = points.map((p, i) => {
-    const date = new Date(p.v.published_at).toLocaleDateString();
-    return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="var(--purple)" stroke="var(--surf)" stroke-width="1.5" style="cursor:pointer">
-      <title>${date}: ${fmtNum(p.v[igChartMetric] || 0)} ${igChartMetric}</title>
-    </circle>`;
-  }).join("");
-  const gridLines = [0, 0.25, 0.5, 0.75, 1].map(pct => {
-    const y = h - pct * (h - 20) - 10;
-    const val = Math.round(maxVal * pct);
-    return `<line x1="0" y1="${y}" x2="${w}" y2="${y}" stroke="var(--border)" stroke-width="0.3" stroke-dasharray="2"/>
-      <text x="-2" y="${y + 2}" fill="var(--text3)" font-size="3" text-anchor="end" font-family="var(--font-display)">${fmtNum(val)}</text>`;
-  }).join("");
-  const dateLabels = [0, Math.floor(byDate.length / 2), byDate.length - 1].filter((v, i, a) => a.indexOf(v) === i).map(i => {
-    const x = byDate.length > 1 ? (i / (byDate.length - 1)) * w : 50;
-    const d = new Date(byDate[i].published_at);
-    return `<text x="${x}" y="${h + 8}" fill="var(--text3)" font-size="3" text-anchor="middle" font-family="var(--font-body)">${d.getDate()}/${d.getMonth() + 1}</text>`;
-  }).join("");
-  return `<div style="overflow-x:auto"><svg viewBox="-12 -5 ${w + 16} ${h + 18}" style="width:100%;max-height:220px">
-    ${gridLines}
-    <path d="${area}" fill="url(#igGrad)" opacity=".3"/>
-    <path d="${line}" fill="none" stroke="var(--purple)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    ${dots}${dateLabels}
-    <defs><linearGradient id="igGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--purple)"/><stop offset="1" stop-color="var(--purple)" stop-opacity="0"/></linearGradient></defs>
-  </svg></div>`;
-}
+  if (!byDate.length) { wrap.innerHTML = ""; return; }
 
-function renderIgBubbleChart() {
-  const data = igVideosCache.filter(v => v.views > 0);
-  if (!data.length) return '<div style="text-align:center;padding:20px;color:var(--text3);font-size:.8rem">No data</div>';
-  const maxViews = Math.max(...data.map(v => v.views));
-  const maxEng = Math.max(...data.map(v => (v.likes + v.comments + (v.shares || 0)) / v.views), 0.01);
-  const avgEng = data.reduce((s, v) => s + (v.likes + v.comments + (v.shares || 0)) / v.views, 0) / data.length;
-  const h = 160, w = 100;
-  const bubbles = data.map(v => {
-    const eng = (v.likes + v.comments + (v.shares || 0)) / v.views;
-    const x = (v.views / maxViews) * (w - 10) + 5;
-    const y = h - (eng / maxEng) * (h - 20) - 10;
-    const r = Math.max(2.5, Math.min(6, (v[igChartMetric] || 0) / maxViews * 8));
-    const tagObj = IG_TAGS.find(t => t.id === v.tag);
-    const color = tagObj ? tagObj.color : "var(--purple)";
-    const caption = (v.caption || "").slice(0, 30);
-    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${color}" opacity=".7" stroke="${color}" stroke-width=".5" style="cursor:pointer;transition:all .2s" onmouseover="this.setAttribute('r','${(r+2).toFixed(1)}')" onmouseout="this.setAttribute('r','${r.toFixed(1)}')">
-      <title>${caption}\n${fmtNum(v.views)} views · ${(eng * 100).toFixed(1)}% eng</title>
-    </circle>`;
+  const maxVal = Math.max(...byDate.map(v => v[igChartMetric] || 0), 1);
+  const avgVal = byDate.reduce((s, v) => s + (v[igChartMetric] || 0), 0) / byDate.length;
+  const topId = [...byDate].sort((a, b) => (b[igChartMetric] || 0) - (a[igChartMetric] || 0))[0]?.ig_video_id;
+  const h = 200, padTop = 20, padBot = 40, padLeft = 45, padRight = 10;
+  const chartW = 100 - padLeft - padRight;
+  const chartH = h - padTop - padBot;
+  const barGap = 2;
+  const barW = Math.max(6, Math.min(32, (chartW - barGap * byDate.length) / byDate.length));
+  const totalBarsW = byDate.length * (barW + barGap) - barGap;
+  const offsetX = padLeft + (chartW - totalBarsW) / 2;
+
+  // Y-axis grid
+  const gridSteps = 4;
+  const gridLines = Array.from({length: gridSteps + 1}, (_, i) => {
+    const pct = i / gridSteps;
+    const y = padTop + chartH - pct * chartH;
+    const val = Math.round(maxVal * pct);
+    return `<line x1="${padLeft}" y1="${y}" x2="${100 - padRight}" y2="${y}" stroke="var(--border)" stroke-width="0.2" stroke-dasharray="1.5"/>
+      <text x="${padLeft - 2}" y="${y + 1.2}" fill="var(--text3)" font-size="2.8" text-anchor="end" font-family="var(--font-display)">${fmtNum(val)}</text>`;
   }).join("");
-  const avgLine = h - (avgEng / maxEng) * (h - 20) - 10;
-  return `<div style="overflow-x:auto;position:relative">
-    <div style="font-size:.6rem;color:var(--text3);display:flex;justify-content:space-between;margin-bottom:4px"><span>↑ Engagement rate</span><span>Views →</span></div>
-    <svg viewBox="-12 -5 ${w + 16} ${h + 12}" style="width:100%;max-height:220px">
-      <line x1="0" y1="${avgLine}" x2="${w}" y2="${avgLine}" stroke="var(--purple)" stroke-width=".4" stroke-dasharray="3" opacity=".5"/>
-      <text x="${w + 1}" y="${avgLine + 2}" fill="var(--purple)" font-size="2.8" opacity=".7">avg</text>
-      ${bubbles}
-    </svg>
-  </div>`;
+
+  // Average line
+  const avgY = padTop + chartH - (avgVal / maxVal) * chartH;
+  const avgLine = `<line x1="${padLeft}" y1="${avgY}" x2="${100 - padRight}" y2="${avgY}" stroke="var(--purple)" stroke-width="0.4" stroke-dasharray="2" opacity=".6"/>
+    <text x="${100 - padRight + 1}" y="${avgY + 1.2}" fill="var(--purple)" font-size="2.5" font-family="var(--font-display)" opacity=".8">Media: ${fmtNum(Math.round(avgVal))}</text>`;
+
+  // Bars
+  const bars = byDate.map((v, i) => {
+    const val = v[igChartMetric] || 0;
+    const barH = Math.max(1, (val / maxVal) * chartH);
+    const x = offsetX + i * (barW + barGap);
+    const y = padTop + chartH - barH;
+    const isTop = v.ig_video_id === topId;
+    const fill = isTop ? "#f97316" : "var(--purple)";
+    const opacity = isTop ? "1" : "0.75";
+    const d = new Date(v.published_at);
+    const dateStr = `${d.getDate()}/${d.getMonth() + 1}`;
+    const caption = (v.caption || "").slice(0, 35) || "Reel";
+    return `<g>
+      <rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="1.5" fill="${fill}" opacity="${opacity}" style="cursor:pointer;transition:opacity .15s">
+        <title>${esc(caption)}\n${fmtNum(val)} ${igChartMetric} · ❤ ${fmtNum(v.likes)} · 💬 ${fmtNum(v.comments)}</title>
+      </rect>
+      ${isTop ? `<rect x="${x - 0.3}" y="${y - 0.3}" width="${barW + 0.6}" height="${barH + 0.6}" rx="1.8" fill="none" stroke="#eab308" stroke-width="0.5"/>` : ""}
+      ${(i % Math.max(1, Math.floor(byDate.length / 8)) === 0 || i === byDate.length - 1) ? `<text x="${x + barW / 2}" y="${padTop + chartH + 5}" fill="var(--text3)" font-size="2.3" text-anchor="middle" font-family="var(--font-body)">${dateStr}</text>` : ""}
+    </g>`;
+  }).join("");
+
+  wrap.innerHTML = `<div class="ig-chart-tabs">${metricTabs}</div>
+    <div style="overflow-x:auto">
+      <svg viewBox="0 0 ${Math.max(100, offsetX + totalBarsW + padRight + 20)} ${h}" style="width:100%;max-height:250px;min-width:300px">
+        ${gridLines}${avgLine}${bars}
+      </svg>
+    </div>`;
 }
 
 function igSort(field) {
