@@ -2545,11 +2545,11 @@ def _download_thumbnail_b64(url: str) -> str | None:
         r = requests.get(url, timeout=10)
         r.raise_for_status()
         img = Image.open(BytesIO(r.content))
-        img.thumbnail((160, 200))
+        img.thumbnail((320, 400))
         if img.mode in ("RGBA", "P"):
             img = img.convert("RGB")
         buf = BytesIO()
-        img.save(buf, format="JPEG", quality=50, optimize=True)
+        img.save(buf, format="JPEG", quality=75, optimize=True)
         return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
     except Exception as e:
         logger.warning(f"[IG-METRICS] Thumbnail download failed: {e}")
