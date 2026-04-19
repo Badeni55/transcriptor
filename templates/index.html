@@ -2890,47 +2890,57 @@
     }
 
     @media (max-width: 768px) {
-      /* 1. Stats header — 3×2 grid */
-      .ig-stats-row { grid-template-columns: repeat(3, 1fr) !important; gap: 8px; }
-      .ig-stat-card { padding: 10px 8px; }
-      .ig-stat-val { font-size: 1.1rem; }
-      .ig-stat-label { font-size: .6rem; }
+      /* Prevent overflow on metrics panel */
+      #profPanelMetrics { max-width: 100%; overflow-x: hidden; box-sizing: border-box; }
+      /* 1. Stats header — 3×2 grid, ultra-compact */
+      .ig-stats-row { grid-template-columns: repeat(3, 1fr) !important; gap: 6px; }
+      .ig-stat-card { padding: 8px 6px; border-radius: 8px; }
+      .ig-stat-val { font-size: .95rem; }
+      .ig-stat-label { font-size: .55rem; }
       /* 2. Chart — scrollable container */
       .ig-chart-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
       /* 3. Scale tabs — second row */
-      .ig-chart-toolbar { flex-direction: column !important; align-items: flex-start !important; gap: 6px !important; }
+      .ig-chart-toolbar { flex-direction: column !important; align-items: flex-start !important; gap: 4px !important; }
       .ig-chart-toolbar .ig-chart-tabs { margin-bottom: 0; }
+      .ig-chart-toolbar .ig-chart-tab { padding: 4px 10px; font-size: .65rem; }
       .ig-chart-toolbar .ig-scale-group { margin-left: 0 !important; }
-      .ig-chart-toolbar .ig-scale-group .ig-chart-tab { font-size: .65rem; }
-      /* 4. Cards — 2 cols, compact */
-      .ig-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-      .ig-card-thumb { max-height: 100px; }
-      .ig-card-body { padding: 10px 12px; }
-      .ig-card-caption { font-size: .8rem; -webkit-line-clamp: 2; min-height: 2em; }
-      .ig-card-stats { gap: 8px; font-size: .7rem; flex-wrap: wrap; }
-      .ig-card-actions { flex-direction: column; }
-      .ig-card-btn { font-size: .7rem; padding: 6px 10px; }
-      .ig-card .ig-badges-row span { font-size: .6rem !important; }
+      .ig-chart-toolbar .ig-scale-group .ig-chart-tab { font-size: .6rem; padding: 3px 8px; }
+      /* 4. Cards — 3 cols, very compact */
+      .ig-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+      .ig-card { border-radius: 8px; }
+      .ig-card-thumb { max-height: 90px; border-radius: 8px 8px 0 0; }
+      .ig-thumb-placeholder { max-height: 90px; border-radius: 8px 8px 0 0; }
+      .ig-card-overlay { border-radius: 8px 8px 0 0; }
+      .ig-card-body { padding: 6px 8px; }
+      .ig-card-caption { font-size: .65rem; -webkit-line-clamp: 1; min-height: 1em; margin-bottom: 4px; }
+      .ig-card-stats { gap: 4px; font-size: .55rem; flex-wrap: wrap; margin-bottom: 4px; }
+      .ig-card-eng-bar { height: 10px; margin-bottom: 4px; }
+      .ig-card-actions { flex-direction: column; gap: 3px; }
+      .ig-card-btn { font-size: .6rem; padding: 4px 6px; border-radius: 6px; }
+      .ig-card .ig-badges-row { gap: 2px; margin-bottom: 3px; }
+      .ig-card .ig-badges-row span { font-size: .5rem !important; padding: 0px 4px !important; }
+      .ig-card .ig-card-body span[style*="font-size:.58rem"] { font-size: .5rem !important; padding: 0px 4px !important; }
       /* 5. Filters — horizontal scroll */
-      .ig-filter-bar { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
-      .ig-filter-chip { white-space: nowrap; flex-shrink: 0; }
+      .ig-filter-bar { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; gap: 3px; }
+      .ig-filter-chip { white-space: nowrap; flex-shrink: 0; font-size: .6rem; padding: 3px 8px; }
       /* 6. Top reel — truncate */
-      .ig-best-reel { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .ig-best-reel { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .7rem; padding: 8px 10px; margin-bottom: 12px; }
       .ig-best-reel .ig-best-full { display: none; }
       .ig-best-reel .ig-best-short { display: inline; }
+      /* Sort bar */
+      .ig-sort-bar { gap: 4px; margin-bottom: 10px; }
+      .ig-sort-btn { padding: 3px 7px; font-size: .6rem; }
       /* Other */
-      .ig-linked-header { gap: 8px; }
-      .ig-linked-user { font-size: .95rem; }
+      .ig-linked-header { gap: 6px; margin-bottom: 12px; }
+      .ig-linked-user { font-size: .9rem; }
       .ig-linked-actions { margin-left: 0; width: 100%; }
-      .ig-linked-actions .ig-card-btn { flex: 1; text-align: center; }
-      .ig-sort-bar { gap: 6px; }
-      .ig-sort-btn { padding: 4px 8px; font-size: .7rem; }
-      .ig-link-box { padding: 24px 18px; margin: 20px auto; }
-      #igAnalyzeBar { flex-direction: column; align-items: stretch; gap: 8px; }
-      #igAnalyzeBar .ig-card-btn { width: 100%; }
-      #igAnalyzeBar select { width: 100%; }
+      .ig-linked-actions .ig-card-btn { flex: 1; text-align: center; font-size: .65rem; }
+      .ig-link-box { padding: 20px 14px; margin: 16px auto; }
+      #igAnalyzeBar { flex-direction: column; align-items: stretch; gap: 6px; }
+      #igAnalyzeBar .ig-card-btn { width: 100%; font-size: .7rem; }
+      #igAnalyzeBar select { width: 100%; font-size: .7rem; }
       .ig-delete-btn { opacity: 1; }
-      .ig-detail-metrics { grid-template-columns: repeat(2, 1fr); }
+      .ig-detail-metrics { grid-template-columns: repeat(2, 1fr); gap: 8px; }
       .ig-detail-modal { max-width: 95vw; }
     }
     @media (min-width: 769px) {
@@ -2938,9 +2948,9 @@
       .ig-best-reel .ig-best-full { display: inline; }
     }
     @media (max-width: 420px) {
-      .ig-grid { grid-template-columns: 1fr; }
-      .ig-card-thumb { max-height: 140px; }
-      .ig-card-caption { -webkit-line-clamp: 2; min-height: 2.1em; }
+      .ig-grid { grid-template-columns: repeat(2, 1fr); }
+      .ig-card-thumb { max-height: 100px; }
+      .ig-card-caption { -webkit-line-clamp: 2; min-height: 2em; }
       .ig-detail-metrics { grid-template-columns: repeat(2, 1fr); }
     }
 
