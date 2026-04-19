@@ -6756,7 +6756,10 @@ function renderIgChart() {
   const yCap = Math.max(avgVal * 3, maxVal * 0.4);
   const scaleY = val => Math.min(1, val / yCap);
 
-  const W = 700, H = 300;
+  // Measure container so SVG fills it exactly
+  const cw = wrap.clientWidth || 800;
+  const W = Math.max(600, cw - 34);  // minus container padding
+  const H = 300;
   const padTop = 30, padBot = 48, padLeft = 50, padRight = 16;
   const chartW = W - padLeft - padRight;
   const chartH = H - padTop - padBot;
@@ -6808,7 +6811,7 @@ function renderIgChart() {
   wrap.innerHTML = `<div style="background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:16px 16px 8px">
     <div class="ig-chart-tabs">${metricTabs}</div>
     <div style="overflow-x:auto">
-      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:350px" preserveAspectRatio="xMidYMid meet">
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block" preserveAspectRatio="xMinYMin meet">
         ${gridLines}${avgLine}${bars}
       </svg>
     </div>
