@@ -2655,7 +2655,11 @@
     }
     .ig-stat-card {
       background: var(--surf); border: 1px solid var(--border); border-radius: 12px;
-      padding: 14px; text-align: center;
+      padding: 14px; text-align: center; position: relative; overflow: hidden;
+    }
+    .ig-stat-card::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--stat-accent, var(--purple)); border-radius: 12px 12px 0 0;
     }
     .ig-stat-val {
       font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; margin-bottom: 2px;
@@ -2810,6 +2814,7 @@
       box-shadow: 0 8px 40px rgba(0,0,0,.25); animation: slideUp .25s ease;
     }
     @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
     .ig-detail-header {
       position: relative; overflow: hidden; border-radius: 16px 16px 0 0;
     }
@@ -4867,12 +4872,11 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5.5"/><circle cx="18" cy="6" r="1.5" fill="currentColor" stroke="none"/></svg>
             <span class="ig-linked-user" id="igUsername"></span>
             <div class="ig-linked-actions">
-              <button class="ig-card-btn" onclick="igRefresh()" id="igRefreshBtn" data-i18n="metrics.refresh">Refresh</button>
-              <button class="ig-card-btn" onclick="igUnlink()" style="color:#f87171;border-color:rgba(248,113,113,.3)" data-i18n="metrics.unlink">Unlink</button>
+              <button class="ig-card-btn" onclick="igUnlink()" style="color:#f87171;border-color:rgba(248,113,113,.3)" data-i18n="metrics.unlink">Desvincular</button>
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap;max-width:400px" id="igAnalyzeBar">
-            <button class="ig-card-btn primary" style="padding:10px 20px;font-size:.88rem;font-weight:600" onclick="igAnalyze()" id="igAnalyzeBtn" data-i18n="metrics.analyze_btn">Analyze reels</button>
+            <button class="ig-card-btn primary" style="padding:10px 20px;font-size:.88rem;font-weight:600" onclick="igAnalyze()" id="igAnalyzeBtn" data-i18n="metrics.analyze_btn">Actualizar reels</button>
             <select id="igAnalyzeCount" onchange="localStorage.setItem('ig_count',this.value)" style="padding:8px 12px;background:var(--surf);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:.82rem;font-family:var(--font-body);outline:none;cursor:pointer">
               <option value="5">5 reels</option>
               <option value="10">10 reels</option>
@@ -5415,14 +5419,17 @@ const LANGS = {
     "metrics.transcribe": "Transcribir",
     "metrics.view_transcript": "Ver transcripción",
     "metrics.open_reel": "Abrir reel",
-    "metrics.analyzing": "Analizando...",
     "metrics.transcribing": "Transcribiendo...",
     "metrics.total_views": "Vistas totales",
+    "metrics.avg_views": "Media views",
+    "metrics.median_views": "Mediana views",
     "metrics.total_likes": "Total likes",
     "metrics.total_comments": "Total comentarios",
     "metrics.total_shares": "Total compartidos",
-    "metrics.analyze_btn": "Analizar reels",
+    "metrics.analyze_btn": "Actualizar reels",
+    "metrics.analyzing": "Actualizando...",
     "metrics.analyses_left": "análisis restantes esta semana",
+    "metrics.analyses_warning": "¡Pocos análisis restantes!",
     "metrics.unlimited": "análisis ilimitados",
     "metrics.delete": "Eliminar",
     "metrics.delete_confirm": "¿Eliminar este vídeo?",
@@ -5432,6 +5439,27 @@ const LANGS = {
     "metrics.tag_label": "Etiqueta",
     "metrics.engagement": "Engagement",
     "metrics.published": "Publicado",
+    "metrics.vs_avg": "Este reel vs tu media",
+    "metrics.manual_metrics": "Métricas manuales",
+    "metrics.manual_hint": "Instagram no permite acceder a retención, guardados ni alcance por API. Puedes meterlos aquí desde tus Insights.",
+    "metrics.tags": "Tags",
+    "metrics.add_tag": "Añadir",
+    "metrics.custom_tag": "Tag custom...",
+    "metrics.retention_label": "Retención media",
+    "metrics.saves_label": "Guardados",
+    "metrics.reach_label": "Alcance",
+    "metrics.note_label": "Nota",
+    "metrics.note_placeholder": "Añade una nota...",
+    "metrics.avg_retention": "Media retención",
+    "metrics.avg_saves": "Media guardados",
+    "metrics.reels_updated": "reels actualizados",
+    "metrics.err_no_profile": "No hay perfil de Instagram vinculado",
+    "metrics.err_limit": "Has agotado tus análisis esta semana",
+    "metrics.err_scrape": "No se pudo analizar el perfil. Inténtalo de nuevo.",
+    "metrics.err_network": "Error de conexión. Comprueba tu red.",
+    "metrics.unlink_confirm": "¿Desvincular perfil de Instagram? Se borrarán todos los datos de métricas.",
+    "metrics.unlinked": "Perfil desvinculado",
+    "metrics.vs_best": "vs mejor reel",
     // View modal
     "view.title": "Transcripción",
     "view.copy": "Copiar",
@@ -5746,14 +5774,17 @@ const LANGS = {
     "metrics.transcribe": "Transcribe",
     "metrics.view_transcript": "View transcript",
     "metrics.open_reel": "Open reel",
-    "metrics.analyzing": "Analyzing...",
     "metrics.transcribing": "Transcribing...",
     "metrics.total_views": "Total views",
+    "metrics.avg_views": "Avg views",
+    "metrics.median_views": "Median views",
     "metrics.total_likes": "Total likes",
     "metrics.total_comments": "Total comments",
     "metrics.total_shares": "Total shares",
-    "metrics.analyze_btn": "Analyze reels",
+    "metrics.analyze_btn": "Update reels",
+    "metrics.analyzing": "Updating...",
     "metrics.analyses_left": "analyses left this week",
+    "metrics.analyses_warning": "Few analyses remaining!",
     "metrics.unlimited": "unlimited analyses",
     "metrics.delete": "Delete",
     "metrics.delete_confirm": "Delete this video?",
@@ -5763,6 +5794,27 @@ const LANGS = {
     "metrics.tag_label": "Tag",
     "metrics.engagement": "Engagement",
     "metrics.published": "Published",
+    "metrics.vs_avg": "This reel vs your average",
+    "metrics.manual_metrics": "Manual metrics",
+    "metrics.manual_hint": "Instagram doesn't expose retention, saves or reach via API. You can enter them here from your Insights.",
+    "metrics.tags": "Tags",
+    "metrics.add_tag": "Add",
+    "metrics.custom_tag": "Custom tag...",
+    "metrics.retention_label": "Avg retention",
+    "metrics.saves_label": "Saves",
+    "metrics.reach_label": "Reach",
+    "metrics.note_label": "Note",
+    "metrics.note_placeholder": "Add a note...",
+    "metrics.avg_retention": "Avg retention",
+    "metrics.avg_saves": "Avg saves",
+    "metrics.reels_updated": "reels updated",
+    "metrics.err_no_profile": "No Instagram profile linked",
+    "metrics.err_limit": "You've used all your analyses this week",
+    "metrics.err_scrape": "Couldn't analyze the profile. Please try again.",
+    "metrics.err_network": "Connection error. Check your network.",
+    "metrics.unlink_confirm": "Unlink Instagram profile? All metrics data will be deleted.",
+    "metrics.unlinked": "Profile unlinked",
+    "metrics.vs_best": "vs best reel",
     // View modal
     "view.title": "Transcription",
     "view.copy": "Copy",
@@ -6637,27 +6689,26 @@ async function loadMetricsPanel() {
       ? Math.round((sortedViews[sortedViews.length / 2 - 1] + sortedViews[sortedViews.length / 2]) / 2)
       : sortedViews[Math.floor(sortedViews.length / 2)];
     const stats = [
-      { val: fmtNum(totals.views), label: t("metrics.total_views"), accent: "#f97316" },
-      { val: fmtNum(Math.round(totals.views / n)), label: "Avg views", accent: "#f97316" },
-      { val: fmtNum(medViews), label: "Mediana views", accent: "#f59e0b" },
+      { val: fmtNum(Math.round(totals.views / n)), sub: fmtNum(totals.views) + " total", label: t("metrics.avg_views"), accent: "#f97316" },
+      { val: fmtNum(medViews), label: t("metrics.median_views"), accent: "#f59e0b" },
       { val: fmtNum(totals.likes), label: t("metrics.total_likes"), accent: "#ef4444" },
       { val: fmtNum(totals.comments), label: t("metrics.total_comments"), accent: "#3b82f6" },
-      { val: engRate + "%", label: "Engagement", accent: "#22c55e" },
+      { val: engRate + "%", label: t("metrics.engagement"), accent: "#22c55e" },
     ];
     const withRet = igVideosCache.filter(v => v.retention_seconds != null);
     if (withRet.length) {
       const avgRet = Math.round(withRet.reduce((s, v) => s + v.retention_seconds, 0) / withRet.length);
-      stats.push({ val: avgRet + "s", label: "Avg retención", accent: "#a78bfa" });
+      stats.push({ val: avgRet + "s", label: t("metrics.avg_retention"), accent: "#a78bfa" });
     }
     const withSaves = igVideosCache.filter(v => v.saves != null);
     if (withSaves.length) {
       const avgSaves = Math.round(withSaves.reduce((s, v) => s + v.saves, 0) / withSaves.length);
-      stats.push({ val: fmtNum(avgSaves), label: "Avg guardados", accent: "#ec4899" });
+      stats.push({ val: fmtNum(avgSaves), label: t("metrics.avg_saves"), accent: "#ec4899" });
     }
     const statCols = Math.min(stats.length, 6);
     document.getElementById("igStatsRow").style.gridTemplateColumns = `repeat(${statCols}, 1fr)`;
     document.getElementById("igStatsRow").innerHTML = stats.map(s =>
-      `<div class="ig-stat-card"><div class="ig-stat-val">${s.val}</div><div class="ig-stat-label">${s.label}</div></div>`
+      `<div class="ig-stat-card" style="--stat-accent:${s.accent}"><div class="ig-stat-val">${s.val}</div>${s.sub ? `<div style="font-size:.55rem;color:var(--text3);margin-bottom:1px">${s.sub}</div>` : ""}<div class="ig-stat-label">${s.label}</div></div>`
     ).join("");
 
     // Best reel
@@ -6670,8 +6721,13 @@ async function loadMetricsPanel() {
     // Limits info
     const lim = d.limits || {};
     const limEl = document.getElementById("igLimitsInfo");
-    if (lim.analyses_per_week === null) limEl.textContent = t("metrics.unlimited");
-    else limEl.textContent = `${Math.max(0, lim.analyses_per_week - lim.analyses_used)}/${lim.analyses_per_week} ${t("metrics.analyses_left")}`;
+    if (lim.analyses_per_week === null) { limEl.textContent = t("metrics.unlimited"); limEl.style.color = ""; }
+    else {
+      const remaining = Math.max(0, lim.analyses_per_week - lim.analyses_used);
+      limEl.textContent = `${remaining}/${lim.analyses_per_week} ${t("metrics.analyses_left")}`;
+      limEl.style.color = remaining <= 0 ? "#ef4444" : remaining <= 2 ? "#f97316" : "";
+      limEl.style.fontWeight = remaining <= 2 ? "600" : "";
+    }
 
     renderIgGrid();
     renderIgChart();
@@ -6764,7 +6820,7 @@ function renderIgGrid() {
       return tg
         ? `<span style="font-size:.58rem;padding:1px 6px;border-radius:4px;background:${tg.bg};color:${tg.color};display:inline-flex;align-items:center;gap:2px">${tg.icon} ${tg.label}</span>`
         : `<span style="font-size:.58rem;padding:1px 6px;border-radius:4px;background:var(--surf2);color:var(--text3)">${esc(tid)}</span>`;
-    }).join("") + (vTags.length > 2 ? `<span style="font-size:.55rem;color:var(--text3)">+${vTags.length - 2}</span>` : "");
+    }).join("") + (vTags.length > 2 ? `<span style="font-size:.55rem;color:var(--text3);cursor:help" title="${vTags.slice(2).map(tid => { const tg = IG_TAGS.find(t => t.id === tid); return tg ? tg.label : tid; }).join(", ")}">+${vTags.length - 2}</span>` : "");
     return `<div class="ig-card" id="igc-${v.ig_video_id}" style="position:relative">
       <div style="position:relative">
         ${(v.thumbnail_b64 || v.thumbnail_url) ? `<img class="ig-card-thumb" src="${v.thumbnail_b64 || esc(v.thumbnail_url)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="ig-thumb-placeholder" style="display:none"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><polygon points="5 3 19 12 5 21"/></svg></div>` : '<div class="ig-thumb-placeholder"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><polygon points="5 3 19 12 5 21"/></svg></div>'}
@@ -6789,7 +6845,7 @@ function renderIgGrid() {
           ${v.saves != null ? `<span style="font-size:.6rem;color:#ec4899;background:rgba(236,72,153,.08);padding:1px 5px;border-radius:3px" title="Guardados">🔖${fmtNum(v.saves)}</span>` : ""}
           ${v.note ? `<span style="font-size:.6rem;color:var(--text3)" title="${esc(v.note)}">📝</span>` : ""}
         </div>
-        <div class="ig-card-eng-bar" title="${engPct}% vs best reel"><div class="ig-card-eng-fill" style="width:${engPct}%;background:${engColor}"></div><span class="ig-card-eng-label">${engPct}%</span></div>
+        <div class="ig-card-eng-bar" title="${engPct}% ${t("metrics.vs_best")}"><div class="ig-card-eng-fill" style="width:${engPct}%;background:${engColor}"></div><span class="ig-card-eng-label">${engPct}% ${t("metrics.vs_best")}</span></div>
         <div class="ig-card-actions" onclick="event.stopPropagation()">
           ${hasTranscript
             ? `<button class="ig-card-btn" onclick="igShowTranscript('${v.ig_video_id}')">${t("metrics.view_transcript")}</button>`
@@ -7103,36 +7159,36 @@ function igShowDetail(vid) {
       <div style="font-size:.72rem;color:var(--text3);margin-bottom:14px">${t("metrics.published")}: ${date}</div>
 
       <div class="ig-detail-metrics">
-        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${fmtNum(v.views)}</div><div class="ig-detail-metric-label">Views</div></div>
-        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${fmtNum(v.likes)}</div><div class="ig-detail-metric-label">Likes</div></div>
-        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${fmtNum(v.comments)}</div><div class="ig-detail-metric-label">Comments</div></div>
-        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${fmtNum(v.shares || 0)}</div><div class="ig-detail-metric-label">Shares</div></div>
-        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${engRate}%</div><div class="ig-detail-metric-label">Engagement</div></div>
-        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${dur}</div><div class="ig-detail-metric-label">Duración</div></div>
+        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${fmtNum(v.views)}</div><div class="ig-detail-metric-label">${t("metrics.views")}</div></div>
+        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${fmtNum(v.likes)}</div><div class="ig-detail-metric-label">${t("metrics.likes")}</div></div>
+        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${fmtNum(v.comments)}</div><div class="ig-detail-metric-label">${t("metrics.comments")}</div></div>
+        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${fmtNum(v.shares || 0)}</div><div class="ig-detail-metric-label">${t("metrics.shares")}</div></div>
+        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${engRate}%</div><div class="ig-detail-metric-label">${t("metrics.engagement")}</div></div>
+        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${dur}</div><div class="ig-detail-metric-label">${t("metrics.duration")}</div></div>
       </div>
 
       <div class="ig-manual-section">
-        <div class="ig-manual-label">Este reel vs tu media</div>
-        ${cmpBar(v.views || 0, avgViews, "Views")}
-        ${cmpBar(v.likes || 0, avgLikes, "Likes")}
-        ${cmpBar(v.comments || 0, avgComments, "Comments")}
-        ${avgShares > 0 ? cmpBar(v.shares || 0, avgShares, "Shares") : ""}
+        <div class="ig-manual-label">${t("metrics.vs_avg")}</div>
+        ${cmpBar(v.views || 0, avgViews, t("metrics.views"))}
+        ${cmpBar(v.likes || 0, avgLikes, t("metrics.likes"))}
+        ${cmpBar(v.comments || 0, avgComments, t("metrics.comments"))}
+        ${avgShares > 0 ? cmpBar(v.shares || 0, avgShares, t("metrics.shares")) : ""}
       </div>
 
       <div class="ig-manual-section">
-        <div class="ig-manual-label">Tags</div>
+        <div class="ig-manual-label">${t("metrics.tags")}</div>
         <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px" id="igDetailTags-${v.ig_video_id}">${tagsHtml}</div>
         <div style="display:flex;gap:4px;align-items:center">
-          <input class="ig-manual-input" style="width:120px;text-align:left" type="text" placeholder="Tag custom..." maxlength="20" id="igCustomTag-${v.ig_video_id}" onkeydown="if(event.key==='Enter'){igAddCustomTag('${v.ig_video_id}',this)}"/>
-          <button class="ig-tag-opt" onclick="igAddCustomTag('${v.ig_video_id}',document.getElementById('igCustomTag-${v.ig_video_id}'))" style="font-size:.65rem">+ Añadir</button>
+          <input class="ig-manual-input" style="width:120px;text-align:left" type="text" placeholder="${t("metrics.custom_tag")}" maxlength="20" id="igCustomTag-${v.ig_video_id}" onkeydown="if(event.key==='Enter'){igAddCustomTag('${v.ig_video_id}',this)}"/>
+          <button class="ig-tag-opt" onclick="igAddCustomTag('${v.ig_video_id}',document.getElementById('igCustomTag-${v.ig_video_id}'))" style="font-size:.65rem">+ ${t("metrics.add_tag")}</button>
         </div>
       </div>
 
       <div class="ig-manual-section">
-        <div class="ig-manual-label">Métricas manuales</div>
+        <div class="ig-manual-label">${t("metrics.manual_metrics")} <span style="font-size:.55rem;font-weight:400;opacity:.7">✏️ Insights</span></div>
         <div class="ig-manual-row" style="flex-direction:column;gap:6px">
           <div style="display:flex;align-items:center;gap:6px">
-            <label style="font-size:.7rem;color:var(--text3);white-space:nowrap">⏱ Retención media:</label>
+            <label style="font-size:.7rem;color:var(--text3);white-space:nowrap">⏱ ${t("metrics.retention_label")}:</label>
             <span class="ig-manual-check" id="igmc-ret-${v.ig_video_id}">✓</span>
           </div>
           <div class="ig-retention-widget">
@@ -7147,25 +7203,24 @@ function igShowDetail(vid) {
         </div>
         <div class="ig-manual-row">
           <div class="ig-manual-field">
-            <label>Guardados:</label>
+            <label>🔖 ${t("metrics.saves_label")}:</label>
             <input class="ig-manual-input" type="number" min="0" placeholder="—" value="${v.saves ?? ""}" onchange="igSaveManual('${v.ig_video_id}','saves',this)" onkeydown="if(event.key==='Enter'){this.blur()}" />
             <span class="ig-manual-check" id="igmc-saves-${v.ig_video_id}">✓</span>
           </div>
           <div class="ig-manual-field">
-            <label>Alcance:</label>
+            <label>📊 ${t("metrics.reach_label")}:</label>
             <input class="ig-manual-input wide" type="number" min="0" placeholder="—" value="${v.reach ?? ""}" onchange="igSaveManual('${v.ig_video_id}','reach',this)" onkeydown="if(event.key==='Enter'){this.blur()}" />
             <span class="ig-manual-check" id="igmc-reach-${v.ig_video_id}">✓</span>
           </div>
         </div>
         <div class="ig-manual-row" style="flex-direction:column;gap:4px">
-          <div class="ig-manual-field" style="width:100%"><label>📝 Nota:</label></div>
-          <textarea class="ig-manual-note" placeholder="Añade una nota..." maxlength="500" onblur="igSaveManual('${v.ig_video_id}','note',this)">${esc(v.note || "")}</textarea>
+          <div class="ig-manual-field" style="width:100%"><label>📝 ${t("metrics.note_label")}:</label></div>
+          <textarea class="ig-manual-note" placeholder="${t("metrics.note_placeholder")}" maxlength="500" onblur="igSaveManual('${v.ig_video_id}','note',this)">${esc(v.note || "")}</textarea>
           <span class="ig-manual-check" id="igmc-note-${v.ig_video_id}" style="align-self:flex-end">✓</span>
         </div>
-        ${!localStorage.getItem("ig_retention_hint_dismissed") ? `<div class="ig-manual-hint" id="igRetHint">
-          <span>💡 Instagram no permite acceder a retención, guardados ni alcance por API. Puedes meterlos aquí desde tus Insights.</span>
-          <button class="ig-manual-hint-x" onclick="localStorage.setItem('ig_retention_hint_dismissed','1');document.getElementById('igRetHint').remove()">✕</button>
-        </div>` : ""}
+        <div class="ig-manual-hint">
+          <span>💡 ${t("metrics.manual_hint")}</span>
+        </div>
       </div>
 
       ${v.transcription
@@ -7303,27 +7358,29 @@ function igGetCount() {
 async function igAnalyze() {
   const btn = document.getElementById("igAnalyzeBtn");
   const count = igGetCount();
-  btn.textContent = t("metrics.analyzing");
+  btn.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>${t("metrics.analyzing")}</span>`;
   btn.disabled = true;
   try {
     const r = await fetch("/metrics/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ count }) });
     const d = await r.json();
-    if (!r.ok) { showToast(d.error || "Error"); return; }
-    showToast(`${d.videos_updated} reels updated`);
+    if (!r.ok) {
+      if (r.status === 404) showToast(t("metrics.err_no_profile"));
+      else if (r.status === 429) showToast(t("metrics.err_limit"));
+      else if (r.status === 500) showToast(t("metrics.err_scrape"));
+      else showToast(d.error || "Error");
+      return;
+    }
+    showToast(`${d.videos_updated} ${t("metrics.reels_updated")}`);
     loadMetricsPanel();
-  } catch { showToast("Error"); }
+  } catch { showToast(t("metrics.err_network")); }
   finally { btn.textContent = t("metrics.analyze_btn"); btn.disabled = false; }
 }
 
-async function igRefresh() {
-  igAnalyze();
-}
-
 async function igUnlink() {
-  if (!confirm("Unlink Instagram profile? All metrics data will be deleted.")) return;
+  if (!confirm(t("metrics.unlink_confirm"))) return;
   try {
     const r = await fetch("/metrics/ig-profile", { method: "DELETE" });
-    if (r.ok) { igVideosCache = []; loadMetricsPanel(); showToast("Profile unlinked"); }
+    if (r.ok) { igVideosCache = []; loadMetricsPanel(); showToast(t("metrics.unlinked")); }
   } catch {}
 }
 
