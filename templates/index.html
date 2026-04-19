@@ -6723,6 +6723,8 @@ function renderIgGrid() {
 }
 
 let igChartMetric = "views";
+let igChartScale = "linear";
+let igChartTrend = false;
 
 function renderIgChart() {
   const wrap = document.getElementById("igChartWrap");
@@ -6738,6 +6740,12 @@ function renderIgChart() {
     `<button class="ig-chart-tab${igChartMetric === m ? " on" : ""}" onclick="igChartMetric='${m}';renderIgChart()">${metricLabels[m]}</button>`
   ).join("");
 
+  const scaleToggle = `<div style="display:flex;gap:2px;margin-left:auto">
+    <button class="ig-chart-tab${igChartScale === 'linear' ? ' on' : ''}" onclick="igChartScale='linear';renderIgChart()" style="padding:5px 10px;font-size:.68rem">Lin</button>
+    <button class="ig-chart-tab${igChartScale === 'log' ? ' on' : ''}" onclick="igChartScale='log';renderIgChart()" style="padding:5px 10px;font-size:.68rem">Log</button>
+    <button class="ig-chart-tab${igChartTrend ? ' on' : ''}" onclick="igChartTrend=!igChartTrend;renderIgChart()" style="padding:5px 10px;font-size:.68rem;margin-left:4px">📈 Tendencia</button>
+  </div>`;
+
   const isManualMetric = igChartMetric === "retention_seconds" || igChartMetric === "saves";
   const byDate = [...igVideosCache].filter(v => v.published_at && (!isManualMetric || v[igChartMetric] != null)).sort((a, b) => new Date(a.published_at) - new Date(b.published_at));
   if (!byDate.length) {
@@ -6750,27 +6758,65 @@ function renderIgChart() {
   const maxVal = Math.max(...rawVals, 1);
   const avgVal = rawVals.reduce((s, v) => s + v, 0) / rawVals.length;
   const topId = [...byDate].sort((a, b) => (b[igChartMetric] || 0) - (a[igChartMetric] || 0))[0]?.ig_video_id;
-  const yCap = Math.max(avgVal * 3, maxVal * 0.4);
-  const scale = val => Math.min(1, val / yCap);
   const n = byDate.length;
+
+  // Scale functions
+  const isLog = igChartScale === "log";
+  let yCap, scale, gridLabelsFn;
+  if (isLog) {
+    // Log scale — handles outliers naturally. Min floor at 1 to avoid log(0)
+    yCap = maxVal;
+    const logMax = Math.log10(Math.max(10, maxVal));
+    scale = val => val <= 0 ? 0 : Math.log10(Math.max(1, val)) / logMax;
+    // Grid at powers of 10
+    gridLabelsFn = () => {
+      const steps = [];
+      let p = 1;
+      while (p <= maxVal * 1.2) { steps.push(p); p *= 10; }
+      if (steps[steps.length - 1] < maxVal) steps.push(maxVal);
+      return steps.map(val => ({ val, pct: scale(val) }));
+    };
+  } else {
+    // Linear capped — avg*3 so small bars visible, outliers get ▲
+    yCap = Math.max(avgVal * 3, maxVal * 0.4);
+    scale = val => Math.min(1, val / yCap);
+    gridLabelsFn = () => {
+      const steps = 4;
+      return Array.from({length: steps + 1}, (_, i) => ({
+        val: Math.round(yCap * i / steps), pct: i / steps
+      }));
+    };
+  }
+
+  // Trend data — rolling average + median
+  let trendSvg = "";
+  const sortedVals = [...rawVals].sort((a, b) => a - b);
+  const medianVal = sortedVals.length % 2 === 0
+    ? (sortedVals[sortedVals.length / 2 - 1] + sortedVals[sortedVals.length / 2]) / 2
+    : sortedVals[Math.floor(sortedVals.length / 2)];
+  const rollingW = Math.max(3, Math.min(7, Math.floor(n / 3)));
+  const rollingAvg = rawVals.map((_, i) => {
+    const start = Math.max(0, i - rollingW + 1);
+    const window = rawVals.slice(start, i + 1);
+    return window.reduce((s, v) => s + v, 0) / window.length;
+  });
+
   const isMobile = window.innerWidth <= 768;
 
   if (!isMobile) {
     // ── HORIZONTAL bars (desktop) ─────────────────────────────
-    const rowH = 32, padLeft = 100, padRight = 60, padTop = 8, padBot = 8;
+    const rowH = 32, padLeft = 110, padRight = 60, padTop = 8, padBot = 8;
     const H = padTop + n * rowH + padBot;
     const cw = wrap.clientWidth || 800;
     const W = Math.max(500, cw - 34);
     const chartW = W - padLeft - padRight;
     const barH = Math.min(22, rowH * 0.65);
+    const gridData = gridLabelsFn();
 
-    // Vertical grid lines (X axis values)
-    const gridSteps = 4;
-    const gridLines = Array.from({length: gridSteps + 1}, (_, i) => {
-      const val = Math.round(yCap * i / gridSteps);
-      const x = padLeft + chartW * (i / gridSteps);
+    const gridLines = gridData.map(g => {
+      const x = padLeft + g.pct * chartW;
       return `<line x1="${x}" y1="${padTop}" x2="${x}" y2="${H - padBot}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="4,3"/>
-        <text x="${x}" y="${H - padBot + 14}" fill="var(--text3)" font-size="10" text-anchor="middle" font-family="var(--font-display)">${fmtNum(val)}</text>`;
+        <text x="${x}" y="${H - padBot + 14}" fill="var(--text3)" font-size="10" text-anchor="middle" font-family="var(--font-display)">${fmtNum(Math.round(g.val))}</text>`;
     }).join("");
 
     // Average vertical line
@@ -6778,9 +6824,26 @@ function renderIgChart() {
     const avgLine = `<line x1="${avgX}" y1="${padTop}" x2="${avgX}" y2="${H - padBot}" stroke="var(--purple)" stroke-width="1.2" stroke-dasharray="6,4" opacity=".6"/>
       <text x="${avgX}" y="${padTop - 3}" fill="var(--purple)" font-size="9" font-family="var(--font-display)" font-weight="600" opacity=".8" text-anchor="middle">Media: ${fmtNum(Math.round(avgVal))}</text>`;
 
+    // Median vertical line
+    const medX = padLeft + scale(medianVal) * chartW;
+    const medLine = `<line x1="${medX}" y1="${padTop}" x2="${medX}" y2="${H - padBot}" stroke="#22c55e" stroke-width="1" stroke-dasharray="3,3" opacity=".5"/>
+      <text x="${medX}" y="${padTop - 3}" fill="#22c55e" font-size="8" font-family="var(--font-display)" font-weight="600" opacity=".7" text-anchor="middle">Mediana: ${fmtNum(Math.round(medianVal))}</text>`;
+
+    // Trend overlay — rolling avg dots connected by line (horizontal = value axis)
+    if (igChartTrend) {
+      const trendPoints = rollingAvg.map((avg, i) => {
+        const x = padLeft + scale(avg) * chartW;
+        const yCenter = padTop + rowH * i + rowH / 2;
+        return { x, y: yCenter, val: avg };
+      });
+      const polyline = trendPoints.map(p => `${p.x},${p.y}`).join(" ");
+      trendSvg = `<polyline points="${polyline}" fill="none" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="4,2" opacity=".7"/>
+        ${trendPoints.map(p => `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#06b6d4" opacity=".6"><title>Rolling avg: ${fmtNum(Math.round(p.val))}</title></circle>`).join("")}`;
+    }
+
     const bars = byDate.map((v, i) => {
       const val = rawVals[i];
-      const clipped = val > yCap;
+      const clipped = !isLog && val > yCap;
       const barWPx = Math.max(4, scale(val) * chartW);
       const yCenter = padTop + rowH * i + rowH / 2;
       const y = yCenter - barH / 2;
@@ -6788,7 +6851,7 @@ function renderIgChart() {
       const fill = isTop ? "var(--accent, #f97316)" : "var(--purple)";
       const d = new Date(v.published_at);
       const dateStr = `${d.getDate()}/${d.getMonth() + 1}`;
-      const caption = (v.caption || "").slice(0, 20) || "Reel";
+      const caption = (v.caption || "").slice(0, 18) || "Reel";
       const label = clipped ? `▲ ${fmtNum(val)}` : fmtNum(val);
       return `<g>
         <text x="${padLeft - 6}" y="${yCenter + 4}" fill="var(--text2)" font-size="10" text-anchor="end" font-family="var(--font-body)">${dateStr} ${esc(caption)}</text>
@@ -6802,9 +6865,11 @@ function renderIgChart() {
 
     const svgH = H + 18;
     wrap.innerHTML = `<div style="background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:16px 16px 8px">
-      <div class="ig-chart-tabs">${metricTabs}</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <div class="ig-chart-tabs" style="margin-bottom:0">${metricTabs}</div>${scaleToggle}
+      </div>
       <svg viewBox="0 0 ${W} ${svgH}" style="width:100%;display:block" preserveAspectRatio="xMinYMin meet">
-        ${gridLines}${avgLine}${bars}
+        ${gridLines}${avgLine}${medLine}${bars}${trendSvg}
       </svg>
     </div>`;
 
@@ -6816,22 +6881,36 @@ function renderIgChart() {
     const chartH = H - padTop - padBot;
     const slotW = chartW / n;
     const barW = Math.min(30, slotW * 0.7);
+    const gridData = gridLabelsFn();
 
-    const gridSteps = 4;
-    const gridLines = Array.from({length: gridSteps + 1}, (_, i) => {
-      const val = Math.round(yCap * i / gridSteps);
-      const y = padTop + chartH * (1 - i / gridSteps);
+    const gridLines = gridData.map(g => {
+      const y = padTop + chartH * (1 - g.pct);
       return `<line x1="${padLeft}" y1="${y}" x2="${W - padRight}" y2="${y}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="3,2"/>
-        <text x="${padLeft - 4}" y="${y + 3.5}" fill="var(--text3)" font-size="9" text-anchor="end" font-family="var(--font-display)">${fmtNum(val)}</text>`;
+        <text x="${padLeft - 4}" y="${y + 3.5}" fill="var(--text3)" font-size="9" text-anchor="end" font-family="var(--font-display)">${fmtNum(Math.round(g.val))}</text>`;
     }).join("");
 
     const avgY = padTop + chartH * (1 - scale(avgVal));
     const avgLine = `<line x1="${padLeft}" y1="${avgY}" x2="${W - padRight}" y2="${avgY}" stroke="var(--purple)" stroke-width="1" stroke-dasharray="4,3" opacity=".6"/>
       <text x="${W - padRight - 2}" y="${avgY - 4}" fill="var(--purple)" font-size="8" font-family="var(--font-display)" font-weight="600" opacity=".8" text-anchor="end">Media: ${fmtNum(Math.round(avgVal))}</text>`;
 
+    const medY = padTop + chartH * (1 - scale(medianVal));
+    const medLine = `<line x1="${padLeft}" y1="${medY}" x2="${W - padRight}" y2="${medY}" stroke="#22c55e" stroke-width="0.8" stroke-dasharray="3,3" opacity=".5"/>
+      <text x="${padLeft + 2}" y="${medY - 3}" fill="#22c55e" font-size="7" font-family="var(--font-display)" font-weight="600" opacity=".7">Med: ${fmtNum(Math.round(medianVal))}</text>`;
+
+    if (igChartTrend) {
+      const trendPoints = rollingAvg.map((avg, i) => {
+        const xCenter = padLeft + slotW * i + slotW / 2;
+        const y = padTop + chartH * (1 - scale(avg));
+        return { x: xCenter, y, val: avg };
+      });
+      const polyline = trendPoints.map(p => `${p.x},${p.y}`).join(" ");
+      trendSvg = `<polyline points="${polyline}" fill="none" stroke="#06b6d4" stroke-width="1.2" stroke-dasharray="3,2" opacity=".7"/>
+        ${trendPoints.map(p => `<circle cx="${p.x}" cy="${p.y}" r="2.5" fill="#06b6d4" opacity=".6"><title>Rolling avg: ${fmtNum(Math.round(p.val))}</title></circle>`).join("")}`;
+    }
+
     const bars = byDate.map((v, i) => {
       const val = rawVals[i];
-      const clipped = val > yCap;
+      const clipped = !isLog && val > yCap;
       const barH = Math.max(3, scale(val) * chartH);
       const xCenter = padLeft + slotW * i + slotW / 2;
       const x = xCenter - barW / 2;
@@ -6852,9 +6931,11 @@ function renderIgChart() {
     }).join("");
 
     wrap.innerHTML = `<div style="background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:12px 12px 6px">
-      <div class="ig-chart-tabs">${metricTabs}</div>
+      <div style="display:flex;align-items:center;gap:4px;margin-bottom:8px;flex-wrap:wrap">
+        <div class="ig-chart-tabs" style="margin-bottom:0">${metricTabs}</div>${scaleToggle}
+      </div>
       <svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block" preserveAspectRatio="xMinYMin meet">
-        ${gridLines}${avgLine}${bars}
+        ${gridLines}${avgLine}${medLine}${bars}${trendSvg}
       </svg>
     </div>`;
   }
