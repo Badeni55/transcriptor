@@ -6750,72 +6750,114 @@ function renderIgChart() {
   const maxVal = Math.max(...rawVals, 1);
   const avgVal = rawVals.reduce((s, v) => s + v, 0) / rawVals.length;
   const topId = [...byDate].sort((a, b) => (b[igChartMetric] || 0) - (a[igChartMetric] || 0))[0]?.ig_video_id;
-
-  // Capped scale — Y axis goes to avg*3 so small bars are visible.
-  // Outliers beyond the cap are drawn at full height with ▲ indicator.
   const yCap = Math.max(avgVal * 3, maxVal * 0.4);
-  const scaleY = val => Math.min(1, val / yCap);
-
-  // Measure container so SVG fills it exactly
-  const cw = wrap.clientWidth || 800;
-  const W = Math.max(600, cw - 34);  // minus container padding
-  const H = 300;
-  const padTop = 30, padBot = 48, padLeft = 50, padRight = 16;
-  const chartW = W - padLeft - padRight;
-  const chartH = H - padTop - padBot;
+  const scale = val => Math.min(1, val / yCap);
   const n = byDate.length;
+  const isMobile = window.innerWidth <= 768;
 
-  // Bars fill full width — slot-based, 70% fill, max 50px
-  const slotW = chartW / n;
-  const barW = Math.min(50, slotW * 0.7);
+  if (!isMobile) {
+    // ── HORIZONTAL bars (desktop) ─────────────────────────────
+    const rowH = 32, padLeft = 100, padRight = 60, padTop = 8, padBot = 8;
+    const H = padTop + n * rowH + padBot;
+    const cw = wrap.clientWidth || 800;
+    const W = Math.max(500, cw - 34);
+    const chartW = W - padLeft - padRight;
+    const barH = Math.min(22, rowH * 0.65);
 
-  // Y-axis grid — 4 steps up to yCap
-  const gridSteps = 4;
-  const gridLines = Array.from({length: gridSteps + 1}, (_, i) => {
-    const val = Math.round(yCap * i / gridSteps);
-    const y = padTop + chartH * (1 - i / gridSteps);
-    return `<line x1="${padLeft}" y1="${y}" x2="${W - padRight}" y2="${y}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="4,3"/>
-      <text x="${padLeft - 6}" y="${y + 4}" fill="var(--text3)" font-size="11" text-anchor="end" font-family="var(--font-display)">${fmtNum(val)}</text>`;
-  }).join("");
+    // Vertical grid lines (X axis values)
+    const gridSteps = 4;
+    const gridLines = Array.from({length: gridSteps + 1}, (_, i) => {
+      const val = Math.round(yCap * i / gridSteps);
+      const x = padLeft + chartW * (i / gridSteps);
+      return `<line x1="${x}" y1="${padTop}" x2="${x}" y2="${H - padBot}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="4,3"/>
+        <text x="${x}" y="${H - padBot + 14}" fill="var(--text3)" font-size="10" text-anchor="middle" font-family="var(--font-display)">${fmtNum(val)}</text>`;
+    }).join("");
 
-  // Average line
-  const avgY = padTop + chartH * (1 - scaleY(avgVal));
-  const avgLine = `<line x1="${padLeft}" y1="${avgY}" x2="${W - padRight}" y2="${avgY}" stroke="var(--purple)" stroke-width="1.2" stroke-dasharray="6,4" opacity=".6"/>
-    <text x="${W - padRight - 4}" y="${avgY - 5}" fill="var(--purple)" font-size="10" font-family="var(--font-display)" font-weight="600" opacity=".8" text-anchor="end">Media: ${fmtNum(Math.round(avgVal))}</text>`;
+    // Average vertical line
+    const avgX = padLeft + scale(avgVal) * chartW;
+    const avgLine = `<line x1="${avgX}" y1="${padTop}" x2="${avgX}" y2="${H - padBot}" stroke="var(--purple)" stroke-width="1.2" stroke-dasharray="6,4" opacity=".6"/>
+      <text x="${avgX}" y="${padTop - 3}" fill="var(--purple)" font-size="9" font-family="var(--font-display)" font-weight="600" opacity=".8" text-anchor="middle">Media: ${fmtNum(Math.round(avgVal))}</text>`;
 
-  // Bars
-  const bars = byDate.map((v, i) => {
-    const val = rawVals[i];
-    const clipped = val > yCap;
-    const barHPct = scaleY(val);
-    const barH = Math.max(4, barHPct * chartH);
-    const xCenter = padLeft + slotW * i + slotW / 2;
-    const x = xCenter - barW / 2;
-    const y = padTop + chartH - barH;
-    const isTop = v.ig_video_id === topId;
-    const fill = isTop ? "var(--accent, #f97316)" : "var(--purple)";
-    const d = new Date(v.published_at);
-    const dateStr = `${d.getDate()}/${d.getMonth() + 1}`;
-    const caption = (v.caption || "").slice(0, 35) || "Reel";
-    const label = clipped ? `▲ ${fmtNum(val)}` : fmtNum(val);
-    return `<g>
-      <rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="${Math.min(4, barW / 4)}" fill="${fill}" opacity="${isTop ? 1 : .75}" style="cursor:pointer">
-        <title>${esc(caption)}\n${fmtNum(val)} ${metricLabels[igChartMetric]} · ❤ ${fmtNum(v.likes)} · 💬 ${fmtNum(v.comments)}</title>
-      </rect>
-      ${isTop ? `<rect x="${x - 1}" y="${y - 1}" width="${barW + 2}" height="${barH + 2}" rx="${Math.min(5, barW / 4 + 1)}" fill="none" stroke="#eab308" stroke-width="1.5"/>` : ""}
-      <text x="${xCenter}" y="${y - 5}" fill="${clipped ? 'var(--accent, #f97316)' : 'var(--text2)'}" font-size="10" text-anchor="middle" font-family="var(--font-display)" font-weight="${clipped ? '700' : '600'}">${label}</text>
-      <text x="${xCenter}" y="${padTop + chartH + 14}" fill="var(--text3)" font-size="10" text-anchor="end" font-family="var(--font-body)" transform="rotate(-45 ${xCenter} ${padTop + chartH + 14})">${dateStr}</text>
-    </g>`;
-  }).join("");
+    const bars = byDate.map((v, i) => {
+      const val = rawVals[i];
+      const clipped = val > yCap;
+      const barWPx = Math.max(4, scale(val) * chartW);
+      const yCenter = padTop + rowH * i + rowH / 2;
+      const y = yCenter - barH / 2;
+      const isTop = v.ig_video_id === topId;
+      const fill = isTop ? "var(--accent, #f97316)" : "var(--purple)";
+      const d = new Date(v.published_at);
+      const dateStr = `${d.getDate()}/${d.getMonth() + 1}`;
+      const caption = (v.caption || "").slice(0, 20) || "Reel";
+      const label = clipped ? `▲ ${fmtNum(val)}` : fmtNum(val);
+      return `<g>
+        <text x="${padLeft - 6}" y="${yCenter + 4}" fill="var(--text2)" font-size="10" text-anchor="end" font-family="var(--font-body)">${dateStr} ${esc(caption)}</text>
+        <rect x="${padLeft}" y="${y}" width="${barWPx}" height="${barH}" rx="4" fill="${fill}" opacity="${isTop ? 1 : .75}" style="cursor:pointer">
+          <title>${esc((v.caption || "").slice(0, 50))}\n${fmtNum(val)} ${metricLabels[igChartMetric]} · ❤ ${fmtNum(v.likes)} · 💬 ${fmtNum(v.comments)}</title>
+        </rect>
+        ${isTop ? `<rect x="${padLeft - 1}" y="${y - 1}" width="${barWPx + 2}" height="${barH + 2}" rx="5" fill="none" stroke="#eab308" stroke-width="1.5"/>` : ""}
+        <text x="${padLeft + barWPx + 6}" y="${yCenter + 4}" fill="${clipped ? 'var(--accent, #f97316)' : 'var(--text2)'}" font-size="10" font-family="var(--font-display)" font-weight="${clipped ? '700' : '600'}">${label}</text>
+      </g>`;
+    }).join("");
 
-  wrap.innerHTML = `<div style="background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:16px 16px 8px">
-    <div class="ig-chart-tabs">${metricTabs}</div>
-    <div style="overflow-x:auto">
+    const svgH = H + 18;
+    wrap.innerHTML = `<div style="background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:16px 16px 8px">
+      <div class="ig-chart-tabs">${metricTabs}</div>
+      <svg viewBox="0 0 ${W} ${svgH}" style="width:100%;display:block" preserveAspectRatio="xMinYMin meet">
+        ${gridLines}${avgLine}${bars}
+      </svg>
+    </div>`;
+
+  } else {
+    // ── VERTICAL bars (mobile) ────────────────────────────────
+    const W = 360, H = 280;
+    const padTop = 24, padBot = 44, padLeft = 36, padRight = 10;
+    const chartW = W - padLeft - padRight;
+    const chartH = H - padTop - padBot;
+    const slotW = chartW / n;
+    const barW = Math.min(30, slotW * 0.7);
+
+    const gridSteps = 4;
+    const gridLines = Array.from({length: gridSteps + 1}, (_, i) => {
+      const val = Math.round(yCap * i / gridSteps);
+      const y = padTop + chartH * (1 - i / gridSteps);
+      return `<line x1="${padLeft}" y1="${y}" x2="${W - padRight}" y2="${y}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="3,2"/>
+        <text x="${padLeft - 4}" y="${y + 3.5}" fill="var(--text3)" font-size="9" text-anchor="end" font-family="var(--font-display)">${fmtNum(val)}</text>`;
+    }).join("");
+
+    const avgY = padTop + chartH * (1 - scale(avgVal));
+    const avgLine = `<line x1="${padLeft}" y1="${avgY}" x2="${W - padRight}" y2="${avgY}" stroke="var(--purple)" stroke-width="1" stroke-dasharray="4,3" opacity=".6"/>
+      <text x="${W - padRight - 2}" y="${avgY - 4}" fill="var(--purple)" font-size="8" font-family="var(--font-display)" font-weight="600" opacity=".8" text-anchor="end">Media: ${fmtNum(Math.round(avgVal))}</text>`;
+
+    const bars = byDate.map((v, i) => {
+      const val = rawVals[i];
+      const clipped = val > yCap;
+      const barH = Math.max(3, scale(val) * chartH);
+      const xCenter = padLeft + slotW * i + slotW / 2;
+      const x = xCenter - barW / 2;
+      const y = padTop + chartH - barH;
+      const isTop = v.ig_video_id === topId;
+      const fill = isTop ? "var(--accent, #f97316)" : "var(--purple)";
+      const d = new Date(v.published_at);
+      const dateStr = `${d.getDate()}/${d.getMonth() + 1}`;
+      const label = clipped ? `▲${fmtNum(val)}` : fmtNum(val);
+      return `<g>
+        <rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="3" fill="${fill}" opacity="${isTop ? 1 : .75}" style="cursor:pointer">
+          <title>${esc((v.caption || "").slice(0, 40))}\n${fmtNum(val)} ${metricLabels[igChartMetric]}</title>
+        </rect>
+        ${isTop ? `<rect x="${x - .5}" y="${y - .5}" width="${barW + 1}" height="${barH + 1}" rx="3.5" fill="none" stroke="#eab308" stroke-width="1"/>` : ""}
+        <text x="${xCenter}" y="${y - 3}" fill="${clipped ? 'var(--accent, #f97316)' : 'var(--text2)'}" font-size="8" text-anchor="middle" font-family="var(--font-display)" font-weight="600">${label}</text>
+        <text x="${xCenter}" y="${padTop + chartH + 11}" fill="var(--text3)" font-size="8" text-anchor="end" font-family="var(--font-body)" transform="rotate(-45 ${xCenter} ${padTop + chartH + 11})">${dateStr}</text>
+      </g>`;
+    }).join("");
+
+    wrap.innerHTML = `<div style="background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:12px 12px 6px">
+      <div class="ig-chart-tabs">${metricTabs}</div>
       <svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block" preserveAspectRatio="xMinYMin meet">
         ${gridLines}${avgLine}${bars}
       </svg>
-    </div>
-  </div>`;
+    </div>`;
+  }
 }
 
 function igSort(field) {
