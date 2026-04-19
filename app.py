@@ -2135,6 +2135,18 @@ def index_en():
     return render_template("index.html", lang="en")
 
 
+@app.route("/profile")
+@app.route("/profile/<section>")
+def profile_page(section="overview"):
+    valid = {"overview", "scripts", "transcriptions", "projects",
+             "assistants", "metrics", "ideas", "team", "privacy"}
+    if section not in valid:
+        return redirect("/profile")
+    accept = request.headers.get("Accept-Language", "")
+    lang = "en" if accept.lower().startswith("en") else "es"
+    return render_template("index.html", lang=lang, profile_section=section)
+
+
 # ── Pillar pages ─────────────────────────────────────────────────────────────
 
 PILLAR_PAGES = {

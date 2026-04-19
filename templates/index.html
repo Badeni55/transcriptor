@@ -6183,6 +6183,19 @@ window.addEventListener("DOMContentLoaded", async () => {
   initDemo();
   initScrollReveal();
 
+  // Profile routing — back/forward browser buttons
+  window.addEventListener("popstate", (e) => {
+    if (location.pathname.startsWith("/profile")) {
+      const seg = location.pathname.split("/")[2] || "overview";
+      const tab = PROF_SECTION_MAP[seg] || "overview";
+      openProfile();
+      profTab(tab, false);
+    } else {
+      closeProfile();
+      document.title = "ReelScript";
+    }
+  });
+
   // URL validation + transcribe button state
   const _urlInput = document.getElementById("urlInput");
   const _btnTranscribe = document.getElementById("btnTranscribe");
@@ -6284,9 +6297,21 @@ async function refreshMe() {
     if (d.avatar_seed !== undefined) d.user.avatar_seed = d.avatar_seed;
     st = { user: d.user, credits: d.credits_cents, freeUsed: d.free_used_today, freeLimit: d.free_daily_limit, freeDailyAnon: 3, plan: d.plan || "free", monthlyUsage: d.monthly_usage || 0, monthlyLimit: d.monthly_limit || null, hasStripeSub: !!d.has_stripe_sub };
     renderLoggedIn();
+    // Auto-open profile if URL is /profile/*
+    if (location.pathname.startsWith("/profile")) {
+      const seg = location.pathname.split("/")[2] || "overview";
+      const tab = PROF_SECTION_MAP[seg] || "overview";
+      openProfile();
+      profTab(tab, false);
+    }
   } else {
     st = { user: null, credits: 0, freeUsed: 0, freeLimit: 5, freeDailyAnon: d.free_daily_anon ?? 3, plan: "free" };
     renderLoggedOut();
+    // Redirect unauthenticated /profile/* access
+    if (location.pathname.startsWith("/profile")) {
+      const lang = document.documentElement.lang || "es";
+      history.replaceState(null, "", "/" + lang + "/");
+    }
   }
   renderFreeBar();
   renderPlanCards();
@@ -6381,6 +6406,10 @@ function openProfile() {
   document.body.style.overflow = "hidden";
   closeAvatarPicker();
 
+  if (!location.pathname.startsWith("/profile")) {
+    history.pushState({ profTab: "overview" }, "", "/profile");
+  }
+
   if (st.user) {
     renderProfileHub();
   }
@@ -6468,6 +6497,11 @@ function closeProfile() {
   document.getElementById("profilePage").classList.remove("on");
   document.body.style.overflow = "";
   closeAvatarPicker();
+  if (location.pathname.startsWith("/profile")) {
+    const lang = document.documentElement.lang || "es";
+    history.pushState(null, "", "/" + lang + "/");
+    document.title = "ReelScript";
+  }
 }
 
 // ── Privacy & Data ────────────────────────────────────────────────────────
@@ -7093,7 +7127,20 @@ function updateAllAvatars(seed) {
   }
 }
 
-function profTab(tab) {
+const PROF_SECTION_MAP = {
+  overview: "overview", scripts: "scripts", transcriptions: "transc",
+  projects: "projects", assistants: "assistants", metrics: "metrics",
+  ideas: "ideas", team: "team", privacy: "privacy"
+};
+const PROF_TAB_TO_SLUG = Object.fromEntries(Object.entries(PROF_SECTION_MAP).map(([k, v]) => [v, k]));
+const PROF_TITLES = {
+  overview: "Perfil", scripts: "Scripts", transc: "Transcripciones",
+  projects: "Proyectos", assistants: "Asistentes", metrics: "Métricas",
+  ideas: "Ideas", team: "Equipo", privacy: "Privacidad"
+};
+
+function profTab(tab, pushHistory) {
+  if (pushHistory === undefined) pushHistory = true;
   const panels = {
     overview: "profPanelOverview",
     scripts: "profPanelScripts",
@@ -7132,9 +7179,19 @@ function profTab(tab) {
   document.querySelectorAll(".prof-bottom-tab").forEach(btn => btn.classList.remove("on"));
   const bottomBtn = document.querySelector(`.prof-bottom-tab[onclick="profTabMobile('${tab}')"]`);
   if (bottomBtn) bottomBtn.classList.add("on");
+
+  // pushState + title
+  if (pushHistory) {
+    const slug = PROF_TAB_TO_SLUG[tab] || tab;
+    const url = "/profile" + (slug === "overview" ? "" : "/" + slug);
+    if (location.pathname !== url) {
+      history.pushState({ profTab: tab }, "", url);
+    }
+  }
+  document.title = (PROF_TITLES[tab] || "Perfil") + " · ReelScript";
 }
 
-function profTabMobile(tab) { profTab(tab); }
+function profTabMobile(tab) { profTab(tab, true); }
 
 function renderProfOverview() {
   const el = document.getElementById("profRecentScripts");
