@@ -2890,16 +2890,35 @@
     }
 
     @media (max-width: 768px) {
-      .ig-stats-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-      .ig-stat-card { padding: 10px; }
-      .ig-stat-val { font-size: 1rem; }
+      /* 1. Stats header — 3×2 grid */
+      .ig-stats-row { grid-template-columns: repeat(3, 1fr) !important; gap: 8px; }
+      .ig-stat-card { padding: 10px 8px; }
+      .ig-stat-val { font-size: 1.1rem; }
+      .ig-stat-label { font-size: .6rem; }
+      /* 2. Chart — scrollable container */
+      .ig-chart-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      /* 3. Scale tabs — second row */
+      .ig-chart-toolbar { flex-direction: column !important; align-items: flex-start !important; gap: 6px !important; }
+      .ig-chart-toolbar .ig-chart-tabs { margin-bottom: 0; }
+      .ig-chart-toolbar .ig-scale-group { margin-left: 0 !important; }
+      .ig-chart-toolbar .ig-scale-group .ig-chart-tab { font-size: .65rem; }
+      /* 4. Cards — 2 cols, compact */
       .ig-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-      .ig-card-thumb { max-height: 180px; }
+      .ig-card-thumb { max-height: 100px; }
       .ig-card-body { padding: 10px 12px; }
-      .ig-card-caption { font-size: .72rem; -webkit-line-clamp: 1; min-height: 1em; }
-      .ig-card-stats { gap: 8px; font-size: .65rem; flex-wrap: wrap; }
+      .ig-card-caption { font-size: .8rem; -webkit-line-clamp: 2; min-height: 2em; }
+      .ig-card-stats { gap: 8px; font-size: .7rem; flex-wrap: wrap; }
       .ig-card-actions { flex-direction: column; }
-      .ig-card-btn { font-size: .7rem; padding: 6px 0; }
+      .ig-card-btn { font-size: .7rem; padding: 6px 10px; }
+      .ig-card .ig-badges-row span { font-size: .6rem !important; }
+      /* 5. Filters — horizontal scroll */
+      .ig-filter-bar { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+      .ig-filter-chip { white-space: nowrap; flex-shrink: 0; }
+      /* 6. Top reel — truncate */
+      .ig-best-reel { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .ig-best-reel .ig-best-full { display: none; }
+      .ig-best-reel .ig-best-short { display: inline; }
+      /* Other */
       .ig-linked-header { gap: 8px; }
       .ig-linked-user { font-size: .95rem; }
       .ig-linked-actions { margin-left: 0; width: 100%; }
@@ -2914,8 +2933,13 @@
       .ig-detail-metrics { grid-template-columns: repeat(2, 1fr); }
       .ig-detail-modal { max-width: 95vw; }
     }
+    @media (min-width: 769px) {
+      .ig-best-reel .ig-best-short { display: none; }
+      .ig-best-reel .ig-best-full { display: inline; }
+    }
     @media (max-width: 420px) {
       .ig-grid { grid-template-columns: 1fr; }
+      .ig-card-thumb { max-height: 140px; }
       .ig-card-caption { -webkit-line-clamp: 2; min-height: 2.1em; }
       .ig-detail-metrics { grid-template-columns: repeat(2, 1fr); }
     }
@@ -6594,7 +6618,7 @@ async function loadMetricsPanel() {
     const bestEl = document.getElementById("igBestReel");
     if (igVideosCache.length) {
       const best = [...igVideosCache].sort((a, b) => (b.views || 0) - (a.views || 0))[0];
-      bestEl.innerHTML = `<div class="ig-best-reel">🏆 <span style="color:var(--text3)">Top:</span> <strong>${esc((best.caption || "").slice(0, 50))}</strong> — ${fmtNum(best.views)} views ${best.ig_url ? `<a href="${esc(best.ig_url)}" target="_blank" rel="noopener">↗</a>` : ""}</div>`;
+      bestEl.innerHTML = `<div class="ig-best-reel">🏆 <span class="ig-best-short">Top: ${fmtNum(best.views)} views</span><span class="ig-best-full"><span style="color:var(--text3)">Top:</span> <strong>${esc((best.caption || "").slice(0, 50))}</strong> — ${fmtNum(best.views)} views ${best.ig_url ? `<a href="${esc(best.ig_url)}" target="_blank" rel="noopener">↗</a>` : ""}</span></div>`;
     } else { bestEl.innerHTML = ""; }
 
     // Limits info
@@ -6750,7 +6774,7 @@ function renderIgChart() {
     `<button class="ig-chart-tab${igChartMetric === m ? " on" : ""}" onclick="igChartMetric='${m}';renderIgChart()">${metricLabels[m]}</button>`
   ).join("");
 
-  const scaleToggle = `<div style="display:flex;gap:2px;margin-left:auto">
+  const scaleToggle = `<div class="ig-scale-group" style="display:flex;gap:2px;margin-left:auto">
     <button class="ig-chart-tab${igChartScale === 'linear' ? ' on' : ''}" onclick="igChartScale='linear';renderIgChart()" style="padding:5px 10px;font-size:.68rem">Lin</button>
     <button class="ig-chart-tab${igChartScale === 'log' ? ' on' : ''}" onclick="igChartScale='log';renderIgChart()" style="padding:5px 10px;font-size:.68rem">Log</button>
     <button class="ig-chart-tab${igChartTrend ? ' on' : ''}" onclick="igChartTrend=!igChartTrend;renderIgChart()" style="padding:5px 10px;font-size:.68rem;margin-left:4px">📈 Tendencia</button>
@@ -6875,7 +6899,7 @@ function renderIgChart() {
 
     const svgH = H + 18;
     wrap.innerHTML = `<div style="background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:16px 16px 8px">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+      <div class="ig-chart-toolbar" style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">
         <div class="ig-chart-tabs" style="margin-bottom:0">${metricTabs}</div>${scaleToggle}
       </div>
       <svg viewBox="0 0 ${W} ${svgH}" style="width:100%;display:block" preserveAspectRatio="xMinYMin meet">
@@ -6885,7 +6909,7 @@ function renderIgChart() {
 
   } else {
     // ── VERTICAL bars (mobile) ────────────────────────────────
-    const W = 360, H = 280;
+    const W = Math.max(360, n * 50), H = 280;
     const padTop = 24, padBot = 44, padLeft = 36, padRight = 10;
     const chartW = W - padLeft - padRight;
     const chartH = H - padTop - padBot;
@@ -6940,13 +6964,16 @@ function renderIgChart() {
       </g>`;
     }).join("");
 
+    const minChartW = Math.max(360, n * 50);
     wrap.innerHTML = `<div style="background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:12px 12px 6px">
-      <div style="display:flex;align-items:center;gap:4px;margin-bottom:8px;flex-wrap:wrap">
+      <div class="ig-chart-toolbar" style="display:flex;align-items:center;gap:4px;margin-bottom:8px;flex-wrap:wrap">
         <div class="ig-chart-tabs" style="margin-bottom:0">${metricTabs}</div>${scaleToggle}
       </div>
-      <svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block" preserveAspectRatio="xMinYMin meet">
-        ${gridLines}${avgLine}${medLine}${bars}${trendSvg}
-      </svg>
+      <div class="ig-chart-scroll">
+        <svg viewBox="0 0 ${minChartW} ${H}" style="min-width:${minChartW}px;width:100%;display:block" preserveAspectRatio="xMinYMin meet">
+          ${gridLines}${avgLine}${medLine}${bars}${trendSvg}
+        </svg>
+      </div>
     </div>`;
   }
 }
