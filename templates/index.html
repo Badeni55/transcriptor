@@ -2868,6 +2868,42 @@
     }
     .ig-manual-input:focus { border-color: var(--purple); }
     .ig-manual-input.wide { width: 80px; }
+    .ig-retention-widget {
+      display: flex; flex-direction: column; gap: 8px; width: 100%;
+    }
+    .ig-ret-display {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .ig-ret-val {
+      font-family: var(--font-display); font-size: 1.6rem; font-weight: 700;
+      color: var(--text); min-width: 50px; text-align: center; line-height: 1;
+    }
+    .ig-ret-val small { font-size: .65rem; font-weight: 400; color: var(--text3); }
+    .ig-ret-slider {
+      flex: 1; -webkit-appearance: none; appearance: none; height: 6px;
+      background: var(--surf2); border-radius: 3px; outline: none;
+      cursor: pointer;
+    }
+    .ig-ret-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+      background: var(--purple); cursor: grab; border: 2px solid var(--surf);
+      box-shadow: 0 1px 4px rgba(0,0,0,.25);
+    }
+    .ig-ret-slider::-moz-range-thumb {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--purple); cursor: grab; border: 2px solid var(--surf);
+      box-shadow: 0 1px 4px rgba(0,0,0,.25);
+    }
+    .ig-ret-presets {
+      display: flex; gap: 4px; flex-wrap: wrap;
+    }
+    .ig-ret-preset {
+      padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--surf); color: var(--text2); font-size: .7rem;
+      cursor: pointer; transition: all .15s; font-family: var(--font-display);
+    }
+    .ig-ret-preset:hover { border-color: var(--purple); color: var(--purple); }
+    .ig-ret-preset.on { background: var(--purple); color: #fff; border-color: var(--purple); }
     .ig-manual-check {
       color: #22c55e; font-size: .7rem; opacity: 0; transition: opacity .3s;
     }
@@ -7094,12 +7130,19 @@ function igShowDetail(vid) {
 
       <div class="ig-manual-section">
         <div class="ig-manual-label">Métricas manuales</div>
-        <div class="ig-manual-row">
-          <div class="ig-manual-field">
-            <label>Retención:</label>
-            <input class="ig-manual-input" type="number" min="0" max="300" placeholder="—" value="${v.retention_seconds ?? ""}" onchange="igSaveManual('${v.ig_video_id}','retention_seconds',this)" onkeydown="if(event.key==='Enter'){this.blur()}" />
-            <span>seg</span>
+        <div class="ig-manual-row" style="flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <label style="font-size:.7rem;color:var(--text3);white-space:nowrap">⏱ Retención media:</label>
             <span class="ig-manual-check" id="igmc-ret-${v.ig_video_id}">✓</span>
+          </div>
+          <div class="ig-retention-widget">
+            <div class="ig-ret-display">
+              <div class="ig-ret-val" id="igRetVal-${v.ig_video_id}">${v.retention_seconds != null ? v.retention_seconds : "—"}<small>s</small></div>
+              <input class="ig-ret-slider" type="range" min="0" max="${Math.max(120, v.duration ? Math.ceil(v.duration) : 120)}" step="1" value="${v.retention_seconds ?? 0}" oninput="igRetSlide('${v.ig_video_id}',this.value)" onchange="igRetCommit('${v.ig_video_id}',this.value)" />
+            </div>
+            <div class="ig-ret-presets">
+              ${[3,5,8,10,15,20,30,45,60].map(s => `<button class="ig-ret-preset${v.retention_seconds === s ? " on" : ""}" onclick="igRetQuick('${v.ig_video_id}',${s})">${s}s</button>`).join("")}
+            </div>
           </div>
         </div>
         <div class="ig-manual-row">
@@ -7185,6 +7228,32 @@ async function igAddCustomTag(vid, input) {
     document.querySelector(".ig-detail-overlay")?.remove();
     igShowDetail(vid);
   } catch {}
+}
+
+function igRetSlide(vid, val) {
+  const el = document.getElementById("igRetVal-" + vid);
+  if (el) el.innerHTML = val + "<small>s</small>";
+  document.querySelectorAll(`#igc-${vid} .ig-ret-preset, .ig-detail-overlay .ig-ret-preset`).forEach(b => {
+    b.classList.toggle("on", parseInt(b.textContent) === parseInt(val));
+  });
+}
+function igRetCommit(vid, val) {
+  const v = igVideosCache.find(x => x.ig_video_id === vid);
+  if (v) v.retention_seconds = parseInt(val);
+  fetch(`/metrics/video/${vid}/manual`, {
+    method: "PATCH", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ retention_seconds: parseInt(val) }),
+  }).then(() => {
+    const check = document.getElementById("igmc-ret-" + vid);
+    if (check) { check.classList.add("show"); setTimeout(() => check.classList.remove("show"), 1500); }
+    renderIgGrid();
+  });
+}
+function igRetQuick(vid, secs) {
+  const slider = document.querySelector(`.ig-detail-overlay .ig-ret-slider`);
+  if (slider) { slider.value = secs; }
+  igRetSlide(vid, secs);
+  igRetCommit(vid, secs);
 }
 
 async function igSaveManual(vid, field, el) {
