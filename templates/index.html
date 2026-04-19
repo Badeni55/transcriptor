@@ -6798,7 +6798,7 @@ function renderIgChart() {
   }).join("");
 
   const svgW = Math.max(100, padLeft + n * (barW + gap) + padRight);
-  wrap.innerHTML = `<div style="max-height:300px;overflow:hidden;background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:16px">
+  wrap.innerHTML = `<div style="background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:16px">
     <div class="ig-chart-tabs">${metricTabs}</div>
     <div style="overflow-x:auto">
       <svg viewBox="0 0 ${svgW} ${h}" style="width:100%;max-height:250px;min-width:280px" preserveAspectRatio="xMidYMid meet">
@@ -7136,9 +7136,8 @@ const PROF_SECTION_MAP = {
 };
 const PROF_TAB_TO_SLUG = Object.fromEntries(Object.entries(PROF_SECTION_MAP).map(([k, v]) => [v, k]));
 const PROF_TITLES = {
-  overview: "Perfil", scripts: "Scripts", transc: "Transcripciones",
-  projects: "Proyectos", assistants: "Asistentes", metrics: "Métricas",
-  ideas: "Ideas", team: "Equipo", privacy: "Privacidad"
+  es: { overview: "Perfil", scripts: "Scripts", transc: "Transcripciones", projects: "Proyectos", assistants: "Asistentes", metrics: "Métricas", ideas: "Ideas", team: "Equipo", privacy: "Privacidad" },
+  en: { overview: "Profile", scripts: "Scripts", transc: "Transcriptions", projects: "Projects", assistants: "Assistants", metrics: "Metrics", ideas: "Ideas", team: "Team", privacy: "Privacy" },
 };
 
 function profTab(tab, pushHistory) {
@@ -7190,7 +7189,8 @@ function profTab(tab, pushHistory) {
       history.pushState({ profTab: tab }, "", url);
     }
   }
-  document.title = (PROF_TITLES[tab] || "Perfil") + " · ReelScript";
+  const lang = document.documentElement.lang || "es";
+  document.title = ((PROF_TITLES[lang] || PROF_TITLES.es)[tab] || "Perfil") + " · ReelScript";
 }
 
 function profTabMobile(tab) { profTab(tab, true); }
