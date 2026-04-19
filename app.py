@@ -2854,6 +2854,25 @@ def metrics_tag_video(ig_video_id):
     return jsonify({"ok": True, "tag": tag})
 
 
+@app.route("/metrics/video/<ig_video_id>/tags", methods=["PATCH"])
+@require_auth
+def metrics_tags_video(ig_video_id):
+    user = current_user()
+    body = request.get_json() or {}
+    tags = body.get("tags", [])
+    if not isinstance(tags, list):
+        return jsonify({"error": "tags must be an array"}), 400
+    if len(tags) > 5:
+        return jsonify({"error": "Max 5 tags per video"}), 400
+    tags = [t.strip().lower()[:20] for t in tags if t and isinstance(t, str)]
+    tags = list(dict.fromkeys(tags))  # deduplicate preserving order
+    row = db.table("ig_videos").select("id").eq("user_id", user["id"]).eq("ig_video_id", ig_video_id).execute()
+    if not row.data:
+        return jsonify({"error": "Video not found"}), 404
+    db.table("ig_videos").update({"tags": tags}).eq("id", row.data[0]["id"]).execute()
+    return jsonify({"ok": True, "tags": tags})
+
+
 @app.route("/metrics/video/<ig_video_id>/manual", methods=["PATCH"])
 @require_auth
 def metrics_manual_video(ig_video_id):

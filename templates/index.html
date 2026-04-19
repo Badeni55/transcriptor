@@ -6561,9 +6561,15 @@ async function loadMetricsPanel() {
       return a;
     }, { views: 0, likes: 0, comments: 0, shares: 0 });
     const engRate = totals.views ? ((totals.likes + totals.comments + totals.shares) / totals.views * 100).toFixed(1) : "0.0";
+    // Median views
+    const sortedViews = igVideosCache.map(v => v.views || 0).sort((a, b) => a - b);
+    const medViews = sortedViews.length % 2 === 0
+      ? Math.round((sortedViews[sortedViews.length / 2 - 1] + sortedViews[sortedViews.length / 2]) / 2)
+      : sortedViews[Math.floor(sortedViews.length / 2)];
     const stats = [
       { val: fmtNum(totals.views), label: t("metrics.total_views"), accent: "#f97316" },
       { val: fmtNum(Math.round(totals.views / n)), label: "Avg views", accent: "#f97316" },
+      { val: fmtNum(medViews), label: "Mediana views", accent: "#f59e0b" },
       { val: fmtNum(totals.likes), label: t("metrics.total_likes"), accent: "#ef4444" },
       { val: fmtNum(totals.comments), label: t("metrics.total_comments"), accent: "#3b82f6" },
       { val: engRate + "%", label: "Engagement", accent: "#22c55e" },
@@ -6603,18 +6609,16 @@ async function loadMetricsPanel() {
 }
 
 const IG_TAGS = [
-  { id: "gold",     label: "Oro puro",    icon: "🥇", color: "#eab308", bg: "rgba(234,179,8,.12)" },
-  { id: "poop",     label: "Caquita",     icon: "💩", color: "#92400e", bg: "rgba(146,64,14,.12)" },
-  { id: "brain",    label: "Genialidad",  icon: "🧠", color: "#ec4899", bg: "rgba(236,72,153,.12)" },
-  { id: "clown",    label: "Payasada",    icon: "🤡", color: "#ef4444", bg: "rgba(239,68,68,.12)" },
-  { id: "pepper",   label: "Picante",     icon: "🌶️", color: "#f97316", bg: "rgba(249,115,22,.12)" },
-  { id: "sleep",    label: "Dormilón",    icon: "😴", color: "#6b7280", bg: "rgba(107,114,128,.12)" },
-  { id: "alien",    label: "Alien",       icon: "👽", color: "#22c55e", bg: "rgba(34,197,94,.12)" },
-  { id: "diamond",  label: "Diamante",    icon: "💎", color: "#06b6d4", bg: "rgba(6,182,212,.12)" },
-  { id: "skull",    label: "Muerto",      icon: "💀", color: "#a78bfa", bg: "rgba(167,139,250,.12)" },
-  { id: "rocket",   label: "Cohete",      icon: "🚀", color: "#3b82f6", bg: "rgba(59,130,246,.12)" },
-  { id: "cactus",   label: "Cactus",      icon: "🌵", color: "#16a34a", bg: "rgba(22,163,74,.12)" },
-  { id: "eyes",     label: "Ojo ojo",     icon: "👀", color: "#8b5cf6", bg: "rgba(139,92,246,.12)" },
+  { id: "viral",        label: "Viral",        icon: "🔥", color: "#ef4444", bg: "rgba(239,68,68,.12)" },
+  { id: "payasada",     label: "Payasada",     icon: "😂", color: "#f97316", bg: "rgba(249,115,22,.12)" },
+  { id: "educativo",    label: "Educativo",    icon: "💡", color: "#eab308", bg: "rgba(234,179,8,.12)" },
+  { id: "storytelling", label: "Storytelling", icon: "📖", color: "#8b5cf6", bg: "rgba(139,92,246,.12)" },
+  { id: "cta",          label: "CTA directo",  icon: "🎯", color: "#3b82f6", bg: "rgba(59,130,246,.12)" },
+  { id: "profesional",  label: "Profesional",  icon: "💼", color: "#6b7280", bg: "rgba(107,114,128,.12)" },
+  { id: "mierda",       label: "Mierda",       icon: "🗑️", color: "#92400e", bg: "rgba(146,64,14,.12)" },
+  { id: "experimento",  label: "Experimento",  icon: "🧪", color: "#06b6d4", bg: "rgba(6,182,212,.12)" },
+  { id: "hook",         label: "Hook fuerte",  icon: "🪝", color: "#22c55e", bg: "rgba(34,197,94,.12)" },
+  { id: "tendencia",    label: "Tendencia",    icon: "📈", color: "#ec4899", bg: "rgba(236,72,153,.12)" },
 ];
 let igActiveTagFilter = null;
 
@@ -6633,6 +6637,8 @@ function igGetPerfBadges(v, avgViews, avgEng, topVid) {
   return badges;
 }
 
+function _getVTags(v) { return v.tags && v.tags.length ? v.tags : (v.tag ? [v.tag] : []); }
+
 function renderIgGrid() {
   const grid = document.getElementById("igGrid");
   if (!igVideosCache.length) {
@@ -6641,11 +6647,12 @@ function renderIgGrid() {
   }
 
   const filtered = igActiveTagFilter
-    ? igVideosCache.filter(v => v.tag === igActiveTagFilter)
+    ? igVideosCache.filter(v => _getVTags(v).includes(igActiveTagFilter))
     : igVideosCache;
 
-  // Tag filter chips
-  const usedTags = [...new Set(igVideosCache.map(v => v.tag).filter(Boolean))];
+  // Tag filter chips — collect all used tags (from tags array or legacy tag)
+  const allUsed = igVideosCache.flatMap(v => _getVTags(v));
+  const usedTags = [...new Set(allUsed)];
   const filterBar = document.getElementById("igFilterBar");
   if (filterBar) {
     if (usedTags.length) {
@@ -6654,9 +6661,10 @@ function renderIgGrid() {
         <button class="ig-filter-chip${!igActiveTagFilter ? " on" : ""}" onclick="igActiveTagFilter=null;renderIgGrid()">All (${igVideosCache.length})</button>
         ${usedTags.map(tid => {
           const tg = IG_TAGS.find(t => t.id === tid);
-          if (!tg) return "";
-          const cnt = igVideosCache.filter(v => v.tag === tid).length;
-          return `<button class="ig-filter-chip${igActiveTagFilter === tid ? " on" : ""}" onclick="igActiveTagFilter='${tid}';renderIgGrid()" style="${igActiveTagFilter === tid ? `border-color:${tg.color};color:${tg.color}` : ""}">${tg.icon} ${tg.label} (${cnt})</button>`;
+          const cnt = igVideosCache.filter(v => _getVTags(v).includes(tid)).length;
+          const lbl = tg ? `${tg.icon} ${tg.label}` : tid;
+          const style = igActiveTagFilter === tid ? (tg ? `border-color:${tg.color};color:${tg.color}` : "border-color:var(--purple);color:var(--purple)") : "";
+          return `<button class="ig-filter-chip${igActiveTagFilter === tid ? " on" : ""}" onclick="igActiveTagFilter='${esc(tid)}';renderIgGrid()" style="${style}">${lbl} (${cnt})</button>`;
         }).join("")}`;
     } else { filterBar.style.display = "none"; }
   }
@@ -6680,7 +6688,13 @@ function renderIgGrid() {
     const badges = igGetPerfBadges(v, avgViews, avgEng, topVid);
     const badgesHtml = badges.length ? `<div class="ig-badges-row">${badges.map(b => `<span class="ig-perf-badge" style="background:${b.bg};color:${b.color}">${b.label}</span>`).join("")}</div>` : "";
     const dur = v.duration ? `${Math.floor(v.duration / 60)}:${String(Math.floor(v.duration % 60)).padStart(2, "0")}` : "";
-    const tagObj = IG_TAGS.find(t => t.id === v.tag);
+    const vTags = _getVTags(v);
+    const tagsHtml = vTags.slice(0, 2).map(tid => {
+      const tg = IG_TAGS.find(t => t.id === tid);
+      return tg
+        ? `<span style="font-size:.58rem;padding:1px 6px;border-radius:4px;background:${tg.bg};color:${tg.color};display:inline-flex;align-items:center;gap:2px">${tg.icon} ${tg.label}</span>`
+        : `<span style="font-size:.58rem;padding:1px 6px;border-radius:4px;background:var(--surf2);color:var(--text3)">${esc(tid)}</span>`;
+    }).join("") + (vTags.length > 2 ? `<span style="font-size:.55rem;color:var(--text3)">+${vTags.length - 2}</span>` : "");
     return `<div class="ig-card" id="igc-${v.ig_video_id}" style="position:relative">
       <div style="position:relative">
         ${(v.thumbnail_b64 || v.thumbnail_url) ? `<img class="ig-card-thumb" src="${v.thumbnail_b64 || esc(v.thumbnail_url)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="ig-thumb-placeholder" style="display:none"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><polygon points="5 3 19 12 5 21"/></svg></div>` : '<div class="ig-thumb-placeholder"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><polygon points="5 3 19 12 5 21"/></svg></div>'}
@@ -6692,11 +6706,7 @@ function renderIgGrid() {
       </div>
       <div class="ig-card-body" style="cursor:pointer" onclick="igShowDetail('${v.ig_video_id}')">
         ${badgesHtml}
-        <div style="margin-bottom:6px;position:relative"><button class="ig-tag-btn" onclick="event.stopPropagation();igToggleTagPicker('${v.ig_video_id}')" ${tagObj ? `style="background:${tagObj.bg};color:${tagObj.color};border:1px solid ${tagObj.color}25"` : ""}>${tagObj ? `${tagObj.icon} ${tagObj.label}` : "🏷 Tag"}</button>
-        <div class="ig-tag-picker" id="igtp-${v.ig_video_id}" style="display:none" onclick="event.stopPropagation()">
-          ${IG_TAGS.map(tg => `<button class="ig-tag-opt${v.tag === tg.id ? " on" : ""}" onclick="igSetTag('${v.ig_video_id}','${tg.id}')" style="${v.tag === tg.id ? `border-color:${tg.color}` : ""}">${tg.icon} <span style="font-size:.65rem">${tg.label}</span></button>`).join("")}
-          ${v.tag ? `<button class="ig-tag-opt" onclick="igSetTag('${v.ig_video_id}',null)" style="color:var(--text3)">✕ <span style="font-size:.65rem">Quitar</span></button>` : ""}
-        </div></div>
+        ${tagsHtml ? `<div style="display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap;align-items:center">${tagsHtml}</div>` : ""}
         <div class="ig-card-caption">${esc(v.caption || "—")}</div>
         <div class="ig-card-stats">
           <span>👁 ${fmtNum(v.views)}</span>
@@ -6969,40 +6979,42 @@ async function igDeleteVideo(vid) {
   } catch { showToast("Error"); }
 }
 
-function igToggleTagPicker(vid) {
-  const el = document.getElementById("igtp-" + vid);
-  if (!el) return;
-  document.querySelectorAll(".ig-tag-picker").forEach(p => { if (p !== el) p.style.display = "none"; });
-  el.style.display = el.style.display === "none" ? "flex" : "none";
-}
-
-async function igSetTag(vid, tag) {
-  document.querySelectorAll(".ig-tag-picker").forEach(p => p.style.display = "none");
-  try {
-    const r = await fetch(`/metrics/video/${vid}/tag`, {
-      method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tag }),
-    });
-    if (!r.ok) return;
-    const v = igVideosCache.find(x => x.ig_video_id === vid);
-    if (v) v.tag = tag;
-    renderIgGrid();
-  } catch {}
-}
-
 function igShowDetail(vid) {
   const v = igVideosCache.find(x => x.ig_video_id === vid);
   if (!v) return;
-  const tagObj = IG_TAGS.find(tg => tg.id === v.tag);
   const date = v.published_at ? new Date(v.published_at).toLocaleDateString() : "—";
   const dur = v.duration ? `${Math.floor(v.duration / 60)}:${String(Math.floor(v.duration % 60)).padStart(2, "0")}` : "—";
-  const engRate = v.views ? ((v.likes + v.comments + (v.shares || 0)) / v.views * 100).toFixed(2) + "%" : "—";
+  const engRate = v.views ? ((v.likes + v.comments + (v.shares || 0)) / v.views * 100).toFixed(2) : "0";
 
-  // Performance comparison vs average
-  const avgViews = igVideosCache.reduce((s, x) => s + (x.views || 0), 0) / (igVideosCache.length || 1);
-  const viewsDiff = avgViews > 0 ? (((v.views || 0) - avgViews) / avgViews * 100).toFixed(0) : 0;
-  const viewsDiffLabel = viewsDiff > 0 ? `+${viewsDiff}%` : `${viewsDiff}%`;
-  const viewsDiffColor = viewsDiff > 0 ? "#22c55e" : viewsDiff < -10 ? "#ef4444" : "var(--text3)";
+  // Averages for comparison
+  const nn = igVideosCache.length || 1;
+  const avgViews = igVideosCache.reduce((s, x) => s + (x.views || 0), 0) / nn;
+  const avgLikes = igVideosCache.reduce((s, x) => s + (x.likes || 0), 0) / nn;
+  const avgComments = igVideosCache.reduce((s, x) => s + (x.comments || 0), 0) / nn;
+  const avgShares = igVideosCache.reduce((s, x) => s + (x.shares || 0), 0) / nn;
+
+  function cmpBar(val, avg, label) {
+    if (!avg) return "";
+    const pct = ((val - avg) / avg * 100).toFixed(0);
+    const barPct = Math.min(200, (val / avg) * 100);
+    const color = pct > 0 ? "#22c55e" : pct < -10 ? "#ef4444" : "#f97316";
+    const sign = pct > 0 ? "+" : "";
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+      <span style="font-size:.7rem;color:var(--text3);width:75px;text-align:right">${label}</span>
+      <span style="font-size:.75rem;font-weight:600;width:50px;font-family:var(--font-display)">${fmtNum(val)}</span>
+      <div style="flex:1;height:10px;background:var(--surf2);border-radius:5px;overflow:hidden;position:relative">
+        <div style="width:${Math.min(100, barPct)}%;height:100%;background:${color};border-radius:5px;transition:width .3s"></div>
+      </div>
+      <span style="font-size:.65rem;font-weight:600;color:${color};width:50px">${sign}${pct}%</span>
+    </div>`;
+  }
+
+  // Tags UI
+  const vTags = _getVTags(v);
+  const tagsHtml = IG_TAGS.map(tg => {
+    const active = vTags.includes(tg.id);
+    return `<button class="ig-tag-opt${active ? " on" : ""}" onclick="igToggleDetailTag('${v.ig_video_id}','${tg.id}',this)" style="${active ? `border-color:${tg.color};background:${tg.bg}` : ""}">${tg.icon} <span style="font-size:.65rem">${tg.label}</span></button>`;
+  }).join("");
 
   const overlay = document.createElement("div");
   overlay.className = "ig-detail-overlay";
@@ -7011,23 +7023,38 @@ function igShowDetail(vid) {
     <div class="ig-detail-header">
       ${(v.thumbnail_b64 || v.thumbnail_url) ? `<img src="${v.thumbnail_b64 || esc(v.thumbnail_url)}" alt="" onerror="this.parentElement.style.minHeight='60px'"/>` : ""}
       <button class="ig-detail-close" onclick="this.closest('.ig-detail-overlay').remove()">✕</button>
-      ${tagObj ? `<div style="position:absolute;top:10px;left:10px;background:${tagObj.bg};border:1px solid ${tagObj.color}30;backdrop-filter:blur(6px);border-radius:8px;padding:4px 12px;font-size:.75rem;font-weight:600;color:${tagObj.color};display:flex;align-items:center;gap:4px">${tagObj.icon} ${tagObj.label}</div>` : ""}
       ${dur !== "—" ? `<div style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.6);color:#fff;font-size:.7rem;padding:3px 8px;border-radius:5px;font-family:var(--font-display);backdrop-filter:blur(4px)">${dur}</div>` : ""}
     </div>
     <div class="ig-detail-body">
       <div class="ig-detail-caption">${esc(v.caption || "—")}</div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-        <span style="font-size:.72rem;color:var(--text3)">${t("metrics.published")}: ${date}</span>
-        <span style="font-size:.68rem;font-weight:600;color:${viewsDiffColor};background:${viewsDiffColor}15;padding:2px 8px;border-radius:4px">${viewsDiffLabel} vs avg</span>
-      </div>
+      <div style="font-size:.72rem;color:var(--text3);margin-bottom:14px">${t("metrics.published")}: ${date}</div>
+
       <div class="ig-detail-metrics">
-        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${fmtNum(v.views)}</div><div class="ig-detail-metric-label">${t("metrics.views")}</div></div>
-        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${fmtNum(v.likes)}</div><div class="ig-detail-metric-label">${t("metrics.likes")}</div></div>
-        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${fmtNum(v.comments)}</div><div class="ig-detail-metric-label">${t("metrics.comments")}</div></div>
-        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${fmtNum(v.shares || 0)}</div><div class="ig-detail-metric-label">${t("metrics.shares")}</div></div>
-        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${dur}</div><div class="ig-detail-metric-label">${t("metrics.duration")}</div></div>
-        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${engRate}</div><div class="ig-detail-metric-label">${t("metrics.engagement")}</div></div>
+        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${fmtNum(v.views)}</div><div class="ig-detail-metric-label">Views</div></div>
+        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${fmtNum(v.likes)}</div><div class="ig-detail-metric-label">Likes</div></div>
+        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${fmtNum(v.comments)}</div><div class="ig-detail-metric-label">Comments</div></div>
+        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${fmtNum(v.shares || 0)}</div><div class="ig-detail-metric-label">Shares</div></div>
+        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${engRate}%</div><div class="ig-detail-metric-label">Engagement</div></div>
+        <div class="ig-detail-metric"><div class="ig-detail-metric-val">${dur}</div><div class="ig-detail-metric-label">Duración</div></div>
       </div>
+
+      <div class="ig-manual-section">
+        <div class="ig-manual-label">Este reel vs tu media</div>
+        ${cmpBar(v.views || 0, avgViews, "Views")}
+        ${cmpBar(v.likes || 0, avgLikes, "Likes")}
+        ${cmpBar(v.comments || 0, avgComments, "Comments")}
+        ${avgShares > 0 ? cmpBar(v.shares || 0, avgShares, "Shares") : ""}
+      </div>
+
+      <div class="ig-manual-section">
+        <div class="ig-manual-label">Tags</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px" id="igDetailTags-${v.ig_video_id}">${tagsHtml}</div>
+        <div style="display:flex;gap:4px;align-items:center">
+          <input class="ig-manual-input" style="width:120px;text-align:left" type="text" placeholder="Tag custom..." maxlength="20" id="igCustomTag-${v.ig_video_id}" onkeydown="if(event.key==='Enter'){igAddCustomTag('${v.ig_video_id}',this)}"/>
+          <button class="ig-tag-opt" onclick="igAddCustomTag('${v.ig_video_id}',document.getElementById('igCustomTag-${v.ig_video_id}'))" style="font-size:.65rem">+ Añadir</button>
+        </div>
+      </div>
+
       <div class="ig-manual-section">
         <div class="ig-manual-label">Métricas manuales</div>
         <div class="ig-manual-row">
@@ -7060,6 +7087,7 @@ function igShowDetail(vid) {
           <button class="ig-manual-hint-x" onclick="localStorage.setItem('ig_retention_hint_dismissed','1');document.getElementById('igRetHint').remove()">✕</button>
         </div>` : ""}
       </div>
+
       ${v.transcription
         ? `<div style="font-size:.75rem;font-weight:600;margin-bottom:6px;color:var(--text2)">${t("metrics.view_transcript")}</div><div class="ig-detail-transcript">${esc(v.transcription)}</div>`
         : `<div style="font-size:.8rem;color:var(--text3);font-style:italic;padding:14px;background:var(--surf2);border-radius:10px;text-align:center">${t("metrics.no_transcript")}</div>`}
@@ -7070,6 +7098,56 @@ function igShowDetail(vid) {
     </div>
   </div>`;
   document.body.appendChild(overlay);
+}
+
+async function igToggleDetailTag(vid, tagId, btn) {
+  const v = igVideosCache.find(x => x.ig_video_id === vid);
+  if (!v) return;
+  let tags = _getVTags(v);
+  if (tags.includes(tagId)) {
+    tags = tags.filter(t => t !== tagId);
+  } else {
+    if (tags.length >= 5) return;
+    tags.push(tagId);
+  }
+  try {
+    const r = await fetch(`/metrics/video/${vid}/tags`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tags }),
+    });
+    if (!r.ok) return;
+    v.tags = tags;
+    // Update button state
+    const tg = IG_TAGS.find(t => t.id === tagId);
+    const active = tags.includes(tagId);
+    btn.classList.toggle("on", active);
+    btn.style.borderColor = active && tg ? tg.color : "";
+    btn.style.background = active && tg ? tg.bg : "";
+    renderIgGrid();
+  } catch {}
+}
+
+async function igAddCustomTag(vid, input) {
+  const tag = input.value.trim().toLowerCase().replace(/\s+/g, "-").slice(0, 20);
+  if (!tag) return;
+  const v = igVideosCache.find(x => x.ig_video_id === vid);
+  if (!v) return;
+  let tags = _getVTags(v);
+  if (tags.includes(tag) || tags.length >= 5) return;
+  tags.push(tag);
+  try {
+    const r = await fetch(`/metrics/video/${vid}/tags`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tags }),
+    });
+    if (!r.ok) return;
+    v.tags = tags;
+    input.value = "";
+    renderIgGrid();
+    // Re-open detail to refresh tags UI
+    document.querySelector(".ig-detail-overlay")?.remove();
+    igShowDetail(vid);
+  } catch {}
 }
 
 async function igSaveManual(vid, field, el) {
