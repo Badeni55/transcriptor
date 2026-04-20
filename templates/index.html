@@ -5063,6 +5063,31 @@
   </div>
 </div>
 
+{% if settings_page %}
+<!-- ── SETTINGS PAGE ─────────────────────────────────────────────────── -->
+<div id="settingsView" style="position:fixed;inset:0;z-index:305;background:var(--bg);overflow-y:auto;padding:40px 20px">
+  <div style="max-width:520px;margin:0 auto">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px">
+      <a href="/app" class="btn-nav" style="padding:6px 10px;font-size:.82rem">← <span data-i18n-es="Workspace" data-i18n-en="Workspace">Workspace</span></a>
+      <h1 style="font-family:var(--font-display);font-size:1.6rem;margin:0" data-i18n-es="Mi cuenta" data-i18n-en="My account">My account</h1>
+    </div>
+
+    <div style="background:var(--surf1);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px">
+        <div id="setAv" style="width:56px;height:56px;border-radius:12px;background:var(--surf2);flex-shrink:0"></div>
+        <div style="min-width:0">
+          <div id="setEmail" class="ph-no-capture" data-clarity-mask="true" style="font-family:var(--font-display);font-size:.98rem;word-break:break-all">—</div>
+          <div style="margin-top:4px"><span class="plan-badge free" id="setPlanBadge">Free</span></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-sm" onclick="openTopup()" data-i18n-es="Gestionar plan" data-i18n-en="Manage plan">Manage plan</button>
+        <button class="btn-sm" onclick="logout()" data-i18n-es="Cerrar sesión" data-i18n-en="Log out">Log out</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 <!-- ── MODAL VER COMPLETO ─────────────────────────────────────────────── -->
 <div class="view-overlay" id="viewOverlay" onclick="if(event.target===this)closeView()">
@@ -6616,6 +6641,19 @@ function renderProfileHub() {
   const badge = document.getElementById("profPlanBadge");
   badge.textContent = planLabels[plan] || plan;
   badge.className = `plan-badge ${plan}`;
+
+  // Settings page mirror (only if present in DOM)
+  const setEmail = document.getElementById("setEmail");
+  if (setEmail) {
+    setEmail.textContent = st.user.email;
+    const setBadge = document.getElementById("setPlanBadge");
+    if (setBadge) {
+      setBadge.textContent = planLabels[plan] || plan;
+      setBadge.className = `plan-badge ${plan}`;
+    }
+    const setAv = document.getElementById("setAv");
+    if (setAv) setAv.style.backgroundImage = `url(${dicebearUrl(seed)})`, setAv.style.backgroundSize = "cover";
+  }
 
   // Usage bar
   const usageWrap = document.getElementById("profUsageWrap");

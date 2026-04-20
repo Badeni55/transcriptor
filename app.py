@@ -2158,6 +2158,14 @@ def workspace():
     return render_template("index.html", lang=lang, workspace=True)
 
 
+@app.route("/settings")
+@require_auth_html
+def settings_page():
+    accept = request.headers.get("Accept-Language", "")
+    lang = "en" if accept.lower().startswith("en") else "es"
+    return render_template("index.html", lang=lang, settings_page=True)
+
+
 @app.route("/profile")
 @app.route("/profile/<section>")
 def profile_page(section="overview"):
