@@ -216,6 +216,21 @@ def require_auth(f):
     return wrapper
 
 
+def require_auth_html(f):
+    """Like require_auth but for HTML routes: redirects to home with ?next=."""
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not current_user():
+            accept = request.headers.get("Accept-Language", "")
+            home = "/en/" if accept.lower().startswith("en") else "/es/"
+            full = request.full_path
+            if full.endswith("?"):
+                full = full[:-1]
+            return redirect(f"{home}?next={full}", code=302)
+        return f(*args, **kwargs)
+    return wrapper
+
+
 def get_profile(user_id: str) -> dict:
     """Devuelve el perfil del usuario, reseteando los contadores diarios si hace falta."""
     result = db.table("profiles").select("*").eq("id", user_id).execute()
@@ -2133,6 +2148,14 @@ def index_es():
 @app.route("/en/")
 def index_en():
     return render_template("index.html", lang="en")
+
+
+@app.route("/app")
+@require_auth_html
+def workspace():
+    accept = request.headers.get("Accept-Language", "")
+    lang = "en" if accept.lower().startswith("en") else "es"
+    return render_template("index.html", lang=lang, workspace=True)
 
 
 @app.route("/profile")
