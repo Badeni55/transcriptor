@@ -5260,6 +5260,9 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// ── server-injected globals ──────────────────────────────────────────────
+window.__NEXT_URL__ = {{ next_url|tojson if next_url else 'null' }};
+
 // ── i18n ─────────────────────────────────────────────────────────────────
 const LANGS = {
   es: {

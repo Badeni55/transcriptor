@@ -10,6 +10,8 @@ import uuid
 from datetime import date, datetime, timedelta, timezone
 from functools import wraps
 
+from urllib.parse import urlparse
+
 import requests
 import yt_dlp
 from dotenv import load_dotenv
@@ -216,6 +218,28 @@ def require_auth(f):
     return wrapper
 
 
+def safe_next_url(n: str | None) -> str | None:
+    """Validate a `next` URL. Returns the URL if safe, None otherwise.
+
+    Rules: must start with `/`, not `//`, parsed netloc/scheme must be empty,
+    and it must not target auth/login endpoints (to prevent redirect loops).
+    """
+    if not n or not isinstance(n, str):
+        return None
+    if not n.startswith("/") or n.startswith("//"):
+        return None
+    try:
+        parsed = urlparse(n)
+    except Exception:
+        return None
+    if parsed.netloc or parsed.scheme:
+        return None
+    path = parsed.path or ""
+    if path in ("/login", "/logout") or path.startswith("/auth/"):
+        return None
+    return n
+
+
 def require_auth_html(f):
     """Like require_auth but for HTML routes: redirects to home with ?next=."""
     @wraps(f)
@@ -226,7 +250,8 @@ def require_auth_html(f):
             full = request.full_path
             if full.endswith("?"):
                 full = full[:-1]
-            return redirect(f"{home}?next={full}", code=302)
+            nxt = safe_next_url(full) or "/app"
+            return redirect(f"{home}?next={nxt}", code=302)
         return f(*args, **kwargs)
     return wrapper
 
@@ -2142,12 +2167,14 @@ def index():
 
 @app.route("/es/")
 def index_es():
-    return render_template("index.html", lang="es")
+    return render_template("index.html", lang="es",
+                           next_url=safe_next_url(request.args.get("next")))
 
 
 @app.route("/en/")
 def index_en():
-    return render_template("index.html", lang="en")
+    return render_template("index.html", lang="en",
+                           next_url=safe_next_url(request.args.get("next")))
 
 
 @app.route("/app")
