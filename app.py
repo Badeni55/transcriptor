@@ -479,6 +479,7 @@ def auth_login():
         session["user"] = {"id": user["id"], "email": user["email"]}
         return jsonify({"ok": True, "email": user["email"]})
     except Exception:
+        logger.error("auth_login failed", exc_info=True)
         return jsonify({"error": "Error de conexión"}), 500
 
 
