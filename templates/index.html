@@ -4138,7 +4138,7 @@
     {% if not workspace %}<a class="btn-nav hi" id="btnWorkspace" href="/app" style="display:none;text-decoration:none" data-i18n="nav.workspace">Ir a mi workspace →</a>{% endif %}
     <button class="btn-nav" id="btnLogin" onclick="openAuth('login')" data-i18n="nav.login">Log in</button>
     <button class="btn-nav hi" id="btnReg" onclick="openAuth('register')" data-i18n="nav.register">Free →</button>
-    <button class="theme-btn" id="themeBtn" title="Theme: System">💻</button>
+    <button class="theme-btn" id="themeBtn" title="Theme: System"{% if workspace %} style="display:none"{% endif %}>💻</button>
     <div class="user-menu-wrap">
       <div class="user-pill" id="userPill" onclick="toggleUserMenu(event)" style="cursor:pointer" data-tour="user-profile">
         <div class="avatar" id="userAv" style="overflow:hidden;padding:0"></div>
