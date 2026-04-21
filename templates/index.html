@@ -4146,11 +4146,14 @@
         <span class="user-menu-chevron">▾</span>
       </div>
       <div class="user-menu-dropdown" id="userMenuDropdown">
-        <button class="user-menu-item" onclick="openProfile();closeUserMenu()">👤 <span data-i18n="nav.profile">Mi perfil</span></button>
-        <button class="user-menu-item" onclick="openProfile();profTab('scripts');closeUserMenu()">📄 <span data-i18n="prof.saved_scripts">Saved scripts</span></button>
-        <button class="user-menu-item" onclick="openProfile();profTab('ideas');closeUserMenu()">💡 <span data-i18n="prof.ideas">Ideas</span></button>
-        <button class="user-menu-item" onclick="openProfile();profTab('projects');closeUserMenu()">📁 <span data-i18n="prof.projects">Projects</span></button>
-        <button class="user-menu-item" onclick="openTeleprompterPicker();closeUserMenu()">🖥️ <span data-i18n="prof.teleprompter">Teleprompter</span></button>
+        <a class="user-menu-item" href="/settings" style="text-decoration:none">⚙️ <span data-i18n="nav.my_account">Mi cuenta</span></a>
+        <button class="user-menu-item" onclick="goMyPlan();closeUserMenu()">💎 <span data-i18n="nav.my_plan">Mi plan</span></button>
+        <div class="user-menu-divider"></div>
+        <button class="user-menu-item" onclick="cycleTheme()">🌓 <span data-i18n="nav.dark_mode">Modo oscuro</span></button>
+        <button class="user-menu-item" onclick="toggleLang()">🌐 <span data-i18n="nav.language">Idioma</span> · <span id="navLangToggleCode">{{ 'EN' if lang == 'en' else 'ES' }}</span></button>
+        <div class="user-menu-divider"></div>
+        <a class="user-menu-item" href="/affiliate" style="text-decoration:none">🤝 <span data-i18n="nav.affiliates">Afiliados</span></a>
+        {% if workspace %}<a class="user-menu-item" href="/" style="text-decoration:none">🌍 <span data-i18n="nav.public_web">Ver web pública</span></a>{% endif %}
         <div class="user-menu-divider"></div>
         <button class="user-menu-item user-menu-logout" onclick="logout();closeUserMenu()">🚪 <span data-i18n="nav.logout">Cerrar sesión</span></button>
       </div>
@@ -5289,7 +5292,7 @@ window.__NEXT_URL__ = {{ next_url|tojson if next_url else 'null' }};
 // ── i18n ─────────────────────────────────────────────────────────────────
 const LANGS = {
   es: {
-    "nav.login": "Entrar", "nav.register": "Gratis →", "nav.profile": "Mi perfil", "nav.logout": "Cerrar sesión", "nav.earn": "Ganar 30%", "nav.theme": "Tema", "nav.navigation": "Navegación", "nav.account": "Cuenta", "nav.home": "Inicio", "nav.buy_credits": "Comprar créditos", "nav.workspace": "Ir a mi workspace →",
+    "nav.login": "Entrar", "nav.register": "Gratis →", "nav.profile": "Mi perfil", "nav.logout": "Cerrar sesión", "nav.earn": "Ganar 30%", "nav.theme": "Tema", "nav.navigation": "Navegación", "nav.account": "Cuenta", "nav.home": "Inicio", "nav.buy_credits": "Comprar créditos", "nav.workspace": "Ir a mi workspace →", "nav.my_account": "Mi cuenta", "nav.my_plan": "Mi plan", "nav.dark_mode": "Modo oscuro", "nav.language": "Idioma", "nav.affiliates": "Afiliados", "nav.public_web": "Ver web pública",
     "hero.badge": "5 gratis al día · Sin tarjeta · Sin suscripción",
     "hero.h1": 'Pega la URL.<br><span class="grad-txt">Obtén el guión.</span>',
     "hero.sub": "Transcribe reels de Instagram y TikTok al instante con IA.",
@@ -5649,7 +5652,7 @@ const LANGS = {
     "auth.forgot": "¿Olvidaste tu contraseña?",
   },
   en: {
-    "nav.login": "Log in", "nav.register": "Free →", "nav.profile": "My profile", "nav.logout": "Log out", "nav.earn": "Earn 30%", "nav.theme": "Theme", "nav.navigation": "Navigation", "nav.account": "Account", "nav.home": "Home", "nav.buy_credits": "Buy credits", "nav.workspace": "Go to workspace →",
+    "nav.login": "Log in", "nav.register": "Free →", "nav.profile": "My profile", "nav.logout": "Log out", "nav.earn": "Earn 30%", "nav.theme": "Theme", "nav.navigation": "Navigation", "nav.account": "Account", "nav.home": "Home", "nav.buy_credits": "Buy credits", "nav.workspace": "Go to workspace →", "nav.my_account": "My account", "nav.my_plan": "My plan", "nav.dark_mode": "Dark mode", "nav.language": "Language", "nav.affiliates": "Affiliates", "nav.public_web": "View public site",
     "hero.badge": "5 free/day · No card · No subscription",
     "hero.h1": 'Paste the URL.<br><span class="grad-txt">Get the script.</span>',
     "hero.sub": "Transcribe Instagram and TikTok reels instantly with AI.",
@@ -10886,6 +10889,22 @@ function syncNavMob() {
   document.querySelectorAll(".mob-nav-paid").forEach(el => el.style.display = "");
   const affMob = document.getElementById("navAffMob");
   if (affMob) affMob.style.display = st.user ? "" : "none";
+}
+
+function goMyPlan() {
+  const pricing = document.getElementById("pricingSection");
+  if (pricing) {
+    pricing.scrollIntoView({ behavior: "smooth" });
+  } else {
+    const lang = document.documentElement.lang || "es";
+    window.location.assign("/" + lang + "/#pricingSection");
+  }
+}
+
+function toggleLang() {
+  const curr = document.documentElement.lang || "es";
+  const other = curr === "es" ? "en" : "es";
+  window.location.assign("/" + other + "/");
 }
 
 async function logout() {
