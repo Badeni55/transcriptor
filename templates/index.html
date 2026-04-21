@@ -9381,12 +9381,14 @@ let _fabOnboardTimer = null;
 function updateIdeaFab() {
   const fab = document.getElementById("ideaFab");
   if (!fab) return;
-  fab.classList.toggle("on", !!st.user);
+  const onWorkspace = window.location.pathname.startsWith("/app");
+  const visible = !!st.user && onWorkspace;
+  fab.classList.toggle("on", visible);
   // Update label
   const label = document.getElementById("ideaFabLabel");
   if (label) label.textContent = t("ideas.fab_tooltip");
   // Onboarding tooltip (first time only)
-  if (st.user && !localStorage.getItem("ideas_fab_onboarded")) {
+  if (visible && !localStorage.getItem("ideas_fab_onboarded")) {
     _fabOnboardTimer = setTimeout(showFabOnboard, 2000);
   }
 }
