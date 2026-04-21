@@ -2195,16 +2195,22 @@ def settings_page():
     return render_template("index.html", lang=lang, settings_page=True)
 
 
+PROFILE_REDIRECTS = {
+    "overview": "/app",
+    "scripts": "/app#scripts",
+    "projects": "/app#projects",
+    "ideas": "/app#ideas",
+    "metrics": "/app#metrics",
+    "assistants": "/app#assistants",
+    "team": "/app#team",
+    "transcriptions": "/app#transcriptions",
+}
+
+
 @app.route("/profile")
 @app.route("/profile/<section>")
 def profile_page(section="overview"):
-    valid = {"overview", "scripts", "transcriptions", "projects",
-             "assistants", "metrics", "ideas", "team", "privacy"}
-    if section not in valid:
-        return redirect("/profile")
-    accept = request.headers.get("Accept-Language", "")
-    lang = "en" if accept.lower().startswith("en") else "es"
-    return render_template("index.html", lang=lang, profile_section=section)
+    return redirect(PROFILE_REDIRECTS.get(section, "/app"), code=301)
 
 
 # ── Pillar pages ─────────────────────────────────────────────────────────────
