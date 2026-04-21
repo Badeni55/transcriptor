@@ -4546,6 +4546,26 @@
   </div>
 </div>
 
+{% if workspace %}
+<style>
+  .ws-tabs { max-width: 1200px; margin: 24px auto 8px; padding: 0 24px; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .ws-tabs::-webkit-scrollbar { display: none; }
+  .ws-tab { flex: 0 0 auto; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-size: .85rem; font-weight: 500; cursor: pointer; white-space: nowrap; transition: color .15s, background .15s, border-color .15s; font-family: inherit; }
+  .ws-tab:hover { color: var(--text); background: var(--surf); border-color: var(--text3); }
+</style>
+<nav class="ws-tabs" aria-label="Workspace sections">
+  <button class="ws-tab" onclick="openProfile();profTab('overview')" data-i18n="prof.overview">Resumen</button>
+  <button class="ws-tab" onclick="openProfile();profTab('transc')" data-i18n="prof.transcriptions">Transcripciones</button>
+  <button class="ws-tab" onclick="openProfile();profTab('ideas')" data-i18n="prof.ideas">Ideas</button>
+  <button class="ws-tab" onclick="openProfile();profTab('projects')" data-i18n="prof.projects">Proyectos</button>
+  <button class="ws-tab" onclick="openProfile();profTab('scripts')">Scripts</button>
+  <button class="ws-tab" onclick="openProfile();profTab('assistants')" data-i18n="prof.assistants">Asistentes</button>
+  <button class="ws-tab" onclick="openProfile();profTab('metrics')" data-i18n="prof.metrics">Métricas</button>
+  <button class="ws-tab" onclick="openProfile();profTab('team')" data-i18n="prof.team">Equipo</button>
+  <button class="ws-tab" onclick="openTeleprompterPicker()" data-i18n="prof.teleprompter">Teleprompter</button>
+</nav>
+{% endif %}
+
 {% if not workspace %}
 <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(249,115,22,.12),transparent);max-width:600px;margin:0 auto"></div>
 
