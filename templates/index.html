@@ -4546,6 +4546,7 @@
   </div>
 </div>
 
+{% if not workspace %}
 <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(249,115,22,.12),transparent);max-width:600px;margin:0 auto"></div>
 
 <!-- ── FLUJO DE PASOS ──────────────────────────────────────────────────── -->
@@ -4707,6 +4708,7 @@
     ✦ Probar gratis ahora
   </button>
 </div>
+{% endif %}
 
 <!-- ── PROFILE DRAWER ─────────────────────────────────────────────────── -->
 <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
@@ -11453,6 +11455,7 @@ window.addEventListener("DOMContentLoaded", () => {
   </div>
 </div>
 
+{% if not workspace %}
 <!-- ── FAQ ──────────────────────────────────────────────────────────── -->
 <section class="faq-section fade-in" style="max-width:720px;margin:60px auto 40px;padding:0 24px">
   {% if lang == 'en' %}
@@ -11501,6 +11504,7 @@ window.addEventListener("DOMContentLoaded", () => {
   </details>
   {% endif %}
 </section>
+{% endif %}
 </main>
 
 {% if pillar %}
