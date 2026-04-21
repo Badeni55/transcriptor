@@ -6371,6 +6371,8 @@ window.addEventListener("DOMContentLoaded", async () => {
         });
         if (res.ok) {
           showToast(t("toast.welcome"));
+          window.location.assign(window.__NEXT_URL__ || "/app");
+          return;
         }
       } catch {}
     }
@@ -10812,6 +10814,7 @@ async function submitAuth() {
   await refreshMe(); loadHistory();
   const t3 = LANGS[currentLang] || LANGS.en;
   showToast(authMode === "login" ? t("toast.welcome") : t("toast.account_created"));
+  window.location.assign(window.__NEXT_URL__ || "/app");
 }
 
 document.addEventListener("keydown", e => {
