@@ -4135,6 +4135,7 @@
       <a class="lang-btn{% if lang|default('es') == 'en' %} active{% endif %}" href="/en/">EN</a>
     </div>
     <a href="/affiliate" id="navAffiliate" style="display:none;color:var(--text3);font-size:.78rem;font-weight:500;text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--purple)'" onmouseout="this.style.color='var(--text3)'">Earn 30% &rarr;</a>
+    {% if not workspace %}<a class="btn-nav hi" id="btnWorkspace" href="/app" style="display:none;text-decoration:none" data-i18n="nav.workspace">Ir a mi workspace →</a>{% endif %}
     <button class="btn-nav" id="btnLogin" onclick="openAuth('login')" data-i18n="nav.login">Log in</button>
     <button class="btn-nav hi" id="btnReg" onclick="openAuth('register')" data-i18n="nav.register">Free →</button>
     <button class="theme-btn" id="themeBtn" title="Theme: System">💻</button>
@@ -5288,7 +5289,7 @@ window.__NEXT_URL__ = {{ next_url|tojson if next_url else 'null' }};
 // ── i18n ─────────────────────────────────────────────────────────────────
 const LANGS = {
   es: {
-    "nav.login": "Entrar", "nav.register": "Gratis →", "nav.profile": "Mi perfil", "nav.logout": "Cerrar sesión", "nav.earn": "Ganar 30%", "nav.theme": "Tema", "nav.navigation": "Navegación", "nav.account": "Cuenta", "nav.home": "Inicio", "nav.buy_credits": "Comprar créditos",
+    "nav.login": "Entrar", "nav.register": "Gratis →", "nav.profile": "Mi perfil", "nav.logout": "Cerrar sesión", "nav.earn": "Ganar 30%", "nav.theme": "Tema", "nav.navigation": "Navegación", "nav.account": "Cuenta", "nav.home": "Inicio", "nav.buy_credits": "Comprar créditos", "nav.workspace": "Ir a mi workspace →",
     "hero.badge": "5 gratis al día · Sin tarjeta · Sin suscripción",
     "hero.h1": 'Pega la URL.<br><span class="grad-txt">Obtén el guión.</span>',
     "hero.sub": "Transcribe reels de Instagram y TikTok al instante con IA.",
@@ -5648,7 +5649,7 @@ const LANGS = {
     "auth.forgot": "¿Olvidaste tu contraseña?",
   },
   en: {
-    "nav.login": "Log in", "nav.register": "Free →", "nav.profile": "My profile", "nav.logout": "Log out", "nav.earn": "Earn 30%", "nav.theme": "Theme", "nav.navigation": "Navigation", "nav.account": "Account", "nav.home": "Home", "nav.buy_credits": "Buy credits",
+    "nav.login": "Log in", "nav.register": "Free →", "nav.profile": "My profile", "nav.logout": "Log out", "nav.earn": "Earn 30%", "nav.theme": "Theme", "nav.navigation": "Navigation", "nav.account": "Account", "nav.home": "Home", "nav.buy_credits": "Buy credits", "nav.workspace": "Go to workspace →",
     "hero.badge": "5 free/day · No card · No subscription",
     "hero.h1": 'Paste the URL.<br><span class="grad-txt">Get the script.</span>',
     "hero.sub": "Transcribe Instagram and TikTok reels instantly with AI.",
@@ -6547,6 +6548,8 @@ function renderLoggedIn() {
   const initial = st.user.email[0].toUpperCase();
   document.getElementById("btnLogin").style.display = "none";
   document.getElementById("btnReg").style.display = "none";
+  const btnWs = document.getElementById("btnWorkspace");
+  if (btnWs) btnWs.style.display = "";
   const navMobAuth = document.getElementById("navMobAuth");
   if (navMobAuth) navMobAuth.style.display = "none";
   updateIdeaFab();
@@ -8591,6 +8594,8 @@ function profAdaptFromTransc(id) {
 function renderLoggedOut() {
   document.getElementById("btnLogin").style.display = "";
   document.getElementById("btnReg").style.display = "";
+  const btnWs = document.getElementById("btnWorkspace");
+  if (btnWs) btnWs.style.display = "none";
   const navMobAuth = document.getElementById("navMobAuth");
   if (navMobAuth) navMobAuth.style.display = "";
   document.getElementById("userPill").classList.remove("on");
