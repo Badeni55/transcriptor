@@ -10,7 +10,7 @@ import uuid
 from datetime import date, datetime, timedelta, timezone
 from functools import wraps
 
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlencode
 
 import requests
 import yt_dlp
@@ -228,6 +228,8 @@ def safe_next_url(n: str | None) -> str | None:
         return None
     if not n.startswith("/") or n.startswith("//"):
         return None
+    if "\\" in n:
+        return None
     try:
         parsed = urlparse(n)
     except Exception:
@@ -251,7 +253,7 @@ def require_auth_html(f):
             if full.endswith("?"):
                 full = full[:-1]
             nxt = safe_next_url(full) or "/app"
-            return redirect(f"{home}?next={nxt}", code=302)
+            return redirect(f"{home}?{urlencode({'next': nxt})}", code=302)
         return f(*args, **kwargs)
     return wrapper
 
