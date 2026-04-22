@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  var APP_VERSION = '0.13.1';
+  var APP_VERSION = '0.13.2';
 
   var STYLE_MAP = {
     viral:        'viral',
@@ -186,4 +186,83 @@
   };
 
   window.track = track;
+
+  // ── In-app browser banner ──────────────────────────────────────
+  function _initInAppBanner() {
+    try {
+      if (!isInAppBrowser()) return;
+      if (sessionStorage.getItem('rs_in_app_dismissed')) return;
+      var p = window.location.pathname;
+      var allowed = p === '/es/' || p === '/en/' || p === '/app' || p === '/app/' || p.indexOf('/settings') === 0;
+      if (!allowed) return;
+
+      var isES = (document.documentElement.lang || 'es').toLowerCase().indexOf('es') === 0;
+      var ua = (navigator.userAgent || '').toLowerCase();
+      var isAndroid = /android/.test(ua);
+      var isIOS = /iphone|ipad|ipod/.test(ua);
+
+      var txt = isES
+        ? 'Para la mejor experiencia, abre ReelScript en tu navegador'
+        : 'For the best experience, open ReelScript in your browser';
+      var ctaLbl;
+      if (isAndroid) {
+        ctaLbl = isES ? 'Abrir en Chrome' : 'Open in Chrome';
+      } else {
+        ctaLbl = isES ? 'Cómo abrir' : 'How to open';
+      }
+      var tipTxt = isES
+        ? 'Toca ⋯ y elige "Abrir en Safari"'
+        : 'Tap ⋯ and choose "Open in Safari"';
+      var closeLbl = isES ? 'Cerrar' : 'Close';
+
+      var banner = document.createElement('div');
+      banner.id = 'rsInAppBanner';
+      banner.setAttribute('role', 'banner');
+      banner.innerHTML =
+        '<div class="rs-iab-inner">' +
+          '<span class="rs-iab-icon">ℹ️</span>' +
+          '<span class="rs-iab-text"></span>' +
+          '<button class="rs-iab-cta" id="rsIabCta"></button>' +
+          '<button class="rs-iab-close" id="rsIabClose" aria-label=""></button>' +
+        '</div>' +
+        '<div class="rs-iab-tip" id="rsIabTip" hidden></div>';
+      banner.querySelector('.rs-iab-text').textContent = txt;
+      banner.querySelector('#rsIabCta').textContent = ctaLbl;
+      var closeBtn = banner.querySelector('#rsIabClose');
+      closeBtn.setAttribute('aria-label', closeLbl);
+      closeBtn.textContent = '✕';
+      banner.querySelector('#rsIabTip').textContent = tipTxt;
+
+      document.body.prepend(banner);
+      document.body.classList.add('rs-iab-on');
+      try { window.track && window.track.inAppBannerShown(); } catch (e) {}
+
+      banner.querySelector('#rsIabCta').addEventListener('click', function () {
+        try { window.track && window.track.inAppBannerClicked(); } catch (e) {}
+        if (isAndroid) {
+          var host = window.location.host;
+          var path = window.location.pathname + window.location.search;
+          window.location.href = 'intent://' + host + path + '#Intent;scheme=https;package=com.android.chrome;end';
+        } else {
+          var tip = banner.querySelector('#rsIabTip');
+          tip.hidden = false;
+          document.body.classList.add('rs-iab-tip-on');
+        }
+      });
+
+      closeBtn.addEventListener('click', function () {
+        try { window.track && window.track.inAppBannerDismissed(); } catch (e) {}
+        try { sessionStorage.setItem('rs_in_app_dismissed', '1'); } catch (e) {}
+        banner.remove();
+        document.body.classList.remove('rs-iab-on');
+        document.body.classList.remove('rs-iab-tip-on');
+      });
+    } catch (e) {}
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _initInAppBanner);
+  } else {
+    _initInAppBanner();
+  }
 })();
