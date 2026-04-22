@@ -345,6 +345,52 @@
     ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
 
+    /* ── In-app browser banner ──────────────────────────────── */
+    #rsInAppBanner {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 201;
+      background: linear-gradient(90deg, #ea580c, #b45309);
+      color: #fff; font-family: var(--font-body);
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    }
+    .rs-iab-inner {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 14px; max-width: 1200px; margin: 0 auto;
+    }
+    .rs-iab-icon { flex: 0 0 auto; font-size: .95rem; line-height: 1; }
+    .rs-iab-text { flex: 1 1 auto; font-size: .82rem; line-height: 1.3; }
+    .rs-iab-cta {
+      flex: 0 0 auto; background: rgba(255,255,255,.2); color: #fff;
+      border: 1px solid rgba(255,255,255,.4); border-radius: 8px;
+      padding: 6px 12px; font-size: .78rem; font-weight: 600;
+      cursor: pointer; transition: background .15s; font-family: inherit;
+    }
+    .rs-iab-cta:hover { background: rgba(255,255,255,.3); }
+    .rs-iab-close {
+      flex: 0 0 auto; background: transparent; color: #fff;
+      border: none; font-size: 1rem; padding: 4px 8px;
+      cursor: pointer; opacity: .85; line-height: 1;
+    }
+    .rs-iab-close:hover { opacity: 1; }
+    .rs-iab-tip {
+      padding: 7px 14px 9px; text-align: center;
+      font-size: .76rem; color: rgba(255,255,255,.95);
+      border-top: 1px solid rgba(255,255,255,.22);
+      background: rgba(0,0,0,.08);
+    }
+    body.rs-iab-on { padding-top: 44px; }
+    body.rs-iab-on nav { top: 44px; }
+    body.rs-iab-on.rs-iab-tip-on { padding-top: 74px; }
+    body.rs-iab-on.rs-iab-tip-on nav { top: 74px; }
+    @media (max-width: 640px) {
+      .rs-iab-text { font-size: .76rem; }
+      .rs-iab-cta { font-size: .72rem; padding: 5px 10px; }
+      .rs-iab-inner { padding: 8px 12px; gap: 8px; }
+      body.rs-iab-on { padding-top: 46px; }
+      body.rs-iab-on nav { top: 46px; }
+      body.rs-iab-on.rs-iab-tip-on { padding-top: 78px; }
+      body.rs-iab-on.rs-iab-tip-on nav { top: 78px; }
+    }
+
     /* ── Nav ─────────────────────────────────────────────────── */
     nav {
       position: sticky; top: 0; z-index: 200;
@@ -4130,6 +4176,8 @@
   });
   </script>
   {% endif %}
+
+  <script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
 </head>
 <body>
 
@@ -4153,9 +4201,9 @@
       <a class="lang-btn{% if lang|default('es') == 'en' %} active{% endif %}" href="/en/">EN</a>
     </div>
     <a href="/affiliate" id="navAffiliate" style="display:none;color:var(--text3);font-size:.78rem;font-weight:500;text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--purple)'" onmouseout="this.style.color='var(--text3)'">Earn 30% &rarr;</a>
-    {% if not workspace %}<a class="btn-nav hi" id="btnWorkspace" href="/app" style="display:none;text-decoration:none" data-i18n="nav.workspace">Ir a mi workspace →</a>{% endif %}
-    <button class="btn-nav" id="btnLogin" onclick="openAuth('login')" data-i18n="nav.login">Log in</button>
-    <button class="btn-nav hi" id="btnReg" onclick="openAuth('register')" data-i18n="nav.register">Free →</button>
+    {% if not workspace %}<a class="btn-nav hi" id="btnWorkspace" href="/app" onclick="ctaWorkspaceClick()" style="display:none;text-decoration:none" data-i18n="nav.workspace">Ir a mi workspace →</a>{% endif %}
+    <button class="btn-nav" id="btnLogin" onclick="openAuth('login','nav_login')" data-i18n="nav.login">Log in</button>
+    <button class="btn-nav hi" id="btnReg" onclick="openAuth('register','nav_login')" data-i18n="nav.register">Free →</button>
     <button class="theme-btn" id="themeBtn" title="Theme: System"{% if workspace %} style="display:none"{% endif %}>💻</button>
     <div class="user-menu-wrap">
       <div class="user-pill" id="userPill" onclick="toggleUserMenu(event)" style="cursor:pointer" data-tour="user-profile">
@@ -4164,16 +4212,16 @@
         <span class="user-menu-chevron">▾</span>
       </div>
       <div class="user-menu-dropdown" id="userMenuDropdown">
-        <a class="user-menu-item" href="/settings" style="text-decoration:none">⚙️ <span data-i18n="nav.my_account">Mi cuenta</span></a>
-        <button class="user-menu-item" onclick="goMyPlan();closeUserMenu()">💎 <span data-i18n="nav.my_plan">Mi plan</span></button>
+        <a class="user-menu-item" href="/settings" onclick="window.track&&window.track.avatarDropdownAction({action:'account'})" style="text-decoration:none">⚙️ <span data-i18n="nav.my_account">Mi cuenta</span></a>
+        <button class="user-menu-item" onclick="window.track&&window.track.avatarDropdownAction({action:'plan'});goMyPlan();closeUserMenu()">💎 <span data-i18n="nav.my_plan">Mi plan</span></button>
         <div class="user-menu-divider"></div>
-        <button class="user-menu-item" onclick="cycleTheme()">🌓 <span data-i18n="nav.dark_mode">Modo oscuro</span></button>
-        <button class="user-menu-item" onclick="toggleLang()">🌐 <span data-i18n="nav.language">Idioma</span> · <span id="navLangToggleCode">{{ 'EN' if lang == 'en' else 'ES' }}</span></button>
+        <button class="user-menu-item" onclick="window.track&&window.track.avatarDropdownAction({action:'theme'});cycleTheme()">🌓 <span data-i18n="nav.dark_mode">Modo oscuro</span></button>
+        <button class="user-menu-item" onclick="window.track&&window.track.avatarDropdownAction({action:'language'});toggleLang()">🌐 <span data-i18n="nav.language">Idioma</span> · <span id="navLangToggleCode">{{ 'EN' if lang == 'en' else 'ES' }}</span></button>
         <div class="user-menu-divider"></div>
-        <a class="user-menu-item" href="/affiliate" style="text-decoration:none">🤝 <span data-i18n="nav.affiliates">Afiliados</span></a>
-        {% if workspace %}<a class="user-menu-item" href="/" style="text-decoration:none">🌍 <span data-i18n="nav.public_web">Ver web pública</span></a>{% endif %}
+        <a class="user-menu-item" href="/affiliate" onclick="window.track&&window.track.avatarDropdownAction({action:'affiliate'})" style="text-decoration:none">🤝 <span data-i18n="nav.affiliates">Afiliados</span></a>
+        {% if workspace %}<a class="user-menu-item" href="/" onclick="window.track&&window.track.avatarDropdownAction({action:'public_web'})" style="text-decoration:none">🌍 <span data-i18n="nav.public_web">Ver web pública</span></a>{% endif %}
         <div class="user-menu-divider"></div>
-        <button class="user-menu-item user-menu-logout" onclick="logout();closeUserMenu()">🚪 <span data-i18n="nav.logout">Cerrar sesión</span></button>
+        <button class="user-menu-item user-menu-logout" onclick="window.track&&window.track.avatarDropdownAction({action:'logout'});logout();closeUserMenu()">🚪 <span data-i18n="nav.logout">Cerrar sesión</span></button>
       </div>
     </div>
     <button class="nav-hamburger" id="navHamburger" onclick="toggleNavMob()" aria-label="Menu">☰</button>
@@ -4576,15 +4624,15 @@
   .ws-tab:hover { color: var(--text); background: var(--surf); border-color: var(--text3); }
 </style>
 <nav class="ws-tabs" aria-label="Workspace sections">
-  <button class="ws-tab" onclick="openProfile();profTab('overview')" data-i18n="prof.overview">Resumen</button>
-  <button class="ws-tab" onclick="openProfile();profTab('transc')" data-i18n="prof.transcriptions">Transcripciones</button>
-  <button class="ws-tab" onclick="openProfile();profTab('ideas')" data-i18n="prof.ideas">Ideas</button>
-  <button class="ws-tab" onclick="openProfile();profTab('projects')" data-i18n="prof.projects">Proyectos</button>
-  <button class="ws-tab" onclick="openProfile();profTab('scripts')">Scripts</button>
-  <button class="ws-tab" onclick="openProfile();profTab('assistants')" data-i18n="prof.assistants">Asistentes</button>
-  <button class="ws-tab" onclick="openProfile();profTab('metrics')" data-i18n="prof.metrics">Métricas</button>
-  <button class="ws-tab" onclick="openProfile();profTab('team')" data-i18n="prof.team">Equipo</button>
-  <button class="ws-tab" onclick="openTeleprompterPicker()" data-i18n="prof.teleprompter">Teleprompter</button>
+  <button class="ws-tab" onclick="wsTabClick('overview')" data-i18n="prof.overview">Resumen</button>
+  <button class="ws-tab" onclick="wsTabClick('transc')" data-i18n="prof.transcriptions">Transcripciones</button>
+  <button class="ws-tab" onclick="wsTabClick('ideas')" data-i18n="prof.ideas">Ideas</button>
+  <button class="ws-tab" onclick="wsTabClick('projects')" data-i18n="prof.projects">Proyectos</button>
+  <button class="ws-tab" onclick="wsTabClick('scripts')">Scripts</button>
+  <button class="ws-tab" onclick="wsTabClick('assistants')" data-i18n="prof.assistants">Asistentes</button>
+  <button class="ws-tab" onclick="wsTabClick('metrics')" data-i18n="prof.metrics">Métricas</button>
+  <button class="ws-tab" onclick="wsTabClick('team')" data-i18n="prof.team">Equipo</button>
+  <button class="ws-tab" onclick="wsTabClick('teleprompter')" data-i18n="prof.teleprompter">Teleprompter</button>
 </nav>
 {% endif %}
 
@@ -6316,6 +6364,7 @@ async function saveAssistant() {
     return;
   }
 
+  try { window.track && window.track.featureUsed({ feature: "assistants", action: editingAssistantId ? "update" : "create" }); } catch(e){}
   closeModal("assistantOverlay");
   showToast(editingAssistantId ? t("asst.updated") : t("asst.created"));
   await loadAssistants();
@@ -6415,6 +6464,20 @@ window.addEventListener("DOMContentLoaded", async () => {
         });
         if (res.ok) {
           showToast(t("toast.welcome"));
+          try {
+            await refreshMe();
+            if (st.user) {
+              const knownKey = "rs_known_user_" + st.user.id;
+              const isKnown = !!localStorage.getItem(knownKey);
+              window.track && window.track.identifyUser(st.user.id, { email: st.user.email, plan: st.plan });
+              if (!isKnown) {
+                window.track && window.track.signupStarted({ method: "google", mode: "register" });
+                window.track && window.track.signupCompleted({ method: "google" });
+                try { localStorage.setItem(knownKey, "1"); } catch(e){}
+              }
+            }
+            sessionStorage.setItem("rs_just_logged_in", "1");
+          } catch(e){}
           window.location.assign(window.__NEXT_URL__ || "/app");
           return;
         }
@@ -6426,6 +6489,15 @@ window.addEventListener("DOMContentLoaded", async () => {
   initPrices();
   await refreshMe();
   if (st.user) { loadHistory(); loadAssistants(); loadProjects(); }
+  try {
+    if (st.user && window.location.pathname.startsWith("/app")) {
+      let source = "direct";
+      if (sessionStorage.getItem("rs_just_logged_in")) { source = "post_login"; sessionStorage.removeItem("rs_just_logged_in"); }
+      else if (sessionStorage.getItem("rs_ws_cta")) { source = "cta_nav"; sessionStorage.removeItem("rs_ws_cta"); }
+      else if (document.referrer && /reelscript\.net/i.test(document.referrer)) { source = "internal"; }
+      window.track && window.track.workspaceEntered({ source, plan: st.plan });
+    }
+  } catch(e){}
   animateCounter();
   initDemo();
   initScrollReveal();
@@ -6579,7 +6651,7 @@ function renderLoggedIn() {
   if (affMob) affMob.style.display = "";
   document.getElementById("userPill").classList.add("on");
   document.getElementById("userEmail").textContent = st.user.email;
-  if (window.posthog) posthog.identify(st.user.id, { email: st.user.email, plan: st.plan });
+  try { window.track && window.track.identifyUser(st.user.id, { email: st.user.email, plan: st.plan }); } catch(e){}
   document.getElementById("balBadge").classList.add("on");
   if (st.monthlyLimit) {
     const rem = st.monthlyLimit - st.monthlyUsage;
@@ -7711,6 +7783,16 @@ const PROF_TITLES = {
 
 function profTab(tab, pushHistory) {
   if (pushHistory === undefined) pushHistory = true;
+  try {
+    if (tab && tab !== "overview" && st.user) {
+      const feat = tab === "transc" ? "transcriptions" : tab;
+      const key = "rs_feat_disc_" + st.user.id + "_" + feat;
+      if (!localStorage.getItem(key)) {
+        window.track && window.track.featureDiscovered({ feature: feat, source: "profile_nav" });
+        try { localStorage.setItem(key, "1"); } catch(e){}
+      }
+    }
+  } catch(e){}
   const panels = {
     overview: "profPanelOverview",
     scripts: "profPanelScripts",
@@ -8045,6 +8127,7 @@ async function submitNewProject() {
     body: JSON.stringify({ name, style_prompt: style }),
   });
   if (!res.ok) { const d = await res.json(); err.textContent = d.error || "Error creating project"; err.classList.add("on"); return; }
+  try { window.track && window.track.featureUsed({ feature: "projects", action: "create" }); } catch(e){}
   closeModal("newProjectOverlay");
   showToast(t("toast.project_created"));
   await loadProjects();
@@ -8060,6 +8143,7 @@ async function createProject(name, stylePrompt) {
   });
   if (!res.ok) { const d = await res.json(); showToast(d.error || "Error"); return null; }
   const p = await res.json();
+  try { window.track && window.track.featureUsed({ feature: "projects", action: "create" }); } catch(e){}
   showToast(t("toast.project_created"));
   await loadProjects();
   return p;
@@ -8585,6 +8669,7 @@ async function inviteMember(email) {
       else showToast(d.error || "Could not send invite");
       return;
     }
+    try { window.track && window.track.featureUsed({ feature: "team", action: "invite" }); } catch(e){}
     closeModal("inviteOverlay");
     showToast(t("team.invited") + " " + email);
     await loadTeamMembers();
@@ -8676,7 +8761,7 @@ function renderFreeBar() {
   const rem = limit - used;
   document.getElementById("freeBarTxt").innerHTML = st.user
     ? (rem > 0 ? `${rem} de ${limit} ${t("drawer.free_today")}` : `${t("freebar.limit_reached")} · Recarga saldo para continuar`)
-    : `${t("freebar.anon")} · <a href="#" onclick="openAuth('register');return false" style="color:#fed7aa;font-weight:700;text-decoration:none">${t("freebar.anon_link")}</a>`;
+    : `${t("freebar.anon")} · <a href="#" onclick="openAuth('register','free_limit');return false" style="color:#fed7aa;font-weight:700;text-decoration:none">${t("freebar.anon_link")}</a>`;
 }
 
 // ── Platform icon on URL input ────────────────────────────────────────────
@@ -8690,6 +8775,16 @@ urlInput.addEventListener("input", () => {
   else if (v.includes("tiktok.com")) ic = "🎵";
   platIcon.textContent = ic;
   platIcon.classList.toggle("on", !!ic);
+});
+
+urlInput.addEventListener("paste", (e) => {
+  try {
+    const v = (e.clipboardData || window.clipboardData).getData("text") || "";
+    let platform = "other";
+    if (/instagram\.com/i.test(v)) platform = "instagram";
+    else if (/tiktok\.com/i.test(v)) platform = "tiktok";
+    window.track && window.track.urlPasted({ platform });
+  } catch(err){}
 });
 
 // ── Result panel system ───────────────────────────────────────────────────
@@ -8803,6 +8898,14 @@ function _updateTranscribeBtn() {
   }
 }
 
+function _rsErrorTypeFromStatus(status) {
+  if (status === 402) return "no_credits";
+  if (status === 400) return "invalid_url";
+  if (status === 403) return "private_video";
+  if (status >= 500) return "server_error";
+  return "unknown";
+}
+
 async function rsProcessQueue() {
   if (rsProcessing || !rsPending.length) return;
   rsProcessing = true;
@@ -8814,6 +8917,7 @@ async function rsProcessQueue() {
       await rsTranscribeOne(url);
     } catch (e) {
       console.error("Queue item failed:", url, e);
+      try { window.track && window.track.transcribeCompleted({ success: false, errorType: "network" }); } catch(err){}
       showUrlError(t("toast.error_connection"));
     }
   }
@@ -8845,6 +8949,7 @@ async function rsTranscribeOne(url) {
     });
     const d = await res.json();
     if (!res.ok) {
+      try { window.track && window.track.transcribeCompleted({ success: false, errorType: _rsErrorTypeFromStatus(res.status) }); } catch(e){}
       loader.innerHTML = `<div style="padding:14px 16px;display:flex;align-items:center;gap:10px;color:#fca5a5;font-size:.82rem">
         <span>&#9888;</span><span>${esc(d.error || "Error")}</span>
       </div>`;
@@ -8866,6 +8971,7 @@ async function rsTranscribeOne(url) {
     });
 
     if (result.state === "error") {
+      try { window.track && window.track.transcribeCompleted({ success: false, errorType: "unknown", errorMessage: (result.error || "").toString().slice(0, 120) }); } catch(e){}
       loader.innerHTML = `<div style="padding:14px 16px;display:flex;align-items:center;gap:10px;color:#fca5a5;font-size:.82rem">
         <span>&#9888;</span><span>${esc(result.error || "Failed")}</span>
       </div>`;
@@ -8874,6 +8980,11 @@ async function rsTranscribeOne(url) {
       return;
     }
     loader.remove();
+    try {
+      const _plat = url.includes("instagram") ? "instagram" : (url.includes("tiktok") ? "tiktok" : "other");
+      window.track && window.track.transcribeCompleted({ success: true, platform: _plat, transcriptionLength: (result.text || "").length });
+      window.track && window.track.resultViewed({ platform: _plat });
+    } catch(e){}
 
     // Title from URL
     const plat = url.includes("instagram") ? "Instagram" : url.includes("tiktok") ? "TikTok" : "Reel";
@@ -8999,6 +9110,10 @@ function doTranscribe() {
   if (!validRx.test(url)) { showUrlError(); return; }
   if (_validationErrCard) { _validationErrCard.remove(); _validationErrCard = null; }
   if (_validationErrTimer) { clearTimeout(_validationErrTimer); _validationErrTimer = null; }
+  try {
+    const plat = /instagram\.com/i.test(url) ? "instagram" : (/tiktok\.com/i.test(url) ? "tiktok" : "other");
+    window.track && window.track.transcribeClicked({ platform: plat, isAuthenticated: !!st.user });
+  } catch(e){}
   rsPending.push(url);
   input.value = "";
   input.dispatchEvent(new Event("input"));
@@ -9024,6 +9139,8 @@ function pickChip(btn) {
   const text = document.getElementById("resultTxt").textContent.trim();
   if (!text) return;
 
+  try { window.track && window.track.styleSelected({ style: s, location: "chip" }); } catch(e){}
+
   // Fill the Hazlo tuyo textarea
   document.getElementById("adaptInput").value = text;
 
@@ -9032,7 +9149,7 @@ function pickChip(btn) {
 
   // Select the matching style pill and trigger its logic
   const pill = document.querySelector(`.style-pill[data-s="${s}"]`);
-  if (pill) selectStyle(pill);
+  if (pill) selectStyle(pill, { _fromChip: true });
 }
 
 async function runInlineAdapt() {
@@ -9049,6 +9166,7 @@ async function runInlineAdapt() {
   spinner.classList.add("on");
   result.classList.remove("on");
 
+  try { if (activeChip === "custom" && selectedAssistantId) { window.track && window.track.styleCustomUsed({ assistant_id: selectedAssistantId }); } } catch(e){}
   try {
     const r = await fetch("/adapt", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -9175,9 +9293,12 @@ function initStyleDots() {
   }
 }
 
-function selectStyle(btn) {
+function selectStyle(btn, opts) {
   selectedAssistantId = null;
   const s = btn.dataset.s;
+  if (!opts || !opts._fromChip) {
+    try { window.track && window.track.styleSelected({ style: s, location: "pill" }); } catch(e){}
+  }
   document.querySelectorAll(".style-pill").forEach(b => b.classList.remove("act"));
   btn.classList.add("act");
   activeStyle = s;
@@ -9297,6 +9418,7 @@ async function runAdapt() {
   previewLabel.textContent = t("toast.generating");
 
   _lastAdaptText = text;
+  try { if (activeStyle === "custom" && selectedAssistantId) { window.track && window.track.styleCustomUsed({ assistant_id: selectedAssistantId }); } } catch(e){}
   try {
     const r = await fetch("/adapt", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -9456,6 +9578,7 @@ function dismissFabOnboard() {
 }
 
 function onFabClick() {
+  try { window.track && window.track.ideaFabClicked(); } catch(e){}
   dismissFabOnboard();
   openIdeaModal();
 }
@@ -9574,6 +9697,8 @@ async function saveIdeaCapture() {
       showToast(d.error || t("toast.error_save"));
       return;
     }
+
+    try { window.track && window.track.featureUsed({ feature: "ideas", action: "create", with_develop: !!develop }); } catch(e){}
 
     // Check if it was a fallback (develop failed, saved as draft)
     if (d.fallback) {
@@ -9838,6 +9963,7 @@ function tpStartScroll() {
   TP.isPlaying = true;
   TP.lastTime = performance.now();
   document.getElementById("tpPlayBtn").textContent = "⏸";
+  try { window.track && window.track.featureUsed({ feature: "teleprompter", action: "start" }); } catch(e){}
   tpTick();
 }
 
@@ -10149,6 +10275,15 @@ document.addEventListener("keydown", e => {
 
 // Helper to open teleprompter from an idea
 function openTeleprompterPicker() {
+  try {
+    if (st.user) {
+      const key = "rs_feat_disc_" + st.user.id + "_teleprompter";
+      if (!localStorage.getItem(key)) {
+        window.track && window.track.featureDiscovered({ feature: "teleprompter", source: "picker" });
+        try { localStorage.setItem(key, "1"); } catch(e){}
+      }
+    }
+  } catch(e){}
   // Collect all available texts: scripts, ideas, recent transcriptions
   const items = [];
   // From scriptsCache
@@ -10693,6 +10828,7 @@ async function saveScript() {
   });
   const btn = document.getElementById("pfSaveBtn");
   if (res.ok) {
+    try { window.track && window.track.featureUsed({ feature: "scripts", action: "save", style: activeStyle || "" }); } catch(e){}
     showToast(t("act.saved") + " ✓");
     btn.textContent = "✓ " + t("act.saved");
     setTimeout(() => (btn.textContent = "💾 " + t("act.save")), 2000);
@@ -10828,7 +10964,7 @@ async function doSaveToProject(projectId, projectName) {
 }
 
 // ── Auth modal ─────────────────────────────────────────────────────────────
-function openAuth(mode) {
+function openAuth(mode, trigger) {
   authMode = mode || "login";
   switchTab(authMode);
   document.getElementById("authEmail").value = "";
@@ -10836,6 +10972,7 @@ function openAuth(mode) {
   document.getElementById("authErr").classList.remove("on");
   openModal("authOverlay");
   setTimeout(() => document.getElementById("authEmail").focus(), 100);
+  try { window.track && window.track.signupPrompted({ mode: authMode, trigger: trigger || "unknown" }); } catch(e){}
 }
 
 function switchTab(mode) {
@@ -10851,6 +10988,7 @@ function switchTab(mode) {
 
 async function loginWithGoogle() {
   try {
+    try { window.track && window.track.signupStarted({ method: "google", mode: authMode }); } catch(e){}
     const res = await fetch("/auth/google");
     const d = await res.json();
     if (d.url) window.location.href = d.url;
@@ -10871,6 +11009,7 @@ async function submitAuth() {
     btn.disabled = false; btn.textContent = (LANGS[currentLang] || LANGS.en)["auth.register"] || "Create account";
     return;
   }
+  try { window.track && window.track.signupStarted({ method: "email", mode: authMode }); } catch(e){}
   const authBody = { email, password: pass };
   if (authMode === "register") {
     const aRef = localStorage.getItem("affiliate_ref");
@@ -10891,6 +11030,16 @@ async function submitAuth() {
   await refreshMe(); loadHistory();
   const t3 = LANGS[currentLang] || LANGS.en;
   showToast(authMode === "login" ? t("toast.welcome") : t("toast.account_created"));
+  try {
+    if (st.user) {
+      window.track && window.track.identifyUser(st.user.id, { email: st.user.email, plan: st.plan });
+      if (authMode === "register") {
+        window.track && window.track.signupCompleted({ method: "email" });
+        try { localStorage.setItem("rs_known_user_" + st.user.id, "1"); } catch(e){}
+      }
+    }
+    sessionStorage.setItem("rs_just_logged_in", "1");
+  } catch(e){}
   window.location.assign(window.__NEXT_URL__ || "/app");
 }
 
@@ -10907,7 +11056,10 @@ function toggleUserMenu(e) {
   const pill = document.getElementById("userPill");
   const isOpen = dd.classList.contains("on");
   if (isOpen) { dd.classList.remove("on"); pill.classList.remove("menu-open"); }
-  else { dd.classList.add("on"); pill.classList.add("menu-open"); }
+  else {
+    dd.classList.add("on"); pill.classList.add("menu-open");
+    try { window.track && window.track.avatarDropdownOpened(); } catch(err){}
+  }
 }
 function closeUserMenu() {
   document.getElementById("userMenuDropdown")?.classList.remove("on");
@@ -10954,9 +11106,21 @@ function toggleLang() {
   window.location.assign("/" + other + "/");
 }
 
+// ── Analytics helpers (workspace) ─────────────────────────────────────────
+function ctaWorkspaceClick() {
+  try { sessionStorage.setItem("rs_ws_cta", "1"); } catch(e){}
+  try { window.track && window.track.ctaWorkspaceClicked(); } catch(e){}
+}
+function wsTabClick(tab) {
+  try { window.track && window.track.workspaceTabClicked({ tab }); } catch(e){}
+  if (tab === "teleprompter") { openTeleprompterPicker(); return; }
+  openProfile();
+  profTab(tab);
+}
+
 async function logout() {
   await fetch("/auth/logout", { method: "POST" });
-  if (window.posthog) posthog.reset();
+  try { window.track && window.track.resetUser(); } catch(e){}
   st = { user: null, credits: 0, freeUsed: 0, freeLimit: 5, freeDailyAnon: 3, plan: "free" };
   renderLoggedOut(); renderFreeBar(); renderPlanCards(); showToast(t("toast.session_closed"));
 }
@@ -11037,7 +11201,7 @@ function renderPlanCards() {
         btn.textContent = t("freebar.anon_link");
         btn.disabled = false;
         btn.classList.remove("active");
-        btn.onclick = () => openAuth("register");
+        btn.onclick = () => openAuth("register", "pillar_cta");
       } else {
         btn.textContent = plan === "free" ? t("sub.current_plan") : "Plan Free";
         btn.disabled = plan === "free";
