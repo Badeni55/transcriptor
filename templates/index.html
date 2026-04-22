@@ -2,6 +2,24 @@
 <html lang="{{ lang|default('es') }}">
 <head>
   <meta charset="UTF-8" />
+  <script>
+    (function(){
+      try {
+        var p = localStorage.getItem("rs-theme") || "system";
+        var t = "dark";
+        if (p === "light") {
+          t = "light";
+        } else if (p === "dark") {
+          t = "dark";
+        } else if (p === "system" && window.matchMedia) {
+          t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        document.documentElement.setAttribute("data-theme", t);
+      } catch(e){
+        document.documentElement.setAttribute("data-theme", "dark");
+      }
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="index, follow, max-image-preview:large">
 
@@ -6589,6 +6607,33 @@ function renderLoggedIn() {
   } else {
     navAv.textContent = initial;
     drawerAv.textContent = initial;
+  }
+
+  // Settings page mirror (only if present in DOM)
+  const setEmail = document.getElementById("setEmail");
+  if (setEmail) {
+    setEmail.textContent = st.user.email;
+    const setBadge = document.getElementById("setPlanBadge");
+    if (setBadge) {
+      const planLabels = { free: "Free", basic: "Basic", pro: "Pro", agency: "Agency" };
+      const plan = st.plan || "free";
+      setBadge.textContent = planLabels[plan] || plan;
+      setBadge.className = `plan-badge ${plan}`;
+    }
+    const setAv = document.getElementById("setAv");
+    if (setAv) {
+      if (seed) {
+        setAv.innerHTML = `<img src="${dicebearUrl(seed)}" style="width:100%;height:100%;object-fit:cover;border-radius:12px" />`;
+      } else {
+        setAv.textContent = initial;
+        setAv.style.display = "flex";
+        setAv.style.alignItems = "center";
+        setAv.style.justifyContent = "center";
+        setAv.style.fontFamily = "var(--font-display)";
+        setAv.style.fontSize = "1.6rem";
+        setAv.style.color = "var(--text2)";
+      }
+    }
   }
 }
 
