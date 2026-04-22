@@ -4644,22 +4644,63 @@
     display: flex; flex-direction: column; justify-content: space-between;
     min-height: 172px; padding: 20px 20px 18px;
     padding-right: 96px;
-    background: var(--surf); border: 1px solid var(--border); border-radius: 16px;
+    background: linear-gradient(180deg, #151015 0%, #0d0a0e 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
     color: inherit; text-decoration: none; cursor: pointer;
-    transition: transform .22s cubic-bezier(.2,.7,.3,1), border-color .22s ease, background .22s ease, box-shadow .22s ease;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.045),
+      inset 0 -1px 0 rgba(0,0,0,.35),
+      0 1px 2px rgba(0,0,0,.3),
+      0 4px 12px rgba(0,0,0,.2);
+    transition: transform .22s cubic-bezier(.2,.7,.3,1), border-color .22s ease, box-shadow .22s ease;
     text-align: left; font-family: inherit; overflow: hidden;
+  }
+  [data-theme="light"] .ws-card {
+    background: linear-gradient(180deg, #faf6ec 0%, #f2ede0 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.8),
+      inset 0 -1px 0 rgba(0,0,0,.05),
+      0 1px 2px rgba(0,0,0,.04),
+      0 4px 12px rgba(0,0,0,.03);
   }
   .ws-card::before {
     content: ""; position: absolute; inset: 0;
-    background: radial-gradient(circle at 100% 0%, rgba(var(--acc), .08), transparent 55%);
+    background: radial-gradient(circle at 100% 0%, rgba(var(--acc), .1), transparent 55%);
     opacity: 0; transition: opacity .22s ease; pointer-events: none;
+    border-radius: inherit;
   }
   .ws-card:hover {
-    transform: translateY(-2px) scale(1.015);
+    transform: translateY(-2px);
     border-color: rgba(var(--acc), .45);
-    box-shadow: 0 6px 22px -8px rgba(var(--acc), .28);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.06),
+      inset 0 -1px 0 rgba(0,0,0,.4),
+      0 2px 4px rgba(0,0,0,.35),
+      0 10px 24px -6px rgba(var(--acc), .32);
+  }
+  [data-theme="light"] .ws-card:hover {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.9),
+      inset 0 -1px 0 rgba(0,0,0,.06),
+      0 2px 4px rgba(0,0,0,.06),
+      0 10px 22px -6px rgba(var(--acc), .28);
   }
   .ws-card:hover::before { opacity: 1; }
+  .ws-card:active {
+    transform: translateY(1px);
+    transition-duration: .08s;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.03),
+      inset 0 -1px 0 rgba(0,0,0,.25),
+      0 1px 2px rgba(0,0,0,.25);
+  }
+  [data-theme="light"] .ws-card:active {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.5),
+      inset 0 -1px 0 rgba(0,0,0,.04),
+      0 1px 2px rgba(0,0,0,.05);
+  }
   .ws-card:focus-visible { outline: 2px solid rgba(var(--acc), .6); outline-offset: 2px; }
   .ws-card.ws-card-wide { grid-column: span 4; padding-right: 120px; }
   @media (max-width: 1024px) { .ws-card.ws-card-wide { grid-column: span 4; } }
@@ -4723,6 +4764,16 @@
   @media (max-width: 720px) {
     .ws-mini-transcribe { flex-direction: column; gap: 10px; }
     .ws-mini-transcribe button { width: 100%; padding: 12px 16px; }
+  }
+
+  /* Teleprompter "ready" microinteraction */
+  @keyframes wsPulse { 0%, 100% { opacity: .7; } 50% { opacity: 1; } }
+  .ws-card-tp-ready { color: rgb(var(--acc)); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+  .ws-card-tp-play {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px;
+    animation: wsPulse 2s ease-in-out infinite;
+    color: rgb(var(--acc)); font-size: .7rem; line-height: 1;
   }
 
   /* Attenuate waves on workspace */
@@ -4865,7 +4916,7 @@
         <div class="ws-card-desc" data-i18n="ws.card.teleprompter.desc">Graba con tu guión delante.</div>
       </div>
       <div class="ws-card-stat">
-        <span class="ws-card-stat-lbl" data-i18n="ws.card.teleprompter.lbl">Abrir →</span>
+        <span class="ws-card-stat-lbl" id="wsTpStatus"></span>
       </div>
     </button>
 
@@ -6809,6 +6860,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       window.track && window.track.workspaceEntered({ source, plan: st.plan });
       wsRenderGreeting();
       wsLoadStats();
+      wsRenderTeleprompter();
     }
   } catch(e){}
   animateCounter();
@@ -11489,6 +11541,29 @@ async function wsLoadStats() {
       } else teamPendEl.style.display = "none";
     }
   } catch(e){}
+}
+
+function wsRenderTeleprompter() {
+  const el = document.getElementById("wsTpStatus");
+  if (!el) return;
+  const es = (document.documentElement.lang || "es") === "es";
+  const raw = localStorage.getItem("rs_tp_last_used");
+  const last = raw ? parseInt(raw, 10) : 0;
+  if (last && !isNaN(last) && last > 0) {
+    const diff = Date.now() - last;
+    const mins = Math.floor(diff / 60000);
+    const hours = Math.floor(mins / 60);
+    const days = Math.floor(hours / 24);
+    let txt;
+    if (days >= 1) txt = es ? ("Última sesión: hace " + days + (days === 1 ? " día" : " días")) : ("Last session: " + days + (days === 1 ? " day ago" : " days ago"));
+    else if (hours >= 1) txt = es ? ("Última sesión: hace " + hours + (hours === 1 ? " hora" : " horas")) : ("Last session: " + hours + (hours === 1 ? " hour ago" : " hours ago"));
+    else txt = es ? "Última sesión: hace unos minutos" : "Last session: minutes ago";
+    el.textContent = txt;
+    el.className = "ws-card-stat-lbl";
+  } else {
+    el.innerHTML = '<span class="ws-card-tp-ready"><span class="ws-card-tp-play" aria-hidden="true">▶</span>' + (es ? "Listo para grabar" : "Ready to record") + '</span>';
+    el.className = "ws-card-stat-lbl";
+  }
 }
 
 function wsMiniTranscribe() {
