@@ -4179,7 +4179,7 @@
 
   <script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
 </head>
-<body>
+<body{% if workspace %} class="workspace"{% endif %}>
 
 <!-- Global aurora background -->
 <canvas id="globalAurora"></canvas>
@@ -4618,10 +4618,169 @@
 
 {% if workspace %}
 <style>
+  /* Hide public hero on workspace (kept in DOM so #urlInput stays functional) */
+  body.workspace > main > section.hero,
+  body.workspace > main > section.hero + div { display: none !important; }
+
   .ws-tabs { max-width: 1200px; margin: 24px auto 8px; padding: 0 24px; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
   .ws-tabs::-webkit-scrollbar { display: none; }
   .ws-tab { flex: 0 0 auto; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-size: .85rem; font-weight: 500; cursor: pointer; white-space: nowrap; transition: color .15s, background .15s, border-color .15s; font-family: inherit; }
   .ws-tab:hover { color: var(--text); background: var(--surf); border-color: var(--text3); }
+
+  /* ── Dashboard ───────────────────────────────────────────────── */
+  .ws-dash { max-width: 1200px; margin: 16px auto 48px; padding: 0 24px; }
+  .ws-greeting { font-family: var(--font-head, inherit); font-size: clamp(1.6rem, 3.2vw, 2.2rem); font-weight: 700; color: var(--text); margin: 8px 0 4px; letter-spacing: -.01em; }
+  .ws-greeting .grad-txt { background: linear-gradient(90deg, var(--orange), #ffb57a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .ws-sub { font-size: .92rem; color: var(--text2); margin: 0 0 24px; }
+
+  .ws-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
+  @media (max-width: 1024px) { .ws-grid { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 720px)  { .ws-grid { grid-template-columns: 1fr; gap: 12px; } }
+
+  .ws-card {
+    --acc: 249,115,22;
+    grid-column: span 2;
+    position: relative;
+    display: flex; flex-direction: column; justify-content: space-between;
+    min-height: 172px; padding: 20px 20px 18px;
+    padding-right: 96px;
+    background: linear-gradient(180deg, #1f1a22 0%, #171218 100%);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    border-left: 1px solid rgba(255,255,255,0.04);
+    border-right: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(0,0,0,0.4);
+    border-radius: 16px;
+    color: inherit; text-decoration: none; cursor: pointer;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.03),
+      0 1px 3px rgba(0,0,0,0.5),
+      0 4px 16px rgba(0,0,0,0.4);
+    transition: transform .22s cubic-bezier(.2,.7,.3,1), border-color .22s ease, box-shadow .22s ease, background .22s ease;
+    text-align: left; font-family: inherit; overflow: hidden;
+  }
+  [data-theme="light"] .ws-card {
+    background: linear-gradient(180deg, #faf6ec 0%, #f2ede0 100%);
+    border: 1px solid var(--border);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.8),
+      inset 0 -1px 0 rgba(0,0,0,.05),
+      0 1px 2px rgba(0,0,0,.04),
+      0 4px 12px rgba(0,0,0,.03);
+  }
+  .ws-card::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(circle at 100% 0%, rgba(var(--acc), .1), transparent 55%);
+    opacity: 0; transition: opacity .22s ease; pointer-events: none;
+    border-radius: inherit;
+  }
+  .ws-card:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(180deg, #251f28 0%, #1d1720 100%);
+    border-color: rgba(var(--acc), .45);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.05),
+      0 2px 6px rgba(0,0,0,.5),
+      0 12px 28px -6px rgba(var(--acc), .25);
+  }
+  [data-theme="light"] .ws-card:hover {
+    background: linear-gradient(180deg, #faf6ec 0%, #f2ede0 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.9),
+      inset 0 -1px 0 rgba(0,0,0,.06),
+      0 2px 4px rgba(0,0,0,.06),
+      0 10px 22px -6px rgba(var(--acc), .28);
+  }
+  .ws-card:hover::before { opacity: 1; }
+  .ws-card:active {
+    transform: translateY(1px);
+    transition-duration: .08s;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.02),
+      0 1px 2px rgba(0,0,0,.4);
+  }
+  [data-theme="light"] .ws-card:active {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.5),
+      inset 0 -1px 0 rgba(0,0,0,.04),
+      0 1px 2px rgba(0,0,0,.05);
+  }
+  .ws-card:focus-visible { outline: 2px solid rgba(var(--acc), .6); outline-offset: 2px; }
+  .ws-card.ws-card-wide { grid-column: span 4; padding-right: 120px; }
+  @media (max-width: 1024px) { .ws-card.ws-card-wide { grid-column: span 4; } }
+  @media (max-width: 720px) { .ws-card, .ws-card.ws-card-wide { grid-column: 1 / -1; padding-right: 88px; } }
+
+  /* Per-card accent colors */
+  .ws-a-orange { --acc: 249,115,22; }
+  .ws-a-purple { --acc: 152,117,212; }
+  .ws-a-yellow { --acc: 255,217,61; }
+  .ws-a-brown  { --acc: 216,144,80; }
+  .ws-a-green  { --acc: 93,202,165; }
+  .ws-a-violet { --acc: 125,91,184; }
+  .ws-a-cream  { --acc: 212,168,88; }
+  .ws-a-blue   { --acc: 74,144,184; }
+  .ws-a-coral  { --acc: 232,112,74; }
+
+  /* Pixel-art Hooks icon, positioned top-right of each card */
+  .ws-card-icon {
+    position: absolute; top: 14px; right: 14px;
+    width: 72px; height: 72px;
+    image-rendering: pixelated; image-rendering: crisp-edges;
+    pointer-events: none; user-select: none;
+    transition: transform .35s cubic-bezier(.2,.7,.3,1);
+  }
+  .ws-card:hover .ws-card-icon { transform: translateY(-2px) rotate(-2deg); }
+  .ws-card.ws-card-wide .ws-card-icon { width: 104px; height: 104px; top: 16px; right: 16px; }
+  @media (max-width: 720px) {
+    .ws-card .ws-card-icon { width: 64px; height: 64px; top: 12px; right: 12px; }
+    .ws-card.ws-card-wide .ws-card-icon { width: 72px; height: 72px; }
+  }
+
+  .ws-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; min-height: 24px; }
+  .ws-card-title { font-weight: 700; font-size: 1.02rem; color: var(--text); letter-spacing: -.01em; }
+  .ws-card-desc { font-size: .82rem; color: var(--text2); line-height: 1.45; max-width: 90%; }
+  .ws-card-stat { display: flex; align-items: baseline; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+  .ws-card-stat-num {
+    font-family: var(--font-head, inherit);
+    font-weight: 800; font-size: 1.7rem; line-height: 1;
+    color: rgb(var(--acc)); font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em;
+  }
+  .ws-card-stat-lbl { font-size: .78rem; color: var(--text3); }
+  .ws-card-pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: rgba(var(--acc), .14); color: rgb(var(--acc)); border-radius: 999px; font-size: .72rem; font-weight: 600; }
+  .ws-card-lock { position: absolute; top: 10px; right: 12px; font-size: .85rem; color: var(--text3); }
+
+  /* Transcribir card (wide, with mini input) */
+  .ws-mini-transcribe { display: flex; gap: 8px; margin-top: 14px; }
+  .ws-mini-transcribe input {
+    flex: 1; padding: 11px 14px; background: var(--bg); border: 1.5px solid var(--border);
+    border-radius: 10px; font-size: .9rem; color: var(--text); outline: none; font-family: inherit;
+    transition: border-color .2s, box-shadow .2s;
+    min-width: 0;
+  }
+  .ws-mini-transcribe input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(249,115,22,.12); }
+  .ws-mini-transcribe button {
+    padding: 11px 18px; background: linear-gradient(135deg, var(--orange), #ea580c);
+    color: #fff; border: 0; border-radius: 10px; font-weight: 600; font-size: .9rem;
+    cursor: pointer; transition: transform .15s, box-shadow .15s; font-family: inherit; white-space: nowrap;
+  }
+  .ws-mini-transcribe button:hover { transform: translateY(-1px); box-shadow: 0 4px 14px -4px rgba(249,115,22,.45); }
+  @media (max-width: 720px) {
+    .ws-mini-transcribe { flex-direction: column; gap: 10px; }
+    .ws-mini-transcribe button { width: 100%; padding: 12px 16px; }
+  }
+
+  /* Teleprompter "ready" microinteraction */
+  @keyframes wsPulse { 0%, 100% { opacity: .7; } 50% { opacity: 1; } }
+  .ws-card-tp-ready { color: rgb(var(--acc)); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+  .ws-card-tp-play {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px;
+    animation: wsPulse 2s ease-in-out infinite;
+    color: rgb(var(--acc)); font-size: .7rem; line-height: 1;
+  }
+
+  /* Attenuate waves on workspace */
+  body.workspace #globalAurora { opacity: .35; }
 </style>
 <nav class="ws-tabs" aria-label="Workspace sections">
   <button class="ws-tab" onclick="wsTabClick('overview')" data-i18n="prof.overview">Resumen</button>
@@ -4634,6 +4793,154 @@
   <button class="ws-tab" onclick="wsTabClick('team')" data-i18n="prof.team">Equipo</button>
   <button class="ws-tab" onclick="wsTabClick('teleprompter')" data-i18n="prof.teleprompter">Teleprompter</button>
 </nav>
+
+<section class="ws-dash" aria-label="Workspace dashboard">
+  <h1 class="ws-greeting" id="wsGreeting" data-i18n-es="Hola 👋" data-i18n-en="Hi 👋">Hola 👋</h1>
+  <p class="ws-sub" data-i18n="ws.sub">¿Qué toca hoy?</p>
+
+  <div class="ws-grid">
+
+    <!-- Transcribir (wide) -->
+    <div class="ws-card ws-card-wide ws-a-orange" role="region" aria-label="Transcribir">
+      <img class="ws-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-transcribir.svg') }}" alt="" aria-hidden="true" />
+      <div>
+        <div class="ws-card-head">
+          <span class="ws-card-title" data-i18n="ws.card.transcribe.title">Transcribir un reel</span>
+        </div>
+        <div class="ws-card-desc" data-i18n="ws.card.transcribe.desc">Pega el link de Instagram o TikTok y dale.</div>
+      </div>
+      <div class="ws-mini-transcribe">
+        <input id="wsMiniUrl" type="url" autocomplete="off" spellcheck="false"
+               placeholder="🔗 https://www.instagram.com/reel/..."
+               data-i18n-placeholder-es="🔗 https://www.instagram.com/reel/..."
+               data-i18n-placeholder-en="🔗 https://www.instagram.com/reel/..."
+               onkeydown="if(event.key==='Enter'){event.preventDefault();wsMiniTranscribe();}" />
+        <button type="button" onclick="wsMiniTranscribe()" data-i18n="ws.card.transcribe.btn">Transcribir</button>
+      </div>
+    </div>
+
+    <!-- Hazlo tuyo -->
+    <button type="button" class="ws-card ws-a-purple" onclick="wsOpenAdapt()">
+      <img class="ws-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-adapt.svg') }}" alt="" aria-hidden="true" />
+      <div>
+        <div class="ws-card-head">
+          <span class="ws-card-title" data-i18n="ws.card.adapt.title">Hazlo tuyo</span>
+        </div>
+        <div class="ws-card-desc" data-i18n="ws.card.adapt.desc">Reescribe tu guión en otro estilo.</div>
+      </div>
+      <div class="ws-card-stat">
+        <span class="ws-card-stat-lbl" data-i18n="ws.card.adapt.stat">Viral · LinkedIn · Historia · Hooks</span>
+      </div>
+    </button>
+
+    <!-- Ideas -->
+    <button type="button" class="ws-card ws-a-yellow" onclick="wsTabClick('ideas')">
+      <img class="ws-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-ideas.svg') }}" alt="" aria-hidden="true" />
+      <div>
+        <div class="ws-card-head">
+          <span class="ws-card-title" data-i18n="ws.card.ideas.title">Ideas</span>
+        </div>
+        <div class="ws-card-desc" data-i18n="ws.card.ideas.desc">Banco de ideas con desarrollo IA.</div>
+      </div>
+      <div class="ws-card-stat">
+        <span class="ws-card-stat-num" id="wsStatIdeas">—</span>
+        <span class="ws-card-stat-lbl" data-i18n="ws.card.ideas.lbl">ideas</span>
+        <span class="ws-card-pill" id="wsStatIdeasPending" style="display:none"></span>
+      </div>
+    </button>
+
+    <!-- Proyectos -->
+    <button type="button" class="ws-card ws-a-brown" onclick="wsTabClick('projects')">
+      <img class="ws-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-proyectos.svg') }}" alt="" aria-hidden="true" />
+      <div>
+        <div class="ws-card-head">
+          <span class="ws-card-title" data-i18n="ws.card.projects.title">Proyectos</span>
+        </div>
+        <div class="ws-card-desc" data-i18n="ws.card.projects.desc">Organiza tus contenidos en carpetas.</div>
+      </div>
+      <div class="ws-card-stat">
+        <span class="ws-card-stat-num" id="wsStatProjects">—</span>
+        <span class="ws-card-stat-lbl" data-i18n="ws.card.projects.lbl">proyectos</span>
+      </div>
+    </button>
+
+    <!-- Métricas -->
+    <button type="button" class="ws-card ws-a-green" onclick="wsTabClick('metrics')">
+      <img class="ws-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-metricas.svg') }}" alt="" aria-hidden="true" />
+      <div>
+        <div class="ws-card-head">
+          <span class="ws-card-title" data-i18n="ws.card.metrics.title">Métricas</span>
+        </div>
+        <div class="ws-card-desc" data-i18n="ws.card.metrics.desc">Analiza tu perfil de Instagram.</div>
+      </div>
+      <div class="ws-card-stat">
+        <span class="ws-card-stat-num" id="wsStatMetrics">—</span>
+        <span class="ws-card-stat-lbl" id="wsStatMetricsLbl" data-i18n="ws.card.metrics.lbl">análisis esta semana</span>
+      </div>
+    </button>
+
+    <!-- Asistentes -->
+    <button type="button" class="ws-card ws-a-violet" onclick="wsTabClick('assistants')">
+      <img class="ws-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-asistentes.svg') }}" alt="" aria-hidden="true" />
+      <div>
+        <div class="ws-card-head">
+          <span class="ws-card-title" data-i18n="ws.card.assistants.title">Asistentes</span>
+        </div>
+        <div class="ws-card-desc" data-i18n="ws.card.assistants.desc">Tus estilos personalizados.</div>
+      </div>
+      <div class="ws-card-stat">
+        <span class="ws-card-stat-num" id="wsStatAssistants">—</span>
+        <span class="ws-card-stat-lbl" data-i18n="ws.card.assistants.lbl">asistentes</span>
+      </div>
+    </button>
+
+    <!-- Scripts -->
+    <button type="button" class="ws-card ws-a-cream" onclick="wsTabClick('scripts')">
+      <img class="ws-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-scripts.svg') }}" alt="" aria-hidden="true" />
+      <div>
+        <div class="ws-card-head">
+          <span class="ws-card-title" data-i18n="ws.card.scripts.title">Scripts</span>
+        </div>
+        <div class="ws-card-desc" data-i18n="ws.card.scripts.desc">Tus guiones guardados.</div>
+      </div>
+      <div class="ws-card-stat">
+        <span class="ws-card-stat-num" id="wsStatScripts">—</span>
+        <span class="ws-card-stat-lbl" data-i18n="ws.card.scripts.lbl">guardados</span>
+      </div>
+    </button>
+
+    <!-- Teleprompter -->
+    <button type="button" class="ws-card ws-a-blue" onclick="wsTabClick('teleprompter')">
+      <img class="ws-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-teleprompter.svg') }}" alt="" aria-hidden="true" />
+      <div>
+        <div class="ws-card-head">
+          <span class="ws-card-title" data-i18n="ws.card.teleprompter.title">Teleprompter</span>
+        </div>
+        <div class="ws-card-desc" data-i18n="ws.card.teleprompter.desc">Graba con tu guión delante.</div>
+      </div>
+      <div class="ws-card-stat">
+        <span class="ws-card-stat-lbl" id="wsTpStatus"></span>
+      </div>
+    </button>
+
+    <!-- Equipo -->
+    <button type="button" class="ws-card ws-a-coral" onclick="wsOpenTeam()">
+      <img class="ws-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-equipo.svg') }}" alt="" aria-hidden="true" />
+      <div>
+        <div class="ws-card-head">
+          <span class="ws-card-title" data-i18n="ws.card.team.title">Equipo</span>
+        </div>
+        <div class="ws-card-desc" data-i18n="ws.card.team.desc">Invita miembros a tu agencia.</div>
+      </div>
+      <div class="ws-card-stat">
+        <span class="ws-card-stat-num" id="wsStatTeam">—</span>
+        <span class="ws-card-stat-lbl" data-i18n="ws.card.team.lbl">miembros</span>
+        <span class="ws-card-pill" id="wsStatTeamPending" style="display:none"></span>
+      </div>
+    </button>
+
+  </div>
+</section>
 {% endif %}
 
 {% if not workspace %}
@@ -5407,6 +5714,35 @@ const LANGS = {
     "ex.storytelling": 'Era 2021. Tenía 0 seguidores y grababa en el baño de mi casa para que nadie me oyera.\n\n<span class="ph">Cada vídeo tardaba 4 horas en editarse.</span> Cada uno tenía 12 vistas.\n\nUn día lo dejé todo. Durante 3 meses, no publiqué nada.\n\nCuando volví, cambié solo una cosa: <span class="ph">el primer segundo.</span>\n\nY todo cambió.',
     "ex.hooks": '<span class="ph">1.</span> ¿Sabías que el 90% de creadores comete este error en el primer segundo?\n\n<span class="ph">2.</span> El error que cometen todos los principiantes (y que yo también cometí)\n\n<span class="ph">3.</span> Lo que nadie te dice sobre crear contenido que realmente funciona\n\n<span class="ph">4.</span> Si hubiera sabido esto antes, tendría el doble de seguidores hoy\n\n<span class="ph">5.</span> Para cuando termines este vídeo, querrás regrabar todo lo que tienes',
     "ex.custom": '<span class="ph">✍️ Tú tienes el control.</span>\n\nEscribe cualquier instrucción en el campo de texto:\n\n<span class="ph">"Escríbelo como carta de ventas"</span>\n<span class="ph">"Hazlo en formato pregunta-respuesta"</span>\n<span class="ph">"Tono motivacional, sin tecnicismos"</span>\n\nLa IA adaptará el guión exactamente a lo que pidas.',
+    // Workspace dashboard
+    "ws.sub": "¿Qué toca hoy?",
+    "ws.card.transcribe.title": "Transcribir un reel",
+    "ws.card.transcribe.desc": "Pega el link de Instagram o TikTok y dale.",
+    "ws.card.transcribe.btn": "Transcribir",
+    "ws.card.adapt.title": "Hazlo tuyo",
+    "ws.card.adapt.desc": "Reescribe tu guión en otro estilo.",
+    "ws.card.adapt.stat": "Viral · LinkedIn · Historia · Hooks",
+    "ws.card.ideas.title": "Ideas",
+    "ws.card.ideas.desc": "Banco de ideas con desarrollo IA.",
+    "ws.card.ideas.lbl": "ideas",
+    "ws.card.projects.title": "Proyectos",
+    "ws.card.projects.desc": "Organiza tus contenidos en carpetas.",
+    "ws.card.projects.lbl": "proyectos",
+    "ws.card.metrics.title": "Métricas",
+    "ws.card.metrics.desc": "Analiza tu perfil de Instagram.",
+    "ws.card.metrics.lbl": "análisis esta semana",
+    "ws.card.assistants.title": "Asistentes",
+    "ws.card.assistants.desc": "Tus estilos personalizados.",
+    "ws.card.assistants.lbl": "asistentes",
+    "ws.card.scripts.title": "Scripts",
+    "ws.card.scripts.desc": "Tus guiones guardados.",
+    "ws.card.scripts.lbl": "guardados",
+    "ws.card.teleprompter.title": "Teleprompter",
+    "ws.card.teleprompter.desc": "Graba con tu guión delante.",
+    "ws.card.teleprompter.lbl": "Abrir →",
+    "ws.card.team.title": "Equipo",
+    "ws.card.team.desc": "Invita miembros a tu agencia.",
+    "ws.card.team.lbl": "miembros",
     // Profile hub
     "prof.overview": "Resumen",
     "prof.saved_scripts": "Guiones guardados",
@@ -5768,6 +6104,35 @@ const LANGS = {
     "ex.hooks": '<span class="ph">1.</span> Did you know 90% of creators make this mistake in the first second?\n\n<span class="ph">2.</span> The mistake every beginner makes (and I made it too)\n\n<span class="ph">3.</span> What nobody tells you about creating content that actually works\n\n<span class="ph">4.</span> If I\'d known this sooner, I\'d have twice the followers today\n\n<span class="ph">5.</span> By the time this video ends, you\'ll want to re-record everything you have',
     "ex.custom": '<span class="ph">✍️ You\'re in control.</span>\n\nType any instruction in the text field:\n\n<span class="ph">"Write it as a sales letter"</span>\n<span class="ph">"Make it Q&A format"</span>\n<span class="ph">"Motivational tone, no jargon"</span>\n\nThe AI will adapt the script to exactly what you ask.',
     // Profile hub
+    // Workspace dashboard
+    "ws.sub": "What's on the menu today?",
+    "ws.card.transcribe.title": "Transcribe a reel",
+    "ws.card.transcribe.desc": "Paste the Instagram or TikTok link and go.",
+    "ws.card.transcribe.btn": "Transcribe",
+    "ws.card.adapt.title": "Make it yours",
+    "ws.card.adapt.desc": "Rewrite your script in another style.",
+    "ws.card.adapt.stat": "Viral · LinkedIn · Story · Hooks",
+    "ws.card.ideas.title": "Ideas",
+    "ws.card.ideas.desc": "Idea bank with AI development.",
+    "ws.card.ideas.lbl": "ideas",
+    "ws.card.projects.title": "Projects",
+    "ws.card.projects.desc": "Organize your content in folders.",
+    "ws.card.projects.lbl": "projects",
+    "ws.card.metrics.title": "Metrics",
+    "ws.card.metrics.desc": "Analyze your Instagram profile.",
+    "ws.card.metrics.lbl": "analyses this week",
+    "ws.card.assistants.title": "Assistants",
+    "ws.card.assistants.desc": "Your custom styles.",
+    "ws.card.assistants.lbl": "assistants",
+    "ws.card.scripts.title": "Scripts",
+    "ws.card.scripts.desc": "Your saved scripts.",
+    "ws.card.scripts.lbl": "saved",
+    "ws.card.teleprompter.title": "Teleprompter",
+    "ws.card.teleprompter.desc": "Record with your script in front.",
+    "ws.card.teleprompter.lbl": "Open →",
+    "ws.card.team.title": "Team",
+    "ws.card.team.desc": "Invite members to your agency.",
+    "ws.card.team.lbl": "members",
     "prof.overview": "Overview",
     "prof.saved_scripts": "Saved scripts",
     "prof.transcriptions": "Transcriptions",
@@ -6496,6 +6861,9 @@ window.addEventListener("DOMContentLoaded", async () => {
       else if (sessionStorage.getItem("rs_ws_cta")) { source = "cta_nav"; sessionStorage.removeItem("rs_ws_cta"); }
       else if (document.referrer && /reelscript\.net/i.test(document.referrer)) { source = "internal"; }
       window.track && window.track.workspaceEntered({ source, plan: st.plan });
+      wsRenderGreeting();
+      wsLoadStats();
+      wsRenderTeleprompter();
     }
   } catch(e){}
   animateCounter();
@@ -11116,6 +11484,119 @@ function wsTabClick(tab) {
   if (tab === "teleprompter") { openTeleprompterPicker(); return; }
   openProfile();
   profTab(tab);
+}
+
+// ── Dashboard (workspace cards) ───────────────────────────────────────────
+function wsGreetingName() {
+  try {
+    const email = (st.user && st.user.email) || "";
+    if (email) {
+      const local = email.split("@")[0].replace(/[._-]+/g, " ").trim();
+      return local.charAt(0).toUpperCase() + local.slice(1);
+    }
+  } catch(e){}
+  return "";
+}
+
+function wsRenderGreeting() {
+  const el = document.getElementById("wsGreeting");
+  if (!el) return;
+  const name = wsGreetingName();
+  const es = (document.documentElement.lang || "es") === "es";
+  if (name) {
+    el.innerHTML = (es ? "Hola, " : "Hi, ") + '<span class="grad-txt">' + name + "</span> 👋";
+  } else {
+    el.textContent = es ? "Hola 👋" : "Hi 👋";
+  }
+}
+
+async function wsLoadStats() {
+  try {
+    const res = await fetch("/api/me/stats", { credentials: "same-origin" });
+    if (!res.ok) return;
+    const d = await res.json();
+    const es = (document.documentElement.lang || "es") === "es";
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set("wsStatIdeas", d.ideas && d.ideas.total != null ? d.ideas.total : 0);
+    const pend = d.ideas && d.ideas.pending ? d.ideas.pending : 0;
+    const pendEl = document.getElementById("wsStatIdeasPending");
+    if (pendEl) {
+      if (pend > 0) {
+        pendEl.textContent = pend + (es ? " por desarrollar" : " to develop");
+        pendEl.style.display = "inline-flex";
+      } else pendEl.style.display = "none";
+    }
+    set("wsStatProjects", d.projects || 0);
+    set("wsStatScripts", d.scripts || 0);
+    set("wsStatAssistants", d.assistants || 0);
+    set("wsStatMetrics", d.metrics && d.metrics.weekly_analyses != null ? d.metrics.weekly_analyses : 0);
+    const metricsLbl = document.getElementById("wsStatMetricsLbl");
+    if (metricsLbl && d.metrics && !d.metrics.has_profile) {
+      metricsLbl.textContent = es ? "conecta tu perfil" : "connect your profile";
+    }
+    set("wsStatTeam", d.team && d.team.active != null ? d.team.active : 0);
+    const teamPend = d.team && d.team.pending ? d.team.pending : 0;
+    const teamPendEl = document.getElementById("wsStatTeamPending");
+    if (teamPendEl) {
+      if (teamPend > 0) {
+        teamPendEl.textContent = teamPend + (es ? " pendientes" : " pending");
+        teamPendEl.style.display = "inline-flex";
+      } else teamPendEl.style.display = "none";
+    }
+  } catch(e){}
+}
+
+function wsRenderTeleprompter() {
+  const el = document.getElementById("wsTpStatus");
+  if (!el) return;
+  const es = (document.documentElement.lang || "es") === "es";
+  const raw = localStorage.getItem("rs_tp_last_used");
+  const last = raw ? parseInt(raw, 10) : 0;
+  if (last && !isNaN(last) && last > 0) {
+    const diff = Date.now() - last;
+    const mins = Math.floor(diff / 60000);
+    const hours = Math.floor(mins / 60);
+    const days = Math.floor(hours / 24);
+    let txt;
+    if (days >= 1) txt = es ? ("Última sesión: hace " + days + (days === 1 ? " día" : " días")) : ("Last session: " + days + (days === 1 ? " day ago" : " days ago"));
+    else if (hours >= 1) txt = es ? ("Última sesión: hace " + hours + (hours === 1 ? " hora" : " horas")) : ("Last session: " + hours + (hours === 1 ? " hour ago" : " hours ago"));
+    else txt = es ? "Última sesión: hace unos minutos" : "Last session: minutes ago";
+    el.textContent = txt;
+    el.className = "ws-card-stat-lbl";
+  } else {
+    el.innerHTML = '<span class="ws-card-tp-ready"><span class="ws-card-tp-play" aria-hidden="true">▶</span>' + (es ? "Listo para grabar" : "Ready to record") + '</span>';
+    el.className = "ws-card-stat-lbl";
+  }
+}
+
+function wsMiniTranscribe() {
+  const mini = document.getElementById("wsMiniUrl");
+  const hidden = document.getElementById("urlInput");
+  if (!mini || !hidden) return;
+  hidden.value = mini.value.trim();
+  hidden.dispatchEvent(new Event("input"));
+  doTranscribe();
+  mini.value = "";
+}
+
+function wsOpenAdapt() {
+  try { window.track && window.track.workspaceTabClicked({ tab: "adapt" }); } catch(e){}
+  if (typeof revealAdaptSection === "function") {
+    revealAdaptSection({ focus: true });
+    const sec = document.getElementById("adaptSection");
+    if (sec && sec.scrollIntoView) sec.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+function wsOpenTeam() {
+  try { window.track && window.track.workspaceTabClicked({ tab: "team" }); } catch(e){}
+  if (st.plan === "agency") {
+    openProfile();
+    profTab("team");
+    return;
+  }
+  const lang = document.documentElement.lang || "es";
+  window.location.href = "/" + lang + "/#pricingSection";
 }
 
 async function logout() {

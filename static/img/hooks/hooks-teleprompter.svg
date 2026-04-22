@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" shape-rendering="crispEdges" role="img" aria-labelledby="hk-tele-t">
+  <title id="hk-tele-t">Hooks con teleprompter</title>
+
+  <!-- Teleprompter screen (left side) -->
+  <!-- Outer frame -->
+  <rect x="0" y="80" width="70" height="80" fill="#1a2a3a"/>
+  <rect x="0" y="80" width="70" height="6" fill="#2a4a6a"/>
+  <rect x="0" y="154" width="70" height="6" fill="#0a1a2a"/>
+  <!-- Inner screen -->
+  <rect x="4" y="86" width="62" height="68" fill="#0a1a14"/>
+  <rect x="4" y="86" width="62" height="2" fill="#1a3a2a"/>
+  <!-- Scrolling green text lines -->
+  <rect x="8" y="94" width="50" height="3" fill="#5dcaa5"/>
+  <rect x="8" y="102" width="40" height="3" fill="#5dcaa5"/>
+  <rect x="8" y="110" width="54" height="3" fill="#8ae5c0"/>
+  <rect x="8" y="118" width="46" height="3" fill="#8ae5c0"/>
+  <rect x="8" y="126" width="52" height="3" fill="#5dcaa5"/>
+  <rect x="8" y="134" width="38" height="3" fill="#5dcaa5"/>
+  <rect x="8" y="142" width="48" height="3" fill="#4aa888"/>
+  <!-- Stand -->
+  <rect x="30" y="160" width="10" height="14" fill="#1a2a3a"/>
+  <rect x="18" y="174" width="34" height="4" fill="#2a4a6a"/>
+
+  <g transform="translate(30, 0)">
+    <!-- Hat crown -->
+    <rect x="80" y="20" width="60" height="10" fill="#7d5bb8"/>
+    <rect x="70" y="30" width="80" height="10" fill="#7d5bb8"/>
+    <rect x="80" y="20" width="10" height="10" fill="#9875d4"/>
+    <rect x="70" y="30" width="10" height="10" fill="#9875d4"/>
+    <rect x="60" y="36" width="100" height="4" fill="#3a2260"/>
+    <rect x="60" y="40" width="100" height="10" fill="#6b4ba3"/>
+    <rect x="50" y="50" width="120" height="10" fill="#6b4ba3"/>
+    <rect x="50" y="50" width="120" height="2" fill="#9875d4"/>
+
+    <!-- Face -->
+    <rect x="60" y="60" width="100" height="40" fill="#f5d0a0"/>
+    <rect x="60" y="90" width="100" height="10" fill="#e8b985"/>
+    <rect x="80" y="70" width="10" height="10" fill="#1a1a1a"/>
+    <rect x="130" y="70" width="10" height="10" fill="#1a1a1a"/>
+    <rect x="82" y="72" width="2" height="2" fill="#f5d0a0"/>
+    <rect x="132" y="72" width="2" height="2" fill="#f5d0a0"/>
+    <rect x="90" y="80" width="40" height="10" fill="#e89a4a"/>
+    <rect x="90" y="90" width="40" height="10" fill="#ff6b3d"/>
+    <rect x="90" y="80" width="10" height="4" fill="#f5b670"/>
+
+    <!-- Coat -->
+    <rect x="40" y="100" width="140" height="50" fill="#c89968"/>
+    <rect x="40" y="100" width="10" height="50" fill="#d4a878"/>
+    <rect x="170" y="100" width="10" height="50" fill="#a67a4a"/>
+    <rect x="70" y="100" width="20" height="10" fill="#a67a4a"/>
+    <rect x="130" y="100" width="20" height="10" fill="#a67a4a"/>
+    <rect x="100" y="100" width="20" height="10" fill="#8a6638"/>
+    <rect x="40" y="130" width="140" height="4" fill="#8a6638"/>
+    <rect x="108" y="128" width="8" height="8" fill="#3a2e1a"/>
+    <rect x="108" y="115" width="8" height="6" fill="#3a2e1a"/>
+    <rect x="108" y="142" width="8" height="6" fill="#3a2e1a"/>
+
+    <!-- Legs + shoes -->
+    <rect x="60" y="150" width="40" height="40" fill="#c89968"/>
+    <rect x="120" y="150" width="40" height="40" fill="#c89968"/>
+    <rect x="90" y="150" width="10" height="40" fill="#a67a4a"/>
+    <rect x="150" y="150" width="10" height="40" fill="#a67a4a"/>
+    <rect x="50" y="190" width="60" height="10" fill="#3a2e1a"/>
+    <rect x="110" y="190" width="60" height="10" fill="#3a2e1a"/>
+    <rect x="50" y="190" width="60" height="2" fill="#5a4a2a"/>
+    <rect x="110" y="190" width="60" height="2" fill="#5a4a2a"/>
+  </g>
+</svg>
