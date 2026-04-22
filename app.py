@@ -7,6 +7,7 @@ import re
 import sys
 import tempfile
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta, timezone
 from functools import wraps
 
@@ -1621,6 +1622,84 @@ def profile_data():
     data["recent_scripts"] = recent.data
 
     return jsonify(data)
+
+
+@app.route("/api/me/stats")
+@require_auth
+def api_me_stats():
+    """Aggregated counters for the workspace dashboard cards."""
+    uid = current_user()["id"]
+
+    def _count(query):
+        try:
+            r = query.execute()
+            return r.count if hasattr(r, "count") and r.count is not None else 0
+        except Exception:
+            return 0
+
+    def _ideas_total():
+        return _count(db.table("ideas").select("id", count="exact").eq("user_id", uid))
+
+    def _ideas_pending():
+        return _count(db.table("ideas").select("id", count="exact").eq("user_id", uid).eq("status", "draft"))
+
+    def _projects():
+        return _count(db.table("projects").select("id", count="exact").eq("user_id", uid))
+
+    def _scripts():
+        return _count(db.table("scripts").select("id", count="exact").eq("user_id", uid))
+
+    def _assistants():
+        return _count(db.table("assistants").select("id", count="exact").eq("user_id", uid))
+
+    def _transcriptions():
+        return _count(db.table("transcriptions").select("id", count="exact").eq("user_id", uid))
+
+    def _has_ig_profile():
+        try:
+            r = db.table("ig_profiles").select("id", count="exact").eq("user_id", uid).execute()
+            return bool(r.count and r.count > 0)
+        except Exception:
+            return False
+
+    def _team_active():
+        return _count(db.table("agency_members").select("id", count="exact").eq("agency_owner_id", uid).eq("status", "active"))
+
+    def _team_pending():
+        return _count(db.table("agency_members").select("id", count="exact").eq("agency_owner_id", uid).eq("status", "pending"))
+
+    profile = get_profile(uid)
+    weekly = int(profile.get("metrics_analyses_this_week") or 0)
+
+    tasks = {
+        "ideas_total":    _ideas_total,
+        "ideas_pending":  _ideas_pending,
+        "projects":       _projects,
+        "scripts":        _scripts,
+        "assistants":     _assistants,
+        "transcriptions": _transcriptions,
+        "has_ig_profile": _has_ig_profile,
+        "team_active":    _team_active,
+        "team_pending":   _team_pending,
+    }
+    out = {}
+    with ThreadPoolExecutor(max_workers=len(tasks)) as ex:
+        futures = {k: ex.submit(fn) for k, fn in tasks.items()}
+        for k, fut in futures.items():
+            try:
+                out[k] = fut.result(timeout=4)
+            except Exception:
+                out[k] = 0 if k != "has_ig_profile" else False
+
+    return jsonify({
+        "ideas":          {"total": out["ideas_total"], "pending": out["ideas_pending"]},
+        "projects":       out["projects"],
+        "scripts":        out["scripts"],
+        "assistants":     out["assistants"],
+        "transcriptions": out["transcriptions"],
+        "metrics":        {"has_profile": out["has_ig_profile"], "weekly_analyses": weekly},
+        "team":           {"active": out["team_active"], "pending": out["team_pending"]},
+    })
 
 
 # ── Metrics ──────────────────────────────────────────────────────────────────
