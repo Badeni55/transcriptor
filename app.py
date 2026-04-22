@@ -10,6 +10,8 @@ import uuid
 from datetime import date, datetime, timedelta, timezone
 from functools import wraps
 
+from urllib.parse import urlparse, urlencode
+
 import requests
 import yt_dlp
 from dotenv import load_dotenv
@@ -212,6 +214,46 @@ def require_auth(f):
     def wrapper(*args, **kwargs):
         if not current_user():
             return jsonify({"error": "No autenticado"}), 401
+        return f(*args, **kwargs)
+    return wrapper
+
+
+def safe_next_url(n: str | None) -> str | None:
+    """Validate a `next` URL. Returns the URL if safe, None otherwise.
+
+    Rules: must start with `/`, not `//`, parsed netloc/scheme must be empty,
+    and it must not target auth/login endpoints (to prevent redirect loops).
+    """
+    if not n or not isinstance(n, str):
+        return None
+    if not n.startswith("/") or n.startswith("//"):
+        return None
+    if "\\" in n:
+        return None
+    try:
+        parsed = urlparse(n)
+    except Exception:
+        return None
+    if parsed.netloc or parsed.scheme:
+        return None
+    path = parsed.path or ""
+    if path in ("/login", "/logout") or path.startswith("/auth/"):
+        return None
+    return n
+
+
+def require_auth_html(f):
+    """Like require_auth but for HTML routes: redirects to home with ?next=."""
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not current_user():
+            accept = request.headers.get("Accept-Language", "")
+            home = "/en/" if accept.lower().startswith("en") else "/es/"
+            full = request.full_path
+            if full.endswith("?"):
+                full = full[:-1]
+            nxt = safe_next_url(full) or "/app"
+            return redirect(f"{home}?{urlencode({'next': nxt})}", code=302)
         return f(*args, **kwargs)
     return wrapper
 
@@ -437,6 +479,7 @@ def auth_login():
         session["user"] = {"id": user["id"], "email": user["email"]}
         return jsonify({"ok": True, "email": user["email"]})
     except Exception:
+        logger.error("auth_login failed", exc_info=True)
         return jsonify({"error": "Error de conexión"}), 500
 
 
@@ -2127,24 +2170,48 @@ def index():
 
 @app.route("/es/")
 def index_es():
-    return render_template("index.html", lang="es")
+    return render_template("index.html", lang="es",
+                           next_url=safe_next_url(request.args.get("next")))
 
 
 @app.route("/en/")
 def index_en():
-    return render_template("index.html", lang="en")
+    return render_template("index.html", lang="en",
+                           next_url=safe_next_url(request.args.get("next")))
+
+
+@app.route("/app")
+@require_auth_html
+def workspace():
+    accept = request.headers.get("Accept-Language", "")
+    lang = "en" if accept.lower().startswith("en") else "es"
+    return render_template("index.html", lang=lang, workspace=True)
+
+
+@app.route("/settings")
+@require_auth_html
+def settings_page():
+    accept = request.headers.get("Accept-Language", "")
+    lang = "en" if accept.lower().startswith("en") else "es"
+    return render_template("index.html", lang=lang, settings_page=True)
+
+
+PROFILE_REDIRECTS = {
+    "overview": "/app",
+    "scripts": "/app#scripts",
+    "projects": "/app#projects",
+    "ideas": "/app#ideas",
+    "metrics": "/app#metrics",
+    "assistants": "/app#assistants",
+    "team": "/app#team",
+    "transcriptions": "/app#transcriptions",
+}
 
 
 @app.route("/profile")
 @app.route("/profile/<section>")
 def profile_page(section="overview"):
-    valid = {"overview", "scripts", "transcriptions", "projects",
-             "assistants", "metrics", "ideas", "team", "privacy"}
-    if section not in valid:
-        return redirect("/profile")
-    accept = request.headers.get("Accept-Language", "")
-    lang = "en" if accept.lower().startswith("en") else "es"
-    return render_template("index.html", lang=lang, profile_section=section)
+    return redirect(PROFILE_REDIRECTS.get(section, "/app"), code=301)
 
 
 # ── Pillar pages ─────────────────────────────────────────────────────────────

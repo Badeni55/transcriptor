@@ -873,8 +873,8 @@
     .style-pill .sp-name  { font-family: var(--font-display); font-size: .82rem; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; color: var(--text); transition: color .2s; }
     .style-pill .sp-hint  { font-size: .72rem; font-weight: 300; color: var(--text3); line-height: 1.4; transition: color .2s; }
     [data-theme="light"] .style-pill .sp-hint { color: #555; }
-    .style-pill:hover .sp-name, .style-pill.act .sp-name { color: var(--sc); }
-    .style-pill:hover .sp-hint, .style-pill.act .sp-hint { color: var(--text2); }
+    .style-pill.act .sp-name { color: var(--sc); }
+    .style-pill.act .sp-hint { color: var(--text2); }
 
     .custom-row { display: none; margin-top: 12px; gap: 8px; }
     .custom-row.on { display: flex; }
@@ -4135,9 +4135,10 @@
       <a class="lang-btn{% if lang|default('es') == 'en' %} active{% endif %}" href="/en/">EN</a>
     </div>
     <a href="/affiliate" id="navAffiliate" style="display:none;color:var(--text3);font-size:.78rem;font-weight:500;text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--purple)'" onmouseout="this.style.color='var(--text3)'">Earn 30% &rarr;</a>
+    {% if not workspace %}<a class="btn-nav hi" id="btnWorkspace" href="/app" style="display:none;text-decoration:none" data-i18n="nav.workspace">Ir a mi workspace →</a>{% endif %}
     <button class="btn-nav" id="btnLogin" onclick="openAuth('login')" data-i18n="nav.login">Log in</button>
     <button class="btn-nav hi" id="btnReg" onclick="openAuth('register')" data-i18n="nav.register">Free →</button>
-    <button class="theme-btn" id="themeBtn" title="Theme: System">💻</button>
+    <button class="theme-btn" id="themeBtn" title="Theme: System"{% if workspace %} style="display:none"{% endif %}>💻</button>
     <div class="user-menu-wrap">
       <div class="user-pill" id="userPill" onclick="toggleUserMenu(event)" style="cursor:pointer" data-tour="user-profile">
         <div class="avatar" id="userAv" style="overflow:hidden;padding:0"></div>
@@ -4145,11 +4146,14 @@
         <span class="user-menu-chevron">▾</span>
       </div>
       <div class="user-menu-dropdown" id="userMenuDropdown">
-        <button class="user-menu-item" onclick="openProfile();closeUserMenu()">👤 <span data-i18n="nav.profile">Mi perfil</span></button>
-        <button class="user-menu-item" onclick="openProfile();profTab('scripts');closeUserMenu()">📄 <span data-i18n="prof.saved_scripts">Saved scripts</span></button>
-        <button class="user-menu-item" onclick="openProfile();profTab('ideas');closeUserMenu()">💡 <span data-i18n="prof.ideas">Ideas</span></button>
-        <button class="user-menu-item" onclick="openProfile();profTab('projects');closeUserMenu()">📁 <span data-i18n="prof.projects">Projects</span></button>
-        <button class="user-menu-item" onclick="openTeleprompterPicker();closeUserMenu()">🖥️ <span data-i18n="prof.teleprompter">Teleprompter</span></button>
+        <a class="user-menu-item" href="/settings" style="text-decoration:none">⚙️ <span data-i18n="nav.my_account">Mi cuenta</span></a>
+        <button class="user-menu-item" onclick="goMyPlan();closeUserMenu()">💎 <span data-i18n="nav.my_plan">Mi plan</span></button>
+        <div class="user-menu-divider"></div>
+        <button class="user-menu-item" onclick="cycleTheme()">🌓 <span data-i18n="nav.dark_mode">Modo oscuro</span></button>
+        <button class="user-menu-item" onclick="toggleLang()">🌐 <span data-i18n="nav.language">Idioma</span> · <span id="navLangToggleCode">{{ 'EN' if lang == 'en' else 'ES' }}</span></button>
+        <div class="user-menu-divider"></div>
+        <a class="user-menu-item" href="/affiliate" style="text-decoration:none">🤝 <span data-i18n="nav.affiliates">Afiliados</span></a>
+        {% if workspace %}<a class="user-menu-item" href="/" style="text-decoration:none">🌍 <span data-i18n="nav.public_web">Ver web pública</span></a>{% endif %}
         <div class="user-menu-divider"></div>
         <button class="user-menu-item user-menu-logout" onclick="logout();closeUserMenu()">🚪 <span data-i18n="nav.logout">Cerrar sesión</span></button>
       </div>
@@ -4292,9 +4296,10 @@
       <div class="queue-list" id="queueList" style="display:none"></div>
 
       <!-- Language row -->
-      <div style="display:flex;gap:10px;margin-bottom:12px">
+      <div style="display:flex;gap:10px;margin-bottom:4px">
         <select id="language" style="flex:1;padding:10px 14px;background:var(--surf);border:1.5px solid var(--border);border-radius:var(--rsm);font-size:.85rem;color:var(--text);outline:none;transition:border-color .2s">
-          <option value="" data-i18n-es="Detectar idioma" data-i18n-en="Auto-detect language">Auto-detect language</option>
+          <option value="" data-i18n-es="✨ Detectar idioma automáticamente" data-i18n-en="✨ Auto-detect language">✨ Auto-detect language</option>
+          <option disabled>──────────────</option>
           <option value="es" data-i18n-es="Español" data-i18n-en="Spanish">Spanish</option>
           <option value="en" data-i18n-es="Inglés" data-i18n-en="English">English</option>
           <option value="fr" data-i18n-es="Francés" data-i18n-en="French">French</option>
@@ -4305,6 +4310,19 @@
         <button class="btn-shimmer btn-3d btn-3d-primary" id="btnTranscribe" style="flex:2" onclick="doTranscribe()" data-i18n="hero.btn">
           ✦ Transcribir ahora
         </button>
+      </div>
+      <div style="font-size:.72rem;color:var(--text3);margin:0 2px 12px;line-height:1.4"
+           data-i18n-es="Normalmente no necesitas cambiar esto. Detectamos el idioma solos."
+           data-i18n-en="You usually don't need to change this. We detect the language for you.">Normalmente no necesitas cambiar esto. Detectamos el idioma solos.</div>
+
+      <!-- Alternative flow: user already has a script -->
+      <div id="haveScriptRow" style="margin:2px 2px 0;font-size:.82rem;line-height:1.4">
+        <a href="#" onclick="event.preventDefault();revealAdaptSection({focus:true});"
+           style="color:var(--text2);text-decoration:none;border-bottom:1px dashed var(--text3);padding-bottom:1px;cursor:pointer;transition:color .18s,border-color .18s"
+           onmouseenter="this.style.color='var(--orange)';this.style.borderColor='var(--orange)'"
+           onmouseleave="this.style.color='var(--text2)';this.style.borderColor='var(--text3)'"
+           data-i18n-es="¿Ya tienes un guión? Pégalo aquí →"
+           data-i18n-en="Already have a script? Paste it here →">¿Ya tienes un guión? Pégalo aquí →</a>
       </div>
 
       <!-- Inline loading indicator -->
@@ -4375,7 +4393,7 @@
 <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(249,115,22,.12),transparent);max-width:600px;margin:0 auto"></div>
 
 <!-- ── HAZLO TUYO ─────────────────────────────────────────────────────── -->
-<div class="adapt-section">
+<div class="adapt-section" id="adaptSection" style="display:none">
   <div class="adapt-inner fade-in" id="adaptCard">
 
     <!-- ROW 1: headers -->
@@ -4389,43 +4407,47 @@
 
     <!-- ROW 2: input + style grid -->
     <div class="adapt-left">
+      <div style="font-size:.78rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px"
+           data-i18n-es="Tu guión" data-i18n-en="Your script">Tu guión</div>
       <textarea id="adaptInput" class="script-ta"
-        placeholder="Pega aquí el guión o la transcripción que quieres transformar…"></textarea>
+        placeholder="Pega aquí el guión o la transcripción que quieres transformar…"
+        data-i18n-placeholder-es="Pega aquí el guión o la transcripción que quieres transformar…"
+        data-i18n-placeholder-en="Paste your script or transcription here to transform it…"></textarea>
 
       <input type="text" class="style-search" id="styleSearch" placeholder="Search styles..." style="display:none" oninput="renderStyleGrid()" />
       <div class="style-grid">
         <button class="style-pill" data-s="viral"
-          onclick="selectStyle(this)" onmouseenter="previewStyle('viral')">
+          onclick="selectStyle(this)">
           <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#1a1a2e"/><rect x="20" y="8" width="32" height="4" fill="#1a1a2e"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#1a1a2e"/><rect x="16" y="20" width="12" height="6" fill="#1a1a2e"/><rect x="44" y="20" width="12" height="6" fill="#1a1a2e"/><rect x="17" y="21" width="10" height="4" fill="#60a5fa"/><rect x="45" y="21" width="10" height="4" fill="#60a5fa"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="10" y="40" width="8" height="20" fill="#f97316"/><rect x="54" y="40" width="8" height="20" fill="#f97316"/><rect x="18" y="40" width="36" height="4" fill="#f97316"/><rect x="14" y="44" width="44" height="16" fill="#f97316"/><rect x="18" y="60" width="14" height="20" fill="#f97316"/><rect x="40" y="60" width="14" height="20" fill="#f97316"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
           <span class="sp-name">Viral</span>
           <span class="sp-hint" data-i18n="sh.viral">Hook + tensión + CTA brutal</span>
         </button>
         <button class="style-pill" data-s="divertido"
-          onclick="selectStyle(this)" onmouseenter="previewStyle('divertido')">
+          onclick="selectStyle(this)">
           <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#f4a400"/><rect x="20" y="8" width="32" height="4" fill="#f4a400"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#92400e"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="22" y="28" width="4" height="4" fill="#fcd9a0"/><rect x="46" y="28" width="4" height="4" fill="#fcd9a0"/><rect x="24" y="32" width="24" height="6" fill="#f97316"/><rect x="26" y="36" width="20" height="2" fill="#fff"/><rect x="10" y="40" width="6" height="4" fill="#fcd9a0"/><rect x="56" y="40" width="6" height="4" fill="#fcd9a0"/><rect x="6" y="44" width="6" height="4" fill="#fcd9a0"/><rect x="60" y="44" width="6" height="4" fill="#fcd9a0"/><rect x="18" y="40" width="36" height="4" fill="#f4a400"/><rect x="14" y="44" width="44" height="16" fill="#f4a400"/><rect x="18" y="60" width="14" height="20" fill="#f4a400"/><rect x="40" y="60" width="14" height="20" fill="#f4a400"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
           <span class="sp-name" data-i18n="sn.divertido">Divertido</span>
           <span class="sp-hint" data-i18n="sh.divertido">Tono relajado, humor ligero</span>
         </button>
         <button class="style-pill" data-s="linkedin"
-          onclick="selectStyle(this)" onmouseenter="previewStyle('linkedin')">
+          onclick="selectStyle(this)">
           <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#1a1a2e"/><rect x="20" y="8" width="32" height="4" fill="#1a1a2e"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#1a1a2e"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="16" y="40" width="40" height="4" fill="#1e3a5f"/><rect x="10" y="40" width="8" height="24" fill="#fcd9a0"/><rect x="54" y="40" width="8" height="24" fill="#fcd9a0"/><rect x="18" y="44" width="36" height="16" fill="#1e3a5f"/><rect x="30" y="38" width="12" height="6" fill="#fff"/><rect x="32" y="36" width="8" height="2" fill="#e2e8f0"/><rect x="18" y="60" width="14" height="20" fill="#334155"/><rect x="40" y="60" width="14" height="20" fill="#334155"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
           <span class="sp-name">LinkedIn</span>
           <span class="sp-hint" data-i18n="sh.linkedin">Profesional, reflexivo, red</span>
         </button>
         <button class="style-pill" data-s="storytelling"
-          onclick="selectStyle(this)" onmouseenter="previewStyle('storytelling')">
+          onclick="selectStyle(this)">
           <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#7c3aed"/><rect x="20" y="8" width="32" height="4" fill="#7c3aed"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#4c1d95"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="10" y="40" width="8" height="20" fill="#7c3aed"/><rect x="54" y="40" width="8" height="20" fill="#7c3aed"/><rect x="18" y="40" width="36" height="4" fill="#7c3aed"/><rect x="14" y="44" width="44" height="16" fill="#7c3aed"/><rect x="54" y="32" width="14" height="18" fill="#fef3c7"/><rect x="54" y="32" width="2" height="18" fill="#d97706"/><rect x="54" y="32" width="14" height="2" fill="#d97706"/><rect x="66" y="32" width="2" height="18" fill="#d97706"/><rect x="54" y="48" width="14" height="2" fill="#d97706"/><rect x="58" y="36" width="8" height="2" fill="#94a3b8"/><rect x="58" y="40" width="10" height="2" fill="#94a3b8"/><rect x="58" y="44" width="6" height="2" fill="#94a3b8"/><rect x="18" y="60" width="14" height="20" fill="#7c3aed"/><rect x="40" y="60" width="14" height="20" fill="#7c3aed"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
           <span class="sp-name" data-i18n="sn.storytelling">Historia</span>
           <span class="sp-hint" data-i18n="sh.storytelling">Narrativa emocional, escenas</span>
         </button>
         <button class="style-pill" data-s="hooks"
-          onclick="selectStyle(this)" onmouseenter="previewStyle('hooks')">
+          onclick="selectStyle(this)">
           <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#0369a1"/><rect x="20" y="8" width="32" height="4" fill="#0369a1"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#0c4a6e"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="10" y="40" width="8" height="20" fill="#0369a1"/><rect x="54" y="40" width="8" height="20" fill="#0369a1"/><rect x="18" y="40" width="36" height="4" fill="#0369a1"/><rect x="14" y="44" width="44" height="16" fill="#0369a1"/><rect x="56" y="20" width="2" height="44" fill="#92400e"/><rect x="58" y="18" width="12" height="2" fill="#92400e"/><rect x="68" y="18" width="2" height="14" fill="#64748b"/><rect x="64" y="30" width="6" height="2" fill="#64748b"/><rect x="66" y="32" width="2" height="4" fill="#22c55e"/><rect x="56" y="60" width="12" height="8" fill="#60a5fa"/><rect x="54" y="62" width="16" height="4" fill="#60a5fa"/><rect x="18" y="60" width="14" height="20" fill="#0369a1"/><rect x="40" y="60" width="14" height="20" fill="#0369a1"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
           <span class="sp-name">5 Hooks</span>
           <span class="sp-hint" data-i18n="sh.hooks">5 aperturas que atrapan</span>
         </button>
         <button class="style-pill" data-s="custom"
-          onclick="selectStyle(this)" onmouseenter="previewStyle('custom')">
+          onclick="selectStyle(this)">
           <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#0d9488"/><rect x="20" y="8" width="32" height="4" fill="#0d9488"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#134e4a"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="32" y="20" width="4" height="4" fill="#f97316"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="10" y="40" width="8" height="20" fill="#0d9488"/><rect x="54" y="40" width="8" height="20" fill="#0d9488"/><rect x="18" y="40" width="36" height="4" fill="#0d9488"/><rect x="14" y="44" width="44" height="16" fill="#0d9488"/><rect x="4" y="34" width="12" height="6" fill="#94a3b8"/><rect x="2" y="36" width="4" height="4" fill="#94a3b8"/><rect x="6" y="30" width="8" height="6" fill="#cbd5e1"/><rect x="8" y="28" width="4" height="2" fill="#f97316"/><rect x="18" y="60" width="14" height="20" fill="#0d9488"/><rect x="40" y="60" width="14" height="20" fill="#0d9488"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
           <span class="sp-name">Custom</span>
           <span class="sp-hint" data-i18n="sh.custom">Tú decides las instrucciones</span>
@@ -4528,6 +4550,27 @@
   </div>
 </div>
 
+{% if workspace %}
+<style>
+  .ws-tabs { max-width: 1200px; margin: 24px auto 8px; padding: 0 24px; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .ws-tabs::-webkit-scrollbar { display: none; }
+  .ws-tab { flex: 0 0 auto; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-size: .85rem; font-weight: 500; cursor: pointer; white-space: nowrap; transition: color .15s, background .15s, border-color .15s; font-family: inherit; }
+  .ws-tab:hover { color: var(--text); background: var(--surf); border-color: var(--text3); }
+</style>
+<nav class="ws-tabs" aria-label="Workspace sections">
+  <button class="ws-tab" onclick="openProfile();profTab('overview')" data-i18n="prof.overview">Resumen</button>
+  <button class="ws-tab" onclick="openProfile();profTab('transc')" data-i18n="prof.transcriptions">Transcripciones</button>
+  <button class="ws-tab" onclick="openProfile();profTab('ideas')" data-i18n="prof.ideas">Ideas</button>
+  <button class="ws-tab" onclick="openProfile();profTab('projects')" data-i18n="prof.projects">Proyectos</button>
+  <button class="ws-tab" onclick="openProfile();profTab('scripts')">Scripts</button>
+  <button class="ws-tab" onclick="openProfile();profTab('assistants')" data-i18n="prof.assistants">Asistentes</button>
+  <button class="ws-tab" onclick="openProfile();profTab('metrics')" data-i18n="prof.metrics">Métricas</button>
+  <button class="ws-tab" onclick="openProfile();profTab('team')" data-i18n="prof.team">Equipo</button>
+  <button class="ws-tab" onclick="openTeleprompterPicker()" data-i18n="prof.teleprompter">Teleprompter</button>
+</nav>
+{% endif %}
+
+{% if not workspace %}
 <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(249,115,22,.12),transparent);max-width:600px;margin:0 auto"></div>
 
 <!-- ── FLUJO DE PASOS ──────────────────────────────────────────────────── -->
@@ -4689,6 +4732,7 @@
     ✦ Probar gratis ahora
   </button>
 </div>
+{% endif %}
 
 <!-- ── PROFILE DRAWER ─────────────────────────────────────────────────── -->
 <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
@@ -4931,25 +4975,29 @@
       <div id="profPanelIdeas" style="display:none">
         <div class="prof-section-head">
           <div><div class="prof-section-title" data-i18n="ideas.title">Ideas</div>
-          <div class="prof-section-sub" id="ideasCount"></div></div>
+          <div class="prof-section-hint" data-i18n="ideas.hint" style="font-size:.85rem;color:var(--text3);font-weight:400;margin-top:4px;line-height:1.45;max-width:560px">Apunta cualquier idea suelta que se te ocurra. Nosotros la convertimos en un borrador de guión listo para grabar.</div>
+          <div class="prof-section-sub" id="ideasCount" style="margin-top:4px"></div></div>
         </div>
 
         <!-- New idea input -->
         <div style="background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:20px">
-          <textarea id="ideaInput" rows="3" style="width:100%;padding:12px;background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text);font-family:var(--font-body);font-size:.88rem;line-height:1.5;resize:vertical;outline:none;box-sizing:border-box" placeholder="Write your idea... e.g. How to create viral content without showing your face"></textarea>
+          <textarea id="ideaInput" rows="3" style="width:100%;padding:12px;background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text);font-family:var(--font-body);font-size:.88rem;line-height:1.5;resize:vertical;outline:none;box-sizing:border-box"
+            placeholder="Escribe tu idea... ej: Cómo crear contenido viral sin dar la cara"
+            data-i18n-placeholder-es="Escribe tu idea... ej: Cómo crear contenido viral sin dar la cara"
+            data-i18n-placeholder-en="Write your idea... e.g. How to create viral content without showing your face"></textarea>
           <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap">
             <select id="ideaAssistant" style="padding:8px 12px;background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text2);font-size:.8rem;font-family:var(--font-body);outline:none">
-              <option value="">Default assistant</option>
-              <option value="viral">Viral</option>
-              <option value="divertido">Funny</option>
-              <option value="linkedin">LinkedIn</option>
-              <option value="storytelling">Story</option>
-              <option value="hooks">5 Hooks</option>
+              <option value="" data-i18n-es="Asistente por defecto" data-i18n-en="Default assistant">Asistente por defecto</option>
+              <option value="viral" data-i18n-es="Viral" data-i18n-en="Viral">Viral</option>
+              <option value="divertido" data-i18n-es="Divertido" data-i18n-en="Funny">Divertido</option>
+              <option value="linkedin" data-i18n-es="LinkedIn" data-i18n-en="LinkedIn">LinkedIn</option>
+              <option value="storytelling" data-i18n-es="Historia" data-i18n-en="Story">Historia</option>
+              <option value="hooks" data-i18n-es="5 Hooks" data-i18n-en="5 Hooks">5 Hooks</option>
             </select>
             <select id="ideaProject" style="padding:8px 12px;background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text2);font-size:.8rem;font-family:var(--font-body);outline:none">
-              <option value="">No project</option>
+              <option value="" data-i18n-es="Sin proyecto" data-i18n-en="No project">Sin proyecto</option>
             </select>
-            <button id="ideaSubmitBtn" class="btn-3d btn-3d-primary" onclick="submitIdea()" style="margin-left:auto;padding:8px 20px;background:var(--purple);color:#fff;border:none;border-radius:var(--rsm);font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s">Develop</button>
+            <button id="ideaSubmitBtn" class="btn-3d btn-3d-primary" onclick="submitIdea()" style="margin-left:auto;padding:8px 20px;background:var(--purple);color:#fff;border:none;border-radius:var(--rsm);font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s" data-i18n="ideas.develop">Desarrollar</button>
           </div>
         </div>
 
@@ -4997,11 +5045,11 @@
   <!-- Mobile bottom tab bar -->
   <div class="prof-bottom-bar" id="profBottomBar">
     <div class="prof-bottom-bar-inner">
-      <button class="prof-bottom-tab on" onclick="profTabMobile('overview')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="1" width="6" height="6" fill="currentColor"/><rect x="9" y="1" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" fill="currentColor" opacity=".3"/></svg>Overview</button>
-      <button class="prof-bottom-tab" onclick="profTabMobile('scripts')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="10" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg>Scripts</button>
-      <button class="prof-bottom-tab" onclick="profTabMobile('projects')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="3" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="6" height="3" fill="currentColor"/><rect x="5" y="8" width="6" height="1.5" fill="currentColor" opacity=".4"/></svg>Projects</button>
-      <button class="prof-bottom-tab" onclick="profTabMobile('ideas')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="3" y="1" width="10" height="2" fill="currentColor"/><rect x="2" y="3" width="12" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="6" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="9" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg>Ideas</button>
-      <button class="prof-bottom-tab" onclick="profTabMobile('metrics')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="10" width="3" height="5" fill="currentColor" opacity=".4"/><rect x="5" y="7" width="3" height="8" fill="currentColor" opacity=".6"/><rect x="9" y="4" width="3" height="11" fill="currentColor" opacity=".8"/><rect x="13" y="1" width="3" height="14" fill="currentColor"/></svg>Metrics</button>
+      <button class="prof-bottom-tab on" onclick="profTabMobile('overview')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="1" width="6" height="6" fill="currentColor"/><rect x="9" y="1" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.overview">Overview</span></button>
+      <button class="prof-bottom-tab" onclick="profTabMobile('scripts')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="10" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.saved_scripts">Scripts</span></button>
+      <button class="prof-bottom-tab" onclick="profTabMobile('projects')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="3" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="6" height="3" fill="currentColor"/><rect x="5" y="8" width="6" height="1.5" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.projects">Projects</span></button>
+      <button class="prof-bottom-tab" onclick="profTabMobile('ideas')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="3" y="1" width="10" height="2" fill="currentColor"/><rect x="2" y="3" width="12" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="6" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="9" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.ideas">Ideas</span></button>
+      <button class="prof-bottom-tab" onclick="profTabMobile('metrics')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="10" width="3" height="5" fill="currentColor" opacity=".4"/><rect x="5" y="7" width="3" height="8" fill="currentColor" opacity=".6"/><rect x="9" y="4" width="3" height="11" fill="currentColor" opacity=".8"/><rect x="13" y="1" width="3" height="14" fill="currentColor"/></svg><span data-i18n="prof.metrics">Metrics</span></button>
     </div>
   </div>
 </div>
@@ -5041,6 +5089,31 @@
   </div>
 </div>
 
+{% if settings_page %}
+<!-- ── SETTINGS PAGE ─────────────────────────────────────────────────── -->
+<div id="settingsView" style="position:fixed;inset:0;z-index:305;background:var(--bg);overflow-y:auto;padding:40px 20px">
+  <div style="max-width:520px;margin:0 auto">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px">
+      <a href="/app" class="btn-nav" style="padding:6px 10px;font-size:.82rem">← <span data-i18n-es="Workspace" data-i18n-en="Workspace">Workspace</span></a>
+      <h1 style="font-family:var(--font-display);font-size:1.6rem;margin:0" data-i18n-es="Mi cuenta" data-i18n-en="My account">My account</h1>
+    </div>
+
+    <div style="background:var(--surf1);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px">
+        <div id="setAv" style="width:56px;height:56px;border-radius:12px;background:var(--surf2);flex-shrink:0"></div>
+        <div style="min-width:0">
+          <div id="setEmail" class="ph-no-capture" data-clarity-mask="true" style="font-family:var(--font-display);font-size:.98rem;word-break:break-all">—</div>
+          <div style="margin-top:4px"><span class="plan-badge free" id="setPlanBadge">Free</span></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-sm" onclick="openTopup()" data-i18n-es="Gestionar plan" data-i18n-en="Manage plan">Manage plan</button>
+        <button class="btn-sm" onclick="logout()" data-i18n-es="Cerrar sesión" data-i18n-en="Log out">Log out</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 <!-- ── MODAL VER COMPLETO ─────────────────────────────────────────────── -->
 <div class="view-overlay" id="viewOverlay" onclick="if(event.target===this)closeView()">
@@ -5213,10 +5286,13 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// ── server-injected globals ──────────────────────────────────────────────
+window.__NEXT_URL__ = {{ next_url|tojson if next_url else 'null' }};
+
 // ── i18n ─────────────────────────────────────────────────────────────────
 const LANGS = {
   es: {
-    "nav.login": "Entrar", "nav.register": "Gratis →", "nav.profile": "Mi perfil", "nav.logout": "Cerrar sesión", "nav.earn": "Ganar 30%", "nav.theme": "Tema", "nav.navigation": "Navegación", "nav.account": "Cuenta", "nav.home": "Inicio", "nav.buy_credits": "Comprar créditos",
+    "nav.login": "Entrar", "nav.register": "Gratis →", "nav.profile": "Mi perfil", "nav.logout": "Cerrar sesión", "nav.earn": "Ganar 30%", "nav.theme": "Tema", "nav.navigation": "Navegación", "nav.account": "Cuenta", "nav.home": "Inicio", "nav.buy_credits": "Comprar créditos", "nav.workspace": "Ir a mi workspace →", "nav.my_account": "Mi cuenta", "nav.my_plan": "Mi plan", "nav.dark_mode": "Modo oscuro", "nav.language": "Idioma", "nav.affiliates": "Afiliados", "nav.public_web": "Ver web pública",
     "hero.badge": "5 gratis al día · Sin tarjeta · Sin suscripción",
     "hero.h1": 'Pega la URL.<br><span class="grad-txt">Obtén el guión.</span>',
     "hero.sub": "Transcribe reels de Instagram y TikTok al instante con IA.",
@@ -5274,6 +5350,8 @@ const LANGS = {
     "prof.metrics": "Métricas",
     "prof.ideas": "Ideas",
     "ideas.title": "Ideas",
+    "ideas.hint": "Apunta cualquier idea suelta que se te ocurra. Nosotros la convertimos en un borrador de guión listo para grabar.",
+    "ideas.develop": "Desarrollar",
     "ideas.empty": "Sin ideas todavía. Escribe tu primera idea arriba.",
     "ideas.too_short": "La idea es muy corta (mín. 5 caracteres)",
     "ideas.created": "Idea desarrollada",
@@ -5574,7 +5652,7 @@ const LANGS = {
     "auth.forgot": "¿Olvidaste tu contraseña?",
   },
   en: {
-    "nav.login": "Log in", "nav.register": "Free →", "nav.profile": "My profile", "nav.logout": "Log out", "nav.earn": "Earn 30%", "nav.theme": "Theme", "nav.navigation": "Navigation", "nav.account": "Account", "nav.home": "Home", "nav.buy_credits": "Buy credits",
+    "nav.login": "Log in", "nav.register": "Free →", "nav.profile": "My profile", "nav.logout": "Log out", "nav.earn": "Earn 30%", "nav.theme": "Theme", "nav.navigation": "Navigation", "nav.account": "Account", "nav.home": "Home", "nav.buy_credits": "Buy credits", "nav.workspace": "Go to workspace →", "nav.my_account": "My account", "nav.my_plan": "My plan", "nav.dark_mode": "Dark mode", "nav.language": "Language", "nav.affiliates": "Affiliates", "nav.public_web": "View public site",
     "hero.badge": "5 free/day · No card · No subscription",
     "hero.h1": 'Paste the URL.<br><span class="grad-txt">Get the script.</span>',
     "hero.sub": "Transcribe Instagram and TikTok reels instantly with AI.",
@@ -5632,6 +5710,8 @@ const LANGS = {
     "prof.metrics": "Metrics",
     "prof.ideas": "Ideas",
     "ideas.title": "Ideas",
+    "ideas.hint": "Jot down any raw idea that comes to mind. We turn it into a draft script ready to record.",
+    "ideas.develop": "Develop",
     "ideas.empty": "No ideas yet. Write your first one above.",
     "ideas.too_short": "Idea is too short (min 5 chars)",
     "ideas.created": "Idea developed",
@@ -5962,6 +6042,9 @@ function setLang(lang) {
   if (urlInput) urlInput.placeholder = lang === "en" ? "🔗 Paste your Instagram or TikTok reel here..." : "🔗 Pega aquí tu reel de Instagram o TikTok...";
   document.querySelectorAll("[data-i18n-" + lang + "]").forEach(el => {
     el.textContent = el.getAttribute("data-i18n-" + lang);
+  });
+  document.querySelectorAll("[data-i18n-placeholder-" + lang + "]").forEach(el => {
+    el.placeholder = el.getAttribute("data-i18n-placeholder-" + lang);
   });
   if (typeof initPrices === "function") initPrices();
 }
@@ -6314,6 +6397,8 @@ window.addEventListener("DOMContentLoaded", async () => {
         });
         if (res.ok) {
           showToast(t("toast.welcome"));
+          window.location.assign(window.__NEXT_URL__ || "/app");
+          return;
         }
       } catch {}
     }
@@ -6466,6 +6551,8 @@ function renderLoggedIn() {
   const initial = st.user.email[0].toUpperCase();
   document.getElementById("btnLogin").style.display = "none";
   document.getElementById("btnReg").style.display = "none";
+  const btnWs = document.getElementById("btnWorkspace");
+  if (btnWs) btnWs.style.display = "";
   const navMobAuth = document.getElementById("navMobAuth");
   if (navMobAuth) navMobAuth.style.display = "none";
   updateIdeaFab();
@@ -6587,6 +6674,19 @@ function renderProfileHub() {
   const badge = document.getElementById("profPlanBadge");
   badge.textContent = planLabels[plan] || plan;
   badge.className = `plan-badge ${plan}`;
+
+  // Settings page mirror (only if present in DOM)
+  const setEmail = document.getElementById("setEmail");
+  if (setEmail) {
+    setEmail.textContent = st.user.email;
+    const setBadge = document.getElementById("setPlanBadge");
+    if (setBadge) {
+      setBadge.textContent = planLabels[plan] || plan;
+      setBadge.className = `plan-badge ${plan}`;
+    }
+    const setAv = document.getElementById("setAv");
+    if (setAv) setAv.style.backgroundImage = `url(${dicebearUrl(seed)})`, setAv.style.backgroundSize = "cover";
+  }
 
   // Usage bar
   const usageWrap = document.getElementById("profUsageWrap");
@@ -8347,6 +8447,7 @@ async function ideaToScript(id) {
       const adaptInput = document.getElementById("adaptInput");
       if (adaptInput && d.script) {
         adaptInput.value = d.script;
+        revealAdaptSection({ scroll: false });
       }
       await loadIdeas();
     } else { showToast(d.error || "Error"); }
@@ -8490,12 +8591,14 @@ function profAdaptFromTransc(id) {
   if (!item) return;
   closeProfile();
   document.getElementById("adaptInput").value = item.text;
-  document.getElementById("adaptCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  revealAdaptSection();
 }
 
 function renderLoggedOut() {
   document.getElementById("btnLogin").style.display = "";
   document.getElementById("btnReg").style.display = "";
+  const btnWs = document.getElementById("btnWorkspace");
+  if (btnWs) btnWs.style.display = "none";
   const navMobAuth = document.getElementById("navMobAuth");
   if (navMobAuth) navMobAuth.style.display = "";
   document.getElementById("userPill").classList.remove("on");
@@ -8571,8 +8674,7 @@ function rsToggleTransform(idx) {
   const adaptInput = document.getElementById("adaptInput");
   if (!adaptInput) return;
   adaptInput.value = item.text;
-  document.getElementById("adaptCard").scrollIntoView({ behavior: "smooth", block: "start" });
-  setTimeout(() => adaptInput.focus(), 400);
+  revealAdaptSection({ focus: true });
 }
 
 async function rsQuickTransform(idx, style, btn) {
@@ -8880,12 +8982,12 @@ function pickChip(btn) {
   // Fill the Hazlo tuyo textarea
   document.getElementById("adaptInput").value = text;
 
+  // Reveal the section (was hidden by default)
+  revealAdaptSection();
+
   // Select the matching style pill and trigger its logic
   const pill = document.querySelector(`.style-pill[data-s="${s}"]`);
   if (pill) selectStyle(pill);
-
-  // Scroll to the section
-  document.getElementById("adaptCard").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 async function runInlineAdapt() {
@@ -8934,6 +9036,35 @@ const STYLE_LABELS = {
   viral: "🔥 Viral", divertido: "😂 Divertido", linkedin: "💼 LinkedIn",
   storytelling: "📖 Historia", hooks: "🪝 5 Hooks", custom: "✍️ Custom",
 };
+
+function revealAdaptSection(opts = {}) {
+  const sec = document.getElementById("adaptSection");
+  if (!sec) return;
+  if (sec.style.display === "none") {
+    sec.style.display = "";
+    sec.style.opacity = "0";
+    sec.style.transform = "translateY(-8px)";
+    sec.style.transition = "opacity .35s ease, transform .35s ease";
+    requestAnimationFrame(() => {
+      sec.style.opacity = "1";
+      sec.style.transform = "translateY(0)";
+    });
+  }
+  const row = document.getElementById("haveScriptRow");
+  if (row) row.style.display = "none";
+  if (opts.focus) {
+    const ta = document.getElementById("adaptInput");
+    if (ta) {
+      setTimeout(() => { ta.focus(); ta.scrollIntoView({ behavior: "smooth", block: "center" }); }, 120);
+    }
+  } else if (opts.scroll !== false) {
+    setTimeout(() => {
+      const card = document.getElementById("adaptCard");
+      if (card) card.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+  }
+}
+window.revealAdaptSection = revealAdaptSection;
 
 function previewStyle(s) {
   const card    = document.getElementById("previewCard");
@@ -9250,12 +9381,14 @@ let _fabOnboardTimer = null;
 function updateIdeaFab() {
   const fab = document.getElementById("ideaFab");
   if (!fab) return;
-  fab.classList.toggle("on", !!st.user);
+  const onWorkspace = window.location.pathname.startsWith("/app");
+  const visible = !!st.user && onWorkspace;
+  fab.classList.toggle("on", visible);
   // Update label
   const label = document.getElementById("ideaFabLabel");
   if (label) label.textContent = t("ideas.fab_tooltip");
   // Onboarding tooltip (first time only)
-  if (st.user && !localStorage.getItem("ideas_fab_onboarded")) {
+  if (visible && !localStorage.getItem("ideas_fab_onboarded")) {
     _fabOnboardTimer = setTimeout(showFabOnboard, 2000);
   }
 }
@@ -10590,7 +10723,7 @@ function adaptFromView() {
   const txt = document.getElementById("viewBody").textContent;
   closeView(); closeDrawer();
   document.getElementById("adaptInput").value = txt;
-  document.getElementById("adaptCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  revealAdaptSection();
 }
 
 async function saveViewToProject() {
@@ -10713,6 +10846,7 @@ async function submitAuth() {
   await refreshMe(); loadHistory();
   const t3 = LANGS[currentLang] || LANGS.en;
   showToast(authMode === "login" ? t("toast.welcome") : t("toast.account_created"));
+  window.location.assign(window.__NEXT_URL__ || "/app");
 }
 
 document.addEventListener("keydown", e => {
@@ -10757,6 +10891,22 @@ function syncNavMob() {
   document.querySelectorAll(".mob-nav-paid").forEach(el => el.style.display = "");
   const affMob = document.getElementById("navAffMob");
   if (affMob) affMob.style.display = st.user ? "" : "none";
+}
+
+function goMyPlan() {
+  const pricing = document.getElementById("pricingSection");
+  if (pricing) {
+    pricing.scrollIntoView({ behavior: "smooth" });
+  } else {
+    const lang = document.documentElement.lang || "es";
+    window.location.assign("/" + lang + "/#pricingSection");
+  }
+}
+
+function toggleLang() {
+  const curr = document.documentElement.lang || "es";
+  const other = curr === "es" ? "en" : "es";
+  window.location.assign("/" + other + "/");
 }
 
 async function logout() {
@@ -11351,6 +11501,7 @@ window.addEventListener("DOMContentLoaded", () => {
   </div>
 </div>
 
+{% if not workspace %}
 <!-- ── FAQ ──────────────────────────────────────────────────────────── -->
 <section class="faq-section fade-in" style="max-width:720px;margin:60px auto 40px;padding:0 24px">
   {% if lang == 'en' %}
@@ -11399,6 +11550,7 @@ window.addEventListener("DOMContentLoaded", () => {
   </details>
   {% endif %}
 </section>
+{% endif %}
 </main>
 
 {% if pillar %}
