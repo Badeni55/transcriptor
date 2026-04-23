@@ -174,7 +174,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=Instrument+Serif&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Instrument+Serif&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     /* ── Reset & tokens ─────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -3106,6 +3106,517 @@
       text-align: center; padding: 24px; color: var(--text2); font-size: .85rem;
     }
 
+    /* ── Ideas panel redesign (v0.14.0) ─────────────────────────── */
+    :root {
+      --ideas-accent: #ff6b3d;
+      --ideas-accent-strong: #ef6a29;
+      --ideas-accent-soft: rgba(255, 107, 61, 0.12);
+      --ideas-accent-border: rgba(255, 107, 61, 0.25);
+      --ideas-dev: #5dcaa5;
+      --ideas-dev-soft: rgba(93, 202, 165, 0.12);
+      --ideas-dev-border: rgba(93, 202, 165, 0.25);
+      --ideas-asst: #b5a0ec;
+      --ideas-asst-soft: rgba(125, 91, 184, 0.15);
+      --ideas-asst-border: rgba(125, 91, 184, 0.3);
+      --ideas-proj: #c89968;
+      --ideas-proj-soft: rgba(200, 153, 104, 0.1);
+      --ideas-proj-border: rgba(200, 153, 104, 0.3);
+      --ink-editorial: #f1ead9;
+      --ink-muted: #8a7e72;
+      --ink-cream: #c4b896;
+      --ink-ghost: #6a6258;
+      --ink-body: #d4c9a9;
+      --ideas-card-top: #1f1a22;
+      --ideas-card-bot: #171218;
+      --font-editorial: 'Fraunces', 'Instrument Serif', serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    }
+
+    #profPanelIdeas { position: relative; }
+
+    /* Hero ─────────────────────────────────────────────────── */
+    .ideas-hero-wrap {
+      position: relative;
+      padding: 18px 4px 30px;
+      margin: -8px -4px 28px;
+      overflow: hidden;
+      border-radius: 18px;
+    }
+    .ideas-hero-waves {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      opacity: .13;
+      z-index: 0;
+    }
+    .ideas-hero {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      gap: 32px;
+      padding: 28px 8px 10px;
+    }
+    .ideas-hero-left { min-width: 0; }
+    .ideas-eyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      margin-bottom: 18px;
+    }
+    .ideas-eyebrow-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--ideas-accent);
+      box-shadow: 0 0 0 0 rgba(255, 107, 61, 0.6);
+      animation: ideasPulse 2.4s ease-out infinite;
+    }
+    @keyframes ideasPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(255, 107, 61, 0.55); }
+      70%  { box-shadow: 0 0 0 10px rgba(255, 107, 61, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 107, 61, 0); }
+    }
+    .ideas-h1 {
+      font-family: var(--font-editorial);
+      font-size: clamp(34px, 5vw, 56px);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.02;
+      color: var(--ink-editorial);
+      margin: 0 0 16px;
+    }
+    .ideas-h1 em {
+      font-style: italic;
+      font-weight: 500;
+      color: var(--ideas-accent);
+    }
+    .ideas-sub {
+      font-family: var(--font-body);
+      font-size: 15px; line-height: 1.6;
+      color: var(--ink-muted);
+      max-width: 56ch;
+      font-weight: 300;
+    }
+    .ideas-sub-em { color: var(--ink-cream); }
+
+    .ideas-hero-right {
+      text-align: right;
+      min-width: 160px;
+      padding-bottom: 6px;
+    }
+    .ideas-counter {
+      font-family: var(--font-editorial);
+      font-size: clamp(52px, 8vw, 76px);
+      font-weight: 500;
+      font-feature-settings: "tnum" 1;
+      color: var(--ideas-accent);
+      line-height: 0.9;
+      letter-spacing: -0.03em;
+      display: block;
+      text-shadow: 0 4px 30px rgba(255, 107, 61, 0.18);
+    }
+    .ideas-counter-lbl {
+      display: block;
+      margin-top: 10px;
+      font-family: var(--font-mono);
+      font-size: 10.5px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+    }
+    .ideas-counter-lbl b { color: var(--ideas-accent); font-weight: 500; }
+
+    /* Input card ──────────────────────────────────────────── */
+    .ideas-input-card {
+      position: relative;
+      background: linear-gradient(180deg, var(--ideas-card-top) 0%, var(--ideas-card-bot) 100%);
+      border: 1px solid rgba(255, 107, 61, 0.18);
+      border-radius: 18px;
+      padding: 22px 24px 20px;
+      margin-bottom: 28px;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 60px rgba(255, 107, 61, 0.06);
+    }
+    .ideas-input-label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--ink-cream);
+      margin-bottom: 10px;
+    }
+    .ideas-input-body {
+      display: flex; gap: 18px; align-items: stretch;
+    }
+    .ideas-input-col { flex: 1; min-width: 0; }
+    .ideas-textarea {
+      width: 100%;
+      background: transparent;
+      border: none; outline: none;
+      color: var(--ink-editorial);
+      font-family: var(--font-body);
+      font-size: 16px; line-height: 1.5;
+      min-height: 72px; max-height: 200px;
+      resize: vertical;
+      padding: 0;
+    }
+    .ideas-textarea::placeholder {
+      color: rgba(138, 126, 114, 0.75);
+      font-style: italic;
+    }
+    .ideas-chips {
+      display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap;
+      align-items: center;
+    }
+    .ideas-chip-wrap { position: relative; display: inline-flex; }
+    .ideas-chip-wrap select {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      opacity: 0; cursor: pointer;
+      z-index: 2;
+    }
+    .ideas-chip {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-family: var(--font-body);
+      font-size: 12px; font-weight: 500;
+      cursor: pointer;
+      transition: background .18s, border-color .18s, transform .18s;
+      position: relative;
+      pointer-events: none;
+    }
+    .ideas-chip-asst {
+      background: var(--ideas-asst-soft);
+      border: 1px solid var(--ideas-asst-border);
+      color: var(--ideas-asst);
+    }
+    .ideas-chip-proj {
+      background: var(--ideas-proj-soft);
+      border: 1px solid var(--ideas-proj-border);
+      color: var(--ideas-proj);
+    }
+    .ideas-chip-wrap:hover .ideas-chip {
+      background: rgba(125, 91, 184, 0.22);
+      transform: translateY(-1px);
+    }
+    .ideas-chip-wrap:hover .ideas-chip-proj {
+      background: rgba(200, 153, 104, 0.18);
+    }
+    .ideas-chip svg { flex-shrink: 0; opacity: .85; }
+    .ideas-chip-caret { margin-left: 2px; opacity: .6; }
+
+    .ideas-input-col-right {
+      display: flex; align-items: flex-end;
+    }
+    .ideas-btn-develop {
+      display: inline-flex; align-items: center; gap: 9px;
+      padding: 12px 22px;
+      border-radius: 11px;
+      border: none;
+      font-family: var(--font-body);
+      font-size: 14px; font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, #ff6b3d 0%, #ef6a29 100%);
+      cursor: pointer;
+      transition: transform .16s, box-shadow .16s, filter .16s;
+      box-shadow:
+        0 4px 16px rgba(255, 107, 61, 0.32),
+        0 1px 0 rgba(255, 255, 255, 0.22) inset,
+        0 -1px 0 rgba(0, 0, 0, 0.15) inset;
+      letter-spacing: -0.005em;
+    }
+    .ideas-btn-develop:hover {
+      transform: translateY(-1px);
+      box-shadow:
+        0 7px 22px rgba(255, 107, 61, 0.42),
+        0 1px 0 rgba(255, 255, 255, 0.22) inset,
+        0 -1px 0 rgba(0, 0, 0, 0.15) inset;
+      filter: brightness(1.04);
+    }
+    .ideas-btn-develop:active { transform: translateY(1px); filter: brightness(0.96); }
+    .ideas-btn-develop:disabled { opacity: .65; cursor: wait; transform: none; }
+    .ideas-btn-develop svg { flex-shrink: 0; }
+
+    /* Ideas list ─────────────────────────────────────────── */
+    .ideas-list { display: flex; flex-direction: column; gap: 16px; }
+    .ideas-card {
+      position: relative;
+      background: linear-gradient(180deg, var(--ideas-card-top) 0%, var(--ideas-card-bot) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 22px 24px;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 4px 16px rgba(0, 0, 0, 0.3);
+      transition: transform .22s, box-shadow .22s, border-color .22s;
+    }
+    .ideas-card:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 10px 28px rgba(0, 0, 0, 0.42);
+    }
+    .ideas-card.is-draft { border-left: 3px solid var(--ideas-accent); }
+    .ideas-card.is-draft:hover {
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 10px 28px rgba(0, 0, 0, 0.42),
+        0 0 40px rgba(255, 107, 61, 0.08);
+    }
+    .ideas-card.is-developed { border: 1px solid rgba(93, 202, 165, 0.18); }
+    .ideas-card.is-scripted { opacity: 0.72; }
+    .ideas-card.is-scripted:hover { opacity: 0.88; }
+
+    .ideas-card-head {
+      display: flex; align-items: center; gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .ideas-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 3px 9px;
+      border-radius: 5px;
+      flex-shrink: 0;
+    }
+    .ideas-badge.b-draft { color: var(--ideas-accent); background: rgba(255, 107, 61, 0.1); }
+    .ideas-badge.b-developed { color: var(--ideas-dev); background: rgba(93, 202, 165, 0.1); }
+    .ideas-badge.b-scripted { color: var(--ink-muted); background: rgba(138, 126, 114, 0.1); }
+    .ideas-badge svg { flex-shrink: 0; }
+
+    .ideas-cat {
+      display: inline-flex; align-items: center;
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 3px 9px;
+      border-radius: 5px;
+    }
+    .ideas-cat.cat-motivation   { color: #ef6a29; background: rgba(239, 106, 41, 0.1); }
+    .ideas-cat.cat-humor        { color: #f0997b; background: rgba(240, 153, 123, 0.1); }
+    .ideas-cat.cat-educational  { color: #85b7eb; background: rgba(133, 183, 235, 0.1); }
+    .ideas-cat.cat-tutorial     { color: #85b7eb; background: rgba(133, 183, 235, 0.1); }
+    .ideas-cat.cat-storytelling { color: #c89968; background: rgba(200, 153, 104, 0.1); }
+    .ideas-cat.cat-opinion      { color: #b5a0ec; background: rgba(181, 160, 236, 0.1); }
+    .ideas-cat.cat-case_study   { color: #b5a0ec; background: rgba(181, 160, 236, 0.1); }
+    .ideas-cat.cat-trend        { color: #ff6b3d; background: rgba(255, 107, 61, 0.1); }
+    .ideas-cat.cat-behind_scenes{ color: #c4b896; background: rgba(196, 184, 150, 0.08); }
+    .ideas-cat.cat-list         { color: #5dcaa5; background: rgba(93, 202, 165, 0.08); }
+    .ideas-cat.cat-default      { color: var(--ink-cream); background: rgba(196, 184, 150, 0.08); }
+
+    .ideas-card-title {
+      font-family: var(--font-editorial);
+      font-size: 20px; font-weight: 500;
+      line-height: 1.22;
+      letter-spacing: -0.01em;
+      color: var(--ink-editorial);
+      flex: 1; min-width: 0;
+    }
+    .ideas-card.is-scripted .ideas-card-title { color: #b8ad9c; }
+    .ideas-card-date {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-ghost);
+      letter-spacing: 0.05em;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    .ideas-card-raw {
+      font-family: var(--font-body);
+      font-size: 14px; line-height: 1.55;
+      color: var(--ink-muted);
+      margin-bottom: 14px;
+    }
+    .ideas-card.is-scripted .ideas-card-raw {
+      font-size: 13px;
+      color: var(--ink-ghost);
+      margin-bottom: 12px;
+    }
+    .ideas-develop-block {
+      margin: 12px 0 14px;
+      padding: 14px 16px 14px 18px;
+      background: rgba(0, 0, 0, 0.22);
+      border-radius: 10px;
+      border-left: 2px solid rgba(93, 202, 165, 0.3);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .ideas-develop-lbl {
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--ideas-dev);
+      margin-bottom: 6px;
+      display: block;
+    }
+    .ideas-develop-text {
+      font-family: var(--font-editorial);
+      font-size: 14.5px;
+      line-height: 1.55;
+      color: var(--ink-body);
+      font-weight: 400;
+    }
+    .ideas-develop-text.italic {
+      font-style: italic;
+      color: #e2d6ae;
+    }
+    .ideas-card-acts {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-top: 4px;
+    }
+    .ideas-act {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 13px; font-weight: 500;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s, transform .15s;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--ink-muted);
+    }
+    .ideas-act:hover { transform: translateY(-1px); }
+    .ideas-act.primary-orange {
+      background: var(--ideas-accent-soft);
+      color: var(--ideas-accent);
+      border-color: var(--ideas-accent-border);
+    }
+    .ideas-act.primary-orange:hover {
+      background: rgba(255, 107, 61, 0.18);
+      border-color: rgba(255, 107, 61, 0.4);
+    }
+    .ideas-act.primary-green {
+      background: var(--ideas-dev-soft);
+      color: var(--ideas-dev);
+      border-color: var(--ideas-dev-border);
+    }
+    .ideas-act.primary-green:hover {
+      background: rgba(93, 202, 165, 0.18);
+      border-color: rgba(93, 202, 165, 0.4);
+    }
+    .ideas-act.ghost { border-color: rgba(255, 255, 255, 0.08); }
+    .ideas-act.ghost:hover {
+      border-color: rgba(255, 255, 255, 0.18);
+      color: var(--ink-editorial);
+    }
+    .ideas-act.danger:hover { color: #f0997b; border-color: rgba(240, 153, 123, 0.3); }
+    .ideas-act svg { flex-shrink: 0; }
+
+    .ideas-scripted-pointer {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 10.5px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--ideas-dev);
+      background: none; border: none;
+      padding: 2px 0;
+      cursor: pointer;
+      transition: gap .2s, color .15s;
+    }
+    .ideas-scripted-pointer:hover { gap: 12px; color: #76dbb6; }
+
+    /* Empty state */
+    .ideas-empty-editorial {
+      text-align: left;
+      padding: 48px 28px;
+      border: 1px dashed rgba(255, 107, 61, 0.18);
+      border-radius: 18px;
+      background: rgba(255, 107, 61, 0.03);
+    }
+    .ideas-empty-editorial h3 {
+      font-family: var(--font-editorial);
+      font-size: 24px;
+      font-weight: 500;
+      font-style: italic;
+      color: var(--ink-editorial);
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+    .ideas-empty-editorial p {
+      font-family: var(--font-body);
+      font-size: 14px; line-height: 1.55;
+      color: var(--ink-muted);
+      max-width: 48ch;
+    }
+
+    /* Sidebar: Ideas-active accent override ─────────────── */
+    .prof-nav-item.on.on-ideas {
+      background: linear-gradient(90deg,
+        rgba(255, 107, 61, 0.18) 0%,
+        rgba(255, 107, 61, 0.03) 100%);
+      border-color: rgba(255, 107, 61, 0.22);
+      color: var(--ideas-accent);
+      box-shadow: 0 0 16px rgba(255, 107, 61, 0.12);
+    }
+    .prof-nav-item.on.on-ideas::before {
+      background: var(--ideas-accent);
+      box-shadow: 0 0 8px rgba(255, 107, 61, 0.6);
+    }
+
+    /* Responsive ─────────────────────────────────────── */
+    @media (max-width: 820px) {
+      .ideas-hero {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        padding: 20px 6px 6px;
+      }
+      .ideas-hero-right {
+        text-align: left;
+        min-width: 0;
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+      }
+      .ideas-counter { font-size: 54px; }
+      .ideas-counter-lbl { margin-top: 0; }
+      .ideas-h1 { font-size: 36px; }
+      .ideas-input-body { flex-direction: column; gap: 14px; }
+      .ideas-input-col-right { width: 100%; }
+      .ideas-btn-develop { width: 100%; justify-content: center; }
+      .ideas-card { padding: 18px 18px; }
+      .ideas-card-title { font-size: 18px; }
+      .ideas-card-date { margin-left: 0; }
+    }
+    @media (max-width: 480px) {
+      .ideas-hero-wrap { margin: -4px -4px 20px; }
+      .ideas-input-card { padding: 18px 16px; }
+      .ideas-develop-block { padding: 12px 14px; }
+      .ideas-act { font-size: 12.5px; padding: 6px 12px; }
+    }
+
+    /* Light theme — invert paper ───────────────────────── */
+    [data-theme="light"] #profPanelIdeas {
+      --ink-editorial: #1a140f;
+      --ink-muted: #6b5f52;
+      --ink-cream: #5a4f42;
+      --ink-ghost: #8a7e72;
+      --ink-body: #2a2319;
+      --ideas-card-top: #fbf7ef;
+      --ideas-card-bot: #f3ede0;
+    }
+    [data-theme="light"] .ideas-input-card,
+    [data-theme="light"] .ideas-card {
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        0 4px 16px rgba(180, 150, 100, 0.12);
+    }
+    [data-theme="light"] .ideas-develop-block { background: rgba(255, 255, 255, 0.5); }
+    [data-theme="light"] .ideas-hero-waves { opacity: 0.18; }
+
     /* Team members list */
     .team-list { display: flex; flex-direction: column; gap: 8px; }
     .team-member {
@@ -5346,36 +5857,94 @@
 
       <!-- Ideas panel -->
       <div id="profPanelIdeas" style="display:none">
-        <div class="prof-section-head">
-          <div><div class="prof-section-title" data-i18n="ideas.title">Ideas</div>
-          <div class="prof-section-hint" data-i18n="ideas.hint" style="font-size:.85rem;color:var(--text3);font-weight:400;margin-top:4px;line-height:1.45;max-width:560px">Apunta cualquier idea suelta que se te ocurra. Nosotros la convertimos en un borrador de guión listo para grabar.</div>
-          <div class="prof-section-sub" id="ideasCount" style="margin-top:4px"></div></div>
+
+        <!-- Editorial hero -->
+        <div class="ideas-hero-wrap">
+          <svg class="ideas-hero-waves" viewBox="0 0 1200 380" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0,210 Q180,150 360,200 T720,200 T1080,190 L1200,210 L1200,380 L0,380 Z" fill="#ff6b3d"/>
+            <path d="M0,250 Q220,200 420,240 T780,240 T1200,250 L1200,380 L0,380 Z" fill="#7d5bb8" opacity="0.6"/>
+            <path d="M0,300 Q200,260 420,290 T820,290 T1200,300 L1200,380 L0,380 Z" fill="#c89968" opacity="0.5"/>
+            <circle cx="980" cy="120" r="3" fill="#ff6b3d" opacity="0.7"/>
+            <circle cx="1080" cy="80" r="2" fill="#c4b896" opacity="0.6"/>
+            <circle cx="160" cy="100" r="2.5" fill="#7d5bb8" opacity="0.6"/>
+          </svg>
+          <div class="ideas-hero">
+            <div class="ideas-hero-left">
+              <div class="ideas-eyebrow">
+                <span class="ideas-eyebrow-dot"></span>
+                <span data-i18n-es="IDEAS · BANCO DE IDEAS" data-i18n-en="IDEAS · IDEA VAULT">IDEAS · BANCO DE IDEAS</span>
+              </div>
+              <h1 class="ideas-h1">
+                <span data-i18n-es="Captura lo que se te" data-i18n-en="Catch every">Captura lo que se te</span>
+                <em data-i18n-es="ocurre" data-i18n-en="spark">ocurre</em>.
+              </h1>
+              <p class="ideas-sub">
+                <span data-i18n-es="Apunta cualquier chispa suelta. Hooks la convierte en un borrador de guión listo para grabar." data-i18n-en="Jot down any loose spark. Hooks turns it into a ready-to-shoot script draft.">Apunta cualquier chispa suelta. Hooks la convierte en un borrador de guión listo para grabar.</span>
+                <span class="ideas-sub-em" data-i18n-es="Sin fricción, sin plantillas rígidas." data-i18n-en="No friction, no rigid templates.">Sin fricción, sin plantillas rígidas.</span>
+              </p>
+            </div>
+            <div class="ideas-hero-right">
+              <span class="ideas-counter" id="ideasCounterNum">0</span>
+              <span class="ideas-counter-lbl" id="ideasCounterLbl"><b>0</b> IDEAS · <b>0</b> PENDIENTES</span>
+            </div>
+          </div>
         </div>
 
-        <!-- New idea input -->
-        <div style="background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:20px">
-          <textarea id="ideaInput" rows="3" style="width:100%;padding:12px;background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text);font-family:var(--font-body);font-size:.88rem;line-height:1.5;resize:vertical;outline:none;box-sizing:border-box"
-            placeholder="Escribe tu idea... ej: Cómo crear contenido viral sin dar la cara"
-            data-i18n-placeholder-es="Escribe tu idea... ej: Cómo crear contenido viral sin dar la cara"
-            data-i18n-placeholder-en="Write your idea... e.g. How to create viral content without showing your face"></textarea>
-          <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap">
-            <select id="ideaAssistant" style="padding:8px 12px;background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text2);font-size:.8rem;font-family:var(--font-body);outline:none">
-              <option value="" data-i18n-es="Asistente por defecto" data-i18n-en="Default assistant">Asistente por defecto</option>
-              <option value="viral" data-i18n-es="Viral" data-i18n-en="Viral">Viral</option>
-              <option value="divertido" data-i18n-es="Divertido" data-i18n-en="Funny">Divertido</option>
-              <option value="linkedin" data-i18n-es="LinkedIn" data-i18n-en="LinkedIn">LinkedIn</option>
-              <option value="storytelling" data-i18n-es="Historia" data-i18n-en="Story">Historia</option>
-              <option value="hooks" data-i18n-es="5 Hooks" data-i18n-en="5 Hooks">5 Hooks</option>
-            </select>
-            <select id="ideaProject" style="padding:8px 12px;background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text2);font-size:.8rem;font-family:var(--font-body);outline:none">
-              <option value="" data-i18n-es="Sin proyecto" data-i18n-en="No project">Sin proyecto</option>
-            </select>
-            <button id="ideaSubmitBtn" class="btn-3d btn-3d-primary" onclick="submitIdea()" style="margin-left:auto;padding:8px 20px;background:var(--purple);color:#fff;border:none;border-radius:var(--rsm);font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s" data-i18n="ideas.develop">Desarrollar</button>
+        <!-- New idea input card -->
+        <div class="ideas-input-card">
+          <div class="ideas-input-body">
+            <div class="ideas-input-col">
+              <label class="ideas-input-label" data-i18n-es="NUEVA IDEA" data-i18n-en="NEW IDEA">NUEVA IDEA</label>
+              <textarea id="ideaInput" class="ideas-textarea" rows="3"
+                placeholder="Cuéntale algo a Hooks... ej: cómo hacer contenido viral sin dar la cara"
+                data-i18n-placeholder-es="Cuéntale algo a Hooks... ej: cómo hacer contenido viral sin dar la cara"
+                data-i18n-placeholder-en="Tell Hooks what's on your mind... e.g. how to make viral content without showing your face"></textarea>
+              <div class="ideas-chips">
+                <span class="ideas-chip-wrap">
+                  <span class="ideas-chip ideas-chip-asst" id="ideaAssistantChip">
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                      <circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1.2" fill="none"/>
+                      <circle cx="5" cy="5" r="1.6" fill="currentColor"/>
+                    </svg>
+                    <span id="ideaAssistantChipLbl" data-i18n-es="Asistente por defecto" data-i18n-en="Default assistant">Asistente por defecto</span>
+                    <svg class="ideas-chip-caret" width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path d="M1.5 3 L4 5.5 L6.5 3" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                  <select id="ideaAssistant" onchange="updateIdeaChips()">
+                    <option value="" data-i18n-es="Asistente por defecto" data-i18n-en="Default assistant">Asistente por defecto</option>
+                    <option value="viral" data-i18n-es="Viral" data-i18n-en="Viral">Viral</option>
+                    <option value="divertido" data-i18n-es="Divertido" data-i18n-en="Funny">Divertido</option>
+                    <option value="linkedin" data-i18n-es="LinkedIn" data-i18n-en="LinkedIn">LinkedIn</option>
+                    <option value="storytelling" data-i18n-es="Historia" data-i18n-en="Story">Historia</option>
+                    <option value="hooks" data-i18n-es="5 Hooks" data-i18n-en="5 Hooks">5 Hooks</option>
+                  </select>
+                </span>
+                <span class="ideas-chip-wrap">
+                  <span class="ideas-chip ideas-chip-proj" id="ideaProjectChip">
+                    <svg width="11" height="10" viewBox="0 0 12 10" fill="none" aria-hidden="true">
+                      <path d="M1 2.2 C1 1.5 1.5 1 2.2 1 H4.8 L6 2.3 H9.8 C10.5 2.3 11 2.8 11 3.5 V8 C11 8.7 10.5 9 9.8 9 H2.2 C1.5 9 1 8.5 1 7.8 Z" stroke="currentColor" stroke-width="1.1" fill="none"/>
+                    </svg>
+                    <span id="ideaProjectChipLbl" data-i18n-es="Sin proyecto" data-i18n-en="No project">Sin proyecto</span>
+                    <svg class="ideas-chip-caret" width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path d="M1.5 3 L4 5.5 L6.5 3" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                  <select id="ideaProject" onchange="updateIdeaChips()">
+                    <option value="" data-i18n-es="Sin proyecto" data-i18n-en="No project">Sin proyecto</option>
+                  </select>
+                </span>
+              </div>
+            </div>
+            <div class="ideas-input-col-right">
+              <button id="ideaSubmitBtn" class="ideas-btn-develop" onclick="submitIdea()">
+                <span data-i18n="ideas.develop">Desarrollar</span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M3 8 H12.5 M8.5 4 L13 8 L8.5 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- Ideas list -->
-        <div id="ideasList"></div>
+        <div id="ideasList" class="ideas-list"></div>
       </div>
 
       <!-- Team panel -->
@@ -8182,9 +8751,12 @@ function profTab(tab, pushHistory) {
   if (target) target.style.display = "";
 
   // Update nav active state
-  document.querySelectorAll(".prof-nav-item").forEach(btn => btn.classList.remove("on"));
+  document.querySelectorAll(".prof-nav-item").forEach(btn => { btn.classList.remove("on"); btn.classList.remove("on-ideas"); });
   const navBtn = document.querySelector(`.prof-nav-item[onclick="profTab('${tab}')"]`);
-  if (navBtn) navBtn.classList.add("on");
+  if (navBtn) {
+    navBtn.classList.add("on");
+    if (tab === "ideas") navBtn.classList.add("on-ideas");
+  }
 
   // Load data for specific tabs
   if (tab === "scripts") renderProfScripts();
@@ -8821,22 +9393,78 @@ async function loadIdeas() {
   renderIdeas();
 }
 
+const IDEAS_CAT_LABELS = {
+  educational: "EDUCATIVO", storytelling: "STORYTELLING", opinion: "OPINIÓN",
+  tutorial: "TUTORIAL", humor: "HUMOR", case_study: "CASO",
+  motivation: "MOTIVACIÓN", trend: "TENDENCIA", behind_scenes: "BACKSTAGE", list: "LISTA",
+};
+const IDEAS_CAT_LABELS_EN = {
+  educational: "EDUCATIONAL", storytelling: "STORYTELLING", opinion: "OPINION",
+  tutorial: "TUTORIAL", humor: "HUMOR", case_study: "CASE STUDY",
+  motivation: "MOTIVATION", trend: "TREND", behind_scenes: "BEHIND THE SCENES", list: "LIST",
+};
+
+function ideasFmtDate(iso) {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    const lang = (document.documentElement.lang || "es").toLowerCase();
+    const months = lang === "en"
+      ? ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
+      : ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+    const day = String(d.getDate()).padStart(2, "0");
+    const mon = months[d.getMonth()];
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return `${day} ${mon} · ${hh}:${mm}`;
+  } catch { return ""; }
+}
+
+function updateIdeaChips() {
+  const asstSel = document.getElementById("ideaAssistant");
+  const asstLbl = document.getElementById("ideaAssistantChipLbl");
+  if (asstSel && asstLbl) {
+    const opt = asstSel.options[asstSel.selectedIndex];
+    asstLbl.textContent = opt ? opt.textContent : "";
+  }
+  const projSel = document.getElementById("ideaProject");
+  const projLbl = document.getElementById("ideaProjectChipLbl");
+  if (projSel && projLbl) {
+    const opt = projSel.options[projSel.selectedIndex];
+    projLbl.textContent = opt ? opt.textContent : "";
+  }
+}
+
+function renderIdeasCounter() {
+  const total = ideasCache.length;
+  const pending = ideasCache.filter(i => i.status === "draft").length;
+  const numEl = document.getElementById("ideasCounterNum");
+  const lblEl = document.getElementById("ideasCounterLbl");
+  if (numEl) numEl.textContent = String(total).padStart(2, "0");
+  if (lblEl) {
+    const lang = (document.documentElement.lang || "es").toLowerCase();
+    const ideas = lang === "en" ? "IDEAS" : "IDEAS";
+    const pend = lang === "en" ? "PENDING" : "PENDIENTES";
+    lblEl.innerHTML = `<b>${total}</b> ${ideas} · <b>${pending}</b> ${pend}`;
+  }
+  const countEl = document.getElementById("ideasCount");
+  if (countEl) countEl.textContent = "";
+}
+
 function renderIdeas() {
   const el = document.getElementById("ideasList");
-  const countEl = document.getElementById("ideasCount");
-  if (countEl) countEl.textContent = `${ideasCache.length} idea${ideasCache.length !== 1 ? "s" : ""}`;
+  renderIdeasCounter();
 
-  // Populate project selector
   const projSel = document.getElementById("ideaProject");
-  if (projSel && projectsCache.length) {
-    projSel.innerHTML = '<option value="">No project</option>' +
+  if (projSel && (typeof projectsCache !== "undefined") && projectsCache.length) {
+    const lang = (document.documentElement.lang || "es").toLowerCase();
+    const noProj = lang === "en" ? "No project" : "Sin proyecto";
+    projSel.innerHTML = `<option value="">${noProj}</option>` +
       projectsCache.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("");
   }
 
-  // Populate custom assistants in selector
   const asstSel = document.getElementById("ideaAssistant");
-  if (asstSel && userAssistants.length) {
-    // Keep predefined options, add custom ones
+  if (asstSel && (typeof userAssistants !== "undefined") && userAssistants.length) {
     const existing = asstSel.querySelectorAll("option[data-custom]");
     existing.forEach(o => o.remove());
     userAssistants.forEach(a => {
@@ -8848,40 +9476,138 @@ function renderIdeas() {
     });
   }
 
+  updateIdeaChips();
+
+  if (!el) return;
+
   if (!ideasCache.length) {
-    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">${EMPTY_ICON}</div>${t("ideas.empty")}</div>`;
+    const lang = (document.documentElement.lang || "es").toLowerCase();
+    const emptyTitle = lang === "en" ? "No sparks yet." : "Sin chispas todavía.";
+    const emptyBody = lang === "en"
+      ? "Write your first idea above. Hooks will turn it into a grab-and-go script draft."
+      : "Escribe tu primera idea arriba. Hooks la convierte en un borrador listo para grabar.";
+    el.innerHTML = `
+      <div class="ideas-empty-editorial">
+        <h3>${emptyTitle}</h3>
+        <p>${emptyBody}</p>
+      </div>`;
     return;
   }
 
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const BADGE_DRAFT     = lang === "en" ? "PENDING"    : "PENDIENTE";
+  const BADGE_DEVELOPED = lang === "en" ? "DEVELOPED"  : "DESARROLLADA";
+  const BADGE_SCRIPTED  = lang === "en" ? "USED"       : "USADA";
+  const LBL_INTRO       = lang === "en" ? "INTRO"      : "INTRO";
+  const LBL_DEV         = lang === "en" ? "DEVELOPMENT": "DESARROLLO";
+  const LBL_CLOSE       = lang === "en" ? "CLOSE"      : "CIERRE";
+  const ACT_DEVELOP     = lang === "en" ? "Develop with Hooks" : "Desarrollar con Hooks";
+  const ACT_SCRIPT      = lang === "en" ? "Create script"      : "Crear guión";
+  const ACT_DELETE      = lang === "en" ? "Delete"              : "Eliminar";
+  const ACT_REGEN       = lang === "en" ? "Regenerate"          : "Regenerar";
+  const ACT_TP          = lang === "en" ? "Teleprompter"        : "Al teleprompter";
+  const POINTER_SCRIPTED= lang === "en" ? "→ SCRIPT CREATED · OPEN IN SCRIPTS" : "→ GUIÓN CREADO · VER EN SCRIPTS";
+  const CATS = lang === "en" ? IDEAS_CAT_LABELS_EN : IDEAS_CAT_LABELS;
+
   el.innerHTML = ideasCache.map(idea => {
-    const isDraft = idea.status === "draft";
+    const status = idea.status || "draft";
     const draft = idea.script_draft || {};
+    const cat = (idea.category || "").toLowerCase();
+    const catLabel = CATS[cat] || (idea.category ? String(idea.category).toUpperCase() : "");
+    const catClass = cat ? `cat-${cat.replace(/\s+/g,'_')}` : "";
+    const title = esc(idea.title || (idea.raw_text || "").slice(0, 60));
+    const date = ideasFmtDate(idea.created_at);
+    const raw = esc(idea.raw_text || "");
+    const id = idea.id;
+
+    if (status === "draft") {
+      return `
+      <article class="ideas-card is-draft" data-id="${id}">
+        <div class="ideas-card-head">
+          <span class="ideas-badge b-draft">${BADGE_DRAFT}</span>
+          <span class="ideas-card-title">${title}</span>
+          <span class="ideas-card-date">${date}</span>
+        </div>
+        <div class="ideas-card-raw">${raw}</div>
+        <div class="ideas-card-acts">
+          <button class="ideas-act primary-orange" onclick="developIdeaNow('${id}')">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true"><path d="M6.5 1.2 L7.6 4.9 L11.3 5.1 L8.4 7.4 L9.3 11 L6.5 8.9 L3.7 11 L4.6 7.4 L1.7 5.1 L5.4 4.9 Z" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linejoin="round"/></svg>
+            ${ACT_DEVELOP}
+          </button>
+          <button class="ideas-act ghost" onclick="ideaToScript('${id}')">${ACT_SCRIPT}</button>
+          <button class="ideas-act ghost danger" onclick="deleteIdea('${id}')">${ACT_DELETE}</button>
+        </div>
+      </article>`;
+    }
+
+    if (status === "scripted") {
+      return `
+      <article class="ideas-card is-scripted" data-id="${id}">
+        <div class="ideas-card-head">
+          <span class="ideas-badge b-scripted">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 5.3 L4 7.2 L8 2.8" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            ${BADGE_SCRIPTED}
+          </span>
+          ${catLabel ? `<span class="ideas-cat ${catClass}">${catLabel}</span>` : ""}
+          <span class="ideas-card-title">${title}</span>
+          <span class="ideas-card-date">${date}</span>
+        </div>
+        <div class="ideas-card-raw">${raw.length > 160 ? raw.slice(0, 160) + "…" : raw}</div>
+        <div class="ideas-card-acts">
+          <button class="ideas-scripted-pointer" onclick="ideaOpenScripted('${id}')">
+            ${POINTER_SCRIPTED}
+          </button>
+        </div>
+      </article>`;
+    }
+
+    const hasStructured = !!(draft.intro || draft.desarrollo || draft.cierre);
+    const developBlock = hasStructured ? `
+      <div class="ideas-develop-block">
+        ${draft.intro ? `
+          <div class="ideas-develop-section">
+            <span class="ideas-develop-lbl">${LBL_INTRO}</span>
+            <div class="ideas-develop-text italic">${esc(draft.intro)}</div>
+          </div>` : ""}
+        ${draft.desarrollo ? `
+          <div class="ideas-develop-section">
+            <span class="ideas-develop-lbl">${LBL_DEV}</span>
+            <div class="ideas-develop-text">${esc(draft.desarrollo)}</div>
+          </div>` : ""}
+        ${draft.cierre ? `
+          <div class="ideas-develop-section">
+            <span class="ideas-develop-lbl">${LBL_CLOSE}</span>
+            <div class="ideas-develop-text italic">${esc(draft.cierre)}</div>
+          </div>` : ""}
+      </div>` : `<div class="ideas-card-raw">${raw}</div>`;
+
     return `
-    <div class="idea-card">
-      <div class="idea-card-head">
-        ${isDraft
-          ? `<span class="idea-card-cat" style="background:rgba(255,255,255,.08);color:var(--text3)">${t("ideas.draft")}</span>`
-          : (idea.category ? `<span class="idea-card-cat">${esc(idea.category)}</span>` : "")}
-        <span class="idea-card-title">${esc(idea.title || idea.raw_text.slice(0, 50))}</span>
-        <span class="idea-card-date">${fmtDate(idea.created_at)}</span>
+    <article class="ideas-card is-developed" data-id="${id}">
+      <div class="ideas-card-head">
+        <span class="ideas-badge b-developed">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 5.3 L4 7.2 L8 2.8" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          ${BADGE_DEVELOPED}
+        </span>
+        ${catLabel ? `<span class="ideas-cat ${catClass}">${catLabel}</span>` : ""}
+        <span class="ideas-card-title">${title}</span>
+        <span class="ideas-card-date">${date}</span>
       </div>
-      ${isDraft
-        ? `<div class="idea-card-draft" style="color:var(--text3);font-style:italic">${esc(idea.raw_text)}</div>`
-        : `<div class="idea-card-draft">
-        ${draft.intro ? `<strong>Intro</strong>${esc(draft.intro)}` : ""}
-        ${draft.desarrollo ? `<br><strong>Development</strong>${esc(draft.desarrollo)}` : ""}
-        ${draft.cierre ? `<br><strong>Close</strong>${esc(draft.cierre)}` : ""}
+      ${developBlock}
+      <div class="ideas-card-acts">
+        <button class="ideas-act primary-green" onclick="tpOpenFromIdea('${id}')">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 2.3 L3 9.7 L9.5 6 Z" fill="currentColor"/></svg>
+          ${ACT_TP}
+        </button>
+        <button class="ideas-act ghost" onclick="regenerateIdea('${id}')">${ACT_REGEN}</button>
+        <button class="ideas-act ghost" onclick="ideaToScript('${id}')">${ACT_SCRIPT}</button>
+        <button class="ideas-act ghost danger" onclick="deleteIdea('${id}')">${ACT_DELETE}</button>
       </div>
-      <div style="font-size:.72rem;color:var(--text3);margin-bottom:10px">${esc(idea.raw_text.slice(0, 100))}${idea.raw_text.length > 100 ? "..." : ""}</div>`}
-      <div class="idea-card-acts">
-        ${isDraft ? `<button class="btn-sm" style="background:var(--purple);color:#fff;border:none" onclick="developIdeaNow('${idea.id}')">${t("ideas.develop_now")}</button>` : ""}
-        ${!isDraft ? `<button class="btn-sm" onclick="regenerateIdea('${idea.id}')">${t("ideas.regenerate")}</button>` : ""}
-        ${!isDraft ? `<button class="btn-sm" onclick="ideaToScript('${idea.id}')">${t("ideas.to_script")}</button>` : ""}
-        ${!isDraft ? `<button class="btn-sm" onclick="tpOpenFromIdea('${idea.id}')">Teleprompter</button>` : ""}
-        <button class="btn-sm del" onclick="deleteIdea('${idea.id}')">${t("act.delete")}</button>
-      </div>
-    </div>`;
+    </article>`;
   }).join("");
+}
+
+function ideaOpenScripted(id) {
+  try { profTab("scripts"); } catch {}
 }
 
 async function submitIdea() {
@@ -8890,8 +9616,11 @@ async function submitIdea() {
   const text = input.value.trim();
   if (!text || text.length < 5) { showToast(t("ideas.too_short")); return; }
 
+  const originalHTML = btn.innerHTML;
   btn.disabled = true;
-  btn.textContent = t("toast.generating");
+  btn.innerHTML = `<span>${esc(t("toast.generating"))}</span>`;
+
+  const restore = () => { btn.disabled = false; btn.innerHTML = originalHTML; };
 
   const body = { raw_text: text, language: currentLang };
   const assistantId = document.getElementById("ideaAssistant").value;
@@ -8905,15 +9634,13 @@ async function submitIdea() {
       body: JSON.stringify(body),
     });
     const d = await res.json();
-    btn.disabled = false;
-    btn.textContent = "Develop";
+    restore();
     if (!res.ok) { showToast(d.error || "Error"); return; }
     input.value = "";
     showToast(t("ideas.created"));
     await loadIdeas();
   } catch {
-    btn.disabled = false;
-    btn.textContent = "Develop";
+    restore();
     showToast(t("toast.error_connection"));
   }
 }
