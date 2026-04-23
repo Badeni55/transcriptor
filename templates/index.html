@@ -3909,7 +3909,7 @@
 
     .trans-thumb {
       width: 80px;
-      aspect-ratio: 9 / 16;
+      height: calc(80px * 16 / 9);
       border-radius: 10px;
       object-fit: cover;
       border: 1px solid rgba(255, 255, 255, 0.08);
@@ -3924,16 +3924,16 @@
       justify-content: center;
       background:
         linear-gradient(135deg,
-          rgba(239, 106, 41, 0.08) 0%,
-          rgba(125, 91, 184, 0.08) 100%);
+          rgba(239, 106, 41, 0.16) 0%,
+          rgba(125, 91, 184, 0.16) 100%);
       color: var(--ink-ghost);
     }
     .trans-thumb-empty svg { opacity: .7; }
     [data-theme="light"] .trans-thumb-empty {
       background:
         linear-gradient(135deg,
-          rgba(239, 106, 41, 0.12) 0%,
-          rgba(125, 91, 184, 0.12) 100%);
+          rgba(239, 106, 41, 0.22) 0%,
+          rgba(125, 91, 184, 0.22) 100%);
     }
 
     .trans-card-header {
@@ -4211,7 +4211,7 @@
       .trans-h1 { font-size: 36px; }
       .trans-card { padding: 18px; }
       .trans-card-top { gap: 14px; }
-      .trans-thumb { width: 68px; }
+      .trans-thumb { width: 68px; height: calc(68px * 16 / 9); }
       .trans-card-header { flex-wrap: wrap; gap: 6px 12px; }
       .trans-title { font-size: 18px; flex-basis: 100%; }
       .trans-title-meta { font-size: 10.5px; }
@@ -4229,7 +4229,7 @@
       .trans-hooks { width: 64px; height: 64px; }
       .trans-cta { padding: 14px 16px; flex-direction: column; align-items: flex-start; gap: 10px; }
       .trans-act { font-size: 12.5px; padding: 6px 12px; }
-      .trans-thumb { width: 60px; }
+      .trans-thumb { width: 60px; height: calc(60px * 16 / 9); }
       .trans-card-top { gap: 12px; }
     }
 
@@ -9648,7 +9648,7 @@ function renderProfTransc() {
 
     const thumbHtml = it.thumbnail_b64
       ? `<img class="trans-thumb" src="${it.thumbnail_b64}" alt="" loading="lazy">`
-      : `<div class="trans-thumb trans-thumb-empty" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M8 6 L10 4 L14 4 L16 6"/></svg></div>`;
+      : `<div class="trans-thumb trans-thumb-empty" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M8 6 L10 4 L14 4 L16 6"/></svg></div>`;
 
     return `
     <article class="trans-card" data-id="${id}">
