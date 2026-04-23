@@ -3898,6 +3898,15 @@
         0 10px 28px rgba(0, 0, 0, 0.42),
         0 0 40px rgba(239, 106, 41, 0.05);
     }
+    .trans-card.trans-card-highlight {
+      border-color: rgba(239, 106, 41, 0.5);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 0 0 3px rgba(239, 106, 41, 0.25),
+        0 12px 36px rgba(0, 0, 0, 0.45),
+        0 0 60px rgba(239, 106, 41, 0.2);
+      transition: border-color .2s ease-in, box-shadow .2s ease-in;
+    }
     .trans-card-top {
       display: flex;
       align-items: flex-start;
@@ -9625,6 +9634,26 @@ function renderProfTransc() {
   }
 
   el.innerHTML = histCache.map(it => renderTranscCardHTML(it)).join("");
+  scrollTranscHashIntoView();
+}
+
+function scrollTranscHashIntoView() {
+  const hash = window.location.hash || "";
+  const match = hash.match(/^#(t-\d+)$/);
+  if (!match) return;
+  const targetId = match[1];
+  // Wait a frame for layout (esp. thumbnails) to settle before measuring.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const el = document.getElementById(targetId);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("trans-card-highlight");
+      setTimeout(() => { el.classList.remove("trans-card-highlight"); }, 2000);
+      // Clear the hash so refresh/next actions don't re-scroll.
+      try { history.replaceState(null, "", location.pathname + location.search); } catch {}
+    });
+  });
 }
 
 function renderTranscCardHTML(it, opts) {
