@@ -3898,6 +3898,15 @@
         0 10px 28px rgba(0, 0, 0, 0.42),
         0 0 40px rgba(239, 106, 41, 0.05);
     }
+    .trans-card.trans-card-highlight {
+      border-color: rgba(239, 106, 41, 0.5);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 0 0 3px rgba(239, 106, 41, 0.25),
+        0 12px 36px rgba(0, 0, 0, 0.45),
+        0 0 60px rgba(239, 106, 41, 0.2);
+      transition: border-color .2s ease-in, box-shadow .2s ease-in;
+    }
     .trans-card-top {
       display: flex;
       align-items: flex-start;
@@ -5921,9 +5930,182 @@
     cursor: pointer; transition: transform .15s, box-shadow .15s; font-family: inherit; white-space: nowrap;
   }
   .ws-mini-transcribe button:hover { transform: translateY(-1px); box-shadow: 0 4px 14px -4px rgba(249,115,22,.45); }
+  .ws-mini-transcribe.is-busy input,
+  .ws-mini-transcribe.is-busy button { opacity: .6; cursor: not-allowed; transform: none; }
+  .ws-mini-transcribe.is-busy input { pointer-events: none; }
   @media (max-width: 720px) {
     .ws-mini-transcribe { flex-direction: column; gap: 10px; }
     .ws-mini-transcribe button { width: 100%; padding: 12px 16px; }
+  }
+
+  /* ── Inline transcription feedback widget (dashboard) ───────── */
+  .ws-trans-result {
+    grid-column: 1 / -1;
+    position: relative;
+    padding: 22px 26px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #1f1a22 0%, #171218 100%);
+    border: 1px solid rgba(239, 106, 41, 0.25);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 8px 24px rgba(0, 0, 0, 0.35),
+      0 0 60px rgba(239, 106, 41, 0.06);
+    animation: wsTransIn .22s ease both;
+  }
+  @keyframes wsTransIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  [data-theme="light"] .ws-trans-result {
+    background: linear-gradient(180deg, #fbf7ef 0%, #f3ede0 100%);
+    border-color: rgba(239, 106, 41, 0.3);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      0 6px 18px rgba(180, 150, 100, 0.14);
+  }
+
+  /* LOADING state */
+  .ws-trans-loading {
+    display: flex; align-items: center; gap: 18px;
+    min-height: 120px;
+  }
+  .ws-trans-loading-hooks {
+    width: 48px; height: 48px;
+    flex-shrink: 0;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    filter: drop-shadow(0 0 10px rgba(239, 106, 41, 0.35));
+    animation: wsHooksPulse 2s ease-in-out infinite;
+  }
+  @keyframes wsHooksPulse {
+    0%, 100% { transform: translateY(0); filter: drop-shadow(0 0 10px rgba(239, 106, 41, 0.35)); }
+    50%      { transform: translateY(-2px); filter: drop-shadow(0 0 18px rgba(239, 106, 41, 0.55)); }
+  }
+  .ws-trans-loading-text { flex: 1; min-width: 0; }
+  .ws-trans-loading-title {
+    font-family: var(--font-editorial);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 18px;
+    color: var(--ink-editorial);
+    letter-spacing: -0.005em;
+  }
+  .ws-trans-loading-title::after {
+    content: "…";
+    display: inline-block;
+    width: 1.1em;
+    text-align: left;
+    animation: wsDots 1.5s steps(3, end) infinite;
+    overflow: hidden;
+    vertical-align: bottom;
+  }
+  @keyframes wsDots {
+    0%   { content: "."; }
+    33%  { content: ".."; }
+    66%  { content: "…"; }
+    100% { content: "."; }
+  }
+  .ws-trans-loading-phase {
+    margin-top: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-muted);
+    letter-spacing: 0.04em;
+  }
+
+  /* ERROR state */
+  .ws-trans-error {
+    display: flex; align-items: flex-start; gap: 16px;
+    min-height: 110px;
+  }
+  .ws-trans-error-icon {
+    flex-shrink: 0;
+    width: 32px; height: 32px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #f09595;
+  }
+  .ws-trans-error-body { flex: 1; min-width: 0; }
+  .ws-trans-error-title {
+    font-family: var(--font-editorial);
+    font-weight: 500;
+    font-size: 18px;
+    color: var(--ink-editorial);
+    letter-spacing: -0.005em;
+    margin-bottom: 6px;
+  }
+  .ws-trans-error-sub {
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--ink-muted);
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+  .ws-trans-error-retry {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 18px;
+    border-radius: 10px;
+    border: none;
+    font-family: var(--font-body);
+    font-size: 13px; font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #ff6b3d 0%, #ef6a29 100%);
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 4px 14px rgba(239, 106, 41, 0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+  }
+  .ws-trans-error-retry:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(239, 106, 41, 0.4), inset 0 1px 0 rgba(255,255,255,0.2); }
+  .ws-trans-result.is-error {
+    border-color: rgba(240, 149, 149, 0.28);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      0 8px 24px rgba(0, 0, 0, 0.35),
+      0 0 50px rgba(240, 149, 149, 0.06);
+  }
+
+  /* DONE state: saved pointer styling */
+  .trans-saved-pointer {
+    display: inline-flex; align-items: center; gap: 7px;
+    margin-bottom: 14px;
+    font-family: var(--font-mono);
+    font-size: 11px; font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #5dcaa5;
+    text-decoration: none;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: rgba(93, 202, 165, 0.08);
+    border: 1px solid rgba(93, 202, 165, 0.22);
+    transition: background .15s, gap .2s, color .15s;
+  }
+  .trans-saved-pointer:hover {
+    background: rgba(93, 202, 165, 0.14);
+    color: #76dbb6;
+    gap: 10px;
+  }
+  .trans-saved-pointer svg { flex-shrink: 0; }
+
+  /* The DONE wrapper hosts the extracted trans-card styles. Neutralize
+     the extra top-level margin and the hover transform inside the
+     dashboard widget so it reads as a single result, not a hoverable
+     list card. */
+  .ws-trans-result .trans-card {
+    border: none;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .ws-trans-result .trans-card:hover {
+    transform: none;
+    border: none;
+    box-shadow: none;
+  }
+
+  @media (max-width: 720px) {
+    .ws-trans-result { padding: 18px; }
+    .ws-trans-loading { gap: 14px; }
+    .ws-trans-loading-hooks { width: 40px; height: 40px; }
+    .ws-trans-loading-title { font-size: 16px; }
   }
 
   /* Teleprompter "ready" microinteraction */
@@ -5989,6 +6171,9 @@
         <span class="ws-card-stat-lbl" data-i18n="ws.card.adapt.stat">Viral · LinkedIn · Historia · Hooks</span>
       </div>
     </button>
+
+    <!-- Inline transcription feedback (dashboard only) -->
+    <div id="wsTranscribeResult" class="ws-trans-result" role="status" aria-live="polite" style="display:none"></div>
 
     <!-- Ideas -->
     <button type="button" class="ws-card ws-a-yellow" onclick="wsTabClick('ideas')">
@@ -9624,6 +9809,31 @@ function renderProfTransc() {
     return;
   }
 
+  el.innerHTML = histCache.map(it => renderTranscCardHTML(it)).join("");
+  scrollTranscHashIntoView();
+}
+
+function scrollTranscHashIntoView() {
+  const hash = window.location.hash || "";
+  const match = hash.match(/^#(t-\d+)$/);
+  if (!match) return;
+  const targetId = match[1];
+  // Wait a frame for layout (esp. thumbnails) to settle before measuring.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const el = document.getElementById(targetId);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("trans-card-highlight");
+      setTimeout(() => { el.classList.remove("trans-card-highlight"); }, 2000);
+      // Clear the hash so refresh/next actions don't re-scroll.
+      try { history.replaceState(null, "", location.pathname + location.search); } catch {}
+    });
+  });
+}
+
+function renderTranscCardHTML(it, opts) {
+  opts = opts || {};
   const lang = (document.documentElement.lang || "es").toLowerCase();
   const LBL_WORDS  = lang === "en" ? "words" : "palabras";
   const LBL_COPY   = lang === "en" ? "Copy" : "Copiar";
@@ -9633,25 +9843,34 @@ function renderProfTransc() {
   const LBL_DEL    = lang === "en" ? "Delete" : "Eliminar";
   const LBL_FULL   = lang === "en" ? "VIEW FULL TEXT" : "VER TEXTO COMPLETO";
   const LBL_COLL   = lang === "en" ? "COLLAPSE" : "COLAPSAR";
+  const LBL_SAVED  = lang === "en" ? "Saved in Transcriptions" : "Guardada en Transcripciones";
 
-  el.innerHTML = histCache.map(it => {
-    const text = it.text || "";
-    const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
-    const platform = (it.platform || "").toLowerCase();
-    const platClass = platform === "tiktok" ? "p-tiktok" : "p-instagram";
-    const platLabel = platform === "tiktok" ? "TIKTOK" : "INSTAGRAM";
-    const date = transFmtDate(it.created_at);
-    const urlShort = esc(transShortUrl(it.url));
-    const urlFull = esc(it.url || "");
-    const id = it.id;
-    const autoTitle = esc(transAutoTitle(text)) || platLabel;
+  const text = it.text || "";
+  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const platform = (it.platform || "").toLowerCase();
+  const platClass = platform === "tiktok" ? "p-tiktok" : "p-instagram";
+  const platLabel = platform === "tiktok" ? "TIKTOK" : "INSTAGRAM";
+  const date = transFmtDate(it.created_at);
+  const urlShort = esc(transShortUrl(it.url));
+  const urlFull = esc(it.url || "");
+  const id = it.id;
+  const autoTitle = esc(transAutoTitle(text)) || platLabel;
 
-    const thumbHtml = it.thumbnail_b64
-      ? `<img class="trans-thumb" src="${it.thumbnail_b64}" alt="" loading="lazy">`
-      : `<div class="trans-thumb trans-thumb-empty" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M8 6 L10 4 L14 4 L16 6"/></svg></div>`;
+  const thumbHtml = it.thumbnail_b64
+    ? `<img class="trans-thumb" src="${it.thumbnail_b64}" alt="" loading="lazy">`
+    : `<div class="trans-thumb trans-thumb-empty" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M8 6 L10 4 L14 4 L16 6"/></svg></div>`;
 
-    return `
-    <article class="trans-card" data-id="${id}">
+  const savedPointer = opts.savedPointer
+    ? `<a class="trans-saved-pointer" href="/profile/transcriptions" onclick="event.preventDefault();openTranscHash('')">
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.2 L5 8.5 L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        ${LBL_SAVED}
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M3 3 H7 V7 M7 3 L3 7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </a>`
+    : "";
+
+  return `
+    <article class="trans-card" id="t-${id}" data-id="${id}">
+      ${savedPointer}
       <div class="trans-card-top">
         ${thumbHtml}
         <div class="trans-card-content">
@@ -9694,7 +9913,17 @@ function renderProfTransc() {
         <button class="trans-more" onclick="openCardActions(${id},'transc')" aria-label="More">···</button>
       </div>
     </article>`;
-  }).join("");
+}
+
+function openTranscHash(hash) {
+  try {
+    const clean = (hash || "").replace(/^#/, "");
+    if (clean) {
+      try { history.replaceState(null, "", "#" + clean); } catch {}
+    }
+  } catch {}
+  try { openProfile(); } catch {}
+  try { profTab("transc"); } catch {}
 }
 
 async function saveScriptCardToProject(id) {
@@ -13151,12 +13380,213 @@ function wsRenderTeleprompter() {
 
 function wsMiniTranscribe() {
   const mini = document.getElementById("wsMiniUrl");
+  if (!mini) return;
+  const url = mini.value.trim();
+
+  const isWorkspace = document.body.classList.contains("workspace");
+  const transcResult = document.getElementById("wsTranscribeResult");
+  if (isWorkspace && transcResult) {
+    if (!url) { showToast(t("toast.paste_url")); return; }
+    const validRx = /^https?:\/\/(www\.)?(instagram\.com\/(reel|p|tv)\/[\w-]+|((vm|vt)\.)?tiktok\.com\/)/i;
+    if (!validRx.test(url)) { showToast(pickRandomError()); return; }
+    mini.value = "";
+    wsTranscribeInline(url);
+    return;
+  }
+
+  // Fallback (shouldn't hit in /app — kept for safety on shared templates).
   const hidden = document.getElementById("urlInput");
-  if (!mini || !hidden) return;
-  hidden.value = mini.value.trim();
+  if (!hidden) return;
+  hidden.value = url;
   hidden.dispatchEvent(new Event("input"));
   doTranscribe();
   mini.value = "";
+}
+
+function _wsTransSetBusy(busy) {
+  const box = document.querySelector(".ws-mini-transcribe");
+  const input = document.getElementById("wsMiniUrl");
+  const btn = box ? box.querySelector("button") : null;
+  if (box) box.classList.toggle("is-busy", !!busy);
+  if (input) input.disabled = !!busy;
+  if (btn) {
+    btn.disabled = !!busy;
+    const lang = (document.documentElement.lang || "es").toLowerCase();
+    if (busy) {
+      btn._wsOrigLabel = btn.textContent;
+      btn.textContent = lang === "en" ? "Transcribing…" : "Transcribiendo…";
+    } else if (btn._wsOrigLabel) {
+      btn.textContent = btn._wsOrigLabel;
+      delete btn._wsOrigLabel;
+    }
+  }
+}
+
+function _wsTransPlatformFromUrl(url) {
+  return /instagram\.com/i.test(url) ? "instagram"
+       : (/tiktok\.com/i.test(url) ? "tiktok" : "other");
+}
+
+function wsTransRenderLoading(phaseText) {
+  const el = document.getElementById("wsTranscribeResult");
+  if (!el) return;
+  el.classList.remove("is-error");
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const title = lang === "en" ? "Transcribing your reel" : "Transcribiendo tu reel";
+  const defaultPhase = lang === "en"
+    ? "This usually takes 15–30 seconds"
+    : "Esto suele tardar 15-30 segundos";
+  el.style.display = "";
+  el.innerHTML = `
+    <div class="ws-trans-loading">
+      <img class="ws-trans-loading-hooks" src="/static/img/hooks/hooks-transcribir.svg" alt="" aria-hidden="true">
+      <div class="ws-trans-loading-text">
+        <div class="ws-trans-loading-title">${esc(title)}</div>
+        <div class="ws-trans-loading-phase" id="wsTransLoadingPhase">${esc(phaseText || defaultPhase)}</div>
+      </div>
+    </div>`;
+  try { el.scrollIntoView({ block: "center", behavior: "smooth" }); } catch {}
+}
+
+function wsTransUpdatePhase(phaseText) {
+  const phaseEl = document.getElementById("wsTransLoadingPhase");
+  if (phaseEl && phaseText) phaseEl.textContent = phaseText;
+}
+
+function wsTransRenderError(url, errorMsg) {
+  const el = document.getElementById("wsTranscribeResult");
+  if (!el) return;
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const title = lang === "en"
+    ? "We couldn't transcribe that reel."
+    : "No pudimos transcribir el reel.";
+  const sub = errorMsg || (lang === "en"
+    ? "Check that the URL is valid and the reel is public."
+    : "Verifica que la URL sea válida y que el reel sea público.");
+  const retry = lang === "en" ? "Retry" : "Reintentar";
+  el.classList.add("is-error");
+  el.style.display = "";
+  el.innerHTML = `
+    <div class="ws-trans-error">
+      <div class="ws-trans-error-icon" aria-hidden="true">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="16" r="13"/><path d="M16 9 V17"/><circle cx="16" cy="22" r="1.2" fill="currentColor"/></svg>
+      </div>
+      <div class="ws-trans-error-body">
+        <div class="ws-trans-error-title">${esc(title)}</div>
+        <div class="ws-trans-error-sub">${esc(sub)}</div>
+        <button class="ws-trans-error-retry" onclick="wsTransRetry()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M9.5 4.5 C8.7 3.1 7 2 5 2 C2.8 2 1 3.8 1 6 M9.5 4.5 L9.5 2 M9.5 4.5 L7 4.5 M2.5 7.5 C3.3 8.9 5 10 7 10 C9.2 10 11 8.2 11 6 M2.5 7.5 L2.5 10 M2.5 7.5 L5 7.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          ${retry}
+        </button>
+      </div>
+    </div>`;
+  // Keep URL in mini-input so user can retry fast.
+  const mini = document.getElementById("wsMiniUrl");
+  if (mini && !mini.value) mini.value = url;
+  el._wsRetryUrl = url;
+  _wsTransSetBusy(false);
+}
+
+function wsTransRetry() {
+  const el = document.getElementById("wsTranscribeResult");
+  const url = el && el._wsRetryUrl;
+  if (!url) return;
+  wsTranscribeInline(url);
+}
+
+async function wsTransRenderDone(url, platform) {
+  const el = document.getElementById("wsTranscribeResult");
+  if (!el) return;
+  el.classList.remove("is-error");
+  // Refresh histCache so the new transcription is included (top of list).
+  try { await loadHistory(); } catch {}
+  const item = (histCache || []).find(h => h.url === url) || (histCache && histCache[0]);
+  if (!item) {
+    // Unexpected: loaded but item not found. Fall back to a plain success pill.
+    el.innerHTML = `<div class="ws-trans-loading"><div class="ws-trans-loading-text"><div class="ws-trans-loading-title">✓</div><div class="ws-trans-loading-phase">Listo</div></div></div>`;
+    return;
+  }
+  el.style.display = "";
+  el.innerHTML = renderTranscCardHTML(item, { savedPointer: true });
+  try { el.scrollIntoView({ block: "center", behavior: "smooth" }); } catch {}
+}
+
+async function wsTranscribeInline(url) {
+  if (!url) return;
+  const platform = _wsTransPlatformFromUrl(url);
+
+  try { window.track && window.track.transcribeClicked({ platform, isAuthenticated: !!st.user }); } catch(e){}
+
+  _wsTransSetBusy(true);
+  wsTransRenderLoading();
+
+  let taskId = null;
+  try {
+    const lang = (document.getElementById("language") && document.getElementById("language").value) || null;
+    const res = await fetch("/transcribe", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, language: lang }),
+    });
+    const d = await res.json();
+    if (!res.ok) {
+      try { window.track && window.track.transcribeCompleted({ success: false, errorType: _rsErrorTypeFromStatus(res.status) }); } catch(e){}
+      wsTransRenderError(url, d && d.error);
+      return;
+    }
+    taskId = d.task_id;
+  } catch {
+    try { window.track && window.track.transcribeCompleted({ success: false, errorType: "network" }); } catch(e){}
+    wsTransRenderError(url, t("toast.error_connection"));
+    return;
+  }
+
+  const result = await new Promise((resolve) => {
+    const interval = setInterval(async () => {
+      try {
+        const r = await fetch(`/task/${taskId}`);
+        const s = await r.json();
+        if (s.state === "progress") {
+          if (s.step) wsTransUpdatePhase(s.step);
+          return;
+        }
+        if (s.state === "pending") return;
+        clearInterval(interval);
+        resolve(s);
+      } catch {
+        clearInterval(interval);
+        resolve({ state: "error", error: "Connection error" });
+      }
+    }, 2000);
+  });
+
+  if (result.state === "error") {
+    try { window.track && window.track.transcribeCompleted({ success: false, errorType: "unknown", errorMessage: (result.error || "").toString().slice(0, 120) }); } catch(e){}
+    wsTransRenderError(url, result.error);
+    return;
+  }
+
+  try {
+    window.track && window.track.transcribeCompleted({ success: true, platform, transcriptionLength: (result.text || "").length });
+    window.track && window.track.resultViewed({ platform });
+  } catch(e){}
+
+  // Update credit/usage indicators like rsTranscribeOne does.
+  if (result.credits_cents !== undefined) { st.credits = result.credits_cents; st.freeUsed = result.free_used_today; }
+  if (st.monthlyLimit) {
+    st.monthlyUsage = (st.monthlyUsage || 0) + 1;
+    const rem = st.monthlyLimit - st.monthlyUsage;
+    const balDisp = document.getElementById("balDisp");
+    const drawerBal = document.getElementById("drawerBal");
+    if (balDisp) balDisp.textContent = `${rem}/${st.monthlyLimit}`;
+    if (drawerBal) drawerBal.textContent = `${rem}/${st.monthlyLimit} usos`;
+  } else {
+    const balDisp = document.getElementById("balDisp");
+    if (balDisp) balDisp.textContent = usosNum(st.credits);
+  }
+  if (typeof renderFreeBar === "function") renderFreeBar();
+
+  _wsTransSetBusy(false);
+  await wsTransRenderDone(url, platform);
 }
 
 function wsOpenAdapt() {
