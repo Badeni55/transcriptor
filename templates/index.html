@@ -3898,10 +3898,34 @@
         0 10px 28px rgba(0, 0, 0, 0.42),
         0 0 40px rgba(239, 106, 41, 0.05);
     }
+    .trans-card-header {
+      display: flex; align-items: baseline; gap: 14px;
+      margin-bottom: 10px;
+    }
+    .trans-title {
+      flex: 1; min-width: 0;
+      font-family: var(--font-editorial);
+      font-size: 20px; font-weight: 500;
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+      color: var(--ink-editorial);
+      margin: 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .trans-title-meta {
+      font-family: var(--font-mono);
+      font-size: 11px; color: var(--ink-ghost);
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
     .trans-card-head {
       display: flex; align-items: center; gap: 10px;
       flex-wrap: wrap;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
     .trans-plat {
       display: inline-flex; align-items: center; gap: 6px;
@@ -3978,6 +4002,43 @@
       transition: gap .2s, color .15s;
     }
     .trans-expand:hover { gap: 10px; color: #ff8a57; }
+    .trans-card.expanded .trans-expand-label-collapsed { display: none; }
+    .trans-card:not(.expanded) .trans-expand-label-expanded { display: none; }
+    .trans-expand svg { transition: transform .3s ease; }
+    .trans-card.expanded .trans-expand svg { transform: rotate(-90deg); }
+
+    .trans-full {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows .3s ease, margin-top .3s ease, margin-bottom .3s ease;
+      margin-top: 0;
+    }
+    .trans-full > div { overflow: hidden; }
+    .trans-card.expanded .trans-full {
+      grid-template-rows: 1fr;
+      margin-top: 14px;
+      margin-bottom: 2px;
+    }
+    .trans-full-sep {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.06);
+      margin-bottom: 14px;
+    }
+    [data-theme="light"] .trans-full-sep { background: rgba(0,0,0,0.08); }
+    .trans-full-text {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      padding: 16px 20px;
+      border-left: 2px solid rgba(239, 106, 41, 0.3);
+      font-family: var(--font-editorial);
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1.7;
+      color: var(--ink-body);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    [data-theme="light"] .trans-full-text { background: rgba(0,0,0,0.03); }
 
     .trans-acts {
       display: flex; flex-wrap: wrap; gap: 8px;
@@ -4111,9 +4172,13 @@
       .trans-counter-lbl { text-align: left; }
       .trans-h1 { font-size: 36px; }
       .trans-card { padding: 18px; }
+      .trans-card-header { flex-wrap: wrap; gap: 6px 12px; }
+      .trans-title { font-size: 18px; flex-basis: 100%; }
+      .trans-title-meta { font-size: 10.5px; }
       .trans-card-head { gap: 8px; }
       .trans-url { max-width: 160px; }
       .trans-meta { margin-left: 0; }
+      .trans-full-text { padding: 14px 16px; font-size: 14.5px; }
     }
     @media (max-width: 620px) {
       .trans-acts .trans-act.mob-hide { display: none; }
@@ -9476,6 +9541,23 @@ function transShortUrl(u) {
   } catch { return u.slice(0, 40); }
 }
 
+function transAutoTitle(text) {
+  if (!text) return "";
+  const flat = text.replace(/\s+/g, " ").trim();
+  if (!flat) return "";
+  const words = flat.split(" ");
+  const head = words.slice(0, 8).join(" ");
+  const trimmed = head.replace(/[,.;:!?¡¿—\-«»"'\s]+$/, "");
+  const capitalized = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+  return words.length > 8 ? capitalized + "…" : capitalized;
+}
+
+function toggleTransExpand(id) {
+  const card = document.querySelector(`.trans-card[data-id="${id}"]`);
+  if (!card) return;
+  card.classList.toggle("expanded");
+}
+
 function renderProfTransc() {
   const el = document.getElementById("profListTransc");
   renderTransCounter();
@@ -9508,6 +9590,7 @@ function renderProfTransc() {
   const LBL_PROJ   = lang === "en" ? "To project" : "Al proyecto";
   const LBL_DEL    = lang === "en" ? "Delete" : "Eliminar";
   const LBL_FULL   = lang === "en" ? "VIEW FULL TEXT" : "VER TEXTO COMPLETO";
+  const LBL_COLL   = lang === "en" ? "COLLAPSE" : "COLAPSAR";
 
   el.innerHTML = histCache.map(it => {
     const text = it.text || "";
@@ -9519,28 +9602,35 @@ function renderProfTransc() {
     const urlShort = esc(transShortUrl(it.url));
     const urlFull = esc(it.url || "");
     const id = it.id;
+    const autoTitle = esc(transAutoTitle(text)) || platLabel;
 
     return `
     <article class="trans-card" data-id="${id}">
+      <div class="trans-card-header">
+        <h3 class="trans-title">${autoTitle}</h3>
+        <span class="trans-title-meta">${date} · ${wordCount} ${LBL_WORDS}</span>
+      </div>
       <div class="trans-card-head">
         <span class="trans-plat ${platClass}">${platLabel}</span>
-        ${urlFull ? `<a class="trans-url" href="${urlFull}" target="_blank" rel="noopener" title="${urlFull}">
+        ${urlFull ? `<a class="trans-url" href="${urlFull}" target="_blank" rel="noopener" title="${urlFull}" onclick="event.stopPropagation()">
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 3 H7 V7 M7 3 L3 7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
           ${urlShort}
         </a>` : ""}
-        <span class="trans-meta">
-          <span>${date}</span>
-          <span class="trans-meta-sep">·</span>
-          <span>${wordCount} ${LBL_WORDS}</span>
-        </span>
       </div>
-      <div class="trans-preview-wrap" onclick="viewItem(${id})" title="${lang === 'en' ? 'Click to expand' : 'Click para expandir'}">
+      <div class="trans-preview-wrap" onclick="toggleTransExpand(${id})" title="${lang === 'en' ? 'Click to expand' : 'Click para expandir'}">
         <div class="trans-preview">${esc(text)}</div>
       </div>
-      <button class="trans-expand" onclick="viewItem(${id})">
-        ${LBL_FULL}
+      <button class="trans-expand" onclick="toggleTransExpand(${id})">
+        <span class="trans-expand-label-collapsed">${LBL_FULL}</span>
+        <span class="trans-expand-label-expanded">${LBL_COLL}</span>
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5 H8 M5.5 2.5 L8 5 L5.5 7.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
+      <div class="trans-full" aria-hidden="true">
+        <div>
+          <div class="trans-full-sep"></div>
+          <div class="trans-full-text">${esc(text)}</div>
+        </div>
+      </div>
       <div class="trans-acts">
         <button class="trans-act primary" onclick="profAdaptFromTransc(${id})">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="6" cy="6" r="1.2" fill="currentColor"/></svg>
