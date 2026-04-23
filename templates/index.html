@@ -9624,6 +9624,11 @@ function renderProfTransc() {
     return;
   }
 
+  el.innerHTML = histCache.map(it => renderTranscCardHTML(it)).join("");
+}
+
+function renderTranscCardHTML(it, opts) {
+  opts = opts || {};
   const lang = (document.documentElement.lang || "es").toLowerCase();
   const LBL_WORDS  = lang === "en" ? "words" : "palabras";
   const LBL_COPY   = lang === "en" ? "Copy" : "Copiar";
@@ -9633,25 +9638,34 @@ function renderProfTransc() {
   const LBL_DEL    = lang === "en" ? "Delete" : "Eliminar";
   const LBL_FULL   = lang === "en" ? "VIEW FULL TEXT" : "VER TEXTO COMPLETO";
   const LBL_COLL   = lang === "en" ? "COLLAPSE" : "COLAPSAR";
+  const LBL_SAVED  = lang === "en" ? "Saved in Transcriptions" : "Guardada en Transcripciones";
 
-  el.innerHTML = histCache.map(it => {
-    const text = it.text || "";
-    const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
-    const platform = (it.platform || "").toLowerCase();
-    const platClass = platform === "tiktok" ? "p-tiktok" : "p-instagram";
-    const platLabel = platform === "tiktok" ? "TIKTOK" : "INSTAGRAM";
-    const date = transFmtDate(it.created_at);
-    const urlShort = esc(transShortUrl(it.url));
-    const urlFull = esc(it.url || "");
-    const id = it.id;
-    const autoTitle = esc(transAutoTitle(text)) || platLabel;
+  const text = it.text || "";
+  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const platform = (it.platform || "").toLowerCase();
+  const platClass = platform === "tiktok" ? "p-tiktok" : "p-instagram";
+  const platLabel = platform === "tiktok" ? "TIKTOK" : "INSTAGRAM";
+  const date = transFmtDate(it.created_at);
+  const urlShort = esc(transShortUrl(it.url));
+  const urlFull = esc(it.url || "");
+  const id = it.id;
+  const autoTitle = esc(transAutoTitle(text)) || platLabel;
 
-    const thumbHtml = it.thumbnail_b64
-      ? `<img class="trans-thumb" src="${it.thumbnail_b64}" alt="" loading="lazy">`
-      : `<div class="trans-thumb trans-thumb-empty" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M8 6 L10 4 L14 4 L16 6"/></svg></div>`;
+  const thumbHtml = it.thumbnail_b64
+    ? `<img class="trans-thumb" src="${it.thumbnail_b64}" alt="" loading="lazy">`
+    : `<div class="trans-thumb trans-thumb-empty" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M8 6 L10 4 L14 4 L16 6"/></svg></div>`;
 
-    return `
-    <article class="trans-card" data-id="${id}">
+  const savedPointer = opts.savedPointer
+    ? `<a class="trans-saved-pointer" href="/profile/transcriptions#t-${id}" onclick="event.preventDefault();openTranscHash('t-${id}')">
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6.2 L5 8.5 L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        ${LBL_SAVED}
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M3 3 H7 V7 M7 3 L3 7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </a>`
+    : "";
+
+  return `
+    <article class="trans-card" id="t-${id}" data-id="${id}">
+      ${savedPointer}
       <div class="trans-card-top">
         ${thumbHtml}
         <div class="trans-card-content">
@@ -9694,7 +9708,17 @@ function renderProfTransc() {
         <button class="trans-more" onclick="openCardActions(${id},'transc')" aria-label="More">···</button>
       </div>
     </article>`;
-  }).join("");
+}
+
+function openTranscHash(hash) {
+  try {
+    const clean = (hash || "").replace(/^#/, "");
+    if (clean) {
+      try { history.replaceState(null, "", "#" + clean); } catch {}
+    }
+  } catch {}
+  try { openProfile(); } catch {}
+  try { profTab("transc"); } catch {}
 }
 
 async function saveScriptCardToProject(id) {
