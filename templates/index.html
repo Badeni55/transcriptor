@@ -2197,6 +2197,41 @@
     .prof-main::-webkit-scrollbar { width: 4px; }
     .prof-main::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 3px; }
 
+    .panel-back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px 6px 6px;
+      margin: 0 0 14px -6px;
+      font-family: var(--font-mono, ui-monospace, monospace);
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--ink-muted, var(--text2));
+      text-decoration: none;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: color .18s ease, background .18s ease;
+    }
+    .panel-back-btn:hover {
+      color: #ef6a29;
+      background: rgba(239, 106, 41, 0.06);
+    }
+    .panel-back-arrow {
+      display: inline-block;
+      font-size: 14px;
+      line-height: 1;
+      transition: transform .18s ease;
+    }
+    .panel-back-btn:hover .panel-back-arrow { transform: translateX(-2px); }
+    [data-theme="light"] .panel-back-btn:hover { background: rgba(239, 106, 41, 0.08); }
+    @media (max-width: 768px) {
+      .panel-back-btn { font-size: 11.5px; margin-bottom: 10px; }
+    }
+
     /* Stats cards */
     .prof-stats-row {
       display: grid; grid-template-columns: repeat(3, 1fr);
@@ -6953,6 +6988,12 @@
     <!-- Main content -->
     <div class="prof-main" id="profMain">
 
+      <!-- Back to dashboard (all panels) -->
+      <a href="/app" class="panel-back-btn" onclick="backToDashboard(event)">
+        <span class="panel-back-arrow" aria-hidden="true">←</span>
+        <span data-i18n-es="Volver al dashboard" data-i18n-en="Back to dashboard">Volver al dashboard</span>
+      </a>
+
       <!-- Overview panel (default) -->
       <div id="profPanelOverview">
         <div class="prof-stats-row">
@@ -9150,6 +9191,25 @@ function closeProfile() {
     history.pushState(null, "", "/" + lang + "/");
     document.title = "ReelScript";
   }
+}
+
+function backToDashboard(e) {
+  if (e) e.preventDefault();
+  const isWorkspace = document.body.classList.contains("workspace");
+  if (!isWorkspace) {
+    window.location.href = "/app";
+    return;
+  }
+  // Workspace: close drawer without closeProfile's URL mutation, then push /app.
+  const page = document.getElementById("profilePage");
+  if (page) page.classList.remove("on");
+  document.body.style.overflow = "";
+  try { closeAvatarPicker(); } catch {}
+  if (location.pathname !== "/app") {
+    try { history.pushState({}, "", "/app"); } catch {}
+  }
+  document.title = "ReelScript";
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 // ── Privacy & Data ────────────────────────────────────────────────────────
