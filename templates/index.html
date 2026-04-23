@@ -3701,6 +3701,448 @@
     [data-theme="light"] .ideas-develop-block { background: rgba(255, 255, 255, 0.5); }
     [data-theme="light"] .ideas-hero-waves { opacity: 0.18; }
 
+    /* ── Transcriptions panel redesign (v0.13.4) ───────────────── */
+    :root {
+      --trans-accent: #ef6a29;
+      --trans-accent-soft: rgba(239, 106, 41, 0.12);
+      --trans-accent-border: rgba(239, 106, 41, 0.25);
+      --trans-accent-hi: rgba(239, 106, 41, 0.08);
+    }
+
+    #profPanelTransc { position: relative; }
+
+    .trans-hero-wrap {
+      position: relative;
+      padding: 18px 4px 30px;
+      margin: -8px -4px 28px;
+      overflow: hidden;
+      border-radius: 18px;
+    }
+    .trans-hero-waves {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      opacity: .12;
+      z-index: 0;
+    }
+    .trans-hero {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      gap: 32px;
+      padding: 28px 8px 10px;
+    }
+    .trans-hero-left { min-width: 0; }
+    .trans-eyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      margin-bottom: 18px;
+    }
+    .trans-eyebrow-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--trans-accent);
+      box-shadow: 0 0 0 0 rgba(239, 106, 41, 0.6);
+      animation: transPulse 2.4s ease-out infinite;
+    }
+    @keyframes transPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(239, 106, 41, 0.55); }
+      70%  { box-shadow: 0 0 0 10px rgba(239, 106, 41, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 106, 41, 0); }
+    }
+    .trans-h1 {
+      font-family: var(--font-editorial);
+      font-size: clamp(34px, 5vw, 56px);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.02;
+      color: var(--ink-editorial);
+      margin: 0 0 16px;
+    }
+    .trans-h1 em {
+      font-style: italic;
+      font-weight: 500;
+      color: var(--trans-accent);
+    }
+    .trans-sub {
+      font-family: var(--font-body);
+      font-size: 15px; line-height: 1.6;
+      color: var(--ink-muted);
+      max-width: 58ch;
+      font-weight: 300;
+    }
+    .trans-sub-em { color: var(--ink-cream); }
+
+    .trans-hero-right {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 20px;
+      min-width: 160px;
+      padding-bottom: 6px;
+    }
+    .trans-hero-right-nums {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .trans-hooks {
+      width: 96px; height: 96px;
+      flex-shrink: 0;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      filter: drop-shadow(0 0 14px rgba(239, 106, 41, 0.22));
+      transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+    }
+    #profPanelTransc:hover .trans-hooks { transform: translateY(-2px) rotate(2deg); }
+    .trans-counter {
+      font-family: var(--font-editorial);
+      font-size: clamp(52px, 8vw, 76px);
+      font-weight: 500;
+      font-feature-settings: "tnum" 1;
+      color: var(--trans-accent);
+      line-height: 0.9;
+      letter-spacing: -0.03em;
+      display: block;
+      text-shadow: 0 4px 30px rgba(239, 106, 41, 0.18);
+    }
+    .trans-counter-lbl {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10.5px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      text-align: right;
+    }
+
+    /* CTA ribbon */
+    .trans-cta {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px;
+      background: linear-gradient(180deg, var(--ideas-card-top) 0%, var(--ideas-card-bot) 100%);
+      border: 1px solid rgba(239, 106, 41, 0.14);
+      border-radius: 14px;
+      padding: 16px 22px;
+      margin-bottom: 28px;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 4px 16px rgba(0, 0, 0, 0.3);
+      transition: box-shadow .22s, border-color .22s, transform .22s;
+    }
+    .trans-cta:hover {
+      border-color: rgba(239, 106, 41, 0.3);
+      transform: translateY(-1px);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 8px 24px rgba(0, 0, 0, 0.42),
+        0 0 40px rgba(239, 106, 41, 0.08);
+    }
+    .trans-cta-left {
+      display: flex; align-items: center; gap: 14px;
+      min-width: 0;
+    }
+    .trans-cta-glyph {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: var(--trans-accent-soft);
+      border: 1px solid var(--trans-accent-border);
+      color: var(--trans-accent);
+      flex-shrink: 0;
+    }
+    .trans-cta-text {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--ink-muted);
+      line-height: 1.4;
+    }
+    .trans-cta-go {
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--trans-accent);
+      white-space: nowrap;
+      transition: gap .2s, color .15s;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .trans-cta:hover .trans-cta-go { color: #ff8a57; gap: 10px; }
+
+    /* Cards */
+    .trans-list { display: flex; flex-direction: column; gap: 14px; }
+    .trans-card {
+      position: relative;
+      background: linear-gradient(180deg, var(--ideas-card-top) 0%, var(--ideas-card-bot) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 20px 24px;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 4px 16px rgba(0, 0, 0, 0.3);
+      transition: transform .22s, box-shadow .22s, border-color .22s;
+    }
+    .trans-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(239, 106, 41, 0.2);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 10px 28px rgba(0, 0, 0, 0.42),
+        0 0 40px rgba(239, 106, 41, 0.05);
+    }
+    .trans-card-head {
+      display: flex; align-items: center; gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .trans-plat {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 3px 9px;
+      border-radius: 5px;
+      flex-shrink: 0;
+    }
+    .trans-plat.p-instagram {
+      color: var(--trans-accent);
+      background: var(--trans-accent-hi);
+      border: 1px solid rgba(239, 106, 41, 0.18);
+    }
+    .trans-plat.p-tiktok {
+      color: var(--ink-cream);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .trans-plat svg { flex-shrink: 0; }
+    .trans-url {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 400;
+      color: var(--ink-muted);
+      text-decoration: none;
+      max-width: 240px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      transition: color .15s, gap .2s;
+    }
+    .trans-url:hover { color: var(--trans-accent); gap: 7px; }
+    .trans-url svg { flex-shrink: 0; opacity: .7; }
+    .trans-meta {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 11px; color: var(--ink-ghost);
+      letter-spacing: 0.04em;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    .trans-meta-sep { opacity: .5; }
+
+    .trans-preview-wrap {
+      position: relative;
+      margin-bottom: 12px;
+      cursor: pointer;
+    }
+    .trans-preview {
+      font-family: var(--font-body);
+      font-size: 14px; line-height: 1.6;
+      color: var(--ink-body);
+      font-weight: 300;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      -webkit-mask-image: linear-gradient(180deg, #000 60%, rgba(0,0,0,0.3) 100%);
+              mask-image: linear-gradient(180deg, #000 60%, rgba(0,0,0,0.3) 100%);
+      transition: color .15s;
+    }
+    .trans-preview-wrap:hover .trans-preview { color: var(--ink-editorial); }
+    .trans-expand {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 10.5px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--trans-accent);
+      background: none; border: none; padding: 0;
+      cursor: pointer;
+      transition: gap .2s, color .15s;
+    }
+    .trans-expand:hover { gap: 10px; color: #ff8a57; }
+
+    .trans-acts {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-top: 4px;
+    }
+    .trans-act {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 13px; font-weight: 500;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s, transform .15s;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: transparent;
+      color: var(--ink-muted);
+    }
+    .trans-act:hover { transform: translateY(-1px); border-color: rgba(255, 255, 255, 0.18); color: var(--ink-editorial); }
+    .trans-act.primary {
+      background: var(--trans-accent-soft);
+      color: var(--trans-accent);
+      border-color: var(--trans-accent-border);
+    }
+    .trans-act.primary:hover {
+      background: rgba(239, 106, 41, 0.2);
+      border-color: rgba(239, 106, 41, 0.4);
+      color: #ff8a57;
+    }
+    .trans-act.danger { color: var(--ink-ghost); }
+    .trans-act.danger:hover { color: #f09595; border-color: rgba(240,149,149,0.3); }
+    .trans-act svg { flex-shrink: 0; }
+
+    .trans-more {
+      display: none;
+      width: 32px; height: 32px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--ink-muted);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 0;
+      align-items: center; justify-content: center;
+    }
+
+    /* Empty state */
+    .trans-empty {
+      text-align: center;
+      padding: 56px 28px;
+      border: 1px dashed rgba(239, 106, 41, 0.18);
+      border-radius: 18px;
+      background: rgba(239, 106, 41, 0.025);
+    }
+    .trans-empty img {
+      width: 120px; height: 120px;
+      image-rendering: pixelated;
+      margin: 0 auto 18px;
+      display: block;
+      filter: drop-shadow(0 0 18px rgba(239, 106, 41, 0.22));
+    }
+    .trans-empty h3 {
+      font-family: var(--font-editorial);
+      font-size: 28px; font-weight: 500;
+      font-style: italic;
+      color: var(--ink-editorial);
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+    .trans-empty p {
+      font-family: var(--font-body);
+      font-size: 14px; line-height: 1.55;
+      color: var(--ink-muted);
+      max-width: 48ch;
+      margin: 0 auto 18px;
+    }
+    .trans-empty-cta {
+      display: inline-flex; align-items: center; gap: 9px;
+      padding: 12px 22px;
+      border-radius: 11px;
+      border: none;
+      font-family: var(--font-body);
+      font-size: 14px; font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, #ff6b3d 0%, #ef6a29 100%);
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow:
+        0 4px 16px rgba(255, 107, 61, 0.32),
+        0 1px 0 rgba(255, 255, 255, 0.22) inset;
+      transition: transform .16s, box-shadow .16s;
+    }
+    .trans-empty-cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 7px 22px rgba(255, 107, 61, 0.42), 0 1px 0 rgba(255, 255, 255, 0.22) inset;
+    }
+
+    /* Sidebar accent */
+    .prof-nav-item.on.on-transcriptions {
+      background: linear-gradient(90deg,
+        rgba(239, 106, 41, 0.18) 0%,
+        rgba(239, 106, 41, 0.03) 100%);
+      border-color: rgba(239, 106, 41, 0.22);
+      color: var(--trans-accent);
+      box-shadow: 0 0 16px rgba(239, 106, 41, 0.1);
+    }
+    .prof-nav-item.on.on-transcriptions::before {
+      background: var(--trans-accent);
+      box-shadow: 0 0 8px rgba(239, 106, 41, 0.55);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .trans-hooks { width: 80px; height: 80px; }
+      .trans-hero-right { gap: 16px; }
+    }
+    @media (max-width: 820px) {
+      .trans-hero {
+        grid-template-columns: 1fr;
+        gap: 18px;
+        padding: 20px 6px 6px;
+      }
+      .trans-hero-right {
+        justify-content: flex-start;
+        min-width: 0;
+        gap: 14px;
+      }
+      .trans-hero-right-nums { align-items: flex-start; }
+      .trans-hooks { width: 72px; height: 72px; }
+      .trans-counter { font-size: 54px; }
+      .trans-counter-lbl { text-align: left; }
+      .trans-h1 { font-size: 36px; }
+      .trans-card { padding: 18px; }
+      .trans-card-head { gap: 8px; }
+      .trans-url { max-width: 160px; }
+      .trans-meta { margin-left: 0; }
+    }
+    @media (max-width: 620px) {
+      .trans-acts .trans-act.mob-hide { display: none; }
+      .trans-more { display: inline-flex; }
+    }
+    @media (max-width: 480px) {
+      .trans-hero-wrap { margin: -4px -4px 20px; }
+      .trans-hooks { width: 64px; height: 64px; }
+      .trans-cta { padding: 14px 16px; flex-direction: column; align-items: flex-start; gap: 10px; }
+      .trans-act { font-size: 12.5px; padding: 6px 12px; }
+    }
+
+    [data-theme="light"] #profPanelTransc {
+      --ink-editorial: #1a140f;
+      --ink-muted: #6b5f52;
+      --ink-cream: #5a4f42;
+      --ink-ghost: #8a7e72;
+      --ink-body: #2a2319;
+      --ideas-card-top: #fbf7ef;
+      --ideas-card-bot: #f3ede0;
+    }
+    [data-theme="light"] .trans-card,
+    [data-theme="light"] .trans-cta {
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        0 4px 16px rgba(180, 150, 100, 0.12);
+    }
+    [data-theme="light"] .trans-hero-waves { opacity: 0.18; }
+
     /* Team members list */
     .team-list { display: flex; flex-direction: column; gap: 8px; }
     .team-member {
@@ -5879,13 +6321,62 @@
 
       <!-- Transcriptions panel -->
       <div id="profPanelTransc" style="display:none">
-        <div class="prof-section-head">
-          <div>
-            <div class="prof-section-title" data-i18n="prof.transcriptions">Transcriptions</div>
-            <div class="prof-section-sub" data-i18n="prof.transc_sub">Raw transcriptions from your reels</div>
+
+        <!-- Editorial hero -->
+        <div class="trans-hero-wrap">
+          <svg class="trans-hero-waves" viewBox="0 0 1200 380" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0,210 Q180,150 360,200 T720,200 T1080,190 L1200,210 L1200,380 L0,380 Z" fill="#ef6a29"/>
+            <path d="M0,250 Q220,200 420,240 T780,240 T1200,250 L1200,380 L0,380 Z" fill="#7d5bb8" opacity="0.6"/>
+            <path d="M0,300 Q200,260 420,290 T820,290 T1200,300 L1200,380 L0,380 Z" fill="#c89968" opacity="0.5"/>
+            <circle cx="980" cy="120" r="3" fill="#ef6a29" opacity="0.7"/>
+            <circle cx="1080" cy="80" r="2" fill="#c4b896" opacity="0.6"/>
+            <circle cx="160" cy="100" r="2.5" fill="#7d5bb8" opacity="0.6"/>
+          </svg>
+          <div class="trans-hero">
+            <div class="trans-hero-left">
+              <div class="trans-eyebrow">
+                <span class="trans-eyebrow-dot"></span>
+                <span data-i18n-es="TRANSCRIPCIONES · VOCES CAPTURADAS" data-i18n-en="TRANSCRIPTIONS · CAPTURED VOICES">TRANSCRIPCIONES · VOCES CAPTURADAS</span>
+              </div>
+              <h1 class="trans-h1">
+                <span data-i18n-es="Escucha lo que" data-i18n-en="Replay everything you">Escucha lo que</span>
+                <em data-i18n-es="capturas" data-i18n-en="catch">capturas</em>.
+              </h1>
+              <p class="trans-sub">
+                <span data-i18n-es="Todos los reels que has convertido en texto." data-i18n-en="Every reel you've turned into text.">Todos los reels que has convertido en texto.</span>
+                <span class="trans-sub-em" data-i18n-es="Copia, transforma, prepáralos para tu próximo guión." data-i18n-en="Copy, transform, prime them for your next script.">Copia, transforma, prepáralos para tu próximo guión.</span>
+              </p>
+            </div>
+            <div class="trans-hero-right">
+              <img class="trans-hooks" src="{{ url_for('static', filename='img/hooks/hooks-transcribir.svg') }}" alt="" aria-hidden="true" />
+              <div class="trans-hero-right-nums">
+                <span class="trans-counter" id="transCounterNum">0</span>
+                <span class="trans-counter-lbl" data-i18n-es="TRANSCRIPCIONES GUARDADAS" data-i18n-en="TRANSCRIPTIONS SAVED">TRANSCRIPCIONES GUARDADAS</span>
+              </div>
+            </div>
           </div>
         </div>
-        <div id="profListTransc"></div>
+
+        <!-- CTA back to dashboard -->
+        <a href="#" class="trans-cta" id="transCtaDashboard" onclick="event.preventDefault();transcToDashboard()">
+          <div class="trans-cta-left">
+            <span class="trans-cta-glyph" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path d="M8 3 V13 M3 8 H13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="trans-cta-text" data-i18n-es="¿Otro reel? Transcribe uno nuevo desde el dashboard." data-i18n-en="Another reel? Transcribe a new one from the dashboard.">¿Otro reel? Transcribe uno nuevo desde el dashboard.</span>
+          </div>
+          <span class="trans-cta-go">
+            <span data-i18n-es="Ir al dashboard" data-i18n-en="Go to dashboard">Ir al dashboard</span>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+              <path d="M2 5 H8 M5.5 2.5 L8 5 L5.5 7.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </a>
+
+        <!-- Transcriptions list -->
+        <div id="profListTransc" class="trans-list"></div>
       </div>
 
       <!-- Projects panel -->
@@ -8872,11 +9363,16 @@ function profTab(tab, pushHistory) {
   if (target) target.style.display = "";
 
   // Update nav active state
-  document.querySelectorAll(".prof-nav-item").forEach(btn => { btn.classList.remove("on"); btn.classList.remove("on-ideas"); });
+  document.querySelectorAll(".prof-nav-item").forEach(btn => {
+    btn.classList.remove("on");
+    btn.classList.remove("on-ideas");
+    btn.classList.remove("on-transcriptions");
+  });
   const navBtn = document.querySelector(`.prof-nav-item[onclick="profTab('${tab}')"]`);
   if (navBtn) {
     navBtn.classList.add("on");
     if (tab === "ideas") navBtn.classList.add("on-ideas");
+    if (tab === "transc") navBtn.classList.add("on-transcriptions");
   }
 
   // Load data for specific tabs
@@ -8940,35 +9436,124 @@ function renderProfOverview() {
   }).join("");
 }
 
+function transcToDashboard() {
+  try { closeProfile(); } catch {}
+  try { history.pushState({}, "", "/app"); } catch {}
+  setTimeout(() => {
+    const el = document.getElementById("urlInput");
+    if (el) { el.focus(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  }, 80);
+}
+
+function renderTransCounter() {
+  const el = document.getElementById("transCounterNum");
+  if (el) el.textContent = String((histCache && histCache.length) || 0).padStart(2, "0");
+}
+
+function transFmtDate(iso) {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    const lang = (document.documentElement.lang || "es").toLowerCase();
+    const months = lang === "en"
+      ? ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
+      : ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+    const day = String(d.getDate()).padStart(2, "0");
+    const mon = months[d.getMonth()];
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return `${day} ${mon} · ${hh}:${mm}`;
+  } catch { return ""; }
+}
+
+function transShortUrl(u) {
+  if (!u) return "";
+  try {
+    const { hostname, pathname } = new URL(u);
+    const host = hostname.replace(/^www\./, "").replace(/^vm\./, "");
+    const path = pathname.length > 24 ? pathname.slice(0, 24) + "…" : pathname;
+    return host + path;
+  } catch { return u.slice(0, 40); }
+}
+
 function renderProfTransc() {
   const el = document.getElementById("profListTransc");
+  renderTransCounter();
+
   if (!histCache.length) {
-    el.innerHTML = `<div class="prof-empty">
-      <div class="prof-empty-icon">${EMPTY_ICON}</div>
-      <div class="prof-empty-title">${t("prof.empty_transc_title")}</div>
-      <div class="prof-empty-sub">${t("prof.empty_transc_sub")}</div>
-      <button class="prof-empty-cta" onclick="closeProfile();window.scrollTo({top:0,behavior:'smooth'});document.getElementById('urlInput').focus()">✦ ${t("prof.qa_transcribe")}</button>
-    </div>`;
+    const lang = (document.documentElement.lang || "es").toLowerCase();
+    const title = lang === "en" ? "You haven't transcribed anything yet." : "Todavía no has transcrito nada.";
+    const sub = lang === "en"
+      ? "Paste an Instagram or TikTok URL on the dashboard and get started."
+      : "Pega una URL de Instagram o TikTok en el dashboard y empieza.";
+    const cta = lang === "en" ? "Go to dashboard" : "Ir al dashboard";
+    el.innerHTML = `
+      <div class="trans-empty">
+        <img src="${window.HOOKS_TRANSC_SVG || '/static/img/hooks/hooks-transcribir.svg'}" alt="" aria-hidden="true" />
+        <h3>${title}</h3>
+        <p>${sub}</p>
+        <a href="#" class="trans-empty-cta" onclick="event.preventDefault();transcToDashboard()">
+          ${cta}
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 6 H10 M7 3 L10 6 L7 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>`;
     return;
   }
-  el.innerHTML = histCache.map(it => `
-    <div class="prof-card">
-      <div class="prof-card-top">
-        <span class="prof-card-badge">${esc(it.platform || "reel")}</span>
-        <span class="prof-card-date">${fmtDate(it.created_at)}</span>
+
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const LBL_WORDS  = lang === "en" ? "words" : "palabras";
+  const LBL_COPY   = lang === "en" ? "Copy" : "Copiar";
+  const LBL_TFORM  = lang === "en" ? "Transform" : "Transformar";
+  const LBL_TP     = lang === "en" ? "Teleprompter" : "Teleprompter";
+  const LBL_PROJ   = lang === "en" ? "To project" : "Al proyecto";
+  const LBL_DEL    = lang === "en" ? "Delete" : "Eliminar";
+  const LBL_FULL   = lang === "en" ? "VIEW FULL TEXT" : "VER TEXTO COMPLETO";
+
+  el.innerHTML = histCache.map(it => {
+    const text = it.text || "";
+    const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+    const platform = (it.platform || "").toLowerCase();
+    const platClass = platform === "tiktok" ? "p-tiktok" : "p-instagram";
+    const platLabel = platform === "tiktok" ? "TIKTOK" : "INSTAGRAM";
+    const date = transFmtDate(it.created_at);
+    const urlShort = esc(transShortUrl(it.url));
+    const urlFull = esc(it.url || "");
+    const id = it.id;
+
+    return `
+    <article class="trans-card" data-id="${id}">
+      <div class="trans-card-head">
+        <span class="trans-plat ${platClass}">${platLabel}</span>
+        ${urlFull ? `<a class="trans-url" href="${urlFull}" target="_blank" rel="noopener" title="${urlFull}">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 3 H7 V7 M7 3 L3 7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          ${urlShort}
+        </a>` : ""}
+        <span class="trans-meta">
+          <span>${date}</span>
+          <span class="trans-meta-sep">·</span>
+          <span>${wordCount} ${LBL_WORDS}</span>
+        </span>
       </div>
-      <div class="prof-card-text" onclick="viewItem(${it.id})">${esc(it.text.slice(0, 200))}${it.text.length > 200 ? "…" : ""}</div>
-      <div class="prof-card-acts">
-        <button onclick="cpHist(${it.id},this)">${t("act.copy")}</button>
-        <button class="mob-hide" onclick="viewItem(${it.id})">${t("act.view")}</button>
-        <button class="mob-hide" onclick="profAdaptFromTransc(${it.id})">${t("act.transform")}</button>
-        <button class="mob-hide" onclick="tpOpenFromTransc(${it.id})">${t("prof.teleprompter")}</button>
-        <button class="mob-hide" onclick="saveTranscToProject(${it.id})">${t("act.to_project")}</button>
-        <button class="mob-hide del" onclick="delItem(${it.id},this);setTimeout(()=>{renderProfTransc();renderProfOverview();document.getElementById('profStatTransc').textContent=histCache.length},300)">${t("act.delete")}</button>
-        <button class="btn-more-acts" onclick="openCardActions(${it.id},'transc')">···</button>
+      <div class="trans-preview-wrap" onclick="viewItem(${id})" title="${lang === 'en' ? 'Click to expand' : 'Click para expandir'}">
+        <div class="trans-preview">${esc(text)}</div>
       </div>
-    </div>
-  `).join("");
+      <button class="trans-expand" onclick="viewItem(${id})">
+        ${LBL_FULL}
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5 H8 M5.5 2.5 L8 5 L5.5 7.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="trans-acts">
+        <button class="trans-act primary" onclick="profAdaptFromTransc(${id})">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="6" cy="6" r="1.2" fill="currentColor"/></svg>
+          ${LBL_TFORM}
+        </button>
+        <button class="trans-act" onclick="cpHist(${id},this)">${LBL_COPY}</button>
+        <button class="trans-act mob-hide" onclick="tpOpenFromTransc(${id})">${LBL_TP}</button>
+        <button class="trans-act mob-hide" onclick="saveTranscToProject(${id})">${LBL_PROJ}</button>
+        <button class="trans-act danger mob-hide" onclick="delItem(${id},this);setTimeout(()=>{renderProfTransc();renderProfOverview();document.getElementById('profStatTransc').textContent=histCache.length},300)">${LBL_DEL}</button>
+        <button class="trans-more" onclick="openCardActions(${id},'transc')" aria-label="More">···</button>
+      </div>
+    </article>`;
+  }).join("");
 }
 
 async function saveScriptCardToProject(id) {
@@ -12062,6 +12647,7 @@ async function loadHistory() {
   histCache = await r.json();
   document.getElementById("histCount").textContent = histCache.length;
   document.getElementById("statTotal").textContent = histCache.length;
+  if (typeof renderTransCounter === "function") renderTransCounter();
   const list = document.getElementById("histList");
   if (!histCache.length) { list.innerHTML = `<li class="empty-state" data-i18n="drawer.empty">${t("drawer.empty")}</li>`; return; }
   list.innerHTML = histCache.map(it => `
@@ -12100,8 +12686,13 @@ function viewItem(id) {
   const item = histCache.find(i => i.id === id);
   if (!item) return;
   viewId = id;
-  document.getElementById("viewTitle").textContent = `${item.platform} · ${fmtDate(item.created_at)}`;
-  document.getElementById("viewBody").textContent = item.text;
+  const text = item.text || "";
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const wordsLbl = lang === "en" ? "words" : "palabras";
+  const plat = (item.platform || "reel").toUpperCase();
+  document.getElementById("viewTitle").textContent = `${plat} · ${fmtDate(item.created_at)} · ${words} ${wordsLbl}`;
+  document.getElementById("viewBody").textContent = text;
   document.getElementById("viewDlBtn").onclick = () => window.open(`/download/${id}`, "_blank");
   document.getElementById("viewOverlay").classList.add("on");
 }
