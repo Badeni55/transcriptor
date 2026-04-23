@@ -9171,7 +9171,7 @@ function renderProfileHub() {
   document.getElementById("profManageSubSidebar").style.display = st.hasStripeSub ? "" : "none";
 
   // Load data
-  loadSavedScripts();
+  loadScripts();
   loadProjects();
   if (hasPaidPlan) loadAssistants();
   if (isAgency) loadTeamMembers();
@@ -10205,7 +10205,11 @@ function profTabMobile(tab) { profTab(tab, true); }
 
 function renderProfOverview() {
   const el = document.getElementById("profRecentScripts");
-  const all = [...histCache.slice(0, 5), ...scriptsCache.slice(0, 5)]
+  const tagged = [
+    ...histCache.slice(0, 5).map(it => ({ ...it, _kind: "transc" })),
+    ...scriptsCache.slice(0, 5).map(it => ({ ...it, _kind: "script" })),
+  ];
+  const all = tagged
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     .slice(0, 8);
 
@@ -10219,9 +10223,9 @@ function renderProfOverview() {
     return;
   }
   el.innerHTML = all.map(it => {
-    const isTransc = !it._src || it._src === "transc";
-    const text = it.text || it.content || it.script || "";
-    const title = isTransc ? `${it.platform || "Reel"} · ${fmtDate(it.created_at)}` : (STYLE_LABELS[it.style] || it.title || "Script");
+    const isTransc = it._kind === "transc";
+    const text = isTransc ? (it.text || "") : (it.script || it.transcription || "");
+    const title = isTransc ? `${it.platform || "Reel"} · ${fmtDate(it.created_at)}` : (it.title || "Script");
     const icon = isTransc
       ? '<svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".4"/></svg>'
       : '<svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/></svg>';
@@ -10434,12 +10438,15 @@ function openTranscHash(hash) {
   try { profTab("transc"); } catch {}
 }
 
+function _scriptText(item) {
+  if (!item) return "";
+  return item.script || item.transcription || item.content || "";
+}
+
 async function saveScriptCardToProject(id) {
   const item = scriptsCache.find(i => i.id === id);
   if (!item) return;
-  const text = item._src === "script" ? (item.script || item.transcription || "") : (item.content || "");
-  const title = item._src === "script" ? (item.title || "Script") : (item.style || "Script");
-  await saveTextToProject(text, title);
+  await saveTextToProject(_scriptText(item), item.title || "Script");
 }
 
 async function saveTranscToProject(id) {
@@ -10449,27 +10456,19 @@ async function saveTranscToProject(id) {
   await saveTextToProject(item.text, title);
 }
 
-async function loadSavedScripts() {
+async function loadScripts() {
+  if (!st.user) { scriptsCache = []; return; }
   try {
-    // Cargar saved_scripts (adapt) siempre
-    const r = await fetch("/saved-scripts");
-    if (r.ok) {
-      const legacy = await r.json();
-      scriptsCache = legacy.map(s => ({ ...s, _src: "saved" }));
-    }
-    // Cargar scripts (transcripciones guardadas) para todos
-    if (st.user) {
-      const r2 = await fetch("/scripts");
-      if (r2.ok) {
-        const newer = await r2.json();
-        scriptsCache = [...newer.map(s => ({ ...s, _src: "script" })), ...scriptsCache];
-      }
-    }
+    const r = await fetch("/scripts");
+    if (!r.ok) return;
+    scriptsCache = await r.json();
     document.getElementById("profStatScripts").textContent = scriptsCache.length;
     renderProfScripts();
     renderProfOverview();
   } catch {}
 }
+// Back-compat alias.
+async function loadSavedScripts() { return loadScripts(); }
 
 function renderProfScripts() {
   const el = document.getElementById("profListScripts");
@@ -10483,8 +10482,8 @@ function renderProfScripts() {
     return;
   }
   el.innerHTML = scriptsCache.map(it => {
-    const text = it._src === "script" ? (it.script || it.transcription || "") : (it.content || "");
-    const badge = it._src === "script" ? (it.title || "Guion") : (STYLE_LABELS[it.style] || it.style || "custom");
+    const text = _scriptText(it);
+    const badge = it.title || "Guion";
     return `
     <div class="prof-card">
       <div class="prof-card-top">
@@ -10507,16 +10506,15 @@ function renderProfScripts() {
 function cpScript(id, btn) {
   const item = scriptsCache.find(i => i.id === id);
   if (!item) return;
-  const text = item._src === "script" ? (item.script || item.transcription || "") : (item.content || "");
-  navigator.clipboard.writeText(text);
+  navigator.clipboard.writeText(_scriptText(item));
   if (btn) { btn.textContent = t("act.copied"); setTimeout(() => (btn.textContent = t("act.copy")), 1500); }
 }
 
 function viewScript(id) {
   const item = scriptsCache.find(i => i.id === id);
   if (!item) return;
-  const text = item._src === "script" ? (item.script || item.transcription || "") : (item.content || "");
-  const title = item._src === "script" ? (item.title || "Guion") : (STYLE_LABELS[item.style] || item.style || "Script");
+  const text = _scriptText(item);
+  const title = item.title || "Guion";
   document.getElementById("viewTitle").textContent = `${title} · ${fmtDate(item.created_at)}`;
   document.getElementById("viewBody").textContent = text;
   document.getElementById("viewOverlay").classList.add("on");
@@ -10525,10 +10523,8 @@ function viewScript(id) {
 async function delScript(id, btn) {
   if (!confirm(currentLang === "es" ? "¿Eliminar este guión?" : "Delete this script?")) return;
   if (btn) btn.disabled = true;
-  const item = scriptsCache.find(i => i.id === id);
-  const endpoint = item && item._src === "script" ? `/scripts/${id}` : `/saved-scripts/${id}`;
-  await fetch(endpoint, { method: "DELETE" });
-  await loadSavedScripts();
+  await fetch(`/scripts/${id}`, { method: "DELETE" });
+  await loadScripts();
 }
 
 /* ── Card actions bottom sheet (mobile) ────────────── */
@@ -13122,8 +13118,8 @@ function openTeleprompterPicker() {
   // From scriptsCache
   if (scriptsCache && scriptsCache.length) {
     scriptsCache.forEach(s => {
-      const text = s._src === "script" ? (s.script || s.transcription || "") : (s.content || "");
-      if (text) items.push({ title: s.title || s.style || "Script", text, type: "script" });
+      const text = _scriptText(s);
+      if (text) items.push({ title: s.title || "Script", text, type: "script" });
     });
   }
   // From ideasCache
@@ -13175,7 +13171,7 @@ function tpOpenFromText(text) {
 function tpOpenFromScript(id) {
   const item = scriptsCache.find(i => i.id === id);
   if (!item) return;
-  const text = item._src === "script" ? (item.script || item.transcription || "") : (item.content || "");
+  const text = _scriptText(item);
   if (!text) { showToast("No text"); return; }
   closeProfile();
   tpOpen(text);
