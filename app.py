@@ -1419,12 +1419,36 @@ def delete_script(script_id):
     return jsonify({"ok": True})
 
 
+_HEX_COLOR_RX = re.compile(r"^#[0-9a-f]{6}$", re.IGNORECASE)
+
+
+def _validate_project_color(value):
+    """Return (ok, normalized) where normalized is lowercase hex or None."""
+    if value is None or value == "":
+        return True, None
+    if not isinstance(value, str) or not _HEX_COLOR_RX.match(value):
+        return False, None
+    return True, value.lower()
+
+
 @app.route("/projects", methods=["GET"])
 @require_auth
 def list_projects():
     user = current_user()
     rows = db.table("projects").select("*").eq("user_id", user["id"]).order("created_at", desc=True).execute()
-    return jsonify(rows.data)
+    items = rows.data or []
+    for p in items:
+        try:
+            sc = db.table("scripts").select("id", count="exact").eq("project_id", p["id"]).execute()
+            p["scripts_count"] = sc.count if hasattr(sc, "count") and sc.count is not None else 0
+        except Exception:
+            p["scripts_count"] = 0
+        try:
+            ic = db.table("ideas").select("id", count="exact").eq("project_id", p["id"]).execute()
+            p["ideas_count"] = ic.count if hasattr(ic, "count") and ic.count is not None else 0
+        except Exception:
+            p["ideas_count"] = 0
+    return jsonify(items)
 
 
 @app.route("/projects", methods=["POST"])
@@ -1439,12 +1463,17 @@ def create_project():
         current = count.count if hasattr(count, "count") else len(count.data)
         if current >= max_proj:
             return jsonify({"error": f"Has alcanzado el límite de {max_proj} proyecto(s) en tu plan. Sube de plan para tener ilimitados."}), 403
-    body = request.get_json()
-    row = db.table("projects").insert({
+    body = request.get_json() or {}
+    ok_color, norm_color = _validate_project_color(body.get("color"))
+    if not ok_color:
+        return jsonify({"error": "Invalid color (expected hex #rrggbb)"}), 400
+    payload = {
         "user_id": user["id"],
         "name": body.get("name", "Sin nombre"),
         "style_prompt": body.get("style_prompt", ""),
-    }).execute()
+        "color": norm_color,
+    }
+    row = db.table("projects").insert(payload).execute()
     return jsonify(row.data[0] if row.data else {"ok": True})
 
 
@@ -1487,12 +1516,19 @@ def update_avatar():
 @require_auth
 def update_project(project_id):
     user = current_user()
-    body = request.get_json()
+    body = request.get_json() or {}
     updates = {}
     if "name" in body:
         updates["name"] = body["name"]
     if "style_prompt" in body:
         updates["style_prompt"] = body["style_prompt"]
+    if "assistant_id" in body:
+        updates["assistant_id"] = body["assistant_id"] or None
+    if "color" in body:
+        ok_color, norm_color = _validate_project_color(body["color"])
+        if not ok_color:
+            return jsonify({"error": "Invalid color (expected hex #rrggbb)"}), 400
+        updates["color"] = norm_color
     if not updates:
         return jsonify({"error": "Nothing to update"}), 400
     db.table("projects").update(updates).eq("id", project_id).eq("user_id", user["id"]).execute()
