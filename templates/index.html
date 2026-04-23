@@ -3898,6 +3898,44 @@
         0 10px 28px rgba(0, 0, 0, 0.42),
         0 0 40px rgba(239, 106, 41, 0.05);
     }
+    .trans-card-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+    .trans-card-content { flex: 1; min-width: 0; }
+    .trans-card-content .trans-card-head { margin-bottom: 0; }
+
+    .trans-thumb {
+      width: 80px;
+      height: calc(80px * 16 / 9);
+      border-radius: 10px;
+      object-fit: cover;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      flex-shrink: 0;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.22);
+      display: block;
+    }
+    .trans-thumb-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        linear-gradient(135deg,
+          rgba(239, 106, 41, 0.16) 0%,
+          rgba(125, 91, 184, 0.16) 100%);
+      color: var(--ink-ghost);
+    }
+    .trans-thumb-empty svg { opacity: .7; }
+    [data-theme="light"] .trans-thumb-empty {
+      background:
+        linear-gradient(135deg,
+          rgba(239, 106, 41, 0.22) 0%,
+          rgba(125, 91, 184, 0.22) 100%);
+    }
+
     .trans-card-header {
       display: flex; align-items: baseline; gap: 14px;
       margin-bottom: 10px;
@@ -4172,6 +4210,8 @@
       .trans-counter-lbl { text-align: left; }
       .trans-h1 { font-size: 36px; }
       .trans-card { padding: 18px; }
+      .trans-card-top { gap: 14px; }
+      .trans-thumb { width: 68px; height: calc(68px * 16 / 9); }
       .trans-card-header { flex-wrap: wrap; gap: 6px 12px; }
       .trans-title { font-size: 18px; flex-basis: 100%; }
       .trans-title-meta { font-size: 10.5px; }
@@ -4189,6 +4229,8 @@
       .trans-hooks { width: 64px; height: 64px; }
       .trans-cta { padding: 14px 16px; flex-direction: column; align-items: flex-start; gap: 10px; }
       .trans-act { font-size: 12.5px; padding: 6px 12px; }
+      .trans-thumb { width: 60px; height: calc(60px * 16 / 9); }
+      .trans-card-top { gap: 12px; }
     }
 
     [data-theme="light"] #profPanelTransc {
@@ -9604,18 +9646,27 @@ function renderProfTransc() {
     const id = it.id;
     const autoTitle = esc(transAutoTitle(text)) || platLabel;
 
+    const thumbHtml = it.thumbnail_b64
+      ? `<img class="trans-thumb" src="${it.thumbnail_b64}" alt="" loading="lazy">`
+      : `<div class="trans-thumb trans-thumb-empty" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M8 6 L10 4 L14 4 L16 6"/></svg></div>`;
+
     return `
     <article class="trans-card" data-id="${id}">
-      <div class="trans-card-header">
-        <h3 class="trans-title">${autoTitle}</h3>
-        <span class="trans-title-meta">${date} · ${wordCount} ${LBL_WORDS}</span>
-      </div>
-      <div class="trans-card-head">
-        <span class="trans-plat ${platClass}">${platLabel}</span>
-        ${urlFull ? `<a class="trans-url" href="${urlFull}" target="_blank" rel="noopener" title="${urlFull}" onclick="event.stopPropagation()">
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 3 H7 V7 M7 3 L3 7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-          ${urlShort}
-        </a>` : ""}
+      <div class="trans-card-top">
+        ${thumbHtml}
+        <div class="trans-card-content">
+          <div class="trans-card-header">
+            <h3 class="trans-title">${autoTitle}</h3>
+            <span class="trans-title-meta">${date} · ${wordCount} ${LBL_WORDS}</span>
+          </div>
+          <div class="trans-card-head">
+            <span class="trans-plat ${platClass}">${platLabel}</span>
+            ${urlFull ? `<a class="trans-url" href="${urlFull}" target="_blank" rel="noopener" title="${urlFull}" onclick="event.stopPropagation()">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 3 H7 V7 M7 3 L3 7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              ${urlShort}
+            </a>` : ""}
+          </div>
+        </div>
       </div>
       <div class="trans-preview-wrap" onclick="toggleTransExpand(${id})" title="${lang === 'en' ? 'Click to expand' : 'Click para expandir'}">
         <div class="trans-preview">${esc(text)}</div>

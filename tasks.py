@@ -1,4 +1,5 @@
 import os
+import logging
 import tempfile
 import requests
 import yt_dlp
@@ -7,6 +8,30 @@ from dotenv import load_dotenv
 from supabase import create_client
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
+
+
+def _download_thumbnail_b64(url):
+    """Download an image URL and return it as a small data-URL base64 JPEG."""
+    if not url:
+        return None
+    try:
+        from PIL import Image
+        from io import BytesIO
+        import base64
+        r = requests.get(url, timeout=10)
+        r.raise_for_status()
+        img = Image.open(BytesIO(r.content))
+        img.thumbnail((320, 400))
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+        buf = BytesIO()
+        img.save(buf, format="JPEG", quality=75, optimize=True)
+        return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
+    except Exception as e:
+        logger.warning("Thumbnail download failed for %s: %s", url, e)
+        return None
 
 REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 
@@ -37,9 +62,16 @@ def _ytdlp(url, output_dir):
         "quiet": True,
         "no_warnings": True,
     }
+    thumbnail_url = None
     with yt_dlp.YoutubeDL(opts) as ydl:
-        ydl.download([url])
-    return out + ".mp3"
+        info = ydl.extract_info(url, download=True)
+        if info:
+            thumbnail_url = info.get("thumbnail")
+            if not thumbnail_url:
+                thumbs = info.get("thumbnails") or []
+                if thumbs:
+                    thumbnail_url = thumbs[-1].get("url")
+    return out + ".mp3", thumbnail_url
 
 def _apify_instagram(url, output_dir):
     APIFY_TOKEN = os.environ.get("APIFY_TOKEN", "")
@@ -60,6 +92,7 @@ def _apify_instagram(url, output_dir):
     video_url = item.get("videoUrl") or item.get("video_url")
     if not video_url:
         raise ValueError("No se encontró videoUrl en la respuesta de Apify")
+    thumbnail_url = item.get("displayUrl") or item.get("display_url") or item.get("thumbnailUrl")
     video_path = os.path.join(output_dir, "video.mp4")
     with requests.get(video_url, stream=True, timeout=60) as r:
         r.raise_for_status()
@@ -70,7 +103,7 @@ def _apify_instagram(url, output_dir):
     ret = os.system(f'ffmpeg -i "{video_path}" -vn -ar 44100 -ac 2 -b:a 128k "{mp3_path}" -y -loglevel quiet')
     if ret != 0 or not os.path.exists(mp3_path):
         raise ValueError("Error al convertir vídeo a audio con FFmpeg")
-    return mp3_path
+    return mp3_path, thumbnail_url
 
 def download_audio(url, output_dir, platform):
     APIFY_TOKEN = os.environ.get("APIFY_TOKEN", "")
@@ -94,9 +127,10 @@ def transcribe_task(self, url, language, user_id, ip):
 
     self.update_state(state="PROGRESS", meta={"step": "Descargando audio..."})
 
+    thumbnail_url = None
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
-            audio_path = download_audio(url, tmpdir, platform)
+            audio_path, thumbnail_url = download_audio(url, tmpdir, platform)
 
             self.update_state(state="PROGRESS", meta={"step": "Transcribiendo con IA..."})
 
@@ -113,6 +147,12 @@ def transcribe_task(self, url, language, user_id, ip):
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
+    thumb_b64 = None
+    try:
+        thumb_b64 = _download_thumbnail_b64(thumbnail_url)
+    except Exception as e:
+        logger.warning("Thumbnail capture failed for %s: %s", url, e)
+
     db.table("transcriptions").insert({
         "user_id": user_id,
         "ip": ip if not user_id else None,
@@ -121,6 +161,7 @@ def transcribe_task(self, url, language, user_id, ip):
         "language": language,
         "text": text,
         "cost_cents": COST_CENTS if user_id else 0,
+        "thumbnail_b64": thumb_b64,
     }).execute()
 
     return {"ok": True, "text": text, "platform": platform}
