@@ -5,16 +5,13 @@
   <script>
     (function(){
       try {
-        var p = localStorage.getItem("rs-theme") || "system";
-        var t = "dark";
-        if (p === "light") {
-          t = "light";
-        } else if (p === "dark") {
-          t = "dark";
-        } else if (p === "system" && window.matchMedia) {
-          t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        var k = "rs-theme";
+        var p = localStorage.getItem(k);
+        if (p !== "light" && p !== "dark") {
+          p = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+          try { localStorage.setItem(k, p); } catch(_){}
         }
-        document.documentElement.setAttribute("data-theme", t);
+        document.documentElement.setAttribute("data-theme", p);
       } catch(e){
         document.documentElement.setAttribute("data-theme", "dark");
       }
@@ -174,7 +171,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=Instrument+Serif&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Instrument+Serif&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     /* ── Reset & tokens ─────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -456,6 +453,69 @@
     .user-menu-logout:hover { background: rgba(248,113,113,.1) !important; color: #f87171 !important; }
     .user-menu-divider { height: 1px; background: rgba(255,255,255,.08); margin: 4px 0; }
     [data-theme="light"] .user-menu-divider { background: rgba(0,0,0,.08); }
+    .user-menu-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 10px; border-radius: 7px;
+      color: var(--text2); font-size: .83rem;
+    }
+    .user-menu-row-label { flex: 1; }
+    .theme-seg {
+      display: inline-flex;
+      padding: 3px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      gap: 2px;
+    }
+    [data-theme="light"] .theme-seg {
+      border-color: rgba(0,0,0,.1);
+      background: rgba(0,0,0,.04);
+    }
+    .theme-seg-opt {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 22px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: var(--text3);
+      font-size: .8rem;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background .18s, color .18s, transform .18s;
+    }
+    .theme-seg-opt:hover { color: var(--text); }
+    .theme-seg-opt.on {
+      background: rgba(249,115,22,.18);
+      color: var(--text);
+      box-shadow: inset 0 0 0 1px rgba(249,115,22,.3);
+    }
+    [data-theme="light"] .theme-seg-opt.on {
+      background: rgba(249,115,22,.14);
+      box-shadow: inset 0 0 0 1px rgba(249,115,22,.35);
+    }
+    .mob-theme-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px;
+      padding: 8px 12px;
+      margin-top: 8px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surf);
+      font-size: .82rem; color: var(--text2);
+    }
+    .mob-theme-row .theme-seg-opt { width: 34px; height: 26px; font-size: .9rem; }
+    .prof-theme-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px;
+      padding: 6px 4px 10px;
+      margin-bottom: 4px;
+      border-bottom: 1px solid var(--border);
+      font-size: .78rem; color: var(--text3);
+    }
+    .prof-theme-label { font-weight: 500; }
+    @media (max-width: 768px) {
+      .prof-sidebar-footer .prof-theme-row { display: none; }
+    }
 
     .btn-nav {
       padding: 7px 14px; border-radius: var(--rsm);
@@ -3106,6 +3166,1048 @@
       text-align: center; padding: 24px; color: var(--text2); font-size: .85rem;
     }
 
+    /* ── Ideas panel redesign (v0.14.0) ─────────────────────────── */
+    :root {
+      --ideas-accent: #ff6b3d;
+      --ideas-accent-strong: #ef6a29;
+      --ideas-accent-soft: rgba(255, 107, 61, 0.12);
+      --ideas-accent-border: rgba(255, 107, 61, 0.25);
+      --ideas-dev: #5dcaa5;
+      --ideas-dev-soft: rgba(93, 202, 165, 0.12);
+      --ideas-dev-border: rgba(93, 202, 165, 0.25);
+      --ideas-asst: #b5a0ec;
+      --ideas-asst-soft: rgba(125, 91, 184, 0.15);
+      --ideas-asst-border: rgba(125, 91, 184, 0.3);
+      --ideas-proj: #c89968;
+      --ideas-proj-soft: rgba(200, 153, 104, 0.1);
+      --ideas-proj-border: rgba(200, 153, 104, 0.3);
+      --ink-editorial: #f1ead9;
+      --ink-muted: #8a7e72;
+      --ink-cream: #c4b896;
+      --ink-ghost: #6a6258;
+      --ink-body: #d4c9a9;
+      --ideas-card-top: #1f1a22;
+      --ideas-card-bot: #171218;
+      --font-editorial: 'Fraunces', 'Instrument Serif', serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    }
+
+    #profPanelIdeas { position: relative; }
+
+    /* Hero ─────────────────────────────────────────────────── */
+    .ideas-hero-wrap {
+      position: relative;
+      padding: 18px 4px 30px;
+      margin: -8px -4px 28px;
+      overflow: hidden;
+      border-radius: 18px;
+    }
+    .ideas-hero-waves {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      opacity: .13;
+      z-index: 0;
+    }
+    .ideas-hero {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      gap: 32px;
+      padding: 28px 8px 10px;
+    }
+    .ideas-hero-left { min-width: 0; }
+    .ideas-eyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      margin-bottom: 18px;
+    }
+    .ideas-eyebrow-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--ideas-accent);
+      box-shadow: 0 0 0 0 rgba(255, 107, 61, 0.6);
+      animation: ideasPulse 2.4s ease-out infinite;
+    }
+    @keyframes ideasPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(255, 107, 61, 0.55); }
+      70%  { box-shadow: 0 0 0 10px rgba(255, 107, 61, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 107, 61, 0); }
+    }
+    .ideas-h1 {
+      font-family: var(--font-editorial);
+      font-size: clamp(34px, 5vw, 56px);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.02;
+      color: var(--ink-editorial);
+      margin: 0 0 16px;
+    }
+    .ideas-h1 em {
+      font-style: italic;
+      font-weight: 500;
+      color: var(--ideas-accent);
+    }
+    .ideas-sub {
+      font-family: var(--font-body);
+      font-size: 15px; line-height: 1.6;
+      color: var(--ink-muted);
+      max-width: 56ch;
+      font-weight: 300;
+    }
+    .ideas-sub-em { color: var(--ink-cream); }
+
+    .ideas-hero-right {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 20px;
+      min-width: 160px;
+      padding-bottom: 6px;
+    }
+    .ideas-hero-right-nums {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .ideas-hooks {
+      width: 96px;
+      height: 96px;
+      flex-shrink: 0;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      filter: drop-shadow(0 0 14px rgba(255, 217, 61, 0.22));
+      transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+    }
+    #profPanelIdeas:hover .ideas-hooks { transform: translateY(-2px) rotate(-2deg); }
+    .ideas-counter {
+      font-family: var(--font-editorial);
+      font-size: clamp(52px, 8vw, 76px);
+      font-weight: 500;
+      font-feature-settings: "tnum" 1;
+      color: var(--ideas-accent);
+      line-height: 0.9;
+      letter-spacing: -0.03em;
+      display: block;
+      text-shadow: 0 4px 30px rgba(255, 107, 61, 0.18);
+    }
+    .ideas-counter-lbl {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10.5px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      text-align: right;
+    }
+    .ideas-counter-lbl b { color: var(--ideas-accent); font-weight: 500; }
+
+    /* Input card ──────────────────────────────────────────── */
+    .ideas-input-card {
+      position: relative;
+      background: linear-gradient(180deg, var(--ideas-card-top) 0%, var(--ideas-card-bot) 100%);
+      border: 1px solid rgba(255, 107, 61, 0.18);
+      border-radius: 18px;
+      padding: 22px 24px 20px;
+      margin-bottom: 28px;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 60px rgba(255, 107, 61, 0.06);
+    }
+    .ideas-input-label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--ink-cream);
+      margin-bottom: 10px;
+    }
+    .ideas-input-body {
+      display: flex; gap: 18px; align-items: stretch;
+    }
+    .ideas-input-col { flex: 1; min-width: 0; }
+    .ideas-textarea {
+      width: 100%;
+      background: transparent;
+      border: none; outline: none;
+      color: var(--ink-editorial);
+      font-family: var(--font-body);
+      font-size: 16px; line-height: 1.5;
+      min-height: 72px; max-height: 200px;
+      resize: vertical;
+      padding: 0;
+    }
+    .ideas-textarea::placeholder {
+      color: rgba(138, 126, 114, 0.75);
+      font-style: italic;
+    }
+    .ideas-chips {
+      display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap;
+      align-items: center;
+    }
+    .ideas-chip-wrap { position: relative; display: inline-flex; }
+    .ideas-chip-wrap select {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      opacity: 0; cursor: pointer;
+      z-index: 2;
+    }
+    .ideas-chip {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-family: var(--font-body);
+      font-size: 12px; font-weight: 500;
+      cursor: pointer;
+      transition: background .18s, border-color .18s, transform .18s;
+      position: relative;
+      pointer-events: none;
+    }
+    .ideas-chip-asst {
+      background: var(--ideas-asst-soft);
+      border: 1px solid var(--ideas-asst-border);
+      color: var(--ideas-asst);
+    }
+    .ideas-chip-proj {
+      background: var(--ideas-proj-soft);
+      border: 1px solid var(--ideas-proj-border);
+      color: var(--ideas-proj);
+    }
+    .ideas-chip-wrap:hover .ideas-chip {
+      background: rgba(125, 91, 184, 0.22);
+      transform: translateY(-1px);
+    }
+    .ideas-chip-wrap:hover .ideas-chip-proj {
+      background: rgba(200, 153, 104, 0.18);
+    }
+    .ideas-chip svg { flex-shrink: 0; opacity: .85; }
+    .ideas-chip-caret { margin-left: 2px; opacity: .6; }
+
+    .ideas-input-col-right {
+      display: flex; align-items: flex-end;
+    }
+    .ideas-btn-develop {
+      display: inline-flex; align-items: center; gap: 9px;
+      padding: 12px 22px;
+      border-radius: 11px;
+      border: none;
+      font-family: var(--font-body);
+      font-size: 14px; font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, #ff6b3d 0%, #ef6a29 100%);
+      cursor: pointer;
+      transition: transform .16s, box-shadow .16s, filter .16s;
+      box-shadow:
+        0 4px 16px rgba(255, 107, 61, 0.32),
+        0 1px 0 rgba(255, 255, 255, 0.22) inset,
+        0 -1px 0 rgba(0, 0, 0, 0.15) inset;
+      letter-spacing: -0.005em;
+    }
+    .ideas-btn-develop:hover {
+      transform: translateY(-1px);
+      box-shadow:
+        0 7px 22px rgba(255, 107, 61, 0.42),
+        0 1px 0 rgba(255, 255, 255, 0.22) inset,
+        0 -1px 0 rgba(0, 0, 0, 0.15) inset;
+      filter: brightness(1.04);
+    }
+    .ideas-btn-develop:active { transform: translateY(1px); filter: brightness(0.96); }
+    .ideas-btn-develop:disabled { opacity: .65; cursor: wait; transform: none; }
+    .ideas-btn-develop svg { flex-shrink: 0; }
+
+    /* Ideas list ─────────────────────────────────────────── */
+    .ideas-list { display: flex; flex-direction: column; gap: 16px; }
+    .ideas-card {
+      position: relative;
+      background: linear-gradient(180deg, var(--ideas-card-top) 0%, var(--ideas-card-bot) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 22px 24px;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 4px 16px rgba(0, 0, 0, 0.3);
+      transition: transform .22s, box-shadow .22s, border-color .22s;
+    }
+    .ideas-card:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 10px 28px rgba(0, 0, 0, 0.42);
+    }
+    .ideas-card.is-draft { border-left: 3px solid var(--ideas-accent); }
+    .ideas-card.is-draft:hover {
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 10px 28px rgba(0, 0, 0, 0.42),
+        0 0 40px rgba(255, 107, 61, 0.08);
+    }
+    .ideas-card.is-developed { border: 1px solid rgba(93, 202, 165, 0.18); }
+    .ideas-card.is-scripted { opacity: 0.72; }
+    .ideas-card.is-scripted:hover { opacity: 0.88; }
+
+    .ideas-card-head {
+      display: flex; align-items: center; gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .ideas-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 3px 9px;
+      border-radius: 5px;
+      flex-shrink: 0;
+    }
+    .ideas-badge.b-draft { color: var(--ideas-accent); background: rgba(255, 107, 61, 0.1); }
+    .ideas-badge.b-developed { color: var(--ideas-dev); background: rgba(93, 202, 165, 0.1); }
+    .ideas-badge.b-scripted { color: var(--ink-muted); background: rgba(138, 126, 114, 0.1); }
+    .ideas-badge svg { flex-shrink: 0; }
+
+    .ideas-cat {
+      display: inline-flex; align-items: center;
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 3px 9px;
+      border-radius: 5px;
+    }
+    .ideas-cat.cat-motivation   { color: #ef6a29; background: rgba(239, 106, 41, 0.1); }
+    .ideas-cat.cat-humor        { color: #f0997b; background: rgba(240, 153, 123, 0.1); }
+    .ideas-cat.cat-educational  { color: #85b7eb; background: rgba(133, 183, 235, 0.1); }
+    .ideas-cat.cat-tutorial     { color: #85b7eb; background: rgba(133, 183, 235, 0.1); }
+    .ideas-cat.cat-storytelling { color: #c89968; background: rgba(200, 153, 104, 0.1); }
+    .ideas-cat.cat-opinion      { color: #b5a0ec; background: rgba(181, 160, 236, 0.1); }
+    .ideas-cat.cat-case_study   { color: #b5a0ec; background: rgba(181, 160, 236, 0.1); }
+    .ideas-cat.cat-trend        { color: #ff6b3d; background: rgba(255, 107, 61, 0.1); }
+    .ideas-cat.cat-behind_scenes{ color: #c4b896; background: rgba(196, 184, 150, 0.08); }
+    .ideas-cat.cat-list         { color: #5dcaa5; background: rgba(93, 202, 165, 0.08); }
+    .ideas-cat.cat-default      { color: var(--ink-cream); background: rgba(196, 184, 150, 0.08); }
+
+    .ideas-card-title {
+      font-family: var(--font-editorial);
+      font-size: 20px; font-weight: 500;
+      line-height: 1.22;
+      letter-spacing: -0.01em;
+      color: var(--ink-editorial);
+      flex: 1; min-width: 0;
+    }
+    .ideas-card.is-scripted .ideas-card-title { color: #b8ad9c; }
+    .ideas-card-date {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-ghost);
+      letter-spacing: 0.05em;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    .ideas-card-raw {
+      font-family: var(--font-body);
+      font-size: 14px; line-height: 1.55;
+      color: var(--ink-muted);
+      margin-bottom: 14px;
+    }
+    .ideas-card.is-scripted .ideas-card-raw {
+      font-size: 13px;
+      color: var(--ink-ghost);
+      margin-bottom: 12px;
+    }
+    .ideas-develop-block {
+      margin: 12px 0 14px;
+      padding: 14px 16px 14px 18px;
+      background: rgba(0, 0, 0, 0.22);
+      border-radius: 10px;
+      border-left: 2px solid rgba(93, 202, 165, 0.3);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .ideas-develop-lbl {
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--ideas-dev);
+      margin-bottom: 6px;
+      display: block;
+    }
+    .ideas-develop-text {
+      font-family: var(--font-editorial);
+      font-size: 14.5px;
+      line-height: 1.55;
+      color: var(--ink-body);
+      font-weight: 400;
+    }
+    .ideas-develop-text.italic {
+      font-style: italic;
+      color: #e2d6ae;
+    }
+    .ideas-card-acts {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-top: 4px;
+    }
+    .ideas-act {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 13px; font-weight: 500;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s, transform .15s;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--ink-muted);
+    }
+    .ideas-act:hover { transform: translateY(-1px); }
+    .ideas-act.primary-orange {
+      background: var(--ideas-accent-soft);
+      color: var(--ideas-accent);
+      border-color: var(--ideas-accent-border);
+    }
+    .ideas-act.primary-orange:hover {
+      background: rgba(255, 107, 61, 0.18);
+      border-color: rgba(255, 107, 61, 0.4);
+    }
+    .ideas-act.primary-green {
+      background: var(--ideas-dev-soft);
+      color: var(--ideas-dev);
+      border-color: var(--ideas-dev-border);
+    }
+    .ideas-act.primary-green:hover {
+      background: rgba(93, 202, 165, 0.18);
+      border-color: rgba(93, 202, 165, 0.4);
+    }
+    .ideas-act.ghost { border-color: rgba(255, 255, 255, 0.08); }
+    .ideas-act.ghost:hover {
+      border-color: rgba(255, 255, 255, 0.18);
+      color: var(--ink-editorial);
+    }
+    .ideas-act.danger:hover { color: #f0997b; border-color: rgba(240, 153, 123, 0.3); }
+    .ideas-act svg { flex-shrink: 0; }
+
+    .ideas-scripted-pointer {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 10.5px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--ideas-dev);
+      background: none; border: none;
+      padding: 2px 0;
+      cursor: pointer;
+      transition: gap .2s, color .15s;
+    }
+    .ideas-scripted-pointer:hover { gap: 12px; color: #76dbb6; }
+
+    /* Empty state */
+    .ideas-empty-editorial {
+      text-align: left;
+      padding: 48px 28px;
+      border: 1px dashed rgba(255, 107, 61, 0.18);
+      border-radius: 18px;
+      background: rgba(255, 107, 61, 0.03);
+    }
+    .ideas-empty-editorial h3 {
+      font-family: var(--font-editorial);
+      font-size: 24px;
+      font-weight: 500;
+      font-style: italic;
+      color: var(--ink-editorial);
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+    .ideas-empty-editorial p {
+      font-family: var(--font-body);
+      font-size: 14px; line-height: 1.55;
+      color: var(--ink-muted);
+      max-width: 48ch;
+    }
+
+    /* Sidebar: Ideas-active accent override ─────────────── */
+    .prof-nav-item.on.on-ideas {
+      background: linear-gradient(90deg,
+        rgba(255, 107, 61, 0.18) 0%,
+        rgba(255, 107, 61, 0.03) 100%);
+      border-color: rgba(255, 107, 61, 0.22);
+      color: var(--ideas-accent);
+      box-shadow: 0 0 16px rgba(255, 107, 61, 0.12);
+    }
+    .prof-nav-item.on.on-ideas::before {
+      background: var(--ideas-accent);
+      box-shadow: 0 0 8px rgba(255, 107, 61, 0.6);
+    }
+
+    /* Responsive ─────────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .ideas-hooks { width: 80px; height: 80px; }
+      .ideas-hero-right { gap: 16px; }
+    }
+    @media (max-width: 820px) {
+      .ideas-hero {
+        grid-template-columns: 1fr;
+        gap: 18px;
+        padding: 20px 6px 6px;
+      }
+      .ideas-hero-right {
+        justify-content: flex-start;
+        min-width: 0;
+        gap: 14px;
+      }
+      .ideas-hero-right-nums { align-items: flex-start; }
+      .ideas-hooks { width: 72px; height: 72px; }
+      .ideas-counter { font-size: 54px; }
+      .ideas-counter-lbl { text-align: left; }
+      .ideas-h1 { font-size: 36px; }
+      .ideas-input-body { flex-direction: column; gap: 14px; }
+      .ideas-input-col-right { width: 100%; }
+      .ideas-btn-develop { width: 100%; justify-content: center; }
+      .ideas-card { padding: 18px 18px; }
+      .ideas-card-title { font-size: 18px; }
+      .ideas-card-date { margin-left: 0; }
+    }
+    @media (max-width: 480px) {
+      .ideas-hero-wrap { margin: -4px -4px 20px; }
+      .ideas-hooks { width: 64px; height: 64px; }
+      .ideas-input-card { padding: 18px 16px; }
+      .ideas-develop-block { padding: 12px 14px; }
+      .ideas-act { font-size: 12.5px; padding: 6px 12px; }
+    }
+
+    /* Light theme — invert paper ───────────────────────── */
+    [data-theme="light"] #profPanelIdeas {
+      --ink-editorial: #1a140f;
+      --ink-muted: #6b5f52;
+      --ink-cream: #5a4f42;
+      --ink-ghost: #8a7e72;
+      --ink-body: #2a2319;
+      --ideas-card-top: #fbf7ef;
+      --ideas-card-bot: #f3ede0;
+    }
+    [data-theme="light"] .ideas-input-card,
+    [data-theme="light"] .ideas-card {
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        0 4px 16px rgba(180, 150, 100, 0.12);
+    }
+    [data-theme="light"] .ideas-develop-block { background: rgba(255, 255, 255, 0.5); }
+    [data-theme="light"] .ideas-hero-waves { opacity: 0.18; }
+
+    /* ── Transcriptions panel redesign (v0.13.4) ───────────────── */
+    :root {
+      --trans-accent: #ef6a29;
+      --trans-accent-soft: rgba(239, 106, 41, 0.12);
+      --trans-accent-border: rgba(239, 106, 41, 0.25);
+      --trans-accent-hi: rgba(239, 106, 41, 0.08);
+    }
+
+    #profPanelTransc { position: relative; }
+
+    .trans-hero-wrap {
+      position: relative;
+      padding: 18px 4px 30px;
+      margin: -8px -4px 28px;
+      overflow: hidden;
+      border-radius: 18px;
+    }
+    .trans-hero-waves {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      opacity: .12;
+      z-index: 0;
+    }
+    .trans-hero {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      gap: 32px;
+      padding: 28px 8px 10px;
+    }
+    .trans-hero-left { min-width: 0; }
+    .trans-eyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      margin-bottom: 18px;
+    }
+    .trans-eyebrow-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--trans-accent);
+      box-shadow: 0 0 0 0 rgba(239, 106, 41, 0.6);
+      animation: transPulse 2.4s ease-out infinite;
+    }
+    @keyframes transPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(239, 106, 41, 0.55); }
+      70%  { box-shadow: 0 0 0 10px rgba(239, 106, 41, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 106, 41, 0); }
+    }
+    .trans-h1 {
+      font-family: var(--font-editorial);
+      font-size: clamp(34px, 5vw, 56px);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.02;
+      color: var(--ink-editorial);
+      margin: 0 0 16px;
+    }
+    .trans-h1 em {
+      font-style: italic;
+      font-weight: 500;
+      color: var(--trans-accent);
+    }
+    .trans-sub {
+      font-family: var(--font-body);
+      font-size: 15px; line-height: 1.6;
+      color: var(--ink-muted);
+      max-width: 58ch;
+      font-weight: 300;
+    }
+    .trans-sub-em { color: var(--ink-cream); }
+
+    .trans-hero-right {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 20px;
+      min-width: 160px;
+      padding-bottom: 6px;
+    }
+    .trans-hero-right-nums {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .trans-hooks {
+      width: 96px; height: 96px;
+      flex-shrink: 0;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      filter: drop-shadow(0 0 14px rgba(239, 106, 41, 0.22));
+      transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+    }
+    #profPanelTransc:hover .trans-hooks { transform: translateY(-2px) rotate(2deg); }
+    .trans-counter {
+      font-family: var(--font-editorial);
+      font-size: clamp(52px, 8vw, 76px);
+      font-weight: 500;
+      font-feature-settings: "tnum" 1;
+      color: var(--trans-accent);
+      line-height: 0.9;
+      letter-spacing: -0.03em;
+      display: block;
+      text-shadow: 0 4px 30px rgba(239, 106, 41, 0.18);
+    }
+    .trans-counter-lbl {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10.5px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      text-align: right;
+    }
+
+    /* CTA ribbon */
+    .trans-cta {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px;
+      background: linear-gradient(180deg, var(--ideas-card-top) 0%, var(--ideas-card-bot) 100%);
+      border: 1px solid rgba(239, 106, 41, 0.14);
+      border-radius: 14px;
+      padding: 16px 22px;
+      margin-bottom: 28px;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 4px 16px rgba(0, 0, 0, 0.3);
+      transition: box-shadow .22s, border-color .22s, transform .22s;
+    }
+    .trans-cta:hover {
+      border-color: rgba(239, 106, 41, 0.3);
+      transform: translateY(-1px);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 8px 24px rgba(0, 0, 0, 0.42),
+        0 0 40px rgba(239, 106, 41, 0.08);
+    }
+    .trans-cta-left {
+      display: flex; align-items: center; gap: 14px;
+      min-width: 0;
+    }
+    .trans-cta-glyph {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: var(--trans-accent-soft);
+      border: 1px solid var(--trans-accent-border);
+      color: var(--trans-accent);
+      flex-shrink: 0;
+    }
+    .trans-cta-text {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--ink-muted);
+      line-height: 1.4;
+    }
+    .trans-cta-go {
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--trans-accent);
+      white-space: nowrap;
+      transition: gap .2s, color .15s;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .trans-cta:hover .trans-cta-go { color: #ff8a57; gap: 10px; }
+
+    /* Cards */
+    .trans-list { display: flex; flex-direction: column; gap: 14px; }
+    .trans-card {
+      position: relative;
+      background: linear-gradient(180deg, var(--ideas-card-top) 0%, var(--ideas-card-bot) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 20px 24px;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 4px 16px rgba(0, 0, 0, 0.3);
+      transition: transform .22s, box-shadow .22s, border-color .22s;
+    }
+    .trans-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(239, 106, 41, 0.2);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 10px 28px rgba(0, 0, 0, 0.42),
+        0 0 40px rgba(239, 106, 41, 0.05);
+    }
+    .trans-card-header {
+      display: flex; align-items: baseline; gap: 14px;
+      margin-bottom: 10px;
+    }
+    .trans-title {
+      flex: 1; min-width: 0;
+      font-family: var(--font-editorial);
+      font-size: 20px; font-weight: 500;
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+      color: var(--ink-editorial);
+      margin: 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .trans-title-meta {
+      font-family: var(--font-mono);
+      font-size: 11px; color: var(--ink-ghost);
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .trans-card-head {
+      display: flex; align-items: center; gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .trans-plat {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 3px 9px;
+      border-radius: 5px;
+      flex-shrink: 0;
+    }
+    .trans-plat.p-instagram {
+      color: var(--trans-accent);
+      background: var(--trans-accent-hi);
+      border: 1px solid rgba(239, 106, 41, 0.18);
+    }
+    .trans-plat.p-tiktok {
+      color: var(--ink-cream);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .trans-plat svg { flex-shrink: 0; }
+    .trans-url {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 400;
+      color: var(--ink-muted);
+      text-decoration: none;
+      max-width: 240px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      transition: color .15s, gap .2s;
+    }
+    .trans-url:hover { color: var(--trans-accent); gap: 7px; }
+    .trans-url svg { flex-shrink: 0; opacity: .7; }
+    .trans-meta {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 11px; color: var(--ink-ghost);
+      letter-spacing: 0.04em;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    .trans-meta-sep { opacity: .5; }
+
+    .trans-preview-wrap {
+      position: relative;
+      margin-bottom: 12px;
+      cursor: pointer;
+    }
+    .trans-preview {
+      font-family: var(--font-body);
+      font-size: 14px; line-height: 1.6;
+      color: var(--ink-body);
+      font-weight: 300;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      -webkit-mask-image: linear-gradient(180deg, #000 60%, rgba(0,0,0,0.3) 100%);
+              mask-image: linear-gradient(180deg, #000 60%, rgba(0,0,0,0.3) 100%);
+      transition: color .15s;
+    }
+    .trans-preview-wrap:hover .trans-preview { color: var(--ink-editorial); }
+    .trans-expand {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 10.5px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--trans-accent);
+      background: none; border: none; padding: 0;
+      cursor: pointer;
+      transition: gap .2s, color .15s;
+    }
+    .trans-expand:hover { gap: 10px; color: #ff8a57; }
+    .trans-card.expanded .trans-expand-label-collapsed { display: none; }
+    .trans-card:not(.expanded) .trans-expand-label-expanded { display: none; }
+    .trans-expand svg { transition: transform .3s ease; }
+    .trans-card.expanded .trans-expand svg { transform: rotate(-90deg); }
+
+    .trans-full {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows .3s ease, margin-top .3s ease, margin-bottom .3s ease;
+      margin-top: 0;
+    }
+    .trans-full > div { overflow: hidden; }
+    .trans-card.expanded .trans-full {
+      grid-template-rows: 1fr;
+      margin-top: 14px;
+      margin-bottom: 2px;
+    }
+    .trans-full-sep {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.06);
+      margin-bottom: 14px;
+    }
+    [data-theme="light"] .trans-full-sep { background: rgba(0,0,0,0.08); }
+    .trans-full-text {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      padding: 16px 20px;
+      border-left: 2px solid rgba(239, 106, 41, 0.3);
+      font-family: var(--font-editorial);
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1.7;
+      color: var(--ink-body);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    [data-theme="light"] .trans-full-text { background: rgba(0,0,0,0.03); }
+
+    .trans-acts {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-top: 4px;
+    }
+    .trans-act {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 13px; font-weight: 500;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s, transform .15s;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: transparent;
+      color: var(--ink-muted);
+    }
+    .trans-act:hover { transform: translateY(-1px); border-color: rgba(255, 255, 255, 0.18); color: var(--ink-editorial); }
+    .trans-act.primary {
+      background: var(--trans-accent-soft);
+      color: var(--trans-accent);
+      border-color: var(--trans-accent-border);
+    }
+    .trans-act.primary:hover {
+      background: rgba(239, 106, 41, 0.2);
+      border-color: rgba(239, 106, 41, 0.4);
+      color: #ff8a57;
+    }
+    .trans-act.danger { color: var(--ink-ghost); }
+    .trans-act.danger:hover { color: #f09595; border-color: rgba(240,149,149,0.3); }
+    .trans-act svg { flex-shrink: 0; }
+
+    .trans-more {
+      display: none;
+      width: 32px; height: 32px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--ink-muted);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 0;
+      align-items: center; justify-content: center;
+    }
+
+    /* Empty state */
+    .trans-empty {
+      text-align: center;
+      padding: 56px 28px;
+      border: 1px dashed rgba(239, 106, 41, 0.18);
+      border-radius: 18px;
+      background: rgba(239, 106, 41, 0.025);
+    }
+    .trans-empty img {
+      width: 120px; height: 120px;
+      image-rendering: pixelated;
+      margin: 0 auto 18px;
+      display: block;
+      filter: drop-shadow(0 0 18px rgba(239, 106, 41, 0.22));
+    }
+    .trans-empty h3 {
+      font-family: var(--font-editorial);
+      font-size: 28px; font-weight: 500;
+      font-style: italic;
+      color: var(--ink-editorial);
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+    .trans-empty p {
+      font-family: var(--font-body);
+      font-size: 14px; line-height: 1.55;
+      color: var(--ink-muted);
+      max-width: 48ch;
+      margin: 0 auto 18px;
+    }
+    .trans-empty-cta {
+      display: inline-flex; align-items: center; gap: 9px;
+      padding: 12px 22px;
+      border-radius: 11px;
+      border: none;
+      font-family: var(--font-body);
+      font-size: 14px; font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, #ff6b3d 0%, #ef6a29 100%);
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow:
+        0 4px 16px rgba(255, 107, 61, 0.32),
+        0 1px 0 rgba(255, 255, 255, 0.22) inset;
+      transition: transform .16s, box-shadow .16s;
+    }
+    .trans-empty-cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 7px 22px rgba(255, 107, 61, 0.42), 0 1px 0 rgba(255, 255, 255, 0.22) inset;
+    }
+
+    /* Sidebar accent */
+    .prof-nav-item.on.on-transcriptions {
+      background: linear-gradient(90deg,
+        rgba(239, 106, 41, 0.18) 0%,
+        rgba(239, 106, 41, 0.03) 100%);
+      border-color: rgba(239, 106, 41, 0.22);
+      color: var(--trans-accent);
+      box-shadow: 0 0 16px rgba(239, 106, 41, 0.1);
+    }
+    .prof-nav-item.on.on-transcriptions::before {
+      background: var(--trans-accent);
+      box-shadow: 0 0 8px rgba(239, 106, 41, 0.55);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .trans-hooks { width: 80px; height: 80px; }
+      .trans-hero-right { gap: 16px; }
+    }
+    @media (max-width: 820px) {
+      .trans-hero {
+        grid-template-columns: 1fr;
+        gap: 18px;
+        padding: 20px 6px 6px;
+      }
+      .trans-hero-right {
+        justify-content: flex-start;
+        min-width: 0;
+        gap: 14px;
+      }
+      .trans-hero-right-nums { align-items: flex-start; }
+      .trans-hooks { width: 72px; height: 72px; }
+      .trans-counter { font-size: 54px; }
+      .trans-counter-lbl { text-align: left; }
+      .trans-h1 { font-size: 36px; }
+      .trans-card { padding: 18px; }
+      .trans-card-header { flex-wrap: wrap; gap: 6px 12px; }
+      .trans-title { font-size: 18px; flex-basis: 100%; }
+      .trans-title-meta { font-size: 10.5px; }
+      .trans-card-head { gap: 8px; }
+      .trans-url { max-width: 160px; }
+      .trans-meta { margin-left: 0; }
+      .trans-full-text { padding: 14px 16px; font-size: 14.5px; }
+    }
+    @media (max-width: 620px) {
+      .trans-acts .trans-act.mob-hide { display: none; }
+      .trans-more { display: inline-flex; }
+    }
+    @media (max-width: 480px) {
+      .trans-hero-wrap { margin: -4px -4px 20px; }
+      .trans-hooks { width: 64px; height: 64px; }
+      .trans-cta { padding: 14px 16px; flex-direction: column; align-items: flex-start; gap: 10px; }
+      .trans-act { font-size: 12.5px; padding: 6px 12px; }
+    }
+
+    [data-theme="light"] #profPanelTransc {
+      --ink-editorial: #1a140f;
+      --ink-muted: #6b5f52;
+      --ink-cream: #5a4f42;
+      --ink-ghost: #8a7e72;
+      --ink-body: #2a2319;
+      --ideas-card-top: #fbf7ef;
+      --ideas-card-bot: #f3ede0;
+    }
+    [data-theme="light"] .trans-card,
+    [data-theme="light"] .trans-cta {
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        0 4px 16px rgba(180, 150, 100, 0.12);
+    }
+    [data-theme="light"] .trans-hero-waves { opacity: 0.18; }
+
     /* Team members list */
     .team-list { display: flex; flex-direction: column; gap: 8px; }
     .team-member {
@@ -4204,7 +5306,7 @@
     {% if not workspace %}<a class="btn-nav hi" id="btnWorkspace" href="/app" onclick="ctaWorkspaceClick()" style="display:none;text-decoration:none" data-i18n="nav.workspace">Ir a mi workspace →</a>{% endif %}
     <button class="btn-nav" id="btnLogin" onclick="openAuth('login','nav_login')" data-i18n="nav.login">Log in</button>
     <button class="btn-nav hi" id="btnReg" onclick="openAuth('register','nav_login')" data-i18n="nav.register">Free →</button>
-    <button class="theme-btn" id="themeBtn" title="Theme: System"{% if workspace %} style="display:none"{% endif %}>💻</button>
+    <button class="theme-btn" id="themeBtn" title="Theme">🌙</button>
     <div class="user-menu-wrap">
       <div class="user-pill" id="userPill" onclick="toggleUserMenu(event)" style="cursor:pointer" data-tour="user-profile">
         <div class="avatar" id="userAv" style="overflow:hidden;padding:0"></div>
@@ -4215,7 +5317,13 @@
         <a class="user-menu-item" href="/settings" onclick="window.track&&window.track.avatarDropdownAction({action:'account'})" style="text-decoration:none">⚙️ <span data-i18n="nav.my_account">Mi cuenta</span></a>
         <button class="user-menu-item" onclick="window.track&&window.track.avatarDropdownAction({action:'plan'});goMyPlan();closeUserMenu()">💎 <span data-i18n="nav.my_plan">Mi plan</span></button>
         <div class="user-menu-divider"></div>
-        <button class="user-menu-item" onclick="window.track&&window.track.avatarDropdownAction({action:'theme'});cycleTheme()">🌓 <span data-i18n="nav.dark_mode">Modo oscuro</span></button>
+        <div class="user-menu-row" onclick="event.stopPropagation()">
+          <span class="user-menu-row-label">🌓 <span data-i18n="nav.theme">Tema</span></span>
+          <div class="theme-seg" role="group" aria-label="Theme">
+            <button type="button" class="theme-seg-opt" data-val="light" onclick="window.track&&window.track.avatarDropdownAction({action:'theme'});setThemeBinary('light', event)" aria-label="Light">☀️</button>
+            <button type="button" class="theme-seg-opt" data-val="dark" onclick="window.track&&window.track.avatarDropdownAction({action:'theme'});setThemeBinary('dark', event)" aria-label="Dark">🌙</button>
+          </div>
+        </div>
         <button class="user-menu-item" onclick="window.track&&window.track.avatarDropdownAction({action:'language'});toggleLang()">🌐 <span data-i18n="nav.language">Idioma</span> · <span id="navLangToggleCode">{{ 'EN' if lang == 'en' else 'ES' }}</span></button>
         <div class="user-menu-divider"></div>
         <a class="user-menu-item" href="/affiliate" onclick="window.track&&window.track.avatarDropdownAction({action:'affiliate'})" style="text-decoration:none">🤝 <span data-i18n="nav.affiliates">Afiliados</span></a>
@@ -4245,6 +5353,13 @@
       <div class="mob-lang-row">
         <a class="mob-lang-btn{% if lang|default('es') == 'es' %} active{% endif %}" href="/es/">ES</a>
         <a class="mob-lang-btn{% if lang|default('es') == 'en' %} active{% endif %}" href="/en/">EN</a>
+      </div>
+      <div class="mob-theme-row">
+        <span class="mob-theme-label">🌓 <span data-i18n="nav.theme">Tema</span></span>
+        <div class="theme-seg" role="group" aria-label="Theme">
+          <button type="button" class="theme-seg-opt" data-val="light" onclick="setThemeBinary('light', event)" aria-label="Light">☀️</button>
+          <button type="button" class="theme-seg-opt" data-val="dark" onclick="setThemeBinary('dark', event)" aria-label="Dark">🌙</button>
+        </div>
       </div>
     </div>
     <!-- Navigation -->
@@ -5197,6 +6312,13 @@
       </div>
 
       <div class="prof-sidebar-footer">
+        <div class="prof-theme-row">
+          <span class="prof-theme-label">🌓 <span data-i18n="nav.theme">Tema</span></span>
+          <div class="theme-seg" role="group" aria-label="Theme">
+            <button type="button" class="theme-seg-opt" data-val="light" onclick="setThemeBinary('light', event)" aria-label="Light">☀️</button>
+            <button type="button" class="theme-seg-opt" data-val="dark" onclick="setThemeBinary('dark', event)" aria-label="Dark">🌙</button>
+          </div>
+        </div>
         <button class="btn-3d btn-3d-primary" style="padding:9px;border-radius:8px;background:var(--purple);color:#fff;font-size:.8rem;font-weight:600;border:none;cursor:pointer" onclick="closeProfile();openTopup()" data-i18n="prof.topup">+ Top up</button>
         <button id="profManageSubSidebar" class="btn-3d btn-3d-secondary" style="display:none;padding:8px;border-radius:8px;background:transparent;color:var(--text3);font-size:.75rem;border:1px solid var(--border);cursor:pointer" onclick="manageSub()" data-i18n="prof.manage_sub">Manage subscription</button>
         <button class="btn-3d btn-3d-secondary" style="padding:8px;border-radius:8px;background:transparent;color:var(--text3);font-size:.75rem;border:1px solid var(--border);cursor:pointer" onclick="closeProfile()" data-i18n="prof.back">← Back to app</button>
@@ -5264,13 +6386,62 @@
 
       <!-- Transcriptions panel -->
       <div id="profPanelTransc" style="display:none">
-        <div class="prof-section-head">
-          <div>
-            <div class="prof-section-title" data-i18n="prof.transcriptions">Transcriptions</div>
-            <div class="prof-section-sub" data-i18n="prof.transc_sub">Raw transcriptions from your reels</div>
+
+        <!-- Editorial hero -->
+        <div class="trans-hero-wrap">
+          <svg class="trans-hero-waves" viewBox="0 0 1200 380" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0,210 Q180,150 360,200 T720,200 T1080,190 L1200,210 L1200,380 L0,380 Z" fill="#ef6a29"/>
+            <path d="M0,250 Q220,200 420,240 T780,240 T1200,250 L1200,380 L0,380 Z" fill="#7d5bb8" opacity="0.6"/>
+            <path d="M0,300 Q200,260 420,290 T820,290 T1200,300 L1200,380 L0,380 Z" fill="#c89968" opacity="0.5"/>
+            <circle cx="980" cy="120" r="3" fill="#ef6a29" opacity="0.7"/>
+            <circle cx="1080" cy="80" r="2" fill="#c4b896" opacity="0.6"/>
+            <circle cx="160" cy="100" r="2.5" fill="#7d5bb8" opacity="0.6"/>
+          </svg>
+          <div class="trans-hero">
+            <div class="trans-hero-left">
+              <div class="trans-eyebrow">
+                <span class="trans-eyebrow-dot"></span>
+                <span data-i18n-es="TRANSCRIPCIONES · VOCES CAPTURADAS" data-i18n-en="TRANSCRIPTIONS · CAPTURED VOICES">TRANSCRIPCIONES · VOCES CAPTURADAS</span>
+              </div>
+              <h1 class="trans-h1">
+                <span data-i18n-es="Escucha lo que" data-i18n-en="Replay everything you">Escucha lo que</span>
+                <em data-i18n-es="capturas" data-i18n-en="catch">capturas</em>.
+              </h1>
+              <p class="trans-sub">
+                <span data-i18n-es="Todos los reels que has convertido en texto." data-i18n-en="Every reel you've turned into text.">Todos los reels que has convertido en texto.</span>
+                <span class="trans-sub-em" data-i18n-es="Copia, transforma, prepáralos para tu próximo guión." data-i18n-en="Copy, transform, prime them for your next script.">Copia, transforma, prepáralos para tu próximo guión.</span>
+              </p>
+            </div>
+            <div class="trans-hero-right">
+              <img class="trans-hooks" src="{{ url_for('static', filename='img/hooks/hooks-transcribir.svg') }}" alt="" aria-hidden="true" />
+              <div class="trans-hero-right-nums">
+                <span class="trans-counter" id="transCounterNum">0</span>
+                <span class="trans-counter-lbl" data-i18n-es="TRANSCRIPCIONES GUARDADAS" data-i18n-en="TRANSCRIPTIONS SAVED">TRANSCRIPCIONES GUARDADAS</span>
+              </div>
+            </div>
           </div>
         </div>
-        <div id="profListTransc"></div>
+
+        <!-- CTA back to dashboard -->
+        <a href="#" class="trans-cta" id="transCtaDashboard" onclick="event.preventDefault();transcToDashboard()">
+          <div class="trans-cta-left">
+            <span class="trans-cta-glyph" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path d="M8 3 V13 M3 8 H13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="trans-cta-text" data-i18n-es="¿Otro reel? Transcribe uno nuevo desde el dashboard." data-i18n-en="Another reel? Transcribe a new one from the dashboard.">¿Otro reel? Transcribe uno nuevo desde el dashboard.</span>
+          </div>
+          <span class="trans-cta-go">
+            <span data-i18n-es="Ir al dashboard" data-i18n-en="Go to dashboard">Ir al dashboard</span>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+              <path d="M2 5 H8 M5.5 2.5 L8 5 L5.5 7.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </a>
+
+        <!-- Transcriptions list -->
+        <div id="profListTransc" class="trans-list"></div>
       </div>
 
       <!-- Projects panel -->
@@ -5346,36 +6517,97 @@
 
       <!-- Ideas panel -->
       <div id="profPanelIdeas" style="display:none">
-        <div class="prof-section-head">
-          <div><div class="prof-section-title" data-i18n="ideas.title">Ideas</div>
-          <div class="prof-section-hint" data-i18n="ideas.hint" style="font-size:.85rem;color:var(--text3);font-weight:400;margin-top:4px;line-height:1.45;max-width:560px">Apunta cualquier idea suelta que se te ocurra. Nosotros la convertimos en un borrador de guión listo para grabar.</div>
-          <div class="prof-section-sub" id="ideasCount" style="margin-top:4px"></div></div>
+
+        <!-- Editorial hero -->
+        <div class="ideas-hero-wrap">
+          <svg class="ideas-hero-waves" viewBox="0 0 1200 380" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0,210 Q180,150 360,200 T720,200 T1080,190 L1200,210 L1200,380 L0,380 Z" fill="#ff6b3d"/>
+            <path d="M0,250 Q220,200 420,240 T780,240 T1200,250 L1200,380 L0,380 Z" fill="#7d5bb8" opacity="0.6"/>
+            <path d="M0,300 Q200,260 420,290 T820,290 T1200,300 L1200,380 L0,380 Z" fill="#c89968" opacity="0.5"/>
+            <circle cx="980" cy="120" r="3" fill="#ff6b3d" opacity="0.7"/>
+            <circle cx="1080" cy="80" r="2" fill="#c4b896" opacity="0.6"/>
+            <circle cx="160" cy="100" r="2.5" fill="#7d5bb8" opacity="0.6"/>
+          </svg>
+          <div class="ideas-hero">
+            <div class="ideas-hero-left">
+              <div class="ideas-eyebrow">
+                <span class="ideas-eyebrow-dot"></span>
+                <span data-i18n-es="IDEAS · BANCO DE IDEAS" data-i18n-en="IDEAS · IDEA VAULT">IDEAS · BANCO DE IDEAS</span>
+              </div>
+              <h1 class="ideas-h1">
+                <span data-i18n-es="Captura lo que se te" data-i18n-en="Catch every">Captura lo que se te</span>
+                <em data-i18n-es="ocurre" data-i18n-en="spark">ocurre</em>.
+              </h1>
+              <p class="ideas-sub">
+                <span data-i18n-es="Apunta cualquier chispa suelta. Hooks la convierte en un borrador de guión listo para grabar." data-i18n-en="Jot down any loose spark. Hooks turns it into a ready-to-shoot script draft.">Apunta cualquier chispa suelta. Hooks la convierte en un borrador de guión listo para grabar.</span>
+                <span class="ideas-sub-em" data-i18n-es="Sin fricción, sin plantillas rígidas." data-i18n-en="No friction, no rigid templates.">Sin fricción, sin plantillas rígidas.</span>
+              </p>
+            </div>
+            <div class="ideas-hero-right">
+              <img class="ideas-hooks" src="{{ url_for('static', filename='img/hooks/hooks-ideas.svg') }}" alt="" aria-hidden="true" />
+              <div class="ideas-hero-right-nums">
+                <span class="ideas-counter" id="ideasCounterNum">0</span>
+                <span class="ideas-counter-lbl" id="ideasCounterLbl"><b>0</b> IDEAS · <b>0</b> PENDIENTES</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- New idea input -->
-        <div style="background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:20px">
-          <textarea id="ideaInput" rows="3" style="width:100%;padding:12px;background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text);font-family:var(--font-body);font-size:.88rem;line-height:1.5;resize:vertical;outline:none;box-sizing:border-box"
-            placeholder="Escribe tu idea... ej: Cómo crear contenido viral sin dar la cara"
-            data-i18n-placeholder-es="Escribe tu idea... ej: Cómo crear contenido viral sin dar la cara"
-            data-i18n-placeholder-en="Write your idea... e.g. How to create viral content without showing your face"></textarea>
-          <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap">
-            <select id="ideaAssistant" style="padding:8px 12px;background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text2);font-size:.8rem;font-family:var(--font-body);outline:none">
-              <option value="" data-i18n-es="Asistente por defecto" data-i18n-en="Default assistant">Asistente por defecto</option>
-              <option value="viral" data-i18n-es="Viral" data-i18n-en="Viral">Viral</option>
-              <option value="divertido" data-i18n-es="Divertido" data-i18n-en="Funny">Divertido</option>
-              <option value="linkedin" data-i18n-es="LinkedIn" data-i18n-en="LinkedIn">LinkedIn</option>
-              <option value="storytelling" data-i18n-es="Historia" data-i18n-en="Story">Historia</option>
-              <option value="hooks" data-i18n-es="5 Hooks" data-i18n-en="5 Hooks">5 Hooks</option>
-            </select>
-            <select id="ideaProject" style="padding:8px 12px;background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text2);font-size:.8rem;font-family:var(--font-body);outline:none">
-              <option value="" data-i18n-es="Sin proyecto" data-i18n-en="No project">Sin proyecto</option>
-            </select>
-            <button id="ideaSubmitBtn" class="btn-3d btn-3d-primary" onclick="submitIdea()" style="margin-left:auto;padding:8px 20px;background:var(--purple);color:#fff;border:none;border-radius:var(--rsm);font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s" data-i18n="ideas.develop">Desarrollar</button>
+        <!-- New idea input card -->
+        <div class="ideas-input-card">
+          <div class="ideas-input-body">
+            <div class="ideas-input-col">
+              <label class="ideas-input-label" data-i18n-es="NUEVA IDEA" data-i18n-en="NEW IDEA">NUEVA IDEA</label>
+              <textarea id="ideaInput" class="ideas-textarea" rows="3"
+                placeholder="Cuéntale algo a Hooks... ej: cómo hacer contenido viral sin dar la cara"
+                data-i18n-placeholder-es="Cuéntale algo a Hooks... ej: cómo hacer contenido viral sin dar la cara"
+                data-i18n-placeholder-en="Tell Hooks what's on your mind... e.g. how to make viral content without showing your face"></textarea>
+              <div class="ideas-chips">
+                <span class="ideas-chip-wrap">
+                  <span class="ideas-chip ideas-chip-asst" id="ideaAssistantChip">
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                      <circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1.2" fill="none"/>
+                      <circle cx="5" cy="5" r="1.6" fill="currentColor"/>
+                    </svg>
+                    <span id="ideaAssistantChipLbl" data-i18n-es="Asistente por defecto" data-i18n-en="Default assistant">Asistente por defecto</span>
+                    <svg class="ideas-chip-caret" width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path d="M1.5 3 L4 5.5 L6.5 3" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                  <select id="ideaAssistant" onchange="updateIdeaChips()">
+                    <option value="" data-i18n-es="Asistente por defecto" data-i18n-en="Default assistant">Asistente por defecto</option>
+                    <option value="viral" data-i18n-es="Viral" data-i18n-en="Viral">Viral</option>
+                    <option value="divertido" data-i18n-es="Divertido" data-i18n-en="Funny">Divertido</option>
+                    <option value="linkedin" data-i18n-es="LinkedIn" data-i18n-en="LinkedIn">LinkedIn</option>
+                    <option value="storytelling" data-i18n-es="Historia" data-i18n-en="Story">Historia</option>
+                    <option value="hooks" data-i18n-es="5 Hooks" data-i18n-en="5 Hooks">5 Hooks</option>
+                  </select>
+                </span>
+                <span class="ideas-chip-wrap">
+                  <span class="ideas-chip ideas-chip-proj" id="ideaProjectChip">
+                    <svg width="11" height="10" viewBox="0 0 12 10" fill="none" aria-hidden="true">
+                      <path d="M1 2.2 C1 1.5 1.5 1 2.2 1 H4.8 L6 2.3 H9.8 C10.5 2.3 11 2.8 11 3.5 V8 C11 8.7 10.5 9 9.8 9 H2.2 C1.5 9 1 8.5 1 7.8 Z" stroke="currentColor" stroke-width="1.1" fill="none"/>
+                    </svg>
+                    <span id="ideaProjectChipLbl" data-i18n-es="Sin proyecto" data-i18n-en="No project">Sin proyecto</span>
+                    <svg class="ideas-chip-caret" width="8" height="8" viewBox="0 0 8 8" aria-hidden="true"><path d="M1.5 3 L4 5.5 L6.5 3" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                  <select id="ideaProject" onchange="updateIdeaChips()">
+                    <option value="" data-i18n-es="Sin proyecto" data-i18n-en="No project">Sin proyecto</option>
+                  </select>
+                </span>
+              </div>
+            </div>
+            <div class="ideas-input-col-right">
+              <button id="ideaSubmitBtn" class="ideas-btn-develop" onclick="submitIdea()">
+                <span data-i18n="ideas.develop">Desarrollar</span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M3 8 H12.5 M8.5 4 L13 8 L8.5 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- Ideas list -->
-        <div id="ideasList"></div>
+        <div id="ideasList" class="ideas-list"></div>
       </div>
 
       <!-- Team panel -->
@@ -6482,34 +7714,48 @@ function setLang(lang) {
 
 // ── Theme ─────────────────────────────────────────────────────────────────
 const themeBtn = document.getElementById("themeBtn");
-const themeIcons = { light: "☀️", dark: "🌙", system: "💻" };
-const themeCycle = ["system", "dark", "light"];
+const themeIcons = { light: "☀️", dark: "🌙" };
 
 function resolveTheme(pref) {
-  if (pref === "system") return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  return pref;
+  return (pref === "light" || pref === "dark") ? pref : "dark";
 }
 
 function applyTheme(pref) {
-  document.documentElement.setAttribute("data-theme", resolveTheme(pref));
-  themeBtn.textContent = themeIcons[pref];
-  themeBtn.title = pref === "system" ? "Theme: System" : pref === "dark" ? "Theme: Dark" : "Theme: Light";
+  const t = resolveTheme(pref);
+  document.documentElement.setAttribute("data-theme", t);
+  if (themeBtn) {
+    themeBtn.textContent = themeIcons[t];
+    themeBtn.title = t === "dark" ? "Theme: Dark" : "Theme: Light";
+  }
+  document.querySelectorAll(".theme-seg-opt").forEach(el => {
+    el.classList.toggle("on", el.dataset.val === t);
+  });
 }
 
-let themePref = localStorage.getItem("rs-theme") || "system";
+let themePref = localStorage.getItem("rs-theme");
+if (themePref !== "light" && themePref !== "dark") {
+  themePref = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+  try { localStorage.setItem("rs-theme", themePref); } catch(_){}
+}
 applyTheme(themePref);
 
-function cycleTheme() {
-  const idx = themeCycle.indexOf(themePref);
-  themePref = themeCycle[(idx + 1) % themeCycle.length];
-  localStorage.setItem("rs-theme", themePref);
-  applyTheme(themePref);
+function setThemeBinary(val, e) {
+  if (e) { e.stopPropagation(); e.preventDefault(); }
+  if (val !== "light" && val !== "dark") return;
+  themePref = val;
+  try { localStorage.setItem("rs-theme", val); } catch(_){}
+  applyTheme(val);
 }
-themeBtn.addEventListener("click", cycleTheme);
+function toggleTheme(e) {
+  if (e) e.stopPropagation();
+  setThemeBinary(themePref === "dark" ? "light" : "dark");
+}
+// Legacy alias — kept so older onclick handlers don't break.
+function cycleTheme(e) { toggleTheme(e); }
 
-window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-  if (themePref === "system") applyTheme("system");
-});
+if (themeBtn) {
+  themeBtn.addEventListener("click", e => { e.stopPropagation(); toggleTheme(); });
+}
 
 // ── Currency detection (EUR for Spain, USD everywhere else) ──────────────
 const _tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
@@ -8182,9 +9428,17 @@ function profTab(tab, pushHistory) {
   if (target) target.style.display = "";
 
   // Update nav active state
-  document.querySelectorAll(".prof-nav-item").forEach(btn => btn.classList.remove("on"));
+  document.querySelectorAll(".prof-nav-item").forEach(btn => {
+    btn.classList.remove("on");
+    btn.classList.remove("on-ideas");
+    btn.classList.remove("on-transcriptions");
+  });
   const navBtn = document.querySelector(`.prof-nav-item[onclick="profTab('${tab}')"]`);
-  if (navBtn) navBtn.classList.add("on");
+  if (navBtn) {
+    navBtn.classList.add("on");
+    if (tab === "ideas") navBtn.classList.add("on-ideas");
+    if (tab === "transc") navBtn.classList.add("on-transcriptions");
+  }
 
   // Load data for specific tabs
   if (tab === "scripts") renderProfScripts();
@@ -8247,35 +9501,149 @@ function renderProfOverview() {
   }).join("");
 }
 
+function transcToDashboard() {
+  try { closeProfile(); } catch {}
+  try { history.pushState({}, "", "/app"); } catch {}
+  setTimeout(() => {
+    const el = document.getElementById("urlInput");
+    if (el) { el.focus(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  }, 80);
+}
+
+function renderTransCounter() {
+  const el = document.getElementById("transCounterNum");
+  if (el) el.textContent = String((histCache && histCache.length) || 0).padStart(2, "0");
+}
+
+function transFmtDate(iso) {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    const lang = (document.documentElement.lang || "es").toLowerCase();
+    const months = lang === "en"
+      ? ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
+      : ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+    const day = String(d.getDate()).padStart(2, "0");
+    const mon = months[d.getMonth()];
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return `${day} ${mon} · ${hh}:${mm}`;
+  } catch { return ""; }
+}
+
+function transShortUrl(u) {
+  if (!u) return "";
+  try {
+    const { hostname, pathname } = new URL(u);
+    const host = hostname.replace(/^www\./, "").replace(/^vm\./, "");
+    const path = pathname.length > 24 ? pathname.slice(0, 24) + "…" : pathname;
+    return host + path;
+  } catch { return u.slice(0, 40); }
+}
+
+function transAutoTitle(text) {
+  if (!text) return "";
+  const flat = text.replace(/\s+/g, " ").trim();
+  if (!flat) return "";
+  const words = flat.split(" ");
+  const head = words.slice(0, 8).join(" ");
+  const trimmed = head.replace(/[,.;:!?¡¿—\-«»"'\s]+$/, "");
+  const capitalized = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+  return words.length > 8 ? capitalized + "…" : capitalized;
+}
+
+function toggleTransExpand(id) {
+  const card = document.querySelector(`.trans-card[data-id="${id}"]`);
+  if (!card) return;
+  card.classList.toggle("expanded");
+}
+
 function renderProfTransc() {
   const el = document.getElementById("profListTransc");
+  renderTransCounter();
+
   if (!histCache.length) {
-    el.innerHTML = `<div class="prof-empty">
-      <div class="prof-empty-icon">${EMPTY_ICON}</div>
-      <div class="prof-empty-title">${t("prof.empty_transc_title")}</div>
-      <div class="prof-empty-sub">${t("prof.empty_transc_sub")}</div>
-      <button class="prof-empty-cta" onclick="closeProfile();window.scrollTo({top:0,behavior:'smooth'});document.getElementById('urlInput').focus()">✦ ${t("prof.qa_transcribe")}</button>
-    </div>`;
+    const lang = (document.documentElement.lang || "es").toLowerCase();
+    const title = lang === "en" ? "You haven't transcribed anything yet." : "Todavía no has transcrito nada.";
+    const sub = lang === "en"
+      ? "Paste an Instagram or TikTok URL on the dashboard and get started."
+      : "Pega una URL de Instagram o TikTok en el dashboard y empieza.";
+    const cta = lang === "en" ? "Go to dashboard" : "Ir al dashboard";
+    el.innerHTML = `
+      <div class="trans-empty">
+        <img src="${window.HOOKS_TRANSC_SVG || '/static/img/hooks/hooks-transcribir.svg'}" alt="" aria-hidden="true" />
+        <h3>${title}</h3>
+        <p>${sub}</p>
+        <a href="#" class="trans-empty-cta" onclick="event.preventDefault();transcToDashboard()">
+          ${cta}
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 6 H10 M7 3 L10 6 L7 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>`;
     return;
   }
-  el.innerHTML = histCache.map(it => `
-    <div class="prof-card">
-      <div class="prof-card-top">
-        <span class="prof-card-badge">${esc(it.platform || "reel")}</span>
-        <span class="prof-card-date">${fmtDate(it.created_at)}</span>
+
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const LBL_WORDS  = lang === "en" ? "words" : "palabras";
+  const LBL_COPY   = lang === "en" ? "Copy" : "Copiar";
+  const LBL_TFORM  = lang === "en" ? "Transform" : "Transformar";
+  const LBL_TP     = lang === "en" ? "Teleprompter" : "Teleprompter";
+  const LBL_PROJ   = lang === "en" ? "To project" : "Al proyecto";
+  const LBL_DEL    = lang === "en" ? "Delete" : "Eliminar";
+  const LBL_FULL   = lang === "en" ? "VIEW FULL TEXT" : "VER TEXTO COMPLETO";
+  const LBL_COLL   = lang === "en" ? "COLLAPSE" : "COLAPSAR";
+
+  el.innerHTML = histCache.map(it => {
+    const text = it.text || "";
+    const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+    const platform = (it.platform || "").toLowerCase();
+    const platClass = platform === "tiktok" ? "p-tiktok" : "p-instagram";
+    const platLabel = platform === "tiktok" ? "TIKTOK" : "INSTAGRAM";
+    const date = transFmtDate(it.created_at);
+    const urlShort = esc(transShortUrl(it.url));
+    const urlFull = esc(it.url || "");
+    const id = it.id;
+    const autoTitle = esc(transAutoTitle(text)) || platLabel;
+
+    return `
+    <article class="trans-card" data-id="${id}">
+      <div class="trans-card-header">
+        <h3 class="trans-title">${autoTitle}</h3>
+        <span class="trans-title-meta">${date} · ${wordCount} ${LBL_WORDS}</span>
       </div>
-      <div class="prof-card-text" onclick="viewItem(${it.id})">${esc(it.text.slice(0, 200))}${it.text.length > 200 ? "…" : ""}</div>
-      <div class="prof-card-acts">
-        <button onclick="cpHist(${it.id},this)">${t("act.copy")}</button>
-        <button class="mob-hide" onclick="viewItem(${it.id})">${t("act.view")}</button>
-        <button class="mob-hide" onclick="profAdaptFromTransc(${it.id})">${t("act.transform")}</button>
-        <button class="mob-hide" onclick="tpOpenFromTransc(${it.id})">${t("prof.teleprompter")}</button>
-        <button class="mob-hide" onclick="saveTranscToProject(${it.id})">${t("act.to_project")}</button>
-        <button class="mob-hide del" onclick="delItem(${it.id},this);setTimeout(()=>{renderProfTransc();renderProfOverview();document.getElementById('profStatTransc').textContent=histCache.length},300)">${t("act.delete")}</button>
-        <button class="btn-more-acts" onclick="openCardActions(${it.id},'transc')">···</button>
+      <div class="trans-card-head">
+        <span class="trans-plat ${platClass}">${platLabel}</span>
+        ${urlFull ? `<a class="trans-url" href="${urlFull}" target="_blank" rel="noopener" title="${urlFull}" onclick="event.stopPropagation()">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 3 H7 V7 M7 3 L3 7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          ${urlShort}
+        </a>` : ""}
       </div>
-    </div>
-  `).join("");
+      <div class="trans-preview-wrap" onclick="toggleTransExpand(${id})" title="${lang === 'en' ? 'Click to expand' : 'Click para expandir'}">
+        <div class="trans-preview">${esc(text)}</div>
+      </div>
+      <button class="trans-expand" onclick="toggleTransExpand(${id})">
+        <span class="trans-expand-label-collapsed">${LBL_FULL}</span>
+        <span class="trans-expand-label-expanded">${LBL_COLL}</span>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5 H8 M5.5 2.5 L8 5 L5.5 7.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="trans-full" aria-hidden="true">
+        <div>
+          <div class="trans-full-sep"></div>
+          <div class="trans-full-text">${esc(text)}</div>
+        </div>
+      </div>
+      <div class="trans-acts">
+        <button class="trans-act primary" onclick="profAdaptFromTransc(${id})">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="6" cy="6" r="1.2" fill="currentColor"/></svg>
+          ${LBL_TFORM}
+        </button>
+        <button class="trans-act" onclick="cpHist(${id},this)">${LBL_COPY}</button>
+        <button class="trans-act mob-hide" onclick="tpOpenFromTransc(${id})">${LBL_TP}</button>
+        <button class="trans-act mob-hide" onclick="saveTranscToProject(${id})">${LBL_PROJ}</button>
+        <button class="trans-act danger mob-hide" onclick="delItem(${id},this);setTimeout(()=>{renderProfTransc();renderProfOverview();document.getElementById('profStatTransc').textContent=histCache.length},300)">${LBL_DEL}</button>
+        <button class="trans-more" onclick="openCardActions(${id},'transc')" aria-label="More">···</button>
+      </div>
+    </article>`;
+  }).join("");
 }
 
 async function saveScriptCardToProject(id) {
@@ -8821,22 +10189,78 @@ async function loadIdeas() {
   renderIdeas();
 }
 
+const IDEAS_CAT_LABELS = {
+  educational: "EDUCATIVO", storytelling: "STORYTELLING", opinion: "OPINIÓN",
+  tutorial: "TUTORIAL", humor: "HUMOR", case_study: "CASO",
+  motivation: "MOTIVACIÓN", trend: "TENDENCIA", behind_scenes: "BACKSTAGE", list: "LISTA",
+};
+const IDEAS_CAT_LABELS_EN = {
+  educational: "EDUCATIONAL", storytelling: "STORYTELLING", opinion: "OPINION",
+  tutorial: "TUTORIAL", humor: "HUMOR", case_study: "CASE STUDY",
+  motivation: "MOTIVATION", trend: "TREND", behind_scenes: "BEHIND THE SCENES", list: "LIST",
+};
+
+function ideasFmtDate(iso) {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    const lang = (document.documentElement.lang || "es").toLowerCase();
+    const months = lang === "en"
+      ? ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
+      : ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+    const day = String(d.getDate()).padStart(2, "0");
+    const mon = months[d.getMonth()];
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return `${day} ${mon} · ${hh}:${mm}`;
+  } catch { return ""; }
+}
+
+function updateIdeaChips() {
+  const asstSel = document.getElementById("ideaAssistant");
+  const asstLbl = document.getElementById("ideaAssistantChipLbl");
+  if (asstSel && asstLbl) {
+    const opt = asstSel.options[asstSel.selectedIndex];
+    asstLbl.textContent = opt ? opt.textContent : "";
+  }
+  const projSel = document.getElementById("ideaProject");
+  const projLbl = document.getElementById("ideaProjectChipLbl");
+  if (projSel && projLbl) {
+    const opt = projSel.options[projSel.selectedIndex];
+    projLbl.textContent = opt ? opt.textContent : "";
+  }
+}
+
+function renderIdeasCounter() {
+  const total = ideasCache.length;
+  const pending = ideasCache.filter(i => i.status === "draft").length;
+  const numEl = document.getElementById("ideasCounterNum");
+  const lblEl = document.getElementById("ideasCounterLbl");
+  if (numEl) numEl.textContent = String(total).padStart(2, "0");
+  if (lblEl) {
+    const lang = (document.documentElement.lang || "es").toLowerCase();
+    const ideas = lang === "en" ? "IDEAS" : "IDEAS";
+    const pend = lang === "en" ? "PENDING" : "PENDIENTES";
+    lblEl.innerHTML = `<b>${total}</b> ${ideas} · <b>${pending}</b> ${pend}`;
+  }
+  const countEl = document.getElementById("ideasCount");
+  if (countEl) countEl.textContent = "";
+}
+
 function renderIdeas() {
   const el = document.getElementById("ideasList");
-  const countEl = document.getElementById("ideasCount");
-  if (countEl) countEl.textContent = `${ideasCache.length} idea${ideasCache.length !== 1 ? "s" : ""}`;
+  renderIdeasCounter();
 
-  // Populate project selector
   const projSel = document.getElementById("ideaProject");
-  if (projSel && projectsCache.length) {
-    projSel.innerHTML = '<option value="">No project</option>' +
+  if (projSel && (typeof projectsCache !== "undefined") && projectsCache.length) {
+    const lang = (document.documentElement.lang || "es").toLowerCase();
+    const noProj = lang === "en" ? "No project" : "Sin proyecto";
+    projSel.innerHTML = `<option value="">${noProj}</option>` +
       projectsCache.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("");
   }
 
-  // Populate custom assistants in selector
   const asstSel = document.getElementById("ideaAssistant");
-  if (asstSel && userAssistants.length) {
-    // Keep predefined options, add custom ones
+  if (asstSel && (typeof userAssistants !== "undefined") && userAssistants.length) {
     const existing = asstSel.querySelectorAll("option[data-custom]");
     existing.forEach(o => o.remove());
     userAssistants.forEach(a => {
@@ -8848,40 +10272,138 @@ function renderIdeas() {
     });
   }
 
+  updateIdeaChips();
+
+  if (!el) return;
+
   if (!ideasCache.length) {
-    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">${EMPTY_ICON}</div>${t("ideas.empty")}</div>`;
+    const lang = (document.documentElement.lang || "es").toLowerCase();
+    const emptyTitle = lang === "en" ? "No sparks yet." : "Sin chispas todavía.";
+    const emptyBody = lang === "en"
+      ? "Write your first idea above. Hooks will turn it into a grab-and-go script draft."
+      : "Escribe tu primera idea arriba. Hooks la convierte en un borrador listo para grabar.";
+    el.innerHTML = `
+      <div class="ideas-empty-editorial">
+        <h3>${emptyTitle}</h3>
+        <p>${emptyBody}</p>
+      </div>`;
     return;
   }
 
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const BADGE_DRAFT     = lang === "en" ? "PENDING"    : "PENDIENTE";
+  const BADGE_DEVELOPED = lang === "en" ? "DEVELOPED"  : "DESARROLLADA";
+  const BADGE_SCRIPTED  = lang === "en" ? "USED"       : "USADA";
+  const LBL_INTRO       = lang === "en" ? "INTRO"      : "INTRO";
+  const LBL_DEV         = lang === "en" ? "DEVELOPMENT": "DESARROLLO";
+  const LBL_CLOSE       = lang === "en" ? "CLOSE"      : "CIERRE";
+  const ACT_DEVELOP     = lang === "en" ? "Develop with Hooks" : "Desarrollar con Hooks";
+  const ACT_SCRIPT      = lang === "en" ? "Create script"      : "Crear guión";
+  const ACT_DELETE      = lang === "en" ? "Delete"              : "Eliminar";
+  const ACT_REGEN       = lang === "en" ? "Regenerate"          : "Regenerar";
+  const ACT_TP          = lang === "en" ? "Teleprompter"        : "Al teleprompter";
+  const POINTER_SCRIPTED= lang === "en" ? "→ SCRIPT CREATED · OPEN IN SCRIPTS" : "→ GUIÓN CREADO · VER EN SCRIPTS";
+  const CATS = lang === "en" ? IDEAS_CAT_LABELS_EN : IDEAS_CAT_LABELS;
+
   el.innerHTML = ideasCache.map(idea => {
-    const isDraft = idea.status === "draft";
+    const status = idea.status || "draft";
     const draft = idea.script_draft || {};
+    const cat = (idea.category || "").toLowerCase();
+    const catLabel = CATS[cat] || (idea.category ? String(idea.category).toUpperCase() : "");
+    const catClass = cat ? `cat-${cat.replace(/\s+/g,'_')}` : "";
+    const title = esc(idea.title || (idea.raw_text || "").slice(0, 60));
+    const date = ideasFmtDate(idea.created_at);
+    const raw = esc(idea.raw_text || "");
+    const id = idea.id;
+
+    if (status === "draft") {
+      return `
+      <article class="ideas-card is-draft" data-id="${id}">
+        <div class="ideas-card-head">
+          <span class="ideas-badge b-draft">${BADGE_DRAFT}</span>
+          <span class="ideas-card-title">${title}</span>
+          <span class="ideas-card-date">${date}</span>
+        </div>
+        <div class="ideas-card-raw">${raw}</div>
+        <div class="ideas-card-acts">
+          <button class="ideas-act primary-orange" onclick="developIdeaNow('${id}')">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true"><path d="M6.5 1.2 L7.6 4.9 L11.3 5.1 L8.4 7.4 L9.3 11 L6.5 8.9 L3.7 11 L4.6 7.4 L1.7 5.1 L5.4 4.9 Z" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linejoin="round"/></svg>
+            ${ACT_DEVELOP}
+          </button>
+          <button class="ideas-act ghost" onclick="ideaToScript('${id}')">${ACT_SCRIPT}</button>
+          <button class="ideas-act ghost danger" onclick="deleteIdea('${id}')">${ACT_DELETE}</button>
+        </div>
+      </article>`;
+    }
+
+    if (status === "scripted") {
+      return `
+      <article class="ideas-card is-scripted" data-id="${id}">
+        <div class="ideas-card-head">
+          <span class="ideas-badge b-scripted">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 5.3 L4 7.2 L8 2.8" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            ${BADGE_SCRIPTED}
+          </span>
+          ${catLabel ? `<span class="ideas-cat ${catClass}">${catLabel}</span>` : ""}
+          <span class="ideas-card-title">${title}</span>
+          <span class="ideas-card-date">${date}</span>
+        </div>
+        <div class="ideas-card-raw">${raw.length > 160 ? raw.slice(0, 160) + "…" : raw}</div>
+        <div class="ideas-card-acts">
+          <button class="ideas-scripted-pointer" onclick="ideaOpenScripted('${id}')">
+            ${POINTER_SCRIPTED}
+          </button>
+        </div>
+      </article>`;
+    }
+
+    const hasStructured = !!(draft.intro || draft.desarrollo || draft.cierre);
+    const developBlock = hasStructured ? `
+      <div class="ideas-develop-block">
+        ${draft.intro ? `
+          <div class="ideas-develop-section">
+            <span class="ideas-develop-lbl">${LBL_INTRO}</span>
+            <div class="ideas-develop-text italic">${esc(draft.intro)}</div>
+          </div>` : ""}
+        ${draft.desarrollo ? `
+          <div class="ideas-develop-section">
+            <span class="ideas-develop-lbl">${LBL_DEV}</span>
+            <div class="ideas-develop-text">${esc(draft.desarrollo)}</div>
+          </div>` : ""}
+        ${draft.cierre ? `
+          <div class="ideas-develop-section">
+            <span class="ideas-develop-lbl">${LBL_CLOSE}</span>
+            <div class="ideas-develop-text italic">${esc(draft.cierre)}</div>
+          </div>` : ""}
+      </div>` : `<div class="ideas-card-raw">${raw}</div>`;
+
     return `
-    <div class="idea-card">
-      <div class="idea-card-head">
-        ${isDraft
-          ? `<span class="idea-card-cat" style="background:rgba(255,255,255,.08);color:var(--text3)">${t("ideas.draft")}</span>`
-          : (idea.category ? `<span class="idea-card-cat">${esc(idea.category)}</span>` : "")}
-        <span class="idea-card-title">${esc(idea.title || idea.raw_text.slice(0, 50))}</span>
-        <span class="idea-card-date">${fmtDate(idea.created_at)}</span>
+    <article class="ideas-card is-developed" data-id="${id}">
+      <div class="ideas-card-head">
+        <span class="ideas-badge b-developed">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 5.3 L4 7.2 L8 2.8" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          ${BADGE_DEVELOPED}
+        </span>
+        ${catLabel ? `<span class="ideas-cat ${catClass}">${catLabel}</span>` : ""}
+        <span class="ideas-card-title">${title}</span>
+        <span class="ideas-card-date">${date}</span>
       </div>
-      ${isDraft
-        ? `<div class="idea-card-draft" style="color:var(--text3);font-style:italic">${esc(idea.raw_text)}</div>`
-        : `<div class="idea-card-draft">
-        ${draft.intro ? `<strong>Intro</strong>${esc(draft.intro)}` : ""}
-        ${draft.desarrollo ? `<br><strong>Development</strong>${esc(draft.desarrollo)}` : ""}
-        ${draft.cierre ? `<br><strong>Close</strong>${esc(draft.cierre)}` : ""}
+      ${developBlock}
+      <div class="ideas-card-acts">
+        <button class="ideas-act primary-green" onclick="tpOpenFromIdea('${id}')">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 2.3 L3 9.7 L9.5 6 Z" fill="currentColor"/></svg>
+          ${ACT_TP}
+        </button>
+        <button class="ideas-act ghost" onclick="regenerateIdea('${id}')">${ACT_REGEN}</button>
+        <button class="ideas-act ghost" onclick="ideaToScript('${id}')">${ACT_SCRIPT}</button>
+        <button class="ideas-act ghost danger" onclick="deleteIdea('${id}')">${ACT_DELETE}</button>
       </div>
-      <div style="font-size:.72rem;color:var(--text3);margin-bottom:10px">${esc(idea.raw_text.slice(0, 100))}${idea.raw_text.length > 100 ? "..." : ""}</div>`}
-      <div class="idea-card-acts">
-        ${isDraft ? `<button class="btn-sm" style="background:var(--purple);color:#fff;border:none" onclick="developIdeaNow('${idea.id}')">${t("ideas.develop_now")}</button>` : ""}
-        ${!isDraft ? `<button class="btn-sm" onclick="regenerateIdea('${idea.id}')">${t("ideas.regenerate")}</button>` : ""}
-        ${!isDraft ? `<button class="btn-sm" onclick="ideaToScript('${idea.id}')">${t("ideas.to_script")}</button>` : ""}
-        ${!isDraft ? `<button class="btn-sm" onclick="tpOpenFromIdea('${idea.id}')">Teleprompter</button>` : ""}
-        <button class="btn-sm del" onclick="deleteIdea('${idea.id}')">${t("act.delete")}</button>
-      </div>
-    </div>`;
+    </article>`;
   }).join("");
+}
+
+function ideaOpenScripted(id) {
+  try { profTab("scripts"); } catch {}
 }
 
 async function submitIdea() {
@@ -8890,8 +10412,11 @@ async function submitIdea() {
   const text = input.value.trim();
   if (!text || text.length < 5) { showToast(t("ideas.too_short")); return; }
 
+  const originalHTML = btn.innerHTML;
   btn.disabled = true;
-  btn.textContent = t("toast.generating");
+  btn.innerHTML = `<span>${esc(t("toast.generating"))}</span>`;
+
+  const restore = () => { btn.disabled = false; btn.innerHTML = originalHTML; };
 
   const body = { raw_text: text, language: currentLang };
   const assistantId = document.getElementById("ideaAssistant").value;
@@ -8905,15 +10430,13 @@ async function submitIdea() {
       body: JSON.stringify(body),
     });
     const d = await res.json();
-    btn.disabled = false;
-    btn.textContent = "Develop";
+    restore();
     if (!res.ok) { showToast(d.error || "Error"); return; }
     input.value = "";
     showToast(t("ideas.created"));
     await loadIdeas();
   } catch {
-    btn.disabled = false;
-    btn.textContent = "Develop";
+    restore();
     showToast(t("toast.error_connection"));
   }
 }
@@ -11214,6 +12737,7 @@ async function loadHistory() {
   histCache = await r.json();
   document.getElementById("histCount").textContent = histCache.length;
   document.getElementById("statTotal").textContent = histCache.length;
+  if (typeof renderTransCounter === "function") renderTransCounter();
   const list = document.getElementById("histList");
   if (!histCache.length) { list.innerHTML = `<li class="empty-state" data-i18n="drawer.empty">${t("drawer.empty")}</li>`; return; }
   list.innerHTML = histCache.map(it => `
@@ -11252,8 +12776,13 @@ function viewItem(id) {
   const item = histCache.find(i => i.id === id);
   if (!item) return;
   viewId = id;
-  document.getElementById("viewTitle").textContent = `${item.platform} · ${fmtDate(item.created_at)}`;
-  document.getElementById("viewBody").textContent = item.text;
+  const text = item.text || "";
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const wordsLbl = lang === "en" ? "words" : "palabras";
+  const plat = (item.platform || "reel").toUpperCase();
+  document.getElementById("viewTitle").textContent = `${plat} · ${fmtDate(item.created_at)} · ${words} ${wordsLbl}`;
+  document.getElementById("viewBody").textContent = text;
   document.getElementById("viewDlBtn").onclick = () => window.open(`/download/${id}`, "_blank");
   document.getElementById("viewOverlay").classList.add("on");
 }
