@@ -727,7 +727,7 @@ def history():
     user = current_user()
     rows = (
         db.table("transcriptions")
-        .select("id, url, platform, language, text, cost_cents, created_at")
+        .select("id, url, platform, language, text, cost_cents, created_at, thumbnail_b64")
         .eq("user_id", user["id"])
         .order("id", desc=True)
         .limit(50)
