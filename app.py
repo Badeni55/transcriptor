@@ -16,7 +16,7 @@ from urllib.parse import urlparse, urlencode
 import requests
 import yt_dlp
 from dotenv import load_dotenv
-from flask import Flask, Response, abort, jsonify, redirect, render_template, request, session
+from flask import Flask, Response, abort, jsonify, make_response, redirect, render_template, request, session
 
 load_dotenv()
 
@@ -2260,32 +2260,48 @@ def index():
     return redirect("/es/", code=302)
 
 
+LANG_COOKIE = "rs_lang"
+
+
+def _resolve_lang():
+    """Cookie wins over Accept-Language so the user's toggle choice persists
+    across /app and /profile/* routes."""
+    c = request.cookies.get(LANG_COOKIE)
+    if c in ("es", "en"):
+        return c
+    accept = request.headers.get("Accept-Language", "")
+    return "en" if accept.lower().startswith("en") else "es"
+
+
+def _lang_cookie_response(resp, lang):
+    resp.set_cookie(LANG_COOKIE, lang, max_age=365 * 24 * 3600, samesite="Lax")
+    return resp
+
+
 @app.route("/es/")
 def index_es():
-    return render_template("index.html", lang="es",
-                           next_url=safe_next_url(request.args.get("next")))
+    resp = make_response(render_template("index.html", lang="es",
+                                         next_url=safe_next_url(request.args.get("next"))))
+    return _lang_cookie_response(resp, "es")
 
 
 @app.route("/en/")
 def index_en():
-    return render_template("index.html", lang="en",
-                           next_url=safe_next_url(request.args.get("next")))
+    resp = make_response(render_template("index.html", lang="en",
+                                         next_url=safe_next_url(request.args.get("next"))))
+    return _lang_cookie_response(resp, "en")
 
 
 @app.route("/app")
 @require_auth_html
 def workspace():
-    accept = request.headers.get("Accept-Language", "")
-    lang = "en" if accept.lower().startswith("en") else "es"
-    return render_template("index.html", lang=lang, workspace=True)
+    return render_template("index.html", lang=_resolve_lang(), workspace=True)
 
 
 @app.route("/settings")
 @require_auth_html
 def settings_page():
-    accept = request.headers.get("Accept-Language", "")
-    lang = "en" if accept.lower().startswith("en") else "es"
-    return render_template("index.html", lang=lang, settings_page=True)
+    return render_template("index.html", lang=_resolve_lang(), settings_page=True)
 
 
 PROFILE_SECTIONS = {
@@ -2303,9 +2319,7 @@ def profile_page(section="overview"):
     # lose the route on refresh and dump users on the dashboard.
     if section not in PROFILE_SECTIONS:
         section = "overview"
-    accept = request.headers.get("Accept-Language", "")
-    lang = "en" if accept.lower().startswith("en") else "es"
-    return render_template("index.html", lang=lang, workspace=True)
+    return render_template("index.html", lang=_resolve_lang(), workspace=True)
 
 
 # ── Pillar pages ─────────────────────────────────────────────────────────────

@@ -7851,7 +7851,7 @@
       <textarea id="scrEditText" class="script-ta" style="min-height:180px;font-size:.9rem;font-family:var(--font-editorial, Fraunces), serif;line-height:1.6"></textarea>
     </div>
     <div class="form-err" id="scrEditErr"></div>
-    <button class="btn-full" onclick="submitScriptEditor()" data-i18n-es="Guardar cambios" data-i18n-en="Save changes">Guardar cambios</button>
+    <button class="btn-full" onclick="submitScriptEditModal()" data-i18n-es="Guardar cambios" data-i18n-en="Save changes">Guardar cambios</button>
   </div>
 </div>
 
@@ -11095,8 +11095,8 @@ function _bindScrListDelegation() {
     if (!id) return;
 
     if (action === "toggle") { toggleScrExpand(id); return; }
-    if (action === "edit")   { openScriptEditor(id); return; }
-    if (action === "toProject") { openScriptEditor(id, { focus: "project" }); return; }
+    if (action === "edit")   { openScriptEditModal(id); return; }
+    if (action === "toProject") { openScriptEditModal(id, { focus: "project" }); return; }
     if (action === "teleprompter") { tpOpenFromScript(id); return; }
     if (action === "copy") { cpScript(id, trigger); return; }
     if (action === "delete") { delScript(id, trigger); return; }
@@ -11106,10 +11106,10 @@ function _bindScrListDelegation() {
 // ── Script edit modal ─────────────────────────────────────────────────────
 let _scrEditorId = null;
 
-function openScriptEditor(id, opts) {
+function openScriptEditModal(id, opts) {
   opts = opts || {};
   const item = scriptsCache.find(i => i.id === id);
-  if (!item) { console.warn("[openScriptEditor] script not found", id); return; }
+  if (!item) { console.warn("[openScriptEditModal] script not found", id); return; }
   _scrEditorId = id;
   const modal = document.getElementById("scrEditOverlay");
   if (!modal) return;
@@ -11129,7 +11129,7 @@ function openScriptEditor(id, opts) {
   }, 100);
 }
 
-async function submitScriptEditor() {
+async function submitScriptEditModal() {
   if (!_scrEditorId) return;
   const title = document.getElementById("scrEditTitle").value.trim();
   const text = document.getElementById("scrEditText").value;
