@@ -3199,8 +3199,7 @@
       .ig-best-reel .ig-best-full { display: inline; }
     }
     @media (max-width: 420px) {
-      .ig-grid { grid-template-columns: repeat(2, 1fr); }
-      .ig-card-thumb { max-height: 100px; }
+      /* .ig-grid stays 1fr from the <=768 rule — do NOT re-split to 2 cols. */
       .ig-card-caption { -webkit-line-clamp: 2; min-height: 2em; }
       .ig-detail-metrics { grid-template-columns: repeat(2, 1fr); }
     }
@@ -10443,7 +10442,10 @@ function renderIgChart() {
       </g>`;
     }).join("");
 
-    const minChartW = Math.max(360, n * 50);
+    // Bars need ~60px each to keep the label + date legible on mobile.
+    // Floor 420px covers up to 7 bars; beyond that we overflow and
+    // .ig-chart-scroll provides horizontal scroll.
+    const minChartW = Math.max(420, n * 60);
     wrap.innerHTML = `<div style="background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:12px 12px 6px">
       <div class="ig-chart-toolbar" style="display:flex;align-items:center;gap:4px;margin-bottom:8px;flex-wrap:wrap">
         <div class="ig-chart-tabs" style="margin-bottom:0">${metricTabs}</div>${scaleToggle}
