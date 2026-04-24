@@ -16,7 +16,7 @@ from urllib.parse import urlparse, urlencode
 import requests
 import yt_dlp
 from dotenv import load_dotenv
-from flask import Flask, Response, abort, jsonify, redirect, render_template, request, session
+from flask import Flask, Response, abort, jsonify, make_response, redirect, render_template, request, session
 
 load_dotenv()
 
@@ -1154,41 +1154,21 @@ def adapt_with_ai(text: str, style: str, custom_prompt: str = "") -> dict:
     return _parse_ai_json(raw, style)
 
 
-@app.route("/saved-scripts")
-@require_auth
-def saved_scripts():
-    user = current_user()
-    rows = db.table("saved_scripts") \
-        .select("*") \
-        .eq("user_id", user["id"]) \
-        .order("created_at", desc=True) \
-        .limit(50) \
-        .execute()
-    return jsonify(rows.data)
-
-
-@app.route("/saved-scripts/<script_id>", methods=["DELETE"])
-@require_auth
-def delete_saved_script(script_id):
-    user = current_user()
-    db.table("saved_scripts") \
-        .delete() \
-        .eq("id", script_id) \
-        .eq("user_id", user["id"]) \
-        .execute()
-    return jsonify({"ok": True})
-
-
 @app.route("/save-script", methods=["POST"])
 def save_script():
     user = current_user()
     if not user:
         return jsonify({"error": "No autenticado"}), 401
-    body = request.get_json()
-    db.table("saved_scripts").insert({
+    body = request.get_json() or {}
+    style = (body.get("style") or "").strip()
+    content = body.get("content") or ""
+    today_es = datetime.now(timezone.utc).strftime("%d %b %Y").lower()
+    base = "Guión adaptado"
+    title = f"{base} · {style} · {today_es}" if style else f"{base} · {today_es}"
+    db.table("scripts").insert({
         "user_id": user["id"],
-        "style": body.get("style", ""),
-        "content": body.get("content", ""),
+        "title": title,
+        "script": content,
     }).execute()
     return jsonify({"ok": True})
 
@@ -1951,7 +1931,7 @@ def update_idea(idea_id):
     user = current_user()
     body = request.get_json() or {}
     updates = {}
-    for key in ("title", "category", "script_draft", "project_id", "assistant_id", "status"):
+    for key in ("title", "category", "script_draft", "project_id", "assistant_id", "status", "recorded_at"):
         if key in body:
             updates[key] = body[key]
     if not updates:
@@ -2207,14 +2187,12 @@ def export_account():
     projects = db.table("projects").select("*").eq("user_id", user["id"]).execute()
     scripts = db.table("scripts").select("*").eq("user_id", user["id"]).execute()
     transcriptions = db.table("transcriptions").select("*").eq("user_id", user["id"]).execute()
-    saved = db.table("saved_scripts").select("*").eq("user_id", user["id"]).execute()
 
     payload = {
         "profile": profile.data[0] if profile.data else None,
         "projects": projects.data,
         "scripts": scripts.data,
         "transcriptions": transcriptions.data,
-        "saved_scripts": saved.data,
         "exported_at": datetime.now(timezone.utc).isoformat(),
     }
     response = jsonify(payload)
@@ -2255,7 +2233,6 @@ def delete_account():
         db.table("assistants").delete().eq("user_id", uid).execute()
         db.table("scripts").delete().eq("user_id", uid).execute()
         db.table("projects").delete().eq("user_id", uid).execute()
-        db.table("saved_scripts").delete().eq("user_id", uid).execute()
         db.table("transcriptions").delete().eq("user_id", uid).execute()
         db.table("agency_members").delete().eq("agency_owner_id", uid).execute()
         db.table("profiles").delete().eq("id", uid).execute()
@@ -2283,50 +2260,66 @@ def index():
     return redirect("/es/", code=302)
 
 
+LANG_COOKIE = "rs_lang"
+
+
+def _resolve_lang():
+    """Cookie wins over Accept-Language so the user's toggle choice persists
+    across /app and /profile/* routes."""
+    c = request.cookies.get(LANG_COOKIE)
+    if c in ("es", "en"):
+        return c
+    accept = request.headers.get("Accept-Language", "")
+    return "en" if accept.lower().startswith("en") else "es"
+
+
+def _lang_cookie_response(resp, lang):
+    resp.set_cookie(LANG_COOKIE, lang, max_age=365 * 24 * 3600, samesite="Lax")
+    return resp
+
+
 @app.route("/es/")
 def index_es():
-    return render_template("index.html", lang="es",
-                           next_url=safe_next_url(request.args.get("next")))
+    resp = make_response(render_template("index.html", lang="es",
+                                         next_url=safe_next_url(request.args.get("next"))))
+    return _lang_cookie_response(resp, "es")
 
 
 @app.route("/en/")
 def index_en():
-    return render_template("index.html", lang="en",
-                           next_url=safe_next_url(request.args.get("next")))
+    resp = make_response(render_template("index.html", lang="en",
+                                         next_url=safe_next_url(request.args.get("next"))))
+    return _lang_cookie_response(resp, "en")
 
 
 @app.route("/app")
 @require_auth_html
 def workspace():
-    accept = request.headers.get("Accept-Language", "")
-    lang = "en" if accept.lower().startswith("en") else "es"
-    return render_template("index.html", lang=lang, workspace=True)
+    return render_template("index.html", lang=_resolve_lang(), workspace=True)
 
 
 @app.route("/settings")
 @require_auth_html
 def settings_page():
-    accept = request.headers.get("Accept-Language", "")
-    lang = "en" if accept.lower().startswith("en") else "es"
-    return render_template("index.html", lang=lang, settings_page=True)
+    return render_template("index.html", lang=_resolve_lang(), settings_page=True)
 
 
-PROFILE_REDIRECTS = {
-    "overview": "/app",
-    "scripts": "/app#scripts",
-    "projects": "/app#projects",
-    "ideas": "/app#ideas",
-    "metrics": "/app#metrics",
-    "assistants": "/app#assistants",
-    "team": "/app#team",
-    "transcriptions": "/app#transcriptions",
+PROFILE_SECTIONS = {
+    "overview", "scripts", "projects", "ideas", "metrics",
+    "assistants", "team", "transcriptions", "privacy", "settings",
 }
 
 
 @app.route("/profile")
 @app.route("/profile/<section>")
+@require_auth_html
 def profile_page(section="overview"):
-    return redirect(PROFILE_REDIRECTS.get(section, "/app"), code=301)
+    # Render the workspace shell; the frontend reads location.pathname and
+    # auto-opens the profile drawer to the correct tab. A 301 to /app would
+    # lose the route on refresh and dump users on the dashboard.
+    if section not in PROFILE_SECTIONS:
+        section = "overview"
+    return render_template("index.html", lang=_resolve_lang(), workspace=True)
 
 
 # ── Pillar pages ─────────────────────────────────────────────────────────────

@@ -2231,6 +2231,9 @@
     @media (max-width: 768px) {
       .panel-back-btn { font-size: 11.5px; margin-bottom: 10px; }
     }
+    /* The adapt-section back button only makes sense inside /app */
+    .panel-back-btn-adapt { display: none; }
+    body.workspace .panel-back-btn-adapt { display: inline-flex; }
 
     /* Stats cards */
     .prof-stats-row {
@@ -3458,6 +3461,60 @@
     .ideas-btn-develop:active { transform: translateY(1px); filter: brightness(0.96); }
     .ideas-btn-develop:disabled { opacity: .65; cursor: wait; transform: none; }
     .ideas-btn-develop svg { flex-shrink: 0; }
+    .ideas-input-col-right { display: flex; align-items: flex-end; gap: 10px; }
+    .ideas-btn-add {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 12px 18px;
+      border-radius: 11px;
+      font-family: var(--font-body);
+      font-size: 14px; font-weight: 500;
+      color: var(--ink-cream);
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s, transform .15s;
+    }
+    .ideas-btn-add:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.22);
+      color: var(--ink-editorial);
+      transform: translateY(-1px);
+    }
+    .ideas-btn-add:disabled { opacity: .5; cursor: wait; transform: none; }
+    [data-theme="light"] .ideas-btn-add { border-color: rgba(0, 0, 0, 0.1); }
+    [data-theme="light"] .ideas-btn-add:hover { background: rgba(0, 0, 0, 0.04); border-color: rgba(0, 0, 0, 0.22); }
+
+    /* Recorded chip (per idea card) */
+    .ideas-rec {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 3px 9px;
+      border-radius: 5px;
+      cursor: pointer;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--ink-ghost);
+      transition: color .15s, background .15s, border-color .15s;
+    }
+    .ideas-rec:hover {
+      color: var(--ink-editorial);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    .ideas-rec.is-recorded {
+      color: #5dcaa5;
+      background: rgba(93, 202, 165, 0.1);
+      border-color: rgba(93, 202, 165, 0.28);
+    }
+    .ideas-rec.is-recorded:hover {
+      background: rgba(93, 202, 165, 0.16);
+      border-color: rgba(93, 202, 165, 0.4);
+    }
+    .ideas-rec svg { flex-shrink: 0; }
+    [data-theme="light"] .ideas-rec { border-color: rgba(0, 0, 0, 0.1); }
+    [data-theme="light"] .ideas-rec:hover { border-color: rgba(0, 0, 0, 0.22); }
 
     /* Ideas list ─────────────────────────────────────────── */
     .ideas-list { display: flex; flex-direction: column; gap: 16px; }
@@ -4691,6 +4748,570 @@
         0 4px 16px rgba(180, 150, 100, 0.12);
     }
     [data-theme="light"] .proj-hero-waves { opacity: 0.18; }
+
+    /* ── Scripts panel redesign (v0.13.9) ────────────────────────── */
+    :root {
+      --scr-accent: #ef6a29;
+      --scr-accent-soft: rgba(239, 106, 41, 0.12);
+      --scr-accent-border: rgba(239, 106, 41, 0.25);
+    }
+
+    #profPanelScripts { position: relative; }
+
+    .scr-hero-wrap {
+      position: relative;
+      padding: 18px 4px 30px;
+      margin: -8px -4px 28px;
+      overflow: hidden;
+      border-radius: 18px;
+    }
+    .scr-hero-waves {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      opacity: .12;
+      z-index: 0;
+    }
+    .scr-hero {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      gap: 32px;
+      padding: 28px 8px 10px;
+    }
+    .scr-hero-left { min-width: 0; }
+    .scr-eyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      margin-bottom: 18px;
+    }
+    .scr-eyebrow-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--scr-accent);
+      box-shadow: 0 0 0 0 rgba(239, 106, 41, 0.6);
+      animation: scrPulse 2.4s ease-out infinite;
+    }
+    @keyframes scrPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(239, 106, 41, 0.55); }
+      70%  { box-shadow: 0 0 0 10px rgba(239, 106, 41, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 106, 41, 0); }
+    }
+    .scr-h1 {
+      font-family: var(--font-editorial);
+      font-size: clamp(34px, 5vw, 56px);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.02;
+      color: var(--ink-editorial);
+      margin: 0 0 16px;
+    }
+    .scr-h1 em { font-style: italic; font-weight: 500; color: var(--scr-accent); }
+    .scr-sub {
+      font-family: var(--font-body);
+      font-size: 15px; line-height: 1.6;
+      color: var(--ink-muted);
+      max-width: 58ch;
+      font-weight: 300;
+    }
+    .scr-sub-em { color: var(--ink-cream); }
+
+    .scr-hero-right {
+      display: flex; align-items: center; justify-content: flex-end;
+      gap: 20px;
+      min-width: 160px;
+      padding-bottom: 6px;
+    }
+    .scr-hero-right-nums {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+    }
+    .scr-hooks {
+      width: 96px; height: 96px;
+      flex-shrink: 0;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      filter: drop-shadow(0 0 14px rgba(239, 106, 41, 0.22));
+      transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+    }
+    #profPanelScripts:hover .scr-hooks { transform: translateY(-2px) rotate(-2deg); }
+    .scr-counter {
+      font-family: var(--font-editorial);
+      font-size: clamp(52px, 8vw, 76px);
+      font-weight: 500;
+      font-feature-settings: "tnum" 1;
+      color: var(--scr-accent);
+      line-height: 0.9;
+      letter-spacing: -0.03em;
+      display: block;
+      text-shadow: 0 4px 30px rgba(239, 106, 41, 0.18);
+    }
+    .scr-counter-lbl {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10.5px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      text-align: right;
+    }
+
+    /* Filter banner */
+    .scr-filter-banner {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
+      padding: 10px 16px;
+      background: color-mix(in srgb, var(--fc, #ef6a29) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--fc, #ef6a29) 25%, transparent);
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: var(--ink-cream);
+      font-family: var(--font-body);
+    }
+    .scr-filter-banner b {
+      font-family: var(--font-editorial);
+      font-style: italic;
+      font-weight: 500;
+      color: var(--fc, #ef6a29);
+    }
+    .scr-filter-clear {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px;
+      color: var(--ink-muted);
+      padding: 4px 10px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+    }
+    .scr-filter-clear:hover { color: var(--ink-editorial); border-color: rgba(255,255,255,0.22); }
+
+    /* Script cards */
+    .scr-list { display: flex; flex-direction: column; gap: 14px; }
+    .scr-card {
+      position: relative;
+      background: linear-gradient(180deg, var(--ideas-card-top) 0%, var(--ideas-card-bot) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 20px 24px 18px;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 4px 16px rgba(0, 0, 0, 0.3);
+      transition: transform .22s, box-shadow .22s, border-color .22s;
+    }
+    .scr-card.has-proj { border-left: 3px solid var(--pc, #8a7e72); }
+    .scr-card:hover {
+      transform: translateY(-2px);
+      border-color: color-mix(in srgb, var(--pc, #ef6a29) 25%, transparent);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 10px 28px rgba(0, 0, 0, 0.42),
+        0 0 40px color-mix(in srgb, var(--pc, #ef6a29) 10%, transparent);
+    }
+
+    .scr-card-meta {
+      display: flex; align-items: center; gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .scr-proj-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 3px 9px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background .15s;
+      color: var(--pc, var(--ink-muted));
+      background: color-mix(in srgb, var(--pc, #8a7e72) 12%, transparent);
+      border: 1px solid color-mix(in srgb, var(--pc, #8a7e72) 25%, transparent);
+      border: none;
+    }
+    .scr-proj-badge:hover { background: color-mix(in srgb, var(--pc, #8a7e72) 20%, transparent); }
+    .scr-proj-badge.no-proj {
+      color: var(--ink-ghost);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .scr-card-date, .scr-card-words {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-ghost);
+      letter-spacing: 0.04em;
+    }
+    .scr-card-sep { color: var(--ink-ghost); opacity: .4; }
+
+    .scr-card-title {
+      font-family: var(--font-editorial);
+      font-size: 20px; font-weight: 500;
+      line-height: 1.22;
+      letter-spacing: -0.01em;
+      color: var(--ink-editorial);
+      margin: 0 0 12px;
+    }
+
+    .scr-preview-wrap {
+      position: relative;
+      cursor: pointer;
+      margin-bottom: 2px;
+    }
+    .scr-preview {
+      font-family: var(--font-body);
+      font-size: 14px; line-height: 1.6;
+      color: var(--ink-body);
+      font-weight: 300;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      -webkit-mask-image: linear-gradient(180deg, #000 60%, rgba(0,0,0,0.3) 100%);
+              mask-image: linear-gradient(180deg, #000 60%, rgba(0,0,0,0.3) 100%);
+    }
+
+    .scr-expand {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 10.5px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--scr-accent);
+      background: none; border: none; padding: 0;
+      cursor: pointer;
+      transition: gap .2s, color .15s;
+    }
+    .scr-expand:hover { gap: 10px; color: #ff8a57; }
+    .scr-expand svg { transition: transform .3s ease; }
+    .scr-card.expanded .scr-expand svg { transform: rotate(-90deg); }
+    .scr-card.expanded .scr-expand-label-collapsed { display: none; }
+    .scr-card:not(.expanded) .scr-expand-label-expanded { display: none; }
+
+    .scr-full {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows .3s ease, margin-top .3s ease;
+      margin-top: 0;
+    }
+    .scr-full > div { overflow: hidden; }
+    .scr-card.expanded .scr-full {
+      grid-template-rows: 1fr;
+      margin-top: 14px;
+    }
+    .scr-full-sep {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.06);
+      margin-bottom: 14px;
+    }
+    [data-theme="light"] .scr-full-sep { background: rgba(0, 0, 0, 0.08); }
+    .scr-full-text {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      padding: 16px 20px;
+      border-left: 2px solid rgba(239, 106, 41, 0.3);
+      font-family: var(--font-editorial);
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1.7;
+      color: var(--ink-body);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    [data-theme="light"] .scr-full-text { background: rgba(0, 0, 0, 0.03); }
+
+    /* Inline edit form (desktop) */
+    .scr-inline-edit {
+      display: flex; flex-direction: column; gap: 10px;
+      background: rgba(239, 106, 41, 0.04);
+      border: 1px solid rgba(239, 106, 41, 0.2);
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+    [data-theme="light"] .scr-inline-edit { background: rgba(239, 106, 41, 0.05); }
+    .scr-card.editing .scr-expand,
+    .scr-card.editing .scr-preview-wrap { opacity: .45; pointer-events: none; }
+    .scr-inline-lbl {
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--ink-cream);
+    }
+    .scr-inline-input, .scr-inline-select, .scr-inline-textarea {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--ink-editorial);
+      font-family: var(--font-body);
+      font-size: 14px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .scr-inline-input:focus, .scr-inline-select:focus, .scr-inline-textarea:focus {
+      border-color: rgba(239, 106, 41, 0.5);
+    }
+    [data-theme="light"] .scr-inline-input,
+    [data-theme="light"] .scr-inline-select,
+    [data-theme="light"] .scr-inline-textarea {
+      background: #fff;
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+    .scr-inline-textarea {
+      font-family: var(--font-editorial);
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 180px;
+      resize: vertical;
+    }
+    .scr-inline-err {
+      font-family: var(--font-body);
+      font-size: 12.5px;
+      color: #f09595;
+      padding: 4px 0;
+    }
+    .scr-inline-acts {
+      display: flex; gap: 8px; justify-content: flex-end;
+      margin-top: 2px;
+    }
+
+    .scr-acts {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    [data-theme="light"] .scr-acts { border-top-color: rgba(0, 0, 0, 0.08); }
+    .scr-act {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 13px; font-weight: 500;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: transparent;
+      color: var(--ink-muted);
+      transition: background .15s, border-color .15s, color .15s, transform .15s;
+    }
+    .scr-act:hover { transform: translateY(-1px); border-color: rgba(255, 255, 255, 0.18); color: var(--ink-editorial); }
+    .scr-act.primary {
+      background: var(--scr-accent-soft);
+      color: var(--scr-accent);
+      border-color: var(--scr-accent-border);
+    }
+    .scr-act.primary:hover {
+      background: rgba(239, 106, 41, 0.2);
+      border-color: rgba(239, 106, 41, 0.4);
+      color: #ff8a57;
+    }
+    .scr-act.danger { color: var(--ink-ghost); }
+    .scr-act.danger:hover { color: #f09595; border-color: rgba(240, 149, 149, 0.3); }
+
+    /* Empty state */
+    .scr-empty {
+      text-align: center;
+      padding: 56px 28px;
+      border: 1px dashed rgba(239, 106, 41, 0.18);
+      border-radius: 18px;
+      background: rgba(239, 106, 41, 0.025);
+    }
+    .scr-empty img {
+      width: 120px; height: 120px;
+      image-rendering: pixelated;
+      margin: 0 auto 18px;
+      display: block;
+      filter: drop-shadow(0 0 18px rgba(239, 106, 41, 0.22));
+    }
+    .scr-empty h3 {
+      font-family: var(--font-editorial);
+      font-size: 28px; font-weight: 500;
+      font-style: italic;
+      color: var(--ink-editorial);
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+    .scr-empty p {
+      font-family: var(--font-body);
+      font-size: 14px; line-height: 1.55;
+      color: var(--ink-muted);
+      max-width: 52ch;
+      margin: 0 auto;
+    }
+
+    /* Sidebar accent */
+    .prof-nav-item.on.on-scripts {
+      background: linear-gradient(90deg,
+        rgba(239, 106, 41, 0.18) 0%,
+        rgba(239, 106, 41, 0.03) 100%);
+      border-color: rgba(239, 106, 41, 0.22);
+      color: var(--scr-accent);
+      box-shadow: 0 0 16px rgba(239, 106, 41, 0.1);
+    }
+    .prof-nav-item.on.on-scripts::before {
+      background: var(--scr-accent);
+      box-shadow: 0 0 8px rgba(239, 106, 41, 0.55);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .scr-hooks { width: 80px; height: 80px; }
+      .scr-hero-right { gap: 16px; }
+    }
+    @media (max-width: 820px) {
+      .scr-hero { grid-template-columns: 1fr; gap: 18px; padding: 20px 6px 6px; }
+      .scr-hero-right { justify-content: flex-start; min-width: 0; gap: 14px; }
+      .scr-hero-right-nums { align-items: flex-start; }
+      .scr-hooks { width: 72px; height: 72px; }
+      .scr-counter { font-size: 54px; }
+      .scr-counter-lbl { text-align: left; }
+      .scr-h1 { font-size: 36px; }
+      .scr-card { padding: 18px; }
+      .scr-card-title { font-size: 18px; }
+      .scr-full-text { padding: 14px 16px; font-size: 14.5px; }
+    }
+    @media (max-width: 480px) {
+      .scr-hero-wrap { margin: -4px -4px 20px; }
+      .scr-hooks { width: 64px; height: 64px; }
+      .scr-act { font-size: 12.5px; padding: 6px 12px; }
+    }
+
+    /* Light theme */
+    [data-theme="light"] #profPanelScripts {
+      --ink-editorial: #1a140f;
+      --ink-muted: #6b5f52;
+      --ink-cream: #5a4f42;
+      --ink-ghost: #8a7e72;
+      --ink-body: #2a2319;
+      --ideas-card-top: #fbf7ef;
+      --ideas-card-bot: #f3ede0;
+    }
+    [data-theme="light"] .scr-card {
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 4px 16px rgba(180, 150, 100, 0.12);
+    }
+    [data-theme="light"] .scr-hero-waves { opacity: 0.18; }
+
+    /* ── Settings panel ──────────────────────────────────────────── */
+    #profPanelSettings { position: relative; }
+    .settings-hero-wrap {
+      position: relative;
+      padding: 14px 4px 22px;
+      margin: -8px -4px 24px;
+      overflow: hidden;
+      border-radius: 18px;
+    }
+    .settings-hero-waves {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      opacity: .1;
+      z-index: 0;
+    }
+    .settings-hero {
+      position: relative;
+      z-index: 1;
+      padding: 20px 8px 8px;
+      min-width: 0;
+    }
+    .settings-eyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      margin-bottom: 14px;
+    }
+    .settings-eyebrow-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #ef6a29;
+      box-shadow: 0 0 0 0 rgba(239, 106, 41, 0.55);
+      animation: projPulse 2.4s ease-out infinite;
+    }
+    .settings-h1 {
+      font-family: var(--font-editorial);
+      font-size: clamp(28px, 3.5vw, 40px);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+      color: var(--ink-editorial);
+      margin: 0;
+    }
+    .settings-h1 em { font-style: italic; font-weight: 500; color: #ef6a29; }
+
+    .settings-card {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 20px;
+      background: linear-gradient(180deg, var(--ideas-card-top) 0%, var(--ideas-card-bot) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 18px 22px;
+      margin-bottom: 14px;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+    .settings-card-head { min-width: 0; }
+    .settings-card-title {
+      font-family: var(--font-editorial);
+      font-size: 18px; font-weight: 500;
+      color: var(--ink-editorial);
+      letter-spacing: -0.005em;
+    }
+    .settings-card-sub {
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--ink-muted);
+      margin-top: 3px;
+    }
+    .settings-seg { flex-shrink: 0; }
+    .settings-seg .theme-seg-opt { width: 44px; height: 30px; font-size: .85rem; font-weight: 600; }
+    .settings-lang-opt {
+      font-family: var(--font-mono);
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+
+    [data-theme="light"] #profPanelSettings {
+      --ink-editorial: #1a140f;
+      --ink-muted: #6b5f52;
+      --ink-cream: #5a4f42;
+      --ideas-card-top: #fbf7ef;
+      --ideas-card-bot: #f3ede0;
+    }
+    [data-theme="light"] .settings-card {
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 4px 16px rgba(180,150,100,.12);
+    }
+    [data-theme="light"] .settings-hero-waves { opacity: 0.16; }
+
+    /* Sidebar accent */
+    .prof-nav-item.on.on-settings {
+      background: linear-gradient(90deg,
+        rgba(239, 106, 41, 0.18) 0%,
+        rgba(239, 106, 41, 0.03) 100%);
+      border-color: rgba(239, 106, 41, 0.22);
+      color: #ef6a29;
+      box-shadow: 0 0 16px rgba(239, 106, 41, 0.1);
+    }
+    .prof-nav-item.on.on-settings::before {
+      background: #ef6a29;
+      box-shadow: 0 0 8px rgba(239, 106, 41, 0.55);
+    }
+
+    @media (max-width: 640px) {
+      .settings-card { flex-direction: column; align-items: flex-start; gap: 14px; }
+      .settings-seg { align-self: flex-end; }
+    }
 
     /* Team members list */
     .team-list { display: flex; flex-direction: column; gap: 8px; }
@@ -6061,6 +6682,12 @@
 <div class="adapt-section" id="adaptSection" style="display:none">
   <div class="adapt-inner fade-in" id="adaptCard">
 
+    <!-- Back to dashboard (workspace only) -->
+    <a href="/app" class="panel-back-btn panel-back-btn-adapt" onclick="backToDashboard(event)">
+      <span class="panel-back-arrow" aria-hidden="true">←</span>
+      <span data-i18n-es="Volver al dashboard" data-i18n-en="Back to dashboard">Volver al dashboard</span>
+    </a>
+
     <!-- ROW 1: headers -->
     <div class="adapt-header">
       <h2 data-i18n="adapt.h2">
@@ -6200,7 +6827,7 @@
         <div class="preview-footer" id="previewFooter">
           <div class="pf-dot"></div>
           <span id="previewFooterTxt">Ejemplo · El tuyo será único</span>
-          <button class="pf-copy" id="pfRegenBtn" style="display:none" onclick="runAdapt()" data-i18n="adapt.regen">Regenerar</button>
+          <button class="pf-copy" id="pfRegenBtn" style="display:none" onclick="regenAdapt()" data-i18n="adapt.regen">Regenerar</button>
           <button class="pf-copy" id="pfRegenHookBtn" style="display:none" onclick="regenHookOnly()" data-i18n="adapt.regen_hook">Nuevo hook</button>
           <button class="pf-copy" id="pfCopyBtn" style="display:none" onclick="copyPreviewResult()">Copiar</button>
           <button class="pf-copy" id="pfSaveBtn" style="display:none" onclick="saveScript()">💾 Guardar</button>
@@ -6969,16 +7596,10 @@
         <button class="prof-nav-item" id="profNavTeam" style="display:none" onclick="profTab('team')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><circle cx="5" cy="4" r="2.5" fill="currentColor"/><circle cx="11" cy="4" r="2.5" fill="currentColor" opacity=".6"/><rect x="1" y="8" width="8" height="5" rx="2" fill="currentColor"/><rect x="7" y="8" width="8" height="5" rx="2" fill="currentColor" opacity=".5"/></svg><span data-i18n="prof.team">Team</span></button>
         <button class="prof-nav-item" id="profNavTeleprompter" onclick="openTeleprompterPicker()" style="display:none"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="1" width="14" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="8" height="1.5" fill="currentColor" opacity=".5"/><rect x="4" y="7" width="6" height="1.5" fill="currentColor" opacity=".3"/><rect x="5" y="13" width="6" height="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.teleprompter">Teleprompter</span></button>
         <button class="prof-nav-item" id="profNavPrivacy" onclick="profTab('privacy')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="3" y="6" width="10" height="9" rx="1" fill="currentColor" opacity=".6"/><rect x="5" y="1" width="6" height="7" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="7" y="9" width="2" height="3" fill="#0a0b0f"/></svg><span data-i18n="prof.privacy">Privacy &amp; Data</span></button>
+        <button class="prof-nav-item" id="profNavSettings" onclick="profTab('settings')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><circle cx="8" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1 V3 M8 13 V15 M1 8 H3 M13 8 H15 M3 3 L4.5 4.5 M11.5 11.5 L13 13 M3 13 L4.5 11.5 M11.5 4.5 L13 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span data-i18n="prof.settings">Settings</span></button>
       </div>
 
       <div class="prof-sidebar-footer">
-        <div class="prof-theme-row">
-          <span class="prof-theme-label">🌓 <span data-i18n="nav.theme">Tema</span></span>
-          <div class="theme-seg" role="group" aria-label="Theme">
-            <button type="button" class="theme-seg-opt" data-val="light" onclick="setThemeBinary('light', event)" aria-label="Light">☀️</button>
-            <button type="button" class="theme-seg-opt" data-val="dark" onclick="setThemeBinary('dark', event)" aria-label="Dark">🌙</button>
-          </div>
-        </div>
         <button class="btn-3d btn-3d-primary" style="padding:9px;border-radius:8px;background:var(--purple);color:#fff;font-size:.8rem;font-weight:600;border:none;cursor:pointer" onclick="closeProfile();openTopup()" data-i18n="prof.topup">+ Top up</button>
         <button id="profManageSubSidebar" class="btn-3d btn-3d-secondary" style="display:none;padding:8px;border-radius:8px;background:transparent;color:var(--text3);font-size:.75rem;border:1px solid var(--border);cursor:pointer" onclick="manageSub()" data-i18n="prof.manage_sub">Manage subscription</button>
         <button class="btn-3d btn-3d-secondary" style="padding:8px;border-radius:8px;background:transparent;color:var(--text3);font-size:.75rem;border:1px solid var(--border);cursor:pointer" onclick="closeProfile()" data-i18n="prof.back">← Back to app</button>
@@ -7041,13 +7662,47 @@
 
       <!-- Scripts panel -->
       <div id="profPanelScripts" style="display:none">
-        <div class="prof-section-head">
-          <div>
-            <div class="prof-section-title" data-i18n="prof.saved_scripts">Saved scripts</div>
-            <div class="prof-section-sub" data-i18n="prof.scripts_sub">Scripts you've transformed and saved</div>
+
+        <!-- Editorial hero -->
+        <div class="scr-hero-wrap">
+          <svg class="scr-hero-waves" viewBox="0 0 1200 380" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0,210 Q180,150 360,200 T720,200 T1080,190 L1200,210 L1200,380 L0,380 Z" fill="#ef6a29"/>
+            <path d="M0,250 Q220,200 420,240 T780,240 T1200,250 L1200,380 L0,380 Z" fill="#7d5bb8" opacity="0.6"/>
+            <path d="M0,300 Q200,260 420,290 T820,290 T1200,300 L1200,380 L0,380 Z" fill="#c89968" opacity="0.5"/>
+            <circle cx="980" cy="120" r="3" fill="#ef6a29" opacity="0.7"/>
+            <circle cx="1080" cy="80" r="2" fill="#c4b896" opacity="0.6"/>
+            <circle cx="160" cy="100" r="2.5" fill="#7d5bb8" opacity="0.6"/>
+          </svg>
+          <div class="scr-hero">
+            <div class="scr-hero-left">
+              <div class="scr-eyebrow">
+                <span class="scr-eyebrow-dot"></span>
+                <span data-i18n-es="GUIONES · TU ARCHIVO" data-i18n-en="SCRIPTS · YOUR ARCHIVE">GUIONES · TU ARCHIVO</span>
+              </div>
+              <h1 class="scr-h1">
+                <span data-i18n-es="Todo lo que has" data-i18n-en="Everything you've">Todo lo que has</span>
+                <em data-i18n-es="guardado" data-i18n-en="saved">guardado</em>.
+              </h1>
+              <p class="scr-sub">
+                <span data-i18n-es="Transcripciones convertidas en guiones, versiones adaptadas," data-i18n-en="Transcriptions turned into scripts, adapted versions,">Transcripciones convertidas en guiones, versiones adaptadas,</span>
+                <span class="scr-sub-em" data-i18n-es="trabajo listo para reutilizar." data-i18n-en="work ready to reuse.">trabajo listo para reutilizar.</span>
+              </p>
+            </div>
+            <div class="scr-hero-right">
+              <img class="scr-hooks" src="{{ url_for('static', filename='img/hooks/hooks-scripts.svg') }}" alt="" aria-hidden="true" />
+              <div class="scr-hero-right-nums">
+                <span class="scr-counter" id="scrCounterNum">0</span>
+                <span class="scr-counter-lbl" data-i18n-es="GUIONES GUARDADOS" data-i18n-en="SCRIPTS SAVED">GUIONES GUARDADOS</span>
+              </div>
+            </div>
           </div>
         </div>
-        <div id="profListScripts"></div>
+
+        <!-- Project filter banner (shown when ?project=<id>) -->
+        <div id="scrFilterBanner" style="display:none"></div>
+
+        <!-- Scripts list -->
+        <div id="profListScripts" class="scr-list"></div>
       </div>
 
       <!-- Transcriptions panel -->
@@ -7300,7 +7955,10 @@
               </div>
             </div>
             <div class="ideas-input-col-right">
-              <button id="ideaSubmitBtn" class="ideas-btn-develop" onclick="submitIdea()">
+              <button id="ideaAddOnlyBtn" class="ideas-btn-add" onclick="submitIdea({develop:false})">
+                <span data-i18n-es="Añadir" data-i18n-en="Add">Añadir</span>
+              </button>
+              <button id="ideaSubmitBtn" class="ideas-btn-develop" onclick="submitIdea({develop:true})">
                 <span data-i18n="ideas.develop">Desarrollar</span>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <path d="M3 8 H12.5 M8.5 4 L13 8 L8.5 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -7348,6 +8006,49 @@
         </div>
       </div>
 
+      <!-- Settings panel -->
+      <div id="profPanelSettings" style="display:none">
+        <div class="settings-hero-wrap">
+          <svg class="settings-hero-waves" viewBox="0 0 1200 300" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0,180 Q200,140 400,175 T800,175 T1200,180 L1200,300 L0,300 Z" fill="#ef6a29"/>
+            <path d="M0,220 Q220,180 420,210 T820,210 T1200,220 L1200,300 L0,300 Z" fill="#7d5bb8" opacity="0.55"/>
+            <path d="M0,260 Q200,230 420,250 T820,250 T1200,260 L1200,300 L0,300 Z" fill="#c89968" opacity="0.45"/>
+          </svg>
+          <div class="settings-hero">
+            <div class="settings-eyebrow">
+              <span class="settings-eyebrow-dot"></span>
+              <span data-i18n-es="AJUSTES · TU CUENTA" data-i18n-en="SETTINGS · YOUR ACCOUNT">AJUSTES · TU CUENTA</span>
+            </div>
+            <h1 class="settings-h1">
+              <span data-i18n-es="Personaliza tu" data-i18n-en="Customize your">Personaliza tu</span>
+              <em data-i18n-es="espacio" data-i18n-en="space">espacio</em>.
+            </h1>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <div class="settings-card-title" data-i18n-es="Idioma" data-i18n-en="Language">Idioma</div>
+            <div class="settings-card-sub" data-i18n-es="Elige el idioma de la interfaz." data-i18n-en="Choose the interface language.">Elige el idioma de la interfaz.</div>
+          </div>
+          <div class="theme-seg settings-seg" role="group" aria-label="Language">
+            <button type="button" class="theme-seg-opt settings-lang-opt" data-val="es" onclick="setLangBinary('es', event)" aria-label="Español">ES</button>
+            <button type="button" class="theme-seg-opt settings-lang-opt" data-val="en" onclick="setLangBinary('en', event)" aria-label="English">EN</button>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <div class="settings-card-title" data-i18n-es="Tema" data-i18n-en="Theme">Tema</div>
+            <div class="settings-card-sub" data-i18n-es="Claro u oscuro. Persistente entre sesiones." data-i18n-en="Light or dark. Persists across sessions.">Claro u oscuro. Persistente entre sesiones.</div>
+          </div>
+          <div class="theme-seg settings-seg" role="group" aria-label="Theme">
+            <button type="button" class="theme-seg-opt" data-val="light" onclick="setThemeBinary('light', event)" aria-label="Light">☀️</button>
+            <button type="button" class="theme-seg-opt" data-val="dark" onclick="setThemeBinary('dark', event)" aria-label="Dark">🌙</button>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /.prof-main -->
   </div><!-- /.prof-layout -->
 
@@ -7390,6 +8091,30 @@
     </div>
     <div class="form-err" id="newProjErr"></div>
     <button class="btn-full" id="newProjSubmitBtn" onclick="submitProjectEditor()" data-i18n="proj.create">Create project</button>
+  </div>
+</div>
+
+<!-- Edit script modal -->
+<div class="overlay" id="scrEditOverlay" onclick="if(event.target===this)closeModal('scrEditOverlay')">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('scrEditOverlay')">✕</button>
+    <h2 data-i18n-es="Editar guión" data-i18n-en="Edit script">Editar guión</h2>
+    <div class="field">
+      <label data-i18n-es="Título" data-i18n-en="Title">Título</label>
+      <input type="text" id="scrEditTitle" />
+    </div>
+    <div class="field">
+      <label data-i18n-es="Proyecto" data-i18n-en="Project">Proyecto</label>
+      <select id="scrEditProject" style="width:100%;padding:10px 12px;background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text);font-family:var(--font-body);font-size:.9rem;outline:none">
+        <option value="" data-i18n-es="Sin proyecto" data-i18n-en="No project">Sin proyecto</option>
+      </select>
+    </div>
+    <div class="field">
+      <label data-i18n-es="Contenido del guión" data-i18n-en="Script content">Contenido del guión</label>
+      <textarea id="scrEditText" class="script-ta" style="min-height:180px;font-size:.9rem;font-family:var(--font-editorial, Fraunces), serif;line-height:1.6"></textarea>
+    </div>
+    <div class="form-err" id="scrEditErr"></div>
+    <button class="btn-full" onclick="submitScriptEditModal()" data-i18n-es="Guardar cambios" data-i18n-en="Save changes">Guardar cambios</button>
   </div>
 </div>
 
@@ -7691,7 +8416,7 @@ const LANGS = {
     "ws.card.team.lbl": "miembros",
     // Profile hub
     "prof.overview": "Resumen",
-    "prof.saved_scripts": "Guiones guardados",
+    "prof.saved_scripts": "Guiones",
     "prof.transcriptions": "Transcripciones",
     "prof.projects": "Proyectos",
     "prof.assistants": "Asistentes",
@@ -7751,6 +8476,7 @@ const LANGS = {
     "tp.reset_pos": "Resetear posiciones",
     "tp.close_tp": "Cerrar teleprompter",
     "prof.privacy": "Privacidad y datos",
+    "prof.settings": "Configuración",
     "prof.topup": "+ Recargar",
     "prof.manage_sub": "Gestionar suscripción",
     "prof.back": "← Volver a la app",
@@ -8080,7 +8806,7 @@ const LANGS = {
     "ws.card.team.desc": "Invite members to your agency.",
     "ws.card.team.lbl": "members",
     "prof.overview": "Overview",
-    "prof.saved_scripts": "Saved scripts",
+    "prof.saved_scripts": "Scripts",
     "prof.transcriptions": "Transcriptions",
     "prof.projects": "Projects",
     "prof.assistants": "Assistants",
@@ -8140,6 +8866,7 @@ const LANGS = {
     "tp.reset_pos": "Reset positions",
     "tp.close_tp": "Close teleprompter",
     "prof.privacy": "Privacy & Data",
+    "prof.settings": "Settings",
     "prof.topup": "+ Top up",
     "prof.manage_sub": "Manage subscription",
     "prof.back": "← Back to app",
@@ -8615,11 +9342,13 @@ async function runAdaptWithAssistant(id) {
       document.querySelectorAll(".preview-slide").forEach(s => s.classList.remove("on"));
       _lastAdaptText = text;
       renderStructuredResult(d.result, "custom", previewResult);
+      _lastAdaptSource = { kind: "assistant", value: id };
       previewResult.classList.add("on");
       previewLabel.textContent = t("adapt.your_result");
       pfCopyBtn.style.display = "";
       document.getElementById("pfTpBtn").style.display = "";
       document.getElementById("pfSaveBtn").style.display = "";
+      document.getElementById("pfRegenBtn").style.display = "";
       document.getElementById("pfRegenHookBtn").style.display = (d.result && d.result.hook) ? "" : "none";
       previewFooterTxt.textContent = t("adapt.generated");
       if (d.credits_cents !== undefined) {
@@ -9171,7 +9900,7 @@ function renderProfileHub() {
   document.getElementById("profManageSubSidebar").style.display = st.hasStripeSub ? "" : "none";
 
   // Load data
-  loadSavedScripts();
+  loadScripts();
   loadProjects();
   if (hasPaidPlan) loadAssistants();
   if (isAgency) loadTeamMembers();
@@ -10120,12 +10849,12 @@ function updateAllAvatars(seed) {
 const PROF_SECTION_MAP = {
   overview: "overview", scripts: "scripts", transcriptions: "transc",
   projects: "projects", assistants: "assistants", metrics: "metrics",
-  ideas: "ideas", team: "team", privacy: "privacy"
+  ideas: "ideas", team: "team", privacy: "privacy", settings: "settings"
 };
 const PROF_TAB_TO_SLUG = Object.fromEntries(Object.entries(PROF_SECTION_MAP).map(([k, v]) => [v, k]));
 const PROF_TITLES = {
-  es: { overview: "Perfil", scripts: "Scripts", transc: "Transcripciones", projects: "Proyectos", assistants: "Asistentes", metrics: "Métricas", ideas: "Ideas", team: "Equipo", privacy: "Privacidad" },
-  en: { overview: "Profile", scripts: "Scripts", transc: "Transcriptions", projects: "Projects", assistants: "Assistants", metrics: "Metrics", ideas: "Ideas", team: "Team", privacy: "Privacy" },
+  es: { overview: "Perfil", scripts: "Scripts", transc: "Transcripciones", projects: "Proyectos", assistants: "Asistentes", metrics: "Métricas", ideas: "Ideas", team: "Equipo", privacy: "Privacidad", settings: "Configuración" },
+  en: { overview: "Profile", scripts: "Scripts", transc: "Transcriptions", projects: "Projects", assistants: "Assistants", metrics: "Metrics", ideas: "Ideas", team: "Team", privacy: "Privacy", settings: "Settings" },
 };
 
 function profTab(tab, pushHistory) {
@@ -10150,6 +10879,7 @@ function profTab(tab, pushHistory) {
     ideas: "profPanelIdeas",
     team: "profPanelTeam",
     privacy: "profPanelPrivacy",
+    settings: "profPanelSettings",
   };
   // Hide all panels
   Object.values(panels).forEach(id => {
@@ -10166,6 +10896,8 @@ function profTab(tab, pushHistory) {
     btn.classList.remove("on-ideas");
     btn.classList.remove("on-transcriptions");
     btn.classList.remove("on-projects");
+    btn.classList.remove("on-scripts");
+    btn.classList.remove("on-settings");
   });
   const navBtn = document.querySelector(`.prof-nav-item[onclick="profTab('${tab}')"]`);
   if (navBtn) {
@@ -10173,10 +10905,13 @@ function profTab(tab, pushHistory) {
     if (tab === "ideas") navBtn.classList.add("on-ideas");
     if (tab === "transc") navBtn.classList.add("on-transcriptions");
     if (tab === "projects") navBtn.classList.add("on-projects");
+    if (tab === "scripts") navBtn.classList.add("on-scripts");
+    if (tab === "settings") navBtn.classList.add("on-settings");
   }
 
   // Load data for specific tabs
-  if (tab === "scripts") renderProfScripts();
+  if (tab === "scripts") { readScrProjectFilterFromUrl(); renderProfScripts(); }
+  if (tab === "settings") { highlightActiveLang(); applyTheme(themePref); }
   if (tab === "transc") renderProfTransc();
   if (tab === "projects") renderProfProjects();
   if (tab === "assistants") renderProfAssistants();
@@ -10205,7 +10940,11 @@ function profTabMobile(tab) { profTab(tab, true); }
 
 function renderProfOverview() {
   const el = document.getElementById("profRecentScripts");
-  const all = [...histCache.slice(0, 5), ...scriptsCache.slice(0, 5)]
+  const tagged = [
+    ...histCache.slice(0, 5).map(it => ({ ...it, _kind: "transc" })),
+    ...scriptsCache.slice(0, 5).map(it => ({ ...it, _kind: "script" })),
+  ];
+  const all = tagged
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     .slice(0, 8);
 
@@ -10219,9 +10958,9 @@ function renderProfOverview() {
     return;
   }
   el.innerHTML = all.map(it => {
-    const isTransc = !it._src || it._src === "transc";
-    const text = it.text || it.content || it.script || "";
-    const title = isTransc ? `${it.platform || "Reel"} · ${fmtDate(it.created_at)}` : (STYLE_LABELS[it.style] || it.title || "Script");
+    const isTransc = it._kind === "transc";
+    const text = isTransc ? (it.text || "") : (it.script || it.transcription || "");
+    const title = isTransc ? `${it.platform || "Reel"} · ${fmtDate(it.created_at)}` : (it.title || "Script");
     const icon = isTransc
       ? '<svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".4"/></svg>'
       : '<svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/></svg>';
@@ -10434,89 +11173,368 @@ function openTranscHash(hash) {
   try { profTab("transc"); } catch {}
 }
 
+function _scriptText(item) {
+  if (!item) return "";
+  return item.script || item.transcription || item.content || "";
+}
+
 async function saveScriptCardToProject(id) {
   const item = scriptsCache.find(i => i.id === id);
   if (!item) return;
-  const text = item._src === "script" ? (item.script || item.transcription || "") : (item.content || "");
-  const title = item._src === "script" ? (item.title || "Script") : (item.style || "Script");
-  await saveTextToProject(text, title);
+  await saveTextToProject(_scriptText(item), item.title || "Script", { reel_url: item.reel_url || null });
 }
 
 async function saveTranscToProject(id) {
   const item = histCache.find(i => i.id === id);
   if (!item) return;
   const title = `${item.platform || "Reel"} · ${fmtDate(item.created_at)}`;
-  await saveTextToProject(item.text, title);
+  await saveTextToProject(item.text, title, { reel_url: item.url || null });
 }
 
-async function loadSavedScripts() {
+async function loadScripts() {
+  if (!st.user) { scriptsCache = []; return; }
   try {
-    // Cargar saved_scripts (adapt) siempre
-    const r = await fetch("/saved-scripts");
-    if (r.ok) {
-      const legacy = await r.json();
-      scriptsCache = legacy.map(s => ({ ...s, _src: "saved" }));
-    }
-    // Cargar scripts (transcripciones guardadas) para todos
-    if (st.user) {
-      const r2 = await fetch("/scripts");
-      if (r2.ok) {
-        const newer = await r2.json();
-        scriptsCache = [...newer.map(s => ({ ...s, _src: "script" })), ...scriptsCache];
-      }
-    }
+    const r = await fetch("/scripts");
+    if (!r.ok) return;
+    scriptsCache = await r.json();
     document.getElementById("profStatScripts").textContent = scriptsCache.length;
     renderProfScripts();
     renderProfOverview();
   } catch {}
 }
+// Back-compat alias.
+async function loadSavedScripts() { return loadScripts(); }
+
+let _scrFilterProjectId = null;
+
+function renderScrCounter(visibleCount) {
+  const el = document.getElementById("scrCounterNum");
+  if (el) el.textContent = String(visibleCount).padStart(2, "0");
+}
+
+function _scrProjectFromId(pid) {
+  if (!pid) return null;
+  return (typeof projectsCache !== "undefined" ? projectsCache : []).find(p => p.id === pid) || null;
+}
+
+function renderScrFilterBanner() {
+  const el = document.getElementById("scrFilterBanner");
+  if (!el) return;
+  if (!_scrFilterProjectId) { el.style.display = "none"; el.innerHTML = ""; return; }
+  const proj = _scrProjectFromId(_scrFilterProjectId);
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const name = esc(proj ? proj.name : "—");
+  const color = proj && proj.color && /^#[0-9a-f]{6}$/i.test(proj.color) ? proj.color : "#ef6a29";
+  const label = lang === "en"
+    ? `Showing scripts in project <b>${name}</b>`
+    : `Mostrando guiones del proyecto <b>${name}</b>`;
+  const clear = lang === "en" ? "Clear filter ×" : "Quitar filtro ×";
+  el.style.display = "";
+  el.className = "scr-filter-banner";
+  el.style.setProperty("--fc", color);
+  el.innerHTML = `
+    <span>${label}</span>
+    <button type="button" class="scr-filter-clear" onclick="clearScrProjectFilter()">${clear}</button>`;
+}
+
+function clearScrProjectFilter() {
+  _scrFilterProjectId = null;
+  try { history.replaceState(null, "", location.pathname); } catch {}
+  renderProfScripts();
+}
+
+function readScrProjectFilterFromUrl() {
+  try {
+    const q = new URLSearchParams(location.search);
+    const pid = q.get("project") || q.get("project_id");
+    if (pid) _scrFilterProjectId = pid;
+  } catch {}
+}
+
+function toggleScrExpand(id) {
+  const card = document.querySelector(`.scr-card[data-id="${id}"]`);
+  if (!card) return;
+  card.classList.toggle("expanded");
+}
 
 function renderProfScripts() {
   const el = document.getElementById("profListScripts");
-  if (!scriptsCache.length) {
-    el.innerHTML = `<div class="prof-empty">
-      <div class="prof-empty-icon">${EMPTY_ICON}</div>
-      <div class="prof-empty-title">${t("prof.empty_scripts_title")}</div>
-      <div class="prof-empty-sub">${t("prof.empty_scripts_sub")}</div>
-      <button class="prof-empty-cta" onclick="closeProfile();document.getElementById('adaptCard').scrollIntoView({behavior:'smooth'})">${t("prof.qa_adapt")}</button>
-    </div>`;
+  if (!el) return;
+
+  renderScrFilterBanner();
+
+  const items = _scrFilterProjectId
+    ? scriptsCache.filter(s => s.project_id === _scrFilterProjectId)
+    : scriptsCache.slice();
+  renderScrCounter(items.length);
+
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+
+  if (!items.length) {
+    const title = _scrFilterProjectId
+      ? (lang === "en" ? "No scripts in this project yet." : "Todavía no hay guiones en este proyecto.")
+      : (lang === "en" ? "You haven't saved any scripts yet." : "Todavía no has guardado ningún guión.");
+    const sub = _scrFilterProjectId
+      ? (lang === "en" ? "Save a script to this project from the Hazlo tuyo flow." : "Guarda un guión en este proyecto desde Hazlo tuyo.")
+      : (lang === "en" ? "When you transform a transcription with Hazlo tuyo or save a script, it will appear here." : "Cuando transformes una transcripción con Hazlo tuyo o guardes un guión, aparecerá aquí.");
+    el.innerHTML = `
+      <div class="scr-empty">
+        <img src="/static/img/hooks/hooks-scripts.svg" alt="" aria-hidden="true" />
+        <h3>${title}</h3>
+        <p>${sub}</p>
+      </div>`;
     return;
   }
-  el.innerHTML = scriptsCache.map(it => {
-    const text = it._src === "script" ? (it.script || it.transcription || "") : (it.content || "");
-    const badge = it._src === "script" ? (it.title || "Guion") : (STYLE_LABELS[it.style] || it.style || "custom");
+
+  const LBL_WORDS  = lang === "en" ? "words" : "palabras";
+  const LBL_FULL   = lang === "en" ? "VIEW FULL TEXT" : "VER TEXTO COMPLETO";
+  const LBL_COLL   = lang === "en" ? "COLLAPSE" : "COLAPSAR";
+  const LBL_EDIT   = lang === "en" ? "Edit" : "Editar";
+  const LBL_PROJ   = lang === "en" ? "To project" : "Al proyecto";
+  const LBL_TP     = lang === "en" ? "Teleprompter" : "Teleprompter";
+  const LBL_COPY   = lang === "en" ? "Copy" : "Copiar";
+  const LBL_DEL    = lang === "en" ? "Delete" : "Eliminar";
+  const LBL_NOPROJ = lang === "en" ? "NO PROJECT" : "SIN PROYECTO";
+
+  el.innerHTML = items.map(it => {
+    const text = _scriptText(it);
+    const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+    const id = it.id;
+    const proj = _scrProjectFromId(it.project_id);
+    const color = proj && proj.color && /^#[0-9a-f]{6}$/i.test(proj.color) ? proj.color : null;
+    const cardCls = `scr-card${proj ? " has-proj" : ""}`;
+    const styleVar = color ? ` style="--pc:${color}"` : "";
+    const badge = proj
+      ? `<button type="button" class="scr-proj-badge" style="--pc:${color || "#8a7e72"}" data-scr-action="openProjects" title="${esc(proj.name)}">${esc(proj.name)}</button>`
+      : `<button type="button" class="scr-proj-badge no-proj" data-scr-action="openProjects">${LBL_NOPROJ}</button>`;
+
     return `
-    <div class="prof-card">
-      <div class="prof-card-top">
-        <span class="prof-card-badge">${esc(badge)}</span>
-        <span class="prof-card-date">${fmtDate(it.created_at)}</span>
+    <article class="${cardCls}" id="s-${id}" data-id="${id}"${styleVar}>
+      <div class="scr-card-meta">
+        ${badge}
+        <span class="scr-card-date">${fmtDate(it.created_at)}</span>
+        <span class="scr-card-sep">·</span>
+        <span class="scr-card-words">${wordCount} ${LBL_WORDS}</span>
       </div>
-      <div class="prof-card-text" onclick="viewScript('${it.id}')">${esc(text.slice(0, 200))}${text.length > 200 ? "…" : ""}</div>
-      <div class="prof-card-acts">
-        <button onclick="tpOpenFromScript('${it.id}')">${t("prof.teleprompter")}</button>
-        <button class="mob-hide" onclick="cpScript('${it.id}',this)">${t("act.copy")}</button>
-        <button class="mob-hide" onclick="viewScript('${it.id}')">${t("act.view")}</button>
-        <button class="mob-hide" onclick="saveScriptCardToProject('${it.id}')">${t("act.to_project")}</button>
-        <button class="mob-hide del" onclick="delScript('${it.id}',this)">${t("act.delete")}</button>
-        <button class="btn-more-acts" onclick="openCardActions('${it.id}')">···</button>
+      <h3 class="scr-card-title">${esc(it.title || (lang === "en" ? "Untitled script" : "Sin título"))}</h3>
+      <div class="scr-preview-wrap" data-scr-action="toggle">
+        <div class="scr-preview">${esc(text)}</div>
       </div>
-    </div>`;
+      <button class="scr-expand" data-scr-action="toggle">
+        <span class="scr-expand-label-collapsed">${LBL_FULL}</span>
+        <span class="scr-expand-label-expanded">${LBL_COLL}</span>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5 H8 M5.5 2.5 L8 5 L5.5 7.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="scr-full" aria-hidden="true">
+        <div>
+          <div class="scr-full-sep"></div>
+          <div class="scr-full-text">${esc(text)}</div>
+        </div>
+      </div>
+      <div class="scr-acts">
+        <button class="scr-act primary" data-scr-action="edit">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M12 2 L14 4 L5 13 L2 14 L3 11 Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          ${LBL_EDIT}
+        </button>
+        <button class="scr-act" data-scr-action="toProject">${LBL_PROJ}</button>
+        <button class="scr-act" data-scr-action="teleprompter">${LBL_TP}</button>
+        <button class="scr-act" data-scr-action="copy">${LBL_COPY}</button>
+        <button class="scr-act danger" data-scr-action="delete">${LBL_DEL}</button>
+      </div>
+    </article>`;
   }).join("");
+
+  _bindScrListDelegation();
+}
+
+// Single delegated click handler on the scripts list. Guarded so we only
+// attach once, no matter how many times renderProfScripts runs.
+function _bindScrListDelegation() {
+  const host = document.getElementById("profListScripts");
+  if (!host || host._scrBound) return;
+  host._scrBound = true;
+  host.addEventListener("click", (e) => {
+    const trigger = e.target.closest("[data-scr-action]");
+    if (!trigger || !host.contains(trigger)) return;
+    const action = trigger.dataset.scrAction;
+    const card = trigger.closest(".scr-card[data-id]");
+    const id = card ? card.dataset.id : null;
+
+    if (action === "openProjects") { try { profTab("projects"); } catch {} return; }
+    if (!id) return;
+
+    if (action === "toggle") { toggleScrExpand(id); return; }
+    if (action === "edit")   { openScriptInlineEdit(id); return; }
+    if (action === "toProject") { openScriptInlineEdit(id, { focus: "project" }); return; }
+    if (action === "inlineSave")   { _scrInlineSave(id); return; }
+    if (action === "inlineCancel") { _scrInlineCancel(id); return; }
+    if (action === "teleprompter") { tpOpenFromScript(id); return; }
+    if (action === "copy") { cpScript(id, trigger); return; }
+    if (action === "delete") { delScript(id, trigger); return; }
+  });
+}
+
+// ── Script edit modal ─────────────────────────────────────────────────────
+let _scrEditorId = null;
+
+function openScriptInlineEdit(id, opts) {
+  opts = opts || {};
+  // Mobile keeps the modal UX.
+  if (window.innerWidth < 768) { openScriptEditModal(id, opts); return; }
+
+  const card = document.querySelector(`.scr-card[data-id="${id}"]`);
+  if (!card) { openScriptEditModal(id, opts); return; }
+  const item = scriptsCache.find(i => i.id === id);
+  if (!item) { console.warn("[openScriptInlineEdit] script not found", id); return; }
+  const slot = card.querySelector(".scr-full > div");
+  if (!slot) return;
+
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const LBL_TITLE   = lang === "en" ? "Title" : "Título";
+  const LBL_PROJ    = lang === "en" ? "Project" : "Proyecto";
+  const LBL_TEXT    = lang === "en" ? "Script content" : "Contenido del guión";
+  const LBL_SAVE    = lang === "en" ? "Save" : "Guardar";
+  const LBL_CANCEL  = lang === "en" ? "Cancel" : "Cancelar";
+  const LBL_NOPROJ  = lang === "en" ? "No project" : "Sin proyecto";
+
+  // Stash original slot HTML so Cancel can restore without a full re-render.
+  if (!card._scrOriginalSlot) card._scrOriginalSlot = slot.innerHTML;
+
+  const list = (typeof projectsCache !== "undefined") ? (projectsCache || []) : [];
+  const projOptions = `<option value="">${LBL_NOPROJ}</option>` +
+    list.map(p => `<option value="${p.id}" ${item.project_id === p.id ? "selected" : ""}>${esc(p.name)}</option>`).join("");
+
+  slot.innerHTML = `
+    <div class="scr-full-sep"></div>
+    <form class="scr-inline-edit" onsubmit="event.preventDefault()">
+      <label class="scr-inline-lbl">${LBL_TITLE}</label>
+      <input type="text" class="scr-inline-input" data-field="title" value="${esc(item.title || "")}" />
+      <label class="scr-inline-lbl">${LBL_PROJ}</label>
+      <select class="scr-inline-select" data-field="project">${projOptions}</select>
+      <label class="scr-inline-lbl">${LBL_TEXT}</label>
+      <textarea class="scr-inline-textarea" data-field="script">${esc(_scriptText(item))}</textarea>
+      <div class="scr-inline-err" data-role="err" style="display:none"></div>
+      <div class="scr-inline-acts">
+        <button type="button" class="scr-act" data-scr-action="inlineCancel">${LBL_CANCEL}</button>
+        <button type="button" class="scr-act primary" data-scr-action="inlineSave">${LBL_SAVE}</button>
+      </div>
+    </form>`;
+
+  card.classList.add("expanded", "editing");
+  const focusEl = opts.focus === "project"
+    ? slot.querySelector('[data-field="project"]')
+    : slot.querySelector('[data-field="title"]');
+  if (focusEl && focusEl.focus) setTimeout(() => focusEl.focus(), 120);
+}
+
+function _scrInlineCancel(id) {
+  const card = document.querySelector(`.scr-card[data-id="${id}"]`);
+  if (!card) return;
+  const slot = card.querySelector(".scr-full > div");
+  if (slot && card._scrOriginalSlot != null) {
+    slot.innerHTML = card._scrOriginalSlot;
+    card._scrOriginalSlot = null;
+  }
+  card.classList.remove("editing");
+}
+
+async function _scrInlineSave(id) {
+  const card = document.querySelector(`.scr-card[data-id="${id}"]`);
+  if (!card) return;
+  const titleEl = card.querySelector('[data-field="title"]');
+  const projEl = card.querySelector('[data-field="project"]');
+  const textEl = card.querySelector('[data-field="script"]');
+  const errEl = card.querySelector('[data-role="err"]');
+  const actions = card.querySelectorAll('[data-scr-action="inlineSave"], [data-scr-action="inlineCancel"]');
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+
+  const title = (titleEl.value || "").trim();
+  const project_id = projEl.value || null;
+  const script = textEl.value;
+  if (!title) {
+    errEl.textContent = lang === "en" ? "Title is required" : "El título es requerido";
+    errEl.style.display = "";
+    titleEl.focus();
+    return;
+  }
+  errEl.style.display = "none";
+  actions.forEach(b => b.disabled = true);
+  try {
+    const res = await fetch(`/scripts/${id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, project_id, script }),
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      errEl.textContent = d.error || "Error";
+      errEl.style.display = "";
+      actions.forEach(b => b.disabled = false);
+      return;
+    }
+    showToast(lang === "en" ? "Script updated" : "Guión actualizado");
+    card._scrOriginalSlot = null;
+    await loadScripts();
+  } catch {
+    errEl.textContent = lang === "en" ? "Connection error" : "Error de conexión";
+    errEl.style.display = "";
+    actions.forEach(b => b.disabled = false);
+  }
+}
+
+function openScriptEditModal(id, opts) {
+  opts = opts || {};
+  const item = scriptsCache.find(i => i.id === id);
+  if (!item) { console.warn("[openScriptEditModal] script not found", id); return; }
+  _scrEditorId = id;
+  const modal = document.getElementById("scrEditOverlay");
+  if (!modal) return;
+  document.getElementById("scrEditTitle").value = item.title || "";
+  document.getElementById("scrEditText").value = _scriptText(item);
+  const projSel = document.getElementById("scrEditProject");
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const noProj = lang === "en" ? "No project" : "Sin proyecto";
+  const list = (typeof projectsCache !== "undefined") ? (projectsCache || []) : [];
+  projSel.innerHTML = `<option value="">${noProj}</option>` +
+    list.map(p => `<option value="${p.id}" ${item.project_id === p.id ? "selected" : ""}>${esc(p.name)}</option>`).join("");
+  document.getElementById("scrEditErr").classList.remove("on");
+  openModal("scrEditOverlay");
+  setTimeout(() => {
+    const el = document.getElementById(opts.focus === "project" ? "scrEditProject" : "scrEditTitle");
+    if (el && el.focus) el.focus();
+  }, 100);
+}
+
+async function submitScriptEditModal() {
+  if (!_scrEditorId) return;
+  const title = document.getElementById("scrEditTitle").value.trim();
+  const text = document.getElementById("scrEditText").value;
+  const project_id = document.getElementById("scrEditProject").value || null;
+  const err = document.getElementById("scrEditErr");
+  err.classList.remove("on");
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  if (!title) { err.textContent = lang === "en" ? "Title is required" : "El título es requerido"; err.classList.add("on"); return; }
+  const res = await fetch(`/scripts/${_scrEditorId}`, {
+    method: "PATCH", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, script: text, project_id }),
+  });
+  if (!res.ok) { const d = await res.json().catch(() => ({})); err.textContent = d.error || "Error"; err.classList.add("on"); return; }
+  closeModal("scrEditOverlay");
+  showToast(lang === "en" ? "Script updated" : "Guión actualizado");
+  await loadScripts();
 }
 
 function cpScript(id, btn) {
   const item = scriptsCache.find(i => i.id === id);
   if (!item) return;
-  const text = item._src === "script" ? (item.script || item.transcription || "") : (item.content || "");
-  navigator.clipboard.writeText(text);
+  navigator.clipboard.writeText(_scriptText(item));
   if (btn) { btn.textContent = t("act.copied"); setTimeout(() => (btn.textContent = t("act.copy")), 1500); }
 }
 
 function viewScript(id) {
   const item = scriptsCache.find(i => i.id === id);
   if (!item) return;
-  const text = item._src === "script" ? (item.script || item.transcription || "") : (item.content || "");
-  const title = item._src === "script" ? (item.title || "Guion") : (STYLE_LABELS[item.style] || item.style || "Script");
+  const text = _scriptText(item);
+  const title = item.title || "Guion";
   document.getElementById("viewTitle").textContent = `${title} · ${fmtDate(item.created_at)}`;
   document.getElementById("viewBody").textContent = text;
   document.getElementById("viewOverlay").classList.add("on");
@@ -10525,10 +11543,8 @@ function viewScript(id) {
 async function delScript(id, btn) {
   if (!confirm(currentLang === "es" ? "¿Eliminar este guión?" : "Delete this script?")) return;
   if (btn) btn.disabled = true;
-  const item = scriptsCache.find(i => i.id === id);
-  const endpoint = item && item._src === "script" ? `/scripts/${id}` : `/saved-scripts/${id}`;
-  await fetch(endpoint, { method: "DELETE" });
-  await loadSavedScripts();
+  await fetch(`/scripts/${id}`, { method: "DELETE" });
+  await loadScripts();
 }
 
 /* ── Card actions bottom sheet (mobile) ────────────── */
@@ -10834,15 +11850,15 @@ async function delProject(id) {
 }
 
 async function filterScriptsByProject(projectId, name) {
-  profTab("scripts");
+  _scrFilterProjectId = projectId || null;
   try {
-    const r = await fetch(`/scripts?project_id=${projectId}`);
-    if (!r.ok) return;
-    scriptsCache = await r.json();
-    document.getElementById("profStatScripts").textContent = scriptsCache.length;
-    renderProfScripts();
-    showToast(`Showing scripts in "${name}"`);
+    const url = "/profile/scripts" + (projectId ? `?project=${encodeURIComponent(projectId)}` : "");
+    history.pushState({}, "", url);
   } catch {}
+  profTab("scripts");
+  renderProfScripts();
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  if (projectId && name) showToast(lang === "en" ? `Showing scripts in "${name}"` : `Guiones del proyecto "${name}"`);
 }
 
 // ── Project detail view ───────────────────────────────────────────────────
@@ -11245,7 +12261,17 @@ function renderIdeas() {
   const ACT_REGEN       = lang === "en" ? "Regenerate"          : "Regenerar";
   const ACT_TP          = lang === "en" ? "Teleprompter"        : "Al teleprompter";
   const POINTER_SCRIPTED= lang === "en" ? "→ SCRIPT CREATED · OPEN IN SCRIPTS" : "→ GUIÓN CREADO · VER EN SCRIPTS";
+  const REC_ON          = lang === "en" ? "RECORDED" : "GRABADA";
+  const REC_OFF         = lang === "en" ? "TO RECORD" : "POR GRABAR";
   const CATS = lang === "en" ? IDEAS_CAT_LABELS_EN : IDEAS_CAT_LABELS;
+
+  const recChipFor = (idea) => {
+    const recorded = !!idea.recorded_at;
+    const icon = recorded
+      ? `<svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><circle cx="5" cy="5" r="3.2" fill="currentColor"/></svg>`
+      : `<svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><circle cx="5" cy="5" r="3.2" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>`;
+    return `<button type="button" class="ideas-rec${recorded ? " is-recorded" : ""}" onclick="event.stopPropagation();toggleIdeaRecorded('${idea.id}')" title="${recorded ? REC_ON : REC_OFF}">${icon}${recorded ? REC_ON : REC_OFF}</button>`;
+  };
 
   el.innerHTML = ideasCache.map(idea => {
     const status = idea.status || "draft";
@@ -11257,12 +12283,14 @@ function renderIdeas() {
     const date = ideasFmtDate(idea.created_at);
     const raw = esc(idea.raw_text || "");
     const id = idea.id;
+    const recChip = recChipFor(idea);
 
     if (status === "draft") {
       return `
       <article class="ideas-card is-draft" data-id="${id}">
         <div class="ideas-card-head">
           <span class="ideas-badge b-draft">${BADGE_DRAFT}</span>
+          ${recChip}
           <span class="ideas-card-title">${title}</span>
           <span class="ideas-card-date">${date}</span>
         </div>
@@ -11287,6 +12315,7 @@ function renderIdeas() {
             ${BADGE_SCRIPTED}
           </span>
           ${catLabel ? `<span class="ideas-cat ${catClass}">${catLabel}</span>` : ""}
+          ${recChip}
           <span class="ideas-card-title">${title}</span>
           <span class="ideas-card-date">${date}</span>
         </div>
@@ -11327,6 +12356,7 @@ function renderIdeas() {
           ${BADGE_DEVELOPED}
         </span>
         ${catLabel ? `<span class="ideas-cat ${catClass}">${catLabel}</span>` : ""}
+        ${recChip}
         <span class="ideas-card-title">${title}</span>
         <span class="ideas-card-date">${date}</span>
       </div>
@@ -11348,19 +12378,26 @@ function ideaOpenScripted(id) {
   try { profTab("scripts"); } catch {}
 }
 
-async function submitIdea() {
+async function submitIdea(opts) {
+  opts = opts || {};
+  const develop = opts.develop !== false;
   const input = document.getElementById("ideaInput");
-  const btn = document.getElementById("ideaSubmitBtn");
+  const btnPrimary = document.getElementById("ideaSubmitBtn");
+  const btnAdd = document.getElementById("ideaAddOnlyBtn");
+  const btn = develop ? btnPrimary : btnAdd;
   const text = input.value.trim();
   if (!text || text.length < 5) { showToast(t("ideas.too_short")); return; }
 
   const originalHTML = btn.innerHTML;
-  btn.disabled = true;
+  [btnPrimary, btnAdd].forEach(b => { if (b) b.disabled = true; });
   btn.innerHTML = `<span>${esc(t("toast.generating"))}</span>`;
 
-  const restore = () => { btn.disabled = false; btn.innerHTML = originalHTML; };
+  const restore = () => {
+    [btnPrimary, btnAdd].forEach(b => { if (b) b.disabled = false; });
+    btn.innerHTML = originalHTML;
+  };
 
-  const body = { raw_text: text, language: currentLang };
+  const body = { raw_text: text, language: currentLang, develop };
   const assistantId = document.getElementById("ideaAssistant").value;
   const projectId = document.getElementById("ideaProject").value;
   if (assistantId) body.assistant_id = assistantId;
@@ -11375,10 +12412,41 @@ async function submitIdea() {
     restore();
     if (!res.ok) { showToast(d.error || "Error"); return; }
     input.value = "";
-    showToast(t("ideas.created"));
+    showToast(develop ? t("ideas.created") : (currentLang === "en" ? "Idea added" : "Idea añadida"));
     await loadIdeas();
   } catch {
     restore();
+    showToast(t("toast.error_connection"));
+  }
+}
+
+async function toggleIdeaRecorded(id) {
+  const idea = (ideasCache || []).find(i => i.id === id);
+  if (!idea) return;
+  const now = new Date().toISOString();
+  const recorded_at = idea.recorded_at ? null : now;
+  // Optimistic update so the pill flips instantly.
+  idea.recorded_at = recorded_at;
+  renderIdeas();
+  try {
+    const res = await fetch(`/ideas/${id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ recorded_at }),
+    });
+    if (!res.ok) {
+      idea.recorded_at = recorded_at ? null : now; // rollback
+      renderIdeas();
+      const d = await res.json().catch(() => ({}));
+      showToast(d.error || "Error");
+      return;
+    }
+    const lang = (document.documentElement.lang || "es").toLowerCase();
+    showToast(recorded_at
+      ? (lang === "en" ? "Marked as recorded" : "Marcada como grabada")
+      : (lang === "en" ? "Unmarked" : "Desmarcada"));
+  } catch {
+    idea.recorded_at = recorded_at ? null : now;
+    renderIdeas();
     showToast(t("toast.error_connection"));
   }
 }
@@ -11690,7 +12758,7 @@ async function rsSaveToProject(idx) {
   const item = rsResults[idx];
   if (!item) return;
   const title = item.platform ? `${item.platform} · ${new Date().toLocaleDateString()}` : t("view.title");
-  await saveTextToProject(item.text, title);
+  await saveTextToProject(item.text, title, { reel_url: item.url || null });
 }
 
 
@@ -12153,6 +13221,15 @@ function selectStyle(btn, opts) {
 let _lastStructuredResult = null;
 let _lastAdaptStyle = null;
 let _lastAdaptText = "";
+let _lastAdaptSource = null; // { kind: "style" | "assistant", value }
+
+function regenAdapt() {
+  if (_lastAdaptSource && _lastAdaptSource.kind === "assistant" && _lastAdaptSource.value) {
+    runAdaptWithAssistant(_lastAdaptSource.value);
+    return;
+  }
+  runAdapt();
+}
 
 function renderStructuredResult(data, style, container) {
   _lastStructuredResult = data;
@@ -12267,6 +13344,7 @@ async function runAdapt() {
       // Hide example slides, show structured AI result
       document.querySelectorAll(".preview-slide").forEach(s => s.classList.remove("on"));
       renderStructuredResult(d.result, activeStyle, previewResult);
+      _lastAdaptSource = { kind: "style", value: activeStyle };
       previewResult.classList.add("on");
       previewLabel.textContent = t("adapt.your_result");
       pfCopyBtn.style.display = "";
@@ -13122,8 +14200,8 @@ function openTeleprompterPicker() {
   // From scriptsCache
   if (scriptsCache && scriptsCache.length) {
     scriptsCache.forEach(s => {
-      const text = s._src === "script" ? (s.script || s.transcription || "") : (s.content || "");
-      if (text) items.push({ title: s.title || s.style || "Script", text, type: "script" });
+      const text = _scriptText(s);
+      if (text) items.push({ title: s.title || "Script", text, type: "script" });
     });
   }
   // From ideasCache
@@ -13175,7 +14253,7 @@ function tpOpenFromText(text) {
 function tpOpenFromScript(id) {
   const item = scriptsCache.find(i => i.id === id);
   if (!item) return;
-  const text = item._src === "script" ? (item.script || item.transcription || "") : (item.content || "");
+  const text = _scriptText(item);
   if (!text) { showToast("No text"); return; }
   closeProfile();
   tpOpen(text);
@@ -13613,7 +14691,11 @@ window.addEventListener("beforeunload", e => {
 });
 
 async function regenHookOnly() {
-  if (!_lastStructuredResult || !_lastStructuredResult.hook) return;
+  if (!_lastStructuredResult || !_lastStructuredResult.hook) {
+    console.warn("[regenHookOnly] missing hook state", { _lastStructuredResult });
+    showToast(currentLang === "es" ? "Primero genera un guión" : "Generate a script first");
+    return;
+  }
   const btn = document.getElementById("pfRegenHookBtn");
   btn.disabled = true; btn.textContent = "...";
   try {
@@ -13749,13 +14831,21 @@ function adaptFromView() {
 async function saveViewToProject() {
   const txt = document.getElementById("viewBody").textContent;
   const title = document.getElementById("viewTitle").textContent;
-  await saveTextToProject(txt, title);
+  // viewItem only stashes an id for transcriptions; look it up to grab the URL.
+  let reelUrl = null;
+  if (typeof viewId !== "undefined" && viewId != null) {
+    const h = (histCache || []).find(i => i.id === viewId);
+    if (h && h.url) reelUrl = h.url;
+  }
+  await saveTextToProject(txt, title, { reel_url: reelUrl });
 }
 
 let _pendingSaveText = "";
 let _pendingSaveTitle = "";
+let _pendingSaveReelUrl = null;
 
-async function saveTextToProject(text, title) {
+async function saveTextToProject(text, title, opts) {
+  opts = opts || {};
   if (!st.user) { openAuth("register"); return; }
   if (!projectsCache.length) {
     await loadProjects();
@@ -13763,6 +14853,7 @@ async function saveTextToProject(text, title) {
   }
   _pendingSaveText = text;
   _pendingSaveTitle = title || "Script";
+  _pendingSaveReelUrl = opts.reel_url || null;
 
   // If only 1 project, save directly
   if (projectsCache.length === 1) {
@@ -13790,9 +14881,15 @@ async function pickProject(projectId, projectName) {
 }
 
 async function doSaveToProject(projectId, projectName) {
+  const payload = {
+    title: _pendingSaveTitle,
+    transcription: _pendingSaveText,
+    project_id: projectId,
+  };
+  if (_pendingSaveReelUrl) payload.reel_url = _pendingSaveReelUrl;
   const res = await fetch("/scripts", {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title: _pendingSaveTitle, transcription: _pendingSaveText, project_id: projectId }),
+    body: JSON.stringify(payload),
   });
   if (res.ok) {
     showToast(`${t("toast.saved_to")} "${projectName}"`);
@@ -13943,6 +15040,21 @@ function toggleLang() {
   const curr = document.documentElement.lang || "es";
   const other = curr === "es" ? "en" : "es";
   window.location.assign("/" + other + "/");
+}
+
+function setLangBinary(val, e) {
+  if (e) { e.stopPropagation(); e.preventDefault(); }
+  if (val !== "es" && val !== "en") return;
+  try { document.cookie = "rs_lang=" + val + "; path=/; max-age=31536000; samesite=Lax"; } catch {}
+  // Reload current page in-place so workspace/profile routes honor the cookie.
+  window.location.reload();
+}
+
+function highlightActiveLang() {
+  const curr = (document.documentElement.lang || "es").toLowerCase();
+  document.querySelectorAll(".settings-lang-opt").forEach(el => {
+    el.classList.toggle("on", el.dataset.val === curr);
+  });
 }
 
 // ── Analytics helpers (workspace) ─────────────────────────────────────────
