@@ -1931,7 +1931,7 @@ def update_idea(idea_id):
     user = current_user()
     body = request.get_json() or {}
     updates = {}
-    for key in ("title", "category", "script_draft", "project_id", "assistant_id", "status"):
+    for key in ("title", "category", "script_draft", "project_id", "assistant_id", "status", "recorded_at"):
         if key in body:
             updates[key] = body[key]
     if not updates:

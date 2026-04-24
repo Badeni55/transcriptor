@@ -3461,6 +3461,60 @@
     .ideas-btn-develop:active { transform: translateY(1px); filter: brightness(0.96); }
     .ideas-btn-develop:disabled { opacity: .65; cursor: wait; transform: none; }
     .ideas-btn-develop svg { flex-shrink: 0; }
+    .ideas-input-col-right { display: flex; align-items: flex-end; gap: 10px; }
+    .ideas-btn-add {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 12px 18px;
+      border-radius: 11px;
+      font-family: var(--font-body);
+      font-size: 14px; font-weight: 500;
+      color: var(--ink-cream);
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s, transform .15s;
+    }
+    .ideas-btn-add:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.22);
+      color: var(--ink-editorial);
+      transform: translateY(-1px);
+    }
+    .ideas-btn-add:disabled { opacity: .5; cursor: wait; transform: none; }
+    [data-theme="light"] .ideas-btn-add { border-color: rgba(0, 0, 0, 0.1); }
+    [data-theme="light"] .ideas-btn-add:hover { background: rgba(0, 0, 0, 0.04); border-color: rgba(0, 0, 0, 0.22); }
+
+    /* Recorded chip (per idea card) */
+    .ideas-rec {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 3px 9px;
+      border-radius: 5px;
+      cursor: pointer;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--ink-ghost);
+      transition: color .15s, background .15s, border-color .15s;
+    }
+    .ideas-rec:hover {
+      color: var(--ink-editorial);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    .ideas-rec.is-recorded {
+      color: #5dcaa5;
+      background: rgba(93, 202, 165, 0.1);
+      border-color: rgba(93, 202, 165, 0.28);
+    }
+    .ideas-rec.is-recorded:hover {
+      background: rgba(93, 202, 165, 0.16);
+      border-color: rgba(93, 202, 165, 0.4);
+    }
+    .ideas-rec svg { flex-shrink: 0; }
+    [data-theme="light"] .ideas-rec { border-color: rgba(0, 0, 0, 0.1); }
+    [data-theme="light"] .ideas-rec:hover { border-color: rgba(0, 0, 0, 0.22); }
 
     /* Ideas list ─────────────────────────────────────────── */
     .ideas-list { display: flex; flex-direction: column; gap: 16px; }
@@ -7901,7 +7955,10 @@
               </div>
             </div>
             <div class="ideas-input-col-right">
-              <button id="ideaSubmitBtn" class="ideas-btn-develop" onclick="submitIdea()">
+              <button id="ideaAddOnlyBtn" class="ideas-btn-add" onclick="submitIdea({develop:false})">
+                <span data-i18n-es="Añadir" data-i18n-en="Add">Añadir</span>
+              </button>
+              <button id="ideaSubmitBtn" class="ideas-btn-develop" onclick="submitIdea({develop:true})">
                 <span data-i18n="ideas.develop">Desarrollar</span>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <path d="M3 8 H12.5 M8.5 4 L13 8 L8.5 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -12204,7 +12261,17 @@ function renderIdeas() {
   const ACT_REGEN       = lang === "en" ? "Regenerate"          : "Regenerar";
   const ACT_TP          = lang === "en" ? "Teleprompter"        : "Al teleprompter";
   const POINTER_SCRIPTED= lang === "en" ? "→ SCRIPT CREATED · OPEN IN SCRIPTS" : "→ GUIÓN CREADO · VER EN SCRIPTS";
+  const REC_ON          = lang === "en" ? "RECORDED" : "GRABADA";
+  const REC_OFF         = lang === "en" ? "TO RECORD" : "POR GRABAR";
   const CATS = lang === "en" ? IDEAS_CAT_LABELS_EN : IDEAS_CAT_LABELS;
+
+  const recChipFor = (idea) => {
+    const recorded = !!idea.recorded_at;
+    const icon = recorded
+      ? `<svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><circle cx="5" cy="5" r="3.2" fill="currentColor"/></svg>`
+      : `<svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><circle cx="5" cy="5" r="3.2" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>`;
+    return `<button type="button" class="ideas-rec${recorded ? " is-recorded" : ""}" onclick="event.stopPropagation();toggleIdeaRecorded('${idea.id}')" title="${recorded ? REC_ON : REC_OFF}">${icon}${recorded ? REC_ON : REC_OFF}</button>`;
+  };
 
   el.innerHTML = ideasCache.map(idea => {
     const status = idea.status || "draft";
@@ -12216,12 +12283,14 @@ function renderIdeas() {
     const date = ideasFmtDate(idea.created_at);
     const raw = esc(idea.raw_text || "");
     const id = idea.id;
+    const recChip = recChipFor(idea);
 
     if (status === "draft") {
       return `
       <article class="ideas-card is-draft" data-id="${id}">
         <div class="ideas-card-head">
           <span class="ideas-badge b-draft">${BADGE_DRAFT}</span>
+          ${recChip}
           <span class="ideas-card-title">${title}</span>
           <span class="ideas-card-date">${date}</span>
         </div>
@@ -12246,6 +12315,7 @@ function renderIdeas() {
             ${BADGE_SCRIPTED}
           </span>
           ${catLabel ? `<span class="ideas-cat ${catClass}">${catLabel}</span>` : ""}
+          ${recChip}
           <span class="ideas-card-title">${title}</span>
           <span class="ideas-card-date">${date}</span>
         </div>
@@ -12286,6 +12356,7 @@ function renderIdeas() {
           ${BADGE_DEVELOPED}
         </span>
         ${catLabel ? `<span class="ideas-cat ${catClass}">${catLabel}</span>` : ""}
+        ${recChip}
         <span class="ideas-card-title">${title}</span>
         <span class="ideas-card-date">${date}</span>
       </div>
@@ -12307,19 +12378,26 @@ function ideaOpenScripted(id) {
   try { profTab("scripts"); } catch {}
 }
 
-async function submitIdea() {
+async function submitIdea(opts) {
+  opts = opts || {};
+  const develop = opts.develop !== false;
   const input = document.getElementById("ideaInput");
-  const btn = document.getElementById("ideaSubmitBtn");
+  const btnPrimary = document.getElementById("ideaSubmitBtn");
+  const btnAdd = document.getElementById("ideaAddOnlyBtn");
+  const btn = develop ? btnPrimary : btnAdd;
   const text = input.value.trim();
   if (!text || text.length < 5) { showToast(t("ideas.too_short")); return; }
 
   const originalHTML = btn.innerHTML;
-  btn.disabled = true;
+  [btnPrimary, btnAdd].forEach(b => { if (b) b.disabled = true; });
   btn.innerHTML = `<span>${esc(t("toast.generating"))}</span>`;
 
-  const restore = () => { btn.disabled = false; btn.innerHTML = originalHTML; };
+  const restore = () => {
+    [btnPrimary, btnAdd].forEach(b => { if (b) b.disabled = false; });
+    btn.innerHTML = originalHTML;
+  };
 
-  const body = { raw_text: text, language: currentLang };
+  const body = { raw_text: text, language: currentLang, develop };
   const assistantId = document.getElementById("ideaAssistant").value;
   const projectId = document.getElementById("ideaProject").value;
   if (assistantId) body.assistant_id = assistantId;
@@ -12334,10 +12412,41 @@ async function submitIdea() {
     restore();
     if (!res.ok) { showToast(d.error || "Error"); return; }
     input.value = "";
-    showToast(t("ideas.created"));
+    showToast(develop ? t("ideas.created") : (currentLang === "en" ? "Idea added" : "Idea añadida"));
     await loadIdeas();
   } catch {
     restore();
+    showToast(t("toast.error_connection"));
+  }
+}
+
+async function toggleIdeaRecorded(id) {
+  const idea = (ideasCache || []).find(i => i.id === id);
+  if (!idea) return;
+  const now = new Date().toISOString();
+  const recorded_at = idea.recorded_at ? null : now;
+  // Optimistic update so the pill flips instantly.
+  idea.recorded_at = recorded_at;
+  renderIdeas();
+  try {
+    const res = await fetch(`/ideas/${id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ recorded_at }),
+    });
+    if (!res.ok) {
+      idea.recorded_at = recorded_at ? null : now; // rollback
+      renderIdeas();
+      const d = await res.json().catch(() => ({}));
+      showToast(d.error || "Error");
+      return;
+    }
+    const lang = (document.documentElement.lang || "es").toLowerCase();
+    showToast(recorded_at
+      ? (lang === "en" ? "Marked as recorded" : "Marcada como grabada")
+      : (lang === "en" ? "Unmarked" : "Desmarcada"));
+  } catch {
+    idea.recorded_at = recorded_at ? null : now;
+    renderIdeas();
     showToast(t("toast.error_connection"));
   }
 }
