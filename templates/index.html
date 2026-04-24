@@ -4695,6 +4695,401 @@
     }
     [data-theme="light"] .proj-hero-waves { opacity: 0.18; }
 
+    /* ── Scripts panel redesign (v0.13.9) ────────────────────────── */
+    :root {
+      --scr-accent: #ef6a29;
+      --scr-accent-soft: rgba(239, 106, 41, 0.12);
+      --scr-accent-border: rgba(239, 106, 41, 0.25);
+    }
+
+    #profPanelScripts { position: relative; }
+
+    .scr-hero-wrap {
+      position: relative;
+      padding: 18px 4px 30px;
+      margin: -8px -4px 28px;
+      overflow: hidden;
+      border-radius: 18px;
+    }
+    .scr-hero-waves {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      opacity: .12;
+      z-index: 0;
+    }
+    .scr-hero {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      gap: 32px;
+      padding: 28px 8px 10px;
+    }
+    .scr-hero-left { min-width: 0; }
+    .scr-eyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      margin-bottom: 18px;
+    }
+    .scr-eyebrow-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--scr-accent);
+      box-shadow: 0 0 0 0 rgba(239, 106, 41, 0.6);
+      animation: scrPulse 2.4s ease-out infinite;
+    }
+    @keyframes scrPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(239, 106, 41, 0.55); }
+      70%  { box-shadow: 0 0 0 10px rgba(239, 106, 41, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 106, 41, 0); }
+    }
+    .scr-h1 {
+      font-family: var(--font-editorial);
+      font-size: clamp(34px, 5vw, 56px);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.02;
+      color: var(--ink-editorial);
+      margin: 0 0 16px;
+    }
+    .scr-h1 em { font-style: italic; font-weight: 500; color: var(--scr-accent); }
+    .scr-sub {
+      font-family: var(--font-body);
+      font-size: 15px; line-height: 1.6;
+      color: var(--ink-muted);
+      max-width: 58ch;
+      font-weight: 300;
+    }
+    .scr-sub-em { color: var(--ink-cream); }
+
+    .scr-hero-right {
+      display: flex; align-items: center; justify-content: flex-end;
+      gap: 20px;
+      min-width: 160px;
+      padding-bottom: 6px;
+    }
+    .scr-hero-right-nums {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+    }
+    .scr-hooks {
+      width: 96px; height: 96px;
+      flex-shrink: 0;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      filter: drop-shadow(0 0 14px rgba(239, 106, 41, 0.22));
+      transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+    }
+    #profPanelScripts:hover .scr-hooks { transform: translateY(-2px) rotate(-2deg); }
+    .scr-counter {
+      font-family: var(--font-editorial);
+      font-size: clamp(52px, 8vw, 76px);
+      font-weight: 500;
+      font-feature-settings: "tnum" 1;
+      color: var(--scr-accent);
+      line-height: 0.9;
+      letter-spacing: -0.03em;
+      display: block;
+      text-shadow: 0 4px 30px rgba(239, 106, 41, 0.18);
+    }
+    .scr-counter-lbl {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10.5px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      text-align: right;
+    }
+
+    /* Filter banner */
+    .scr-filter-banner {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
+      padding: 10px 16px;
+      background: color-mix(in srgb, var(--fc, #ef6a29) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--fc, #ef6a29) 25%, transparent);
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: var(--ink-cream);
+      font-family: var(--font-body);
+    }
+    .scr-filter-banner b {
+      font-family: var(--font-editorial);
+      font-style: italic;
+      font-weight: 500;
+      color: var(--fc, #ef6a29);
+    }
+    .scr-filter-clear {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px;
+      color: var(--ink-muted);
+      padding: 4px 10px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+    }
+    .scr-filter-clear:hover { color: var(--ink-editorial); border-color: rgba(255,255,255,0.22); }
+
+    /* Script cards */
+    .scr-list { display: flex; flex-direction: column; gap: 14px; }
+    .scr-card {
+      position: relative;
+      background: linear-gradient(180deg, var(--ideas-card-top) 0%, var(--ideas-card-bot) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 20px 24px 18px;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 4px 16px rgba(0, 0, 0, 0.3);
+      transition: transform .22s, box-shadow .22s, border-color .22s;
+    }
+    .scr-card.has-proj { border-left: 3px solid var(--pc, #8a7e72); }
+    .scr-card:hover {
+      transform: translateY(-2px);
+      border-color: color-mix(in srgb, var(--pc, #ef6a29) 25%, transparent);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 10px 28px rgba(0, 0, 0, 0.42),
+        0 0 40px color-mix(in srgb, var(--pc, #ef6a29) 10%, transparent);
+    }
+
+    .scr-card-meta {
+      display: flex; align-items: center; gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .scr-proj-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 3px 9px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background .15s;
+      color: var(--pc, var(--ink-muted));
+      background: color-mix(in srgb, var(--pc, #8a7e72) 12%, transparent);
+      border: 1px solid color-mix(in srgb, var(--pc, #8a7e72) 25%, transparent);
+      border: none;
+    }
+    .scr-proj-badge:hover { background: color-mix(in srgb, var(--pc, #8a7e72) 20%, transparent); }
+    .scr-proj-badge.no-proj {
+      color: var(--ink-ghost);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .scr-card-date, .scr-card-words {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-ghost);
+      letter-spacing: 0.04em;
+    }
+    .scr-card-sep { color: var(--ink-ghost); opacity: .4; }
+
+    .scr-card-title {
+      font-family: var(--font-editorial);
+      font-size: 20px; font-weight: 500;
+      line-height: 1.22;
+      letter-spacing: -0.01em;
+      color: var(--ink-editorial);
+      margin: 0 0 12px;
+    }
+
+    .scr-preview-wrap {
+      position: relative;
+      cursor: pointer;
+      margin-bottom: 2px;
+    }
+    .scr-preview {
+      font-family: var(--font-body);
+      font-size: 14px; line-height: 1.6;
+      color: var(--ink-body);
+      font-weight: 300;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      -webkit-mask-image: linear-gradient(180deg, #000 60%, rgba(0,0,0,0.3) 100%);
+              mask-image: linear-gradient(180deg, #000 60%, rgba(0,0,0,0.3) 100%);
+    }
+
+    .scr-expand {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 10.5px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--scr-accent);
+      background: none; border: none; padding: 0;
+      cursor: pointer;
+      transition: gap .2s, color .15s;
+    }
+    .scr-expand:hover { gap: 10px; color: #ff8a57; }
+    .scr-expand svg { transition: transform .3s ease; }
+    .scr-card.expanded .scr-expand svg { transform: rotate(-90deg); }
+    .scr-card.expanded .scr-expand-label-collapsed { display: none; }
+    .scr-card:not(.expanded) .scr-expand-label-expanded { display: none; }
+
+    .scr-full {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows .3s ease, margin-top .3s ease;
+      margin-top: 0;
+    }
+    .scr-full > div { overflow: hidden; }
+    .scr-card.expanded .scr-full {
+      grid-template-rows: 1fr;
+      margin-top: 14px;
+    }
+    .scr-full-sep {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.06);
+      margin-bottom: 14px;
+    }
+    [data-theme="light"] .scr-full-sep { background: rgba(0, 0, 0, 0.08); }
+    .scr-full-text {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      padding: 16px 20px;
+      border-left: 2px solid rgba(239, 106, 41, 0.3);
+      font-family: var(--font-editorial);
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1.7;
+      color: var(--ink-body);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    [data-theme="light"] .scr-full-text { background: rgba(0, 0, 0, 0.03); }
+
+    .scr-acts {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    [data-theme="light"] .scr-acts { border-top-color: rgba(0, 0, 0, 0.08); }
+    .scr-act {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 13px; font-weight: 500;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: transparent;
+      color: var(--ink-muted);
+      transition: background .15s, border-color .15s, color .15s, transform .15s;
+    }
+    .scr-act:hover { transform: translateY(-1px); border-color: rgba(255, 255, 255, 0.18); color: var(--ink-editorial); }
+    .scr-act.primary {
+      background: var(--scr-accent-soft);
+      color: var(--scr-accent);
+      border-color: var(--scr-accent-border);
+    }
+    .scr-act.primary:hover {
+      background: rgba(239, 106, 41, 0.2);
+      border-color: rgba(239, 106, 41, 0.4);
+      color: #ff8a57;
+    }
+    .scr-act.danger { color: var(--ink-ghost); }
+    .scr-act.danger:hover { color: #f09595; border-color: rgba(240, 149, 149, 0.3); }
+
+    /* Empty state */
+    .scr-empty {
+      text-align: center;
+      padding: 56px 28px;
+      border: 1px dashed rgba(239, 106, 41, 0.18);
+      border-radius: 18px;
+      background: rgba(239, 106, 41, 0.025);
+    }
+    .scr-empty img {
+      width: 120px; height: 120px;
+      image-rendering: pixelated;
+      margin: 0 auto 18px;
+      display: block;
+      filter: drop-shadow(0 0 18px rgba(239, 106, 41, 0.22));
+    }
+    .scr-empty h3 {
+      font-family: var(--font-editorial);
+      font-size: 28px; font-weight: 500;
+      font-style: italic;
+      color: var(--ink-editorial);
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+    .scr-empty p {
+      font-family: var(--font-body);
+      font-size: 14px; line-height: 1.55;
+      color: var(--ink-muted);
+      max-width: 52ch;
+      margin: 0 auto;
+    }
+
+    /* Sidebar accent */
+    .prof-nav-item.on.on-scripts {
+      background: linear-gradient(90deg,
+        rgba(239, 106, 41, 0.18) 0%,
+        rgba(239, 106, 41, 0.03) 100%);
+      border-color: rgba(239, 106, 41, 0.22);
+      color: var(--scr-accent);
+      box-shadow: 0 0 16px rgba(239, 106, 41, 0.1);
+    }
+    .prof-nav-item.on.on-scripts::before {
+      background: var(--scr-accent);
+      box-shadow: 0 0 8px rgba(239, 106, 41, 0.55);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .scr-hooks { width: 80px; height: 80px; }
+      .scr-hero-right { gap: 16px; }
+    }
+    @media (max-width: 820px) {
+      .scr-hero { grid-template-columns: 1fr; gap: 18px; padding: 20px 6px 6px; }
+      .scr-hero-right { justify-content: flex-start; min-width: 0; gap: 14px; }
+      .scr-hero-right-nums { align-items: flex-start; }
+      .scr-hooks { width: 72px; height: 72px; }
+      .scr-counter { font-size: 54px; }
+      .scr-counter-lbl { text-align: left; }
+      .scr-h1 { font-size: 36px; }
+      .scr-card { padding: 18px; }
+      .scr-card-title { font-size: 18px; }
+      .scr-full-text { padding: 14px 16px; font-size: 14.5px; }
+    }
+    @media (max-width: 480px) {
+      .scr-hero-wrap { margin: -4px -4px 20px; }
+      .scr-hooks { width: 64px; height: 64px; }
+      .scr-act { font-size: 12.5px; padding: 6px 12px; }
+    }
+
+    /* Light theme */
+    [data-theme="light"] #profPanelScripts {
+      --ink-editorial: #1a140f;
+      --ink-muted: #6b5f52;
+      --ink-cream: #5a4f42;
+      --ink-ghost: #8a7e72;
+      --ink-body: #2a2319;
+      --ideas-card-top: #fbf7ef;
+      --ideas-card-bot: #f3ede0;
+    }
+    [data-theme="light"] .scr-card {
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 4px 16px rgba(180, 150, 100, 0.12);
+    }
+    [data-theme="light"] .scr-hero-waves { opacity: 0.18; }
+
     /* Team members list */
     .team-list { display: flex; flex-direction: column; gap: 8px; }
     .team-member {
@@ -7050,13 +7445,47 @@
 
       <!-- Scripts panel -->
       <div id="profPanelScripts" style="display:none">
-        <div class="prof-section-head">
-          <div>
-            <div class="prof-section-title" data-i18n="prof.saved_scripts">Saved scripts</div>
-            <div class="prof-section-sub" data-i18n="prof.scripts_sub">Scripts you've transformed and saved</div>
+
+        <!-- Editorial hero -->
+        <div class="scr-hero-wrap">
+          <svg class="scr-hero-waves" viewBox="0 0 1200 380" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0,210 Q180,150 360,200 T720,200 T1080,190 L1200,210 L1200,380 L0,380 Z" fill="#ef6a29"/>
+            <path d="M0,250 Q220,200 420,240 T780,240 T1200,250 L1200,380 L0,380 Z" fill="#7d5bb8" opacity="0.6"/>
+            <path d="M0,300 Q200,260 420,290 T820,290 T1200,300 L1200,380 L0,380 Z" fill="#c89968" opacity="0.5"/>
+            <circle cx="980" cy="120" r="3" fill="#ef6a29" opacity="0.7"/>
+            <circle cx="1080" cy="80" r="2" fill="#c4b896" opacity="0.6"/>
+            <circle cx="160" cy="100" r="2.5" fill="#7d5bb8" opacity="0.6"/>
+          </svg>
+          <div class="scr-hero">
+            <div class="scr-hero-left">
+              <div class="scr-eyebrow">
+                <span class="scr-eyebrow-dot"></span>
+                <span data-i18n-es="GUIONES · TU ARCHIVO" data-i18n-en="SCRIPTS · YOUR ARCHIVE">GUIONES · TU ARCHIVO</span>
+              </div>
+              <h1 class="scr-h1">
+                <span data-i18n-es="Todo lo que has" data-i18n-en="Everything you've">Todo lo que has</span>
+                <em data-i18n-es="guardado" data-i18n-en="saved">guardado</em>.
+              </h1>
+              <p class="scr-sub">
+                <span data-i18n-es="Transcripciones convertidas en guiones, versiones adaptadas," data-i18n-en="Transcriptions turned into scripts, adapted versions,">Transcripciones convertidas en guiones, versiones adaptadas,</span>
+                <span class="scr-sub-em" data-i18n-es="trabajo listo para reutilizar." data-i18n-en="work ready to reuse.">trabajo listo para reutilizar.</span>
+              </p>
+            </div>
+            <div class="scr-hero-right">
+              <img class="scr-hooks" src="{{ url_for('static', filename='img/hooks/hooks-scripts.svg') }}" alt="" aria-hidden="true" />
+              <div class="scr-hero-right-nums">
+                <span class="scr-counter" id="scrCounterNum">0</span>
+                <span class="scr-counter-lbl" data-i18n-es="GUIONES GUARDADOS" data-i18n-en="SCRIPTS SAVED">GUIONES GUARDADOS</span>
+              </div>
+            </div>
           </div>
         </div>
-        <div id="profListScripts"></div>
+
+        <!-- Project filter banner (shown when ?project=<id>) -->
+        <div id="scrFilterBanner" style="display:none"></div>
+
+        <!-- Scripts list -->
+        <div id="profListScripts" class="scr-list"></div>
       </div>
 
       <!-- Transcriptions panel -->
@@ -7402,6 +7831,30 @@
   </div>
 </div>
 
+<!-- Edit script modal -->
+<div class="overlay" id="scrEditOverlay" onclick="if(event.target===this)closeModal('scrEditOverlay')">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('scrEditOverlay')">✕</button>
+    <h2 data-i18n-es="Editar guión" data-i18n-en="Edit script">Editar guión</h2>
+    <div class="field">
+      <label data-i18n-es="Título" data-i18n-en="Title">Título</label>
+      <input type="text" id="scrEditTitle" />
+    </div>
+    <div class="field">
+      <label data-i18n-es="Proyecto" data-i18n-en="Project">Proyecto</label>
+      <select id="scrEditProject" style="width:100%;padding:10px 12px;background:var(--surf2);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text);font-family:var(--font-body);font-size:.9rem;outline:none">
+        <option value="" data-i18n-es="Sin proyecto" data-i18n-en="No project">Sin proyecto</option>
+      </select>
+    </div>
+    <div class="field">
+      <label data-i18n-es="Contenido del guión" data-i18n-en="Script content">Contenido del guión</label>
+      <textarea id="scrEditText" class="script-ta" style="min-height:180px;font-size:.9rem;font-family:var(--font-editorial, Fraunces), serif;line-height:1.6"></textarea>
+    </div>
+    <div class="form-err" id="scrEditErr"></div>
+    <button class="btn-full" onclick="submitScriptEditor()" data-i18n-es="Guardar cambios" data-i18n-en="Save changes">Guardar cambios</button>
+  </div>
+</div>
+
 <!-- Invite member modal -->
 <div class="overlay" id="inviteOverlay" onclick="if(event.target===this)closeModal('inviteOverlay')">
   <div class="modal">
@@ -7700,7 +8153,7 @@ const LANGS = {
     "ws.card.team.lbl": "miembros",
     // Profile hub
     "prof.overview": "Resumen",
-    "prof.saved_scripts": "Guiones guardados",
+    "prof.saved_scripts": "Guiones",
     "prof.transcriptions": "Transcripciones",
     "prof.projects": "Proyectos",
     "prof.assistants": "Asistentes",
@@ -8089,7 +8542,7 @@ const LANGS = {
     "ws.card.team.desc": "Invite members to your agency.",
     "ws.card.team.lbl": "members",
     "prof.overview": "Overview",
-    "prof.saved_scripts": "Saved scripts",
+    "prof.saved_scripts": "Scripts",
     "prof.transcriptions": "Transcriptions",
     "prof.projects": "Projects",
     "prof.assistants": "Assistants",
@@ -10177,6 +10630,7 @@ function profTab(tab, pushHistory) {
     btn.classList.remove("on-ideas");
     btn.classList.remove("on-transcriptions");
     btn.classList.remove("on-projects");
+    btn.classList.remove("on-scripts");
   });
   const navBtn = document.querySelector(`.prof-nav-item[onclick="profTab('${tab}')"]`);
   if (navBtn) {
@@ -10184,10 +10638,11 @@ function profTab(tab, pushHistory) {
     if (tab === "ideas") navBtn.classList.add("on-ideas");
     if (tab === "transc") navBtn.classList.add("on-transcriptions");
     if (tab === "projects") navBtn.classList.add("on-projects");
+    if (tab === "scripts") navBtn.classList.add("on-scripts");
   }
 
   // Load data for specific tabs
-  if (tab === "scripts") renderProfScripts();
+  if (tab === "scripts") { readScrProjectFilterFromUrl(); renderProfScripts(); }
   if (tab === "transc") renderProfTransc();
   if (tab === "projects") renderProfProjects();
   if (tab === "assistants") renderProfAssistants();
@@ -10481,37 +10936,189 @@ async function loadScripts() {
 // Back-compat alias.
 async function loadSavedScripts() { return loadScripts(); }
 
+let _scrFilterProjectId = null;
+
+function renderScrCounter(visibleCount) {
+  const el = document.getElementById("scrCounterNum");
+  if (el) el.textContent = String(visibleCount).padStart(2, "0");
+}
+
+function _scrProjectFromId(pid) {
+  if (!pid) return null;
+  return (typeof projectsCache !== "undefined" ? projectsCache : []).find(p => p.id === pid) || null;
+}
+
+function renderScrFilterBanner() {
+  const el = document.getElementById("scrFilterBanner");
+  if (!el) return;
+  if (!_scrFilterProjectId) { el.style.display = "none"; el.innerHTML = ""; return; }
+  const proj = _scrProjectFromId(_scrFilterProjectId);
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const name = esc(proj ? proj.name : "—");
+  const color = proj && proj.color && /^#[0-9a-f]{6}$/i.test(proj.color) ? proj.color : "#ef6a29";
+  const label = lang === "en"
+    ? `Showing scripts in project <b>${name}</b>`
+    : `Mostrando guiones del proyecto <b>${name}</b>`;
+  const clear = lang === "en" ? "Clear filter ×" : "Quitar filtro ×";
+  el.style.display = "";
+  el.className = "scr-filter-banner";
+  el.style.setProperty("--fc", color);
+  el.innerHTML = `
+    <span>${label}</span>
+    <button type="button" class="scr-filter-clear" onclick="clearScrProjectFilter()">${clear}</button>`;
+}
+
+function clearScrProjectFilter() {
+  _scrFilterProjectId = null;
+  try { history.replaceState(null, "", location.pathname); } catch {}
+  renderProfScripts();
+}
+
+function readScrProjectFilterFromUrl() {
+  try {
+    const q = new URLSearchParams(location.search);
+    const pid = q.get("project") || q.get("project_id");
+    if (pid) _scrFilterProjectId = pid;
+  } catch {}
+}
+
+function toggleScrExpand(id) {
+  const card = document.querySelector(`.scr-card[data-id="${id}"]`);
+  if (!card) return;
+  card.classList.toggle("expanded");
+}
+
 function renderProfScripts() {
   const el = document.getElementById("profListScripts");
-  if (!scriptsCache.length) {
-    el.innerHTML = `<div class="prof-empty">
-      <div class="prof-empty-icon">${EMPTY_ICON}</div>
-      <div class="prof-empty-title">${t("prof.empty_scripts_title")}</div>
-      <div class="prof-empty-sub">${t("prof.empty_scripts_sub")}</div>
-      <button class="prof-empty-cta" onclick="closeProfile();document.getElementById('adaptCard').scrollIntoView({behavior:'smooth'})">${t("prof.qa_adapt")}</button>
-    </div>`;
+  if (!el) return;
+
+  renderScrFilterBanner();
+
+  const items = _scrFilterProjectId
+    ? scriptsCache.filter(s => s.project_id === _scrFilterProjectId)
+    : scriptsCache.slice();
+  renderScrCounter(items.length);
+
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+
+  if (!items.length) {
+    const title = _scrFilterProjectId
+      ? (lang === "en" ? "No scripts in this project yet." : "Todavía no hay guiones en este proyecto.")
+      : (lang === "en" ? "You haven't saved any scripts yet." : "Todavía no has guardado ningún guión.");
+    const sub = _scrFilterProjectId
+      ? (lang === "en" ? "Save a script to this project from the Hazlo tuyo flow." : "Guarda un guión en este proyecto desde Hazlo tuyo.")
+      : (lang === "en" ? "When you transform a transcription with Hazlo tuyo or save a script, it will appear here." : "Cuando transformes una transcripción con Hazlo tuyo o guardes un guión, aparecerá aquí.");
+    el.innerHTML = `
+      <div class="scr-empty">
+        <img src="/static/img/hooks/hooks-scripts.svg" alt="" aria-hidden="true" />
+        <h3>${title}</h3>
+        <p>${sub}</p>
+      </div>`;
     return;
   }
-  el.innerHTML = scriptsCache.map(it => {
+
+  const LBL_WORDS  = lang === "en" ? "words" : "palabras";
+  const LBL_FULL   = lang === "en" ? "VIEW FULL TEXT" : "VER TEXTO COMPLETO";
+  const LBL_COLL   = lang === "en" ? "COLLAPSE" : "COLAPSAR";
+  const LBL_EDIT   = lang === "en" ? "Edit" : "Editar";
+  const LBL_PROJ   = lang === "en" ? "To project" : "Al proyecto";
+  const LBL_TP     = lang === "en" ? "Teleprompter" : "Teleprompter";
+  const LBL_COPY   = lang === "en" ? "Copy" : "Copiar";
+  const LBL_DEL    = lang === "en" ? "Delete" : "Eliminar";
+  const LBL_NOPROJ = lang === "en" ? "NO PROJECT" : "SIN PROYECTO";
+
+  el.innerHTML = items.map(it => {
     const text = _scriptText(it);
-    const badge = it.title || "Guion";
+    const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+    const id = it.id;
+    const proj = _scrProjectFromId(it.project_id);
+    const color = proj && proj.color && /^#[0-9a-f]{6}$/i.test(proj.color) ? proj.color : null;
+    const cardCls = `scr-card${proj ? " has-proj" : ""}`;
+    const styleVar = color ? ` style="--pc:${color}"` : "";
+    const badge = proj
+      ? `<button type="button" class="scr-proj-badge" style="--pc:${color || "#8a7e72"}" onclick="profTab('projects')" title="${esc(proj.name)}">${esc(proj.name)}</button>`
+      : `<button type="button" class="scr-proj-badge no-proj" onclick="profTab('projects')">${LBL_NOPROJ}</button>`;
+
     return `
-    <div class="prof-card">
-      <div class="prof-card-top">
-        <span class="prof-card-badge">${esc(badge)}</span>
-        <span class="prof-card-date">${fmtDate(it.created_at)}</span>
+    <article class="${cardCls}" id="s-${id}" data-id="${id}"${styleVar}>
+      <div class="scr-card-meta">
+        ${badge}
+        <span class="scr-card-date">${fmtDate(it.created_at)}</span>
+        <span class="scr-card-sep">·</span>
+        <span class="scr-card-words">${wordCount} ${LBL_WORDS}</span>
       </div>
-      <div class="prof-card-text" onclick="viewScript('${it.id}')">${esc(text.slice(0, 200))}${text.length > 200 ? "…" : ""}</div>
-      <div class="prof-card-acts">
-        <button onclick="tpOpenFromScript('${it.id}')">${t("prof.teleprompter")}</button>
-        <button class="mob-hide" onclick="cpScript('${it.id}',this)">${t("act.copy")}</button>
-        <button class="mob-hide" onclick="viewScript('${it.id}')">${t("act.view")}</button>
-        <button class="mob-hide" onclick="saveScriptCardToProject('${it.id}')">${t("act.to_project")}</button>
-        <button class="mob-hide del" onclick="delScript('${it.id}',this)">${t("act.delete")}</button>
-        <button class="btn-more-acts" onclick="openCardActions('${it.id}')">···</button>
+      <h3 class="scr-card-title">${esc(it.title || "Guion")}</h3>
+      <div class="scr-preview-wrap" onclick="toggleScrExpand('${id}')">
+        <div class="scr-preview">${esc(text)}</div>
       </div>
-    </div>`;
+      <button class="scr-expand" onclick="toggleScrExpand('${id}')">
+        <span class="scr-expand-label-collapsed">${LBL_FULL}</span>
+        <span class="scr-expand-label-expanded">${LBL_COLL}</span>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5 H8 M5.5 2.5 L8 5 L5.5 7.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="scr-full" aria-hidden="true">
+        <div>
+          <div class="scr-full-sep"></div>
+          <div class="scr-full-text">${esc(text)}</div>
+        </div>
+      </div>
+      <div class="scr-acts">
+        <button class="scr-act primary" onclick="openScriptEditor('${id}')">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M12 2 L14 4 L5 13 L2 14 L3 11 Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          ${LBL_EDIT}
+        </button>
+        <button class="scr-act" onclick="openScriptEditor('${id}', {focus:'project'})">${LBL_PROJ}</button>
+        <button class="scr-act" onclick="tpOpenFromScript('${id}')">${LBL_TP}</button>
+        <button class="scr-act" onclick="cpScript('${id}',this)">${LBL_COPY}</button>
+        <button class="scr-act danger" onclick="delScript('${id}',this)">${LBL_DEL}</button>
+      </div>
+    </article>`;
   }).join("");
+}
+
+// ── Script edit modal ─────────────────────────────────────────────────────
+let _scrEditorId = null;
+
+function openScriptEditor(id, opts) {
+  opts = opts || {};
+  const item = scriptsCache.find(i => i.id === id);
+  if (!item) return;
+  _scrEditorId = id;
+  const modal = document.getElementById("scrEditOverlay");
+  if (!modal) return;
+  document.getElementById("scrEditTitle").value = item.title || "";
+  document.getElementById("scrEditText").value = _scriptText(item);
+  const projSel = document.getElementById("scrEditProject");
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const noProj = lang === "en" ? "No project" : "Sin proyecto";
+  const list = (typeof projectsCache !== "undefined") ? (projectsCache || []) : [];
+  projSel.innerHTML = `<option value="">${noProj}</option>` +
+    list.map(p => `<option value="${p.id}" ${item.project_id === p.id ? "selected" : ""}>${esc(p.name)}</option>`).join("");
+  document.getElementById("scrEditErr").classList.remove("on");
+  openModal("scrEditOverlay");
+  setTimeout(() => {
+    const el = document.getElementById(opts.focus === "project" ? "scrEditProject" : "scrEditTitle");
+    if (el && el.focus) el.focus();
+  }, 100);
+}
+
+async function submitScriptEditor() {
+  if (!_scrEditorId) return;
+  const title = document.getElementById("scrEditTitle").value.trim();
+  const text = document.getElementById("scrEditText").value;
+  const project_id = document.getElementById("scrEditProject").value || null;
+  const err = document.getElementById("scrEditErr");
+  err.classList.remove("on");
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  if (!title) { err.textContent = lang === "en" ? "Title is required" : "El título es requerido"; err.classList.add("on"); return; }
+  const res = await fetch(`/scripts/${_scrEditorId}`, {
+    method: "PATCH", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, script: text, project_id }),
+  });
+  if (!res.ok) { const d = await res.json().catch(() => ({})); err.textContent = d.error || "Error"; err.classList.add("on"); return; }
+  closeModal("scrEditOverlay");
+  showToast(lang === "en" ? "Script updated" : "Guión actualizado");
+  await loadScripts();
 }
 
 function cpScript(id, btn) {
@@ -10841,15 +11448,15 @@ async function delProject(id) {
 }
 
 async function filterScriptsByProject(projectId, name) {
-  profTab("scripts");
+  _scrFilterProjectId = projectId || null;
   try {
-    const r = await fetch(`/scripts?project_id=${projectId}`);
-    if (!r.ok) return;
-    scriptsCache = await r.json();
-    document.getElementById("profStatScripts").textContent = scriptsCache.length;
-    renderProfScripts();
-    showToast(`Showing scripts in "${name}"`);
+    const url = "/profile/scripts" + (projectId ? `?project=${encodeURIComponent(projectId)}` : "");
+    history.pushState({}, "", url);
   } catch {}
+  profTab("scripts");
+  renderProfScripts();
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  if (projectId && name) showToast(lang === "en" ? `Showing scripts in "${name}"` : `Guiones del proyecto "${name}"`);
 }
 
 // ── Project detail view ───────────────────────────────────────────────────
