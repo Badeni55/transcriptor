@@ -4974,6 +4974,63 @@
     }
     [data-theme="light"] .scr-full-text { background: rgba(0, 0, 0, 0.03); }
 
+    /* Inline edit form (desktop) */
+    .scr-inline-edit {
+      display: flex; flex-direction: column; gap: 10px;
+      background: rgba(239, 106, 41, 0.04);
+      border: 1px solid rgba(239, 106, 41, 0.2);
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+    [data-theme="light"] .scr-inline-edit { background: rgba(239, 106, 41, 0.05); }
+    .scr-card.editing .scr-expand,
+    .scr-card.editing .scr-preview-wrap { opacity: .45; pointer-events: none; }
+    .scr-inline-lbl {
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--ink-cream);
+    }
+    .scr-inline-input, .scr-inline-select, .scr-inline-textarea {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--ink-editorial);
+      font-family: var(--font-body);
+      font-size: 14px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .scr-inline-input:focus, .scr-inline-select:focus, .scr-inline-textarea:focus {
+      border-color: rgba(239, 106, 41, 0.5);
+    }
+    [data-theme="light"] .scr-inline-input,
+    [data-theme="light"] .scr-inline-select,
+    [data-theme="light"] .scr-inline-textarea {
+      background: #fff;
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+    .scr-inline-textarea {
+      font-family: var(--font-editorial);
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 180px;
+      resize: vertical;
+    }
+    .scr-inline-err {
+      font-family: var(--font-body);
+      font-size: 12.5px;
+      color: #f09595;
+      padding: 4px 0;
+    }
+    .scr-inline-acts {
+      display: flex; gap: 8px; justify-content: flex-end;
+      margin-top: 2px;
+    }
+
     .scr-acts {
       display: flex; flex-wrap: wrap; gap: 8px;
       margin-top: 14px;
@@ -5089,6 +5146,118 @@
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 4px 16px rgba(180, 150, 100, 0.12);
     }
     [data-theme="light"] .scr-hero-waves { opacity: 0.18; }
+
+    /* ── Settings panel ──────────────────────────────────────────── */
+    #profPanelSettings { position: relative; }
+    .settings-hero-wrap {
+      position: relative;
+      padding: 14px 4px 22px;
+      margin: -8px -4px 24px;
+      overflow: hidden;
+      border-radius: 18px;
+    }
+    .settings-hero-waves {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      opacity: .1;
+      z-index: 0;
+    }
+    .settings-hero {
+      position: relative;
+      z-index: 1;
+      padding: 20px 8px 8px;
+      min-width: 0;
+    }
+    .settings-eyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--ink-muted);
+      margin-bottom: 14px;
+    }
+    .settings-eyebrow-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #ef6a29;
+      box-shadow: 0 0 0 0 rgba(239, 106, 41, 0.55);
+      animation: projPulse 2.4s ease-out infinite;
+    }
+    .settings-h1 {
+      font-family: var(--font-editorial);
+      font-size: clamp(28px, 3.5vw, 40px);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+      color: var(--ink-editorial);
+      margin: 0;
+    }
+    .settings-h1 em { font-style: italic; font-weight: 500; color: #ef6a29; }
+
+    .settings-card {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 20px;
+      background: linear-gradient(180deg, var(--ideas-card-top) 0%, var(--ideas-card-bot) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 18px 22px;
+      margin-bottom: 14px;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+    .settings-card-head { min-width: 0; }
+    .settings-card-title {
+      font-family: var(--font-editorial);
+      font-size: 18px; font-weight: 500;
+      color: var(--ink-editorial);
+      letter-spacing: -0.005em;
+    }
+    .settings-card-sub {
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--ink-muted);
+      margin-top: 3px;
+    }
+    .settings-seg { flex-shrink: 0; }
+    .settings-seg .theme-seg-opt { width: 44px; height: 30px; font-size: .85rem; font-weight: 600; }
+    .settings-lang-opt {
+      font-family: var(--font-mono);
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+
+    [data-theme="light"] #profPanelSettings {
+      --ink-editorial: #1a140f;
+      --ink-muted: #6b5f52;
+      --ink-cream: #5a4f42;
+      --ideas-card-top: #fbf7ef;
+      --ideas-card-bot: #f3ede0;
+    }
+    [data-theme="light"] .settings-card {
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 4px 16px rgba(180,150,100,.12);
+    }
+    [data-theme="light"] .settings-hero-waves { opacity: 0.16; }
+
+    /* Sidebar accent */
+    .prof-nav-item.on.on-settings {
+      background: linear-gradient(90deg,
+        rgba(239, 106, 41, 0.18) 0%,
+        rgba(239, 106, 41, 0.03) 100%);
+      border-color: rgba(239, 106, 41, 0.22);
+      color: #ef6a29;
+      box-shadow: 0 0 16px rgba(239, 106, 41, 0.1);
+    }
+    .prof-nav-item.on.on-settings::before {
+      background: #ef6a29;
+      box-shadow: 0 0 8px rgba(239, 106, 41, 0.55);
+    }
+
+    @media (max-width: 640px) {
+      .settings-card { flex-direction: column; align-items: flex-start; gap: 14px; }
+      .settings-seg { align-self: flex-end; }
+    }
 
     /* Team members list */
     .team-list { display: flex; flex-direction: column; gap: 8px; }
@@ -7373,16 +7542,10 @@
         <button class="prof-nav-item" id="profNavTeam" style="display:none" onclick="profTab('team')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><circle cx="5" cy="4" r="2.5" fill="currentColor"/><circle cx="11" cy="4" r="2.5" fill="currentColor" opacity=".6"/><rect x="1" y="8" width="8" height="5" rx="2" fill="currentColor"/><rect x="7" y="8" width="8" height="5" rx="2" fill="currentColor" opacity=".5"/></svg><span data-i18n="prof.team">Team</span></button>
         <button class="prof-nav-item" id="profNavTeleprompter" onclick="openTeleprompterPicker()" style="display:none"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="1" width="14" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="8" height="1.5" fill="currentColor" opacity=".5"/><rect x="4" y="7" width="6" height="1.5" fill="currentColor" opacity=".3"/><rect x="5" y="13" width="6" height="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.teleprompter">Teleprompter</span></button>
         <button class="prof-nav-item" id="profNavPrivacy" onclick="profTab('privacy')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="3" y="6" width="10" height="9" rx="1" fill="currentColor" opacity=".6"/><rect x="5" y="1" width="6" height="7" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="7" y="9" width="2" height="3" fill="#0a0b0f"/></svg><span data-i18n="prof.privacy">Privacy &amp; Data</span></button>
+        <button class="prof-nav-item" id="profNavSettings" onclick="profTab('settings')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><circle cx="8" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1 V3 M8 13 V15 M1 8 H3 M13 8 H15 M3 3 L4.5 4.5 M11.5 11.5 L13 13 M3 13 L4.5 11.5 M11.5 4.5 L13 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span data-i18n="prof.settings">Settings</span></button>
       </div>
 
       <div class="prof-sidebar-footer">
-        <div class="prof-theme-row">
-          <span class="prof-theme-label">🌓 <span data-i18n="nav.theme">Tema</span></span>
-          <div class="theme-seg" role="group" aria-label="Theme">
-            <button type="button" class="theme-seg-opt" data-val="light" onclick="setThemeBinary('light', event)" aria-label="Light">☀️</button>
-            <button type="button" class="theme-seg-opt" data-val="dark" onclick="setThemeBinary('dark', event)" aria-label="Dark">🌙</button>
-          </div>
-        </div>
         <button class="btn-3d btn-3d-primary" style="padding:9px;border-radius:8px;background:var(--purple);color:#fff;font-size:.8rem;font-weight:600;border:none;cursor:pointer" onclick="closeProfile();openTopup()" data-i18n="prof.topup">+ Top up</button>
         <button id="profManageSubSidebar" class="btn-3d btn-3d-secondary" style="display:none;padding:8px;border-radius:8px;background:transparent;color:var(--text3);font-size:.75rem;border:1px solid var(--border);cursor:pointer" onclick="manageSub()" data-i18n="prof.manage_sub">Manage subscription</button>
         <button class="btn-3d btn-3d-secondary" style="padding:8px;border-radius:8px;background:transparent;color:var(--text3);font-size:.75rem;border:1px solid var(--border);cursor:pointer" onclick="closeProfile()" data-i18n="prof.back">← Back to app</button>
@@ -7783,6 +7946,49 @@
             <div style="font-size:.82rem;color:var(--text2);font-weight:300">Permanently delete your account, all projects, scripts, and transcriptions. Your active subscription will be cancelled. This cannot be undone.</div>
           </div>
           <button class="btn-sm btn-3d btn-3d-danger" style="background:transparent;border:1px solid rgba(239,68,68,.3);color:#f87171;padding:8px 16px" onclick="openDeleteAccountModal()">Delete my account</button>
+        </div>
+      </div>
+
+      <!-- Settings panel -->
+      <div id="profPanelSettings" style="display:none">
+        <div class="settings-hero-wrap">
+          <svg class="settings-hero-waves" viewBox="0 0 1200 300" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0,180 Q200,140 400,175 T800,175 T1200,180 L1200,300 L0,300 Z" fill="#ef6a29"/>
+            <path d="M0,220 Q220,180 420,210 T820,210 T1200,220 L1200,300 L0,300 Z" fill="#7d5bb8" opacity="0.55"/>
+            <path d="M0,260 Q200,230 420,250 T820,250 T1200,260 L1200,300 L0,300 Z" fill="#c89968" opacity="0.45"/>
+          </svg>
+          <div class="settings-hero">
+            <div class="settings-eyebrow">
+              <span class="settings-eyebrow-dot"></span>
+              <span data-i18n-es="AJUSTES · TU CUENTA" data-i18n-en="SETTINGS · YOUR ACCOUNT">AJUSTES · TU CUENTA</span>
+            </div>
+            <h1 class="settings-h1">
+              <span data-i18n-es="Personaliza tu" data-i18n-en="Customize your">Personaliza tu</span>
+              <em data-i18n-es="espacio" data-i18n-en="space">espacio</em>.
+            </h1>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <div class="settings-card-title" data-i18n-es="Idioma" data-i18n-en="Language">Idioma</div>
+            <div class="settings-card-sub" data-i18n-es="Elige el idioma de la interfaz." data-i18n-en="Choose the interface language.">Elige el idioma de la interfaz.</div>
+          </div>
+          <div class="theme-seg settings-seg" role="group" aria-label="Language">
+            <button type="button" class="theme-seg-opt settings-lang-opt" data-val="es" onclick="setLangBinary('es', event)" aria-label="Español">ES</button>
+            <button type="button" class="theme-seg-opt settings-lang-opt" data-val="en" onclick="setLangBinary('en', event)" aria-label="English">EN</button>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <div class="settings-card-title" data-i18n-es="Tema" data-i18n-en="Theme">Tema</div>
+            <div class="settings-card-sub" data-i18n-es="Claro u oscuro. Persistente entre sesiones." data-i18n-en="Light or dark. Persists across sessions.">Claro u oscuro. Persistente entre sesiones.</div>
+          </div>
+          <div class="theme-seg settings-seg" role="group" aria-label="Theme">
+            <button type="button" class="theme-seg-opt" data-val="light" onclick="setThemeBinary('light', event)" aria-label="Light">☀️</button>
+            <button type="button" class="theme-seg-opt" data-val="dark" onclick="setThemeBinary('dark', event)" aria-label="Dark">🌙</button>
+          </div>
         </div>
       </div>
 
@@ -8213,6 +8419,7 @@ const LANGS = {
     "tp.reset_pos": "Resetear posiciones",
     "tp.close_tp": "Cerrar teleprompter",
     "prof.privacy": "Privacidad y datos",
+    "prof.settings": "Configuración",
     "prof.topup": "+ Recargar",
     "prof.manage_sub": "Gestionar suscripción",
     "prof.back": "← Volver a la app",
@@ -8602,6 +8809,7 @@ const LANGS = {
     "tp.reset_pos": "Reset positions",
     "tp.close_tp": "Close teleprompter",
     "prof.privacy": "Privacy & Data",
+    "prof.settings": "Settings",
     "prof.topup": "+ Top up",
     "prof.manage_sub": "Manage subscription",
     "prof.back": "← Back to app",
@@ -10584,12 +10792,12 @@ function updateAllAvatars(seed) {
 const PROF_SECTION_MAP = {
   overview: "overview", scripts: "scripts", transcriptions: "transc",
   projects: "projects", assistants: "assistants", metrics: "metrics",
-  ideas: "ideas", team: "team", privacy: "privacy"
+  ideas: "ideas", team: "team", privacy: "privacy", settings: "settings"
 };
 const PROF_TAB_TO_SLUG = Object.fromEntries(Object.entries(PROF_SECTION_MAP).map(([k, v]) => [v, k]));
 const PROF_TITLES = {
-  es: { overview: "Perfil", scripts: "Scripts", transc: "Transcripciones", projects: "Proyectos", assistants: "Asistentes", metrics: "Métricas", ideas: "Ideas", team: "Equipo", privacy: "Privacidad" },
-  en: { overview: "Profile", scripts: "Scripts", transc: "Transcriptions", projects: "Projects", assistants: "Assistants", metrics: "Metrics", ideas: "Ideas", team: "Team", privacy: "Privacy" },
+  es: { overview: "Perfil", scripts: "Scripts", transc: "Transcripciones", projects: "Proyectos", assistants: "Asistentes", metrics: "Métricas", ideas: "Ideas", team: "Equipo", privacy: "Privacidad", settings: "Configuración" },
+  en: { overview: "Profile", scripts: "Scripts", transc: "Transcriptions", projects: "Projects", assistants: "Assistants", metrics: "Metrics", ideas: "Ideas", team: "Team", privacy: "Privacy", settings: "Settings" },
 };
 
 function profTab(tab, pushHistory) {
@@ -10614,6 +10822,7 @@ function profTab(tab, pushHistory) {
     ideas: "profPanelIdeas",
     team: "profPanelTeam",
     privacy: "profPanelPrivacy",
+    settings: "profPanelSettings",
   };
   // Hide all panels
   Object.values(panels).forEach(id => {
@@ -10631,6 +10840,7 @@ function profTab(tab, pushHistory) {
     btn.classList.remove("on-transcriptions");
     btn.classList.remove("on-projects");
     btn.classList.remove("on-scripts");
+    btn.classList.remove("on-settings");
   });
   const navBtn = document.querySelector(`.prof-nav-item[onclick="profTab('${tab}')"]`);
   if (navBtn) {
@@ -10639,10 +10849,12 @@ function profTab(tab, pushHistory) {
     if (tab === "transc") navBtn.classList.add("on-transcriptions");
     if (tab === "projects") navBtn.classList.add("on-projects");
     if (tab === "scripts") navBtn.classList.add("on-scripts");
+    if (tab === "settings") navBtn.classList.add("on-settings");
   }
 
   // Load data for specific tabs
   if (tab === "scripts") { readScrProjectFilterFromUrl(); renderProfScripts(); }
+  if (tab === "settings") { highlightActiveLang(); applyTheme(themePref); }
   if (tab === "transc") renderProfTransc();
   if (tab === "projects") renderProfProjects();
   if (tab === "assistants") renderProfAssistants();
@@ -11095,8 +11307,10 @@ function _bindScrListDelegation() {
     if (!id) return;
 
     if (action === "toggle") { toggleScrExpand(id); return; }
-    if (action === "edit")   { openScriptEditModal(id); return; }
-    if (action === "toProject") { openScriptEditModal(id, { focus: "project" }); return; }
+    if (action === "edit")   { openScriptInlineEdit(id); return; }
+    if (action === "toProject") { openScriptInlineEdit(id, { focus: "project" }); return; }
+    if (action === "inlineSave")   { _scrInlineSave(id); return; }
+    if (action === "inlineCancel") { _scrInlineCancel(id); return; }
     if (action === "teleprompter") { tpOpenFromScript(id); return; }
     if (action === "copy") { cpScript(id, trigger); return; }
     if (action === "delete") { delScript(id, trigger); return; }
@@ -11105,6 +11319,110 @@ function _bindScrListDelegation() {
 
 // ── Script edit modal ─────────────────────────────────────────────────────
 let _scrEditorId = null;
+
+function openScriptInlineEdit(id, opts) {
+  opts = opts || {};
+  // Mobile keeps the modal UX.
+  if (window.innerWidth < 768) { openScriptEditModal(id, opts); return; }
+
+  const card = document.querySelector(`.scr-card[data-id="${id}"]`);
+  if (!card) { openScriptEditModal(id, opts); return; }
+  const item = scriptsCache.find(i => i.id === id);
+  if (!item) { console.warn("[openScriptInlineEdit] script not found", id); return; }
+  const slot = card.querySelector(".scr-full > div");
+  if (!slot) return;
+
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const LBL_TITLE   = lang === "en" ? "Title" : "Título";
+  const LBL_PROJ    = lang === "en" ? "Project" : "Proyecto";
+  const LBL_TEXT    = lang === "en" ? "Script content" : "Contenido del guión";
+  const LBL_SAVE    = lang === "en" ? "Save" : "Guardar";
+  const LBL_CANCEL  = lang === "en" ? "Cancel" : "Cancelar";
+  const LBL_NOPROJ  = lang === "en" ? "No project" : "Sin proyecto";
+
+  // Stash original slot HTML so Cancel can restore without a full re-render.
+  if (!card._scrOriginalSlot) card._scrOriginalSlot = slot.innerHTML;
+
+  const list = (typeof projectsCache !== "undefined") ? (projectsCache || []) : [];
+  const projOptions = `<option value="">${LBL_NOPROJ}</option>` +
+    list.map(p => `<option value="${p.id}" ${item.project_id === p.id ? "selected" : ""}>${esc(p.name)}</option>`).join("");
+
+  slot.innerHTML = `
+    <div class="scr-full-sep"></div>
+    <form class="scr-inline-edit" onsubmit="event.preventDefault()">
+      <label class="scr-inline-lbl">${LBL_TITLE}</label>
+      <input type="text" class="scr-inline-input" data-field="title" value="${esc(item.title || "")}" />
+      <label class="scr-inline-lbl">${LBL_PROJ}</label>
+      <select class="scr-inline-select" data-field="project">${projOptions}</select>
+      <label class="scr-inline-lbl">${LBL_TEXT}</label>
+      <textarea class="scr-inline-textarea" data-field="script">${esc(_scriptText(item))}</textarea>
+      <div class="scr-inline-err" data-role="err" style="display:none"></div>
+      <div class="scr-inline-acts">
+        <button type="button" class="scr-act" data-scr-action="inlineCancel">${LBL_CANCEL}</button>
+        <button type="button" class="scr-act primary" data-scr-action="inlineSave">${LBL_SAVE}</button>
+      </div>
+    </form>`;
+
+  card.classList.add("expanded", "editing");
+  const focusEl = opts.focus === "project"
+    ? slot.querySelector('[data-field="project"]')
+    : slot.querySelector('[data-field="title"]');
+  if (focusEl && focusEl.focus) setTimeout(() => focusEl.focus(), 120);
+}
+
+function _scrInlineCancel(id) {
+  const card = document.querySelector(`.scr-card[data-id="${id}"]`);
+  if (!card) return;
+  const slot = card.querySelector(".scr-full > div");
+  if (slot && card._scrOriginalSlot != null) {
+    slot.innerHTML = card._scrOriginalSlot;
+    card._scrOriginalSlot = null;
+  }
+  card.classList.remove("editing");
+}
+
+async function _scrInlineSave(id) {
+  const card = document.querySelector(`.scr-card[data-id="${id}"]`);
+  if (!card) return;
+  const titleEl = card.querySelector('[data-field="title"]');
+  const projEl = card.querySelector('[data-field="project"]');
+  const textEl = card.querySelector('[data-field="script"]');
+  const errEl = card.querySelector('[data-role="err"]');
+  const actions = card.querySelectorAll('[data-scr-action="inlineSave"], [data-scr-action="inlineCancel"]');
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+
+  const title = (titleEl.value || "").trim();
+  const project_id = projEl.value || null;
+  const script = textEl.value;
+  if (!title) {
+    errEl.textContent = lang === "en" ? "Title is required" : "El título es requerido";
+    errEl.style.display = "";
+    titleEl.focus();
+    return;
+  }
+  errEl.style.display = "none";
+  actions.forEach(b => b.disabled = true);
+  try {
+    const res = await fetch(`/scripts/${id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, project_id, script }),
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      errEl.textContent = d.error || "Error";
+      errEl.style.display = "";
+      actions.forEach(b => b.disabled = false);
+      return;
+    }
+    showToast(lang === "en" ? "Script updated" : "Guión actualizado");
+    card._scrOriginalSlot = null;
+    await loadScripts();
+  } catch {
+    errEl.textContent = lang === "en" ? "Connection error" : "Error de conexión";
+    errEl.style.display = "";
+    actions.forEach(b => b.disabled = false);
+  }
+}
 
 function openScriptEditModal(id, opts) {
   opts = opts || {};
@@ -14598,6 +14916,21 @@ function toggleLang() {
   const curr = document.documentElement.lang || "es";
   const other = curr === "es" ? "en" : "es";
   window.location.assign("/" + other + "/");
+}
+
+function setLangBinary(val, e) {
+  if (e) { e.stopPropagation(); e.preventDefault(); }
+  if (val !== "es" && val !== "en") return;
+  try { document.cookie = "rs_lang=" + val + "; path=/; max-age=31536000; samesite=Lax"; } catch {}
+  // Reload current page in-place so workspace/profile routes honor the cookie.
+  window.location.reload();
+}
+
+function highlightActiveLang() {
+  const curr = (document.documentElement.lang || "es").toLowerCase();
+  document.querySelectorAll(".settings-lang-opt").forEach(el => {
+    el.classList.toggle("on", el.dataset.val === curr);
+  });
 }
 
 // ── Analytics helpers (workspace) ─────────────────────────────────────────

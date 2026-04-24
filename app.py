@@ -2306,7 +2306,7 @@ def settings_page():
 
 PROFILE_SECTIONS = {
     "overview", "scripts", "projects", "ideas", "metrics",
-    "assistants", "team", "transcriptions", "privacy",
+    "assistants", "team", "transcriptions", "privacy", "settings",
 }
 
 
