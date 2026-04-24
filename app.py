@@ -2288,22 +2288,24 @@ def settings_page():
     return render_template("index.html", lang=lang, settings_page=True)
 
 
-PROFILE_REDIRECTS = {
-    "overview": "/app",
-    "scripts": "/app#scripts",
-    "projects": "/app#projects",
-    "ideas": "/app#ideas",
-    "metrics": "/app#metrics",
-    "assistants": "/app#assistants",
-    "team": "/app#team",
-    "transcriptions": "/app#transcriptions",
+PROFILE_SECTIONS = {
+    "overview", "scripts", "projects", "ideas", "metrics",
+    "assistants", "team", "transcriptions", "privacy",
 }
 
 
 @app.route("/profile")
 @app.route("/profile/<section>")
+@require_auth_html
 def profile_page(section="overview"):
-    return redirect(PROFILE_REDIRECTS.get(section, "/app"), code=301)
+    # Render the workspace shell; the frontend reads location.pathname and
+    # auto-opens the profile drawer to the correct tab. A 301 to /app would
+    # lose the route on refresh and dump users on the dashboard.
+    if section not in PROFILE_SECTIONS:
+        section = "overview"
+    accept = request.headers.get("Accept-Language", "")
+    lang = "en" if accept.lower().startswith("en") else "es"
+    return render_template("index.html", lang=lang, workspace=True)
 
 
 # ── Pillar pages ─────────────────────────────────────────────────────────────

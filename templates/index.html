@@ -11036,8 +11036,8 @@ function renderProfScripts() {
     const cardCls = `scr-card${proj ? " has-proj" : ""}`;
     const styleVar = color ? ` style="--pc:${color}"` : "";
     const badge = proj
-      ? `<button type="button" class="scr-proj-badge" style="--pc:${color || "#8a7e72"}" onclick="profTab('projects')" title="${esc(proj.name)}">${esc(proj.name)}</button>`
-      : `<button type="button" class="scr-proj-badge no-proj" onclick="profTab('projects')">${LBL_NOPROJ}</button>`;
+      ? `<button type="button" class="scr-proj-badge" style="--pc:${color || "#8a7e72"}" data-scr-action="openProjects" title="${esc(proj.name)}">${esc(proj.name)}</button>`
+      : `<button type="button" class="scr-proj-badge no-proj" data-scr-action="openProjects">${LBL_NOPROJ}</button>`;
 
     return `
     <article class="${cardCls}" id="s-${id}" data-id="${id}"${styleVar}>
@@ -11047,11 +11047,11 @@ function renderProfScripts() {
         <span class="scr-card-sep">·</span>
         <span class="scr-card-words">${wordCount} ${LBL_WORDS}</span>
       </div>
-      <h3 class="scr-card-title">${esc(it.title || "Guion")}</h3>
-      <div class="scr-preview-wrap" onclick="toggleScrExpand('${id}')">
+      <h3 class="scr-card-title">${esc(it.title || (lang === "en" ? "Untitled script" : "Sin título"))}</h3>
+      <div class="scr-preview-wrap" data-scr-action="toggle">
         <div class="scr-preview">${esc(text)}</div>
       </div>
-      <button class="scr-expand" onclick="toggleScrExpand('${id}')">
+      <button class="scr-expand" data-scr-action="toggle">
         <span class="scr-expand-label-collapsed">${LBL_FULL}</span>
         <span class="scr-expand-label-expanded">${LBL_COLL}</span>
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5 H8 M5.5 2.5 L8 5 L5.5 7.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -11063,17 +11063,44 @@ function renderProfScripts() {
         </div>
       </div>
       <div class="scr-acts">
-        <button class="scr-act primary" onclick="openScriptEditor('${id}')">
+        <button class="scr-act primary" data-scr-action="edit">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M12 2 L14 4 L5 13 L2 14 L3 11 Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
           ${LBL_EDIT}
         </button>
-        <button class="scr-act" onclick="openScriptEditor('${id}', {focus:'project'})">${LBL_PROJ}</button>
-        <button class="scr-act" onclick="tpOpenFromScript('${id}')">${LBL_TP}</button>
-        <button class="scr-act" onclick="cpScript('${id}',this)">${LBL_COPY}</button>
-        <button class="scr-act danger" onclick="delScript('${id}',this)">${LBL_DEL}</button>
+        <button class="scr-act" data-scr-action="toProject">${LBL_PROJ}</button>
+        <button class="scr-act" data-scr-action="teleprompter">${LBL_TP}</button>
+        <button class="scr-act" data-scr-action="copy">${LBL_COPY}</button>
+        <button class="scr-act danger" data-scr-action="delete">${LBL_DEL}</button>
       </div>
     </article>`;
   }).join("");
+
+  _bindScrListDelegation();
+}
+
+// Single delegated click handler on the scripts list. Guarded so we only
+// attach once, no matter how many times renderProfScripts runs.
+function _bindScrListDelegation() {
+  const host = document.getElementById("profListScripts");
+  if (!host || host._scrBound) return;
+  host._scrBound = true;
+  host.addEventListener("click", (e) => {
+    const trigger = e.target.closest("[data-scr-action]");
+    if (!trigger || !host.contains(trigger)) return;
+    const action = trigger.dataset.scrAction;
+    const card = trigger.closest(".scr-card[data-id]");
+    const id = card ? card.dataset.id : null;
+
+    if (action === "openProjects") { try { profTab("projects"); } catch {} return; }
+    if (!id) return;
+
+    if (action === "toggle") { toggleScrExpand(id); return; }
+    if (action === "edit")   { openScriptEditor(id); return; }
+    if (action === "toProject") { openScriptEditor(id, { focus: "project" }); return; }
+    if (action === "teleprompter") { tpOpenFromScript(id); return; }
+    if (action === "copy") { cpScript(id, trigger); return; }
+    if (action === "delete") { delScript(id, trigger); return; }
+  });
 }
 
 // ── Script edit modal ─────────────────────────────────────────────────────
@@ -11082,7 +11109,7 @@ let _scrEditorId = null;
 function openScriptEditor(id, opts) {
   opts = opts || {};
   const item = scriptsCache.find(i => i.id === id);
-  if (!item) return;
+  if (!item) { console.warn("[openScriptEditor] script not found", id); return; }
   _scrEditorId = id;
   const modal = document.getElementById("scrEditOverlay");
   if (!modal) return;
