@@ -709,6 +709,30 @@
     @keyframes shimmer { to { background-position: 250% center; } }
 
     /* Counter */
+    .hero-demo-line {
+      margin-top: 8px;
+      display: flex; justify-content: center;
+    }
+    .hero-demo-link {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--text2);
+      font-size: .78rem;
+      font-weight: 500;
+      text-decoration: none;
+      padding: 4px 10px;
+      border-radius: 999px;
+      transition: color .15s, background .15s;
+    }
+    .hero-demo-link:hover { color: var(--purple); background: rgba(249,115,22,.08); }
+    .hero-demo-play {
+      width: 0; height: 0;
+      border-left: 8px solid currentColor;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      margin-left: 1px;
+    }
+    .hero-demo-time { color: var(--text3); font-size: .72rem; }
+
     .hero-counter {
       margin-top: 20px; font-size: .78rem; color: var(--text3);
       display: flex; align-items: center; justify-content: center; gap: 6px;
@@ -3124,31 +3148,39 @@
       .ig-chart-toolbar .ig-chart-tab { padding: 4px 10px; font-size: .65rem; }
       .ig-chart-toolbar .ig-scale-group { margin-left: 0 !important; }
       .ig-chart-toolbar .ig-scale-group .ig-chart-tab { font-size: .6rem; padding: 3px 8px; }
-      /* 4. Cards — 3 cols, very compact */
-      .ig-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
-      .ig-card { border-radius: 8px; }
-      .ig-card-thumb { max-height: 90px; border-radius: 8px 8px 0 0; }
-      .ig-thumb-placeholder { max-height: 90px; border-radius: 8px 8px 0 0; }
-      .ig-card-overlay { border-radius: 8px 8px 0 0; }
-      .ig-card-body { padding: 6px 8px; }
-      .ig-card-caption { font-size: .65rem; -webkit-line-clamp: 1; min-height: 1em; margin-bottom: 4px; }
-      .ig-card-stats { gap: 4px; font-size: .55rem; flex-wrap: wrap; margin-bottom: 4px; }
-      .ig-card-eng-bar { height: 10px; margin-bottom: 4px; }
-      .ig-card-actions { flex-direction: column; gap: 3px; }
-      .ig-card-btn { font-size: .6rem; padding: 4px 6px; border-radius: 6px; }
-      .ig-card .ig-badges-row { gap: 2px; margin-bottom: 3px; }
-      .ig-card .ig-badges-row span { font-size: .5rem !important; padding: 0px 4px !important; }
-      .ig-card .ig-card-body span[style*="font-size:.58rem"] { font-size: .5rem !important; padding: 0px 4px !important; }
+      /* 4. Cards — 1 col on mobile so thumb + stats fit legibly */
+      .ig-grid { grid-template-columns: 1fr; gap: 10px; }
+      .ig-card { border-radius: 10px; }
+      .ig-card-thumb { max-height: 220px; border-radius: 10px 10px 0 0; }
+      .ig-thumb-placeholder { max-height: 220px; border-radius: 10px 10px 0 0; }
+      .ig-card-overlay { border-radius: 10px 10px 0 0; }
+      .ig-card-body { padding: 10px 12px; }
+      .ig-card-caption { font-size: .78rem; -webkit-line-clamp: 2; min-height: 1em; margin-bottom: 6px; }
+      .ig-card-stats { gap: 8px; font-size: .7rem; flex-wrap: wrap; margin-bottom: 6px; }
+      .ig-card-eng-bar { height: 12px; margin-bottom: 6px; }
+      .ig-card-actions { flex-direction: row; gap: 6px; }
+      .ig-card-btn { font-size: .75rem; padding: 7px 10px; border-radius: 8px; }
+      .ig-card .ig-badges-row { gap: 4px; margin-bottom: 6px; }
       /* 5. Filters — horizontal scroll */
-      .ig-filter-bar { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; gap: 3px; }
-      .ig-filter-chip { white-space: nowrap; flex-shrink: 0; font-size: .6rem; padding: 3px 8px; }
+      .ig-filter-bar { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; gap: 6px; scrollbar-width: none; }
+      .ig-filter-bar::-webkit-scrollbar { display: none; }
+      .ig-filter-chip { white-space: nowrap; flex-shrink: 0; font-size: .7rem; padding: 4px 10px; }
       /* 6. Top reel — truncate */
       .ig-best-reel { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .7rem; padding: 8px 10px; margin-bottom: 12px; }
       .ig-best-reel .ig-best-full { display: none; }
       .ig-best-reel .ig-best-short { display: inline; }
-      /* Sort bar */
-      .ig-sort-bar { gap: 4px; margin-bottom: 10px; }
-      .ig-sort-btn { padding: 3px 7px; font-size: .6rem; }
+      /* Sort bar — horizontal scroll so "Ordenar por…" no se corta */
+      .ig-sort-bar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 6px;
+        margin-bottom: 10px;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+      }
+      .ig-sort-bar::-webkit-scrollbar { display: none; }
+      .ig-sort-btn { padding: 4px 10px; font-size: .7rem; white-space: nowrap; flex-shrink: 0; }
       /* Other */
       .ig-linked-header { gap: 6px; margin-bottom: 12px; }
       .ig-linked-user { font-size: .9rem; }
@@ -3763,8 +3795,8 @@
       .ideas-input-col-right { width: 100%; }
       .ideas-btn-develop { width: 100%; justify-content: center; }
       .ideas-card { padding: 18px 18px; }
-      .ideas-card-title { font-size: 18px; }
-      .ideas-card-date { margin-left: 0; }
+      .ideas-card-title { font-size: 18px; flex-basis: 100%; order: 1; }
+      .ideas-card-date { margin-left: 0; order: 2; }
     }
     @media (max-width: 480px) {
       .ideas-hero-wrap { margin: -4px -4px 20px; }
@@ -3772,6 +3804,15 @@
       .ideas-input-card { padding: 18px 16px; }
       .ideas-develop-block { padding: 12px 14px; }
       .ideas-act { font-size: 12.5px; padding: 6px 12px; }
+      /* Mobile: softer glow so the orange halo doesn't bleed into the next card */
+      .ideas-btn-develop {
+        box-shadow: 0 3px 12px rgba(239, 106, 41, 0.22),
+                    0 1px 0 rgba(255, 255, 255, 0.2) inset;
+      }
+      .ideas-btn-develop:hover {
+        box-shadow: 0 4px 16px rgba(239, 106, 41, 0.3),
+                    0 1px 0 rgba(255, 255, 255, 0.2) inset;
+      }
     }
 
     /* Light theme — invert paper ───────────────────────── */
@@ -5393,8 +5434,8 @@
       }
       .prof-sidebar-identity .prof-av { width: 80px; height: 80px; margin: 0; }
       .prof-sidebar-nav { display: none; }
-      .prof-sidebar-footer { flex-direction: row; padding: 8px 12px; }
-      .prof-sidebar-footer button { flex: 1; font-size: .72rem; }
+      .prof-sidebar-footer { flex-direction: column; padding: 12px 16px; gap: 8px; }
+      .prof-sidebar-footer button { width: 100%; font-size: .8rem; padding: 10px 12px; }
       .prof-main { padding: 20px 16px 100px; overflow-y: visible; }
       .prof-stats-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
       .prof-stat-card { padding: 14px 10px; flex-direction: column; gap: 6px; text-align: center; }
@@ -5564,15 +5605,21 @@
 
     @media (max-width: 640px) {
       .logo span { display: none; }
-      .nav-r { gap: 8px; }
+      .nav-r { gap: 12px; }
       .nav-r .lang-switch { display: none; }
       .nav-r #navAffiliate { display: none !important; }
       .nav-r .btn-nav { display: none; }
       .nav-r .user-menu-chevron { display: none; }
       .nav-r #userEmail { display: none; }
+      .nav-r #balBadge { display: none; }
+      .nav-r #themeBtn { display: none; }
       .user-menu-dropdown { display: none !important; }
       .bal-unit { display: none; }
       .nav-hamburger { display: flex; }
+      /* Hero input row — select + button stacked full-width so nothing is cut off */
+      .hero-lang-row { flex-direction: column; gap: 10px; }
+      .hero-lang-row > select,
+      .hero-lang-row > button { width: 100%; flex: none; }
     }
     @media (max-width: 360px) {
       .nav-r { gap: 6px; }
@@ -6589,7 +6636,7 @@
       <div class="queue-list" id="queueList" style="display:none"></div>
 
       <!-- Language row -->
-      <div style="display:flex;gap:10px;margin-bottom:4px">
+      <div class="hero-lang-row" style="display:flex;gap:10px;margin-bottom:4px">
         <select id="language" style="flex:1;padding:10px 14px;background:var(--surf);border:1.5px solid var(--border);border-radius:var(--rsm);font-size:.85rem;color:var(--text);outline:none;transition:border-color .2s">
           <option value="" data-i18n-es="✨ Detectar idioma automáticamente" data-i18n-en="✨ Auto-detect language">✨ Auto-detect language</option>
           <option disabled>──────────────</option>
@@ -6681,6 +6728,14 @@
     <div class="counter-dot"></div>
     <span id="counterNum" class="counter-num">0</span>
     <span data-i18n="hero.counter_suffix">reels transcritos hoy</span>
+  </div>
+  <!-- Inline demo link (replaces the floating tut-bubble) -->
+  <div class="hero-demo-line">
+    <a href="#" class="hero-demo-link" onclick="event.preventDefault();tutBubbleOpen()">
+      <span class="hero-demo-play" aria-hidden="true"></span>
+      <span data-i18n-es="Ver cómo funciona" data-i18n-en="See how it works">Ver cómo funciona</span>
+      <span class="hero-demo-time">(30s)</span>
+    </a>
   </div>
 </section>
 <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(249,115,22,.12),transparent);max-width:600px;margin:0 auto"></div>
@@ -8346,7 +8401,7 @@ const LANGS = {
     "nav.login": "Entrar", "nav.register": "Gratis →", "nav.profile": "Mi perfil", "nav.logout": "Cerrar sesión", "nav.earn": "Ganar 30%", "nav.theme": "Tema", "nav.navigation": "Navegación", "nav.account": "Cuenta", "nav.home": "Inicio", "nav.buy_credits": "Comprar créditos", "nav.workspace": "Ir a mi workspace →", "nav.my_account": "Mi cuenta", "nav.my_plan": "Mi plan", "nav.dark_mode": "Modo oscuro", "nav.language": "Idioma", "nav.affiliates": "Afiliados", "nav.public_web": "Ver web pública",
     "hero.badge": "5 gratis al día · Sin tarjeta · Sin suscripción",
     "hero.h1": 'Pega la URL.<br><span class="grad-txt">Obtén el guión.</span>',
-    "hero.sub": "Transcribe reels de Instagram y TikTok al instante con IA.",
+    "hero.sub": "Transcribe reels de Instagram y TikTok al instante con IA.",
     "hero.btn": "✦ Transcribir ahora",
     "hero.add_queue": "Añadir a la cola",
     "hero.counter_suffix": "reels transcritos hoy",
@@ -8736,7 +8791,7 @@ const LANGS = {
     "nav.login": "Log in", "nav.register": "Free →", "nav.profile": "My profile", "nav.logout": "Log out", "nav.earn": "Earn 30%", "nav.theme": "Theme", "nav.navigation": "Navigation", "nav.account": "Account", "nav.home": "Home", "nav.buy_credits": "Buy credits", "nav.workspace": "Go to workspace →", "nav.my_account": "My account", "nav.my_plan": "My plan", "nav.dark_mode": "Dark mode", "nav.language": "Language", "nav.affiliates": "Affiliates", "nav.public_web": "View public site",
     "hero.badge": "5 free/day · No card · No subscription",
     "hero.h1": 'Paste the URL.<br><span class="grad-txt">Get the script.</span>',
-    "hero.sub": "Transcribe Instagram and TikTok reels instantly with AI.",
+    "hero.sub": "Transcribe Instagram and TikTok reels instantly with AI.",
     "hero.btn": "✦ Transcribe now",
     "hero.add_queue": "Add to queue",
     "hero.counter_suffix": "reels transcribed today",
@@ -16111,14 +16166,7 @@ window.addEventListener("DOMContentLoaded", () => {
     <div id="casButtons"></div>
   </div>
 </div>
-<!-- ── Tutorial bubble widget ─────────────────────────────────────────── -->
-<div class="tut-bubble" id="tutBubble" onclick="tutBubbleOpen()">
-  <div class="tut-bubble-circle" id="tutBubbleCircle">
-    <div class="tut-bubble-play"></div>
-    <button class="tut-bubble-dismiss" onclick="event.stopPropagation();tutBubbleDismiss()">✕</button>
-  </div>
-  <span class="tut-bubble-text" id="tutBubbleText" data-i18n="tut.bubble">Ver cómo funciona</span>
-</div>
+<!-- Tutorial floating bubble removed — demo trigger now lives inline in the hero counter block. -->
 
 <!-- Desktop player -->
 <div class="tut-player" id="tutPlayer">
@@ -16147,32 +16195,13 @@ window.addEventListener("DOMContentLoaded", () => {
   let pulseCount = 0;
   let playerOpen = false;
 
-  function shouldShow() {
-    if (sessionStorage.getItem("tutorial_bubble_dismissed")) return false;
-    const uses = parseInt(localStorage.getItem("tutorial_uses_seen") || "0", 10);
-    if (uses > 3) return false;
-    return true;
-  }
-
-  function show() {
-    if (!shouldShow()) return;
-    bubble.classList.add("on");
-    setTimeout(() => textEl.classList.add("fade"), 5000);
-    const ringInterval = setInterval(() => {
-      if (pulseCount >= 3) { clearInterval(ringInterval); return; }
-      circle.classList.remove("ring");
-      void circle.offsetWidth;
-      circle.classList.add("ring");
-      pulseCount++;
-    }, 4000);
-  }
-
-  setTimeout(show, 2000);
+  // The floating bubble was removed; the inline hero link now triggers tutBubbleOpen().
+  // Guards: every bubble/circle/textEl mutation is no-op when those elements are absent.
 
   window.tutBubbleOpen = function() {
     if (playerOpen) return;
     playerOpen = true;
-    bubble.classList.remove("on");
+    if (bubble) bubble.classList.remove("on");
     if (isMob()) {
       overlay.classList.add("on");
       sheet.classList.add("on");
@@ -16195,10 +16224,6 @@ window.addEventListener("DOMContentLoaded", () => {
       document.getElementById("tutPlayerIframe").src = "";
     }, 300);
     playerOpen = false;
-    if (shouldShow()) {
-      textEl.classList.add("fade");
-      bubble.classList.add("on");
-    }
   };
 
   window.tutSheetClose = function() {
@@ -16210,14 +16235,10 @@ window.addEventListener("DOMContentLoaded", () => {
       document.getElementById("tutSheetIframe").src = "";
     }, 350);
     playerOpen = false;
-    if (shouldShow()) {
-      textEl.classList.add("fade");
-      bubble.classList.add("on");
-    }
   };
 
   window.tutBubbleDismiss = function() {
-    bubble.classList.remove("on");
+    if (bubble) bubble.classList.remove("on");
     sessionStorage.setItem("tutorial_bubble_dismissed", "true");
   };
 
@@ -16230,28 +16251,15 @@ window.addEventListener("DOMContentLoaded", () => {
     if (dy > 60) tutSheetClose();
   }, { passive: true });
 
-  // Increment uses counter on transcription
+  // Increment uses counter on transcription (kept so future metrics still log; bubble gone).
   const origDoTranscribe = window.doTranscribe;
   if (origDoTranscribe) {
     window.doTranscribe = function() {
       const n = parseInt(localStorage.getItem("tutorial_uses_seen") || "0", 10);
       localStorage.setItem("tutorial_uses_seen", String(n + 1));
-      if (n + 1 > 3) bubble.classList.remove("on");
       return origDoTranscribe.apply(this, arguments);
     };
   }
-
-  // Hide during teleprompter / profile
-  const obs = new MutationObserver(() => {
-    const tpOpen = document.getElementById("tpOverlay")?.classList.contains("on");
-    const profOpen = document.getElementById("profilePage")?.classList.contains("on");
-    if ((tpOpen || profOpen) && !playerOpen) {
-      bubble.style.visibility = "hidden";
-    } else if (!playerOpen && shouldShow()) {
-      bubble.style.visibility = "";
-    }
-  });
-  obs.observe(document.body, { subtree: true, attributes: true, attributeFilter: ["class"] });
 })();
 
 // Connect existing tutorial buttons to bubble player
