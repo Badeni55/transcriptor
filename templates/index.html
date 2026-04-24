@@ -5421,11 +5421,31 @@
 
     /* Mobile responsive — Profile Hub */
     @media (max-width: 768px) {
-      .profile-overlay { overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
-      .prof-layout { grid-template-columns: 1fr; height: auto; overflow: visible; }
+      .profile-overlay {
+        overflow-y: auto; overflow-x: hidden;
+        -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+      }
+      /* Force the whole profile tree to stay inside the viewport.
+         Without these caps, iOS Safari can let a wide child (chart SVG,
+         wide flex row, etc.) push the layout past 100vw, which shows
+         up as buttons and cards "cortados por la derecha". */
+      .prof-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+        overflow-x: hidden;
+        max-width: 100vw;
+      }
+      .prof-sidebar, .prof-main {
+        max-width: 100vw; overflow-x: hidden; box-sizing: border-box;
+        min-width: 0;
+      }
       .prof-sidebar {
         height: auto; border-right: none; border-bottom: 1px solid var(--border);
-        overflow: visible;
+      }
+      .prof-sidebar-footer, .prof-sidebar-footer button { min-width: 0; max-width: 100%; }
+      .ig-stats-row, .ig-grid, .ig-sort-bar, .ig-filter-bar, .ig-chart-scroll, .ig-best-reel,
+      .ig-linked-header, #igAnalyzeBar {
+        max-width: 100%; box-sizing: border-box;
       }
       .prof-sidebar-identity {
         padding: 24px 16px; display: flex; flex-direction: column;
