@@ -11124,14 +11124,14 @@ function _scriptText(item) {
 async function saveScriptCardToProject(id) {
   const item = scriptsCache.find(i => i.id === id);
   if (!item) return;
-  await saveTextToProject(_scriptText(item), item.title || "Script");
+  await saveTextToProject(_scriptText(item), item.title || "Script", { reel_url: item.reel_url || null });
 }
 
 async function saveTranscToProject(id) {
   const item = histCache.find(i => i.id === id);
   if (!item) return;
   const title = `${item.platform || "Reel"} · ${fmtDate(item.created_at)}`;
-  await saveTextToProject(item.text, title);
+  await saveTextToProject(item.text, title, { reel_url: item.url || null });
 }
 
 async function loadScripts() {
@@ -12649,7 +12649,7 @@ async function rsSaveToProject(idx) {
   const item = rsResults[idx];
   if (!item) return;
   const title = item.platform ? `${item.platform} · ${new Date().toLocaleDateString()}` : t("view.title");
-  await saveTextToProject(item.text, title);
+  await saveTextToProject(item.text, title, { reel_url: item.url || null });
 }
 
 
@@ -14722,13 +14722,21 @@ function adaptFromView() {
 async function saveViewToProject() {
   const txt = document.getElementById("viewBody").textContent;
   const title = document.getElementById("viewTitle").textContent;
-  await saveTextToProject(txt, title);
+  // viewItem only stashes an id for transcriptions; look it up to grab the URL.
+  let reelUrl = null;
+  if (typeof viewId !== "undefined" && viewId != null) {
+    const h = (histCache || []).find(i => i.id === viewId);
+    if (h && h.url) reelUrl = h.url;
+  }
+  await saveTextToProject(txt, title, { reel_url: reelUrl });
 }
 
 let _pendingSaveText = "";
 let _pendingSaveTitle = "";
+let _pendingSaveReelUrl = null;
 
-async function saveTextToProject(text, title) {
+async function saveTextToProject(text, title, opts) {
+  opts = opts || {};
   if (!st.user) { openAuth("register"); return; }
   if (!projectsCache.length) {
     await loadProjects();
@@ -14736,6 +14744,7 @@ async function saveTextToProject(text, title) {
   }
   _pendingSaveText = text;
   _pendingSaveTitle = title || "Script";
+  _pendingSaveReelUrl = opts.reel_url || null;
 
   // If only 1 project, save directly
   if (projectsCache.length === 1) {
@@ -14763,9 +14772,15 @@ async function pickProject(projectId, projectName) {
 }
 
 async function doSaveToProject(projectId, projectName) {
+  const payload = {
+    title: _pendingSaveTitle,
+    transcription: _pendingSaveText,
+    project_id: projectId,
+  };
+  if (_pendingSaveReelUrl) payload.reel_url = _pendingSaveReelUrl;
   const res = await fetch("/scripts", {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title: _pendingSaveTitle, transcription: _pendingSaveText, project_id: projectId }),
+    body: JSON.stringify(payload),
   });
   if (res.ok) {
     showToast(`${t("toast.saved_to")} "${projectName}"`);
