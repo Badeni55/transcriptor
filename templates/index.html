@@ -965,6 +965,105 @@
     }
     .mock-script-btn.primary { background: var(--purple); color: #fff; border-color: var(--purple); }
 
+    /* ── Try Free (preview transcribe) ──────────────────────── */
+    .try-free-section {
+      max-width: 720px; margin: 0 auto; padding: 64px 24px 48px;
+      text-align: center; position: relative; z-index: 1;
+    }
+    .try-free-h2 {
+      font-family: var(--font-display); font-weight: 400;
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      line-height: 1.1; letter-spacing: -.5px;
+      margin: 0 0 14px;
+    }
+    .try-free-h2 em { font-style: italic; color: #fdba74; -webkit-text-fill-color: #fdba74; }
+    [data-theme="light"] .try-free-h2 em { color: #c2410c; -webkit-text-fill-color: #c2410c; }
+    .try-free-sub {
+      color: var(--text2); font-size: 1rem; line-height: 1.55;
+      max-width: 540px; margin: 0 auto 8px;
+    }
+    .try-free-hooks-line {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: .82rem; color: var(--text3); margin: 0 0 28px;
+    }
+    .try-free-hooks-line img { width: 22px; height: 22px; }
+    .try-form {
+      display: flex; flex-direction: column; gap: 10px;
+      background: var(--surf); border: 1px solid var(--border); border-radius: 16px;
+      padding: 16px; box-shadow: 0 4px 24px rgba(0,0,0,.12);
+    }
+    .try-form-row { display: flex; gap: 8px; align-items: stretch; }
+    .try-input {
+      flex: 1; min-width: 0;
+      padding: 12px 14px; border-radius: 10px;
+      background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      font-family: var(--font-body); font-size: .92rem; outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .try-input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(249,115,22,.18); }
+    .try-input::placeholder { color: var(--text3); }
+    .try-form-actions { display: flex; gap: 8px; }
+    .try-lang-select {
+      flex: 1; padding: 11px 12px; border-radius: 10px;
+      background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      font-family: var(--font-body); font-size: .85rem; outline: none;
+    }
+    .try-btn {
+      flex: 0 0 auto; padding: 11px 22px; border-radius: 10px;
+      background: var(--purple); color: #fff; border: 0; cursor: pointer;
+      font-family: var(--font-body); font-weight: 700; font-size: .88rem;
+      box-shadow: 0 5px 0 #92400e; transition: transform .12s, box-shadow .15s, opacity .15s;
+    }
+    .try-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 0 #92400e, 0 4px 16px rgba(249,115,22,.3); }
+    .try-btn:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 #92400e; }
+    .try-btn:disabled { opacity: .65; cursor: default; }
+    .try-output {
+      margin-top: 14px; opacity: 0; max-height: 0; overflow: hidden;
+      transition: opacity .25s ease, max-height .35s ease;
+    }
+    .try-output.on { opacity: 1; max-height: 800px; }
+    .try-loading {
+      display: flex; gap: 6px; justify-content: center; padding: 24px;
+    }
+    .try-loading .dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--orange);
+      animation: mockBounce .8s infinite alternate;
+    }
+    .try-loading .dot:nth-child(2) { animation-delay: .15s; }
+    .try-loading .dot:nth-child(3) { animation-delay: .3s; }
+    .try-error {
+      padding: 18px;
+      color: var(--text2); font-size: .92rem; line-height: 1.5;
+      background: rgba(239,68,68,.06); border: 1px solid rgba(239,68,68,.2);
+      border-radius: 12px; text-align: center;
+    }
+    .try-result {
+      position: relative;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
+      padding: 22px 22px 0; text-align: left;
+      overflow: hidden;
+    }
+    .try-result-text {
+      font-size: .98rem; line-height: 1.65; color: var(--text);
+      min-height: 90px; padding-bottom: 60px;
+      white-space: pre-wrap;
+    }
+    .try-result-mask {
+      position: absolute; left: 0; right: 0; bottom: 116px; height: 70px;
+      background: linear-gradient(to bottom, transparent, var(--bg) 80%);
+      pointer-events: none;
+    }
+    .try-result-cta {
+      position: relative; z-index: 1;
+      margin: 0 -22px; padding: 18px 22px 22px;
+      background: linear-gradient(135deg, rgba(249,115,22,.08), rgba(125,91,184,.06));
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    .try-result-cta p {
+      margin: 0 0 12px; color: var(--text2); font-size: .88rem; line-height: 1.5;
+    }
+
     /* Platform tabs */
     .plat-tabs {
       display: flex; gap: 8px; margin-bottom: 24px;
@@ -7342,6 +7441,44 @@
 </section>
 <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(249,115,22,.12),transparent);max-width:600px;margin:0 auto"></div>
 
+{% if not workspace %}
+<!-- ── TRY FREE (preview transcribe) ─────────────────────────────────── -->
+<section class="try-free-section fade-in" id="tryFree">
+  <div class="s-label" data-i18n-es="PRUÉBALO" data-i18n-en="TRY IT">PRUÉBALO</div>
+  <h2 class="try-free-h2">
+    <span data-i18n-es="Pruébalo gratis." data-i18n-en="Try it free.">Pruébalo gratis.</span>
+    <em data-i18n-es="Regístrate en 10 segundos." data-i18n-en="Sign up in 10 seconds.">Regístrate en 10 segundos.</em>
+  </h2>
+  <p class="try-free-sub" data-i18n-es="Pega un reel y mira la magia. Para ver el guion completo, crea cuenta." data-i18n-en="Paste a reel and watch the magic. To see the full script, sign up.">Pega un reel y mira la magia. Para ver el guion completo, crea cuenta.</p>
+  <div class="try-free-hooks-line">
+    <img src="/static/img/hooks/hooks-transcribir.svg" alt="" loading="lazy" width="22" height="22">
+    <span data-i18n-es="Hooks va a transcribir tu reel en segundos." data-i18n-en="Hooks will transcribe your reel in seconds.">Hooks va a transcribir tu reel en segundos.</span>
+  </div>
+  <div class="try-form" id="tryForm">
+    <div class="try-form-row">
+      <input type="url" id="tryUrlInput" class="try-input ph-no-capture" data-clarity-mask="true"
+        placeholder="🔗 https://www.instagram.com/reel/…"
+        autocomplete="off" spellcheck="false"
+        data-i18n-placeholder-es="🔗 https://www.instagram.com/reel/…"
+        data-i18n-placeholder-en="🔗 https://www.instagram.com/reel/…" />
+    </div>
+    <div class="try-form-actions">
+      <select id="tryLanguage" class="try-lang-select">
+        <option value="" data-i18n-es="✨ Detectar idioma automáticamente" data-i18n-en="✨ Auto-detect language">✨ Detectar idioma automáticamente</option>
+        <option value="es" data-i18n-es="Español" data-i18n-en="Spanish">Español</option>
+        <option value="en" data-i18n-es="Inglés" data-i18n-en="English">English</option>
+        <option value="fr" data-i18n-es="Francés" data-i18n-en="French">French</option>
+        <option value="pt" data-i18n-es="Portugués" data-i18n-en="Portuguese">Portuguese</option>
+        <option value="de" data-i18n-es="Alemán" data-i18n-en="German">German</option>
+        <option value="it" data-i18n-es="Italiano" data-i18n-en="Italian">Italian</option>
+      </select>
+      <button id="tryBtn" class="try-btn" onclick="doPreviewTranscribe()" data-i18n-es="✦ Transcribir" data-i18n-en="✦ Transcribe">✦ Transcribir</button>
+    </div>
+    <div class="try-output" id="tryOutput" aria-live="polite"></div>
+  </div>
+</section>
+{% endif %}
+
 <!-- ── HAZLO TUYO ─────────────────────────────────────────────────────── -->
 <div class="adapt-section" id="adaptSection" style="display:none">
   <div class="adapt-inner fade-in" id="adaptCard">
@@ -10429,6 +10566,136 @@ function resumeSceneRotator() { _scenePaused = false; }
 window.addEventListener("DOMContentLoaded", () => {
   if (document.getElementById("sceneRotator")) startSceneRotator();
 });
+
+// ── Try Free (anonymous preview transcribe) ──────────────────────────────
+let _tryActiveTask = null;
+
+async function doPreviewTranscribe() {
+  const input = document.getElementById("tryUrlInput");
+  const lang  = document.getElementById("tryLanguage");
+  const btn   = document.getElementById("tryBtn");
+  const out   = document.getElementById("tryOutput");
+  if (!input || !btn || !out) return;
+  const url = (input.value || "").trim();
+  if (!url) {
+    showToast(currentLang === "es" ? "Pega un reel" : "Paste a reel");
+    input.focus();
+    return;
+  }
+  btn.disabled = true;
+  const labelGo = currentLang === "es" ? "Transcribiendo…" : "Transcribing…";
+  btn.textContent = labelGo;
+  out.classList.add("on");
+  out.innerHTML = `<div class="try-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+  try {
+    const res = await fetch("/transcribe-preview", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, language: lang.value || "" }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      _tryRenderError(data, res.status);
+      _tryResetBtn();
+      return;
+    }
+    _tryActiveTask = data.task_id;
+    _tryPollTask(data.task_id);
+  } catch (e) {
+    _tryRenderError({ error: currentLang === "es" ? "Error de red" : "Network error" }, 0);
+    _tryResetBtn();
+  }
+}
+
+async function _tryPollTask(taskId) {
+  const out = document.getElementById("tryOutput");
+  const start = Date.now();
+  while (_tryActiveTask === taskId && Date.now() - start < 90000) {
+    try {
+      const res = await fetch(`/task/${taskId}`);
+      const data = await res.json();
+      if (data.state === "success" && data.text) {
+        _tryRenderResult(data.text);
+        _tryResetBtn(true);
+        return;
+      }
+      if (data.state === "failure") {
+        _tryRenderError({ error: data.error || "Error" }, 0);
+        _tryResetBtn();
+        return;
+      }
+    } catch {}
+    await new Promise(r => setTimeout(r, 1500));
+  }
+  _tryRenderError({ error: currentLang === "es" ? "Tardó demasiado. Inténtalo de nuevo." : "Took too long. Try again." }, 0);
+  _tryResetBtn();
+}
+
+function _tryResetBtn(done) {
+  const btn = document.getElementById("tryBtn");
+  if (!btn) return;
+  btn.disabled = false;
+  if (done) {
+    btn.textContent = currentLang === "es" ? "Transcribir otro" : "Transcribe another";
+  } else {
+    btn.textContent = currentLang === "es" ? "✦ Transcribir" : "✦ Transcribe";
+  }
+}
+
+function _tryRenderError(data, status) {
+  const out = document.getElementById("tryOutput");
+  if (!out) return;
+  const isLimit = status === 429 || data.preview_limit_reached;
+  if (isLimit) {
+    const msg = data.error || (currentLang === "es"
+      ? "Has usado tus 3 transcripciones de prueba. Crea cuenta gratis para seguir."
+      : "You've used your 3 preview transcriptions. Sign up free to keep going.");
+    const cta = currentLang === "es" ? "Crear cuenta gratis →" : "Sign up free →";
+    out.innerHTML = `
+      <div class="try-error" style="background:rgba(249,115,22,.06);border-color:rgba(249,115,22,.25);color:var(--text)">
+        <p style="margin:0 0 12px">${msg}</p>
+        <button class="hero-cta-primary" style="display:inline-block" onclick="openAuth('register','try_free_limit')">${cta}</button>
+      </div>`;
+  } else {
+    out.innerHTML = `<div class="try-error">${data.error || "Error"}</div>`;
+  }
+}
+
+function _tryRenderResult(fullText) {
+  const out = document.getElementById("tryOutput");
+  if (!out) return;
+  // Trim to 3 sentences (or ~80 words fallback)
+  let preview;
+  const sentences = fullText.split(/(?<=[.!?…])\s+/).map(s => s.trim()).filter(Boolean);
+  if (sentences.length >= 3) {
+    preview = sentences.slice(0, 3).join(" ");
+  } else if (sentences.length > 0) {
+    preview = sentences.join(" ");
+  } else {
+    preview = fullText.split(/\s+/).slice(0, 80).join(" ") + "…";
+  }
+  const ctaText = currentLang === "es"
+    ? "Regístrate gratis para ver el guion completo y guardarlo en tu workspace."
+    : "Sign up free to see the full script and save it to your workspace.";
+  const ctaBtn = currentLang === "es" ? "Crear cuenta gratis →" : "Sign up free →";
+  out.innerHTML = `
+    <div class="try-result">
+      <div class="try-result-text" id="tryResultText"></div>
+      <div class="try-result-mask"></div>
+      <div class="try-result-cta">
+        <p>${ctaText}</p>
+        <button class="hero-cta-primary" onclick="openAuth('register','try_free_done')">${ctaBtn}</button>
+      </div>
+    </div>`;
+  // Typewriter
+  const target = document.getElementById("tryResultText");
+  let i = 0;
+  const tick = () => {
+    if (!target.isConnected || i >= preview.length) return;
+    target.textContent = preview.slice(0, ++i);
+    setTimeout(tick, 16 + Math.random() * 8);
+  };
+  tick();
+}
 
 // ── Counter animation ─────────────────────────────────────────────────────
 function animateCounter() {

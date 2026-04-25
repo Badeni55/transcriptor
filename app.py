@@ -155,6 +155,10 @@ def inject_analytics():
 
 @app.errorhandler(429)
 def ratelimit_handler(e):
+    if request.path == "/transcribe-preview":
+        msg = ("Has usado tus 3 transcripciones de prueba. "
+               "Crea cuenta gratis para seguir transcribiendo.")
+        return jsonify({"error": msg, "preview_limit_reached": True}), 429
     return jsonify({"error": "Too many requests. Please slow down.", "retry_after": str(e.description)}), 429
 
 
@@ -692,6 +696,35 @@ def transcribe():
     )
 
     return jsonify({"task_id": task.id, "cost_cents": cost_cents})
+
+
+@app.route("/transcribe-preview", methods=["POST"])
+@limiter.limit("3 per day")
+def transcribe_preview():
+    """Anonymous preview transcription used by the landing #tryFree section.
+    Returns the full transcription via the regular /task/<id> polling endpoint;
+    the landing UI truncates to 3 sentences and shows a signup CTA.
+
+    Tech debt v0.15: truncate audio before Whisper to cut Groq cost on previews.
+    """
+    body = request.get_json() or {}
+    url = (body.get("url") or "").strip()
+    language = (body.get("language") or "").strip() or None
+
+    err = validate_url(url)
+    if err:
+        return jsonify({"error": err}), 400
+    if not GROQ_API_KEY:
+        return jsonify({"error": "Service unavailable"}), 500
+
+    platform = detect_platform(url)
+    if platform == "youtube":
+        return jsonify({
+            "error": "YouTube no disponible. Solo Instagram y TikTok."
+        }), 400
+
+    task = transcribe_task.delay(url, language, None, get_client_ip())
+    return jsonify({"task_id": task.id, "preview": True})
 
 
 @app.route("/task/<task_id>")
