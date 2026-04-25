@@ -2625,8 +2625,8 @@
       font-family: var(--font-body); font-size: .65rem; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;
     }
     .plan-badge.free     { background: rgba(148,163,184,.15); color: var(--text3); border: 1px solid var(--border); }
-    .plan-badge.basic    { background: rgba(59,130,246,.15);  color: #60a5fa; border: 1px solid rgba(59,130,246,.3); }
-    .plan-badge.pro      { background: rgba(249,115,22,.15);  color: #fed7aa; border: 1px solid rgba(249,115,22,.3); }
+    .plan-badge.pro      { background: rgba(59,130,246,.15);  color: #60a5fa; border: 1px solid rgba(59,130,246,.3); }
+    .plan-badge.creator  { background: rgba(249,115,22,.15);  color: #fed7aa; border: 1px solid rgba(249,115,22,.3); }
     .plan-badge.agency   { background: rgba(167,139,250,.15); color: #a78bfa; border: 1px solid rgba(167,139,250,.3); }
 
     /* Usage bar */
@@ -7597,68 +7597,63 @@
       </ul>
       <button class="btn-plan" id="btnPlanFree" disabled style="opacity:.5">Plan actual</button>
     </div>
-    <!-- BASIC -->
-    <div class="price-card" id="planCard-basic"
-         data-stripe-price-month-eur="REPLACE_STRIPE_BASIC_MONTH_EUR"
-         data-stripe-price-month-usd="REPLACE_STRIPE_BASIC_MONTH_USD"
-         data-stripe-price-year-eur="REPLACE_STRIPE_BASIC_YEAR_EUR"
-         data-stripe-price-year-usd="REPLACE_STRIPE_BASIC_YEAR_USD">
-      <div class="price-icon">⚡</div>
-      <div class="price-title" data-i18n="pricing.basic.title">Basic</div>
-      <div class="price-amount"
-           data-price-month-eur="999"  data-price-month-usd="1099"
-           data-price-year-eur="799"   data-price-year-usd="879"></div>
-      <div class="price-billed" data-billed-eur="9590" data-billed-usd="10550"></div>
-      <div class="price-ideal" data-i18n-es="Creadores que publican 1-2 reels por semana." data-i18n-en="Creators publishing 1-2 reels per week.">Creadores que publican 1-2 reels por semana.</div>
-      <ul class="price-features">
-        <li data-i18n="pricing.basic.f1">30 uses/month</li>
-        <li data-i18n="pricing.basic.f2">Unlimited scripts</li>
-        <li data-i18n="pricing.basic.f3">Unlimited projects</li>
-        <li data-i18n="pricing.basic.f4">Teleprompter + recording</li>
-        <li data-i18n="pricing.basic.f5">Ideas with AI</li>
-        <li data-i18n="pricing.basic.f6">1 custom assistant</li>
-        <li data-i18n="pricing.basic.f7">Email support</li>
-      </ul>
-      <button class="btn-plan" onclick="subscribePlanFromCard('basic')" data-i18n="pricing.choose_basic">Get Basic</button>
-    </div>
     <!-- PRO -->
-    <div class="price-card featured" id="planCard-pro"
-         data-stripe-price-month-eur="REPLACE_STRIPE_PRO_MONTH_EUR"
-         data-stripe-price-month-usd="REPLACE_STRIPE_PRO_MONTH_USD"
-         data-stripe-price-year-eur="REPLACE_STRIPE_PRO_YEAR_EUR"
-         data-stripe-price-year-usd="REPLACE_STRIPE_PRO_YEAR_USD">
-      <div class="price-badge" data-i18n="pricing.popular">Most popular</div>
-      <div class="price-icon">🚀</div>
+    <div class="price-card" id="planCard-pro"
+         data-stripe-price-month="price_1TPz2tCWQn5Tis1W5CdUwBmN"
+         data-stripe-price-year="price_1TPz2tCWQn5Tis1W1HNRJlL9">
+      <div class="price-icon">⚡</div>
       <div class="price-title">Pro</div>
       <div class="price-amount"
-           data-price-month-eur="1499" data-price-month-usd="1699"
-           data-price-year-eur="1199"  data-price-year-usd="1359"></div>
-      <div class="price-billed" data-billed-eur="14390" data-billed-usd="16310"></div>
-      <div class="price-ideal" data-i18n-es="Creadores activos con métricas + 1 cliente." data-i18n-en="Active creators with metrics + 1 client.">Creadores activos con métricas + 1 cliente.</div>
+           data-price-month-eur="1499" data-price-month-usd="1799"
+           data-price-year-eur="1199"  data-price-year-usd="1439"></div>
+      <div class="price-billed" data-billed-eur="14390" data-billed-usd="17270"></div>
+      <div class="price-ideal" data-i18n-es="Para empezar a publicar con orden." data-i18n-en="To start publishing with order.">Para empezar a publicar con orden.</div>
       <ul class="price-features">
-        <li data-i18n="pricing.pro.f1">100 uses/month</li>
+        <li data-i18n="pricing.pro.f1">50 uses/month</li>
         <li data-i18n="pricing.pro.f2">Unlimited scripts</li>
         <li data-i18n="pricing.pro.f3">Unlimited projects</li>
         <li data-i18n="pricing.pro.f4">Teleprompter + recording</li>
         <li data-i18n="pricing.pro.f5">Ideas with AI</li>
-        <li data-i18n="pricing.pro.f6">5 custom assistants</li>
+        <li data-i18n="pricing.pro.f6">1 custom assistant</li>
         <li data-i18n="pricing.pro.f7">Email support</li>
       </ul>
       <button class="btn-plan" onclick="subscribePlanFromCard('pro')" data-i18n="pricing.choose_pro">Get Pro</button>
     </div>
+    <!-- CREATOR -->
+    <div class="price-card featured" id="planCard-creator"
+         data-stripe-price-month="price_1TPz8tCWQn5Tis1WJDtNSlr7"
+         data-stripe-price-year="price_1TPz8tCWQn5Tis1WxxF2WeHs">
+      <div class="price-badge" data-i18n="pricing.popular">Most popular</div>
+      <div class="price-icon">🚀</div>
+      <div class="price-title">Creator</div>
+      <div class="price-amount"
+           data-price-month-eur="1999" data-price-month-usd="2299"
+           data-price-year-eur="1599"  data-price-year-usd="1839"></div>
+      <div class="price-billed" data-billed-eur="19190" data-billed-usd="22070"></div>
+      <div class="price-ideal" data-i18n-es="Para creadores activos que viven del contenido." data-i18n-en="For active creators living off their content.">Para creadores activos que viven del contenido.</div>
+      <ul class="price-features">
+        <li data-i18n="pricing.creator.f1">200 uses/month</li>
+        <li data-i18n="pricing.creator.f2">Unlimited scripts</li>
+        <li data-i18n="pricing.creator.f3">Unlimited projects</li>
+        <li data-i18n="pricing.creator.f4">Teleprompter + recording</li>
+        <li data-i18n="pricing.creator.f5">Ideas with AI</li>
+        <li data-i18n="pricing.creator.f6">10 custom assistants</li>
+        <li data-i18n="pricing.creator.f7">Priority processing</li>
+        <li data-i18n="pricing.creator.f8">Email support</li>
+      </ul>
+      <button class="btn-plan" onclick="subscribePlanFromCard('creator')" data-i18n="pricing.choose_creator">Get Creator</button>
+    </div>
     <!-- AGENCY -->
     <div class="price-card" id="planCard-agency"
-         data-stripe-price-month-eur="REPLACE_STRIPE_AGENCY_MONTH_EUR"
-         data-stripe-price-month-usd="REPLACE_STRIPE_AGENCY_MONTH_USD"
-         data-stripe-price-year-eur="REPLACE_STRIPE_AGENCY_YEAR_EUR"
-         data-stripe-price-year-usd="REPLACE_STRIPE_AGENCY_YEAR_USD">
+         data-stripe-price-month="price_1TPzAbCWQn5Tis1WSylC7yNa"
+         data-stripe-price-year="price_1TPzAbCWQn5Tis1WRGwN81Ca">
       <div class="price-icon">🏢</div>
       <div class="price-title" data-i18n="pricing.agency.title">Agency</div>
       <div class="price-amount"
-           data-price-month-eur="3999" data-price-month-usd="4399"
-           data-price-year-eur="3199"  data-price-year-usd="3519"></div>
-      <div class="price-billed" data-billed-eur="38390" data-billed-usd="42230"></div>
-      <div class="price-ideal" data-i18n-es="Equipos gestionando varios creadores." data-i18n-en="Teams managing multiple creators.">Equipos gestionando varios creadores.</div>
+           data-price-month-eur="3999" data-price-month-usd="4599"
+           data-price-year-eur="3199"  data-price-year-usd="3679"></div>
+      <div class="price-billed" data-billed-eur="38390" data-billed-usd="44150"></div>
+      <div class="price-ideal" data-i18n-es="Para equipos que gestionan varios creadores." data-i18n-en="For teams managing multiple creators.">Para equipos que gestionan varios creadores.</div>
       <ul class="price-features">
         <li data-i18n="pricing.agency.f1">250 uses/month + 50/seat</li>
         <li data-i18n="pricing.agency.f2">Unlimited scripts</li>
@@ -8231,7 +8226,7 @@
           <div class="settings-billing-row">
             <div class="settings-billing-info">
               <div class="settings-billing-label" data-i18n-es="Plan actual" data-i18n-en="Current plan">Plan actual</div>
-              <div class="settings-billing-plan"><span id="settingsPlanBadge" class="plan-badge free">Free</span></div>
+              <div class="settings-billing-plan"><span id="settingsPlanBadge" class="plan-badge free">Free</span> <span id="settingsPlanPrice" style="font-size:.82rem;color:var(--text3)"></span></div>
             </div>
             <div class="settings-billing-actions">
               <button class="btn-3d btn-3d-primary" id="settingsChangePlanBtn" onclick="openUpgradeModal('settings')" style="padding:8px 14px;border-radius:8px;font-size:.82rem" data-i18n-es="Cambiar plan" data-i18n-en="Change plan">Cambiar plan</button>
@@ -8582,10 +8577,10 @@ const LANGS = {
     "pricing.h2": 'Elige tu plan.<br><span class="grad-txt" style="font-style:italic">Empieza gratis, escala cuando quieras.</span>',
     "pricing.all_included": "Teleprompter, Proyectos e Ideas incluidos en todos los planes.",
     "pricing.popular": "Más popular",
-    "pricing.basic.title": "Básico", "pricing.agency.title": "Agencia",
+    "pricing.agency.title": "Agencia",
     "pricing.free.f1": "5 usos/día", "pricing.free.f2": "5 guiones guardados", "pricing.free.f3": "1 proyecto", "pricing.free.f4": "Teleprompter + grabación", "pricing.free.f5": "Ideas con IA", "pricing.free.f6": "Historial persistente",
-    "pricing.basic.f1": "30 usos/mes", "pricing.basic.f2": "Guiones ilimitados", "pricing.basic.f3": "Proyectos ilimitados", "pricing.basic.f4": "Teleprompter + grabación", "pricing.basic.f5": "Ideas con IA", "pricing.basic.f6": "1 asistente personalizado", "pricing.basic.f7": "Soporte por email",
-    "pricing.pro.f1": "100 usos/mes", "pricing.pro.f2": "Guiones ilimitados", "pricing.pro.f3": "Proyectos ilimitados", "pricing.pro.f4": "Teleprompter + grabación", "pricing.pro.f5": "Ideas con IA", "pricing.pro.f6": "5 asistentes personalizados", "pricing.pro.f7": "Soporte por email",
+    "pricing.pro.f1": "50 usos/mes", "pricing.pro.f2": "Guiones ilimitados", "pricing.pro.f3": "Proyectos ilimitados", "pricing.pro.f4": "Teleprompter + grabación", "pricing.pro.f5": "Ideas con IA", "pricing.pro.f6": "1 asistente personalizado", "pricing.pro.f7": "Soporte por email",
+    "pricing.creator.f1": "200 usos/mes", "pricing.creator.f2": "Guiones ilimitados", "pricing.creator.f3": "Proyectos ilimitados", "pricing.creator.f4": "Teleprompter + grabación", "pricing.creator.f5": "Ideas con IA", "pricing.creator.f6": "10 asistentes personalizados", "pricing.creator.f7": "Procesado prioritario", "pricing.creator.f8": "Soporte por email",
     "pricing.agency.f1": "250 usos/mes + 50/asiento", "pricing.agency.f2": "Guiones ilimitados", "pricing.agency.f3": "Proyectos ilimitados", "pricing.agency.f4": "Teleprompter + grabación", "pricing.agency.f5": "Asistentes ilimitados", "pricing.agency.f6": "2 asientos de equipo incluidos", "pricing.agency.f7": "Procesamiento prioritario", "pricing.agency.f8": "Soporte email + chat",
     "cta.h2": 'Empieza ahora.<br><span class="grad-txt">Es gratis.</span>',
     "cta.sub": "Tu primer reel transcrito en menos de 10 segundos.",
@@ -8913,8 +8908,8 @@ const LANGS = {
     "sub.cancelled": "Suscripción cancelada. Activa hasta fin de período.",
     "sub.current_plan": "Plan actual",
     // Pricing dynamic
-    "pricing.choose_basic": "Elegir Básico",
     "pricing.choose_pro": "Elegir Pro",
+    "pricing.choose_creator": "Elegir Creator",
     "pricing.choose_agency": "Elegir Agencia",
     "pricing.popular": "Más elegido",
     "nav.upgrade": "✦ Upgrade",
@@ -8977,10 +8972,10 @@ const LANGS = {
     "pricing.h2": 'Choose your plan.<br><span class="grad-txt" style="font-style:italic">Start free, scale when ready.</span>',
     "pricing.all_included": "Teleprompter, Projects and Ideas included in all plans.",
     "pricing.popular": "Most popular",
-    "pricing.basic.title": "Basic", "pricing.agency.title": "Agency",
+    "pricing.agency.title": "Agency",
     "pricing.free.f1": "5 uses/day", "pricing.free.f2": "5 saved scripts", "pricing.free.f3": "1 project", "pricing.free.f4": "Teleprompter + recording", "pricing.free.f5": "Ideas with AI", "pricing.free.f6": "Persistent history",
-    "pricing.basic.f1": "30 uses/month", "pricing.basic.f2": "Unlimited scripts", "pricing.basic.f3": "Unlimited projects", "pricing.basic.f4": "Teleprompter + recording", "pricing.basic.f5": "Ideas with AI", "pricing.basic.f6": "1 custom assistant", "pricing.basic.f7": "Email support",
-    "pricing.pro.f1": "100 uses/month", "pricing.pro.f2": "Unlimited scripts", "pricing.pro.f3": "Unlimited projects", "pricing.pro.f4": "Teleprompter + recording", "pricing.pro.f5": "Ideas with AI", "pricing.pro.f6": "5 custom assistants", "pricing.pro.f7": "Email support",
+    "pricing.pro.f1": "50 uses/month", "pricing.pro.f2": "Unlimited scripts", "pricing.pro.f3": "Unlimited projects", "pricing.pro.f4": "Teleprompter + recording", "pricing.pro.f5": "Ideas with AI", "pricing.pro.f6": "1 custom assistant", "pricing.pro.f7": "Email support",
+    "pricing.creator.f1": "200 uses/month", "pricing.creator.f2": "Unlimited scripts", "pricing.creator.f3": "Unlimited projects", "pricing.creator.f4": "Teleprompter + recording", "pricing.creator.f5": "Ideas with AI", "pricing.creator.f6": "10 custom assistants", "pricing.creator.f7": "Priority processing", "pricing.creator.f8": "Email support",
     "pricing.agency.f1": "250 uses/month + 50/seat", "pricing.agency.f2": "Unlimited scripts", "pricing.agency.f3": "Unlimited projects", "pricing.agency.f4": "Teleprompter + recording", "pricing.agency.f5": "Unlimited assistants", "pricing.agency.f6": "2 team seats included", "pricing.agency.f7": "Priority processing", "pricing.agency.f8": "Email + chat support",
     "cta.h2": 'Start now.<br><span class="grad-txt">It\'s free.</span>',
     "cta.sub": "Your first reel transcribed in under 10 seconds.",
@@ -9308,8 +9303,8 @@ const LANGS = {
     "sub.cancelled": "Subscription cancelled. Active until end of period.",
     "sub.current_plan": "Current plan",
     // Pricing dynamic
-    "pricing.choose_basic": "Get Basic",
     "pricing.choose_pro": "Get Pro",
+    "pricing.choose_creator": "Get Creator",
     "pricing.choose_agency": "Get Agency",
     "pricing.popular": "Most popular",
     "nav.upgrade": "✦ Upgrade",
@@ -9511,7 +9506,7 @@ function renderStyleGrid() {
 
   // Add "+" button
   const plan = st.plan || "free";
-  const limits = { free: 0, basic: 1, pro: 5, agency: 999 };
+  const limits = { free: 0, pro: 1, creator: 10, agency: 999 };
   const limit = limits[plan] || 0;
   const atLimit = userAssistants.length >= limit;
 
@@ -9666,7 +9661,7 @@ function renderProfAssistants() {
   const el = document.getElementById("profListAssistants");
   if (!el) return;
   const plan = st.plan || "free";
-  const limits = { free: 0, basic: 1, pro: 5, agency: 999 };
+  const limits = { free: 0, pro: 1, creator: 10, agency: 999 };
   const limit = limits[plan] || 0;
 
   const countEl = document.getElementById("profAsstCount");
@@ -10008,7 +10003,7 @@ function renderLoggedIn() {
     setEmail.textContent = st.user.email;
     const setBadge = document.getElementById("setPlanBadge");
     if (setBadge) {
-      const planLabels = { free: "Free", basic: "Basic", pro: "Pro", agency: "Agency" };
+      const planLabels = { free: "Free", pro: "Pro", creator: "Creator", agency: "Agency" };
       const plan = st.plan || "free";
       setBadge.textContent = planLabels[plan] || plan;
       setBadge.className = `plan-badge ${plan}`;
@@ -10108,7 +10103,7 @@ function renderProfileHub() {
 
   // Plan badge
   const plan = st.plan || "free";
-  const planLabels = { free: "Free", basic: "Basic", pro: "Pro", agency: "Agency" };
+  const planLabels = { free: "Free", pro: "Pro", creator: "Creator", agency: "Agency" };
   const badge = document.getElementById("profPlanBadge");
   badge.textContent = planLabels[plan] || plan;
   badge.className = `plan-badge ${plan}`;
@@ -10149,7 +10144,7 @@ function renderProfileHub() {
   document.getElementById("profStatUsos").textContent = Math.floor(st.credits / 18);
 
   // Show nav items — all features available to all plans
-  const hasPaidPlan = ["basic","pro","agency"].includes(plan);
+  const hasPaidPlan = ["pro","creator","agency"].includes(plan);
   const isAgency = plan === "agency";
   document.getElementById("profNavProjects").style.display = "";
   document.getElementById("profNavAssistants").style.display = hasPaidPlan ? "" : "none";
@@ -10172,6 +10167,17 @@ function renderProfileHub() {
   if (setPlanBadge) {
     setPlanBadge.textContent = planLabels[plan] || plan;
     setPlanBadge.className = `plan-badge ${plan}`;
+  }
+  const setPlanPrice = document.getElementById("settingsPlanPrice");
+  if (setPlanPrice) {
+    const meta = (typeof PLAN_META !== "undefined") ? PLAN_META[plan] : null;
+    if (meta && meta.price && meta.price.monthEur > 0) {
+      const cents = isEUR ? meta.price.monthEur : meta.price.monthUsd;
+      const per = currentLang === "es" ? "/mes" : "/mo";
+      setPlanPrice.textContent = `· ${curr(cents)}${per}`;
+    } else {
+      setPlanPrice.textContent = "";
+    }
   }
   const setChangeBtn = document.getElementById("settingsChangePlanBtn");
   if (setChangeBtn) setChangeBtn.style.display = (plan !== "agency") ? "" : "none";
@@ -15708,11 +15714,12 @@ async function subscribePlan(priceId) {
 }
 
 async function subscribePlanFromCard(planKey) {
-  // Look up the card on whichever surface (landing or upgrade modal) has it visible
+  // Multi-currency Stripe prices: one ID per (plan, cycle). Stripe picks the
+  // currency from the customer.
   const cards = document.querySelectorAll(`[data-plan-key="${planKey}"], #planCard-${planKey}, #upgradeCard-${planKey}`);
   let priceId = null;
   for (const card of cards) {
-    const attr = `stripePrice${billingCycle === "year" ? "Year" : "Month"}${isEUR ? "Eur" : "Usd"}`;
+    const attr = billingCycle === "year" ? "stripePriceYear" : "stripePriceMonth";
     const v = card.dataset[attr];
     if (v && !v.startsWith("REPLACE_")) { priceId = v; break; }
   }
@@ -15736,13 +15743,41 @@ async function manageSub() {
 
 // ── Upgrade modal ─────────────────────────────────────────────────────────
 const PLAN_META = {
-  free:   { icon: "✅", price: { monthEur: 0,    monthUsd: 0,    yearEur: 0,    yearUsd: 0,    billedEur: 0,     billedUsd: 0 },     ideal: { es: "Probar la herramienta. 5 transcripciones al día.",       en: "Try the tool. 5 transcriptions a day." }, features: { es: ["5 usos/día","5 guiones guardados","1 proyecto","Teleprompter + grabación","Ideas con IA","Historial persistente"], en: ["5 uses/day","5 saved scripts","1 project","Teleprompter + recording","Ideas with AI","Persistent history"] } },
-  basic:  { icon: "⚡", price: { monthEur: 999,  monthUsd: 1099, yearEur: 799,  yearUsd: 879,  billedEur: 9590,  billedUsd: 10550 }, ideal: { es: "Creadores que publican 1-2 reels por semana.",            en: "Creators publishing 1-2 reels per week." },     features: { es: ["30 usos/mes","Guiones ilimitados","Proyectos ilimitados","Teleprompter + grabación","Ideas con IA","1 asistente personalizado","Soporte por email"], en: ["30 uses/month","Unlimited scripts","Unlimited projects","Teleprompter + recording","Ideas with AI","1 custom assistant","Email support"] }, stripeKeys: { monthEur: "REPLACE_STRIPE_BASIC_MONTH_EUR", monthUsd: "REPLACE_STRIPE_BASIC_MONTH_USD", yearEur: "REPLACE_STRIPE_BASIC_YEAR_EUR", yearUsd: "REPLACE_STRIPE_BASIC_YEAR_USD" } },
-  pro:    { icon: "🚀", price: { monthEur: 1499, monthUsd: 1699, yearEur: 1199, yearUsd: 1359, billedEur: 14390, billedUsd: 16310 }, ideal: { es: "Creadores activos con métricas + 1 cliente.",              en: "Active creators with metrics + 1 client." },     features: { es: ["100 usos/mes","Guiones ilimitados","Proyectos ilimitados","Teleprompter + grabación","Ideas con IA","5 asistentes personalizados","Soporte por email"], en: ["100 uses/month","Unlimited scripts","Unlimited projects","Teleprompter + recording","Ideas with AI","5 custom assistants","Email support"] }, stripeKeys: { monthEur: "REPLACE_STRIPE_PRO_MONTH_EUR", monthUsd: "REPLACE_STRIPE_PRO_MONTH_USD", yearEur: "REPLACE_STRIPE_PRO_YEAR_EUR", yearUsd: "REPLACE_STRIPE_PRO_YEAR_USD" }, featured: true },
-  agency: { icon: "🏢", price: { monthEur: 3999, monthUsd: 4399, yearEur: 3199, yearUsd: 3519, billedEur: 38390, billedUsd: 42230 }, ideal: { es: "Equipos gestionando varios creadores.",                     en: "Teams managing multiple creators." },           features: { es: ["250 usos/mes + 50/asiento","Guiones ilimitados","Proyectos ilimitados","Teleprompter + grabación","Asistentes ilimitados","2 asientos de equipo incluidos","Procesado prioritario","Soporte email + chat"], en: ["250 uses/month + 50/seat","Unlimited scripts","Unlimited projects","Teleprompter + recording","Unlimited assistants","2 team seats included","Priority processing","Email + chat support"] }, stripeKeys: { monthEur: "REPLACE_STRIPE_AGENCY_MONTH_EUR", monthUsd: "REPLACE_STRIPE_AGENCY_MONTH_USD", yearEur: "REPLACE_STRIPE_AGENCY_YEAR_EUR", yearUsd: "REPLACE_STRIPE_AGENCY_YEAR_USD" } },
+  free: {
+    icon: "✅", label: "Free",
+    price:    { monthEur: 0,    monthUsd: 0,    yearEur: 0,    yearUsd: 0,    billedEur: 0,     billedUsd: 0 },
+    ideal:    { es: "Probar la herramienta. 5 transcripciones al día.", en: "Try the tool. 5 transcriptions a day." },
+    features: { es: ["5 usos/día","5 guiones guardados","1 proyecto","Teleprompter + grabación","Ideas con IA","Historial persistente"],
+                en: ["5 uses/day","5 saved scripts","1 project","Teleprompter + recording","Ideas with AI","Persistent history"] },
+  },
+  pro: {
+    icon: "⚡", label: "Pro",
+    price:    { monthEur: 1499, monthUsd: 1799, yearEur: 1199, yearUsd: 1439, billedEur: 14390, billedUsd: 17270 },
+    ideal:    { es: "Para empezar a publicar con orden.", en: "To start publishing with order." },
+    features: { es: ["50 usos/mes","Guiones ilimitados","Proyectos ilimitados","Teleprompter + grabación","Ideas con IA","1 asistente personalizado","Soporte por email"],
+                en: ["50 uses/month","Unlimited scripts","Unlimited projects","Teleprompter + recording","Ideas with AI","1 custom assistant","Email support"] },
+    stripeKeys: { month: "price_1TPz2tCWQn5Tis1W5CdUwBmN", year: "price_1TPz2tCWQn5Tis1W1HNRJlL9" },
+  },
+  creator: {
+    icon: "🚀", label: "Creator",
+    price:    { monthEur: 1999, monthUsd: 2299, yearEur: 1599, yearUsd: 1839, billedEur: 19190, billedUsd: 22070 },
+    ideal:    { es: "Para creadores activos que viven del contenido.", en: "For active creators living off their content." },
+    features: { es: ["200 usos/mes","Guiones ilimitados","Proyectos ilimitados","Teleprompter + grabación","Ideas con IA","10 asistentes personalizados","Procesado prioritario","Soporte por email"],
+                en: ["200 uses/month","Unlimited scripts","Unlimited projects","Teleprompter + recording","Ideas with AI","10 custom assistants","Priority processing","Email support"] },
+    stripeKeys: { month: "price_1TPz8tCWQn5Tis1WJDtNSlr7", year: "price_1TPz8tCWQn5Tis1WxxF2WeHs" },
+    featured: true,
+  },
+  agency: {
+    icon: "🏢", label: "Agency",
+    price:    { monthEur: 3999, monthUsd: 4599, yearEur: 3199, yearUsd: 3679, billedEur: 38390, billedUsd: 44150 },
+    ideal:    { es: "Para equipos que gestionan varios creadores.", en: "For teams managing multiple creators." },
+    features: { es: ["250 usos/mes + 50/asiento","Guiones ilimitados","Proyectos ilimitados","Teleprompter + grabación","Asistentes ilimitados","2 asientos de equipo incluidos","Procesado prioritario","Soporte email + chat"],
+                en: ["250 uses/month + 50/seat","Unlimited scripts","Unlimited projects","Teleprompter + recording","Unlimited assistants","2 team seats included","Priority processing","Email + chat support"] },
+    stripeKeys: { month: "price_1TPzAbCWQn5Tis1WSylC7yNa", year: "price_1TPzAbCWQn5Tis1WRGwN81Ca" },
+  },
 };
 
-const PLAN_RANK = { free: 0, basic: 1, pro: 2, agency: 3 };
+const PLAN_RANK = { free: 0, pro: 1, creator: 2, agency: 3 };
 
 function openUpgradeModal(source) {
   if (!st.user) { openAuth("register"); return; }
@@ -15761,13 +15796,12 @@ function renderUpgradeCards() {
   const plan = st.plan || "free";
   const cyc = billingCycle;
   const lang = currentLang;
-  const planLabels = { free: "Free", basic: "Basic", pro: "Pro", agency: "Agency" };
 
-  const plans = ["basic","pro","agency"].filter(p => PLAN_RANK[p] >= PLAN_RANK[plan]);
+  // Show only plans strictly above the user's current tier
+  const plans = ["pro","creator","agency"].filter(p => PLAN_RANK[p] > PLAN_RANK[plan]);
 
   grid.innerHTML = plans.map(p => {
     const m = PLAN_META[p];
-    const isCurrent = (p === plan);
     const priceCents = isEUR ? m.price[cyc + "Eur"] : m.price[cyc + "Usd"];
     const billedCents = isEUR ? m.price.billedEur : m.price.billedUsd;
     const per = lang === "es" ? "/mes" : "/mo";
@@ -15777,24 +15811,20 @@ function renderUpgradeCards() {
     const ideal = `<div class="price-ideal">${m.ideal[lang] || m.ideal.es}</div>`;
     const features = (m.features[lang] || m.features.es).map(f => `<li>${f}</li>`).join("");
     const sk = m.stripeKeys || {};
-    const dataAttrs = sk.monthEur
-      ? ` data-plan-key="${p}" data-stripe-price-month-eur="${sk.monthEur}" data-stripe-price-month-usd="${sk.monthUsd}" data-stripe-price-year-eur="${sk.yearEur}" data-stripe-price-year-usd="${sk.yearUsd}"`
+    const dataAttrs = (sk.month && sk.year)
+      ? ` data-plan-key="${p}" data-stripe-price-month="${sk.month}" data-stripe-price-year="${sk.year}"`
       : ` data-plan-key="${p}"`;
-    const cta = isCurrent
-      ? `<button class="btn-plan" disabled>${lang === "es" ? "Tu plan actual" : "Your current plan"}</button>`
-      : `<button class="btn-plan" onclick="subscribePlanFromCard('${p}')">${lang === "es" ? "Cambiar a este plan" : "Switch to this plan"}</button>`;
-    const badge = m.featured && !isCurrent ? `<div class="price-badge">${lang === "es" ? "Más elegido" : "Most popular"}</div>` : "";
-    const currentBadge = isCurrent ? `<div class="price-badge" style="background:var(--surf2);color:var(--text2);border:1px solid var(--border)">${lang === "es" ? "Tu plan actual" : "Your current plan"}</div>` : "";
+    const badge = m.featured ? `<div class="price-badge">${lang === "es" ? "Más elegido" : "Most popular"}</div>` : "";
     return `
-      <div class="price-card upgrade-card${isCurrent ? " is-current" : ""}${m.featured && !isCurrent ? " featured" : ""}" id="upgradeCard-${p}"${dataAttrs}>
-        ${badge}${currentBadge}
+      <div class="price-card upgrade-card${m.featured ? " featured" : ""}" id="upgradeCard-${p}"${dataAttrs}>
+        ${badge}
         <div class="price-icon">${m.icon}</div>
-        <div class="price-title">${planLabels[p]}</div>
+        <div class="price-title">${m.label}</div>
         <div class="price-amount">${curr(priceCents)}<span style="font-size:.75rem;color:var(--text3)">${per}</span></div>
         ${billedLine}
         ${ideal}
         <ul class="price-features">${features}</ul>
-        ${cta}
+        <button class="btn-plan" onclick="subscribePlanFromCard('${p}')">${lang === "es" ? "Cambiar a este plan" : "Switch to this plan"}</button>
       </div>`;
   }).join("");
 }
@@ -15811,7 +15841,7 @@ async function cancelSubscription() {
 
 function renderPlanCards() {
   const plan = st.plan || "free";
-  ["free","basic","pro","agency"].forEach(p => {
+  ["free","pro","creator","agency"].forEach(p => {
     const card = document.getElementById("planCard-" + p);
     const btn = card ? card.querySelector(".btn-plan") : null;
     if (!btn) return;
@@ -15833,7 +15863,7 @@ function renderPlanCards() {
         btn.onclick = null;
       }
     } else {
-      const labels = { basic: t("pricing.choose_basic"), pro: t("pricing.choose_pro"), agency: t("pricing.choose_agency") };
+      const labels = { pro: t("pricing.choose_pro"), creator: t("pricing.choose_creator"), agency: t("pricing.choose_agency") };
       btn.textContent = labels[p];
       btn.disabled = false;
       btn.classList.remove("active");
