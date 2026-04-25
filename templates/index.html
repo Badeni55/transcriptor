@@ -149,19 +149,19 @@
       {"@type": "Question", "name": {{ item.q | tojson }}, "acceptedAnswer": {"@type": "Answer", "text": {{ item.a | tojson }}}}{% if not loop.last %},{% endif %}
       {% endfor %}
       {% elif lang == 'en' %}
-      {"@type": "Question", "name": "How does the transcription work?", "acceptedAnswer": {"@type": "Answer", "text": "Paste the reel URL and ReelScript sends the audio to Groq Whisper. In about 10 seconds you've got the full script — no downloads, no extensions, no watermark."}},
-      {"@type": "Question", "name": "What reels can I transcribe?", "acceptedAnswer": {"@type": "Answer", "text": "Any public Instagram reel or TikTok video. Private accounts and restricted content cannot be accessed."}},
-      {"@type": "Question", "name": "Can I cancel anytime?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. You can cancel your subscription from the workspace settings (Stripe Customer Portal) and you'll keep access until the end of the billing period."}},
-      {"@type": "Question", "name": "What happens if I run out of transcriptions?", "acceptedAnswer": {"@type": "Answer", "text": "On Free you get 5 transcriptions a day. On paid plans you get monthly volume; once you hit your limit you can upgrade or wait for the monthly reset."}},
-      {"@type": "Question", "name": "Is there a duration limit per reel?", "acceptedAnswer": {"@type": "Answer", "text": "There's no hard cap, but Whisper is optimized for short-form content — reels and TikToks under 90 seconds give the best speed and accuracy."}},
-      {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Your account, transcriptions and saved scripts live on Supabase with row-level security. Payments are handled by Stripe — we never store card data."}}
+      {"@type": "Question", "name": "How does the transcription work?", "acceptedAnswer": {"@type": "Answer", "text": "Paste the URL of a public Instagram reel or TikTok video. ReelScript extracts the audio and runs it through Groq Whisper. In about 10 seconds you've got the full script. No downloads, no extensions, no watermark."}},
+      {"@type": "Question", "name": "What does ReelScript do beyond transcribing?", "acceptedAnswer": {"@type": "Answer", "text": "It's a complete content manager: capture ideas and let AI expand them into intro, body and closing; save scripts with status tags; open them in the built-in teleprompter; and connect your Instagram metrics to see which hooks work."}},
+      {"@type": "Question", "name": "Does it work with any reel?", "acceptedAnswer": {"@type": "Answer", "text": "Only with public reels and TikToks. Private accounts or restricted content cannot be processed. YouTube is coming to paid plans — it's not available yet."}},
+      {"@type": "Question", "name": "Is there a free plan?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. 5 transcriptions a day, no card needed. With a free account you also save your scripts, ideas and projects. Paid plans start at €14.99/month and unlock monthly volume, custom AI assistants and metrics."}},
+      {"@type": "Question", "name": "Can I cancel anytime?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Cancel from the Stripe portal in one click and keep access until the end of the billing period. No commitments."}},
+      {"@type": "Question", "name": "Are my data and scripts safe?", "acceptedAnswer": {"@type": "Answer", "text": "Your transcriptions, ideas and scripts live on Supabase with row-level security: only you can access your own. Payments are processed by Stripe — we never see or store card data. You can export or delete everything whenever you want."}}
       {% else %}
-      {"@type": "Question", "name": "¿Cómo funciona la transcripción?", "acceptedAnswer": {"@type": "Answer", "text": "Pegas la URL del reel y ReelScript envía el audio a Groq Whisper. En unos 10 segundos tienes el guion completo — sin descargas, sin extensiones, sin marca de agua."}},
-      {"@type": "Question", "name": "¿Qué reels puedo transcribir?", "acceptedAnswer": {"@type": "Answer", "text": "Cualquier reel público de Instagram o vídeo de TikTok. Las cuentas privadas y el contenido restringido no se pueden procesar."}},
-      {"@type": "Question", "name": "¿Puedo cancelar cuando quiera?", "acceptedAnswer": {"@type": "Answer", "text": "Sí. Puedes cancelar tu suscripción desde los ajustes del workspace (Stripe Customer Portal) y mantienes el acceso hasta el final del periodo facturado."}},
-      {"@type": "Question", "name": "¿Qué pasa si me quedo sin transcripciones?", "acceptedAnswer": {"@type": "Answer", "text": "En Free tienes 5 transcripciones al día. En planes de pago tienes volumen mensual; al llegar al límite puedes mejorar de plan o esperar al reset mensual."}},
-      {"@type": "Question", "name": "¿Hay límite de duración del reel?", "acceptedAnswer": {"@type": "Answer", "text": "No hay tope estricto, pero Whisper está optimizado para contenido corto — reels y TikToks de menos de 90 segundos dan la mejor velocidad y precisión."}},
-      {"@type": "Question", "name": "¿Mis datos están seguros?", "acceptedAnswer": {"@type": "Answer", "text": "Tu cuenta, transcripciones y guiones guardados viven en Supabase con row-level security. Los pagos los gestiona Stripe — nunca guardamos datos de tarjeta."}}
+      {"@type": "Question", "name": "¿Cómo funciona la transcripción?", "acceptedAnswer": {"@type": "Answer", "text": "Pegas la URL de un reel público de Instagram o TikTok. ReelScript extrae el audio y lo pasa por Groq Whisper. En unos 10 segundos tienes el guion completo. Sin descargas, sin extensiones, sin marca de agua."}},
+      {"@type": "Question", "name": "¿Qué hace ReelScript además de transcribir?", "acceptedAnswer": {"@type": "Answer", "text": "Es un gestor de contenido completo: captura ideas y las desarrolla con IA en intro, desarrollo y cierre; guarda guiones con etiquetas de estado; los abre en el teleprompter integrado; y conecta tus métricas de Instagram para ver qué hooks funcionan."}},
+      {"@type": "Question", "name": "¿Funciona con cualquier reel?", "acceptedAnswer": {"@type": "Answer", "text": "Solo con reels y TikToks públicos. Cuentas privadas o contenido restringido no se pueden procesar. YouTube llegará en los planes de pago, todavía no está disponible."}},
+      {"@type": "Question", "name": "¿Hay plan gratis?", "acceptedAnswer": {"@type": "Answer", "text": "Sí. 5 transcripciones al día sin tarjeta. Con cuenta gratuita además guardas tus guiones, ideas y proyectos. Los planes de pago empiezan en 14,99€/mes y desbloquean volumen mensual, asistentes IA personalizados y métricas."}},
+      {"@type": "Question", "name": "¿Puedo cancelar cuando quiera?", "acceptedAnswer": {"@type": "Answer", "text": "Sí. Cancelas desde el portal de Stripe en un click y mantienes el acceso hasta el final del periodo facturado. Sin permanencias."}},
+      {"@type": "Question", "name": "¿Mis datos y mis guiones están seguros?", "acceptedAnswer": {"@type": "Answer", "text": "Tus transcripciones, ideas y guiones viven en Supabase con row-level security: solo tú accedes a lo tuyo. Los pagos los procesa Stripe — nunca vemos ni guardamos datos de tarjeta. Puedes exportar o borrar todos tus datos cuando quieras."}}
       {% endif %}
     ]
   }
@@ -17875,36 +17875,32 @@ window.addEventListener("DOMContentLoaded", () => {
 
   <details class="faq-item">
     <summary data-i18n-es="¿Cómo funciona la transcripción?" data-i18n-en="How does the transcription work?">¿Cómo funciona la transcripción?</summary>
-    <p data-i18n-es="Pegas la URL del reel y ReelScript envía el audio a Groq Whisper. En unos 10 segundos tienes el guion completo — sin descargas, sin extensiones, sin marca de agua." data-i18n-en="Paste the reel URL and ReelScript sends the audio to Groq Whisper. In about 10 seconds you've got the full script — no downloads, no extensions, no watermark.">Pegas la URL del reel y ReelScript envía el audio a Groq Whisper. En unos 10 segundos tienes el guion completo — sin descargas, sin extensiones, sin marca de agua.</p>
+    <p data-i18n-es="Pegas la URL de un reel público de Instagram o TikTok. ReelScript extrae el audio y lo pasa por Groq Whisper. En unos 10 segundos tienes el guion completo. Sin descargas, sin extensiones, sin marca de agua." data-i18n-en="Paste the URL of a public Instagram reel or TikTok video. ReelScript extracts the audio and runs it through Groq Whisper. In about 10 seconds you've got the full script. No downloads, no extensions, no watermark.">Pegas la URL de un reel público de Instagram o TikTok. ReelScript extrae el audio y lo pasa por Groq Whisper. En unos 10 segundos tienes el guion completo. Sin descargas, sin extensiones, sin marca de agua.</p>
   </details>
 
   <details class="faq-item">
-    <summary data-i18n-es="¿Qué reels puedo transcribir?" data-i18n-en="What reels can I transcribe?">¿Qué reels puedo transcribir?</summary>
-    <p data-i18n-es="Cualquier reel público de Instagram o vídeo de TikTok. Las cuentas privadas y el contenido restringido no se pueden procesar." data-i18n-en="Any public Instagram reel or TikTok video. Private accounts and restricted content cannot be accessed.">Cualquier reel público de Instagram o vídeo de TikTok. Las cuentas privadas y el contenido restringido no se pueden procesar.</p>
+    <summary data-i18n-es="¿Qué hace ReelScript además de transcribir?" data-i18n-en="What does ReelScript do beyond transcribing?">¿Qué hace ReelScript además de transcribir?</summary>
+    <p data-i18n-es="Es un gestor de contenido completo: captura ideas y las desarrolla con IA en intro, desarrollo y cierre; guarda guiones con etiquetas de estado; los abre en el teleprompter integrado para grabar sin improvisar; y conecta tus métricas de Instagram para ver qué hooks funcionan." data-i18n-en="It's a complete content manager: capture ideas and let AI expand them into intro, body and closing; save scripts with status tags; open them in the built-in teleprompter to record without improvising; and connect your Instagram metrics to see which hooks work.">Es un gestor de contenido completo: captura ideas y las desarrolla con IA en intro, desarrollo y cierre; guarda guiones con etiquetas de estado; los abre en el teleprompter integrado para grabar sin improvisar; y conecta tus métricas de Instagram para ver qué hooks funcionan.</p>
+  </details>
+
+  <details class="faq-item">
+    <summary data-i18n-es="¿Funciona con cualquier reel?" data-i18n-en="Does it work with any reel?">¿Funciona con cualquier reel?</summary>
+    <p data-i18n-es="Solo con reels y TikToks públicos. Cuentas privadas o contenido restringido no se pueden procesar. YouTube llegará en los planes de pago, todavía no está disponible." data-i18n-en="Only with public reels and TikToks. Private accounts or restricted content cannot be processed. YouTube is coming to paid plans — it's not available yet.">Solo con reels y TikToks públicos. Cuentas privadas o contenido restringido no se pueden procesar. YouTube llegará en los planes de pago, todavía no está disponible.</p>
+  </details>
+
+  <details class="faq-item">
+    <summary data-i18n-es="¿Hay plan gratis?" data-i18n-en="Is there a free plan?">¿Hay plan gratis?</summary>
+    <p data-i18n-es="Sí. 5 transcripciones al día sin tarjeta. Con cuenta gratuita además guardas tus guiones, ideas y proyectos. Los planes de pago empiezan en 14,99€/mes y desbloquean volumen mensual, asistentes IA personalizados y métricas." data-i18n-en="Yes. 5 transcriptions a day, no card needed. With a free account you also save your scripts, ideas and projects. Paid plans start at €14.99/month and unlock monthly volume, custom AI assistants and metrics.">Sí. 5 transcripciones al día sin tarjeta. Con cuenta gratuita además guardas tus guiones, ideas y proyectos. Los planes de pago empiezan en 14,99€/mes y desbloquean volumen mensual, asistentes IA personalizados y métricas.</p>
   </details>
 
   <details class="faq-item">
     <summary data-i18n-es="¿Puedo cancelar cuando quiera?" data-i18n-en="Can I cancel anytime?">¿Puedo cancelar cuando quiera?</summary>
-    <!-- TODO_DAVID: confirmar copy concreto sobre periodo facturado / refunds -->
-    <p data-i18n-es="Sí. Puedes cancelar tu suscripción desde los ajustes del workspace (Stripe Customer Portal) y mantienes el acceso hasta el final del periodo facturado." data-i18n-en="Yes. You can cancel your subscription from the workspace settings (Stripe Customer Portal) and you'll keep access until the end of the billing period.">Sí. Puedes cancelar tu suscripción desde los ajustes del workspace (Stripe Customer Portal) y mantienes el acceso hasta el final del periodo facturado.</p>
+    <p data-i18n-es="Sí. Cancelas desde el portal de Stripe en un click y mantienes el acceso hasta el final del periodo facturado. Sin permanencias ni preguntas." data-i18n-en="Yes. Cancel from the Stripe portal in one click and keep access until the end of the billing period. No commitments, no questions.">Sí. Cancelas desde el portal de Stripe en un click y mantienes el acceso hasta el final del periodo facturado. Sin permanencias ni preguntas.</p>
   </details>
 
   <details class="faq-item">
-    <summary data-i18n-es="¿Qué pasa si me quedo sin transcripciones?" data-i18n-en="What happens if I run out of transcriptions?">¿Qué pasa si me quedo sin transcripciones?</summary>
-    <!-- TODO_DAVID: confirmar mensaje y opciones (recarga? upgrade?) -->
-    <p data-i18n-es="En Free tienes 5 transcripciones al día. En planes de pago tienes volumen mensual; al llegar al límite puedes mejorar de plan o esperar al reset mensual." data-i18n-en="On Free you get 5 transcriptions a day. On paid plans you get monthly volume; once you hit your limit you can upgrade or wait for the monthly reset.">En Free tienes 5 transcripciones al día. En planes de pago tienes volumen mensual; al llegar al límite puedes mejorar de plan o esperar al reset mensual.</p>
-  </details>
-
-  <details class="faq-item">
-    <summary data-i18n-es="¿Hay límite de duración del reel?" data-i18n-en="Is there a duration limit per reel?">¿Hay límite de duración del reel?</summary>
-    <!-- TODO_DAVID: confirmar si hay tope real (>5min? >10min?) en infra -->
-    <p data-i18n-es="No hay tope estricto, pero Whisper está optimizado para contenido corto — reels y TikToks de menos de 90 segundos dan la mejor velocidad y precisión." data-i18n-en="There's no hard cap, but Whisper is optimized for short-form content — reels and TikToks under 90 seconds give the best speed and accuracy.">No hay tope estricto, pero Whisper está optimizado para contenido corto — reels y TikToks de menos de 90 segundos dan la mejor velocidad y precisión.</p>
-  </details>
-
-  <details class="faq-item">
-    <summary data-i18n-es="¿Mis datos están seguros?" data-i18n-en="Is my data safe?">¿Mis datos están seguros?</summary>
-    <!-- TODO_DAVID: confirmar / ampliar — mencionar política de privacidad? -->
-    <p data-i18n-es="Tu cuenta, transcripciones y guiones guardados viven en Supabase con row-level security. Los pagos los gestiona Stripe — nunca guardamos datos de tarjeta." data-i18n-en="Your account, transcriptions and saved scripts live on Supabase with row-level security. Payments are handled by Stripe — we never store card data.">Tu cuenta, transcripciones y guiones guardados viven en Supabase con row-level security. Los pagos los gestiona Stripe — nunca guardamos datos de tarjeta.</p>
+    <summary data-i18n-es="¿Mis datos y mis guiones están seguros?" data-i18n-en="Are my data and scripts safe?">¿Mis datos y mis guiones están seguros?</summary>
+    <p data-i18n-es="Tus transcripciones, ideas y guiones viven en Supabase con row-level security: solo tú accedes a lo tuyo. Los pagos los procesa Stripe — nunca vemos ni guardamos datos de tarjeta. Puedes exportar o borrar todos tus datos cuando quieras." data-i18n-en="Your transcriptions, ideas and scripts live on Supabase with row-level security: only you can access your own. Payments are processed by Stripe — we never see or store card data. You can export or delete everything whenever you want.">Tus transcripciones, ideas y guiones viven en Supabase con row-level security: solo tú accedes a lo tuyo. Los pagos los procesa Stripe — nunca vemos ni guardamos datos de tarjeta. Puedes exportar o borrar todos tus datos cuando quieras.</p>
   </details>
 </section>
 {% endif %}
