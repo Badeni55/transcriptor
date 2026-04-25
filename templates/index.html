@@ -37,11 +37,11 @@
   <meta name="twitter:description" content="{{ pillar.description }}">
   {% else %}
   {% if lang == 'en' %}
-  <title>ReelScript · Transcribe Instagram and TikTok reels in seconds</title>
-  <meta name="description" content="Paste an Instagram or TikTok reel and get the transcript instantly. Turn it into a viral post, LinkedIn article, story or hooks with one click. Free, no card required.">
+  <title>ReelScript · Content management for creators</title>
+  <meta name="description" content="Be organized. Run your content from one place: transcribe reels, capture ideas, generate scripts and measure what works. Free, no card.">
   {% else %}
-  <title>ReelScript · Transcribe reels de Instagram y TikTok en segundos</title>
-  <meta name="description" content="Pega un reel de Instagram o TikTok y obtén la transcripción al instante. Conviértela en post viral, LinkedIn, historia o hooks con un click. Gratis sin tarjeta.">
+  <title>ReelScript · Gestión de contenido para creadores</title>
+  <meta name="description" content="Sé ordenado. Gestiona tu contenido desde un sitio: transcribe reels, guarda ideas, genera guiones y mide lo que funciona. Gratis, sin tarjeta.">
   {% endif %}
   <link rel="canonical" href="https://reelscript.net/{{ lang|default('es') }}/">
   <link rel="alternate" hreflang="es" href="https://reelscript.net/es/">
@@ -54,21 +54,21 @@
   <meta property="og:site_name" content="ReelScript">
   {% if not pillar %}
   {% if lang == 'en' %}
-  <meta property="og:title" content="ReelScript · Transcribe Instagram and TikTok reels in seconds">
-  <meta property="og:description" content="Paste an Instagram or TikTok reel and get the transcript instantly. Turn it into a viral post, LinkedIn article, story or hooks with one click. Free, no card required.">
+  <meta property="og:title" content="ReelScript · Content management for creators">
+  <meta property="og:description" content="Be organized. Run your content from one place: transcribe reels, capture ideas, generate scripts and measure what works. Free, no card.">
   <meta property="og:url" content="https://reelscript.net/en/">
   <meta property="og:locale" content="en_US">
   <meta property="og:locale:alternate" content="es_ES">
   <meta property="og:image" content="https://reelscript.net/static/og-image-en.png">
-  <meta property="og:image:alt" content="ReelScript — Transcribe reels in seconds">
+  <meta property="og:image:alt" content="ReelScript — Content management for creators">
   {% else %}
-  <meta property="og:title" content="ReelScript · Transcribe reels de Instagram y TikTok en segundos">
-  <meta property="og:description" content="Pega un reel de Instagram o TikTok y obtén la transcripción al instante. Conviértela en post viral, LinkedIn, historia o hooks con un click. Gratis sin tarjeta.">
+  <meta property="og:title" content="ReelScript · Gestión de contenido para creadores">
+  <meta property="og:description" content="Sé ordenado. Gestiona tu contenido desde un sitio: transcribe reels, guarda ideas, genera guiones y mide lo que funciona. Gratis, sin tarjeta.">
   <meta property="og:url" content="https://reelscript.net/es/">
   <meta property="og:locale" content="es_ES">
   <meta property="og:locale:alternate" content="en_US">
   <meta property="og:image" content="https://reelscript.net/static/og-image-es.png">
-  <meta property="og:image:alt" content="ReelScript — Transcribe reels en segundos">
+  <meta property="og:image:alt" content="ReelScript — Gestión de contenido para creadores">
   {% endif %}
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -149,17 +149,19 @@
       {"@type": "Question", "name": {{ item.q | tojson }}, "acceptedAnswer": {"@type": "Answer", "text": {{ item.a | tojson }}}}{% if not loop.last %},{% endif %}
       {% endfor %}
       {% elif lang == 'en' %}
-      {"@type": "Question", "name": "How do I transcribe an Instagram reel?", "acceptedAnswer": {"@type": "Answer", "text": "Paste the reel URL into ReelScript and click Transcribe. You'll have the full text in under 10 seconds, powered by Groq Whisper AI."}},
-      {"@type": "Question", "name": "Can I transcribe a private TikTok?", "acceptedAnswer": {"@type": "Answer", "text": "Only public TikToks and reels can be transcribed. If the video is private or restricted, ReelScript won't be able to access the audio."}},
-      {"@type": "Question", "name": "How accurate is the transcription?", "acceptedAnswer": {"@type": "Answer", "text": "ReelScript uses Groq Whisper, one of the most accurate speech-to-text models available. Accuracy is typically above 95% for clear audio in supported languages."}},
-      {"@type": "Question", "name": "Can I use it for free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. You get 5 free transcriptions and 5 free adaptations every day, no credit card required. Paid plans are available if you need more."}},
-      {"@type": "Question", "name": "What languages does it support?", "acceptedAnswer": {"@type": "Answer", "text": "ReelScript supports transcription in Spanish, English, French, Portuguese, German, Italian and more — any language supported by Whisper."}}
+      {"@type": "Question", "name": "How does the transcription work?", "acceptedAnswer": {"@type": "Answer", "text": "Paste the reel URL and ReelScript sends the audio to Groq Whisper. In about 10 seconds you've got the full script — no downloads, no extensions, no watermark."}},
+      {"@type": "Question", "name": "What reels can I transcribe?", "acceptedAnswer": {"@type": "Answer", "text": "Any public Instagram reel or TikTok video. Private accounts and restricted content cannot be accessed."}},
+      {"@type": "Question", "name": "Can I cancel anytime?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. You can cancel your subscription from the workspace settings (Stripe Customer Portal) and you'll keep access until the end of the billing period."}},
+      {"@type": "Question", "name": "What happens if I run out of transcriptions?", "acceptedAnswer": {"@type": "Answer", "text": "On Free you get 5 transcriptions a day. On paid plans you get monthly volume; once you hit your limit you can upgrade or wait for the monthly reset."}},
+      {"@type": "Question", "name": "Is there a duration limit per reel?", "acceptedAnswer": {"@type": "Answer", "text": "There's no hard cap, but Whisper is optimized for short-form content — reels and TikToks under 90 seconds give the best speed and accuracy."}},
+      {"@type": "Question", "name": "Is my data safe?", "acceptedAnswer": {"@type": "Answer", "text": "Your account, transcriptions and saved scripts live on Supabase with row-level security. Payments are handled by Stripe — we never store card data."}}
       {% else %}
-      {"@type": "Question", "name": "¿Cómo transcribir un reel de Instagram?", "acceptedAnswer": {"@type": "Answer", "text": "Pega la URL del reel en ReelScript y pulsa Transcribir. Tendrás el texto completo en menos de 10 segundos, gracias a Groq Whisper AI."}},
-      {"@type": "Question", "name": "¿Se puede transcribir un TikTok privado?", "acceptedAnswer": {"@type": "Answer", "text": "Solo se pueden transcribir TikToks y reels públicos. Si el vídeo es privado o restringido, ReelScript no podrá acceder al audio."}},
-      {"@type": "Question", "name": "¿Qué precisión tiene la transcripción?", "acceptedAnswer": {"@type": "Answer", "text": "ReelScript usa Groq Whisper, uno de los modelos de speech-to-text más precisos. La precisión suele superar el 95% en audio claro en los idiomas soportados."}},
-      {"@type": "Question", "name": "¿Puedo usarlo gratis?", "acceptedAnswer": {"@type": "Answer", "text": "Sí. Tienes 5 transcripciones y 5 adaptaciones gratis cada día, sin tarjeta de crédito. Los planes de pago están disponibles si necesitas más."}},
-      {"@type": "Question", "name": "¿Qué idiomas soporta?", "acceptedAnswer": {"@type": "Answer", "text": "ReelScript soporta transcripción en español, inglés, francés, portugués, alemán, italiano y más — cualquier idioma soportado por Whisper."}}
+      {"@type": "Question", "name": "¿Cómo funciona la transcripción?", "acceptedAnswer": {"@type": "Answer", "text": "Pegas la URL del reel y ReelScript envía el audio a Groq Whisper. En unos 10 segundos tienes el guion completo — sin descargas, sin extensiones, sin marca de agua."}},
+      {"@type": "Question", "name": "¿Qué reels puedo transcribir?", "acceptedAnswer": {"@type": "Answer", "text": "Cualquier reel público de Instagram o vídeo de TikTok. Las cuentas privadas y el contenido restringido no se pueden procesar."}},
+      {"@type": "Question", "name": "¿Puedo cancelar cuando quiera?", "acceptedAnswer": {"@type": "Answer", "text": "Sí. Puedes cancelar tu suscripción desde los ajustes del workspace (Stripe Customer Portal) y mantienes el acceso hasta el final del periodo facturado."}},
+      {"@type": "Question", "name": "¿Qué pasa si me quedo sin transcripciones?", "acceptedAnswer": {"@type": "Answer", "text": "En Free tienes 5 transcripciones al día. En planes de pago tienes volumen mensual; al llegar al límite puedes mejorar de plan o esperar al reset mensual."}},
+      {"@type": "Question", "name": "¿Hay límite de duración del reel?", "acceptedAnswer": {"@type": "Answer", "text": "No hay tope estricto, pero Whisper está optimizado para contenido corto — reels y TikToks de menos de 90 segundos dan la mejor velocidad y precisión."}},
+      {"@type": "Question", "name": "¿Mis datos están seguros?", "acceptedAnswer": {"@type": "Answer", "text": "Tu cuenta, transcripciones y guiones guardados viven en Supabase con row-level security. Los pagos los gestiona Stripe — nunca guardamos datos de tarjeta."}}
       {% endif %}
     ]
   }
@@ -2673,19 +2675,80 @@
 
     /* ── CTA final ────────────────────────────────────────────── */
     .cta-section {
-      padding: 96px 24px;
+      padding: 80px 24px 96px;
       text-align: center;
       background: transparent;
       position: relative; overflow: hidden;
     }
-    .cta-h2 { font-size: clamp(1.8rem,4vw,2.8rem); font-weight: 900; letter-spacing: -1px; margin-bottom: 12px; }
-    .cta-sub { color: var(--text2); font-size: 1.05rem; margin-bottom: 32px; }
-    .cta-pills { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 32px; }
+    .cta-mascot {
+      width: 120px; height: 120px; margin: 0 auto 18px; display: block;
+      filter: drop-shadow(0 8px 24px rgba(0,0,0,.25));
+      animation: ctaMascotFloat 3s ease-in-out infinite;
+    }
+    @keyframes ctaMascotFloat {
+      0%,100% { transform: translateY(0); }
+      50%     { transform: translateY(-8px); }
+    }
+    .cta-h2 {
+      font-family: var(--font-display); font-weight: 400;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      line-height: 1.1; letter-spacing: -1px; margin-bottom: 14px;
+    }
+    .cta-h2 em { font-style: italic; color: #fdba74; -webkit-text-fill-color: #fdba74; }
+    [data-theme="light"] .cta-h2 em { color: #c2410c; -webkit-text-fill-color: #c2410c; }
+    .cta-sub { color: var(--text2); font-size: 1.05rem; margin-bottom: 28px; line-height: 1.5; max-width: 520px; margin-left: auto; margin-right: auto; }
+    .cta-pills { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
     .cta-pill {
       display: flex; align-items: center; gap: 5px;
       font-size: .8rem; color: var(--text2); font-weight: 600;
     }
     .cta-pill .ck { color: var(--green); }
+    .cta-btn-final {
+      display: inline-block;
+      background: var(--purple); color: #fff; border: 0;
+      padding: 16px 32px; border-radius: 14px; cursor: pointer;
+      font-family: var(--font-body); font-weight: 700; font-size: 1rem;
+      box-shadow: 0 6px 0 #92400e;
+      transition: transform .12s, box-shadow .15s;
+    }
+    .cta-btn-final:hover { transform: translateY(-1px); box-shadow: 0 7px 0 #92400e, 0 6px 20px rgba(249,115,22,.35); }
+    .cta-btn-final:active { transform: translateY(5px); box-shadow: 0 1px 0 #92400e; }
+
+    /* ── FAQ section ──────────────────────────────────────────── */
+    .faq-section-v2 {
+      max-width: 720px; margin: 60px auto 40px; padding: 0 24px;
+    }
+    .faq-section-v2 .s-label { display: block; text-align: center; margin-bottom: 8px; }
+    .faq-h2 {
+      font-family: var(--font-display); font-weight: 400;
+      font-size: clamp(1.8rem, 4vw, 2.4rem); line-height: 1.1; letter-spacing: -.5px;
+      text-align: center; margin: 0 0 36px;
+    }
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+      padding: 18px 0;
+    }
+    .faq-item summary {
+      cursor: pointer; list-style: none;
+      display: flex; align-items: center; justify-content: space-between; gap: 14px;
+      font-weight: 500; color: var(--text); font-size: .98rem; line-height: 1.4;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after {
+      content: "+"; flex-shrink: 0;
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 1px solid var(--border); color: var(--text3);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; font-weight: 400;
+      transition: transform .2s, color .2s, border-color .2s;
+    }
+    .faq-item[open] summary::after {
+      content: "−"; color: var(--orange); border-color: var(--orange);
+    }
+    .faq-item p {
+      margin: 12px 0 0; padding-right: 42px;
+      color: var(--text2); font-size: .9rem; line-height: 1.6;
+    }
 
     /* ── History ──────────────────────────────────────────────── */
     .history-section { padding: 0 24px 80px; }
@@ -8876,18 +8939,20 @@
 
 <!-- ── CTA FINAL ──────────────────────────────────────────────────────── -->
 <div class="cta-section fade-in">
-  <h2 class="cta-h2" data-i18n="cta.h2">Empieza ahora.<br><span class="grad-txt">Es gratis.</span></h2>
-  <p class="cta-sub" data-i18n="cta.sub">Tu primer reel transcrito en menos de 10 segundos.</p>
+  <img class="cta-mascot" src="/static/img/hooks/hooks-transcribir.svg" alt="" loading="lazy" width="120" height="120">
+  <h2 class="cta-h2">
+    <span data-i18n-es="Empieza ahora." data-i18n-en="Start now.">Empieza ahora.</span>
+    <em data-i18n-es="Es gratis." data-i18n-en="It's free.">Es gratis.</em>
+  </h2>
+  <p class="cta-sub" data-i18n-es="5 transcripciones al día. Sin tarjeta. Sin suscripción." data-i18n-en="5 transcriptions a day. No card. No subscription.">5 transcripciones al día. Sin tarjeta. Sin suscripción.</p>
   <div class="cta-pills">
-    <span class="cta-pill"><span class="ck">✓</span> <span data-i18n="cta.pill1">5 free/day</span></span>
+    <span class="cta-pill"><span class="ck">✓</span> <span data-i18n="cta.pill1">5 gratis al día</span></span>
     <span style="color:var(--text3)">·</span>
     <span class="cta-pill"><span class="ck">✓</span> <span data-i18n="cta.pill2">Sin suscripción</span></span>
     <span style="color:var(--text3)">·</span>
     <span class="cta-pill"><span class="ck">✓</span> <span data-i18n="cta.pill3">Saldo sin caducidad</span></span>
   </div>
-  <button class="btn-shimmer btn-3d btn-3d-primary" style="max-width:320px;margin:0 auto;display:block" onclick="document.getElementById('urlInput').focus();window.scrollTo({top:0,behavior:'smooth'})" data-i18n="cta.btn">
-    ✦ Probar gratis ahora
-  </button>
+  <button class="cta-btn-final" onclick="openAuth('register','cta_final')" data-i18n-es="Crear cuenta gratis →" data-i18n-en="Sign up free →">Crear cuenta gratis →</button>
 </div>
 {% endif %}
 
@@ -17804,52 +17869,43 @@ window.addEventListener("DOMContentLoaded", () => {
 
 {% if not workspace %}
 <!-- ── FAQ ──────────────────────────────────────────────────────────── -->
-<section class="faq-section fade-in" style="max-width:720px;margin:60px auto 40px;padding:0 24px">
-  {% if lang == 'en' %}
-  <h2 class="s-title" style="text-align:center;margin-bottom:28px">Frequently Asked Questions</h2>
-  <details style="border-bottom:1px solid var(--border);padding:16px 0">
-    <summary style="cursor:pointer;font-weight:500;color:var(--text);font-size:.95rem">How do I transcribe an Instagram reel?</summary>
-    <p style="margin-top:10px;color:var(--text2);font-size:.88rem;line-height:1.6">Paste the reel URL into ReelScript and click Transcribe. You'll have the full text in under 10 seconds, powered by Groq Whisper AI. No downloads, no apps, no extensions needed.</p>
+<section class="faq-section-v2 fade-in" id="faqSection">
+  <div class="s-label" data-i18n-es="DUDAS" data-i18n-en="QUESTIONS">DUDAS</div>
+  <h2 class="faq-h2" data-i18n-es="Preguntas frecuentes" data-i18n-en="Frequently asked questions">Preguntas frecuentes</h2>
+
+  <details class="faq-item">
+    <summary data-i18n-es="¿Cómo funciona la transcripción?" data-i18n-en="How does the transcription work?">¿Cómo funciona la transcripción?</summary>
+    <p data-i18n-es="Pegas la URL del reel y ReelScript envía el audio a Groq Whisper. En unos 10 segundos tienes el guion completo — sin descargas, sin extensiones, sin marca de agua." data-i18n-en="Paste the reel URL and ReelScript sends the audio to Groq Whisper. In about 10 seconds you've got the full script — no downloads, no extensions, no watermark.">Pegas la URL del reel y ReelScript envía el audio a Groq Whisper. En unos 10 segundos tienes el guion completo — sin descargas, sin extensiones, sin marca de agua.</p>
   </details>
-  <details style="border-bottom:1px solid var(--border);padding:16px 0">
-    <summary style="cursor:pointer;font-weight:500;color:var(--text);font-size:.95rem">Can I transcribe a private TikTok?</summary>
-    <p style="margin-top:10px;color:var(--text2);font-size:.88rem;line-height:1.6">Only public TikToks and reels can be transcribed. If the video is private or restricted, ReelScript won't be able to access the audio.</p>
+
+  <details class="faq-item">
+    <summary data-i18n-es="¿Qué reels puedo transcribir?" data-i18n-en="What reels can I transcribe?">¿Qué reels puedo transcribir?</summary>
+    <p data-i18n-es="Cualquier reel público de Instagram o vídeo de TikTok. Las cuentas privadas y el contenido restringido no se pueden procesar." data-i18n-en="Any public Instagram reel or TikTok video. Private accounts and restricted content cannot be accessed.">Cualquier reel público de Instagram o vídeo de TikTok. Las cuentas privadas y el contenido restringido no se pueden procesar.</p>
   </details>
-  <details style="border-bottom:1px solid var(--border);padding:16px 0">
-    <summary style="cursor:pointer;font-weight:500;color:var(--text);font-size:.95rem">How accurate is the transcription?</summary>
-    <p style="margin-top:10px;color:var(--text2);font-size:.88rem;line-height:1.6">ReelScript uses Groq Whisper, one of the most accurate speech-to-text models available. Accuracy is typically above 95% for clear audio in supported languages.</p>
+
+  <details class="faq-item">
+    <summary data-i18n-es="¿Puedo cancelar cuando quiera?" data-i18n-en="Can I cancel anytime?">¿Puedo cancelar cuando quiera?</summary>
+    <!-- TODO_DAVID: confirmar copy concreto sobre periodo facturado / refunds -->
+    <p data-i18n-es="Sí. Puedes cancelar tu suscripción desde los ajustes del workspace (Stripe Customer Portal) y mantienes el acceso hasta el final del periodo facturado." data-i18n-en="Yes. You can cancel your subscription from the workspace settings (Stripe Customer Portal) and you'll keep access until the end of the billing period.">Sí. Puedes cancelar tu suscripción desde los ajustes del workspace (Stripe Customer Portal) y mantienes el acceso hasta el final del periodo facturado.</p>
   </details>
-  <details style="border-bottom:1px solid var(--border);padding:16px 0">
-    <summary style="cursor:pointer;font-weight:500;color:var(--text);font-size:.95rem">Can I use it for free?</summary>
-    <p style="margin-top:10px;color:var(--text2);font-size:.88rem;line-height:1.6">Yes. You get 5 free transcriptions and 5 free adaptations every day, no credit card required. Paid plans are available if you need more volume.</p>
+
+  <details class="faq-item">
+    <summary data-i18n-es="¿Qué pasa si me quedo sin transcripciones?" data-i18n-en="What happens if I run out of transcriptions?">¿Qué pasa si me quedo sin transcripciones?</summary>
+    <!-- TODO_DAVID: confirmar mensaje y opciones (recarga? upgrade?) -->
+    <p data-i18n-es="En Free tienes 5 transcripciones al día. En planes de pago tienes volumen mensual; al llegar al límite puedes mejorar de plan o esperar al reset mensual." data-i18n-en="On Free you get 5 transcriptions a day. On paid plans you get monthly volume; once you hit your limit you can upgrade or wait for the monthly reset.">En Free tienes 5 transcripciones al día. En planes de pago tienes volumen mensual; al llegar al límite puedes mejorar de plan o esperar al reset mensual.</p>
   </details>
-  <details style="border-bottom:1px solid var(--border);padding:16px 0">
-    <summary style="cursor:pointer;font-weight:500;color:var(--text);font-size:.95rem">What languages does it support?</summary>
-    <p style="margin-top:10px;color:var(--text2);font-size:.88rem;line-height:1.6">ReelScript supports transcription in Spanish, English, French, Portuguese, German, Italian and more — any language supported by Whisper.</p>
+
+  <details class="faq-item">
+    <summary data-i18n-es="¿Hay límite de duración del reel?" data-i18n-en="Is there a duration limit per reel?">¿Hay límite de duración del reel?</summary>
+    <!-- TODO_DAVID: confirmar si hay tope real (>5min? >10min?) en infra -->
+    <p data-i18n-es="No hay tope estricto, pero Whisper está optimizado para contenido corto — reels y TikToks de menos de 90 segundos dan la mejor velocidad y precisión." data-i18n-en="There's no hard cap, but Whisper is optimized for short-form content — reels and TikToks under 90 seconds give the best speed and accuracy.">No hay tope estricto, pero Whisper está optimizado para contenido corto — reels y TikToks de menos de 90 segundos dan la mejor velocidad y precisión.</p>
   </details>
-  {% else %}
-  <h2 class="s-title" style="text-align:center;margin-bottom:28px">Preguntas frecuentes</h2>
-  <details style="border-bottom:1px solid var(--border);padding:16px 0">
-    <summary style="cursor:pointer;font-weight:500;color:var(--text);font-size:.95rem">¿Cómo transcribir un reel de Instagram?</summary>
-    <p style="margin-top:10px;color:var(--text2);font-size:.88rem;line-height:1.6">Pega la URL del reel en ReelScript y pulsa Transcribir. Tendrás el texto completo en menos de 10 segundos, gracias a Groq Whisper AI. Sin descargas, sin apps, sin extensiones.</p>
+
+  <details class="faq-item">
+    <summary data-i18n-es="¿Mis datos están seguros?" data-i18n-en="Is my data safe?">¿Mis datos están seguros?</summary>
+    <!-- TODO_DAVID: confirmar / ampliar — mencionar política de privacidad? -->
+    <p data-i18n-es="Tu cuenta, transcripciones y guiones guardados viven en Supabase con row-level security. Los pagos los gestiona Stripe — nunca guardamos datos de tarjeta." data-i18n-en="Your account, transcriptions and saved scripts live on Supabase with row-level security. Payments are handled by Stripe — we never store card data.">Tu cuenta, transcripciones y guiones guardados viven en Supabase con row-level security. Los pagos los gestiona Stripe — nunca guardamos datos de tarjeta.</p>
   </details>
-  <details style="border-bottom:1px solid var(--border);padding:16px 0">
-    <summary style="cursor:pointer;font-weight:500;color:var(--text);font-size:.95rem">¿Se puede transcribir un TikTok privado?</summary>
-    <p style="margin-top:10px;color:var(--text2);font-size:.88rem;line-height:1.6">Solo se pueden transcribir TikToks y reels públicos. Si el vídeo es privado o restringido, ReelScript no podrá acceder al audio.</p>
-  </details>
-  <details style="border-bottom:1px solid var(--border);padding:16px 0">
-    <summary style="cursor:pointer;font-weight:500;color:var(--text);font-size:.95rem">¿Qué precisión tiene la transcripción?</summary>
-    <p style="margin-top:10px;color:var(--text2);font-size:.88rem;line-height:1.6">ReelScript usa Groq Whisper, uno de los modelos de speech-to-text más precisos. La precisión suele superar el 95% en audio claro en los idiomas soportados.</p>
-  </details>
-  <details style="border-bottom:1px solid var(--border);padding:16px 0">
-    <summary style="cursor:pointer;font-weight:500;color:var(--text);font-size:.95rem">¿Puedo usarlo gratis?</summary>
-    <p style="margin-top:10px;color:var(--text2);font-size:.88rem;line-height:1.6">Sí. Tienes 5 transcripciones y 5 adaptaciones gratis cada día, sin tarjeta de crédito. Los planes de pago están disponibles si necesitas más volumen.</p>
-  </details>
-  <details style="border-bottom:1px solid var(--border);padding:16px 0">
-    <summary style="cursor:pointer;font-weight:500;color:var(--text);font-size:.95rem">¿Qué idiomas soporta?</summary>
-    <p style="margin-top:10px;color:var(--text2);font-size:.88rem;line-height:1.6">ReelScript soporta transcripción en español, inglés, francés, portugués, alemán, italiano y más — cualquier idioma soportado por Whisper.</p>
-  </details>
-  {% endif %}
 </section>
 {% endif %}
 </main>
