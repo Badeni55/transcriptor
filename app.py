@@ -85,8 +85,8 @@ PLANS = {
         "priority": False,
         "support": None,
     },
-    "basic": {
-        "monthly_uses": 30,
+    "pro": {
+        "monthly_uses": 50,
         "daily_free": 0,
         "scripts_max": None,           # ilimitado
         "projects_max": None,
@@ -96,15 +96,15 @@ PLANS = {
         "priority": False,
         "support": "email",
     },
-    "pro": {
-        "monthly_uses": 100,
+    "creator": {
+        "monthly_uses": 200,
         "daily_free": 0,
         "scripts_max": None,
         "projects_max": None,
-        "assistants_max": 5,
+        "assistants_max": 10,
         "history_days": None,
         "seats": 1,
-        "priority": False,
+        "priority": True,
         "support": "email",
     },
     "agency": {
@@ -643,7 +643,7 @@ def transcribe():
     else:
         profile = get_profile(user["id"])
         user_plan = profile.get("plan", "free")
-        if user_plan in ("basic", "pro", "agency"):
+        if user_plan in ("pro", "creator", "agency"):
             ok, err_msg = check_monthly_limit(profile)
             if not ok:
                 return jsonify({"error": err_msg}), 429
@@ -668,7 +668,7 @@ def transcribe():
     elif not is_unlimited:
         profile = get_profile(user["id"])
         user_plan = profile.get("plan", "free")
-        if user_plan in ("basic", "pro", "agency"):
+        if user_plan in ("pro", "creator", "agency"):
             # Incrementar uso mensual
             db.table("profiles").update({
                 "monthly_usage": profile.get("monthly_usage", 0) + 1
@@ -838,7 +838,7 @@ def stripe_webhook():
             # ── Suscripción ──────────────────────────────────────────
             line_items = stripe_lib.checkout.Session.list_line_items(stripe_session_id)
             price_id = line_items.data[0].price.id if line_items.data else None
-            plan = PRICE_TO_PLAN.get(price_id, "basic")
+            plan = PRICE_TO_PLAN.get(price_id, "pro")
             db.table("profiles").update({
                 "plan": plan,
                 "stripe_subscription_id": obj.get("subscription"),
@@ -886,9 +886,20 @@ def stripe_webhook():
 # ── Subscription endpoints ───────────────────────────────────────────────────
 
 PRICE_TO_PLAN = {
-    "price_1TI14pCWQn5Tis1WycY83MrR": "basic",
-    "price_1TI15ACWQn5Tis1WKNbdhFW1": "pro",
-    "price_1TI15NCWQn5Tis1WwIIb1TX1": "agency",
+    # ── Legacy price IDs (grandfathering) ────────────────────────────────────
+    # Existing active subscriptions keep their original price. The legacy
+    # "basic" plan was renamed to "pro" in v0.14.3 (option A). Do not remove
+    # these entries until Stripe reports zero subs against any of them.
+    "price_1TI14pCWQn5Tis1WycY83MrR": "pro",     # legacy basic → pro
+    "price_1TI15ACWQn5Tis1WKNbdhFW1": "pro",     # legacy pro → pro
+    "price_1TI15NCWQn5Tis1WwIIb1TX1": "agency",  # legacy agency
+    # ── v0.14.3 prices (multi-currency, EUR + USD inside each price) ─────────
+    "price_1TPz2tCWQn5Tis1W5CdUwBmN": "pro",      # Pro monthly
+    "price_1TPz2tCWQn5Tis1W1HNRJlL9": "pro",      # Pro yearly
+    "price_1TPz8tCWQn5Tis1WJDtNSlr7": "creator",  # Creator monthly
+    "price_1TPz8tCWQn5Tis1WxxF2WeHs": "creator",  # Creator yearly
+    "price_1TPzAbCWQn5Tis1WSylC7yNa": "agency",   # Agency monthly
+    "price_1TPzAbCWQn5Tis1WRGwN81Ca": "agency",   # Agency yearly
 }
 
 
@@ -1212,7 +1223,7 @@ def adapt():
     else:
         profile = get_profile(user["id"])
         user_plan = profile.get("plan", "free")
-        if user_plan in ("basic", "pro", "agency"):
+        if user_plan in ("pro", "creator", "agency"):
             ok, err_msg = check_monthly_limit(profile)
             if not ok:
                 return jsonify({"error": err_msg}), 429
@@ -1238,7 +1249,7 @@ def adapt():
     # Actualizar contadores
     is_unlimited = user and user.get("email", "").lower() in UNLIMITED_EMAILS
     if not is_unlimited and user:
-        if profile.get("plan", "free") in ("basic", "pro", "agency"):
+        if profile.get("plan", "free") in ("pro", "creator", "agency"):
             db.table("profiles").update({
                 "monthly_usage": profile.get("monthly_usage", 0) + 1
             }).eq("id", user["id"]).execute()
@@ -2662,10 +2673,10 @@ def sitemap():
 # ── Metrics (Instagram analytics) ────────────────────────────────────────────
 
 METRICS_LIMITS = {
-    "free":   {"analyses_per_week": 1, "videos_per_analysis": 5},
-    "basic":  {"analyses_per_week": 2, "videos_per_analysis": 10},
-    "pro":    {"analyses_per_week": 5, "videos_per_analysis": 20},
-    "agency": {"analyses_per_week": None, "videos_per_analysis": 20},
+    "free":    {"analyses_per_week": 1,    "videos_per_analysis": 5},
+    "pro":     {"analyses_per_week": 2,    "videos_per_analysis": 10},
+    "creator": {"analyses_per_week": 15,   "videos_per_analysis": 20},
+    "agency":  {"analyses_per_week": None, "videos_per_analysis": 20},
 }
 
 
@@ -2903,7 +2914,7 @@ def metrics_transcribe_video():
     is_unlimited = user.get("email", "").lower() in UNLIMITED_EMAILS
     if not is_unlimited:
         user_plan = profile.get("plan", "free")
-        if user_plan in ("basic", "pro", "agency"):
+        if user_plan in ("pro", "creator", "agency"):
             ok, err_msg = check_monthly_limit(profile)
             if not ok:
                 return jsonify({"error": err_msg}), 429
@@ -2934,7 +2945,7 @@ def metrics_transcribe_video():
 
     if not is_unlimited:
         user_plan = profile.get("plan", "free")
-        if user_plan in ("basic", "pro", "agency"):
+        if user_plan in ("pro", "creator", "agency"):
             db.table("profiles").update({
                 "monthly_usage": profile.get("monthly_usage", 0) + 1
             }).eq("id", user["id"]).execute()
