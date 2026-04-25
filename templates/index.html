@@ -810,6 +810,44 @@
     }
 
     /* Scene 1: Transcribe */
+    .mock-reel-preview {
+      display: flex; gap: 12px; align-items: center;
+      margin: 0 14px 4px; padding: 12px;
+      background: linear-gradient(135deg, rgba(249,115,22,.08), rgba(125,91,184,.08));
+      border: 1px solid var(--border); border-radius: 12px;
+      opacity: 0;
+    }
+    .scene-mockup[data-scene="transcribe"].is-active .mock-reel-preview {
+      animation: lineIn .4s ease 1s both;
+    }
+    .mock-reel-thumb {
+      position: relative; flex-shrink: 0;
+      width: 54px; height: 88px; border-radius: 8px;
+      background: linear-gradient(135deg, #f97316 0%, #c2410c 50%, #7d5bb8 100%);
+      overflow: hidden;
+    }
+    .mock-reel-thumb::before {
+      content: ""; position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse at 30% 40%, rgba(255,255,255,.25) 0%, transparent 40%),
+        radial-gradient(ellipse at 70% 80%, rgba(0,0,0,.3) 0%, transparent 50%);
+    }
+    .mock-reel-thumb::after {
+      content: "▶"; position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,.95); font-size: 1rem;
+      text-shadow: 0 2px 8px rgba(0,0,0,.4);
+    }
+    .mock-reel-meta { flex: 1; min-width: 0; }
+    .mock-reel-handle { font-size: .76rem; color: var(--text); font-weight: 600; }
+    .mock-reel-handle::before { content: "@"; color: var(--orange); }
+    .mock-reel-stats { font-size: .7rem; color: var(--text3); margin-top: 2px; display: flex; gap: 8px; }
+    .mock-reel-stats span { display: inline-flex; align-items: center; gap: 3px; }
+    .mock-reel-duration {
+      flex-shrink: 0; padding: 3px 8px; border-radius: 999px;
+      background: rgba(0,0,0,.5); color: #fff; font-size: .65rem;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+    }
     .scene-mockup[data-scene="transcribe"].is-active .mock-typed {
       animation: typeIn 1.6s steps(40) both;
     }
@@ -866,23 +904,36 @@
     .mock-kpi-label { font-size: .68rem; color: var(--text3); text-transform: uppercase; letter-spacing: .04em; }
     .mock-kpi-num { font-family: var(--font-display); font-size: 1.1rem; color: var(--text); margin-top: 2px; font-variant-numeric: tabular-nums; }
 
-    /* Scene 3: Ideas */
-    .mock-ideas { display: flex; flex-direction: column; gap: 8px; flex: 1; padding-bottom: 14px; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-typed { animation: typeIn 1.4s steps(36) both; }
-    .mock-idea-block {
-      margin: 0 18px; padding: 10px 12px;
+    /* Scene 3: Ideas (saved ideas notebook) */
+    .mock-ideas { display: flex; flex-direction: column; gap: 8px; flex: 1; padding: 14px 18px; }
+    .mock-ideas-head {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+    }
+    .mock-ideas-icon { font-size: 1rem; }
+    .mock-ideas-title { font-family: var(--font-display); font-size: .95rem; color: var(--text); flex: 1; }
+    .mock-ideas-count {
+      background: rgba(249,115,22,.14); color: var(--orange);
+      padding: 2px 9px; border-radius: 999px;
+      font-size: .68rem; font-weight: 700; font-variant-numeric: tabular-nums;
+    }
+    .mock-idea-card {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 10px 12px;
       background: var(--surf); border: 1px solid var(--border); border-radius: 10px;
-      opacity: 0; transform: translateX(-8px);
+      opacity: 0; transform: translateX(-10px);
     }
-    .scene-mockup[data-scene="ideas"].is-active .mock-idea-block:nth-of-type(1) { animation: ideaIn .35s ease 2.4s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-idea-block:nth-of-type(2) { animation: ideaIn .35s ease 2.9s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-idea-block:nth-of-type(3) { animation: ideaIn .35s ease 3.4s both; }
-    @keyframes ideaIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
-    .mock-idea-tag {
-      font-size: .62rem; font-weight: 800; color: var(--orange);
-      letter-spacing: .08em; margin-bottom: 4px;
+    .mock-idea-card-tag {
+      flex-shrink: 0; padding: 3px 8px; border-radius: 999px;
+      font-size: .62rem; font-weight: 700; letter-spacing: .04em;
+      background: color-mix(in srgb, var(--c) 16%, transparent);
+      color: var(--c); border: 1px solid color-mix(in srgb, var(--c) 32%, transparent);
     }
-    .mock-idea-block p { font-size: .8rem; color: var(--text2); line-height: 1.45; margin: 0; }
+    .mock-idea-card p { font-size: .78rem; color: var(--text2); line-height: 1.45; margin: 0; flex: 1; min-width: 0; }
+    .scene-mockup[data-scene="ideas"].is-active .mock-idea-card:nth-of-type(1) { animation: ideaIn .35s ease .3s both; }
+    .scene-mockup[data-scene="ideas"].is-active .mock-idea-card:nth-of-type(2) { animation: ideaIn .35s ease .55s both; }
+    .scene-mockup[data-scene="ideas"].is-active .mock-idea-card:nth-of-type(3) { animation: ideaIn .35s ease .8s both; }
+    .scene-mockup[data-scene="ideas"].is-active .mock-idea-card:nth-of-type(4) { animation: ideaIn .35s ease 1.05s both; }
+    @keyframes ideaIn { from{opacity:0;transform:translateX(-10px)} to{opacity:1;transform:translateX(0)} }
 
     /* Scene 4: Scripts */
     .mock-scripts { padding: 14px 18px; flex: 1; }
@@ -7128,6 +7179,17 @@
               <div class="mock-input"><span class="mock-typed">https://www.instagram.com/reel/abc123…</span></div>
               <div class="mock-btn-go">✦ Transcribir</div>
             </div>
+            <div class="mock-reel-preview" aria-hidden="true">
+              <div class="mock-reel-thumb"></div>
+              <div class="mock-reel-meta">
+                <div class="mock-reel-handle">creador.viral</div>
+                <div class="mock-reel-stats">
+                  <span>♥ 2,4 K</span>
+                  <span>💬 128</span>
+                </div>
+              </div>
+              <div class="mock-reel-duration">0:42</div>
+            </div>
             <div class="mock-spinner"><div></div><div></div><div></div></div>
             <div class="mock-output">
               <p class="mock-line l1" data-i18n-es="Lo que voy a contarte cambió mi forma de grabar reels." data-i18n-en="What I'm about to share changed how I shoot reels.">Lo que voy a contarte cambió mi forma de grabar reels.</p>
@@ -7172,26 +7234,31 @@
           <img class="scene-mascot" src="/static/img/hooks/hooks-metricas.svg" alt="" loading="lazy" width="60" height="60">
         </div>
 
-        <!-- IDEAS -->
+        <!-- IDEAS (guarda tus ideas en un sitio) -->
         <div class="scene-mockup" data-scene="ideas">
           <div class="scene-frame">
             <div class="mock-window-bar"><span></span><span></span><span></span></div>
             <div class="mock-ideas">
-              <div class="mock-input-row">
-                <div class="mock-input"><span class="mock-typed">cómo conseguir mis primeros usuarios</span></div>
-                <div class="mock-btn-go" data-i18n-es="Desarrollar" data-i18n-en="Expand">Desarrollar</div>
+              <div class="mock-ideas-head">
+                <span class="mock-ideas-icon">💡</span>
+                <span class="mock-ideas-title" data-i18n-es="Tus ideas en un sitio" data-i18n-en="Your ideas in one place">Tus ideas en un sitio</span>
+                <span class="mock-ideas-count">12</span>
               </div>
-              <div class="mock-idea-block">
-                <div class="mock-idea-tag">INTRO</div>
-                <p data-i18n-es="Tres trampas que van a matar tu lanzamiento si no las ves a tiempo." data-i18n-en="Three traps that will kill your launch if you don't catch them.">Tres trampas que van a matar tu lanzamiento si no las ves a tiempo.</p>
+              <div class="mock-idea-card">
+                <span class="mock-idea-card-tag" style="--c:#22c55e">REEL</span>
+                <p data-i18n-es="Tres trampas que matan un lanzamiento de creador" data-i18n-en="Three traps that kill a creator launch">Tres trampas que matan un lanzamiento de creador</p>
               </div>
-              <div class="mock-idea-block">
-                <div class="mock-idea-tag" data-i18n-es="DESARROLLO" data-i18n-en="BODY">DESARROLLO</div>
-                <p data-i18n-es="No te obsesiones con el producto perfecto. Enseña algo y mira si alguien escribe." data-i18n-en="Don't obsess over the perfect product. Show something and see who writes back.">No te obsesiones con el producto perfecto. Enseña algo y mira si alguien escribe.</p>
+              <div class="mock-idea-card">
+                <span class="mock-idea-card-tag" style="--c:#3b82f6" data-i18n-es="HILO" data-i18n-en="THREAD">HILO</span>
+                <p data-i18n-es="Cómo conseguí mis primeros 100 usuarios reales" data-i18n-en="How I got my first 100 real users">Cómo conseguí mis primeros 100 usuarios reales</p>
               </div>
-              <div class="mock-idea-block">
-                <div class="mock-idea-tag" data-i18n-es="CIERRE" data-i18n-en="CLOSING">CIERRE</div>
-                <p data-i18n-es="El primer usuario es una persona, no una métrica. Habla con ella." data-i18n-en="The first user is a person, not a metric. Talk to them.">El primer usuario es una persona, no una métrica. Habla con ella.</p>
+              <div class="mock-idea-card">
+                <span class="mock-idea-card-tag" style="--c:#f97316">LinkedIn</span>
+                <p data-i18n-es="El error de empezar por el producto, no por la audiencia" data-i18n-en="The mistake of starting with the product, not the audience">El error de empezar por el producto, no por la audiencia</p>
+              </div>
+              <div class="mock-idea-card">
+                <span class="mock-idea-card-tag" style="--c:#a78bfa">REEL</span>
+                <p data-i18n-es="5 cosas que aprendí publicando todos los días 6 meses" data-i18n-en="5 things I learned posting every day for 6 months">5 cosas que aprendí publicando todos los días 6 meses</p>
               </div>
             </div>
           </div>
@@ -7949,7 +8016,7 @@
 <div class="flow-section fade-in">
   <div class="flow-container">
     <div class="flow-header">
-      <h2 class="s-title" data-i18n="flow.h2">Cómo funciona esto.<br><span class="grad-txt">Sin humo.</span></h2>
+      <h2 class="s-title" data-i18n="flow.h2">Cómo funciona esto.</h2>
       <p class="s-sub" style="margin:0 auto" data-i18n="flow.sub">Spoiler: es exactamente tan fácil como parece.</p>
     </div>
     <div class="flow-nodes">
@@ -9013,7 +9080,7 @@ const LANGS = {
     "sh.storytelling": "Narrativa emocional, escenas",
     "sh.hooks": "5 aperturas que atrapan",
     "sh.custom": "Tú decides las instrucciones",
-    "flow.h2": 'Cómo funciona esto.<br><span class="grad-txt">Sin humo.</span>',
+    "flow.h2": 'Cómo funciona esto.',
     "flow.sub": "Spoiler: es exactamente tan fácil como parece.",
     "flow.n1.title": "Pega el reel", "flow.n1.desc": "Instagram o TikTok. Cualquier reel público funciona.",
     "flow.n2.title": "Transcripción", "flow.n2.desc": "Groq Whisper convierte el audio en texto en segundos.",
@@ -9408,7 +9475,7 @@ const LANGS = {
     "sh.storytelling": "Emotional narrative, scenes",
     "sh.hooks": "5 opening lines that grab",
     "sh.custom": "You decide the instructions",
-    "flow.h2": 'How this actually works.<br><span class="grad-txt">No BS.</span>',
+    "flow.h2": 'How this actually works.',
     "flow.sub": "Spoiler: it's exactly as easy as it sounds.",
     "flow.n1.title": "Paste the reel", "flow.n1.desc": "Instagram or TikTok. Any public reel works.",
     "flow.n2.title": "Transcription", "flow.n2.desc": "Groq Whisper turns the audio into text in seconds.",
