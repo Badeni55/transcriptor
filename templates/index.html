@@ -1301,6 +1301,88 @@
       position: absolute; inset: 30px 0 0 0; width: 100%; height: calc(100% - 30px);
       object-fit: cover; object-position: top center; display: block;
     }
+    /* Pillar 1: pull-quote treatment */
+    .pillar-visual-quote {
+      background: linear-gradient(135deg, rgba(249,115,22,.06), rgba(125,91,184,.04));
+    }
+    .pquote-wrap {
+      position: absolute; inset: 30px 0 0 0;
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 28px 32px;
+    }
+    .pquote-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: .68rem; font-weight: 700; letter-spacing: .08em; color: var(--orange);
+      margin-bottom: 14px;
+    }
+    .pquote-text {
+      font-family: var(--font-display); font-size: 1.15rem; line-height: 1.45;
+      color: var(--text); margin: 0 0 14px; font-weight: 400;
+      position: relative; padding-left: 14px;
+    }
+    .pquote-text::before {
+      content: ""; position: absolute; left: 0; top: 4px; bottom: 4px;
+      width: 3px; background: var(--orange); border-radius: 2px;
+    }
+    .pquote-meta {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: .68rem; color: var(--text3);
+    }
+
+    /* Pillar 2: stat callout */
+    .pillar-visual-stat {
+      background: linear-gradient(135deg, rgba(125,91,184,.06), rgba(34,197,94,.04));
+    }
+    .pstat-wrap {
+      position: absolute; inset: 30px 0 0 0;
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 24px 28px;
+    }
+    .pstat-label {
+      font-size: .65rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--text3); margin-bottom: 10px;
+    }
+    .pstat-num {
+      font-family: var(--font-display); font-size: 3.2rem; line-height: 1;
+      color: var(--orange); font-weight: 400; margin-bottom: 4px;
+      font-variant-numeric: tabular-nums; letter-spacing: -2px;
+    }
+    [data-theme="light"] .pstat-num { color: #c2410c; }
+    .pstat-sub { color: var(--text2); font-size: .9rem; margin-bottom: 16px; }
+    .pstat-bars {
+      display: grid; grid-template-columns: repeat(7,1fr); gap: 5px;
+      align-items: end; height: 50px;
+    }
+    .pstat-bar {
+      background: linear-gradient(180deg, var(--orange), #fdba74);
+      border-radius: 3px 3px 0 0;
+    }
+    .pstat-xlabels {
+      display: grid; grid-template-columns: repeat(7,1fr); gap: 5px;
+      margin-top: 4px; font-size: .58rem; color: var(--text3); text-align: center;
+    }
+
+    /* Pillar 3: idea structure card */
+    .pillar-visual-idea {
+      background: linear-gradient(135deg, rgba(34,197,94,.04), rgba(249,115,22,.04));
+    }
+    .pidea-wrap {
+      position: absolute; inset: 30px 0 0 0;
+      display: flex; flex-direction: column; padding: 22px 28px; gap: 10px; justify-content: center;
+    }
+    .pidea-title {
+      font-family: var(--font-display); font-size: 1.05rem; color: var(--text);
+      margin-bottom: 6px; font-weight: 400; line-height: 1.2;
+    }
+    .pidea-block {
+      padding: 8px 12px;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    }
+    .pidea-block .lbl {
+      font-size: .58rem; font-weight: 700; letter-spacing: .1em; color: #4ade80;
+      margin-bottom: 2px;
+    }
+    .pidea-block p { font-size: .76rem; color: var(--text2); line-height: 1.4; margin: 0; font-style: italic; }
 
     /* ── Social proof (counter) ─────────────────────────────── */
     .social-proof-section {
@@ -8545,10 +8627,10 @@
 <section class="pillars-section fade-in">
   <div class="pillars-head">
     <h2>
-      <span data-i18n-es="Cuatro cosas." data-i18n-en="Four things.">Cuatro cosas.</span>
-      <em data-i18n-es="Un sitio." data-i18n-en="One place.">Un sitio.</em>
+      <span data-i18n-es="De la URL al guion grabado," data-i18n-en="From URL to recorded script,">De la URL al guion grabado,</span>
+      <em data-i18n-es="sin abrir cinco pestañas" data-i18n-en="without opening five tabs">sin abrir cinco pestañas</em>.
     </h2>
-    <p data-i18n-es="Transcribir, medir, capturar ideas y guardar guiones — sin saltar entre 5 herramientas." data-i18n-en="Transcribe, measure, capture ideas and save scripts — no jumping between 5 tools.">Transcribir, medir, capturar ideas y guardar guiones — sin saltar entre 5 herramientas.</p>
+    <p data-i18n-es="Cuatro funciones que se hablan entre sí. Lo que transcribes, mides, escribes y grabas vive en el mismo sitio." data-i18n-en="Four features that talk to each other. What you transcribe, measure, write and record lives in the same place.">Cuatro funciones que se hablan entre sí. Lo que transcribes, mides, escribes y grabas vive en el mismo sitio.</p>
   </div>
 
   <!-- Pilar 01: TRANSCRIBIR -->
@@ -8567,9 +8649,13 @@
       <a class="pillar-link" href="/es/transcribir-reel-instagram">Saber más →</a>
       {% endif %}
     </div>
-    <div class="pillar-visual">
+    <div class="pillar-visual pillar-visual-quote">
       <div class="pmock-bar"><span></span><span></span><span></span></div>
-      <img class="pillar-visual-img" src="/static/img/landing/screen-transcript.jpg" alt="" loading="lazy">
+      <div class="pquote-wrap">
+        <div class="pquote-tag">↘ INSTAGRAM · 0:42</div>
+        <p class="pquote-text" data-i18n-es="Lo que voy a contarte cambió mi forma de grabar reels. Antes me pasaba dos horas con cada guion. Ahora, diez minutos." data-i18n-en="What I'm about to share changed how I shoot reels. Before, two hours per script. Now, ten minutes.">Lo que voy a contarte cambió mi forma de grabar reels. Antes me pasaba dos horas con cada guion. Ahora, diez minutos.</p>
+        <div class="pquote-meta" data-i18n-es="@davidayalac · 213 palabras · 8 segundos" data-i18n-en="@davidayalac · 213 words · 8 seconds">@davidayalac · 213 palabras · 8 segundos</div>
+      </div>
     </div>
   </div>
 
@@ -8584,9 +8670,23 @@
       </h3>
       <p class="pillar-text" data-i18n-es="Conecta tu Instagram y mira qué hooks generan retención, qué temas escalan y cuáles no. Decisiones con datos, no intuición." data-i18n-en="Plug in your Instagram and see which hooks drive retention, which topics scale and which don't. Data over hunches.">Conecta tu Instagram y mira qué hooks generan retención, qué temas escalan y cuáles no. Decisiones con datos, no intuición.</p>
     </div>
-    <div class="pillar-visual">
+    <div class="pillar-visual pillar-visual-stat">
       <div class="pmock-bar"><span></span><span></span><span></span></div>
-      <img class="pillar-visual-img" src="/static/img/landing/screen-metrics.jpg" alt="" loading="lazy">
+      <div class="pstat-wrap">
+        <div class="pstat-label" data-i18n-es="TU MEJOR REEL · ÚLT. 7 DÍAS" data-i18n-en="TOP REEL · LAST 7 DAYS">TU MEJOR REEL · ÚLT. 7 DÍAS</div>
+        <div class="pstat-num">2,1<span style="font-size:1.6rem"> K</span></div>
+        <div class="pstat-sub" data-i18n-es="comentarios · +185% vs media" data-i18n-en="comments · +185% vs average">comentarios · +185% vs media</div>
+        <div class="pstat-bars">
+          <div class="pstat-bar" style="height:42%"></div>
+          <div class="pstat-bar" style="height:68%"></div>
+          <div class="pstat-bar" style="height:54%"></div>
+          <div class="pstat-bar" style="height:82%"></div>
+          <div class="pstat-bar" style="height:100%"></div>
+          <div class="pstat-bar" style="height:71%"></div>
+          <div class="pstat-bar" style="height:88%"></div>
+        </div>
+        <div class="pstat-xlabels"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+      </div>
     </div>
   </div>
 
@@ -8601,9 +8701,23 @@
       </h3>
       <p class="pillar-text" data-i18n-es="Capta una idea en una frase. Hooks la desarrolla en intro, desarrollo y cierre — listo para grabar. Cuéntale a Hooks." data-i18n-en="Capture an idea in one line. Hooks expands it into intro, body and closing — ready to record. Tell Hooks.">Capta una idea en una frase. Hooks la desarrolla en intro, desarrollo y cierre — listo para grabar. Cuéntale a Hooks.</p>
     </div>
-    <div class="pillar-visual">
+    <div class="pillar-visual pillar-visual-idea">
       <div class="pmock-bar"><span></span><span></span><span></span></div>
-      <img class="pillar-visual-img" src="/static/img/landing/screen-ideas.jpg" alt="" loading="lazy">
+      <div class="pidea-wrap">
+        <div class="pidea-title" data-i18n-es="3 pasos para conseguir tus primeros usuarios" data-i18n-en="3 steps to get your first users">3 pasos para conseguir tus primeros usuarios</div>
+        <div class="pidea-block">
+          <div class="lbl">INTRO</div>
+          <p data-i18n-es="Lanzaste tu app y no tienes usuarios." data-i18n-en="You launched your app and have no users.">Lanzaste tu app y no tienes usuarios.</p>
+        </div>
+        <div class="pidea-block">
+          <div class="lbl" data-i18n-es="DESARROLLO" data-i18n-en="BODY">DESARROLLO</div>
+          <p data-i18n-es="Empieza por tu círculo. Comunidades del nicho. Aporta valor." data-i18n-en="Start with your circle. Niche communities. Bring value.">Empieza por tu círculo. Comunidades del nicho. Aporta valor.</p>
+        </div>
+        <div class="pidea-block">
+          <div class="lbl" data-i18n-es="CIERRE" data-i18n-en="CLOSING">CIERRE</div>
+          <p data-i18n-es="Esos primeros usuarios son tu base." data-i18n-en="Those first users are your base.">Esos primeros usuarios son tu base.</p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -11142,9 +11256,11 @@ async function animateCounter() {
     if (res.ok) stats = await res.json();
   } catch {}
 
-  // Choose primary metric: today if >0, else fallback to week
+  const SOCIAL_PROOF_MIN = 25;  // hide social proof entirely if numbers below this
+
+  // Choose primary metric: today if >=10, else fallback to week
   let target, labelKeyEs, labelKeyEn;
-  if (stats.transcripts_today > 0) {
+  if (stats.transcripts_today >= 10) {
     target = stats.transcripts_today;
     labelKeyEs = "reels transcritos hoy";
     labelKeyEn = "reels transcribed today";
@@ -11154,24 +11270,35 @@ async function animateCounter() {
     labelKeyEn = "reels transcribed this week";
   }
 
-  // Hero trust line counter (small, in the hero)
+  // Hero trust line: if real number is too small, hide the trust line entirely
   const heroEl = document.getElementById("counterNum");
-  if (heroEl) tickCounter(heroEl, target);
+  const heroTrust = document.querySelector(".hero-trust");
+  if (heroEl) {
+    if (target >= SOCIAL_PROOF_MIN) {
+      tickCounter(heroEl, target);
+    } else if (heroTrust) {
+      heroTrust.style.display = "none";
+    }
+  }
 
-  // Big social proof counter
-  const bigEl = document.getElementById("socialCounterMain");
-  if (bigEl) tickCounter(bigEl, target);
-
-  const lbl = document.getElementById("socialCounterLabel");
-  if (lbl) lbl.textContent = currentLang === "es" ? labelKeyEs : labelKeyEn;
-
-  // Optional creators row
-  if (stats.creators_week > 0) {
-    const row = document.getElementById("socialCreatorsRow");
-    const num = document.getElementById("socialCreatorsNum");
-    if (row && num) {
-      num.textContent = stats.creators_week.toLocaleString(currentLang === "es" ? "es-ES" : "en-US");
-      row.style.display = "";
+  // Big social proof block: hide entirely if numbers don't sell
+  const sp = document.getElementById("socialProof");
+  if (sp) {
+    if (target < SOCIAL_PROOF_MIN) {
+      sp.style.display = "none";
+      return;
+    }
+    const bigEl = document.getElementById("socialCounterMain");
+    if (bigEl) tickCounter(bigEl, target);
+    const lbl = document.getElementById("socialCounterLabel");
+    if (lbl) lbl.textContent = currentLang === "es" ? labelKeyEs : labelKeyEn;
+    if (stats.creators_week >= 5) {
+      const row = document.getElementById("socialCreatorsRow");
+      const num = document.getElementById("socialCreatorsNum");
+      if (row && num) {
+        num.textContent = stats.creators_week.toLocaleString(currentLang === "es" ? "es-ES" : "en-US");
+        row.style.display = "";
+      }
     }
   }
 }
