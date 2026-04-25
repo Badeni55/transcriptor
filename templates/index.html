@@ -1239,63 +1239,7 @@
       margin: 0 0 12px; color: var(--text2); font-size: .88rem; line-height: 1.5;
     }
 
-    /* Try free side visual: tilted browser frame with real screenshot */
-    .try-shot-frame {
-      position: relative; aspect-ratio: 4/3; max-width: 440px; margin: 0 auto;
-      border-radius: 14px; overflow: hidden;
-      background: var(--surf); border: 1px solid var(--border);
-      box-shadow:
-        0 30px 60px rgba(0,0,0,.4),
-        0 12px 24px rgba(0,0,0,.25);
-      transform: rotate(-2deg);
-      transition: transform .35s cubic-bezier(.2,.8,.2,1);
-    }
-    .try-shot-frame:hover { transform: rotate(0) translateY(-4px); }
-    .try-shot-bar {
-      display: flex; align-items: center; gap: 6px; padding: 10px 12px;
-      border-bottom: 1px solid var(--border); flex-shrink: 0;
-      background: rgba(0,0,0,.18);
-    }
-    .try-shot-bar span {
-      width: 9px; height: 9px; border-radius: 50%; background: var(--surf2);
-    }
-    .try-shot-bar .url {
-      flex: 1; margin-left: 14px;
-      padding: 4px 10px; border-radius: 6px;
-      background: var(--bg); color: var(--text3);
-      font-family: ui-monospace, SFMono-Regular, monospace; font-size: .62rem;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .try-shot-img {
-      display: block; width: 100%; height: calc(100% - 35px);
-      object-fit: cover; object-position: top center;
-    }
-    .try-shot-mascot {
-      position: absolute; right: -32px; bottom: -20px;
-      width: 96px; height: 96px;
-      transform: rotate(8deg);
-      filter: drop-shadow(0 8px 18px rgba(0,0,0,.35));
-      pointer-events: none; z-index: 4;
-      animation: phoneMascotFloat 4s ease-in-out infinite;
-    }
-    /* Polaroid stack below: workspace previews */
-    .try-shot-stack {
-      position: absolute; left: -28px; bottom: -38px;
-      display: flex; gap: 0; z-index: 3;
-    }
-    .try-shot-stack img {
-      width: 88px; aspect-ratio: 4/3; object-fit: cover; object-position: top center;
-      border: 4px solid var(--surf); border-radius: 8px;
-      box-shadow: 0 8px 20px rgba(0,0,0,.35);
-      background: var(--bg);
-    }
-    .try-shot-stack img:nth-child(1) { transform: rotate(-8deg); }
-    .try-shot-stack img:nth-child(2) { transform: rotate(3deg); margin-left: -16px; }
-    @media (max-width: 880px) {
-      .try-shot-stack { display: none; }
-    }
-
-    /* Phone frame (legacy, no longer used in try-free but kept as utility) */
+    /* Phone frame (try-free side visual) */
     .phone-frame {
       position: relative; aspect-ratio: 9/18; max-width: 280px; margin: 0 auto;
       border-radius: 36px; padding: 10px;
@@ -7813,17 +7757,26 @@
     </div>
 
     <div class="try-free-right" aria-hidden="true">
-      <div class="try-shot-frame">
-        <div class="try-shot-bar">
-          <span></span><span></span><span></span>
-          <div class="url">reelscript.net/app · transcripción</div>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="phone-screen-header">
+            <span class="ph-dot"></span>
+            <span>ReelScript</span>
+          </div>
+          <div class="phone-url-bar">instagram.com/reel/abc123…</div>
+          <div class="phone-reel-card">
+            <div class="phone-reel-meta">
+              <div class="av"></div>
+              <div class="h">davidayalac</div>
+              <div class="t">0:42</div>
+            </div>
+          </div>
+          <div class="phone-transcript">
+            <div class="phone-transcript-label" data-i18n-es="GUION TRANSCRITO" data-i18n-en="TRANSCRIBED SCRIPT">GUION TRANSCRITO</div>
+            <p class="phone-transcript-text" data-i18n-es="Lo que voy a contarte cambió mi forma de grabar reels. Antes me pasaba dos horas con cada guion. Ahora son diez minutos." data-i18n-en="What I'm about to share changed how I shoot reels. Before I'd spend two hours on every script. Now ten minutes.">Lo que voy a contarte cambió mi forma de grabar reels. Antes me pasaba dos horas con cada guion. Ahora son diez minutos.</p>
+          </div>
         </div>
-        <img class="try-shot-img" src="/static/img/landing/screen-transcript.jpg" alt="" loading="lazy">
-        <div class="try-shot-stack">
-          <img src="/static/img/landing/screen-metrics.jpg" alt="" loading="lazy">
-          <img src="/static/img/landing/screen-ideas.jpg" alt="" loading="lazy">
-        </div>
-        <img class="try-shot-mascot" src="/static/img/hooks/hooks-transcribir.svg" alt="" loading="lazy" width="96" height="96">
+        <img class="phone-mascot" src="/static/img/hooks/hooks-transcribir.svg" alt="" loading="lazy" width="96" height="96">
       </div>
     </div>
   </div>
