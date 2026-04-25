@@ -778,9 +778,34 @@
     .mock-window-bar {
       display: flex; gap: 6px; padding: 10px 12px;
       border-bottom: 1px solid var(--border); flex-shrink: 0;
+      align-items: center;
     }
     .mock-window-bar span {
       width: 9px; height: 9px; border-radius: 50%; background: var(--surf2);
+    }
+    .mock-window-bar .mock-window-url {
+      flex: 1; margin-left: 12px;
+      padding: 3px 10px; border-radius: 6px;
+      background: var(--surf); color: var(--text3);
+      font-family: ui-monospace, SFMono-Regular, monospace; font-size: .58rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .scene-shot {
+      flex: 1; width: 100%; min-height: 0;
+      object-fit: cover; object-position: top center;
+      display: block;
+    }
+    .scene-mockup.is-active .scene-shot {
+      animation: kenBurnsScene 9s ease-out both;
+    }
+    @keyframes kenBurnsScene {
+      from { transform: scale(1.05); }
+      to   { transform: scale(1); }
+    }
+    .scene-shot-overlay {
+      position: absolute; left: 0; right: 0; bottom: 0; height: 60px;
+      background: linear-gradient(to bottom, transparent, rgba(0,0,0,.35));
+      pointer-events: none;
     }
     .scene-mascot {
       position: absolute; right: 14px; bottom: 14px;
@@ -1129,7 +1154,63 @@
       margin: 0 0 12px; color: var(--text2); font-size: .88rem; line-height: 1.5;
     }
 
-    /* Phone frame visual (decorative, side of try-free) */
+    /* Try free side visual: tilted browser frame with real screenshot */
+    .try-shot-frame {
+      position: relative; aspect-ratio: 4/3; max-width: 440px; margin: 0 auto;
+      border-radius: 14px; overflow: hidden;
+      background: var(--surf); border: 1px solid var(--border);
+      box-shadow:
+        0 30px 60px rgba(0,0,0,.4),
+        0 12px 24px rgba(0,0,0,.25);
+      transform: rotate(-2deg);
+      transition: transform .35s cubic-bezier(.2,.8,.2,1);
+    }
+    .try-shot-frame:hover { transform: rotate(0) translateY(-4px); }
+    .try-shot-bar {
+      display: flex; align-items: center; gap: 6px; padding: 10px 12px;
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
+      background: rgba(0,0,0,.18);
+    }
+    .try-shot-bar span {
+      width: 9px; height: 9px; border-radius: 50%; background: var(--surf2);
+    }
+    .try-shot-bar .url {
+      flex: 1; margin-left: 14px;
+      padding: 4px 10px; border-radius: 6px;
+      background: var(--bg); color: var(--text3);
+      font-family: ui-monospace, SFMono-Regular, monospace; font-size: .62rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .try-shot-img {
+      display: block; width: 100%; height: calc(100% - 35px);
+      object-fit: cover; object-position: top center;
+    }
+    .try-shot-mascot {
+      position: absolute; right: -32px; bottom: -20px;
+      width: 96px; height: 96px;
+      transform: rotate(8deg);
+      filter: drop-shadow(0 8px 18px rgba(0,0,0,.35));
+      pointer-events: none; z-index: 4;
+      animation: phoneMascotFloat 4s ease-in-out infinite;
+    }
+    /* Polaroid stack below: workspace previews */
+    .try-shot-stack {
+      position: absolute; left: -28px; bottom: -38px;
+      display: flex; gap: 0; z-index: 3;
+    }
+    .try-shot-stack img {
+      width: 88px; aspect-ratio: 4/3; object-fit: cover; object-position: top center;
+      border: 4px solid var(--surf); border-radius: 8px;
+      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+      background: var(--bg);
+    }
+    .try-shot-stack img:nth-child(1) { transform: rotate(-8deg); }
+    .try-shot-stack img:nth-child(2) { transform: rotate(3deg); margin-left: -16px; }
+    @media (max-width: 880px) {
+      .try-shot-stack { display: none; }
+    }
+
+    /* Phone frame (legacy, no longer used in try-free but kept as utility) */
     .phone-frame {
       position: relative; aspect-ratio: 9/18; max-width: 280px; margin: 0 auto;
       border-radius: 36px; padding: 10px;
@@ -7437,112 +7518,41 @@
       </div>
 
       <div class="scene-stage">
-        <!-- TRANSCRIBE -->
+        <!-- TRANSCRIBE (real screenshot) -->
         <div class="scene-mockup is-active" data-scene="transcribe">
           <div class="scene-frame">
-            <div class="mock-window-bar"><span></span><span></span><span></span></div>
-            <div class="mock-input-row">
-              <div class="mock-input"><span class="mock-typed">https://www.instagram.com/reel/abc123…</span></div>
-              <div class="mock-btn-go">✦ Transcribir</div>
+            <div class="mock-window-bar">
+              <span></span><span></span><span></span>
+              <div class="mock-window-url">reelscript.net/app · transcripción</div>
             </div>
-            <div class="mock-reel-preview" aria-hidden="true">
-              <div class="mock-reel-thumb"></div>
-              <div class="mock-reel-meta">
-                <div class="mock-reel-handle-row">
-                  <div class="mock-reel-avatar"></div>
-                  <div class="mock-reel-handle">creador.viral</div>
-                </div>
-                <div class="mock-reel-stats">
-                  <span>♥ 2,4 K</span>
-                  <span>💬 128</span>
-                  <span>↗ 412</span>
-                </div>
-              </div>
-              <div class="mock-reel-duration">0:42</div>
-            </div>
-            <div class="mock-spinner"><div></div><div></div><div></div></div>
-            <div class="mock-output">
-              <p class="mock-line l1" data-i18n-es="Lo que voy a contarte cambió mi forma de grabar reels." data-i18n-en="What I'm about to share changed how I shoot reels.">Lo que voy a contarte cambió mi forma de grabar reels.</p>
-              <p class="mock-line l2" data-i18n-es="Antes me pasaba dos horas con cada guion." data-i18n-en="Before I'd spend two hours on every script.">Antes me pasaba dos horas con cada guion.</p>
-              <p class="mock-line l3" data-i18n-es="Ahora son diez minutos. Igual de bueno o mejor." data-i18n-en="Now ten minutes. Same quality or better.">Ahora son diez minutos. Igual de bueno o mejor.</p>
-            </div>
+            <img class="scene-shot" src="/static/img/landing/screen-transcript.jpg" alt="" loading="lazy">
+            <div class="scene-shot-overlay"></div>
           </div>
           <img class="scene-mascot" src="/static/img/hooks/hooks-transcribir.svg" alt="" loading="lazy" width="60" height="60">
         </div>
 
-        <!-- METRICS -->
+        <!-- METRICS (real screenshot) -->
         <div class="scene-mockup" data-scene="metrics">
           <div class="scene-frame">
-            <div class="mock-window-bar"><span></span><span></span><span></span></div>
-            <div class="mock-metrics">
-              <div class="mock-metrics-title" data-i18n-es="Últimos 7 días · Reels publicados" data-i18n-en="Last 7 days · Reels published">Últimos 7 días · Reels publicados</div>
-              <div class="mock-bars-wrap">
-                <div class="mock-bars-yaxis">
-                  <span>10K</span>
-                  <span>5K</span>
-                  <span>0</span>
-                </div>
-                <div class="mock-bars">
-                  <div class="mock-bar" style="--h:42%"></div>
-                  <div class="mock-bar" style="--h:68%"></div>
-                  <div class="mock-bar" style="--h:54%"></div>
-                  <div class="mock-bar" style="--h:82%"></div>
-                  <div class="mock-bar" style="--h:95%"></div>
-                  <div class="mock-bar" style="--h:71%"></div>
-                  <div class="mock-bar" style="--h:88%"></div>
-                </div>
-              </div>
-              <div class="mock-bars-xlabels"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
-              <div class="mock-kpis">
-                <div class="mock-kpi">
-                  <div class="mock-kpi-label" data-i18n-es="Vistas" data-i18n-en="Views">Vistas</div>
-                  <div class="mock-kpi-num">12,4 K</div>
-                </div>
-                <div class="mock-kpi">
-                  <div class="mock-kpi-label">Likes</div>
-                  <div class="mock-kpi-num">1 240</div>
-                </div>
-                <div class="mock-kpi">
-                  <div class="mock-kpi-label" data-i18n-es="Comentarios" data-i18n-en="Comments">Comentarios</div>
-                  <div class="mock-kpi-num">87</div>
-                </div>
-              </div>
+            <div class="mock-window-bar">
+              <span></span><span></span><span></span>
+              <div class="mock-window-url">reelscript.net/app · métricas</div>
             </div>
+            <img class="scene-shot" src="/static/img/landing/screen-metrics.jpg" alt="" loading="lazy">
+            <div class="scene-shot-overlay"></div>
           </div>
           <img class="scene-mascot" src="/static/img/hooks/hooks-metricas.svg" alt="" loading="lazy" width="60" height="60">
         </div>
 
-        <!-- IDEAS (guarda tus ideas en un sitio) -->
+        <!-- IDEAS (real screenshot) -->
         <div class="scene-mockup" data-scene="ideas">
           <div class="scene-frame">
-            <div class="mock-window-bar"><span></span><span></span><span></span></div>
-            <div class="mock-ideas">
-              <div class="mock-ideas-head">
-                <span class="mock-ideas-icon">💡</span>
-                <span class="mock-ideas-title" data-i18n-es="Tus ideas en un sitio" data-i18n-en="Your ideas in one place">Tus ideas en un sitio</span>
-                <span class="mock-ideas-count">12</span>
-              </div>
-              <div class="mock-idea-card">
-                <span class="mock-idea-card-tag" style="--c:#22c55e">REEL</span>
-                <p data-i18n-es="Tres trampas que matan un lanzamiento de creador" data-i18n-en="Three traps that kill a creator launch">Tres trampas que matan un lanzamiento de creador</p>
-                <span class="mock-idea-time" data-i18n-es="hace 2h" data-i18n-en="2h ago">hace 2h</span>
-              </div>
-              <div class="mock-idea-card">
-                <span class="mock-idea-card-tag" style="--c:#3b82f6" data-i18n-es="HILO" data-i18n-en="THREAD">HILO</span>
-                <p data-i18n-es="Cómo conseguí mis primeros 100 usuarios reales" data-i18n-en="How I got my first 100 real users">Cómo conseguí mis primeros 100 usuarios reales</p>
-                <span class="mock-idea-time" data-i18n-es="ayer" data-i18n-en="yesterday">ayer</span>
-              </div>
-              <div class="mock-idea-card">
-                <span class="mock-idea-card-tag" style="--c:#f97316">LinkedIn</span>
-                <p data-i18n-es="El error de empezar por el producto, no por la audiencia" data-i18n-en="The mistake of starting with the product, not the audience">El error de empezar por el producto, no por la audiencia</p>
-                <span class="mock-idea-time" data-i18n-es="hace 3d" data-i18n-en="3d ago">hace 3d</span>
-              </div>
-              <div class="mock-idea-card">
-                <span class="mock-idea-card-tag" style="--c:#a78bfa">REEL</span>
-                <p data-i18n-es="5 cosas que aprendí publicando 6 meses sin parar" data-i18n-en="5 things I learned posting non-stop for 6 months">5 cosas que aprendí publicando 6 meses sin parar</p>
-                <span class="mock-idea-time" data-i18n-es="hace 1 sem" data-i18n-en="1w ago">hace 1 sem</span>
-              </div>
+            <div class="mock-window-bar">
+              <span></span><span></span><span></span>
+              <div class="mock-window-url">reelscript.net/app · ideas</div>
             </div>
+            <img class="scene-shot" src="/static/img/landing/screen-ideas.jpg" alt="" loading="lazy">
+            <div class="scene-shot-overlay"></div>
           </div>
           <img class="scene-mascot" src="/static/img/hooks/hooks-ideas.svg" alt="" loading="lazy" width="60" height="60">
         </div>
@@ -7667,26 +7677,17 @@
     </div>
 
     <div class="try-free-right" aria-hidden="true">
-      <div class="phone-frame">
-        <div class="phone-screen">
-          <div class="phone-screen-header">
-            <span class="ph-dot"></span>
-            <span>ReelScript</span>
-          </div>
-          <div class="phone-url-bar">instagram.com/reel/abc123…</div>
-          <div class="phone-reel-card">
-            <div class="phone-reel-meta">
-              <div class="av"></div>
-              <div class="h">creador.viral</div>
-              <div class="t">0:42</div>
-            </div>
-          </div>
-          <div class="phone-transcript">
-            <div class="phone-transcript-label" data-i18n-es="GUION TRANSCRITO" data-i18n-en="TRANSCRIBED SCRIPT">GUION TRANSCRITO</div>
-            <p class="phone-transcript-text" data-i18n-es="Lo que voy a contarte cambió mi forma de grabar reels. Antes me pasaba dos horas con cada guion. Ahora son diez minutos." data-i18n-en="What I'm about to share changed how I shoot reels. Before I'd spend two hours on every script. Now ten minutes.">Lo que voy a contarte cambió mi forma de grabar reels. Antes me pasaba dos horas con cada guion. Ahora son diez minutos.</p>
-          </div>
+      <div class="try-shot-frame">
+        <div class="try-shot-bar">
+          <span></span><span></span><span></span>
+          <div class="url">reelscript.net/app · transcripción</div>
         </div>
-        <img class="phone-mascot" src="/static/img/hooks/hooks-transcribir.svg" alt="" loading="lazy" width="96" height="96">
+        <img class="try-shot-img" src="/static/img/landing/screen-transcript.jpg" alt="" loading="lazy">
+        <div class="try-shot-stack">
+          <img src="/static/img/landing/screen-metrics.jpg" alt="" loading="lazy">
+          <img src="/static/img/landing/screen-ideas.jpg" alt="" loading="lazy">
+        </div>
+        <img class="try-shot-mascot" src="/static/img/hooks/hooks-transcribir.svg" alt="" loading="lazy" width="96" height="96">
       </div>
     </div>
   </div>
