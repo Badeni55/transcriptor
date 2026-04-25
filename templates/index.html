@@ -8795,7 +8795,8 @@
 </section>
 
 <!-- ── SOCIAL PROOF (counter real) ─────────────────────────────────────── -->
-<section class="social-proof-section fade-in" id="socialProof">
+<!-- Sección oculta por defecto: animateCounter() la muestra solo si hay números reales (>=25) -->
+<section class="social-proof-section fade-in" id="socialProof" style="display:none">
   <div class="social-proof-counter" id="socialCounterMain">0</div>
   <div class="social-proof-label" id="socialCounterLabel" data-i18n-es="reels transcritos hoy" data-i18n-en="reels transcribed today">reels transcritos hoy</div>
   <div class="social-proof-secondary" id="socialCreatorsRow" style="display:none">
@@ -11318,13 +11319,14 @@ async function animateCounter() {
     }
   }
 
-  // Big social proof block: hide entirely if numbers don't sell
+  // Big social proof block: hidden by default in HTML; reveal only if numbers sell
   const sp = document.getElementById("socialProof");
   if (sp) {
     if (target < SOCIAL_PROOF_MIN) {
       sp.style.display = "none";
       return;
     }
+    sp.style.display = "";
     const bigEl = document.getElementById("socialCounterMain");
     if (bigEl) tickCounter(bigEl, target);
     const lbl = document.getElementById("socialCounterLabel");
