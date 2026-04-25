@@ -1239,6 +1239,94 @@
       margin: 0 0 12px; color: var(--text2); font-size: .88rem; line-height: 1.5;
     }
 
+    /* ── 4 Pillars (editorial) ──────────────────────────────── */
+    .pillars-section { max-width: 1100px; margin: 24px auto 0; padding: 64px 24px 32px; }
+    .pillars-head { text-align: center; margin-bottom: 48px; }
+    .pillars-head h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.1; letter-spacing: -.5px; margin: 0 0 10px; }
+    .pillars-head h2 em { font-style: italic; color: #fdba74; -webkit-text-fill-color: #fdba74; }
+    [data-theme="light"] .pillars-head h2 em { color: #c2410c; -webkit-text-fill-color: #c2410c; }
+    .pillars-head p { color: var(--text2); font-size: 1rem; margin: 0 auto; max-width: 540px; line-height: 1.55; }
+
+    .pillar {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 56px;
+      align-items: center; padding: 48px 0;
+    }
+    .pillar.reverse > .pillar-copy { order: 2; }
+    .pillar.reverse > .pillar-visual { order: 1; }
+    @media (max-width: 880px) {
+      .pillar { display: flex; flex-direction: column-reverse; gap: 28px; padding: 32px 0; }
+      .pillar.reverse { flex-direction: column-reverse; }
+    }
+    .pillar-mascot {
+      width: 96px; height: 96px;
+      filter: drop-shadow(0 6px 16px rgba(0,0,0,.25));
+      animation: phoneMascotFloat 4s ease-in-out infinite;
+    }
+    .pillar-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px; margin: 16px 0 14px;
+      color: var(--orange); font-size: .72rem; font-weight: 700;
+      letter-spacing: .12em; text-transform: uppercase;
+    }
+    .pillar-eyebrow::before {
+      content: ""; width: 24px; height: 1px; background: var(--orange); display: inline-block;
+    }
+    .pillar-title {
+      font-family: var(--font-display); font-weight: 400;
+      font-size: clamp(1.6rem, 3.4vw, 2.2rem); line-height: 1.12; letter-spacing: -.5px;
+      color: var(--text); margin: 0 0 14px;
+    }
+    .pillar-title em { font-style: italic; color: #fdba74; -webkit-text-fill-color: #fdba74; }
+    [data-theme="light"] .pillar-title em { color: #c2410c; -webkit-text-fill-color: #c2410c; }
+    .pillar-text {
+      color: var(--text2); font-size: 1rem; line-height: 1.6; margin: 0 0 18px;
+      max-width: 460px;
+    }
+    .pillar-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--orange); font-weight: 700; font-size: .88rem;
+      text-decoration: none; padding-bottom: 2px; border-bottom: 1px solid transparent;
+      transition: border-color .18s, gap .18s;
+    }
+    .pillar-link:hover { border-bottom-color: var(--orange); gap: 10px; }
+    .pillar-visual {
+      position: relative;
+      aspect-ratio: 5/4; max-width: 460px; width: 100%; justify-self: center;
+      border-radius: 16px; overflow: hidden;
+      background: var(--surf); border: 1px solid var(--border);
+      box-shadow: 0 16px 40px rgba(0,0,0,.18);
+    }
+    .pillar-visual .pmock-bar { padding: 8px 12px; border-bottom: 1px solid var(--border); display: flex; gap: 5px; align-items: center; }
+    .pillar-visual .pmock-bar span { width: 8px; height: 8px; border-radius: 50%; background: var(--surf2); }
+    .pillar-visual-img {
+      position: absolute; inset: 30px 0 0 0; width: 100%; height: calc(100% - 30px);
+      object-fit: cover; object-position: top center; display: block;
+    }
+
+    /* ── Social proof (counter) ─────────────────────────────── */
+    .social-proof-section {
+      max-width: 880px; margin: 0 auto; padding: 56px 24px 80px; text-align: center;
+      position: relative;
+    }
+    .social-proof-counter {
+      font-family: var(--font-display); font-weight: 400;
+      font-size: clamp(3.2rem, 11vw, 6rem);
+      color: var(--orange); line-height: 1;
+      letter-spacing: -2px;
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 8px;
+    }
+    [data-theme="light"] .social-proof-counter { color: #c2410c; -webkit-text-fill-color: #c2410c; }
+    .social-proof-label {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .85rem; color: var(--text3); letter-spacing: .04em;
+    }
+    .social-proof-secondary {
+      margin-top: 22px; padding-top: 18px;
+      border-top: 1px solid var(--border);
+      color: var(--text3); font-size: .82rem;
+    }
+    .social-proof-secondary b { color: var(--text2); font-variant-numeric: tabular-nums; }
+
     /* Phone frame (try-free side visual) */
     .phone-frame {
       position: relative; aspect-ratio: 9/18; max-width: 280px; margin: 0 auto;
@@ -8453,67 +8541,112 @@
 {% if not workspace %}
 <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(249,115,22,.12),transparent);max-width:600px;margin:0 auto"></div>
 
-<!-- ── FLUJO DE PASOS ──────────────────────────────────────────────────── -->
-<div class="flow-section fade-in">
-  <div class="flow-container">
-    <div class="flow-header">
-      <h2 class="s-title" data-i18n="flow.h2">Cómo funciona esto.</h2>
-      <p class="s-sub" style="margin:0 auto" data-i18n="flow.sub">Spoiler: es exactamente tan fácil como parece.</p>
+<!-- ── 4 PILARES EDITORIALES ───────────────────────────────────────────── -->
+<section class="pillars-section fade-in">
+  <div class="pillars-head">
+    <h2>
+      <span data-i18n-es="Cuatro cosas." data-i18n-en="Four things.">Cuatro cosas.</span>
+      <em data-i18n-es="Un sitio." data-i18n-en="One place.">Un sitio.</em>
+    </h2>
+    <p data-i18n-es="Transcribir, medir, capturar ideas y guardar guiones — sin saltar entre 5 herramientas." data-i18n-en="Transcribe, measure, capture ideas and save scripts — no jumping between 5 tools.">Transcribir, medir, capturar ideas y guardar guiones — sin saltar entre 5 herramientas.</p>
+  </div>
+
+  <!-- Pilar 01: TRANSCRIBIR -->
+  <div class="pillar">
+    <div class="pillar-copy">
+      <img class="pillar-mascot" src="/static/img/hooks/hooks-transcribir.svg" alt="" loading="lazy" width="96" height="96">
+      <div class="pillar-eyebrow"><span data-i18n-es="PILAR 01" data-i18n-en="PILLAR 01">PILAR 01</span></div>
+      <h3 class="pillar-title">
+        <span data-i18n-es="Transcribe cualquier" data-i18n-en="Transcribe any">Transcribe cualquier</span>
+        <em data-i18n-es="reel" data-i18n-en="reel">reel</em>.
+      </h3>
+      <p class="pillar-text" data-i18n-es="Pegas la URL de Instagram o TikTok y en 10 segundos tienes el guión. Sin descargas, sin extensiones, sin marca de agua." data-i18n-en="Paste an Instagram or TikTok URL — 10 seconds later you've got the script. No downloads, no extensions, no watermark.">Pegas la URL de Instagram o TikTok y en 10 segundos tienes el guión. Sin descargas, sin extensiones, sin marca de agua.</p>
+      {% if lang == 'en' %}
+      <a class="pillar-link" href="/en/instagram-reel-transcript">Saber más →</a>
+      {% else %}
+      <a class="pillar-link" href="/es/transcribir-reel-instagram">Saber más →</a>
+      {% endif %}
     </div>
-    <div class="flow-nodes">
-
-      <div class="flow-node">
-        <div class="flow-node-step">1</div>
-        <div class="flow-node-icon">📱</div>
-        <div class="flow-node-title" data-i18n="flow.n1.title">Pega el reel</div>
-        <div class="flow-node-desc" data-i18n="flow.n1.desc">Instagram o TikTok. Cualquier reel público funciona.</div>
-      </div>
-
-      <div class="flow-arrow">
-        <div class="flow-arrow-track">
-          <div class="flow-arrow-pulse"></div>
-          <div class="flow-arrow-head"></div>
-        </div>
-      </div>
-
-      <div class="flow-node">
-        <div class="flow-node-step">2</div>
-        <div class="flow-node-icon">⚡</div>
-        <div class="flow-node-title" data-i18n="flow.n2.title">Transcripción</div>
-        <div class="flow-node-desc" data-i18n="flow.n2.desc">Groq Whisper convierte el audio en texto en segundos.</div>
-      </div>
-
-      <div class="flow-arrow">
-        <div class="flow-arrow-track">
-          <div class="flow-arrow-pulse" style="animation-delay:.7s"></div>
-          <div class="flow-arrow-head"></div>
-        </div>
-      </div>
-
-      <div class="flow-node">
-        <div class="flow-node-step">3</div>
-        <div class="flow-node-icon">✍️</div>
-        <div class="flow-node-title" data-i18n="flow.n3.title">Elige estilo</div>
-        <div class="flow-node-desc" data-i18n="flow.n3.desc">Viral, LinkedIn, historia, 5 hooks. Un click, la IA lo reescribe.</div>
-      </div>
-
-      <div class="flow-arrow">
-        <div class="flow-arrow-track">
-          <div class="flow-arrow-pulse" style="animation-delay:1.4s"></div>
-          <div class="flow-arrow-head"></div>
-        </div>
-      </div>
-
-      <div class="flow-node final">
-        <div class="flow-node-step">4</div>
-        <div class="flow-node-icon">🔥</div>
-        <div class="flow-node-title" data-i18n="flow.n4.title">Contenido listo</div>
-        <div class="flow-node-desc" data-i18n="flow.n4.desc">Copia, pega y publica. Ya está.</div>
-      </div>
-
+    <div class="pillar-visual">
+      <div class="pmock-bar"><span></span><span></span><span></span></div>
+      <img class="pillar-visual-img" src="/static/img/landing/screen-transcript.jpg" alt="" loading="lazy">
     </div>
   </div>
-</div>
+
+  <!-- Pilar 02: MÉTRICAS -->
+  <div class="pillar reverse">
+    <div class="pillar-copy">
+      <img class="pillar-mascot" src="/static/img/hooks/hooks-metricas.svg" alt="" loading="lazy" width="96" height="96">
+      <div class="pillar-eyebrow"><span data-i18n-es="PILAR 02" data-i18n-en="PILLAR 02">PILAR 02</span></div>
+      <h3 class="pillar-title">
+        <span data-i18n-es="Mide qué" data-i18n-en="Measure what">Mide qué</span>
+        <em data-i18n-es="funciona" data-i18n-en="works">funciona</em>.
+      </h3>
+      <p class="pillar-text" data-i18n-es="Conecta tu Instagram y mira qué hooks generan retención, qué temas escalan y cuáles no. Decisiones con datos, no intuición." data-i18n-en="Plug in your Instagram and see which hooks drive retention, which topics scale and which don't. Data over hunches.">Conecta tu Instagram y mira qué hooks generan retención, qué temas escalan y cuáles no. Decisiones con datos, no intuición.</p>
+    </div>
+    <div class="pillar-visual">
+      <div class="pmock-bar"><span></span><span></span><span></span></div>
+      <img class="pillar-visual-img" src="/static/img/landing/screen-metrics.jpg" alt="" loading="lazy">
+    </div>
+  </div>
+
+  <!-- Pilar 03: IDEAS -->
+  <div class="pillar">
+    <div class="pillar-copy">
+      <img class="pillar-mascot" src="/static/img/hooks/hooks-ideas.svg" alt="" loading="lazy" width="96" height="96">
+      <div class="pillar-eyebrow"><span data-i18n-es="PILAR 03" data-i18n-en="PILLAR 03">PILAR 03</span></div>
+      <h3 class="pillar-title">
+        <span data-i18n-es="Tus ideas," data-i18n-en="Your ideas,">Tus ideas,</span>
+        <em data-i18n-es="en un sitio" data-i18n-en="in one place">en un sitio</em>.
+      </h3>
+      <p class="pillar-text" data-i18n-es="Capta una idea en una frase. Hooks la desarrolla en intro, desarrollo y cierre — listo para grabar. Cuéntale a Hooks." data-i18n-en="Capture an idea in one line. Hooks expands it into intro, body and closing — ready to record. Tell Hooks.">Capta una idea en una frase. Hooks la desarrolla en intro, desarrollo y cierre — listo para grabar. Cuéntale a Hooks.</p>
+    </div>
+    <div class="pillar-visual">
+      <div class="pmock-bar"><span></span><span></span><span></span></div>
+      <img class="pillar-visual-img" src="/static/img/landing/screen-ideas.jpg" alt="" loading="lazy">
+    </div>
+  </div>
+
+  <!-- Pilar 04: GUIONES -->
+  <div class="pillar reverse">
+    <div class="pillar-copy">
+      <img class="pillar-mascot" src="/static/img/hooks/hooks-scripts.svg" alt="" loading="lazy" width="96" height="96">
+      <div class="pillar-eyebrow"><span data-i18n-es="PILAR 04" data-i18n-en="PILLAR 04">PILAR 04</span></div>
+      <h3 class="pillar-title">
+        <span data-i18n-es="Guiones que" data-i18n-en="Scripts that">Guiones que</span>
+        <em data-i18n-es="te esperan" data-i18n-en="wait for you">te esperan</em>.
+      </h3>
+      <p class="pillar-text" data-i18n-es="Cada transcripción y cada idea se guarda. Etiquetadas por estado, abrelas en el teleprompter integrado y graba sin improvisar. Hooks ya tiene guiones esperándote." data-i18n-en="Every transcription and every idea is saved. Tagged by status, open them in the built-in teleprompter and record without improvising. Hooks has scripts waiting for you.">Cada transcripción y cada idea se guarda. Etiquetadas por estado, abrelas en el teleprompter integrado y graba sin improvisar. Hooks ya tiene guiones esperándote.</p>
+    </div>
+    <div class="pillar-visual">
+      <div class="pmock-bar"><span></span><span></span><span></span></div>
+      <div style="position:absolute;inset:30px 0 0 0;padding:18px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px">
+        <div style="width:90%;background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:14px">
+          <div style="font-family:var(--font-display);font-size:1rem;color:var(--text);margin-bottom:8px">3 pasos para conseguir tus primeros usuarios</div>
+          <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+            <span style="font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:999px;background:rgba(34,197,94,.14);color:#4ade80;border:1px solid rgba(34,197,94,.3)">✓ DESARROLLADA</span>
+            <span style="font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:999px;background:rgba(45,212,191,.14);color:#5eead4;border:1px solid rgba(45,212,191,.3)">EDUCATIVO</span>
+            <span style="font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:999px;background:rgba(34,197,94,.14);color:#86efac;border:1px solid rgba(34,197,94,.3)">● GRABADA</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button style="flex:1;padding:6px;border-radius:6px;background:rgba(34,197,94,.14);border:1px solid rgba(34,197,94,.3);color:#4ade80;font-family:var(--font-body);font-size:.7rem;font-weight:600">▶ Teleprompter</button>
+            <button style="flex:1;padding:6px;border-radius:6px;background:transparent;border:1px solid var(--border);color:var(--text2);font-family:var(--font-body);font-size:.7rem;font-weight:500">Editar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SOCIAL PROOF (counter real) ─────────────────────────────────────── -->
+<section class="social-proof-section fade-in" id="socialProof">
+  <div class="social-proof-counter" id="socialCounterMain">0</div>
+  <div class="social-proof-label" id="socialCounterLabel" data-i18n-es="reels transcritos hoy" data-i18n-en="reels transcribed today">reels transcritos hoy</div>
+  <div class="social-proof-secondary" id="socialCreatorsRow" style="display:none">
+    <span data-i18n-es="Creadores activos esta semana:" data-i18n-en="Active creators this week:">Creadores activos esta semana:</span>
+    <b id="socialCreatorsNum">0</b>
+  </div>
+</section>
 
 <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(249,115,22,.12),transparent);max-width:600px;margin:0 auto"></div>
 
@@ -11001,22 +11134,57 @@ function _tryRenderResult(fullText) {
   tick();
 }
 
-// ── Counter animation ─────────────────────────────────────────────────────
-function animateCounter() {
-  const base = 120 + Math.floor(Math.random() * 80);
-  const el = document.getElementById("counterNum");
+// ── Counter animation (real data from /api/stats/today) ──────────────────
+async function animateCounter() {
+  let stats = { transcripts_today: 0, transcripts_week: 0, creators_week: 0 };
+  try {
+    const res = await fetch("/api/stats/today");
+    if (res.ok) stats = await res.json();
+  } catch {}
+
+  // Choose primary metric: today if >0, else fallback to week
+  let target, labelKeyEs, labelKeyEn;
+  if (stats.transcripts_today > 0) {
+    target = stats.transcripts_today;
+    labelKeyEs = "reels transcritos hoy";
+    labelKeyEn = "reels transcribed today";
+  } else {
+    target = stats.transcripts_week;
+    labelKeyEs = "reels transcritos esta semana";
+    labelKeyEn = "reels transcribed this week";
+  }
+
+  // Hero trust line counter (small, in the hero)
+  const heroEl = document.getElementById("counterNum");
+  if (heroEl) tickCounter(heroEl, target);
+
+  // Big social proof counter
+  const bigEl = document.getElementById("socialCounterMain");
+  if (bigEl) tickCounter(bigEl, target);
+
+  const lbl = document.getElementById("socialCounterLabel");
+  if (lbl) lbl.textContent = currentLang === "es" ? labelKeyEs : labelKeyEn;
+
+  // Optional creators row
+  if (stats.creators_week > 0) {
+    const row = document.getElementById("socialCreatorsRow");
+    const num = document.getElementById("socialCreatorsNum");
+    if (row && num) {
+      num.textContent = stats.creators_week.toLocaleString(currentLang === "es" ? "es-ES" : "en-US");
+      row.style.display = "";
+    }
+  }
+}
+
+function tickCounter(el, target) {
+  if (target <= 0) { el.textContent = "0"; return; }
   let cur = 0;
   const step = () => {
-    cur = Math.min(cur + Math.ceil((base - cur) / 8 + 1), base);
-    el.textContent = cur.toLocaleString("es-ES");
-    if (cur < base) requestAnimationFrame(step);
+    cur = Math.min(cur + Math.max(1, Math.ceil((target - cur) / 8)), target);
+    el.textContent = cur.toLocaleString(currentLang === "es" ? "es-ES" : "en-US");
+    if (cur < target) requestAnimationFrame(step);
   };
   requestAnimationFrame(step);
-  // Slowly increment every 8-15s
-  setInterval(() => {
-    const n = parseInt(el.textContent.replace(/\./g, "")) + 1;
-    el.textContent = n.toLocaleString("es-ES");
-  }, 10000 + Math.random() * 5000);
 }
 
 // ── Marquee (removed) ─────────────────────────────────────────────────────

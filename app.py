@@ -727,6 +727,42 @@ def transcribe_preview():
     return jsonify({"task_id": task.id, "preview": True})
 
 
+# ── Public stats (landing social proof) ────────────────────────────────────
+import time as _time  # noqa: E402
+
+_stats_cache = {"data": None, "ts": 0.0}
+
+@app.route("/api/stats/today")
+def api_stats_today():
+    """Public counter feeding the landing 'X reels transcritos hoy' line.
+    Cached 60s in-process to avoid hammering Supabase from anonymous traffic."""
+    now = _time.time()
+    if _stats_cache["data"] and (now - _stats_cache["ts"]) < 60:
+        return jsonify(_stats_cache["data"])
+    today_count = 0
+    week_count = 0
+    creators_week = 0
+    try:
+        today_iso = datetime.utcnow().date().isoformat()
+        week_ago_iso = (datetime.utcnow() - timedelta(days=7)).isoformat()
+        r1 = db.table("transcriptions").select("id", count="exact").gte("created_at", today_iso).execute()
+        today_count = r1.count or 0
+        r2 = db.table("transcriptions").select("user_id").gte("created_at", week_ago_iso).execute()
+        rows = r2.data or []
+        week_count = len(rows)
+        creators_week = len({r.get("user_id") for r in rows if r.get("user_id")})
+    except Exception as e:
+        logger.warning("api_stats_today error: %s", e)
+    data = {
+        "transcripts_today": today_count,
+        "transcripts_week": week_count,
+        "creators_week": creators_week,
+    }
+    _stats_cache["data"] = data
+    _stats_cache["ts"] = now
+    return jsonify(data)
+
+
 @app.route("/task/<task_id>")
 def task_status(task_id):
     task = transcribe_task.AsyncResult(task_id)
