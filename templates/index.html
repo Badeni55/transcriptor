@@ -2629,27 +2629,6 @@
     }
     .marquee-item span { font-size: .9rem; }
 
-    /* ── How it works ─────────────────────────────────────────── */
-    .steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 0; margin-top: 48px; position: relative; }
-    .steps::before {
-      content: ""; position: absolute; top: 36px; left: calc(16.66% + 12px);
-      right: calc(16.66% + 12px); height: 1px;
-      background: linear-gradient(90deg, var(--purple), var(--pink));
-      opacity: .4;
-    }
-    .step { text-align: center; padding: 0 24px; position: relative; }
-    .step-num {
-      width: 72px; height: 72px; border-radius: 50%;
-      background: var(--grad); display: flex; align-items: center; justify-content: center;
-      font-size: 1.8rem; margin: 0 auto 20px;
-      box-shadow: 0 0 30px rgba(249,115,22,.35);
-      animation: float 4s ease-in-out infinite;
-    }
-    .step:nth-child(2) .step-num { animation-delay: .5s; }
-    .step:nth-child(3) .step-num { animation-delay: 1s; }
-    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-    .step h3 { font-size: 1rem; font-weight: 800; margin-bottom: 8px; }
-    .step p  { font-size: .85rem; color: var(--text2); line-height: 1.6; }
 
     /* ── Testimonials ─────────────────────────────────────────── */
     .testi-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-top: 40px; }
