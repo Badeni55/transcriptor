@@ -329,7 +329,12 @@
       font-size: 15px;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      display: flex;
+      flex-direction: column;
     }
+    /* Sticky footer pattern: main expands to fill, footer stays at bottom */
+    main { flex: 1 0 auto; }
+    body > footer { flex-shrink: 0; }
 
     h1, h2, h3, h4, .s-title, .hero-h1, .cta-h2, .price-title, .price-amount {
       font-family: var(--font-display);
