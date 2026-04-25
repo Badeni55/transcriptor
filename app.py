@@ -155,6 +155,10 @@ def inject_analytics():
 
 @app.errorhandler(429)
 def ratelimit_handler(e):
+    if request.path == "/transcribe-preview":
+        msg = ("Has usado tus 3 transcripciones de prueba. "
+               "Crea cuenta gratis para seguir transcribiendo.")
+        return jsonify({"error": msg, "preview_limit_reached": True}), 429
     return jsonify({"error": "Too many requests. Please slow down.", "retry_after": str(e.description)}), 429
 
 
@@ -692,6 +696,71 @@ def transcribe():
     )
 
     return jsonify({"task_id": task.id, "cost_cents": cost_cents})
+
+
+@app.route("/transcribe-preview", methods=["POST"])
+@limiter.limit("3 per day")
+def transcribe_preview():
+    """Anonymous preview transcription used by the landing #tryFree section.
+    Returns the full transcription via the regular /task/<id> polling endpoint;
+    the landing UI truncates to 3 sentences and shows a signup CTA.
+
+    Tech debt v0.15: truncate audio before Whisper to cut Groq cost on previews.
+    """
+    body = request.get_json() or {}
+    url = (body.get("url") or "").strip()
+    language = (body.get("language") or "").strip() or None
+
+    err = validate_url(url)
+    if err:
+        return jsonify({"error": err}), 400
+    if not GROQ_API_KEY:
+        return jsonify({"error": "Service unavailable"}), 500
+
+    platform = detect_platform(url)
+    if platform == "youtube":
+        return jsonify({
+            "error": "YouTube no disponible. Solo Instagram y TikTok."
+        }), 400
+
+    task = transcribe_task.delay(url, language, None, get_client_ip())
+    return jsonify({"task_id": task.id, "preview": True})
+
+
+# ── Public stats (landing social proof) ────────────────────────────────────
+import time as _time  # noqa: E402
+
+_stats_cache = {"data": None, "ts": 0.0}
+
+@app.route("/api/stats/today")
+def api_stats_today():
+    """Public counter feeding the landing 'X reels transcritos hoy' line.
+    Cached 60s in-process to avoid hammering Supabase from anonymous traffic."""
+    now = _time.time()
+    if _stats_cache["data"] and (now - _stats_cache["ts"]) < 60:
+        return jsonify(_stats_cache["data"])
+    today_count = 0
+    week_count = 0
+    creators_week = 0
+    try:
+        today_iso = datetime.utcnow().date().isoformat()
+        week_ago_iso = (datetime.utcnow() - timedelta(days=7)).isoformat()
+        r1 = db.table("transcriptions").select("id", count="exact").gte("created_at", today_iso).execute()
+        today_count = r1.count or 0
+        r2 = db.table("transcriptions").select("user_id").gte("created_at", week_ago_iso).execute()
+        rows = r2.data or []
+        week_count = len(rows)
+        creators_week = len({r.get("user_id") for r in rows if r.get("user_id")})
+    except Exception as e:
+        logger.warning("api_stats_today error: %s", e)
+    data = {
+        "transcripts_today": today_count,
+        "transcripts_week": week_count,
+        "creators_week": creators_week,
+    }
+    _stats_cache["data"] = data
+    _stats_cache["ts"] = now
+    return jsonify(data)
 
 
 @app.route("/task/<task_id>")
