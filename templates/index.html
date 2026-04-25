@@ -848,11 +848,14 @@
     .mock-reel-thumb {
       position: relative; flex-shrink: 0;
       width: 54px; height: 88px; border-radius: 8px;
-      background:
-        radial-gradient(ellipse at 35% 30%, rgba(255,255,255,.35) 0%, transparent 45%),
-        linear-gradient(135deg, #f97316 0%, #c2410c 50%, #7d5bb8 100%);
       overflow: hidden;
-      box-shadow: 0 4px 12px rgba(124,45,18,.35);
+      box-shadow: 0 4px 12px rgba(0,0,0,.35);
+      background: linear-gradient(135deg, #f97316 0%, #c2410c 50%, #7d5bb8 100%);
+    }
+    .mock-reel-thumb img {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; object-position: center;
+      display: block;
     }
     .mock-reel-handle-row { display: flex; align-items: center; gap: 6px; }
     .mock-reel-avatar {
@@ -867,10 +870,14 @@
         radial-gradient(ellipse at 70% 80%, rgba(0,0,0,.3) 0%, transparent 50%);
     }
     .mock-reel-thumb::after {
-      content: "▶"; position: absolute; inset: 0;
+      content: "▶"; position: absolute; top: 50%; left: 50%;
+      transform: translate(-40%,-50%);
+      width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(0,0,0,.55); backdrop-filter: blur(4px);
       display: flex; align-items: center; justify-content: center;
-      color: rgba(255,255,255,.95); font-size: 1rem;
-      text-shadow: 0 2px 8px rgba(0,0,0,.4);
+      color: #fff; font-size: .68rem; padding-left: 1px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.4);
+      z-index: 2;
     }
     .mock-reel-meta { flex: 1; min-width: 0; }
     .mock-reel-handle { font-size: .76rem; color: var(--text); font-weight: 600; }
@@ -952,7 +959,85 @@
     .mock-kpi-label { font-size: .68rem; color: var(--text3); text-transform: uppercase; letter-spacing: .04em; }
     .mock-kpi-num { font-family: var(--font-display); font-size: 1.1rem; color: var(--text); margin-top: 2px; font-variant-numeric: tabular-nums; }
 
-    /* Scene 3: Ideas (saved ideas notebook) */
+    /* Scene 3: Ideas (idea + developed result) */
+    .mock-ideas-v2 {
+      display: flex; flex-direction: column; gap: 10px;
+      padding: 12px 14px 14px; flex: 1; overflow: hidden;
+    }
+    .mock-ideas-input-card {
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 8px 10px; background: var(--surf);
+    }
+    .mock-ideas-input-label {
+      font-size: .58rem; color: var(--text3); letter-spacing: .1em; text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .mock-ideas-input-text {
+      font-size: .8rem; color: var(--text); font-style: italic; line-height: 1.3; min-height: 1em;
+    }
+    .mock-ideas-input-row {
+      display: flex; gap: 6px; align-items: center; margin-top: 8px;
+    }
+    .mock-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px; border-radius: 999px;
+      font-size: .62rem; font-weight: 500; white-space: nowrap;
+    }
+    .mock-chip.purple { background: rgba(125,91,184,.12); color: #a78bfa; border: 1px solid rgba(125,91,184,.35); }
+    .mock-chip.orange { background: rgba(249,115,22,.12); color: #fed7aa; border: 1px solid rgba(249,115,22,.35); }
+    .mock-chip-spacer { flex: 1; }
+    .mock-ideas-cta {
+      padding: 5px 10px; border-radius: 8px;
+      background: linear-gradient(135deg, #f97316, #fb923c); color: #fff;
+      font-size: .68rem; font-weight: 700;
+      box-shadow: 0 2px 8px rgba(249,115,22,.3);
+    }
+    .mock-ideas-result {
+      flex: 1; min-height: 0;
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 10px 12px; background: var(--surf);
+      display: flex; flex-direction: column; gap: 8px; overflow: hidden;
+    }
+    .mock-ideas-badges {
+      display: flex; gap: 5px; flex-wrap: wrap;
+    }
+    .mock-ideas-badges .b {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-size: .58rem; font-weight: 700; letter-spacing: .04em;
+      padding: 2px 7px; border-radius: 999px;
+    }
+    .mock-ideas-badges .b.ok { background: rgba(34,197,94,.14); color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
+    .mock-ideas-badges .b.cy { background: rgba(45,212,191,.14); color: #5eead4; border: 1px solid rgba(45,212,191,.3); }
+    .mock-ideas-badges .b.gr { background: rgba(34,197,94,.14); color: #86efac; border: 1px solid rgba(34,197,94,.3); }
+    .mock-ideas-result-title {
+      font-family: var(--font-display); font-size: .92rem; line-height: 1.2;
+      color: var(--text); font-weight: 400;
+    }
+    .mock-ideas-blocks {
+      flex: 1; min-height: 0;
+      display: flex; flex-direction: column; gap: 6px;
+      padding: 8px 10px;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      overflow: hidden;
+    }
+    .mock-ideas-block-lbl {
+      font-size: .56rem; font-weight: 700; letter-spacing: .1em;
+      color: #4ade80; margin-bottom: 0;
+    }
+    .mock-ideas-block-txt {
+      font-size: .72rem; color: var(--text2); font-style: italic; line-height: 1.4;
+      margin: 0 0 2px;
+    }
+    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-input-card { animation: lineIn .35s ease .15s both; }
+    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-result    { animation: lineIn .4s ease .55s both; }
+    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-blocks > *:nth-child(1) { animation: lineIn .3s ease 1.1s both; }
+    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-blocks > *:nth-child(2) { animation: lineIn .3s ease 1.3s both; }
+    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-blocks > *:nth-child(3) { animation: lineIn .3s ease 1.5s both; }
+    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-blocks > *:nth-child(4) { animation: lineIn .3s ease 1.7s both; }
+    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-blocks > *:nth-child(5) { animation: lineIn .3s ease 1.9s both; }
+    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-blocks > *:nth-child(6) { animation: lineIn .3s ease 2.1s both; }
+
+    /* (legacy) Scene 3 simpler: kept for rare edge cases */
     .mock-ideas { display: flex; flex-direction: column; gap: 8px; flex: 1; padding: 14px 18px; }
     .mock-ideas-head {
       display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
@@ -7518,15 +7603,40 @@
       </div>
 
       <div class="scene-stage">
-        <!-- TRANSCRIBE (real screenshot) -->
+        <!-- TRANSCRIBE (HTML mockup with real creator photo as reel thumb) -->
         <div class="scene-mockup is-active" data-scene="transcribe">
           <div class="scene-frame">
             <div class="mock-window-bar">
               <span></span><span></span><span></span>
               <div class="mock-window-url">reelscript.net/app · transcripción</div>
             </div>
-            <img class="scene-shot" src="/static/img/landing/screen-transcript.jpg" alt="" loading="lazy">
-            <div class="scene-shot-overlay"></div>
+            <div class="mock-input-row">
+              <div class="mock-input"><span class="mock-typed">https://www.instagram.com/reel/abc123…</span></div>
+              <div class="mock-btn-go">✦ Transcribir</div>
+            </div>
+            <div class="mock-reel-preview" aria-hidden="true">
+              <div class="mock-reel-thumb">
+                <img src="/static/img/landing/reel-thumb-creator.jpg" alt="" loading="lazy">
+              </div>
+              <div class="mock-reel-meta">
+                <div class="mock-reel-handle-row">
+                  <div class="mock-reel-avatar"></div>
+                  <div class="mock-reel-handle">davidayalac</div>
+                </div>
+                <div class="mock-reel-stats">
+                  <span>♥ 2,4 K</span>
+                  <span>💬 128</span>
+                  <span>↗ 412</span>
+                </div>
+              </div>
+              <div class="mock-reel-duration">0:42</div>
+            </div>
+            <div class="mock-spinner"><div></div><div></div><div></div></div>
+            <div class="mock-output">
+              <p class="mock-line l1" data-i18n-es="Lo que voy a contarte cambió mi forma de grabar reels." data-i18n-en="What I'm about to share changed how I shoot reels.">Lo que voy a contarte cambió mi forma de grabar reels.</p>
+              <p class="mock-line l2" data-i18n-es="Antes me pasaba dos horas con cada guion." data-i18n-en="Before I'd spend two hours on every script.">Antes me pasaba dos horas con cada guion.</p>
+              <p class="mock-line l3" data-i18n-es="Ahora son diez minutos. Igual de bueno o mejor." data-i18n-en="Now ten minutes. Same quality or better.">Ahora son diez minutos. Igual de bueno o mejor.</p>
+            </div>
           </div>
           <img class="scene-mascot" src="/static/img/hooks/hooks-transcribir.svg" alt="" loading="lazy" width="60" height="60">
         </div>
@@ -7544,15 +7654,41 @@
           <img class="scene-mascot" src="/static/img/hooks/hooks-metricas.svg" alt="" loading="lazy" width="60" height="60">
         </div>
 
-        <!-- IDEAS (real screenshot) -->
+        <!-- IDEAS (HTML mockup: input idea → desarrollada con INTRO/DESARROLLO/CIERRE) -->
         <div class="scene-mockup" data-scene="ideas">
           <div class="scene-frame">
             <div class="mock-window-bar">
               <span></span><span></span><span></span>
               <div class="mock-window-url">reelscript.net/app · ideas</div>
             </div>
-            <img class="scene-shot" src="/static/img/landing/screen-ideas.jpg" alt="" loading="lazy">
-            <div class="scene-shot-overlay"></div>
+            <div class="mock-ideas-v2">
+              <div class="mock-ideas-input-card">
+                <div class="mock-ideas-input-label" data-i18n-es="NUEVA IDEA" data-i18n-en="NEW IDEA">NUEVA IDEA</div>
+                <div class="mock-ideas-input-text" data-i18n-es="cómo conseguir mis primeros usuarios" data-i18n-en="how to get my first users">cómo conseguir mis primeros usuarios</div>
+                <div class="mock-ideas-input-row">
+                  <span class="mock-chip purple" data-i18n-es="◉ Asistente por defecto" data-i18n-en="◉ Default assistant">◉ Asistente por defecto</span>
+                  <span class="mock-chip orange" data-i18n-es="📁 Sin proyecto" data-i18n-en="📁 No project">📁 Sin proyecto</span>
+                  <span class="mock-chip-spacer"></span>
+                  <span class="mock-ideas-cta" data-i18n-es="Desarrollar →" data-i18n-en="Expand →">Desarrollar →</span>
+                </div>
+              </div>
+              <div class="mock-ideas-result">
+                <div class="mock-ideas-badges">
+                  <span class="b ok" data-i18n-es="✓ DESARROLLADA" data-i18n-en="✓ EXPANDED">✓ DESARROLLADA</span>
+                  <span class="b cy" data-i18n-es="EDUCATIVO" data-i18n-en="EDUCATIONAL">EDUCATIVO</span>
+                  <span class="b gr" data-i18n-es="● GRABADA" data-i18n-en="● RECORDED">● GRABADA</span>
+                </div>
+                <div class="mock-ideas-result-title" data-i18n-es="3 pasos para conseguir los primeros usuarios" data-i18n-en="3 steps to get your first users">3 pasos para conseguir los primeros usuarios</div>
+                <div class="mock-ideas-blocks">
+                  <div class="mock-ideas-block-lbl">INTRO</div>
+                  <p class="mock-ideas-block-txt" data-i18n-es="Lanzaste tu app y no tienes usuarios. Sigue estos 3 pasos." data-i18n-en="You launched your app and have no users. Follow these 3 steps.">Lanzaste tu app y no tienes usuarios. Sigue estos 3 pasos.</p>
+                  <div class="mock-ideas-block-lbl" data-i18n-es="DESARROLLO" data-i18n-en="BODY">DESARROLLO</div>
+                  <p class="mock-ideas-block-txt" data-i18n-es="Empieza por tu círculo. Busca comunidades del nicho. Aporta valor." data-i18n-en="Start with your circle. Find niche communities. Bring value first.">Empieza por tu círculo. Busca comunidades del nicho. Aporta valor.</p>
+                  <div class="mock-ideas-block-lbl" data-i18n-es="CIERRE" data-i18n-en="CLOSING">CIERRE</div>
+                  <p class="mock-ideas-block-txt" data-i18n-es="Esos primeros usuarios son tu base. Guarda este vídeo." data-i18n-en="Those first users are your base. Save this video.">Esos primeros usuarios son tu base. Guarda este vídeo.</p>
+                </div>
+              </div>
+            </div>
           </div>
           <img class="scene-mascot" src="/static/img/hooks/hooks-ideas.svg" alt="" loading="lazy" width="60" height="60">
         </div>
