@@ -886,9 +886,29 @@ def stripe_webhook():
 # ── Subscription endpoints ───────────────────────────────────────────────────
 
 PRICE_TO_PLAN = {
+    # ── Legacy price IDs (grandfathering) ────────────────────────────────────
+    # Existing active subscriptions keep their original price. Do not remove
+    # these entries until Stripe reports zero subs against any of them.
     "price_1TI14pCWQn5Tis1WycY83MrR": "basic",
     "price_1TI15ACWQn5Tis1WKNbdhFW1": "pro",
     "price_1TI15NCWQn5Tis1WwIIb1TX1": "agency",
+    # ── v0.14.3 prices (monthly) ─────────────────────────────────────────────
+    # Replace the placeholders with the real price IDs created in Stripe.
+    # While they are placeholders, the checkout call rejects them with
+    # "Price ID no válido" because Stripe never issued a price with this id.
+    "REPLACE_STRIPE_BASIC_MONTH_EUR":  "basic",
+    "REPLACE_STRIPE_BASIC_MONTH_USD":  "basic",
+    "REPLACE_STRIPE_PRO_MONTH_EUR":    "pro",
+    "REPLACE_STRIPE_PRO_MONTH_USD":    "pro",
+    "REPLACE_STRIPE_AGENCY_MONTH_EUR": "agency",
+    "REPLACE_STRIPE_AGENCY_MONTH_USD": "agency",
+    # ── v0.14.3 prices (annual, -20%) ────────────────────────────────────────
+    "REPLACE_STRIPE_BASIC_YEAR_EUR":   "basic",
+    "REPLACE_STRIPE_BASIC_YEAR_USD":   "basic",
+    "REPLACE_STRIPE_PRO_YEAR_EUR":     "pro",
+    "REPLACE_STRIPE_PRO_YEAR_USD":     "pro",
+    "REPLACE_STRIPE_AGENCY_YEAR_EUR":  "agency",
+    "REPLACE_STRIPE_AGENCY_YEAR_USD":  "agency",
 }
 
 

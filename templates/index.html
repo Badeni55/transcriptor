@@ -1616,6 +1616,74 @@
       font-family: var(--font-body); font-size: .65rem; font-weight: 600;
       padding: 4px 14px; border-radius: 20px; letter-spacing: .05em; white-space: nowrap;
     }
+    /* Billing toggle */
+    .billing-toggle {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--surf); border: 1px solid var(--border); border-radius: 999px;
+      padding: 4px; margin: 14px auto 4px;
+    }
+    .billing-toggle { display: flex; width: max-content; }
+    .pricing-cards + .billing-toggle, #pricingSection .billing-toggle { margin-left: auto; margin-right: auto; }
+    #pricingSection .billing-toggle { display: flex; justify-content: center; margin: 18px auto 0; }
+    .billing-toggle-opt {
+      background: transparent; border: 0; cursor: pointer;
+      padding: 8px 16px; border-radius: 999px;
+      font-family: var(--font-body); font-size: .82rem; color: var(--text2); font-weight: 600;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: background .18s, color .18s;
+    }
+    .billing-toggle-opt:hover { color: var(--text); }
+    .billing-toggle-opt.on {
+      background: var(--purple); color: #fff;
+      box-shadow: 0 2px 8px rgba(249,115,22,.25);
+    }
+    .billing-toggle-save {
+      font-size: .65rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+      background: rgba(34,197,94,.16); color: #22c55e;
+      padding: 2px 7px; border-radius: 999px;
+    }
+    .billing-toggle-opt.on .billing-toggle-save { background: rgba(255,255,255,.22); color: #fff; }
+    .price-billed { font-size: .72rem; color: var(--text3); margin-top: -2px; margin-bottom: 4px; }
+    .price-ideal { font-size: .78rem; color: var(--text2); line-height: 1.5; font-style: italic; margin-bottom: 6px; min-height: 36px; }
+    /* Nav Upgrade button */
+    .nav-upgrade-btn {
+      background: var(--grad);
+      color: #fff; border: 0; cursor: pointer;
+      padding: 8px 14px; border-radius: 999px;
+      font-family: var(--font-body); font-weight: 700; font-size: .78rem;
+      letter-spacing: .02em; white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(249,115,22,.25);
+      transition: transform .12s, box-shadow .18s, opacity .18s;
+    }
+    .nav-upgrade-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(249,115,22,.35); }
+    .nav-upgrade-btn:active { transform: translateY(0); }
+    /* Upgrade modal */
+    .upgrade-modal { max-width: 980px; width: 96vw; }
+    .upgrade-modal h2 { text-align: center; }
+    .upgrade-modal > p { text-align: center; color: var(--text2); }
+    .upgrade-modal .billing-toggle { display: flex; justify-content: center; margin: 8px auto 18px; width: max-content; }
+    .upgrade-cards-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+      align-items: stretch;
+    }
+    .upgrade-card.is-current { opacity: .7; filter: saturate(.7); }
+    .upgrade-card.is-current .price-icon { background: var(--surf2); }
+    .upgrade-card .btn-plan:disabled {
+      background: transparent; border: 1px solid var(--purple); color: var(--purple);
+      opacity: .9; box-shadow: none;
+    }
+    @media (max-width: 768px) {
+      .upgrade-cards-grid { grid-template-columns: 1fr; }
+    }
+    /* Settings: billing card */
+    .settings-billing-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      flex-wrap: wrap;
+    }
+    .settings-billing-info { display: flex; flex-direction: column; gap: 4px; }
+    .settings-billing-label { font-size: .72rem; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; }
+    .settings-billing-plan { display: flex; align-items: center; gap: 8px; }
+    .settings-billing-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
     /* ── Marquee ─────────────────────────────────────────────── */
     .marquee-section { padding: 0 0 80px; overflow: hidden; }
@@ -5632,6 +5700,7 @@
       .nav-r #userEmail { display: none; }
       .nav-r #balBadge { display: none; }
       .nav-r #themeBtn { display: none; }
+      .nav-upgrade-btn { padding: 6px 12px; font-size: .72rem; }
       .user-menu-dropdown { display: none !important; }
       .bal-unit { display: none; }
       .nav-hamburger { display: flex; }
@@ -6484,6 +6553,7 @@
     {% if not workspace %}<a class="btn-nav hi" id="btnWorkspace" href="/app" onclick="ctaWorkspaceClick()" style="display:none;text-decoration:none" data-i18n="nav.workspace">Ir a mi workspace →</a>{% endif %}
     <button class="btn-nav" id="btnLogin" onclick="openAuth('login','nav_login')" data-i18n="nav.login">Log in</button>
     <button class="btn-nav hi" id="btnReg" onclick="openAuth('register','nav_login')" data-i18n="nav.register">Free →</button>
+    {% if workspace %}<button class="nav-upgrade-btn" id="navUpgradeBtn" onclick="openUpgradeModal('nav')" style="display:none" data-i18n-es="✦ Upgrade" data-i18n-en="✦ Upgrade">✦ Upgrade</button>{% endif %}
     <button class="theme-btn" id="themeBtn" title="Theme">🌙</button>
     <div class="user-menu-wrap">
       <div class="user-pill" id="userPill" onclick="toggleUserMenu(event)" style="cursor:pointer" data-tour="user-profile">
@@ -7500,12 +7570,23 @@
     <h2 class="s-title" data-i18n="pricing.h2">Choose your plan.<br><span class="grad-txt" style="font-style:italic">Start free, scale when ready.</span></h2>
     <p style="color:var(--text3);font-size:.85rem;margin-top:8px" data-i18n="pricing.all_included">Teleprompter, Projects and Ideas included in all plans.</p>
   </div>
+  <div class="billing-toggle" data-host="pricingSection">
+    <button type="button" class="billing-toggle-opt on" data-cycle="month" onclick="setBillingCycle('month','pricingSection')" data-i18n-es="Mensual" data-i18n-en="Monthly">Mensual</button>
+    <button type="button" class="billing-toggle-opt" data-cycle="year" onclick="setBillingCycle('year','pricingSection')">
+      <span data-i18n-es="Anual" data-i18n-en="Annual">Anual</span>
+      <span class="billing-toggle-save" data-i18n-es="Ahorra 20%" data-i18n-en="Save 20%">Ahorra 20%</span>
+    </button>
+  </div>
   <div class="pricing-cards" style="grid-template-columns:repeat(4,1fr)">
     <!-- FREE -->
     <div class="price-card" id="planCard-free">
       <div class="price-icon">✅</div>
       <div class="price-title">Free</div>
-      <div class="price-amount" data-price-eur="0" data-price-usd="0"></div>
+      <div class="price-amount"
+           data-price-month-eur="0" data-price-month-usd="0"
+           data-price-year-eur="0"  data-price-year-usd="0"></div>
+      <div class="price-billed" data-billed-eur="0" data-billed-usd="0"></div>
+      <div class="price-ideal" data-i18n-es="Probar la herramienta. 5 transcripciones al día." data-i18n-en="Try the tool. 5 transcriptions a day.">Probar la herramienta. 5 transcripciones al día.</div>
       <ul class="price-features">
         <li data-i18n="pricing.free.f1">5 uses/day</li>
         <li data-i18n="pricing.free.f2">5 saved scripts</li>
@@ -7517,10 +7598,18 @@
       <button class="btn-plan" id="btnPlanFree" disabled style="opacity:.5">Plan actual</button>
     </div>
     <!-- BASIC -->
-    <div class="price-card" id="planCard-basic">
+    <div class="price-card" id="planCard-basic"
+         data-stripe-price-month-eur="REPLACE_STRIPE_BASIC_MONTH_EUR"
+         data-stripe-price-month-usd="REPLACE_STRIPE_BASIC_MONTH_USD"
+         data-stripe-price-year-eur="REPLACE_STRIPE_BASIC_YEAR_EUR"
+         data-stripe-price-year-usd="REPLACE_STRIPE_BASIC_YEAR_USD">
       <div class="price-icon">⚡</div>
       <div class="price-title" data-i18n="pricing.basic.title">Basic</div>
-      <div class="price-amount" data-price-eur="499" data-price-usd="599"></div>
+      <div class="price-amount"
+           data-price-month-eur="999"  data-price-month-usd="1099"
+           data-price-year-eur="799"   data-price-year-usd="879"></div>
+      <div class="price-billed" data-billed-eur="9590" data-billed-usd="10550"></div>
+      <div class="price-ideal" data-i18n-es="Creadores que publican 1-2 reels por semana." data-i18n-en="Creators publishing 1-2 reels per week.">Creadores que publican 1-2 reels por semana.</div>
       <ul class="price-features">
         <li data-i18n="pricing.basic.f1">30 uses/month</li>
         <li data-i18n="pricing.basic.f2">Unlimited scripts</li>
@@ -7530,14 +7619,22 @@
         <li data-i18n="pricing.basic.f6">1 custom assistant</li>
         <li data-i18n="pricing.basic.f7">Email support</li>
       </ul>
-      <button class="btn-plan" onclick="subscribePlan(PLAN_PRICES.basic)" data-i18n="pricing.choose_basic">Get Basic</button>
+      <button class="btn-plan" onclick="subscribePlanFromCard('basic')" data-i18n="pricing.choose_basic">Get Basic</button>
     </div>
     <!-- PRO -->
-    <div class="price-card featured" id="planCard-pro">
+    <div class="price-card featured" id="planCard-pro"
+         data-stripe-price-month-eur="REPLACE_STRIPE_PRO_MONTH_EUR"
+         data-stripe-price-month-usd="REPLACE_STRIPE_PRO_MONTH_USD"
+         data-stripe-price-year-eur="REPLACE_STRIPE_PRO_YEAR_EUR"
+         data-stripe-price-year-usd="REPLACE_STRIPE_PRO_YEAR_USD">
       <div class="price-badge" data-i18n="pricing.popular">Most popular</div>
       <div class="price-icon">🚀</div>
       <div class="price-title">Pro</div>
-      <div class="price-amount" data-price-eur="999" data-price-usd="1199"></div>
+      <div class="price-amount"
+           data-price-month-eur="1499" data-price-month-usd="1699"
+           data-price-year-eur="1199"  data-price-year-usd="1359"></div>
+      <div class="price-billed" data-billed-eur="14390" data-billed-usd="16310"></div>
+      <div class="price-ideal" data-i18n-es="Creadores activos con métricas + 1 cliente." data-i18n-en="Active creators with metrics + 1 client.">Creadores activos con métricas + 1 cliente.</div>
       <ul class="price-features">
         <li data-i18n="pricing.pro.f1">100 uses/month</li>
         <li data-i18n="pricing.pro.f2">Unlimited scripts</li>
@@ -7547,13 +7644,21 @@
         <li data-i18n="pricing.pro.f6">5 custom assistants</li>
         <li data-i18n="pricing.pro.f7">Email support</li>
       </ul>
-      <button class="btn-plan" onclick="subscribePlan(PLAN_PRICES.pro)" data-i18n="pricing.choose_pro">Get Pro</button>
+      <button class="btn-plan" onclick="subscribePlanFromCard('pro')" data-i18n="pricing.choose_pro">Get Pro</button>
     </div>
     <!-- AGENCY -->
-    <div class="price-card" id="planCard-agency">
+    <div class="price-card" id="planCard-agency"
+         data-stripe-price-month-eur="REPLACE_STRIPE_AGENCY_MONTH_EUR"
+         data-stripe-price-month-usd="REPLACE_STRIPE_AGENCY_MONTH_USD"
+         data-stripe-price-year-eur="REPLACE_STRIPE_AGENCY_YEAR_EUR"
+         data-stripe-price-year-usd="REPLACE_STRIPE_AGENCY_YEAR_USD">
       <div class="price-icon">🏢</div>
       <div class="price-title" data-i18n="pricing.agency.title">Agency</div>
-      <div class="price-amount" data-price-eur="1999" data-price-usd="2499"></div>
+      <div class="price-amount"
+           data-price-month-eur="3999" data-price-month-usd="4399"
+           data-price-year-eur="3199"  data-price-year-usd="3519"></div>
+      <div class="price-billed" data-billed-eur="38390" data-billed-usd="42230"></div>
+      <div class="price-ideal" data-i18n-es="Equipos gestionando varios creadores." data-i18n-en="Teams managing multiple creators.">Equipos gestionando varios creadores.</div>
       <ul class="price-features">
         <li data-i18n="pricing.agency.f1">250 uses/month + 50/seat</li>
         <li data-i18n="pricing.agency.f2">Unlimited scripts</li>
@@ -7564,7 +7669,7 @@
         <li data-i18n="pricing.agency.f7">Priority processing</li>
         <li data-i18n="pricing.agency.f8">Email + chat support</li>
       </ul>
-      <button class="btn-plan" onclick="subscribePlan(PLAN_PRICES.agency)" data-i18n="pricing.choose_agency">Get Agency</button>
+      <button class="btn-plan" onclick="subscribePlanFromCard('agency')" data-i18n="pricing.choose_agency">Get Agency</button>
     </div>
   </div>
   <p style="text-align:center;margin-top:20px;color:var(--text3);font-size:.82rem" id="topupCta"></p>
@@ -8118,6 +8223,23 @@
           </div>
         </div>
 
+        <div class="settings-card settings-billing-card">
+          <div class="settings-card-head">
+            <div class="settings-card-title" data-i18n-es="Plan y facturación" data-i18n-en="Plan & Billing">Plan y facturación</div>
+            <div class="settings-card-sub" data-i18n-es="Cambia de plan o gestiona tu suscripción." data-i18n-en="Change plan or manage your subscription.">Cambia de plan o gestiona tu suscripción.</div>
+          </div>
+          <div class="settings-billing-row">
+            <div class="settings-billing-info">
+              <div class="settings-billing-label" data-i18n-es="Plan actual" data-i18n-en="Current plan">Plan actual</div>
+              <div class="settings-billing-plan"><span id="settingsPlanBadge" class="plan-badge free">Free</span></div>
+            </div>
+            <div class="settings-billing-actions">
+              <button class="btn-3d btn-3d-primary" id="settingsChangePlanBtn" onclick="openUpgradeModal('settings')" style="padding:8px 14px;border-radius:8px;font-size:.82rem" data-i18n-es="Cambiar plan" data-i18n-en="Change plan">Cambiar plan</button>
+              <button class="btn-3d btn-3d-secondary" id="settingsManageSubBtn" onclick="manageSub()" style="display:none;padding:8px 14px;border-radius:8px;font-size:.82rem;background:transparent;border:1px solid var(--border);color:var(--text2)" data-i18n-es="Gestionar suscripción" data-i18n-en="Manage subscription">Gestionar suscripción</button>
+            </div>
+          </div>
+        </div>
+
         <div class="settings-card">
           <div class="settings-card-head">
             <div class="settings-card-title" data-i18n-es="Tema" data-i18n-en="Theme">Tema</div>
@@ -8404,6 +8526,23 @@
     <p class="topup-note" data-i18n="topup.secure">Secure card payment via Stripe · No subscription</p>
     <button class="btn-full btn-3d btn-3d-primary" id="btnTopupOk" onclick="submitTopup()" data-i18n="topup.go">Go to payment →</button>
     <div class="form-err" id="topupErr"></div>
+  </div>
+</div>
+
+<!-- ── UPGRADE MODAL ────────────────────────────────────────────────── -->
+<div class="overlay" id="upgradeOverlay" onclick="backdropClose(event,'upgradeOverlay')">
+  <div class="modal upgrade-modal">
+    <button class="modal-x" onclick="closeModal('upgradeOverlay')">✕</button>
+    <h2 data-i18n-es="Mejorar plan" data-i18n-en="Upgrade plan">Mejorar plan</h2>
+    <p data-i18n-es="Elige el plan que mejor se adapte. Cancela cuando quieras." data-i18n-en="Pick the plan that fits. Cancel anytime.">Elige el plan que mejor se adapte. Cancela cuando quieras.</p>
+    <div class="billing-toggle" data-host="upgradeOverlay" style="margin:8px auto 18px">
+      <button type="button" class="billing-toggle-opt on" data-cycle="month" onclick="setBillingCycle('month','upgradeOverlay')" data-i18n-es="Mensual" data-i18n-en="Monthly">Mensual</button>
+      <button type="button" class="billing-toggle-opt" data-cycle="year" onclick="setBillingCycle('year','upgradeOverlay')">
+        <span data-i18n-es="Anual" data-i18n-en="Annual">Anual</span>
+        <span class="billing-toggle-save" data-i18n-es="Ahorra 20%" data-i18n-en="Save 20%">Ahorra 20%</span>
+      </button>
+    </div>
+    <div class="upgrade-cards-grid" id="upgradeCardsGrid"></div>
   </div>
 </div>
 
@@ -8777,6 +8916,11 @@ const LANGS = {
     "pricing.choose_basic": "Elegir Básico",
     "pricing.choose_pro": "Elegir Pro",
     "pricing.choose_agency": "Elegir Agencia",
+    "pricing.popular": "Más elegido",
+    "nav.upgrade": "✦ Upgrade",
+    "upgrade.title": "Mejorar plan",
+    "upgrade.choose_this": "Cambiar a este plan",
+    "upgrade.current_plan": "Tu plan actual",
     // Free bar
     "freebar.monthly_used": "usados este mes",
     "freebar.limit_reached": "Límite mensual alcanzado",
@@ -9167,6 +9311,11 @@ const LANGS = {
     "pricing.choose_basic": "Get Basic",
     "pricing.choose_pro": "Get Pro",
     "pricing.choose_agency": "Get Agency",
+    "pricing.popular": "Most popular",
+    "nav.upgrade": "✦ Upgrade",
+    "upgrade.title": "Upgrade plan",
+    "upgrade.choose_this": "Switch to this plan",
+    "upgrade.current_plan": "Your current plan",
     // Free bar
     "freebar.monthly_used": "used this month",
     "freebar.limit_reached": "Monthly limit reached",
@@ -9554,12 +9703,46 @@ function renderProfAssistants() {
 }
 
 // ── Init ─────────────────────────────────────────────────────────────────
+let billingCycle = "month";
+
+function setBillingCycle(cycle, hostId) {
+  billingCycle = (cycle === "year") ? "year" : "month";
+  document.querySelectorAll(`.billing-toggle[data-host="${hostId}"] .billing-toggle-opt`).forEach(b => {
+    b.classList.toggle("on", b.dataset.cycle === billingCycle);
+  });
+  // Sync all toggles on page so pricing landing + upgrade modal stay aligned
+  document.querySelectorAll(".billing-toggle .billing-toggle-opt").forEach(b => {
+    b.classList.toggle("on", b.dataset.cycle === billingCycle);
+  });
+  initPrices();
+  if (typeof renderUpgradeCards === "function") renderUpgradeCards();
+}
+
 function initPrices() {
+  const cyc = billingCycle;
+  const curKey = isEUR ? "eur" : "usd";
   // Pricing cards
-  document.querySelectorAll(".price-amount[data-price-eur]").forEach(el => {
-    const c = parseInt(isEUR ? el.dataset.priceEur : el.dataset.priceUsd);
-    const per = currentLang === "es" ? "/mes" : "/mo";
-    el.innerHTML = `${curr(c)}<span style="font-size:.75rem;color:var(--text3)">${per}</span>`;
+  document.querySelectorAll(".price-amount[data-price-month-eur]").forEach(el => {
+    const c = parseInt(el.dataset[`price${cyc === "year" ? "Year" : "Month"}${curKey === "eur" ? "Eur" : "Usd"}`]);
+    if (c === 0) {
+      el.innerHTML = currentLang === "es" ? `0€<span style="font-size:.75rem;color:var(--text3)">/mes</span>` : `$0<span style="font-size:.75rem;color:var(--text3)">/mo</span>`;
+    } else {
+      const per = currentLang === "es" ? "/mes" : "/mo";
+      el.innerHTML = `${curr(c)}<span style="font-size:.75rem;color:var(--text3)">${per}</span>`;
+    }
+  });
+  // Billed annually line
+  document.querySelectorAll(".price-billed[data-billed-eur]").forEach(el => {
+    const billed = parseInt(isEUR ? el.dataset.billedEur : el.dataset.billedUsd);
+    if (cyc === "year" && billed > 0) {
+      el.textContent = currentLang === "es"
+        ? `facturado ${curr(billed)} al año`
+        : `billed ${curr(billed)}/year`;
+      el.style.display = "";
+    } else {
+      el.textContent = "";
+      el.style.display = "none";
+    }
   });
   // Topup price
   const tp = document.getElementById("topupPrice");
@@ -9979,6 +10162,21 @@ function renderProfileHub() {
 
   // Manage sub button in sidebar
   document.getElementById("profManageSubSidebar").style.display = st.hasStripeSub ? "" : "none";
+
+  // Nav Upgrade button — visible in workspace when not on highest tier
+  const navUp = document.getElementById("navUpgradeBtn");
+  if (navUp) navUp.style.display = (plan !== "agency") ? "" : "none";
+
+  // Settings: Plan & Billing card
+  const setPlanBadge = document.getElementById("settingsPlanBadge");
+  if (setPlanBadge) {
+    setPlanBadge.textContent = planLabels[plan] || plan;
+    setPlanBadge.className = `plan-badge ${plan}`;
+  }
+  const setChangeBtn = document.getElementById("settingsChangePlanBtn");
+  if (setChangeBtn) setChangeBtn.style.display = (plan !== "agency") ? "" : "none";
+  const setManageBtn = document.getElementById("settingsManageSubBtn");
+  if (setManageBtn) setManageBtn.style.display = st.hasStripeSub ? "" : "none";
 
   // Load data
   loadScripts();
@@ -15509,6 +15707,24 @@ async function subscribePlan(priceId) {
   window.location.href = d.url;
 }
 
+async function subscribePlanFromCard(planKey) {
+  // Look up the card on whichever surface (landing or upgrade modal) has it visible
+  const cards = document.querySelectorAll(`[data-plan-key="${planKey}"], #planCard-${planKey}, #upgradeCard-${planKey}`);
+  let priceId = null;
+  for (const card of cards) {
+    const attr = `stripePrice${billingCycle === "year" ? "Year" : "Month"}${isEUR ? "Eur" : "Usd"}`;
+    const v = card.dataset[attr];
+    if (v && !v.startsWith("REPLACE_")) { priceId = v; break; }
+  }
+  if (!priceId) {
+    showToast(currentLang === "es"
+      ? "Configurando precios… inténtalo en unos minutos."
+      : "Setting prices up… try again in a few minutes.");
+    return;
+  }
+  return subscribePlan(priceId);
+}
+
 async function manageSub() {
   const res = await fetch("/manage-subscription", {
     method: "POST", headers: { "Content-Type": "application/json" },
@@ -15516,6 +15732,71 @@ async function manageSub() {
   const d = await res.json();
   if (!res.ok) { showToast(d.error || "Error"); return; }
   window.location.href = d.url;
+}
+
+// ── Upgrade modal ─────────────────────────────────────────────────────────
+const PLAN_META = {
+  free:   { icon: "✅", price: { monthEur: 0,    monthUsd: 0,    yearEur: 0,    yearUsd: 0,    billedEur: 0,     billedUsd: 0 },     ideal: { es: "Probar la herramienta. 5 transcripciones al día.",       en: "Try the tool. 5 transcriptions a day." }, features: { es: ["5 usos/día","5 guiones guardados","1 proyecto","Teleprompter + grabación","Ideas con IA","Historial persistente"], en: ["5 uses/day","5 saved scripts","1 project","Teleprompter + recording","Ideas with AI","Persistent history"] } },
+  basic:  { icon: "⚡", price: { monthEur: 999,  monthUsd: 1099, yearEur: 799,  yearUsd: 879,  billedEur: 9590,  billedUsd: 10550 }, ideal: { es: "Creadores que publican 1-2 reels por semana.",            en: "Creators publishing 1-2 reels per week." },     features: { es: ["30 usos/mes","Guiones ilimitados","Proyectos ilimitados","Teleprompter + grabación","Ideas con IA","1 asistente personalizado","Soporte por email"], en: ["30 uses/month","Unlimited scripts","Unlimited projects","Teleprompter + recording","Ideas with AI","1 custom assistant","Email support"] }, stripeKeys: { monthEur: "REPLACE_STRIPE_BASIC_MONTH_EUR", monthUsd: "REPLACE_STRIPE_BASIC_MONTH_USD", yearEur: "REPLACE_STRIPE_BASIC_YEAR_EUR", yearUsd: "REPLACE_STRIPE_BASIC_YEAR_USD" } },
+  pro:    { icon: "🚀", price: { monthEur: 1499, monthUsd: 1699, yearEur: 1199, yearUsd: 1359, billedEur: 14390, billedUsd: 16310 }, ideal: { es: "Creadores activos con métricas + 1 cliente.",              en: "Active creators with metrics + 1 client." },     features: { es: ["100 usos/mes","Guiones ilimitados","Proyectos ilimitados","Teleprompter + grabación","Ideas con IA","5 asistentes personalizados","Soporte por email"], en: ["100 uses/month","Unlimited scripts","Unlimited projects","Teleprompter + recording","Ideas with AI","5 custom assistants","Email support"] }, stripeKeys: { monthEur: "REPLACE_STRIPE_PRO_MONTH_EUR", monthUsd: "REPLACE_STRIPE_PRO_MONTH_USD", yearEur: "REPLACE_STRIPE_PRO_YEAR_EUR", yearUsd: "REPLACE_STRIPE_PRO_YEAR_USD" }, featured: true },
+  agency: { icon: "🏢", price: { monthEur: 3999, monthUsd: 4399, yearEur: 3199, yearUsd: 3519, billedEur: 38390, billedUsd: 42230 }, ideal: { es: "Equipos gestionando varios creadores.",                     en: "Teams managing multiple creators." },           features: { es: ["250 usos/mes + 50/asiento","Guiones ilimitados","Proyectos ilimitados","Teleprompter + grabación","Asistentes ilimitados","2 asientos de equipo incluidos","Procesado prioritario","Soporte email + chat"], en: ["250 uses/month + 50/seat","Unlimited scripts","Unlimited projects","Teleprompter + recording","Unlimited assistants","2 team seats included","Priority processing","Email + chat support"] }, stripeKeys: { monthEur: "REPLACE_STRIPE_AGENCY_MONTH_EUR", monthUsd: "REPLACE_STRIPE_AGENCY_MONTH_USD", yearEur: "REPLACE_STRIPE_AGENCY_YEAR_EUR", yearUsd: "REPLACE_STRIPE_AGENCY_YEAR_USD" } },
+};
+
+const PLAN_RANK = { free: 0, basic: 1, pro: 2, agency: 3 };
+
+function openUpgradeModal(source) {
+  if (!st.user) { openAuth("register"); return; }
+  if (st.plan === "agency") {
+    showToast(currentLang === "es" ? "Ya tienes el plan más alto." : "You're already on the top plan.");
+    return;
+  }
+  renderUpgradeCards();
+  openModal("upgradeOverlay");
+  try { window.track && window.track.upgradeModalOpened && window.track.upgradeModalOpened({ source: source || "unknown", plan: st.plan }); } catch(e){}
+}
+
+function renderUpgradeCards() {
+  const grid = document.getElementById("upgradeCardsGrid");
+  if (!grid) return;
+  const plan = st.plan || "free";
+  const cyc = billingCycle;
+  const lang = currentLang;
+  const planLabels = { free: "Free", basic: "Basic", pro: "Pro", agency: "Agency" };
+
+  const plans = ["basic","pro","agency"].filter(p => PLAN_RANK[p] >= PLAN_RANK[plan]);
+
+  grid.innerHTML = plans.map(p => {
+    const m = PLAN_META[p];
+    const isCurrent = (p === plan);
+    const priceCents = isEUR ? m.price[cyc + "Eur"] : m.price[cyc + "Usd"];
+    const billedCents = isEUR ? m.price.billedEur : m.price.billedUsd;
+    const per = lang === "es" ? "/mes" : "/mo";
+    const billedLine = (cyc === "year" && billedCents > 0)
+      ? `<div class="price-billed">${lang === "es" ? "facturado " + curr(billedCents) + " al año" : "billed " + curr(billedCents) + "/year"}</div>`
+      : "";
+    const ideal = `<div class="price-ideal">${m.ideal[lang] || m.ideal.es}</div>`;
+    const features = (m.features[lang] || m.features.es).map(f => `<li>${f}</li>`).join("");
+    const sk = m.stripeKeys || {};
+    const dataAttrs = sk.monthEur
+      ? ` data-plan-key="${p}" data-stripe-price-month-eur="${sk.monthEur}" data-stripe-price-month-usd="${sk.monthUsd}" data-stripe-price-year-eur="${sk.yearEur}" data-stripe-price-year-usd="${sk.yearUsd}"`
+      : ` data-plan-key="${p}"`;
+    const cta = isCurrent
+      ? `<button class="btn-plan" disabled>${lang === "es" ? "Tu plan actual" : "Your current plan"}</button>`
+      : `<button class="btn-plan" onclick="subscribePlanFromCard('${p}')">${lang === "es" ? "Cambiar a este plan" : "Switch to this plan"}</button>`;
+    const badge = m.featured && !isCurrent ? `<div class="price-badge">${lang === "es" ? "Más elegido" : "Most popular"}</div>` : "";
+    const currentBadge = isCurrent ? `<div class="price-badge" style="background:var(--surf2);color:var(--text2);border:1px solid var(--border)">${lang === "es" ? "Tu plan actual" : "Your current plan"}</div>` : "";
+    return `
+      <div class="price-card upgrade-card${isCurrent ? " is-current" : ""}${m.featured && !isCurrent ? " featured" : ""}" id="upgradeCard-${p}"${dataAttrs}>
+        ${badge}${currentBadge}
+        <div class="price-icon">${m.icon}</div>
+        <div class="price-title">${planLabels[p]}</div>
+        <div class="price-amount">${curr(priceCents)}<span style="font-size:.75rem;color:var(--text3)">${per}</span></div>
+        ${billedLine}
+        ${ideal}
+        <ul class="price-features">${features}</ul>
+        ${cta}
+      </div>`;
+  }).join("");
 }
 
 async function cancelSubscription() {
@@ -15527,12 +15808,6 @@ async function cancelSubscription() {
   if (!res.ok) { showToast(d.error || "Error"); return; }
   showToast(t("sub.cancelled"));
 }
-
-const PLAN_PRICES = {
-  basic: "price_1TI14pCWQn5Tis1WycY83MrR",
-  pro: "price_1TI15ACWQn5Tis1WKNbdhFW1",
-  agency: "price_1TI15NCWQn5Tis1WwIIb1TX1",
-};
 
 function renderPlanCards() {
   const plan = st.plan || "free";
@@ -15552,9 +15827,9 @@ function renderPlanCards() {
         btn.classList.remove("active");
         btn.onclick = () => openAuth("register", "pillar_cta");
       } else {
-        btn.textContent = plan === "free" ? t("sub.current_plan") : "Plan Free";
-        btn.disabled = plan === "free";
-        btn.classList.toggle("active", plan === "free");
+        btn.textContent = "Plan Free";
+        btn.disabled = false;
+        btn.classList.remove("active");
         btn.onclick = null;
       }
     } else {
@@ -15562,7 +15837,7 @@ function renderPlanCards() {
       btn.textContent = labels[p];
       btn.disabled = false;
       btn.classList.remove("active");
-      btn.onclick = () => subscribePlan(PLAN_PRICES[p]);
+      btn.onclick = () => subscribePlanFromCard(p);
     }
   });
 }
