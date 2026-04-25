@@ -393,9 +393,63 @@
       position: sticky; top: 0; z-index: 200;
       display: flex; align-items: center; justify-content: space-between;
       padding: 0 32px; height: 56px;
-      background: rgba(10,11,15,.8);
+      background: rgba(10,11,15,.55);
+      backdrop-filter: blur(14px) saturate(1.15);
+      border-bottom: 1px solid transparent;
+      transition: background .25s ease, backdrop-filter .25s ease, border-color .25s ease, box-shadow .25s ease;
+    }
+    nav.scrolled {
+      background: rgba(10,11,15,.88);
       backdrop-filter: blur(24px) saturate(1.2);
-      border-bottom: 1px solid rgba(255,255,255,.05);
+      border-bottom-color: rgba(255,255,255,.06);
+      box-shadow: 0 2px 16px rgba(0,0,0,.18);
+    }
+    [data-theme="light"] nav { background: rgba(255,250,243,.6); }
+    [data-theme="light"] nav.scrolled { background: rgba(255,250,243,.92); border-bottom-color: rgba(0,0,0,.08); }
+
+    /* Landing-only center nav */
+    .nav-c-landing {
+      display: flex; align-items: center; gap: 4px;
+      flex: 1; justify-content: center;
+    }
+    .nav-c-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: none; border: 0; cursor: pointer;
+      color: var(--text2); font-family: var(--font-body); font-weight: 500; font-size: .85rem;
+      padding: 8px 14px; border-radius: 10px;
+      text-decoration: none; transition: color .15s, background .15s;
+      white-space: nowrap;
+    }
+    .nav-c-link:hover { color: var(--text); background: rgba(255,255,255,.04); }
+    [data-theme="light"] .nav-c-link:hover { background: rgba(0,0,0,.04); }
+    .nav-c-link .chev {
+      width: 10px; height: 10px; opacity: .6;
+      transition: transform .2s;
+    }
+    .nav-c-dropdown { position: relative; }
+    .nav-c-dropdown.open .nav-c-link .chev { transform: rotate(180deg); }
+    .nav-c-menu {
+      position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%) translateY(-4px);
+      min-width: 280px; padding: 8px;
+      background: var(--surf); border: 1px solid var(--border); border-radius: 14px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.35);
+      opacity: 0; pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .nav-c-dropdown.open .nav-c-menu { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+    .nav-c-menu-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 10px;
+      color: var(--text2); font-size: .82rem; font-weight: 500; text-decoration: none;
+      transition: background .15s, color .15s;
+    }
+    .nav-c-menu-item:hover { background: rgba(249,115,22,.08); color: var(--text); }
+    .nav-c-menu-item .arr { margin-left: auto; opacity: 0; transition: opacity .15s, transform .15s; }
+    .nav-c-menu-item:hover .arr { opacity: 1; transform: translateX(2px); color: var(--purple); }
+
+    @media (max-width: 900px) {
+      .nav-c-landing { display: none; }
     }
 
     .logo {
@@ -6539,10 +6593,37 @@
 </div>
 
 <!-- ── NAV ──────────────────────────────────────────────────────────────── -->
-<nav>
+<nav id="topNav">
   <div style="display:flex;align-items:center;gap:16px">
-    <span class="logo">RS<span>ReelScript</span></span>
+    <a href="/" style="text-decoration:none"><span class="logo">RS<span>ReelScript</span></span></a>
   </div>
+  {% if not workspace %}
+  <div class="nav-c-landing">
+    <div class="nav-c-dropdown" id="navUseCases">
+      <button type="button" class="nav-c-link" onclick="toggleUseCases(event)" aria-haspopup="true" aria-expanded="false">
+        <span data-i18n-es="Casos de uso" data-i18n-en="Use cases">Casos de uso</span>
+        <svg class="chev" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M3 6l5 5 5-5z"/></svg>
+      </button>
+      <div class="nav-c-menu" role="menu">
+        {% if lang == 'en' %}
+        <a class="nav-c-menu-item" href="/en/instagram-reel-transcript">📱 Transcribe Instagram reels<span class="arr">→</span></a>
+        <a class="nav-c-menu-item" href="/en/tiktok-to-text">🎵 Transcribe TikTok<span class="arr">→</span></a>
+        <a class="nav-c-menu-item" href="/en/reel-to-linkedin">💼 Reel to LinkedIn<span class="arr">→</span></a>
+        <a class="nav-c-menu-item" href="/en/hooks-from-video">🎯 Hooks from a reel<span class="arr">→</span></a>
+        <a class="nav-c-menu-item" href="/en/free-video-transcription">🎬 Transcribe audio/video<span class="arr">→</span></a>
+        {% else %}
+        <a class="nav-c-menu-item" href="/es/transcribir-reel-instagram">📱 Transcribir reels de Instagram<span class="arr">→</span></a>
+        <a class="nav-c-menu-item" href="/es/transcribir-tiktok">🎵 Transcribir TikTok<span class="arr">→</span></a>
+        <a class="nav-c-menu-item" href="/es/reel-a-linkedin">💼 Reel a LinkedIn<span class="arr">→</span></a>
+        <a class="nav-c-menu-item" href="/es/hooks-desde-reel">🎯 Hooks desde reel<span class="arr">→</span></a>
+        <a class="nav-c-menu-item" href="/es/transcribir-audio-video">🎬 Transcribir audio/vídeo<span class="arr">→</span></a>
+        {% endif %}
+      </div>
+    </div>
+    <a class="nav-c-link" href="#pricingSection" onclick="document.getElementById('pricingSection').scrollIntoView({behavior:'smooth'});return false;" data-i18n-es="Precios" data-i18n-en="Pricing">Precios</a>
+    <a class="nav-c-link" href="#faqSection" onclick="const el=document.getElementById('faqSection');if(el){el.scrollIntoView({behavior:'smooth'});}return false;" data-i18n-es="FAQ" data-i18n-en="FAQ">FAQ</a>
+  </div>
+  {% endif %}
   <div class="nav-r">
     <button class="badge-bal" id="balBadge" onclick="document.getElementById('pricingSection').scrollIntoView({behavior:'smooth'})">⚡ <span id="balDisp">0</span><span class="bal-unit"> usos</span></button>
     <div class="lang-switch">
@@ -6610,6 +6691,32 @@
         </div>
       </div>
     </div>
+    {% if not workspace %}
+    <!-- Landing: Use cases / Pricing / FAQ -->
+    <div class="nav-mob-section" data-i18n-es="Casos de uso" data-i18n-en="Use cases">Casos de uso</div>
+    <div class="nav-mob-items">
+      {% if lang == 'en' %}
+      <a href="/en/instagram-reel-transcript" onclick="closeNavMob()">📱 Transcribe Instagram reels</a>
+      <a href="/en/tiktok-to-text" onclick="closeNavMob()">🎵 Transcribe TikTok</a>
+      <a href="/en/reel-to-linkedin" onclick="closeNavMob()">💼 Reel to LinkedIn</a>
+      <a href="/en/hooks-from-video" onclick="closeNavMob()">🎯 Hooks from a reel</a>
+      <a href="/en/free-video-transcription" onclick="closeNavMob()">🎬 Transcribe audio/video</a>
+      {% else %}
+      <a href="/es/transcribir-reel-instagram" onclick="closeNavMob()">📱 Transcribir reels de Instagram</a>
+      <a href="/es/transcribir-tiktok" onclick="closeNavMob()">🎵 Transcribir TikTok</a>
+      <a href="/es/reel-a-linkedin" onclick="closeNavMob()">💼 Reel a LinkedIn</a>
+      <a href="/es/hooks-desde-reel" onclick="closeNavMob()">🎯 Hooks desde reel</a>
+      <a href="/es/transcribir-audio-video" onclick="closeNavMob()">🎬 Transcribir audio/vídeo</a>
+      {% endif %}
+      <button onclick="closeNavMob();document.getElementById('pricingSection')?.scrollIntoView({behavior:'smooth'})">
+        💎 <span data-i18n-es="Precios" data-i18n-en="Pricing">Precios</span>
+      </button>
+      <button onclick="closeNavMob();document.getElementById('faqSection')?.scrollIntoView({behavior:'smooth'})">
+        ❓ FAQ
+      </button>
+    </div>
+    {% endif %}
+
     <!-- Navigation -->
     <div class="nav-mob-section" data-i18n="nav.navigation">Navigation</div>
     <div class="nav-mob-items" id="navMobNav">
@@ -15272,6 +15379,30 @@ document.addEventListener("keydown", e => {
   if (e.key === "Escape") closeUserMenu();
 });
 document.addEventListener("click", () => closeUserMenu());
+
+// ── Landing nav: sticky scroll state + use cases dropdown ─────────────────
+(function initLandingNav() {
+  const nav = document.getElementById("topNav");
+  if (!nav) return;
+  const onScroll = () => nav.classList.toggle("scrolled", window.scrollY > 80);
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+})();
+
+function toggleUseCases(e) {
+  e.stopPropagation();
+  const dd = document.getElementById("navUseCases");
+  if (!dd) return;
+  const open = dd.classList.toggle("open");
+  dd.querySelector(".nav-c-link")?.setAttribute("aria-expanded", open ? "true" : "false");
+}
+document.addEventListener("click", (e) => {
+  const dd = document.getElementById("navUseCases");
+  if (dd && !dd.contains(e.target)) {
+    dd.classList.remove("open");
+    dd.querySelector(".nav-c-link")?.setAttribute("aria-expanded", "false");
+  }
+});
 
 function toggleUserMenu(e) {
   e.stopPropagation();
