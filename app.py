@@ -2375,7 +2375,8 @@ def index_en():
 @app.route("/app")
 @require_auth_html
 def workspace():
-    return render_template("index.html", lang=_resolve_lang(), workspace=True)
+    # v0.14.5a: dashboard intermedio eliminado. /app entra directo a Resumen.
+    return redirect("/profile/overview", code=302)
 
 
 @app.route("/settings")
