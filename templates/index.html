@@ -3466,6 +3466,14 @@
     }
     .ov-card-body { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; min-height: 0; }
     .ov-empty { font-size: .78rem; color: var(--text3); line-height: 1.45; }
+    .ov-card-count {
+      margin-top: 10px; padding-top: 8px;
+      border-top: 1px solid rgba(255,255,255,.05);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .68rem; color: var(--text3); letter-spacing: .02em;
+      font-variant-numeric: tabular-nums;
+    }
+    [data-theme="light"] .ov-card-count { border-top-color: rgba(0,0,0,.05); }
 
     /* Loading skeleton */
     .ov-skel {
@@ -8805,8 +8813,8 @@
     <!-- Main content -->
     <div class="prof-main" id="profMain">
 
-      <!-- Back to dashboard (all panels) -->
-      <a href="/app" class="panel-back-btn" onclick="backToDashboard(event)">
+      <!-- Back to app (visible solo en paneles ≠ overview; profTab() lo togglea). -->
+      <a href="/app" class="panel-back-btn" onclick="backToDashboard(event)" style="display:none">
         <span class="panel-back-arrow" aria-hidden="true">←</span>
         <span data-i18n-es="Volver a la app" data-i18n-en="Back to the app">Volver a la app</span>
       </a>
@@ -8830,11 +8838,7 @@
                 <span class="ov-eyebrow-dot"></span>
                 <span data-i18n-es="TU APP · RESUMEN" data-i18n-en="YOUR APP · OVERVIEW">TU APP · RESUMEN</span>
               </div>
-              <h1 class="ov-h1" id="ovGreeting">
-                <span data-i18n-es="Hola" data-i18n-en="Hi">Hola</span>
-                <em id="ovGreetingName">creador</em>,
-                <span id="ovDateText" class="ov-h1-date"></span>.
-              </h1>
+              <h1 class="ov-h1" id="ovGreeting" data-i18n-es="Hola" data-i18n-en="Hi">Hola</h1>
               <div class="ov-sub" data-i18n-es="¿Qué toca hoy?" data-i18n-en="What's on the menu today?">¿Qué toca hoy?</div>
             </div>
             <div class="ov-hero-right" aria-hidden="true">
@@ -8844,7 +8848,8 @@
           </div>
         </div>
 
-        <!-- v0.14.5b: 9 rich widgets (data via /api/me/overview) -->
+        <!-- v0.14.5b: 9 rich widgets (data via /api/me/overview).
+             Subs ESTÁTICAS descriptivas; counts viven en body via JS. -->
         <div class="ov-grid" id="ovGrid">
 
           <!-- 1. Transcribir -->
@@ -8853,7 +8858,7 @@
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-transcribir.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
                 <div class="ov-card-label" data-i18n-es="Transcribir" data-i18n-en="Transcribe">Transcribir</div>
-                <div class="ov-card-sub" id="ovSubTransc">—</div>
+                <div class="ov-card-sub" data-i18n-es="Convierte reels en texto" data-i18n-en="Turn reels into text">Convierte reels en texto</div>
               </div>
             </div>
             <div class="ov-card-body" id="ovBodyTransc"><div class="ov-skel"></div></div>
@@ -8879,7 +8884,7 @@
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-ideas.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
                 <div class="ov-card-label" data-i18n-es="Ideas" data-i18n-en="Ideas">Ideas</div>
-                <div class="ov-card-sub" id="ovSubIdeas">—</div>
+                <div class="ov-card-sub" data-i18n-es="Captura cualquier chispa" data-i18n-en="Capture any spark">Captura cualquier chispa</div>
               </div>
             </div>
             <div class="ov-card-body" id="ovBodyIdeas"><div class="ov-skel"></div></div>
@@ -8891,7 +8896,7 @@
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-proyectos.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
                 <div class="ov-card-label" data-i18n-es="Proyectos" data-i18n-en="Projects">Proyectos</div>
-                <div class="ov-card-sub" id="ovSubProjects">—</div>
+                <div class="ov-card-sub" data-i18n-es="Organiza tu trabajo" data-i18n-en="Organize your work">Organiza tu trabajo</div>
               </div>
             </div>
             <div class="ov-card-body" id="ovBodyProjects"><div class="ov-skel"></div></div>
@@ -8903,7 +8908,7 @@
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-metricas.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
                 <div class="ov-card-label" data-i18n-es="Métricas" data-i18n-en="Metrics">Métricas</div>
-                <div class="ov-card-sub" id="ovSubMetrics" data-i18n-es="Últimos 7 reels" data-i18n-en="Last 7 reels">Últimos 7 reels</div>
+                <div class="ov-card-sub" data-i18n-es="Mide qué funciona" data-i18n-en="Measure what works">Mide qué funciona</div>
               </div>
             </div>
             <div class="ov-card-body" id="ovBodyMetrics"><div class="ov-skel"></div></div>
@@ -8915,7 +8920,7 @@
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-asistentes.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
                 <div class="ov-card-label" data-i18n-es="Asistentes" data-i18n-en="Assistants">Asistentes</div>
-                <div class="ov-card-sub" id="ovSubAssistants">—</div>
+                <div class="ov-card-sub" data-i18n-es="Crea estilos propios" data-i18n-en="Create your own styles">Crea estilos propios</div>
               </div>
             </div>
             <div class="ov-card-body" id="ovBodyAssistants"><div class="ov-skel"></div></div>
@@ -8927,7 +8932,7 @@
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-scripts.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
                 <div class="ov-card-label" data-i18n-es="Guiones" data-i18n-en="Scripts">Guiones</div>
-                <div class="ov-card-sub" id="ovSubScripts">—</div>
+                <div class="ov-card-sub" data-i18n-es="Tu archivo de guiones" data-i18n-en="Your script archive">Tu archivo de guiones</div>
               </div>
             </div>
             <div class="ov-card-body" id="ovBodyScripts"><div class="ov-skel"></div></div>
@@ -8953,7 +8958,7 @@
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-equipo.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
                 <div class="ov-card-label" data-i18n-es="Equipo" data-i18n-en="Team">Equipo</div>
-                <div class="ov-card-sub" id="ovSubTeam">—</div>
+                <div class="ov-card-sub" data-i18n-es="Trabaja con tu gente" data-i18n-en="Work with your team">Trabaja con tu gente</div>
               </div>
             </div>
             <div class="ov-card-body" id="ovBodyTeam"><div class="ov-skel"></div></div>
@@ -11442,10 +11447,13 @@ function renderProfileHub() {
     usageWrap.style.display = "none";
   }
 
-  // Stats
-  document.getElementById("profStatTransc").textContent = histCache.length;
-  document.getElementById("profStatScripts").textContent = scriptsCache.length;
-  document.getElementById("profStatUsos").textContent = Math.floor(st.credits / 18);
+  // Stats row (.prof-stats-row) eliminada en v0.14.5b — los datos viven en
+  // los widgets de #profPanelOverview. Las refs antiguas siguen aquí como
+  // optional-set para no romper si alguien restaura los elementos.
+  const _setIf = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  _setIf("profStatTransc", histCache.length);
+  _setIf("profStatScripts", scriptsCache.length);
+  _setIf("profStatUsos", Math.floor(st.credits / 18));
 
   // Show nav items — all features available to all plans
   const hasPaidPlan = ["pro","creator","agency"].includes(plan);
@@ -12461,20 +12469,31 @@ function ovGreetingName() {
   return "";
 }
 function ovRenderGreeting() {
-  const nameEl = document.getElementById("ovGreetingName");
-  if (!nameEl) return;
-  const name = ovGreetingName();
-  if (name) nameEl.textContent = name;
-  // Date (localized)
-  const dateEl = document.getElementById("ovDateText");
-  if (dateEl) {
-    const lang = (document.documentElement.lang || "es") === "es" ? "es-ES" : "en-US";
-    try {
-      dateEl.textContent = new Date().toLocaleDateString(lang, { weekday: "long", day: "numeric", month: "long" });
-    } catch (e) {
-      dateEl.textContent = "";
-    }
+  const root = document.getElementById("ovGreeting");
+  if (!root) return;
+  const es = (document.documentElement.lang || "es") === "es";
+  const name = ovGreetingName(); // "" si no hay user
+  let dateStr = "";
+  try {
+    dateStr = new Date().toLocaleDateString(es ? "es-ES" : "en-US", { weekday: "long", day: "numeric", month: "long" });
+  } catch (e) {}
+
+  const hi = es ? "Hola" : "Hi";
+  // Construye el saludo sin comas/puntos sueltos
+  // - con nombre + fecha: "Hola, David. Sábado 26 de abril."
+  // - solo nombre:        "Hola, David."
+  // - solo fecha:         "Hola. Sábado 26 de abril."
+  // - sin nada:           "Hola."
+  const parts = [];
+  if (name) {
+    parts.push(`${hi}, <em>${name.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</em>.`);
+  } else {
+    parts.push(`${hi}.`);
   }
+  if (dateStr) {
+    parts.push(`<span class="ov-h1-date">${dateStr.charAt(0).toUpperCase()}${dateStr.slice(1)}.</span>`);
+  }
+  root.innerHTML = parts.join(" ");
 }
 
 // v0.14.5b — relative time formatter (es/en)
@@ -12539,47 +12558,49 @@ async function loadOverviewMiniGrid() {
   } catch (e) { return; }
 
   const es = (document.documentElement.lang || "es") === "es";
-  const setSub  = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   const setBody = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  const countLine = (txt) => `<div class="ov-card-count">${txt}</div>`;
 
   // ── 1. Transcribir ─────────────────────────────────────────────────────
   const t = d.transcribe || {};
-  setSub("ovSubTransc", (t.total || 0) + " " + (es ? "transcripciones" : "transcriptions"));
+  let bodyT;
   if (t.last) {
     const thumb = t.last.thumbnail_b64
       ? `<img class="ov-thumb-img" src="${ovEsc(t.last.thumbnail_b64)}" alt="">`
       : `<div class="ov-thumb-img"></div>`;
-    setBody("ovBodyTransc", `
+    bodyT = `
       <div class="ov-thumb-row">
         ${thumb}
         <div class="ov-thumb-text">
           <div class="ov-thumb-title">${ovEsc(t.last.title || (es ? "Sin título" : "Untitled"))}</div>
           <div class="ov-thumb-time">${ovEsc(ovRelTime(t.last.created_at))} · ${ovEsc(t.last.platform || "")}</div>
         </div>
-      </div>`);
+      </div>`;
   } else {
-    setBody("ovBodyTransc", `<div class="ov-empty">${es ? "Empieza tu primera transcripción" : "Start your first transcription"}</div>`);
+    bodyT = `<div class="ov-empty">${es ? "Empieza tu primera transcripción" : "Start your first transcription"}</div>`;
   }
+  setBody("ovBodyTransc", bodyT + countLine((t.total || 0) + " " + (es ? "transcripciones" : "transcriptions")));
 
   // ── 3. Ideas ───────────────────────────────────────────────────────────
   const ideas = d.ideas || {};
-  const ideasParts = [(ideas.total || 0) + " " + (es ? "guardadas" : "saved")];
-  if (ideas.pending) ideasParts.push((ideas.pending) + " " + (es ? "pendientes" : "pending"));
-  setSub("ovSubIdeas", ideasParts.join(" · "));
+  let bodyI;
   if (ideas.last) {
     const status = ideas.last.status || "draft";
     const statusLbl = ({ draft: es ? "BORRADOR" : "DRAFT", developed: es ? "DESARROLLADA" : "DEVELOPED", scripted: es ? "GUIONIZADA" : "SCRIPTED" })[status] || status.toUpperCase();
-    setBody("ovBodyIdeas", `
+    bodyI = `
       <div class="ov-mini-prefix">${es ? "ÚLTIMA IDEA" : "LATEST IDEA"}</div>
       <div class="ov-line italic">${ovEsc(ideas.last.title || "")}</div>
-      <span class="ov-status s-${ovEsc(status)}">${statusLbl}</span>`);
+      <span class="ov-status s-${ovEsc(status)}">${statusLbl}</span>`;
   } else {
-    setBody("ovBodyIdeas", `<div class="ov-empty">${es ? "Captura tu primera chispa" : "Capture your first spark"}</div>`);
+    bodyI = `<div class="ov-empty">${es ? "Captura tu primera chispa" : "Capture your first spark"}</div>`;
   }
+  const ideasCount = (ideas.total || 0) + " " + (es ? "guardadas" : "saved")
+    + (ideas.pending ? " · " + ideas.pending + " " + (es ? "pendientes" : "pending") : "");
+  setBody("ovBodyIdeas", bodyI + countLine(ideasCount));
 
   // ── 4. Proyectos ───────────────────────────────────────────────────────
   const proj = d.projects || {};
-  setSub("ovSubProjects", (proj.total || 0) + " " + (es ? "proyectos" : "projects"));
+  let bodyP;
   if (proj.top && proj.top.length) {
     const rows = proj.top.map(p => `
       <div class="ov-proj-row">
@@ -12588,71 +12609,77 @@ async function loadOverviewMiniGrid() {
       </div>`).join("");
     const more = (proj.total > proj.top.length)
       ? `<div class="ov-proj-more">+${proj.total - proj.top.length} ${es ? "más" : "more"}</div>` : "";
-    setBody("ovBodyProjects", `<div class="ov-proj-list">${rows}</div>${more}`);
+    bodyP = `<div class="ov-proj-list">${rows}</div>${more}`;
   } else {
-    setBody("ovBodyProjects", `<div class="ov-empty">${es ? "Crea tu primer proyecto" : "Create your first project"}</div>`);
+    bodyP = `<div class="ov-empty">${es ? "Crea tu primer proyecto" : "Create your first project"}</div>`;
   }
+  setBody("ovBodyProjects", bodyP + countLine((proj.total || 0) + " " + (es ? "proyectos" : "projects")));
 
   // ── 5. Métricas (sparkline o conecta IG) ───────────────────────────────
   const m = d.metrics || {};
+  let bodyM;
+  let needsSparkline = false;
   if (!m.has_profile) {
-    document.getElementById("ovSubMetrics").textContent = es ? "Sin perfil conectado" : "No profile connected";
-    setBody("ovBodyMetrics", `
+    bodyM = `
       <div class="ov-empty">${es ? "Conecta tu Instagram" : "Connect your Instagram"}</div>
-      <span class="ov-cta-inline">${es ? "Conectar →" : "Connect →"}</span>`);
+      <span class="ov-cta-inline">${es ? "Conectar →" : "Connect →"}</span>`;
   } else if (m.sparkline && m.sparkline.length >= 2) {
-    setBody("ovBodyMetrics", `
+    bodyM = `
       <div class="ov-spark-wrap">
         <div class="ov-spark-meta">
           <span class="ov-spark-num">${(m.avg_views_recent || 0).toLocaleString(es ? "es-ES" : "en-US")}</span>
           <span class="ov-spark-lbl">${es ? "vistas/reel" : "views/reel"}</span>
         </div>
         <div id="ovSparkBox"></div>
-      </div>`);
-    // requestAnimationFrame so container has width
-    requestAnimationFrame(() => {
-      const box = document.getElementById("ovSparkBox");
-      ovRenderSparkline(m.sparkline, box);
-    });
+      </div>`;
+    needsSparkline = true;
   } else {
-    setBody("ovBodyMetrics", `<div class="ov-empty">${es ? "Aún sin datos" : "No data yet"}</div>`);
+    bodyM = `<div class="ov-empty">${es ? "Aún sin reels analizados" : "No reels analyzed yet"}</div>`;
+  }
+  setBody("ovBodyMetrics", bodyM);
+  if (needsSparkline) {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {  // doble RAF: garantiza que el card layout aplicó width
+        ovRenderSparkline(m.sparkline, document.getElementById("ovSparkBox"));
+      });
+    });
   }
 
   // ── 6. Asistentes ──────────────────────────────────────────────────────
   const a = d.assistants || {};
-  setSub("ovSubAssistants", (a.total || 0) + " " + (es ? "creados" : "created"));
+  let bodyA;
   if (a.last_created) {
-    setBody("ovBodyAssistants", `
+    bodyA = `
       <div class="ov-mini-prefix">${es ? "ÚLTIMO CREADO" : "LAST CREATED"}</div>
       <div class="ov-line">${ovEsc(a.last_created.name)}</div>
-      <div class="ov-thumb-time">${ovEsc(ovRelTime(a.last_created.created_at))}</div>`);
+      <div class="ov-thumb-time">${ovEsc(ovRelTime(a.last_created.created_at))}</div>`;
   } else {
-    setBody("ovBodyAssistants", `<div class="ov-empty">${es ? "Crea tu primer asistente" : "Create your first assistant"}</div>`);
+    bodyA = `<div class="ov-empty">${es ? "Crea tu primer asistente" : "Create your first assistant"}</div>`;
   }
+  setBody("ovBodyAssistants", bodyA + countLine((a.total || 0) + " " + (es ? "creados" : "created")));
 
   // ── 7. Guiones ─────────────────────────────────────────────────────────
   const sc = d.scripts || {};
-  setSub("ovSubScripts", (sc.total || 0) + " " + (es ? "guardados" : "saved"));
+  let bodyS;
   if (sc.last) {
-    setBody("ovBodyScripts", `
+    bodyS = `
       <div class="ov-mini-prefix">${es ? "ÚLTIMO GUION" : "LAST SCRIPT"}</div>
       <div class="ov-line">${ovEsc(sc.last.title)}</div>
-      <div class="ov-thumb-time">${ovEsc(ovRelTime(sc.last.created_at))}</div>`);
+      <div class="ov-thumb-time">${ovEsc(ovRelTime(sc.last.created_at))}</div>`;
   } else {
-    setBody("ovBodyScripts", `<div class="ov-empty">${es ? "Guarda tu primer guion" : "Save your first script"}</div>`);
+    bodyS = `<div class="ov-empty">${es ? "Guarda tu primer guion" : "Save your first script"}</div>`;
   }
+  setBody("ovBodyScripts", bodyS + countLine((sc.total || 0) + " " + (es ? "guardados" : "saved")));
 
   // ── 9. Equipo ──────────────────────────────────────────────────────────
   const tm = d.team || {};
-  setSub("ovSubTeam", (tm.active || 0) + " " + (es ? "activos" : "active"));
+  let bodyTm;
   if ((tm.active || 0) > 0 && tm.members && tm.members.length) {
     const max = 4;
     const visible = tm.members.slice(0, max);
-    const extras = (tm.active > max) ? max : 0;
     const stack = visible.map(mem => {
-      const seed = ovEsc(mem.id || "u");
-      // Use DiceBear-style avatar via CSS gradient seeded on member id
-      const hash = seed.split("").reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 0);
+      const seed = String(mem.id || "u");
+      const hash = seed.split("").reduce((acc, c) => (acc * 31 + c.charCodeAt(0)) >>> 0, 0);
       const hueA = hash % 360;
       const hueB = (hash * 7) % 360;
       return `<div class="ov-team-av" style="background:linear-gradient(135deg, hsl(${hueA},70%,55%), hsl(${hueB},65%,45%))"></div>`;
@@ -12660,10 +12687,11 @@ async function loadOverviewMiniGrid() {
     const more = (tm.active > max) ? `<div class="ov-team-more">+${tm.active - max}</div>` : "";
     const pending = (tm.pending || 0) > 0
       ? `<div class="ov-pending-pill">${tm.pending} ${es ? "pendiente" : "pending"}${tm.pending > 1 ? (es ? "s" : "") : ""}</div>` : "";
-    setBody("ovBodyTeam", `<div class="ov-team-stack">${stack}${more}</div>${pending}`);
+    bodyTm = `<div class="ov-team-stack">${stack}${more}</div>${pending}`;
   } else {
-    setBody("ovBodyTeam", `<div class="ov-empty">${es ? "Invita a tu equipo" : "Invite your team"}</div>`);
+    bodyTm = `<div class="ov-empty">${es ? "Invita a tu equipo" : "Invite your team"}</div>`;
   }
+  setBody("ovBodyTeam", bodyTm + countLine((tm.active || 0) + " " + (es ? "activos" : "active")));
 }
 
 function ovOpenTeam() {
@@ -12986,7 +13014,7 @@ function renderTranscCardHTML(it, opts) {
         <button class="trans-act" onclick="cpHist(${id},this)">${LBL_COPY}</button>
         <button class="trans-act mob-hide" onclick="tpOpenFromTransc(${id})">${LBL_TP}</button>
         <button class="trans-act mob-hide" onclick="saveTranscToProject(${id})">${LBL_PROJ}</button>
-        <button class="trans-act danger mob-hide" onclick="delItem(${id},this);setTimeout(()=>{renderProfTransc();renderProfOverview();document.getElementById('profStatTransc').textContent=histCache.length},300)">${LBL_DEL}</button>
+        <button class="trans-act danger mob-hide" onclick="delItem(${id},this);setTimeout(()=>{renderProfTransc();renderProfOverview();if(typeof loadOverviewMiniGrid==='function')loadOverviewMiniGrid()},300)">${LBL_DEL}</button>
         <button class="trans-more" onclick="openCardActions(${id},'transc')" aria-label="More">···</button>
       </div>
     </article>`;
@@ -13027,7 +13055,8 @@ async function loadScripts() {
     const r = await fetch("/scripts");
     if (!r.ok) return;
     scriptsCache = await r.json();
-    document.getElementById("profStatScripts").textContent = scriptsCache.length;
+    const _profSS = document.getElementById("profStatScripts");
+    if (_profSS) _profSS.textContent = scriptsCache.length;
     renderProfScripts();
     renderProfOverview();
   } catch {}
@@ -13396,7 +13425,7 @@ function openCardActions(id, type) {
       <button class="cas-btn" onclick="closeCardActions();profAdaptFromTransc(${id})">✨ ${t("act.transform")}</button>
       <button class="cas-btn" onclick="closeCardActions();tpOpenFromTransc(${id})">🎬 ${t("prof.teleprompter")}</button>
       <button class="cas-btn" onclick="closeCardActions();saveTranscToProject(${id})">📁 ${t("act.to_project")}</button>
-      <button class="cas-btn danger" onclick="closeCardActions();delItem(${id});setTimeout(()=>{renderProfTransc();renderProfOverview();document.getElementById('profStatTransc').textContent=histCache.length},300)">🗑 ${t("act.delete")}</button>
+      <button class="cas-btn danger" onclick="closeCardActions();delItem(${id});setTimeout(()=>{renderProfTransc();renderProfOverview();if(typeof loadOverviewMiniGrid==='function')loadOverviewMiniGrid()},300)">🗑 ${t("act.delete")}</button>
     `;
   } else {
     const it = scriptsCache.find(i => i.id === id);
