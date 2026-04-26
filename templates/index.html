@@ -8612,11 +8612,7 @@
 <div class="adapt-section" id="adaptSection" style="display:none">
   <div class="adapt-inner fade-in" id="adaptCard">
 
-    <!-- Back to dashboard (workspace only) -->
-    <a href="/app" class="panel-back-btn panel-back-btn-adapt" onclick="backToDashboard(event)">
-      <span class="panel-back-arrow" aria-hidden="true">←</span>
-      <span data-i18n-es="Volver a la app" data-i18n-en="Back to the app">Volver a la app</span>
-    </a>
+    <!-- v0.14.9a: panel-back-btn-adapt eliminado. -->
 
     <!-- ROW 1: headers -->
     <div class="adapt-header">
@@ -9103,7 +9099,7 @@
     <!-- Sidebar -->
     <div class="prof-sidebar">
       <div class="prof-sidebar-identity" style="position:relative">
-        <div class="prof-av" id="profAv" onclick="openAvatarMenu()" title="Profile menu" style="width:64px;height:64px;border-radius:14px;margin:0 auto 12px;display:block;cursor:pointer">
+        <div class="prof-av" id="profAv" onclick="event.stopPropagation();openAvatarMenu()" title="Profile menu" style="width:64px;height:64px;border-radius:14px;margin:0 auto 12px;display:block;cursor:pointer">
           <div class="prof-av-edit" data-i18n="prof.edit">Edit</div>
         </div>
         <!-- Avatar picker grid -->
@@ -9143,18 +9139,14 @@
 
       <div class="prof-sidebar-footer">
         <button id="profManageSubSidebar" class="btn-3d btn-3d-secondary" style="display:none;padding:8px;border-radius:8px;background:transparent;color:var(--text3);font-size:.75rem;border:1px solid var(--border);cursor:pointer" onclick="manageSub()" data-i18n="prof.manage_sub">Manage subscription</button>
-        <button class="btn-3d btn-3d-secondary" style="padding:8px;border-radius:8px;background:transparent;color:var(--text3);font-size:.75rem;border:1px solid var(--border);cursor:pointer" onclick="closeProfile()" data-i18n="prof.back">← Back to app</button>
+        <!-- v0.14.9a: "Volver a la app" eliminado. Tap en avatar → menú unificado. -->
       </div>
     </div>
 
     <!-- Main content -->
     <div class="prof-main" id="profMain">
 
-      <!-- Back to app (visible solo en paneles ≠ overview; profTab() lo togglea). -->
-      <a href="/app" class="panel-back-btn" onclick="backToDashboard(event)" style="display:none">
-        <span class="panel-back-arrow" aria-hidden="true">←</span>
-        <span data-i18n-es="Volver a la app" data-i18n-en="Back to the app">Volver a la app</span>
-      </a>
+      <!-- v0.14.9a: panel-back-btn eliminado (tap en avatar → menú unificado). -->
 
       <!-- Overview panel (default) -->
       <div id="profPanelOverview">
@@ -13077,10 +13069,7 @@ function profTab(tab, pushHistory) {
     loadOverviewMiniGrid();
   }
 
-  // v0.14.5b: ocultar "← Volver a la app" en Overview (estamos EN la app)
-  document.querySelectorAll(".prof-main > .panel-back-btn").forEach(btn => {
-    btn.style.display = (tab === "overview") ? "none" : "";
-  });
+  // v0.14.9a: panel-back-btn eliminado del DOM. Toggle innecesario.
 
   // Update nav active state
   document.querySelectorAll(".prof-nav-item").forEach(btn => {
@@ -17403,9 +17392,11 @@ async function submitAuth() {
 
 document.addEventListener("keydown", e => {
   if (e.key === "Enter" && document.getElementById("authOverlay").classList.contains("on")) submitAuth();
-  if (e.key === "Escape") closeUserMenu();
 });
-document.addEventListener("click", () => closeUserMenu());
+// v0.14.9a: removido document click → closeUserMenu() viejo. Cerraba el
+// avatarMenu inmediatamente porque closeUserMenu ahora es alias. La lógica
+// de close-on-outside vive en el handler propio del avatar menu (líneas
+// 17534+), que respeta los triggers (userPill / profAv / navMobAvatar).
 
 // ── Landing nav: sticky scroll state + use cases dropdown ─────────────────
 (function initLandingNav() {
