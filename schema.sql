@@ -54,6 +54,18 @@ CREATE TABLE IF NOT EXISTS public.transcriptions (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- v0.14.7: métricas Apify (solo para plans pro/creator/agency)
+ALTER TABLE public.transcriptions
+  ADD COLUMN IF NOT EXISTS views              BIGINT,
+  ADD COLUMN IF NOT EXISTS likes              BIGINT,
+  ADD COLUMN IF NOT EXISTS comments           BIGINT,
+  ADD COLUMN IF NOT EXISTS shares             BIGINT,
+  ADD COLUMN IF NOT EXISTS published_at       TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS metrics_updated_at TIMESTAMPTZ;
+
+CREATE INDEX IF NOT EXISTS idx_transcriptions_user_published
+  ON public.transcriptions(user_id, published_at DESC);
+
 -- Pagos / recargas
 CREATE TABLE IF NOT EXISTS public.payments (
   id                    BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
