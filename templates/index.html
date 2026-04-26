@@ -3355,23 +3355,21 @@
       color: transparent; -webkit-text-fill-color: transparent;
     }
     .ov-sub {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: .76rem; color: var(--text3);
-      display: inline-flex; align-items: center; gap: 8px;
-      flex-wrap: wrap;
+      font-size: .92rem; color: var(--text2);
+      line-height: 1.4;
     }
-    .ov-sub .dot { color: var(--text3); opacity: .5; }
-    .ov-sub .pill {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 3px 10px; border-radius: 999px;
-      background: rgba(249,115,22,.1); border: 1px solid rgba(249,115,22,.25);
-      color: #fdba74; font-weight: 600;
+    .ov-h1-date {
+      font-style: italic; color: var(--text2); font-weight: 400;
+      font-size: .92em;
     }
-    [data-theme="light"] .ov-sub .pill { color: #c2410c; }
     .ov-hero-right {
       position: relative;
       width: 130px; height: 130px;
       flex-shrink: 0;
+      margin-right: 24px;
+    }
+    @media (max-width: 720px) {
+      .ov-hero-right { margin-right: 0; }
     }
     .ov-hooks {
       width: 100%; height: 100%;
@@ -3395,23 +3393,24 @@
       to   { opacity: 1;  transform: scale(1.1); }
     }
 
-    /* v0.14.5a — Overview mini grid (replaces ws-dash) */
+    /* v0.14.5b — Overview rich widgets */
     .ov-grid {
       display: grid; grid-template-columns: repeat(3, 1fr);
       gap: 14px; margin: 8px 0 28px;
     }
-    @media (max-width: 720px) { .ov-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+    @media (max-width: 1024px) { .ov-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 720px)  { .ov-grid { grid-template-columns: 1fr; gap: 10px; } }
     .ov-card {
       position: relative;
-      display: flex; flex-direction: column; align-items: flex-start;
-      gap: 6px;
-      min-height: 140px; padding: 16px 16px 14px;
+      display: flex; flex-direction: column;
+      gap: 14px;
+      min-height: 160px; padding: 20px;
       background: linear-gradient(180deg, #1f1a22 0%, #171218 100%);
       border-top: 1px solid rgba(255,255,255,.08);
       border-left: 1px solid rgba(255,255,255,.04);
       border-right: 1px solid rgba(255,255,255,.04);
       border-bottom: 1px solid rgba(0,0,0,.4);
-      border-radius: 14px;
+      border-radius: 16px;
       color: var(--text); text-align: left; cursor: pointer;
       font-family: inherit;
       box-shadow:
@@ -3447,26 +3446,116 @@
     .ov-card:hover::before { opacity: 1; }
     .ov-card:active { transform: translateY(0); }
     .ov-card:focus-visible { outline: 2px solid rgba(var(--ov-acc), .6); outline-offset: 2px; }
-    .ov-card-icon {
-      width: 56px; height: 56px;
-      filter: drop-shadow(0 4px 12px rgba(0,0,0,.25));
+    .ov-card-head { display: flex; align-items: flex-start; gap: 12px; }
+    .ov-card-hooks {
+      width: 44px; height: 44px; flex-shrink: 0;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,.25));
       transition: transform .2s;
-      flex-shrink: 0;
     }
-    .ov-card:hover .ov-card-icon { transform: translateY(-1px) rotate(-2deg); }
+    .ov-card:hover .ov-card-hooks { transform: translateY(-1px) rotate(-2deg); }
+    .ov-card-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
     .ov-card-label {
-      font-family: var(--font-display); font-size: 1rem;
-      color: var(--text); line-height: 1.2; margin-top: 2px;
-      letter-spacing: -.01em;
+      font-family: var(--font-display); font-size: 1.12rem;
+      color: var(--text); line-height: 1.15; letter-spacing: -.01em;
     }
-    .ov-card-stat {
-      font-size: .76rem; color: var(--text3);
-      margin-top: auto; line-height: 1.3;
+    .ov-card-sub {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .68rem; color: var(--text3); letter-spacing: .02em;
       font-variant-numeric: tabular-nums;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .ov-card-num {
-      font-weight: 700; color: var(--text2);
-      font-family: var(--font-display); font-size: .92rem;
+    .ov-card-body { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; min-height: 0; }
+    .ov-empty { font-size: .78rem; color: var(--text3); line-height: 1.45; }
+
+    /* Loading skeleton */
+    .ov-skel {
+      height: 12px; border-radius: 4px;
+      background: linear-gradient(90deg, rgba(255,255,255,.04), rgba(255,255,255,.08), rgba(255,255,255,.04));
+      background-size: 200% 100%;
+      animation: ovSkelShine 1.4s ease-in-out infinite;
+    }
+    @keyframes ovSkelShine { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* Widget specific bits */
+    .ov-thumb-row { display: flex; gap: 10px; align-items: flex-start; }
+    .ov-thumb-img {
+      width: 60px; height: 60px; border-radius: 8px;
+      object-fit: cover; flex-shrink: 0;
+      background: var(--surf2);
+      border: 1px solid var(--border);
+    }
+    .ov-thumb-text { flex: 1; min-width: 0; }
+    .ov-thumb-title {
+      font-size: .82rem; color: var(--text); line-height: 1.35;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .ov-thumb-time {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: .66rem; color: var(--text3); margin-top: 4px;
+    }
+    .ov-line {
+      font-size: .82rem; color: var(--text); line-height: 1.4;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .ov-line.italic { font-style: italic; font-family: var(--font-display); font-size: .92rem; }
+    .ov-mini-prefix { font-family: ui-monospace, monospace; font-size: .64rem; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+    .ov-status {
+      display: inline-block; margin-top: 6px;
+      font-size: .58rem; font-weight: 700; letter-spacing: .06em;
+      padding: 2px 8px; border-radius: 999px;
+    }
+    .ov-status.s-draft     { background: rgba(148,163,184,.15); color: #cbd5e1; border: 1px solid rgba(148,163,184,.3); }
+    .ov-status.s-developed { background: rgba(34,197,94,.14);   color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
+    .ov-status.s-scripted  { background: rgba(125,91,184,.14);  color: #a78bfa; border: 1px solid rgba(125,91,184,.3); }
+
+    .ov-proj-list { display: flex; flex-direction: column; gap: 6px; }
+    .ov-proj-row { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--text); }
+    .ov-proj-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+      box-shadow: 0 0 0 2px rgba(0,0,0,.25);
+    }
+    .ov-proj-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ov-proj-more { font-size: .7rem; color: var(--text3); margin-top: 4px; }
+
+    .ov-spark-wrap { display: flex; flex-direction: column; gap: 6px; }
+    .ov-spark { width: 100%; height: 40px; }
+    .ov-spark polyline { stroke: rgb(var(--ov-acc)); stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .ov-spark-fill { fill: rgba(var(--ov-acc), .12); }
+    .ov-spark-meta { display: flex; align-items: baseline; gap: 6px; }
+    .ov-spark-num {
+      font-family: var(--font-display); font-size: 1.4rem; color: var(--text);
+      font-variant-numeric: tabular-nums; line-height: 1;
+    }
+    .ov-spark-lbl { font-size: .72rem; color: var(--text3); }
+
+    .ov-cta-inline {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: .78rem; color: rgb(var(--ov-acc)); font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .ov-team-stack { display: flex; align-items: center; gap: 0; margin-bottom: 4px; }
+    .ov-team-av {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, #a78bfa, #f97316);
+      border: 2px solid var(--surf);
+      margin-left: -8px;
+    }
+    .ov-team-av:first-child { margin-left: 0; }
+    .ov-team-more {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--surf2); border: 2px solid var(--surf);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: .68rem; font-weight: 700; color: var(--text2);
+      margin-left: -8px;
+    }
+    .ov-pending-pill {
+      display: inline-block; margin-top: 2px;
+      font-size: .62rem; font-weight: 700;
+      padding: 1px 7px; border-radius: 999px;
+      background: rgba(249,115,22,.14); color: #fdba74; border: 1px solid rgba(249,115,22,.3);
     }
 
     /* Stats cards */
@@ -8742,15 +8831,11 @@
                 <span data-i18n-es="TU APP · RESUMEN" data-i18n-en="YOUR APP · OVERVIEW">TU APP · RESUMEN</span>
               </div>
               <h1 class="ov-h1" id="ovGreeting">
-                <span data-i18n-es="Me alegra que estés aquí," data-i18n-en="Glad you're here,">Me alegra que estés aquí,</span>
-                <em id="ovGreetingName">creador</em>.
+                <span data-i18n-es="Hola" data-i18n-en="Hi">Hola</span>
+                <em id="ovGreetingName">creador</em>,
+                <span id="ovDateText" class="ov-h1-date"></span>.
               </h1>
-              <div class="ov-sub">
-                <span class="pill" id="ovStreakPill" style="display:none">🔥 <span id="ovStreakText">0 días</span></span>
-                <span id="ovDateText"></span>
-                <span class="dot">·</span>
-                <span id="ovTotalsText" data-i18n-es="todo en orden" data-i18n-en="all set">todo en orden</span>
-              </div>
+              <div class="ov-sub" data-i18n-es="¿Qué toca hoy?" data-i18n-en="What's on the menu today?">¿Qué toca hoy?</div>
             </div>
             <div class="ov-hero-right" aria-hidden="true">
               <div class="ov-hooks-glow"></div>
@@ -8759,69 +8844,122 @@
           </div>
         </div>
 
-        <!-- v0.14.5a: 9-card mini grid (replaces ws-dash) -->
+        <!-- v0.14.5b: 9 rich widgets (data via /api/me/overview) -->
         <div class="ov-grid" id="ovGrid">
+
+          <!-- 1. Transcribir -->
           <button type="button" class="ov-card" style="--ov-acc:249,115,22" onclick="profTab('transc')">
-            <img class="ov-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-transcribir.svg') }}" alt="" aria-hidden="true">
-            <div class="ov-card-label" data-i18n-es="Transcribir" data-i18n-en="Transcribe">Transcribir</div>
-            <div class="ov-card-stat"><span class="ov-card-num" id="ovStatTransc">—</span> <span data-i18n-es="hechas" data-i18n-en="done">hechas</span></div>
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-transcribir.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Transcribir" data-i18n-en="Transcribe">Transcribir</div>
+                <div class="ov-card-sub" id="ovSubTransc">—</div>
+              </div>
+            </div>
+            <div class="ov-card-body" id="ovBodyTransc"><div class="ov-skel"></div></div>
           </button>
+
+          <!-- 2. Hazlo tuyo (honesto-vacío hasta v0.15) -->
           <button type="button" class="ov-card" style="--ov-acc:167,139,250" onclick="closeProfile();const el=document.getElementById('adaptCard');if(el)el.scrollIntoView({behavior:'smooth'})">
-            <img class="ov-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-adapt.svg') }}" alt="" aria-hidden="true">
-            <div class="ov-card-label" data-i18n-es="Hazlo tuyo" data-i18n-en="Make it yours">Hazlo tuyo</div>
-            <div class="ov-card-stat" data-i18n-es="Reescribir guion" data-i18n-en="Rewrite a script">Reescribir guion</div>
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-adapt.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Hazlo tuyo" data-i18n-en="Make it yours">Hazlo tuyo</div>
+                <div class="ov-card-sub" data-i18n-es="Reescribe un guion" data-i18n-en="Rewrite a script">Reescribe un guion</div>
+              </div>
+            </div>
+            <div class="ov-card-body">
+              <div class="ov-empty" data-i18n-es="Viral · LinkedIn · Historia · Hooks · Custom" data-i18n-en="Viral · LinkedIn · Story · Hooks · Custom">Viral · LinkedIn · Historia · Hooks · Custom</div>
+            </div>
           </button>
+
+          <!-- 3. Ideas -->
           <button type="button" class="ov-card" style="--ov-acc:234,179,8" onclick="profTab('ideas')">
-            <img class="ov-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-ideas.svg') }}" alt="" aria-hidden="true">
-            <div class="ov-card-label" data-i18n-es="Ideas" data-i18n-en="Ideas">Ideas</div>
-            <div class="ov-card-stat"><span class="ov-card-num" id="ovStatIdeas">—</span> <span data-i18n-es="guardadas" data-i18n-en="saved">guardadas</span></div>
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-ideas.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Ideas" data-i18n-en="Ideas">Ideas</div>
+                <div class="ov-card-sub" id="ovSubIdeas">—</div>
+              </div>
+            </div>
+            <div class="ov-card-body" id="ovBodyIdeas"><div class="ov-skel"></div></div>
           </button>
+
+          <!-- 4. Proyectos -->
           <button type="button" class="ov-card" style="--ov-acc:200,153,104" onclick="profTab('projects')">
-            <img class="ov-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-proyectos.svg') }}" alt="" aria-hidden="true">
-            <div class="ov-card-label" data-i18n-es="Proyectos" data-i18n-en="Projects">Proyectos</div>
-            <div class="ov-card-stat"><span class="ov-card-num" id="ovStatProjects">—</span> <span data-i18n-es="proyectos" data-i18n-en="projects">proyectos</span></div>
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-proyectos.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Proyectos" data-i18n-en="Projects">Proyectos</div>
+                <div class="ov-card-sub" id="ovSubProjects">—</div>
+              </div>
+            </div>
+            <div class="ov-card-body" id="ovBodyProjects"><div class="ov-skel"></div></div>
           </button>
+
+          <!-- 5. Métricas -->
           <button type="button" class="ov-card" style="--ov-acc:34,197,94" onclick="profTab('metrics')">
-            <img class="ov-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-metricas.svg') }}" alt="" aria-hidden="true">
-            <div class="ov-card-label" data-i18n-es="Métricas" data-i18n-en="Metrics">Métricas</div>
-            <div class="ov-card-stat" id="ovStatMetricsWrap"><span class="ov-card-num" id="ovStatMetrics">—</span> <span data-i18n-es="análisis sem." data-i18n-en="weekly">análisis sem.</span></div>
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-metricas.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Métricas" data-i18n-en="Metrics">Métricas</div>
+                <div class="ov-card-sub" id="ovSubMetrics" data-i18n-es="Últimos 7 reels" data-i18n-en="Last 7 reels">Últimos 7 reels</div>
+              </div>
+            </div>
+            <div class="ov-card-body" id="ovBodyMetrics"><div class="ov-skel"></div></div>
           </button>
+
+          <!-- 6. Asistentes -->
           <button type="button" class="ov-card" style="--ov-acc:125,91,184" onclick="profTab('assistants')">
-            <img class="ov-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-asistentes.svg') }}" alt="" aria-hidden="true">
-            <div class="ov-card-label" data-i18n-es="Asistentes" data-i18n-en="Assistants">Asistentes</div>
-            <div class="ov-card-stat"><span class="ov-card-num" id="ovStatAssistants">—</span> <span data-i18n-es="asistentes" data-i18n-en="assistants">asistentes</span></div>
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-asistentes.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Asistentes" data-i18n-en="Assistants">Asistentes</div>
+                <div class="ov-card-sub" id="ovSubAssistants">—</div>
+              </div>
+            </div>
+            <div class="ov-card-body" id="ovBodyAssistants"><div class="ov-skel"></div></div>
           </button>
+
+          <!-- 7. Guiones -->
           <button type="button" class="ov-card" style="--ov-acc:236,201,160" onclick="profTab('scripts')">
-            <img class="ov-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-scripts.svg') }}" alt="" aria-hidden="true">
-            <div class="ov-card-label" data-i18n-es="Guiones" data-i18n-en="Scripts">Guiones</div>
-            <div class="ov-card-stat"><span class="ov-card-num" id="ovStatScripts">—</span> <span data-i18n-es="guardados" data-i18n-en="saved">guardados</span></div>
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-scripts.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Guiones" data-i18n-en="Scripts">Guiones</div>
+                <div class="ov-card-sub" id="ovSubScripts">—</div>
+              </div>
+            </div>
+            <div class="ov-card-body" id="ovBodyScripts"><div class="ov-skel"></div></div>
           </button>
+
+          <!-- 8. Teleprompter (no tabla teleprompter_recordings — layout simple) -->
           <button type="button" class="ov-card" style="--ov-acc:59,130,246" onclick="openTeleprompterPicker()">
-            <img class="ov-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-teleprompter.svg') }}" alt="" aria-hidden="true">
-            <div class="ov-card-label" data-i18n-es="Teleprompter" data-i18n-en="Teleprompter">Teleprompter</div>
-            <div class="ov-card-stat" data-i18n-es="Graba sin improvisar" data-i18n-en="Record without improvising">Graba sin improvisar</div>
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-teleprompter.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Teleprompter" data-i18n-en="Teleprompter">Teleprompter</div>
+                <div class="ov-card-sub" data-i18n-es="Graba sin improvisar" data-i18n-en="Record without improvising">Graba sin improvisar</div>
+              </div>
+            </div>
+            <div class="ov-card-body">
+              <div class="ov-empty" data-i18n-es="Cualquier guion → cámara" data-i18n-en="Any script → camera">Cualquier guion → cámara</div>
+            </div>
           </button>
+
+          <!-- 9. Equipo -->
           <button type="button" class="ov-card" id="ovCardTeam" style="--ov-acc:251,113,133" onclick="ovOpenTeam()">
-            <img class="ov-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-equipo.svg') }}" alt="" aria-hidden="true">
-            <div class="ov-card-label" data-i18n-es="Equipo" data-i18n-en="Team">Equipo</div>
-            <div class="ov-card-stat"><span class="ov-card-num" id="ovStatTeam">—</span> <span data-i18n-es="miembros" data-i18n-en="members">miembros</span></div>
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-equipo.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Equipo" data-i18n-en="Team">Equipo</div>
+                <div class="ov-card-sub" id="ovSubTeam">—</div>
+              </div>
+            </div>
+            <div class="ov-card-body" id="ovBodyTeam"><div class="ov-skel"></div></div>
           </button>
         </div>
 
-        <div class="prof-stats-row">
-          <div class="prof-stat-card" style="--stat-accent:#f97316">
-            <div class="prof-stat-icon orange"><svg width="18" height="18" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><rect x="5" y="10" width="6" height="1" fill="currentColor" opacity=".5"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".3"/></svg></div>
-            <div><div class="prof-stat-val" id="profStatTransc">0</div><div class="prof-stat-label" data-i18n="prof.stat_transc">Transcriptions</div></div>
-          </div>
-          <div class="prof-stat-card" style="--stat-accent:#a78bfa">
-            <div class="prof-stat-icon purple"><svg width="18" height="18" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="10" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg></div>
-            <div><div class="prof-stat-val" id="profStatScripts">0</div><div class="prof-stat-label" data-i18n="prof.stat_scripts">Saved scripts</div></div>
-          </div>
-          <div class="prof-stat-card" style="--stat-accent:#22c55e">
-            <div class="prof-stat-icon green"><svg width="18" height="18" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="4" y="2" width="8" height="3" fill="currentColor"/><rect x="6" y="5" width="4" height="6" fill="currentColor"/><rect x="3" y="11" width="10" height="3" fill="currentColor" opacity=".5"/></svg></div>
-            <div><div class="prof-stat-val" id="profStatUsos">0</div><div class="prof-stat-label" data-i18n="prof.stat_uses">Uses left</div></div>
-          </div>
-        </div>
 
         <!-- Quick actions -->
         <div class="prof-quick-grid" id="profQuickGrid">
@@ -12339,44 +12477,193 @@ function ovRenderGreeting() {
   }
 }
 
+// v0.14.5b — relative time formatter (es/en)
+function ovRelTime(iso) {
+  if (!iso) return "";
+  const es = (document.documentElement.lang || "es") === "es";
+  const t = new Date(iso).getTime();
+  if (isNaN(t)) return "";
+  const diff = Date.now() - t;
+  const m = Math.floor(diff / 60000);
+  if (m < 1)  return es ? "ahora" : "just now";
+  if (m < 60) return es ? `hace ${m} min`         : `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return es ? `hace ${h}h`            : `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 7)  return es ? (d === 1 ? "ayer" : `hace ${d} días`) : (d === 1 ? "yesterday" : `${d}d ago`);
+  const w = Math.floor(d / 7);
+  if (w < 5)  return es ? (w === 1 ? "hace 1 sem" : `hace ${w} sem`) : (w === 1 ? "1w ago" : `${w}w ago`);
+  const mo = Math.floor(d / 30);
+  return es ? `hace ${mo} mes${mo > 1 ? "es" : ""}` : `${mo}mo ago`;
+}
+
+function ovEsc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function ovRenderSparkline(values, container) {
+  if (!container) return;
+  const w = Math.max(120, container.clientWidth || 200);
+  const h = 40;
+  if (!values || values.length < 2) {
+    container.innerHTML = "";
+    return;
+  }
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  const range = (max - min) || 1;
+  const pts = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * w;
+    const y = h - ((v - min) / range) * h;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const polyline = pts.join(" ");
+  // Filled area under curve for visual weight
+  const fill = `0,${h} ${polyline} ${w},${h}`;
+  container.innerHTML = `
+    <svg class="ov-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+      <polygon class="ov-spark-fill" points="${fill}"/>
+      <polyline points="${polyline}"/>
+    </svg>`;
+}
+
 async function loadOverviewMiniGrid() {
   ovRenderGreeting();
+  let d;
   try {
-    const res = await fetch("/api/me/stats", { credentials: "same-origin" });
+    const res = await fetch("/api/me/overview", { credentials: "same-origin" });
     if (!res.ok) return;
-    const d = await res.json();
-    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    // Transcripciones: usa histCache.length si disponible, fallback al endpoint
-    const transcCount = (typeof histCache !== "undefined" && Array.isArray(histCache)) ? histCache.length : 0;
-    set("ovStatTransc", transcCount);
-    set("ovStatIdeas", (d.ideas && d.ideas.total != null) ? d.ideas.total : 0);
-    set("ovStatProjects", d.projects || 0);
-    set("ovStatAssistants", d.assistants || 0);
-    set("ovStatScripts", d.scripts || 0);
-    set("ovStatTeam", (d.team && d.team.active != null) ? d.team.active : 0);
-    // Métricas: si no tiene perfil conectado, mostrar "conecta perfil"
-    const mWrap = document.getElementById("ovStatMetricsWrap");
-    if (mWrap && d.metrics && !d.metrics.has_profile) {
-      const es = (document.documentElement.lang || "es") === "es";
-      mWrap.textContent = es ? "Conecta tu perfil" : "Connect your profile";
-    } else {
-      set("ovStatMetrics", (d.metrics && d.metrics.weekly_analyses != null) ? d.metrics.weekly_analyses : 0);
-    }
-    // Totales en el subtítulo del hero
-    const totalsEl = document.getElementById("ovTotalsText");
-    if (totalsEl) {
-      const es = (document.documentElement.lang || "es") === "es";
-      const ideas = (d.ideas && d.ideas.total) || 0;
-      const scripts = d.scripts || 0;
-      if (transcCount + ideas + scripts > 0) {
-        totalsEl.textContent = es
-          ? `${transcCount} transcripciones · ${scripts} guiones · ${ideas} ideas`
-          : `${transcCount} transcriptions · ${scripts} scripts · ${ideas} ideas`;
-      } else {
-        totalsEl.textContent = es ? "todavía no hay nada — empieza por transcribir" : "nothing yet — start by transcribing";
-      }
-    }
-  } catch (e) {}
+    d = await res.json();
+  } catch (e) { return; }
+
+  const es = (document.documentElement.lang || "es") === "es";
+  const setSub  = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const setBody = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+
+  // ── 1. Transcribir ─────────────────────────────────────────────────────
+  const t = d.transcribe || {};
+  setSub("ovSubTransc", (t.total || 0) + " " + (es ? "transcripciones" : "transcriptions"));
+  if (t.last) {
+    const thumb = t.last.thumbnail_b64
+      ? `<img class="ov-thumb-img" src="${ovEsc(t.last.thumbnail_b64)}" alt="">`
+      : `<div class="ov-thumb-img"></div>`;
+    setBody("ovBodyTransc", `
+      <div class="ov-thumb-row">
+        ${thumb}
+        <div class="ov-thumb-text">
+          <div class="ov-thumb-title">${ovEsc(t.last.title || (es ? "Sin título" : "Untitled"))}</div>
+          <div class="ov-thumb-time">${ovEsc(ovRelTime(t.last.created_at))} · ${ovEsc(t.last.platform || "")}</div>
+        </div>
+      </div>`);
+  } else {
+    setBody("ovBodyTransc", `<div class="ov-empty">${es ? "Empieza tu primera transcripción" : "Start your first transcription"}</div>`);
+  }
+
+  // ── 3. Ideas ───────────────────────────────────────────────────────────
+  const ideas = d.ideas || {};
+  const ideasParts = [(ideas.total || 0) + " " + (es ? "guardadas" : "saved")];
+  if (ideas.pending) ideasParts.push((ideas.pending) + " " + (es ? "pendientes" : "pending"));
+  setSub("ovSubIdeas", ideasParts.join(" · "));
+  if (ideas.last) {
+    const status = ideas.last.status || "draft";
+    const statusLbl = ({ draft: es ? "BORRADOR" : "DRAFT", developed: es ? "DESARROLLADA" : "DEVELOPED", scripted: es ? "GUIONIZADA" : "SCRIPTED" })[status] || status.toUpperCase();
+    setBody("ovBodyIdeas", `
+      <div class="ov-mini-prefix">${es ? "ÚLTIMA IDEA" : "LATEST IDEA"}</div>
+      <div class="ov-line italic">${ovEsc(ideas.last.title || "")}</div>
+      <span class="ov-status s-${ovEsc(status)}">${statusLbl}</span>`);
+  } else {
+    setBody("ovBodyIdeas", `<div class="ov-empty">${es ? "Captura tu primera chispa" : "Capture your first spark"}</div>`);
+  }
+
+  // ── 4. Proyectos ───────────────────────────────────────────────────────
+  const proj = d.projects || {};
+  setSub("ovSubProjects", (proj.total || 0) + " " + (es ? "proyectos" : "projects"));
+  if (proj.top && proj.top.length) {
+    const rows = proj.top.map(p => `
+      <div class="ov-proj-row">
+        <span class="ov-proj-dot" style="background:${ovEsc(p.color || "#ef6a29")}"></span>
+        <span class="ov-proj-name">${ovEsc(p.name)}</span>
+      </div>`).join("");
+    const more = (proj.total > proj.top.length)
+      ? `<div class="ov-proj-more">+${proj.total - proj.top.length} ${es ? "más" : "more"}</div>` : "";
+    setBody("ovBodyProjects", `<div class="ov-proj-list">${rows}</div>${more}`);
+  } else {
+    setBody("ovBodyProjects", `<div class="ov-empty">${es ? "Crea tu primer proyecto" : "Create your first project"}</div>`);
+  }
+
+  // ── 5. Métricas (sparkline o conecta IG) ───────────────────────────────
+  const m = d.metrics || {};
+  if (!m.has_profile) {
+    document.getElementById("ovSubMetrics").textContent = es ? "Sin perfil conectado" : "No profile connected";
+    setBody("ovBodyMetrics", `
+      <div class="ov-empty">${es ? "Conecta tu Instagram" : "Connect your Instagram"}</div>
+      <span class="ov-cta-inline">${es ? "Conectar →" : "Connect →"}</span>`);
+  } else if (m.sparkline && m.sparkline.length >= 2) {
+    setBody("ovBodyMetrics", `
+      <div class="ov-spark-wrap">
+        <div class="ov-spark-meta">
+          <span class="ov-spark-num">${(m.avg_views_recent || 0).toLocaleString(es ? "es-ES" : "en-US")}</span>
+          <span class="ov-spark-lbl">${es ? "vistas/reel" : "views/reel"}</span>
+        </div>
+        <div id="ovSparkBox"></div>
+      </div>`);
+    // requestAnimationFrame so container has width
+    requestAnimationFrame(() => {
+      const box = document.getElementById("ovSparkBox");
+      ovRenderSparkline(m.sparkline, box);
+    });
+  } else {
+    setBody("ovBodyMetrics", `<div class="ov-empty">${es ? "Aún sin datos" : "No data yet"}</div>`);
+  }
+
+  // ── 6. Asistentes ──────────────────────────────────────────────────────
+  const a = d.assistants || {};
+  setSub("ovSubAssistants", (a.total || 0) + " " + (es ? "creados" : "created"));
+  if (a.last_created) {
+    setBody("ovBodyAssistants", `
+      <div class="ov-mini-prefix">${es ? "ÚLTIMO CREADO" : "LAST CREATED"}</div>
+      <div class="ov-line">${ovEsc(a.last_created.name)}</div>
+      <div class="ov-thumb-time">${ovEsc(ovRelTime(a.last_created.created_at))}</div>`);
+  } else {
+    setBody("ovBodyAssistants", `<div class="ov-empty">${es ? "Crea tu primer asistente" : "Create your first assistant"}</div>`);
+  }
+
+  // ── 7. Guiones ─────────────────────────────────────────────────────────
+  const sc = d.scripts || {};
+  setSub("ovSubScripts", (sc.total || 0) + " " + (es ? "guardados" : "saved"));
+  if (sc.last) {
+    setBody("ovBodyScripts", `
+      <div class="ov-mini-prefix">${es ? "ÚLTIMO GUION" : "LAST SCRIPT"}</div>
+      <div class="ov-line">${ovEsc(sc.last.title)}</div>
+      <div class="ov-thumb-time">${ovEsc(ovRelTime(sc.last.created_at))}</div>`);
+  } else {
+    setBody("ovBodyScripts", `<div class="ov-empty">${es ? "Guarda tu primer guion" : "Save your first script"}</div>`);
+  }
+
+  // ── 9. Equipo ──────────────────────────────────────────────────────────
+  const tm = d.team || {};
+  setSub("ovSubTeam", (tm.active || 0) + " " + (es ? "activos" : "active"));
+  if ((tm.active || 0) > 0 && tm.members && tm.members.length) {
+    const max = 4;
+    const visible = tm.members.slice(0, max);
+    const extras = (tm.active > max) ? max : 0;
+    const stack = visible.map(mem => {
+      const seed = ovEsc(mem.id || "u");
+      // Use DiceBear-style avatar via CSS gradient seeded on member id
+      const hash = seed.split("").reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 0);
+      const hueA = hash % 360;
+      const hueB = (hash * 7) % 360;
+      return `<div class="ov-team-av" style="background:linear-gradient(135deg, hsl(${hueA},70%,55%), hsl(${hueB},65%,45%))"></div>`;
+    }).join("");
+    const more = (tm.active > max) ? `<div class="ov-team-more">+${tm.active - max}</div>` : "";
+    const pending = (tm.pending || 0) > 0
+      ? `<div class="ov-pending-pill">${tm.pending} ${es ? "pendiente" : "pending"}${tm.pending > 1 ? (es ? "s" : "") : ""}</div>` : "";
+    setBody("ovBodyTeam", `<div class="ov-team-stack">${stack}${more}</div>${pending}`);
+  } else {
+    setBody("ovBodyTeam", `<div class="ov-empty">${es ? "Invita a tu equipo" : "Invite your team"}</div>`);
+  }
 }
 
 function ovOpenTeam() {
@@ -12427,6 +12714,11 @@ function profTab(tab, pushHistory) {
   if (tab === "overview" && typeof loadOverviewMiniGrid === "function") {
     loadOverviewMiniGrid();
   }
+
+  // v0.14.5b: ocultar "← Volver a la app" en Overview (estamos EN la app)
+  document.querySelectorAll(".prof-main > .panel-back-btn").forEach(btn => {
+    btn.style.display = (tab === "overview") ? "none" : "";
+  });
 
   // Update nav active state
   document.querySelectorAll(".prof-nav-item").forEach(btn => {
