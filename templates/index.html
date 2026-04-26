@@ -3405,11 +3405,12 @@
       display: flex; flex-direction: column;
       gap: 14px;
       min-height: 160px; padding: 20px;
+      padding-left: 22px; /* compensa el border-left de 3px */
       background: linear-gradient(180deg, #1f1a22 0%, #171218 100%);
       border-top: 1px solid rgba(255,255,255,.08);
-      border-left: 1px solid rgba(255,255,255,.04);
       border-right: 1px solid rgba(255,255,255,.04);
       border-bottom: 1px solid rgba(0,0,0,.4);
+      border-left: 3px solid rgb(var(--ov-acc));
       border-radius: 16px;
       color: var(--text); text-align: left; cursor: pointer;
       font-family: inherit;
@@ -3417,34 +3418,45 @@
         inset 0 1px 0 rgba(255,255,255,.03),
         0 1px 3px rgba(0,0,0,.45),
         0 4px 14px rgba(0,0,0,.35);
-      transition: transform .2s cubic-bezier(.2,.7,.3,1), border-color .2s, box-shadow .2s;
+      transition: transform .2s ease-out, border-color .2s, box-shadow .2s;
       overflow: hidden;
     }
     [data-theme="light"] .ov-card {
       background: linear-gradient(180deg, #faf6ec 0%, #f2ede0 100%);
-      border: 1px solid var(--border);
+      border-top: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,.8),
         inset 0 -1px 0 rgba(0,0,0,.05),
         0 1px 2px rgba(0,0,0,.04),
         0 4px 12px rgba(0,0,0,.03);
     }
+    /* v0.14.6: capa decorativa de waves (mask-image) en el 60% inferior */
     .ov-card::before {
-      content: ""; position: absolute; inset: 0;
-      background: radial-gradient(circle at 100% 0%, rgba(var(--ov-acc), .14), transparent 55%);
-      opacity: 0; transition: opacity .2s; pointer-events: none;
-      border-radius: inherit;
+      content: ""; position: absolute;
+      left: 0; right: 0; bottom: 0; height: 60%;
+      background-color: rgb(var(--ov-acc));
+      -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 380' preserveAspectRatio='none'><path d='M0,210 Q180,150 360,200 T720,200 T1080,190 L1200,210 L1200,380 L0,380 Z' fill='black'/><path d='M0,260 Q220,210 420,250 T780,250 T1200,260 L1200,380 L0,380 Z' fill='black' opacity='0.55'/></svg>");
+      -webkit-mask-size: 100% 100%;
+      -webkit-mask-repeat: no-repeat;
+              mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 380' preserveAspectRatio='none'><path d='M0,210 Q180,150 360,200 T720,200 T1080,190 L1200,210 L1200,380 L0,380 Z' fill='black'/><path d='M0,260 Q220,210 420,250 T780,250 T1200,260 L1200,380 L0,380 Z' fill='black' opacity='0.55'/></svg>");
+              mask-size: 100% 100%;
+              mask-repeat: no-repeat;
+      opacity: .05;
+      pointer-events: none;
+      z-index: 0;
+      transition: opacity .2s ease-out;
     }
+    .ov-card > * { position: relative; z-index: 1; }
     .ov-card:hover {
-      transform: translateY(-2px);
-      border-color: color-mix(in srgb, rgb(var(--ov-acc)) 45%, var(--border));
+      transform: translateY(-4px);
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,.05),
-        0 2px 6px rgba(0,0,0,.5),
-        0 12px 28px -6px rgba(var(--ov-acc), .28);
+        0 8px 32px color-mix(in srgb, rgb(var(--ov-acc)) 25%, transparent);
     }
-    .ov-card:hover::before { opacity: 1; }
-    .ov-card:active { transform: translateY(0); }
+    .ov-card:hover::before { opacity: .08; }
+    .ov-card:active { transform: translateY(-1px); }
     .ov-card:focus-visible { outline: 2px solid rgba(var(--ov-acc), .6); outline-offset: 2px; }
     .ov-card-head { display: flex; align-items: flex-start; gap: 12px; }
     .ov-card-hooks {
@@ -3452,15 +3464,15 @@
       filter: drop-shadow(0 4px 10px rgba(0,0,0,.25));
       transition: transform .2s;
     }
-    .ov-card:hover .ov-card-hooks { transform: translateY(-1px) rotate(-2deg); }
-    .ov-card-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .ov-card:hover .ov-card-hooks { transform: translateY(-2px) rotate(-2deg); }
+    .ov-card-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
     .ov-card-label {
-      font-family: var(--font-display); font-size: 1.12rem;
-      color: var(--text); line-height: 1.15; letter-spacing: -.01em;
+      font-family: var(--font-display); font-size: 1.4rem;
+      color: var(--text); line-height: 1.15; letter-spacing: -.015em;
     }
     .ov-card-sub {
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: .68rem; color: var(--text3); letter-spacing: .02em;
+      font-size: .76rem; color: var(--text3); letter-spacing: .02em;
       font-variant-numeric: tabular-nums;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
@@ -3763,35 +3775,6 @@
     .prof-section-sub {
       font-size: .82rem; color: var(--text3); margin-top: 2px;
     }
-
-    /* Quick actions grid */
-    .prof-quick-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 10px; margin-bottom: 28px;
-    }
-    .prof-quick-btn {
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
-      padding: 16px 12px; background: var(--surf); border: 1px solid var(--border);
-      border-radius: 12px; cursor: pointer; transition: all .18s;
-      color: var(--text2); font-size: .75rem; font-weight: 500;
-      font-family: var(--font-body); text-align: center;
-      box-shadow: 0 3px 0 rgba(255,255,255,.04); transform: translateY(0);
-    }
-    .prof-quick-btn:hover {
-      border-color: var(--qc, var(--purple)); color: var(--text);
-      transform: translateY(-2px); box-shadow: 0 5px 0 rgba(255,255,255,.04);
-      background: var(--surf2);
-    }
-    .prof-quick-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(255,255,255,.04); }
-    .prof-quick-icon {
-      width: 36px; height: 36px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(var(--qcr, 249,115,22), .1); color: var(--qc, var(--purple));
-      font-size: 1rem;
-    }
-    [data-theme="light"] .prof-quick-btn { box-shadow: 0 3px 0 rgba(0,0,0,.05); }
-    [data-theme="light"] .prof-quick-btn:hover { box-shadow: 0 5px 0 rgba(0,0,0,.05); }
-    [data-theme="light"] .prof-quick-btn:active { box-shadow: 0 1px 0 rgba(0,0,0,.05); }
 
     /* Enhanced empty states */
     .prof-empty {
@@ -6691,21 +6674,6 @@
     .status-badge.pending { background: rgba(251,191,36,.15); color: #fbbf24; }
     .status-badge.owner   { background: rgba(249,115,22,.15); color: #fed7aa; }
 
-    /* Recent scripts list in overview */
-    .recent-scripts-list { display: flex; flex-direction: column; gap: 8px; }
-    .recent-script-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 12px 14px; background: var(--surf);
-      border: 1px solid var(--border); border-radius: var(--rsm);
-      transition: border-color .2s; cursor: pointer;
-    }
-    .recent-script-item:hover { border-color: var(--purple); }
-    .rsi-icon { font-size: 1.1rem; flex-shrink: 0; }
-    .rsi-info { flex: 1; min-width: 0; }
-    .rsi-title { font-size: .88rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .rsi-meta  { font-size: .72rem; color: var(--text3); margin-top: 2px; }
-    .rsi-link  { font-size: .75rem; color: var(--purple); font-weight: 600; flex-shrink: 0; text-decoration: none; }
-    .rsi-link:hover { text-decoration: underline; }
 
     /* Mobile bottom tab bar for profile */
     .prof-bottom-bar {
@@ -8853,7 +8821,7 @@
         <div class="ov-grid" id="ovGrid">
 
           <!-- 1. Transcribir -->
-          <button type="button" class="ov-card" style="--ov-acc:249,115,22" onclick="profTab('transc')">
+          <button type="button" class="ov-card" style="--ov-acc:239,106,41" onclick="profTab('transc')">
             <div class="ov-card-head">
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-transcribir.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
@@ -8865,7 +8833,7 @@
           </button>
 
           <!-- 2. Hazlo tuyo (honesto-vacío hasta v0.15) -->
-          <button type="button" class="ov-card" style="--ov-acc:167,139,250" onclick="closeProfile();const el=document.getElementById('adaptCard');if(el)el.scrollIntoView({behavior:'smooth'})">
+          <button type="button" class="ov-card" style="--ov-acc:192,132,252" onclick="closeProfile();const el=document.getElementById('adaptCard');if(el)el.scrollIntoView({behavior:'smooth'})">
             <div class="ov-card-head">
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-adapt.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
@@ -8879,7 +8847,7 @@
           </button>
 
           <!-- 3. Ideas -->
-          <button type="button" class="ov-card" style="--ov-acc:234,179,8" onclick="profTab('ideas')">
+          <button type="button" class="ov-card" style="--ov-acc:255,107,61" onclick="profTab('ideas')">
             <div class="ov-card-head">
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-ideas.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
@@ -8903,7 +8871,7 @@
           </button>
 
           <!-- 5. Métricas -->
-          <button type="button" class="ov-card" style="--ov-acc:34,197,94" onclick="profTab('metrics')">
+          <button type="button" class="ov-card" style="--ov-acc:93,202,165" onclick="profTab('metrics')">
             <div class="ov-card-head">
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-metricas.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
@@ -8915,7 +8883,7 @@
           </button>
 
           <!-- 6. Asistentes -->
-          <button type="button" class="ov-card" style="--ov-acc:125,91,184" onclick="profTab('assistants')">
+          <button type="button" class="ov-card" style="--ov-acc:244,199,94" onclick="profTab('assistants')">
             <div class="ov-card-head">
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-asistentes.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
@@ -8927,7 +8895,7 @@
           </button>
 
           <!-- 7. Guiones -->
-          <button type="button" class="ov-card" style="--ov-acc:236,201,160" onclick="profTab('scripts')">
+          <button type="button" class="ov-card" style="--ov-acc:239,106,41" onclick="profTab('scripts')">
             <div class="ov-card-head">
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-scripts.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
@@ -8939,7 +8907,7 @@
           </button>
 
           <!-- 8. Teleprompter (no tabla teleprompter_recordings — layout simple) -->
-          <button type="button" class="ov-card" style="--ov-acc:59,130,246" onclick="openTeleprompterPicker()">
+          <button type="button" class="ov-card" style="--ov-acc:93,202,165" onclick="openTeleprompterPicker()">
             <div class="ov-card-head">
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-teleprompter.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
@@ -8953,7 +8921,7 @@
           </button>
 
           <!-- 9. Equipo -->
-          <button type="button" class="ov-card" id="ovCardTeam" style="--ov-acc:251,113,133" onclick="ovOpenTeam()">
+          <button type="button" class="ov-card" id="ovCardTeam" style="--ov-acc:192,132,252" onclick="ovOpenTeam()">
             <div class="ov-card-head">
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-equipo.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
@@ -8965,33 +8933,6 @@
           </button>
         </div>
 
-
-        <!-- Quick actions -->
-        <div class="prof-quick-grid" id="profQuickGrid">
-          <button class="prof-quick-btn" style="--qc:#f97316;--qcr:249,115,22" onclick="closeProfile();window.scrollTo({top:0,behavior:'smooth'});document.getElementById('urlInput').focus()">
-            <span class="prof-quick-icon"><svg width="18" height="18" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".4"/></svg></span>
-            <span data-i18n="prof.qa_transcribe">Transcribe</span>
-          </button>
-          <button class="prof-quick-btn" style="--qc:#a78bfa;--qcr:167,139,250" onclick="closeProfile();document.getElementById('adaptCard').scrollIntoView({behavior:'smooth'})">
-            <span class="prof-quick-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg></span>
-            <span data-i18n="prof.qa_adapt">Make it yours</span>
-          </button>
-          <button class="prof-quick-btn prof-quick-paid" style="--qc:#22c55e;--qcr:34,197,94;display:none" onclick="openTeleprompterPicker()">
-            <span class="prof-quick-icon"><svg width="18" height="18" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="1" width="14" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="8" height="1.5" fill="currentColor" opacity=".5"/><rect x="4" y="7" width="6" height="1.5" fill="currentColor" opacity=".3"/><rect x="5" y="13" width="6" height="2" fill="currentColor" opacity=".4"/></svg></span>
-            <span data-i18n="prof.teleprompter">Teleprompter</span>
-          </button>
-          <button class="prof-quick-btn prof-quick-paid" style="--qc:#3b82f6;--qcr:59,130,246;display:none" onclick="profTab('projects')">
-            <span class="prof-quick-icon"><svg width="18" height="18" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="3" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="6" height="3" fill="currentColor"/></svg></span>
-            <span data-i18n="prof.projects">Projects</span>
-          </button>
-          <button class="prof-quick-btn prof-quick-paid" style="--qc:#eab308;--qcr:234,179,8;display:none" onclick="profTab('ideas')">
-            <span class="prof-quick-icon"><svg width="18" height="18" viewBox="0 0 16 16" shape-rendering="crispEdges"><path d="M9 18h6"/><path d="M10 22h4"/><rect x="3" y="1" width="10" height="2" fill="currentColor"/><rect x="2" y="3" width="12" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></span>
-            <span data-i18n="prof.ideas">Ideas</span>
-          </button>
-        </div>
-
-        <div style="font-family:var(--font-display);font-size:1.1rem;margin-bottom:14px" data-i18n="prof.recent_activity">Recent activity</div>
-        <div id="profRecentScripts"></div>
       </div>
 
       <!-- Scripts panel -->
@@ -11502,7 +11443,6 @@ function renderProfileHub() {
   if (hasPaidPlan) loadAssistants();
   if (isAgency) loadTeamMembers();
   renderProfTransc();
-  renderProfOverview();
 
   // Default to overview
   profTab("overview");
@@ -12796,42 +12736,6 @@ function profTab(tab, pushHistory) {
 
 function profTabMobile(tab) { profTab(tab, true); }
 
-function renderProfOverview() {
-  const el = document.getElementById("profRecentScripts");
-  const tagged = [
-    ...histCache.slice(0, 5).map(it => ({ ...it, _kind: "transc" })),
-    ...scriptsCache.slice(0, 5).map(it => ({ ...it, _kind: "script" })),
-  ];
-  const all = tagged
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    .slice(0, 8);
-
-  if (!all.length) {
-    el.innerHTML = `<div class="prof-empty">
-      <div class="prof-empty-icon">${EMPTY_ICON}</div>
-      <div class="prof-empty-title">${t("prof.empty_overview_title")}</div>
-      <div class="prof-empty-sub">${t("prof.empty_overview_sub")}</div>
-      <button class="prof-empty-cta" onclick="closeProfile();window.scrollTo({top:0,behavior:'smooth'});document.getElementById('urlInput').focus()">✦ ${t("prof.qa_transcribe")}</button>
-    </div>`;
-    return;
-  }
-  el.innerHTML = all.map(it => {
-    const isTransc = it._kind === "transc";
-    const text = isTransc ? (it.text || "") : (it.script || it.transcription || "");
-    const title = isTransc ? `${it.platform || "Reel"} · ${fmtDate(it.created_at)}` : (it.title || "Script");
-    const icon = isTransc
-      ? '<svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".4"/></svg>'
-      : '<svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/></svg>';
-    return `<div class="recent-script-item" onclick="${isTransc ? `viewItem(${it.id})` : `viewScript('${it.id}')`}">
-      <span class="rsi-icon">${icon}</span>
-      <div class="rsi-info">
-        <div class="rsi-title">${esc(title)}</div>
-        <div class="rsi-meta">${esc(text.slice(0, 80))}${text.length > 80 ? "…" : ""}</div>
-      </div>
-      <span class="rsi-link">View →</span>
-    </div>`;
-  }).join("");
-}
 
 function transcToDashboard() {
   try { closeProfile(); } catch {}
@@ -13014,7 +12918,7 @@ function renderTranscCardHTML(it, opts) {
         <button class="trans-act" onclick="cpHist(${id},this)">${LBL_COPY}</button>
         <button class="trans-act mob-hide" onclick="tpOpenFromTransc(${id})">${LBL_TP}</button>
         <button class="trans-act mob-hide" onclick="saveTranscToProject(${id})">${LBL_PROJ}</button>
-        <button class="trans-act danger mob-hide" onclick="delItem(${id},this);setTimeout(()=>{renderProfTransc();renderProfOverview();if(typeof loadOverviewMiniGrid==='function')loadOverviewMiniGrid()},300)">${LBL_DEL}</button>
+        <button class="trans-act danger mob-hide" onclick="delItem(${id},this);setTimeout(()=>{renderProfTransc();if(typeof loadOverviewMiniGrid==='function')loadOverviewMiniGrid()},300)">${LBL_DEL}</button>
         <button class="trans-more" onclick="openCardActions(${id},'transc')" aria-label="More">···</button>
       </div>
     </article>`;
@@ -13058,7 +12962,7 @@ async function loadScripts() {
     const _profSS = document.getElementById("profStatScripts");
     if (_profSS) _profSS.textContent = scriptsCache.length;
     renderProfScripts();
-    renderProfOverview();
+    if (typeof loadOverviewMiniGrid === "function") loadOverviewMiniGrid();
   } catch {}
 }
 // Back-compat alias.
@@ -13425,7 +13329,7 @@ function openCardActions(id, type) {
       <button class="cas-btn" onclick="closeCardActions();profAdaptFromTransc(${id})">✨ ${t("act.transform")}</button>
       <button class="cas-btn" onclick="closeCardActions();tpOpenFromTransc(${id})">🎬 ${t("prof.teleprompter")}</button>
       <button class="cas-btn" onclick="closeCardActions();saveTranscToProject(${id})">📁 ${t("act.to_project")}</button>
-      <button class="cas-btn danger" onclick="closeCardActions();delItem(${id});setTimeout(()=>{renderProfTransc();renderProfOverview();if(typeof loadOverviewMiniGrid==='function')loadOverviewMiniGrid()},300)">🗑 ${t("act.delete")}</button>
+      <button class="cas-btn danger" onclick="closeCardActions();delItem(${id});setTimeout(()=>{renderProfTransc();if(typeof loadOverviewMiniGrid==='function')loadOverviewMiniGrid()},300)">🗑 ${t("act.delete")}</button>
     `;
   } else {
     const it = scriptsCache.find(i => i.id === id);
