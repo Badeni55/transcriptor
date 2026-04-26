@@ -493,6 +493,142 @@
     .user-menu-wrap { position: relative; }
     .user-menu-chevron { font-size: .6rem; color: var(--text3); transition: transform .15s; line-height: 1; }
     .user-pill.menu-open .user-menu-chevron { transform: rotate(180deg); }
+
+    /* v0.14.9a — Avatar menu (popover desktop / sheet mobile) */
+    .av-menu-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.6); backdrop-filter: blur(2px);
+      z-index: 1099;
+      opacity: 0; transition: opacity .2s ease;
+    }
+    .av-menu-overlay.on { display: block; opacity: 1; }
+    .av-menu {
+      position: fixed; right: 16px; top: 64px;
+      width: 320px; max-width: calc(100vw - 32px);
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 14px; padding: 10px;
+      box-shadow: 0 16px 48px rgba(0,0,0,.4), 0 4px 12px rgba(0,0,0,.25);
+      z-index: 1100;
+      opacity: 0; transform: translateY(-6px) scale(.98);
+      transition: opacity .18s ease, transform .18s ease;
+      pointer-events: none;
+      max-height: calc(100vh - 80px); overflow-y: auto;
+    }
+    .av-menu.on { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+    [data-theme="light"] .av-menu {
+      background: var(--surf);
+      box-shadow: 0 16px 48px rgba(0,0,0,.18), 0 4px 12px rgba(0,0,0,.08);
+    }
+    .av-menu-handle { display: none; }
+
+    .av-menu-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 8px 8px 12px;
+    }
+    .av-menu-av {
+      width: 56px; height: 56px; border-radius: 14px;
+      background: var(--surf2); border: 1px solid var(--border);
+      flex-shrink: 0; overflow: hidden;
+      background-size: cover; background-position: center;
+    }
+    .av-menu-info { flex: 1; min-width: 0; }
+    .av-menu-email {
+      font-family: var(--font-display); font-size: .92rem; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+    .av-menu-plan-row { display: flex; align-items: center; gap: 6px; }
+    .av-menu-close {
+      background: transparent; border: 0; color: var(--text3);
+      font-size: 1rem; cursor: pointer; padding: 6px 8px;
+      flex-shrink: 0; border-radius: 8px;
+      transition: background .15s, color .15s;
+    }
+    .av-menu-close:hover { background: var(--surf2); color: var(--text); }
+
+    .av-menu-usage {
+      padding: 8px 10px; margin-bottom: 8px;
+      background: var(--surf2); border-radius: 10px;
+    }
+    .av-menu-usage-row {
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: .76rem; color: var(--text2); margin-bottom: 6px;
+    }
+    .av-menu-usage-num { font-family: ui-monospace, monospace; color: var(--text); font-variant-numeric: tabular-nums; }
+    .av-menu-usage-bar {
+      height: 4px; border-radius: 2px;
+      background: rgba(255,255,255,.06); overflow: hidden;
+    }
+    [data-theme="light"] .av-menu-usage-bar { background: rgba(0,0,0,.08); }
+    .av-menu-usage-fill {
+      height: 100%; width: 0;
+      background: linear-gradient(90deg, var(--orange), #fdba74);
+      transition: width .3s ease;
+    }
+
+    .av-menu-sep {
+      height: 1px; background: var(--border); margin: 4px 0;
+    }
+
+    .av-menu-item {
+      display: flex; align-items: center; gap: 12px;
+      width: 100%; padding: 10px 10px;
+      background: transparent; border: 0; cursor: pointer;
+      color: var(--text2); font-family: var(--font-body);
+      font-size: .9rem; font-weight: 500;
+      text-align: left; text-decoration: none;
+      border-radius: 8px;
+      transition: background .15s, color .15s;
+    }
+    .av-menu-item:hover { background: var(--surf2); color: var(--text); }
+    .av-menu-item.av-menu-logout { color: #f87171; }
+    .av-menu-item.av-menu-logout:hover { background: rgba(220,38,38,.08); color: #fca5a5; }
+    [data-theme="light"] .av-menu-item.av-menu-logout { color: #b91c1c; }
+    .av-menu-icon {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: rgba(255,255,255,.04);
+      display: inline-flex; align-items: center; justify-content: center;
+      color: var(--text3); flex-shrink: 0;
+    }
+    [data-theme="light"] .av-menu-icon { background: rgba(0,0,0,.04); }
+    .av-menu-item:hover .av-menu-icon { color: var(--orange); }
+    .av-menu-logout .av-menu-icon { color: #f87171; }
+    .av-menu-logout:hover .av-menu-icon { color: #fca5a5; }
+
+    .av-menu-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 10px 10px;
+    }
+    .av-menu-row-toggle .av-menu-row-label {
+      display: inline-flex; align-items: center; gap: 12px;
+      color: var(--text2); font-size: .9rem; font-weight: 500;
+    }
+    .av-menu-row-toggle .theme-seg { padding: 2px; gap: 2px; }
+    .av-menu-row-toggle .theme-seg-opt { font-size: .8rem; padding: 4px 10px; }
+
+    /* Mobile bottom sheet */
+    @media (max-width: 768px) {
+      .av-menu {
+        position: fixed; left: 0; right: 0; bottom: 0; top: auto;
+        width: 100%; max-width: 100%;
+        max-height: 90vh;
+        border-radius: 18px 18px 0 0;
+        padding: 6px 14px 24px;
+        transform: translateY(100%);
+        transition: transform .3s cubic-bezier(.4,0,.2,1);
+      }
+      .av-menu.on { transform: translateY(0); }
+      .av-menu-handle {
+        display: block;
+        width: 40px; height: 4px; border-radius: 2px;
+        background: var(--text3); opacity: .35;
+        margin: 6px auto 8px;
+      }
+      .av-menu-header { padding: 4px 4px 12px; }
+      .av-menu-av { width: 64px; height: 64px; }
+      .av-menu-email { font-size: 1rem; }
+    }
+
     .user-menu-dropdown {
       display: none; position: absolute; top: calc(100% + 8px); right: 0;
       background: var(--surf); border: 1px solid rgba(255,255,255,.08);
@@ -7968,28 +8104,104 @@
         <span id="userEmail" class="ph-no-capture" data-clarity-mask="true" style="font-size:.82rem;color:var(--text2)"></span>
         <span class="user-menu-chevron">▾</span>
       </div>
-      <div class="user-menu-dropdown" id="userMenuDropdown">
-        <a class="user-menu-item" href="/settings" onclick="window.track&&window.track.avatarDropdownAction({action:'account'})" style="text-decoration:none">⚙️ <span data-i18n="nav.my_account">Mi cuenta</span></a>
-        <button class="user-menu-item" onclick="window.track&&window.track.avatarDropdownAction({action:'plan'});goMyPlan();closeUserMenu()">💎 <span data-i18n="nav.my_plan">Mi plan</span></button>
-        <div class="user-menu-divider"></div>
-        <div class="user-menu-row" onclick="event.stopPropagation()">
-          <span class="user-menu-row-label">🌓 <span data-i18n="nav.theme">Tema</span></span>
-          <div class="theme-seg" role="group" aria-label="Theme">
-            <button type="button" class="theme-seg-opt" data-val="light" onclick="window.track&&window.track.avatarDropdownAction({action:'theme'});setThemeBinary('light', event)" aria-label="Light">☀️</button>
-            <button type="button" class="theme-seg-opt" data-val="dark" onclick="window.track&&window.track.avatarDropdownAction({action:'theme'});setThemeBinary('dark', event)" aria-label="Dark">🌙</button>
-          </div>
-        </div>
-        <button class="user-menu-item" onclick="window.track&&window.track.avatarDropdownAction({action:'language'});toggleLang()">🌐 <span data-i18n="nav.language">Idioma</span> · <span id="navLangToggleCode">{{ 'EN' if lang == 'en' else 'ES' }}</span></button>
-        <div class="user-menu-divider"></div>
-        <a class="user-menu-item" href="/affiliate" onclick="window.track&&window.track.avatarDropdownAction({action:'affiliate'})" style="text-decoration:none">🤝 <span data-i18n="nav.affiliates">Afiliados</span></a>
-        {% if workspace %}<a class="user-menu-item" href="/" onclick="window.track&&window.track.avatarDropdownAction({action:'public_web'})" style="text-decoration:none">🌍 <span data-i18n="nav.public_web">Ver web pública</span></a>{% endif %}
-        <div class="user-menu-divider"></div>
-        <button class="user-menu-item user-menu-logout" onclick="window.track&&window.track.avatarDropdownAction({action:'logout'});logout();closeUserMenu()">🚪 <span data-i18n="nav.logout">Cerrar sesión</span></button>
-      </div>
+      <!-- v0.14.9a: el dropdown viejo está sustituido por #avatarMenu (sheet/popover unificado) -->
     </div>
     <button class="nav-hamburger" id="navHamburger" onclick="toggleNavMob()" aria-label="Menu">☰</button>
   </div>
 </nav>
+
+<!-- v0.14.9a — Avatar menu unificado (mobile sheet / desktop popover) -->
+<div id="avatarMenuOverlay" class="av-menu-overlay" onclick="closeAvatarMenu()" aria-hidden="true"></div>
+<div id="avatarMenu" class="av-menu" role="menu" aria-hidden="true" aria-labelledby="avMenuEmail">
+  <div class="av-menu-handle" aria-hidden="true"></div>
+
+  <div class="av-menu-header">
+    <div class="av-menu-av" id="avMenuAvatar" aria-hidden="true"></div>
+    <div class="av-menu-info">
+      <div class="av-menu-email ph-no-capture" id="avMenuEmail" data-clarity-mask="true">—</div>
+      <div class="av-menu-plan-row">
+        <span class="plan-badge free" id="avMenuPlanBadge">Free</span>
+      </div>
+    </div>
+    <button class="av-menu-close" onclick="closeAvatarMenu()" aria-label="Close">✕</button>
+  </div>
+
+  <div class="av-menu-usage" id="avMenuUsageWrap" style="display:none">
+    <div class="av-menu-usage-row">
+      <span data-i18n-es="Uso mensual" data-i18n-en="Monthly usage">Uso mensual</span>
+      <span class="av-menu-usage-num" id="avMenuUsageNum">0/0</span>
+    </div>
+    <div class="av-menu-usage-bar"><div class="av-menu-usage-fill" id="avMenuUsageFill"></div></div>
+  </div>
+
+  <div class="av-menu-sep"></div>
+
+  <button type="button" class="av-menu-item" onclick="avMenuOpenAvatarPicker()">
+    <span class="av-menu-icon" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 22a10 10 0 1 1 10-10c0 2-1 3-3 3h-2a2 2 0 0 0-2 2v1a2 2 0 0 1-2 2z"/></svg>
+    </span>
+    <span data-i18n-es="Cambiar avatar" data-i18n-en="Change avatar">Cambiar avatar</span>
+  </button>
+
+  <button type="button" class="av-menu-item" onclick="avMenuManagePlan()">
+    <span class="av-menu-icon" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3 H18 L22 9 L12 22 L2 9 Z"/><path d="M11 3 L8 9 L12 22 M13 3 L16 9 L12 22 M2 9 H22"/></svg>
+    </span>
+    <span data-i18n-es="Gestionar plan" data-i18n-en="Manage plan">Gestionar plan</span>
+  </button>
+
+  <div class="av-menu-row av-menu-row-toggle">
+    <span class="av-menu-row-label">
+      <span class="av-menu-icon" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </span>
+      <span data-i18n-es="Tema" data-i18n-en="Theme">Tema</span>
+    </span>
+    <div class="theme-seg" role="group" aria-label="Theme">
+      <button type="button" class="theme-seg-opt" data-val="light" onclick="setThemeBinary('light', event)" aria-label="Light">☀️</button>
+      <button type="button" class="theme-seg-opt" data-val="dark" onclick="setThemeBinary('dark', event)" aria-label="Dark">🌙</button>
+    </div>
+  </div>
+
+  <div class="av-menu-row av-menu-row-toggle">
+    <span class="av-menu-row-label">
+      <span class="av-menu-icon" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      </span>
+      <span data-i18n-es="Idioma" data-i18n-en="Language">Idioma</span>
+    </span>
+    <div class="theme-seg" role="group" aria-label="Language">
+      <button type="button" class="theme-seg-opt settings-lang-opt" data-val="es" onclick="setLangBinary('es', event)" aria-label="Español">ES</button>
+      <button type="button" class="theme-seg-opt settings-lang-opt" data-val="en" onclick="setLangBinary('en', event)" aria-label="English">EN</button>
+    </div>
+  </div>
+
+  <div class="av-menu-sep"></div>
+
+  <a class="av-menu-item" href="/profile/privacy" onclick="closeAvatarMenu()">
+    <span class="av-menu-icon" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11 V7 a5 5 0 0 1 10 0 v4"/></svg>
+    </span>
+    <span data-i18n-es="Privacidad y datos" data-i18n-en="Privacy &amp; data">Privacidad y datos</span>
+  </a>
+
+  <a class="av-menu-item" href="/profile/settings" onclick="closeAvatarMenu()">
+    <span class="av-menu-icon" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </span>
+    <span data-i18n-es="Configuración" data-i18n-en="Settings">Configuración</span>
+  </a>
+
+  <div class="av-menu-sep"></div>
+
+  <button type="button" class="av-menu-item av-menu-logout" onclick="closeAvatarMenu();logout()">
+    <span class="av-menu-icon" aria-hidden="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </span>
+    <span data-i18n-es="Cerrar sesión" data-i18n-en="Sign out">Cerrar sesión</span>
+  </button>
+</div>
+
 <!-- Mobile nav menu -->
 <div class="nav-mob-menu" id="navMobMenu">
   <div class="nav-mob-backdrop" onclick="closeNavMob()"></div>
@@ -8003,20 +8215,7 @@
       </div>
       <button class="nav-mob-close" onclick="closeNavMob()" aria-label="Close">✕</button>
     </div>
-    <!-- Lang -->
-    <div class="nav-mob-items">
-      <div class="mob-lang-row">
-        <a class="mob-lang-btn{% if lang|default('es') == 'es' %} active{% endif %}" href="/es/">ES</a>
-        <a class="mob-lang-btn{% if lang|default('es') == 'en' %} active{% endif %}" href="/en/">EN</a>
-      </div>
-      <div class="mob-theme-row">
-        <span class="mob-theme-label">🌓 <span data-i18n="nav.theme">Tema</span></span>
-        <div class="theme-seg" role="group" aria-label="Theme">
-          <button type="button" class="theme-seg-opt" data-val="light" onclick="setThemeBinary('light', event)" aria-label="Light">☀️</button>
-          <button type="button" class="theme-seg-opt" data-val="dark" onclick="setThemeBinary('dark', event)" aria-label="Dark">🌙</button>
-        </div>
-      </div>
-    </div>
+    <!-- v0.14.9a: tema + idioma viven ahora en #avatarMenu (tap en avatar) -->
     {% if not workspace %}
     <!-- Landing: Use cases / Pricing / FAQ -->
     <div class="nav-mob-section" data-i18n-es="Casos de uso" data-i18n-en="Use cases">Casos de uso</div>
@@ -8106,10 +8305,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         Tutorial
       </button>
-      <button class="mob-logout" onclick="closeNavMob();logout()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        <span data-i18n="nav.logout">Log out</span>
-      </button>
+      <!-- v0.14.9a: logout vive ahora en #avatarMenu (tap en avatar). -->
     </div>
   </div>
 </div>
@@ -8907,7 +9103,7 @@
     <!-- Sidebar -->
     <div class="prof-sidebar">
       <div class="prof-sidebar-identity" style="position:relative">
-        <div class="prof-av" id="profAv" onclick="toggleAvatarPicker(event)" title="Change avatar" style="width:64px;height:64px;border-radius:14px;margin:0 auto 12px;display:block">
+        <div class="prof-av" id="profAv" onclick="openAvatarMenu()" title="Profile menu" style="width:64px;height:64px;border-radius:14px;margin:0 auto 12px;display:block;cursor:pointer">
           <div class="prof-av-edit" data-i18n="prof.edit">Edit</div>
         </div>
         <!-- Avatar picker grid -->
@@ -17235,22 +17431,128 @@ document.addEventListener("click", (e) => {
   }
 });
 
+// v0.14.9a — Avatar menu unificado (sustituye al userMenuDropdown viejo)
 function toggleUserMenu(e) {
-  e.stopPropagation();
-  if (window.innerWidth <= 640) { openProfile(); return; }
-  const dd = document.getElementById("userMenuDropdown");
-  const pill = document.getElementById("userPill");
-  const isOpen = dd.classList.contains("on");
-  if (isOpen) { dd.classList.remove("on"); pill.classList.remove("menu-open"); }
-  else {
-    dd.classList.add("on"); pill.classList.add("menu-open");
-    try { window.track && window.track.avatarDropdownOpened(); } catch(err){}
-  }
+  if (e) e.stopPropagation();
+  openAvatarMenu();
 }
 function closeUserMenu() {
-  document.getElementById("userMenuDropdown")?.classList.remove("on");
-  document.getElementById("userPill")?.classList.remove("menu-open");
+  // Compat alias: cualquier llamador antiguo cierra el menú nuevo.
+  closeAvatarMenu();
 }
+
+function openAvatarMenu() {
+  const overlay = document.getElementById("avatarMenuOverlay");
+  const menu = document.getElementById("avatarMenu");
+  if (!menu) return;
+  // Populate header
+  if (st && st.user) {
+    const emailEl = document.getElementById("avMenuEmail");
+    if (emailEl) emailEl.textContent = st.user.email || "—";
+    const planBadge = document.getElementById("avMenuPlanBadge");
+    if (planBadge) {
+      const plan = (st.plan || "free");
+      const labels = { free: "Free", pro: "Pro", creator: "Creator", agency: "Agency" };
+      planBadge.textContent = labels[plan] || plan;
+      planBadge.className = `plan-badge ${plan}`;
+    }
+    const avEl = document.getElementById("avMenuAvatar");
+    if (avEl) {
+      const seed = st.user.avatar_seed || "default";
+      avEl.style.backgroundImage = `url(${dicebearUrl(seed)})`;
+    }
+    // Usage bar (paid plans only)
+    const usageWrap = document.getElementById("avMenuUsageWrap");
+    if (usageWrap) {
+      if (st.monthlyLimit) {
+        usageWrap.style.display = "";
+        const num = document.getElementById("avMenuUsageNum");
+        const fill = document.getElementById("avMenuUsageFill");
+        if (num) num.textContent = `${st.monthlyUsage || 0}/${st.monthlyLimit}`;
+        if (fill) fill.style.width = Math.min(100, ((st.monthlyUsage || 0) / st.monthlyLimit) * 100) + "%";
+      } else {
+        usageWrap.style.display = "none";
+      }
+    }
+  }
+  // Sync theme/lang seg state
+  const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
+  document.querySelectorAll("#avatarMenu .theme-seg-opt[data-val='light'], #avatarMenu .theme-seg-opt[data-val='dark']").forEach(b => {
+    b.classList.toggle("on", b.dataset.val === currentTheme);
+  });
+  const currentLangSel = (document.documentElement.lang || "es").toLowerCase();
+  document.querySelectorAll("#avatarMenu .settings-lang-opt").forEach(b => {
+    b.classList.toggle("on", b.dataset.val === currentLangSel);
+  });
+
+  if (overlay) overlay.classList.add("on");
+  menu.classList.add("on");
+  menu.setAttribute("aria-hidden", "false");
+  if (window.innerWidth <= 768) document.body.style.overflow = "hidden";
+  try { window.track && window.track.avatarDropdownOpened && window.track.avatarDropdownOpened(); } catch(err){}
+}
+
+function closeAvatarMenu() {
+  const overlay = document.getElementById("avatarMenuOverlay");
+  const menu = document.getElementById("avatarMenu");
+  if (overlay) overlay.classList.remove("on");
+  if (menu) {
+    menu.classList.remove("on");
+    menu.setAttribute("aria-hidden", "true");
+  }
+  document.body.style.overflow = "";
+}
+
+// "Cambiar avatar" del menú → abre el picker existente
+function avMenuOpenAvatarPicker() {
+  closeAvatarMenu();
+  // Asegura que estamos en /profile/* para que .prof-av sea visible
+  const profilePage = document.getElementById("profilePage");
+  if (profilePage && !profilePage.classList.contains("on")) {
+    openProfile();
+    if (typeof profTab === "function") profTab("overview", false);
+  }
+  setTimeout(() => {
+    const picker = document.getElementById("avatarPicker");
+    if (picker) picker.classList.add("on");
+    const profAv = document.getElementById("profAv");
+    if (profAv) profAv.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, 120);
+}
+
+// "Gestionar plan" — Stripe portal si hay sub, sino upgrade modal
+function avMenuManagePlan() {
+  closeAvatarMenu();
+  if (st && st.hasStripeSub) {
+    if (typeof manageSub === "function") manageSub();
+  } else {
+    if (typeof openUpgradeModal === "function") openUpgradeModal("avatar_menu");
+  }
+}
+
+// Cierre por click fuera (desktop popover) — el overlay ya cubre mobile
+document.addEventListener("click", (e) => {
+  const menu = document.getElementById("avatarMenu");
+  if (!menu || !menu.classList.contains("on")) return;
+  if (window.innerWidth <= 768) return; // mobile: overlay maneja el click-outside
+  // Desktop: cierra si click fuera del menú y fuera de los triggers
+  const triggers = [
+    document.getElementById("userPill"),
+    document.getElementById("profAv"),
+    document.getElementById("navMobAvatar"),
+  ];
+  if (menu.contains(e.target)) return;
+  if (triggers.some(t => t && t.contains(e.target))) return;
+  closeAvatarMenu();
+});
+
+// ESC cierra el menú
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    const menu = document.getElementById("avatarMenu");
+    if (menu && menu.classList.contains("on")) closeAvatarMenu();
+  }
+});
 
 function toggleNavMob() {
   const menu = document.getElementById("navMobMenu");
