@@ -5251,6 +5251,155 @@
       text-align: right;
     }
 
+    /* v0.14.7 — Input card embebido */
+    .trans-input-card {
+      display: flex; flex-direction: column; gap: 10px;
+      padding: 16px 18px;
+      background: linear-gradient(180deg, var(--ideas-card-top) 0%, var(--ideas-card-bot) 100%);
+      border: 1px solid rgba(239,106,41,.18);
+      border-left: 3px solid #ef6a29;
+      border-radius: 14px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.18);
+    }
+    .trans-input-row {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+      padding: 4px 12px; transition: border-color .15s, box-shadow .15s;
+    }
+    .trans-input-row:focus-within {
+      border-color: #ef6a29;
+      box-shadow: 0 0 0 3px rgba(239,106,41,.18);
+    }
+    .trans-input-icon { font-size: .9rem; opacity: .7; flex-shrink: 0; }
+    .trans-input {
+      flex: 1; background: transparent; border: 0; outline: 0;
+      color: var(--text); font-family: var(--font-body); font-size: .9rem;
+      padding: 10px 0;
+    }
+    .trans-input::placeholder { color: var(--text3); font-family: ui-monospace, SFMono-Regular, monospace; font-size: .8rem; }
+    .trans-input-actions { display: flex; gap: 8px; align-items: stretch; }
+    .trans-lang-select {
+      flex: 1; padding: 10px 12px; border-radius: 10px;
+      background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      font-family: var(--font-body); font-size: .82rem; outline: none;
+    }
+    .trans-input-btn {
+      flex: 0 0 auto; padding: 10px 22px; border-radius: 10px;
+      background: var(--purple); color: #fff; border: 0; cursor: pointer;
+      font-family: var(--font-body); font-weight: 700; font-size: .85rem;
+      box-shadow: 0 4px 0 #92400e;
+      transition: transform .12s, box-shadow .15s, opacity .15s;
+    }
+    .trans-input-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 5px 0 #92400e, 0 4px 12px rgba(249,115,22,.3); }
+    .trans-input-btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #92400e; }
+    .trans-input-btn:disabled { opacity: .65; cursor: default; }
+    .trans-input-status {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 8px;
+      background: rgba(239,106,41,.06); border: 1px solid rgba(239,106,41,.2);
+      font-size: .82rem; color: var(--text2);
+    }
+    .trans-input-status.is-error { background: rgba(239,68,68,.07); border-color: rgba(239,68,68,.25); color: #fca5a5; }
+    .trans-input-status.is-ok { background: rgba(34,197,94,.07); border-color: rgba(34,197,94,.25); color: #86efac; }
+    .panel-transc-spinner {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid rgba(239,106,41,.25);
+      border-top-color: #ef6a29;
+      animation: ptSpin .8s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes ptSpin { to { transform: rotate(360deg); } }
+
+    /* List header + bulk refresh + filters */
+    .trans-list-header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap;
+      margin: 12px 0 14px;
+    }
+    .trans-list-title {
+      font-family: var(--font-display); font-size: 1.1rem; color: var(--text);
+    }
+    .trans-list-count { color: var(--text3); font-size: .9em; font-family: ui-monospace, monospace; margin-left: 6px; }
+    .trans-bulk-refresh {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: 10px;
+      background: rgba(239,106,41,.1); border: 1px solid rgba(239,106,41,.3);
+      color: #fdba74; cursor: pointer;
+      font-family: var(--font-body); font-size: .8rem; font-weight: 600;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .trans-bulk-refresh:hover:not(:disabled) { background: rgba(239,106,41,.16); border-color: rgba(239,106,41,.5); }
+    .trans-bulk-refresh:disabled { opacity: .65; cursor: default; }
+    .trans-bulk-refresh.is-busy svg { animation: ptSpin 1s linear infinite; }
+    [data-theme="light"] .trans-bulk-refresh { color: #c2410c; }
+
+    .trans-filters { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+    .trans-filter {
+      padding: 6px 12px; border-radius: 999px;
+      background: transparent; border: 1px solid var(--border); color: var(--text2);
+      font-family: var(--font-body); font-size: .76rem; font-weight: 500;
+      cursor: pointer; transition: color .15s, background .15s, border-color .15s;
+    }
+    .trans-filter:hover { color: var(--text); border-color: var(--text3); }
+    .trans-filter.on { background: rgba(239,106,41,.12); border-color: rgba(239,106,41,.4); color: #fdba74; }
+    [data-theme="light"] .trans-filter.on { color: #c2410c; }
+
+    /* Card metrics chips */
+    .trans-metrics {
+      display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+      margin: 6px 0 10px;
+      position: relative;
+    }
+    .trans-metric {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: 999px;
+      background: var(--surf); border: 1px solid var(--border);
+      font-size: .76rem; color: var(--text2);
+      font-variant-numeric: tabular-nums;
+    }
+    .trans-metric svg { width: 12px; height: 12px; opacity: .7; }
+    .trans-metric.muted { color: var(--text3); opacity: .65; }
+    .trans-metric.muted .trans-metric-num { font-family: ui-monospace, monospace; }
+    .trans-metric-num { font-weight: 600; color: var(--text); }
+    .trans-metric.muted .trans-metric-num { color: var(--text3); font-weight: 400; }
+    .trans-metrics-time {
+      font-family: ui-monospace, monospace; font-size: .68rem; color: var(--text3);
+      margin-left: auto;
+    }
+    .trans-refresh {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; border-radius: 8px;
+      background: transparent; border: 1px solid var(--border); cursor: pointer;
+      color: var(--text3); flex-shrink: 0;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .trans-refresh:hover { color: #fdba74; border-color: rgba(239,106,41,.4); background: rgba(239,106,41,.06); }
+    .trans-refresh.is-busy svg { animation: ptSpin 1s linear infinite; }
+    .trans-refresh:disabled { opacity: .5; cursor: default; }
+
+    /* Paywall blur for free plan */
+    .trans-metrics.is-locked .trans-metric { filter: blur(5px); user-select: none; pointer-events: none; }
+    .trans-metrics-paywall {
+      position: absolute; inset: 0; z-index: 2;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      background: linear-gradient(90deg, rgba(0,0,0,.35), rgba(0,0,0,.15));
+      backdrop-filter: blur(2px);
+      border-radius: 8px; cursor: pointer;
+      color: var(--text); font-size: .76rem; font-weight: 600;
+      border: 0; font-family: var(--font-body);
+    }
+    .trans-metrics-paywall:hover { color: #fdba74; }
+    [data-theme="light"] .trans-metrics-paywall {
+      background: linear-gradient(90deg, rgba(255,255,255,.65), rgba(255,255,255,.4));
+    }
+
+    /* TikTok no-metrics state */
+    .trans-metrics.is-tiktok-empty {
+      font-size: .72rem; color: var(--text3); font-style: italic;
+      padding: 4px 0;
+    }
+
     /* CTA ribbon */
     .trans-cta {
       display: flex; align-items: center; justify-content: space-between;
@@ -9000,8 +9149,8 @@
                 <span data-i18n-es="TRANSCRIPCIONES · VOCES CAPTURADAS" data-i18n-en="TRANSCRIPTIONS · CAPTURED VOICES">TRANSCRIPCIONES · VOCES CAPTURADAS</span>
               </div>
               <h1 class="trans-h1">
-                <span data-i18n-es="Escucha lo que" data-i18n-en="Replay everything you">Escucha lo que</span>
-                <em data-i18n-es="capturas" data-i18n-en="catch">capturas</em>.
+                <span data-i18n-es="Transcribe lo que" data-i18n-en="Transcribe what">Transcribe lo que</span>
+                <em data-i18n-es="importa" data-i18n-en="matters">importa</em>.
               </h1>
               <p class="trans-sub">
                 <span data-i18n-es="Todos los reels que has convertido en texto." data-i18n-en="Every reel you've turned into text.">Todos los reels que has convertido en texto.</span>
@@ -9018,23 +9167,48 @@
           </div>
         </div>
 
-        <!-- CTA back to dashboard -->
-        <a href="#" class="trans-cta" id="transCtaDashboard" onclick="event.preventDefault();transcToDashboard()">
-          <div class="trans-cta-left">
-            <span class="trans-cta-glyph" aria-hidden="true">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path d="M8 3 V13 M3 8 H13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-              </svg>
-            </span>
-            <span class="trans-cta-text" data-i18n-es="¿Otro reel? Transcribe uno nuevo desde la app." data-i18n-en="Another reel? Transcribe a new one from the app.">¿Otro reel? Transcribe uno nuevo desde la app.</span>
+        <!-- v0.14.7: input transcribir embebido en el panel -->
+        <div class="trans-input-card" id="transInputCard">
+          <div class="trans-input-row">
+            <span class="trans-input-icon" aria-hidden="true">🔗</span>
+            <input id="panelUrlInput" type="url" class="trans-input ph-no-capture" data-clarity-mask="true"
+                   placeholder="https://www.instagram.com/reel/… · https://www.tiktok.com/…"
+                   autocomplete="off" spellcheck="false"
+                   onkeydown="if(event.key==='Enter'){event.preventDefault();doTranscribeFromPanel();}" />
           </div>
-          <span class="trans-cta-go">
-            <span data-i18n-es="Ir a la app" data-i18n-en="Go to the app">Ir a la app</span>
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-              <path d="M2 5 H8 M5.5 2.5 L8 5 L5.5 7.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <div class="trans-input-actions">
+            <select id="panelLang" class="trans-lang-select">
+              <option value="" data-i18n-es="✨ Detectar idioma automáticamente" data-i18n-en="✨ Auto-detect language">✨ Detectar idioma automáticamente</option>
+              <option value="es" data-i18n-es="Español" data-i18n-en="Spanish">Español</option>
+              <option value="en" data-i18n-es="Inglés" data-i18n-en="English">English</option>
+              <option value="fr" data-i18n-es="Francés" data-i18n-en="French">French</option>
+              <option value="pt" data-i18n-es="Portugués" data-i18n-en="Portuguese">Portuguese</option>
+              <option value="de" data-i18n-es="Alemán" data-i18n-en="German">German</option>
+              <option value="it" data-i18n-es="Italiano" data-i18n-en="Italian">Italian</option>
+            </select>
+            <button id="panelTranscribeBtn" class="trans-input-btn" onclick="doTranscribeFromPanel()" data-i18n-es="✦ Transcribir" data-i18n-en="✦ Transcribe">✦ Transcribir</button>
+          </div>
+          <div id="panelTranscribeStatus" class="trans-input-status" style="display:none"></div>
+        </div>
+
+        <!-- Header: count + bulk refresh + filtros -->
+        <div class="trans-list-header">
+          <div class="trans-list-title">
+            <span data-i18n-es="Tus transcripciones" data-i18n-en="Your transcriptions">Tus transcripciones</span>
+            <span class="trans-list-count" id="transListCount">(<span id="transCountNum">0</span>)</span>
+          </div>
+          <button id="transBulkRefresh" class="trans-bulk-refresh" onclick="refreshAllTransMetrics()" style="display:none">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M14 4 V8 H10 M2 12 V8 H6 M14 8 A6 6 0 0 0 4 5 M2 8 A6 6 0 0 0 12 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-          </span>
-        </a>
+            <span id="transBulkRefreshLbl" data-i18n-es="Actualizar métricas" data-i18n-en="Refresh metrics">Actualizar métricas</span>
+          </button>
+        </div>
+        <div class="trans-filters" id="transFilters" style="display:none">
+          <button class="trans-filter on" data-sort="recent" onclick="setTransFilter('recent')" data-i18n-es="Recientes" data-i18n-en="Recent">Recientes</button>
+          <button class="trans-filter" data-sort="views" onclick="setTransFilter('views')" data-i18n-es="Más vistas" data-i18n-en="Most viewed">Más vistas</button>
+          <button class="trans-filter" data-sort="likes" onclick="setTransFilter('likes')" data-i18n-es="Más likes" data-i18n-en="Most liked">Más likes</button>
+        </div>
 
         <!-- Transcriptions list -->
         <div id="profListTransc" class="trans-list"></div>
@@ -9697,7 +9871,7 @@ const LANGS = {
     // Profile hub
     "prof.overview": "Resumen",
     "prof.saved_scripts": "Guiones",
-    "prof.transcriptions": "Transcripciones",
+    "prof.transcriptions": "Transcribir",
     "prof.projects": "Proyectos",
     "prof.assistants": "Asistentes",
     "prof.metrics": "Métricas",
@@ -10063,7 +10237,7 @@ const LANGS = {
     // Profile hub
     "prof.overview": "Overview",
     "prof.saved_scripts": "Scripts",
-    "prof.transcriptions": "Transcriptions",
+    "prof.transcriptions": "Transcribe",
     "prof.projects": "Projects",
     "prof.assistants": "Assistants",
     "prof.metrics": "Metrics",
@@ -12749,6 +12923,191 @@ function transcToDashboard() {
 function renderTransCounter() {
   const el = document.getElementById("transCounterNum");
   if (el) el.textContent = String((histCache && histCache.length) || 0).padStart(2, "0");
+  // v0.14.7: header count + bulk button visibility
+  const cn = document.getElementById("transCountNum");
+  if (cn) cn.textContent = String((histCache && histCache.length) || 0);
+  const bulk = document.getElementById("transBulkRefresh");
+  if (bulk) {
+    const hasMetricsPlan = (st.user && ["pro","creator","agency"].includes(st.plan));
+    bulk.style.display = hasMetricsPlan ? "" : "none";
+  }
+  const filters = document.getElementById("transFilters");
+  if (filters) filters.style.display = (histCache && histCache.length > 10) ? "" : "none";
+}
+
+// v0.14.7 — Métricas helpers ---------------------------------------------------
+function transFmtCount(n) {
+  if (n == null) return "—";
+  const v = Number(n);
+  if (!isFinite(v) || v < 0) return "—";
+  if (v >= 1_000_000) return (v / 1_000_000).toFixed(v < 10_000_000 ? 1 : 0).replace(".0", "") + "M";
+  if (v >= 1_000)     return (v / 1_000).toFixed(v < 10_000 ? 1 : 0).replace(".0", "") + "K";
+  return String(v);
+}
+function transHasMetricsPlan() {
+  return !!(st.user && ["pro","creator","agency"].includes(st.plan));
+}
+function transHasAnyMetric(it) {
+  return [it.views, it.likes, it.comments, it.shares].some(v => v != null);
+}
+function renderTransMetrics(it) {
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const platform = (it.platform || "").toLowerCase();
+  const isIG = platform === "instagram";
+  const isPaid = transHasMetricsPlan();
+
+  // TikTok: layout simple "próximamente"
+  if (!isIG) {
+    const tipt = lang === "en" ? "TikTok metrics coming soon" : "Métricas de TikTok próximamente";
+    return `<div class="trans-metrics is-tiktok-empty" title="${tipt}">— ${tipt}</div>`;
+  }
+
+  const eyeSvg     = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 8 C3 4 6 2 8 2 C10 2 13 4 15 8 C13 12 10 14 8 14 C6 14 3 12 1 8 Z"/><circle cx="8" cy="8" r="2"/></svg>';
+  const heartSvg   = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 14 C5 12 1 9 1 5.5 C1 3.5 2.5 2 4.5 2 C6 2 7.3 3 8 4 C8.7 3 10 2 11.5 2 C13.5 2 15 3.5 15 5.5 C15 9 11 12 8 14 Z"/></svg>';
+  const cmtSvg     = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4 C2 3 3 2 4 2 H12 C13 2 14 3 14 4 V10 C14 11 13 12 12 12 H6 L3 14.5 V12 C2.5 12 2 11.5 2 10 Z"/></svg>';
+  const shareSvg   = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2 L13 6 L9 10 M13 6 H6 C4 6 3 7 3 9 V14"/></svg>';
+
+  const chip = (svg, val, accent) => {
+    const empty = val == null;
+    return `<span class="trans-metric${empty ? " muted" : ""}">${svg} <span class="trans-metric-num">${empty ? "—" : transFmtCount(val)}</span></span>`;
+  };
+
+  const chipsHtml = `
+    ${chip(eyeSvg,   it.views)}
+    ${chip(heartSvg, it.likes)}
+    ${chip(cmtSvg,   it.comments)}
+    ${chip(shareSvg, it.shares)}
+  `;
+
+  // Free plan: blur + paywall
+  if (!isPaid) {
+    const lbl = lang === "en" ? "🔒 Pro metrics" : "🔒 Métricas Pro";
+    return `<div class="trans-metrics is-locked" onclick="event.stopPropagation();openUpgradeModal('transcribe_card');return false;">
+      ${chipsHtml}
+      <button type="button" class="trans-metrics-paywall" onclick="event.stopPropagation();openUpgradeModal('transcribe_card');return false;">${lbl}</button>
+    </div>`;
+  }
+
+  // Paid plan: chips + refresh per-card
+  const refreshLbl = lang === "en" ? "Refresh metrics" : "Refrescar métricas";
+  const updatedTime = it.metrics_updated_at
+    ? `<span class="trans-metrics-time" title="${lang === 'en' ? 'Last refreshed' : 'Actualizado'} ${esc(it.metrics_updated_at)}">${esc(ovRelTime ? ovRelTime(it.metrics_updated_at) : "")}</span>`
+    : "";
+  return `<div class="trans-metrics" id="trans-metrics-${it.id}">
+    ${chipsHtml}
+    <button type="button" class="trans-refresh" title="${refreshLbl}" onclick="event.stopPropagation();refreshTransMetrics(${it.id}, this)">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M14 4 V8 H10 M2 12 V8 H6 M14 8 A6 6 0 0 0 4 5 M2 8 A6 6 0 0 0 12 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    ${updatedTime}
+  </div>`;
+}
+
+async function refreshTransMetrics(tid, btn) {
+  if (!btn) btn = document.querySelector(`#trans-metrics-${tid} .trans-refresh`);
+  if (btn) { btn.classList.add("is-busy"); btn.disabled = true; }
+  try {
+    const res = await fetch(`/transcriptions/${tid}/refresh-metrics`, {
+      method: "POST", credentials: "same-origin",
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      if (data.upgrade_required) {
+        showToast((document.documentElement.lang === "en") ? "Upgrade required" : "Necesitas un plan de pago");
+      } else {
+        showToast(data.error || "Error");
+      }
+      return;
+    }
+    // Update local cache + re-render the card
+    const it = histCache.find(h => h.id === tid);
+    if (it && data.metrics) {
+      Object.assign(it, data.metrics);
+      // Re-render only this card
+      const card = document.getElementById(`t-${tid}`);
+      if (card) card.outerHTML = renderTranscCardHTML(it);
+    }
+  } catch (e) {
+    showToast("Error de red");
+  } finally {
+    if (btn) { btn.classList.remove("is-busy"); btn.disabled = false; }
+  }
+}
+
+let _bulkRefreshPolling = null;
+async function refreshAllTransMetrics() {
+  const btn = document.getElementById("transBulkRefresh");
+  if (btn) { btn.classList.add("is-busy"); btn.disabled = true; }
+  try {
+    const res = await fetch("/transcriptions/refresh-metrics-bulk", {
+      method: "POST", credentials: "same-origin",
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || "Error");
+      if (btn) { btn.classList.remove("is-busy"); btn.disabled = false; }
+      return;
+    }
+    if (!data.queued) {
+      showToast(data.message || (document.documentElement.lang === "en" ? "All metrics up to date" : "Todas las métricas están al día"));
+      if (btn) { btn.classList.remove("is-busy"); btn.disabled = false; }
+      return;
+    }
+    if (data.truncated) {
+      const es = (document.documentElement.lang || "es") === "es";
+      showToast(es
+        ? `Solo se actualizarán las ${data.limit} más recientes (de ${data.total_ig})`
+        : `Only the ${data.limit} most recent will be refreshed (of ${data.total_ig})`);
+    }
+    const lblEl = document.getElementById("transBulkRefreshLbl");
+    if (lblEl) {
+      const es = (document.documentElement.lang || "es") === "es";
+      lblEl.textContent = es ? `Actualizando 0/${data.queued}…` : `Refreshing 0/${data.queued}…`;
+    }
+    if (_bulkRefreshPolling) clearInterval(_bulkRefreshPolling);
+    _bulkRefreshPolling = setInterval(() => pollBulkRefresh(data.task_id, data.queued, btn), 3000);
+  } catch (e) {
+    showToast("Error de red");
+    if (btn) { btn.classList.remove("is-busy"); btn.disabled = false; }
+  }
+}
+
+async function pollBulkRefresh(taskId, total, btn) {
+  try {
+    const r = await fetch(`/transcriptions/refresh-metrics-bulk/${taskId}`, { credentials: "same-origin" });
+    const d = await r.json();
+    const es = (document.documentElement.lang || "es") === "es";
+    const lblEl = document.getElementById("transBulkRefreshLbl");
+    if (d.state === "progress" && lblEl) {
+      lblEl.textContent = es ? `Actualizando ${d.updated}/${total}…` : `Refreshing ${d.updated}/${total}…`;
+    }
+    if (d.state === "success" || d.state === "failure") {
+      clearInterval(_bulkRefreshPolling); _bulkRefreshPolling = null;
+      if (btn) { btn.classList.remove("is-busy"); btn.disabled = false; }
+      if (lblEl) lblEl.textContent = es ? "Actualizar métricas" : "Refresh metrics";
+      if (d.state === "success") {
+        const upd = d.updated || 0;
+        showToast(es ? `${upd} métricas actualizadas` : `${upd} metrics refreshed`);
+        // Reload list to pick up fresh data
+        if (typeof loadHistory === "function") {
+          await loadHistory();
+          if (typeof renderProfTransc === "function") renderProfTransc();
+        }
+      } else {
+        showToast(d.error || "Error");
+      }
+    }
+  } catch (e) {}
+}
+
+let _transFilterCurrent = "recent";
+function setTransFilter(sort) {
+  _transFilterCurrent = sort;
+  document.querySelectorAll(".trans-filter").forEach(b => {
+    b.classList.toggle("on", b.dataset.sort === sort);
+  });
+  renderProfTransc();
 }
 
 function transFmtDate(iso) {
@@ -12802,24 +13161,101 @@ function renderProfTransc() {
     const lang = (document.documentElement.lang || "es").toLowerCase();
     const title = lang === "en" ? "You haven't transcribed anything yet." : "Todavía no has transcrito nada.";
     const sub = lang === "en"
-      ? "Paste an Instagram or TikTok URL in the app and get started."
-      : "Pega una URL de Instagram o TikTok en la app y empieza.";
-    const cta = lang === "en" ? "Go to the app" : "Ir a la app";
+      ? "Paste an Instagram or TikTok URL above and get started."
+      : "Pega una URL de Instagram o TikTok arriba y empieza.";
     el.innerHTML = `
       <div class="trans-empty">
         <img src="${window.HOOKS_TRANSC_SVG || '/static/img/hooks/hooks-transcribir.svg'}" alt="" aria-hidden="true" />
         <h3>${title}</h3>
         <p>${sub}</p>
-        <a href="#" class="trans-empty-cta" onclick="event.preventDefault();transcToDashboard()">
-          ${cta}
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 6 H10 M7 3 L10 6 L7 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </a>
       </div>`;
     return;
   }
 
-  el.innerHTML = histCache.map(it => renderTranscCardHTML(it)).join("");
+  // v0.14.7: sort según filtro activo
+  let rows = histCache.slice();
+  if (_transFilterCurrent === "views")  rows.sort((a, b) => (b.views    || 0) - (a.views    || 0));
+  else if (_transFilterCurrent === "likes") rows.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+  // 'recent' = orden natural por id desc (ya viene así de /history)
+
+  el.innerHTML = rows.map(it => renderTranscCardHTML(it)).join("");
   scrollTranscHashIntoView();
+}
+
+// v0.14.7 — Transcribir desde el panel (input embebido)
+async function doTranscribeFromPanel() {
+  const input = document.getElementById("panelUrlInput");
+  const langSel = document.getElementById("panelLang");
+  const btn = document.getElementById("panelTranscribeBtn");
+  const statusEl = document.getElementById("panelTranscribeStatus");
+  if (!input || !btn || !statusEl) return;
+  const url = (input.value || "").trim();
+  if (!url) { showToast(t("toast.paste_url")); return; }
+  const validRx = /^https?:\/\/(www\.)?(instagram\.com\/(reel|p|tv)\/[\w-]+|((vm|vt)\.)?tiktok\.com\/)/i;
+  if (!validRx.test(url)) { showToast(pickRandomError()); return; }
+
+  btn.disabled = true;
+  statusEl.style.display = "";
+  statusEl.classList.remove("is-error", "is-ok");
+  const es = (document.documentElement.lang || "es") === "es";
+  statusEl.innerHTML = `<div class="panel-transc-spinner"></div><span>${es ? "Descargando audio…" : "Downloading audio…"}</span>`;
+
+  try {
+    const res = await fetch("/transcribe", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ url, language: langSel ? langSel.value : "" }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      statusEl.classList.add("is-error");
+      statusEl.innerHTML = `<span>${esc(data.error || "Error")}</span>`;
+      btn.disabled = false;
+      return;
+    }
+    pollPanelTask(data.task_id, statusEl, () => {
+      input.value = "";
+      btn.disabled = false;
+      statusEl.classList.add("is-ok");
+      statusEl.innerHTML = `<span>${es ? "✓ Transcripción guardada" : "✓ Transcription saved"}</span>`;
+      setTimeout(() => { statusEl.style.display = "none"; statusEl.classList.remove("is-ok"); }, 2200);
+      if (typeof loadHistory === "function") {
+        loadHistory().then(() => { if (typeof renderProfTransc === "function") renderProfTransc(); });
+      }
+    });
+  } catch (e) {
+    statusEl.classList.add("is-error");
+    statusEl.innerHTML = `<span>${(document.documentElement.lang === "en") ? "Network error" : "Error de red"}</span>`;
+    btn.disabled = false;
+  }
+}
+
+async function pollPanelTask(taskId, statusEl, onDone) {
+  const start = Date.now();
+  const es = (document.documentElement.lang || "es") === "es";
+  while (Date.now() - start < 90000) {
+    try {
+      const r = await fetch(`/task/${taskId}`);
+      const d = await r.json();
+      if (d.state === "success") { onDone(); return; }
+      if (d.state === "failure") {
+        statusEl.classList.add("is-error");
+        statusEl.innerHTML = `<span>${esc(d.error || "Error")}</span>`;
+        const btn = document.getElementById("panelTranscribeBtn");
+        if (btn) btn.disabled = false;
+        return;
+      }
+      if (d.step) {
+        const sp = statusEl.querySelector("span");
+        if (sp) sp.textContent = d.step;
+      }
+    } catch {}
+    await new Promise(r => setTimeout(r, 1500));
+  }
+  statusEl.classList.add("is-error");
+  statusEl.innerHTML = `<span>${es ? "Tardó demasiado. Inténtalo de nuevo." : "Took too long. Try again."}</span>`;
+  const btn = document.getElementById("panelTranscribeBtn");
+  if (btn) btn.disabled = false;
 }
 
 function scrollTranscHashIntoView() {
@@ -12877,6 +13313,8 @@ function renderTranscCardHTML(it, opts) {
       </a>`
     : "";
 
+  const metricsHtml = renderTransMetrics(it);
+
   return `
     <article class="trans-card" id="t-${id}" data-id="${id}">
       ${savedPointer}
@@ -12894,6 +13332,7 @@ function renderTranscCardHTML(it, opts) {
               ${urlShort}
             </a>` : ""}
           </div>
+          ${metricsHtml}
         </div>
       </div>
       <div class="trans-preview-wrap" onclick="toggleTransExpand(${id})" title="${lang === 'en' ? 'Click to expand' : 'Click para expandir'}">
