@@ -1798,6 +1798,227 @@ def api_me_stats():
     })
 
 
+# ── /api/me/overview — dashboard rico para #profPanelOverview ────────────
+_overview_cache: dict = {}  # uid -> (data, ts)
+_OVERVIEW_TTL_S = 60
+
+
+def _ov_get_cached(uid: str):
+    entry = _overview_cache.get(uid)
+    if entry and (_time.time() - entry[1]) < _OVERVIEW_TTL_S:
+        return entry[0]
+    return None
+
+
+def _ov_set_cached(uid: str, data: dict) -> None:
+    _overview_cache[uid] = (data, _time.time())
+
+
+def _derive_title_from_text(text: str, max_chars: int = 60) -> str:
+    if not text:
+        return ""
+    cleaned = " ".join(text.split())
+    if len(cleaned) <= max_chars:
+        return cleaned
+    return cleaned[:max_chars].rstrip() + "…"
+
+
+@app.route("/api/me/overview")
+@require_auth
+def api_me_overview():
+    """Rich dashboard data for #profPanelOverview.
+    7 parallel queries via ThreadPoolExecutor. Cached 60s per user_id.
+    v0.15 deuda: tabla `adapts` + `assistants.usage_count` para enriquecer
+    los widgets Hazlo tuyo y Asistentes (hoy honestos-vacíos).
+    """
+    uid = current_user()["id"]
+
+    cached = _ov_get_cached(uid)
+    if cached is not None:
+        return jsonify(cached)
+
+    def _w_transcribe():
+        try:
+            r = (db.table("transcriptions")
+                   .select("id, url, text, platform, thumbnail_b64, created_at", count="exact")
+                   .eq("user_id", uid)
+                   .order("created_at", desc=True)
+                   .limit(1)
+                   .execute())
+            total = r.count or 0
+            last = None
+            if r.data:
+                row = r.data[0]
+                last = {
+                    "title": _derive_title_from_text(row.get("text") or ""),
+                    "platform": row.get("platform"),
+                    "thumbnail_b64": row.get("thumbnail_b64"),
+                    "created_at": row.get("created_at"),
+                }
+            return {"total": total, "last": last}
+        except Exception as e:
+            logger.warning("ov_transcribe error: %s", e)
+            return {"total": 0, "last": None}
+
+    def _w_ideas():
+        try:
+            total_r = (db.table("ideas").select("id", count="exact").eq("user_id", uid).execute())
+            pending_r = (db.table("ideas").select("id", count="exact").eq("user_id", uid).eq("status", "draft").execute())
+            last_r = (db.table("ideas")
+                        .select("id, title, raw_text, status, created_at")
+                        .eq("user_id", uid)
+                        .order("created_at", desc=True)
+                        .limit(1)
+                        .execute())
+            last = None
+            if last_r.data:
+                row = last_r.data[0]
+                title = (row.get("title") or "").strip() or _derive_title_from_text(row.get("raw_text") or "", 60)
+                last = {
+                    "title": title,
+                    "status": row.get("status") or "draft",
+                    "created_at": row.get("created_at"),
+                }
+            return {"total": total_r.count or 0, "pending": pending_r.count or 0, "last": last}
+        except Exception as e:
+            logger.warning("ov_ideas error: %s", e)
+            return {"total": 0, "pending": 0, "last": None}
+
+    def _w_projects():
+        try:
+            total_r = db.table("projects").select("id", count="exact").eq("user_id", uid).execute()
+            top_r = (db.table("projects")
+                       .select("id, name, color")
+                       .eq("user_id", uid)
+                       .order("created_at", desc=True)
+                       .limit(3)
+                       .execute())
+            top = [
+                {"id": p["id"], "name": p.get("name") or "—", "color": p.get("color") or "#ef6a29"}
+                for p in (top_r.data or [])
+            ]
+            return {"total": total_r.count or 0, "top": top}
+        except Exception as e:
+            logger.warning("ov_projects error: %s", e)
+            return {"total": 0, "top": []}
+
+    def _w_metrics():
+        try:
+            prof_r = db.table("ig_profiles").select("id, ig_username").eq("user_id", uid).limit(1).execute()
+            has_profile = bool(prof_r.data)
+            sparkline = []
+            avg_views = 0
+            if has_profile:
+                vids_r = (db.table("ig_videos")
+                            .select("views, published_at")
+                            .eq("user_id", uid)
+                            .order("published_at", desc=True)
+                            .limit(7)
+                            .execute())
+                rows = vids_r.data or []
+                # Cronológico: invertimos (oldest → newest)
+                rows = list(reversed(rows))
+                sparkline = [int(v.get("views") or 0) for v in rows]
+                if sparkline:
+                    avg_views = sum(sparkline) // len(sparkline)
+            return {
+                "has_profile": has_profile,
+                "sparkline": sparkline,
+                "avg_views_recent": avg_views,
+            }
+        except Exception as e:
+            logger.warning("ov_metrics error: %s", e)
+            return {"has_profile": False, "sparkline": [], "avg_views_recent": 0}
+
+    def _w_assistants():
+        try:
+            total_r = db.table("assistants").select("id", count="exact").eq("user_id", uid).execute()
+            last_r = (db.table("assistants")
+                        .select("id, name, created_at")
+                        .eq("user_id", uid)
+                        .order("created_at", desc=True)
+                        .limit(1)
+                        .execute())
+            last_created = None
+            if last_r.data:
+                row = last_r.data[0]
+                last_created = {"name": row.get("name") or "—", "created_at": row.get("created_at")}
+            return {"total": total_r.count or 0, "last_created": last_created}
+        except Exception as e:
+            logger.warning("ov_assistants error: %s", e)
+            return {"total": 0, "last_created": None}
+
+    def _w_scripts():
+        try:
+            total_r = db.table("scripts").select("id", count="exact").eq("user_id", uid).execute()
+            last_r = (db.table("scripts")
+                        .select("id, title, created_at")
+                        .eq("user_id", uid)
+                        .order("created_at", desc=True)
+                        .limit(1)
+                        .execute())
+            last = None
+            if last_r.data:
+                row = last_r.data[0]
+                last = {
+                    "title": (row.get("title") or "").strip() or "Sin título",
+                    "created_at": row.get("created_at"),
+                }
+            return {"total": total_r.count or 0, "last": last}
+        except Exception as e:
+            logger.warning("ov_scripts error: %s", e)
+            return {"total": 0, "last": None}
+
+    def _w_team():
+        try:
+            active_r = (db.table("agency_members")
+                          .select("id, member_id", count="exact")
+                          .eq("agency_owner_id", uid)
+                          .eq("status", "active")
+                          .limit(4)
+                          .execute())
+            pending_r = (db.table("agency_members")
+                           .select("id", count="exact")
+                           .eq("agency_owner_id", uid)
+                           .eq("status", "pending")
+                           .execute())
+            members = [{"id": m.get("member_id")} for m in (active_r.data or [])]
+            return {
+                "active": active_r.count or 0,
+                "pending": pending_r.count or 0,
+                "members": members,
+            }
+        except Exception as e:
+            logger.warning("ov_team error: %s", e)
+            return {"active": 0, "pending": 0, "members": []}
+
+    tasks = {
+        "transcribe": _w_transcribe,
+        "ideas":      _w_ideas,
+        "projects":   _w_projects,
+        "metrics":    _w_metrics,
+        "assistants": _w_assistants,
+        "scripts":    _w_scripts,
+        "team":       _w_team,
+    }
+    out: dict = {}
+    with ThreadPoolExecutor(max_workers=len(tasks)) as ex:
+        futures = {k: ex.submit(fn) for k, fn in tasks.items()}
+        for k, fut in futures.items():
+            try:
+                out[k] = fut.result(timeout=4)
+            except Exception as e:
+                logger.warning("ov_task %s timeout/error: %s", k, e)
+                out[k] = None
+
+    # Hazlo tuyo / teleprompter — honestos-vacíos por ahora (deuda v0.15)
+    out["adapt"] = None
+    out["teleprompter"] = None
+
+    _ov_set_cached(uid, out)
+    return jsonify(out)
+
+
 # ── Metrics ──────────────────────────────────────────────────────────────────
 
 @app.route("/metrics/summary")
@@ -2375,7 +2596,8 @@ def index_en():
 @app.route("/app")
 @require_auth_html
 def workspace():
-    return render_template("index.html", lang=_resolve_lang(), workspace=True)
+    # v0.14.5a: dashboard intermedio eliminado. /app entra directo a Resumen.
+    return redirect("/profile/overview", code=302)
 
 
 @app.route("/settings")

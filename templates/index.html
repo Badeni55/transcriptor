@@ -3295,6 +3295,277 @@
     .panel-back-btn-adapt { display: none; }
     body.workspace .panel-back-btn-adapt { display: inline-flex; }
 
+    /* v0.14.5a — Overview editorial hero */
+    .ov-hero-wrap {
+      position: relative; overflow: hidden;
+      border-radius: 18px;
+      padding: 22px 4px 12px;
+      margin: -8px -4px 22px;
+    }
+    .ov-hero-waves {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      opacity: .12;
+      z-index: 0;
+    }
+    [data-theme="light"] .ov-hero-waves { opacity: .2; }
+    .ov-hero {
+      position: relative; z-index: 1;
+      display: grid; grid-template-columns: minmax(0,1fr) auto;
+      gap: 18px; align-items: center;
+      padding: 6px 8px 4px;
+    }
+    @media (max-width: 720px) {
+      .ov-hero { grid-template-columns: 1fr; gap: 12px; }
+      .ov-hero-right { display: none; }
+    }
+    .ov-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-body); font-size: .68rem; font-weight: 700;
+      letter-spacing: .14em; text-transform: uppercase;
+      color: var(--text3);
+      margin-bottom: 12px;
+    }
+    .ov-eyebrow-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: #ef6a29;
+      box-shadow: 0 0 0 0 rgba(239,106,41,.55);
+      animation: ovEyePulse 2.4s ease-out infinite;
+    }
+    @keyframes ovEyePulse {
+      0%   { box-shadow: 0 0 0 0 rgba(239,106,41,.55); }
+      70%  { box-shadow: 0 0 0 12px rgba(239,106,41,0); }
+      100% { box-shadow: 0 0 0 0 rgba(239,106,41,0); }
+    }
+    .ov-h1 {
+      font-family: var(--font-display); font-weight: 400;
+      font-size: clamp(1.6rem, 3.2vw, 2.2rem);
+      line-height: 1.1; letter-spacing: -.5px;
+      color: var(--text); margin: 0 0 10px;
+    }
+    .ov-h1 em {
+      font-style: italic;
+      background: linear-gradient(135deg, #fdba74, #ef6a29);
+      -webkit-background-clip: text; background-clip: text;
+      color: transparent; -webkit-text-fill-color: transparent;
+    }
+    [data-theme="light"] .ov-h1 em {
+      background: linear-gradient(135deg, #c2410c, #7c2d12);
+      -webkit-background-clip: text; background-clip: text;
+      color: transparent; -webkit-text-fill-color: transparent;
+    }
+    .ov-sub {
+      font-size: .92rem; color: var(--text2);
+      line-height: 1.4;
+    }
+    .ov-h1-date {
+      font-style: italic; color: var(--text2); font-weight: 400;
+      font-size: .92em;
+    }
+    .ov-hero-right {
+      position: relative;
+      width: 130px; height: 130px;
+      flex-shrink: 0;
+      margin-right: 24px;
+    }
+    @media (max-width: 720px) {
+      .ov-hero-right { margin-right: 0; }
+    }
+    .ov-hooks {
+      width: 100%; height: 100%;
+      filter: drop-shadow(0 8px 22px rgba(239,106,41,.25));
+      animation: ovHooksFloat 4s ease-in-out infinite;
+    }
+    @keyframes ovHooksFloat {
+      0%,100% { transform: translateY(0) rotate(-2deg); }
+      50%     { transform: translateY(-6px) rotate(2deg); }
+    }
+    .ov-hooks-glow {
+      position: absolute; inset: 10px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(239,106,41,.25) 0%, transparent 70%);
+      filter: blur(14px);
+      z-index: -1;
+      animation: ovHooksGlow 3s ease-in-out infinite alternate;
+    }
+    @keyframes ovHooksGlow {
+      from { opacity: .6; transform: scale(.95); }
+      to   { opacity: 1;  transform: scale(1.1); }
+    }
+
+    /* v0.14.5b — Overview rich widgets */
+    .ov-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 14px; margin: 8px 0 28px;
+    }
+    @media (max-width: 1024px) { .ov-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 720px)  { .ov-grid { grid-template-columns: 1fr; gap: 10px; } }
+    .ov-card {
+      position: relative;
+      display: flex; flex-direction: column;
+      gap: 14px;
+      min-height: 160px; padding: 20px;
+      background: linear-gradient(180deg, #1f1a22 0%, #171218 100%);
+      border-top: 1px solid rgba(255,255,255,.08);
+      border-left: 1px solid rgba(255,255,255,.04);
+      border-right: 1px solid rgba(255,255,255,.04);
+      border-bottom: 1px solid rgba(0,0,0,.4);
+      border-radius: 16px;
+      color: var(--text); text-align: left; cursor: pointer;
+      font-family: inherit;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.03),
+        0 1px 3px rgba(0,0,0,.45),
+        0 4px 14px rgba(0,0,0,.35);
+      transition: transform .2s cubic-bezier(.2,.7,.3,1), border-color .2s, box-shadow .2s;
+      overflow: hidden;
+    }
+    [data-theme="light"] .ov-card {
+      background: linear-gradient(180deg, #faf6ec 0%, #f2ede0 100%);
+      border: 1px solid var(--border);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.8),
+        inset 0 -1px 0 rgba(0,0,0,.05),
+        0 1px 2px rgba(0,0,0,.04),
+        0 4px 12px rgba(0,0,0,.03);
+    }
+    .ov-card::before {
+      content: ""; position: absolute; inset: 0;
+      background: radial-gradient(circle at 100% 0%, rgba(var(--ov-acc), .14), transparent 55%);
+      opacity: 0; transition: opacity .2s; pointer-events: none;
+      border-radius: inherit;
+    }
+    .ov-card:hover {
+      transform: translateY(-2px);
+      border-color: color-mix(in srgb, rgb(var(--ov-acc)) 45%, var(--border));
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.05),
+        0 2px 6px rgba(0,0,0,.5),
+        0 12px 28px -6px rgba(var(--ov-acc), .28);
+    }
+    .ov-card:hover::before { opacity: 1; }
+    .ov-card:active { transform: translateY(0); }
+    .ov-card:focus-visible { outline: 2px solid rgba(var(--ov-acc), .6); outline-offset: 2px; }
+    .ov-card-head { display: flex; align-items: flex-start; gap: 12px; }
+    .ov-card-hooks {
+      width: 44px; height: 44px; flex-shrink: 0;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,.25));
+      transition: transform .2s;
+    }
+    .ov-card:hover .ov-card-hooks { transform: translateY(-1px) rotate(-2deg); }
+    .ov-card-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .ov-card-label {
+      font-family: var(--font-display); font-size: 1.12rem;
+      color: var(--text); line-height: 1.15; letter-spacing: -.01em;
+    }
+    .ov-card-sub {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .68rem; color: var(--text3); letter-spacing: .02em;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .ov-card-body { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; min-height: 0; }
+    .ov-empty { font-size: .78rem; color: var(--text3); line-height: 1.45; }
+    .ov-card-count {
+      margin-top: 10px; padding-top: 8px;
+      border-top: 1px solid rgba(255,255,255,.05);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .68rem; color: var(--text3); letter-spacing: .02em;
+      font-variant-numeric: tabular-nums;
+    }
+    [data-theme="light"] .ov-card-count { border-top-color: rgba(0,0,0,.05); }
+
+    /* Loading skeleton */
+    .ov-skel {
+      height: 12px; border-radius: 4px;
+      background: linear-gradient(90deg, rgba(255,255,255,.04), rgba(255,255,255,.08), rgba(255,255,255,.04));
+      background-size: 200% 100%;
+      animation: ovSkelShine 1.4s ease-in-out infinite;
+    }
+    @keyframes ovSkelShine { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* Widget specific bits */
+    .ov-thumb-row { display: flex; gap: 10px; align-items: flex-start; }
+    .ov-thumb-img {
+      width: 60px; height: 60px; border-radius: 8px;
+      object-fit: cover; flex-shrink: 0;
+      background: var(--surf2);
+      border: 1px solid var(--border);
+    }
+    .ov-thumb-text { flex: 1; min-width: 0; }
+    .ov-thumb-title {
+      font-size: .82rem; color: var(--text); line-height: 1.35;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .ov-thumb-time {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: .66rem; color: var(--text3); margin-top: 4px;
+    }
+    .ov-line {
+      font-size: .82rem; color: var(--text); line-height: 1.4;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .ov-line.italic { font-style: italic; font-family: var(--font-display); font-size: .92rem; }
+    .ov-mini-prefix { font-family: ui-monospace, monospace; font-size: .64rem; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+    .ov-status {
+      display: inline-block; margin-top: 6px;
+      font-size: .58rem; font-weight: 700; letter-spacing: .06em;
+      padding: 2px 8px; border-radius: 999px;
+    }
+    .ov-status.s-draft     { background: rgba(148,163,184,.15); color: #cbd5e1; border: 1px solid rgba(148,163,184,.3); }
+    .ov-status.s-developed { background: rgba(34,197,94,.14);   color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
+    .ov-status.s-scripted  { background: rgba(125,91,184,.14);  color: #a78bfa; border: 1px solid rgba(125,91,184,.3); }
+
+    .ov-proj-list { display: flex; flex-direction: column; gap: 6px; }
+    .ov-proj-row { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--text); }
+    .ov-proj-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+      box-shadow: 0 0 0 2px rgba(0,0,0,.25);
+    }
+    .ov-proj-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ov-proj-more { font-size: .7rem; color: var(--text3); margin-top: 4px; }
+
+    .ov-spark-wrap { display: flex; flex-direction: column; gap: 6px; }
+    .ov-spark { width: 100%; height: 40px; }
+    .ov-spark polyline { stroke: rgb(var(--ov-acc)); stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .ov-spark-fill { fill: rgba(var(--ov-acc), .12); }
+    .ov-spark-meta { display: flex; align-items: baseline; gap: 6px; }
+    .ov-spark-num {
+      font-family: var(--font-display); font-size: 1.4rem; color: var(--text);
+      font-variant-numeric: tabular-nums; line-height: 1;
+    }
+    .ov-spark-lbl { font-size: .72rem; color: var(--text3); }
+
+    .ov-cta-inline {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: .78rem; color: rgb(var(--ov-acc)); font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .ov-team-stack { display: flex; align-items: center; gap: 0; margin-bottom: 4px; }
+    .ov-team-av {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, #a78bfa, #f97316);
+      border: 2px solid var(--surf);
+      margin-left: -8px;
+    }
+    .ov-team-av:first-child { margin-left: 0; }
+    .ov-team-more {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--surf2); border: 2px solid var(--surf);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: .68rem; font-weight: 700; color: var(--text2);
+      margin-left: -8px;
+    }
+    .ov-pending-pill {
+      display: inline-block; margin-top: 2px;
+      font-size: .62rem; font-weight: 700;
+      padding: 1px 7px; border-radius: 999px;
+      background: rgba(249,115,22,.14); color: #fdba74; border: 1px solid rgba(249,115,22,.3);
+    }
+
     /* Stats cards */
     .prof-stats-row {
       display: grid; grid-template-columns: repeat(3, 1fr);
@@ -7545,7 +7816,7 @@
       <a class="lang-btn{% if lang|default('es') == 'en' %} active{% endif %}" href="/en/">EN</a>
     </div>
     <a href="/affiliate" id="navAffiliate" style="display:none;color:var(--text3);font-size:.78rem;font-weight:500;text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--purple)'" onmouseout="this.style.color='var(--text3)'">Earn 30% &rarr;</a>
-    {% if not workspace %}<a class="btn-nav hi" id="btnWorkspace" href="/app" onclick="ctaWorkspaceClick()" style="display:none;text-decoration:none" data-i18n="nav.workspace">Ir a mi workspace →</a>{% endif %}
+    {% if not workspace %}<a class="btn-nav hi" id="btnWorkspace" href="/app" onclick="ctaWorkspaceClick()" style="display:none;text-decoration:none" data-i18n="nav.workspace">Ir a mi app →</a>{% endif %}
     <button class="btn-nav" id="btnLogin" onclick="openAuth('login','nav_login')" data-i18n="nav.login">Log in</button>
     <button class="btn-nav hi" id="btnReg" onclick="openAuth('register','nav_login')" data-i18n="nav.register">Free →</button>
     {% if workspace %}<button class="nav-upgrade-btn" id="navUpgradeBtn" onclick="openUpgradeModal('nav')" style="display:none" data-i18n-es="✦ Upgrade" data-i18n-en="✦ Upgrade">✦ Upgrade</button>{% endif %}
@@ -8007,7 +8278,7 @@
     <!-- Back to dashboard (workspace only) -->
     <a href="/app" class="panel-back-btn panel-back-btn-adapt" onclick="backToDashboard(event)">
       <span class="panel-back-arrow" aria-hidden="true">←</span>
-      <span data-i18n-es="Volver al dashboard" data-i18n-en="Back to dashboard">Volver al dashboard</span>
+      <span data-i18n-es="Volver a la app" data-i18n-en="Back to the app">Volver a la app</span>
     </a>
 
     <!-- ROW 1: headers -->
@@ -8170,501 +8441,10 @@
   body.workspace > main > section.hero,
   body.workspace > main > section.hero + div { display: none !important; }
 
-  .ws-tabs { max-width: 1200px; margin: 24px auto 8px; padding: 0 24px; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-  .ws-tabs::-webkit-scrollbar { display: none; }
-  .ws-tab { flex: 0 0 auto; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-size: .85rem; font-weight: 500; cursor: pointer; white-space: nowrap; transition: color .15s, background .15s, border-color .15s; font-family: inherit; }
-  .ws-tab:hover { color: var(--text); background: var(--surf); border-color: var(--text3); }
-
-  /* ── Dashboard ───────────────────────────────────────────────── */
-  .ws-dash { max-width: 1200px; margin: 16px auto 48px; padding: 0 24px; }
-  .ws-greeting { font-family: var(--font-head, inherit); font-size: clamp(1.6rem, 3.2vw, 2.2rem); font-weight: 700; color: var(--text); margin: 8px 0 4px; letter-spacing: -.01em; }
-  .ws-greeting .grad-txt { background: linear-gradient(90deg, var(--orange), #ffb57a); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .ws-sub { font-size: .92rem; color: var(--text2); margin: 0 0 24px; }
-
-  .ws-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
-  @media (max-width: 1024px) { .ws-grid { grid-template-columns: repeat(4, 1fr); } }
-  @media (max-width: 720px)  { .ws-grid { grid-template-columns: 1fr; gap: 12px; } }
-
-  .ws-card {
-    --acc: 249,115,22;
-    grid-column: span 2;
-    position: relative;
-    display: flex; flex-direction: column; justify-content: space-between;
-    min-height: 172px; padding: 20px 20px 18px;
-    padding-right: 96px;
-    background: linear-gradient(180deg, #1f1a22 0%, #171218 100%);
-    border-top: 1px solid rgba(255,255,255,0.08);
-    border-left: 1px solid rgba(255,255,255,0.04);
-    border-right: 1px solid rgba(255,255,255,0.04);
-    border-bottom: 1px solid rgba(0,0,0,0.4);
-    border-radius: 16px;
-    color: inherit; text-decoration: none; cursor: pointer;
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.03),
-      0 1px 3px rgba(0,0,0,0.5),
-      0 4px 16px rgba(0,0,0,0.4);
-    transition: transform .22s cubic-bezier(.2,.7,.3,1), border-color .22s ease, box-shadow .22s ease, background .22s ease;
-    text-align: left; font-family: inherit; overflow: hidden;
-  }
-  [data-theme="light"] .ws-card {
-    background: linear-gradient(180deg, #faf6ec 0%, #f2ede0 100%);
-    border: 1px solid var(--border);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.8),
-      inset 0 -1px 0 rgba(0,0,0,.05),
-      0 1px 2px rgba(0,0,0,.04),
-      0 4px 12px rgba(0,0,0,.03);
-  }
-  .ws-card::before {
-    content: ""; position: absolute; inset: 0;
-    background: radial-gradient(circle at 100% 0%, rgba(var(--acc), .1), transparent 55%);
-    opacity: 0; transition: opacity .22s ease; pointer-events: none;
-    border-radius: inherit;
-  }
-  .ws-card:hover {
-    transform: translateY(-2px);
-    background: linear-gradient(180deg, #251f28 0%, #1d1720 100%);
-    border-color: rgba(var(--acc), .45);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.05),
-      0 2px 6px rgba(0,0,0,.5),
-      0 12px 28px -6px rgba(var(--acc), .25);
-  }
-  [data-theme="light"] .ws-card:hover {
-    background: linear-gradient(180deg, #faf6ec 0%, #f2ede0 100%);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.9),
-      inset 0 -1px 0 rgba(0,0,0,.06),
-      0 2px 4px rgba(0,0,0,.06),
-      0 10px 22px -6px rgba(var(--acc), .28);
-  }
-  .ws-card:hover::before { opacity: 1; }
-  .ws-card:active {
-    transform: translateY(1px);
-    transition-duration: .08s;
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.02),
-      0 1px 2px rgba(0,0,0,.4);
-  }
-  [data-theme="light"] .ws-card:active {
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.5),
-      inset 0 -1px 0 rgba(0,0,0,.04),
-      0 1px 2px rgba(0,0,0,.05);
-  }
-  .ws-card:focus-visible { outline: 2px solid rgba(var(--acc), .6); outline-offset: 2px; }
-  .ws-card.ws-card-wide { grid-column: span 4; padding-right: 120px; }
-  @media (max-width: 1024px) { .ws-card.ws-card-wide { grid-column: span 4; } }
-  @media (max-width: 720px) { .ws-card, .ws-card.ws-card-wide { grid-column: 1 / -1; padding-right: 88px; } }
-
-  /* Per-card accent colors */
-  .ws-a-orange { --acc: 249,115,22; }
-  .ws-a-purple { --acc: 152,117,212; }
-  .ws-a-yellow { --acc: 255,217,61; }
-  .ws-a-brown  { --acc: 216,144,80; }
-  .ws-a-green  { --acc: 93,202,165; }
-  .ws-a-violet { --acc: 125,91,184; }
-  .ws-a-cream  { --acc: 212,168,88; }
-  .ws-a-blue   { --acc: 74,144,184; }
-  .ws-a-coral  { --acc: 232,112,74; }
-
-  /* Pixel-art Hooks icon, positioned top-right of each card */
-  .ws-card-icon {
-    position: absolute; top: 14px; right: 14px;
-    width: 72px; height: 72px;
-    image-rendering: pixelated; image-rendering: crisp-edges;
-    pointer-events: none; user-select: none;
-    transition: transform .35s cubic-bezier(.2,.7,.3,1);
-  }
-  .ws-card:hover .ws-card-icon { transform: translateY(-2px) rotate(-2deg); }
-  .ws-card.ws-card-wide .ws-card-icon { width: 104px; height: 104px; top: 16px; right: 16px; }
-  @media (max-width: 720px) {
-    .ws-card .ws-card-icon { width: 64px; height: 64px; top: 12px; right: 12px; }
-    .ws-card.ws-card-wide .ws-card-icon { width: 72px; height: 72px; }
-  }
-
-  .ws-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; min-height: 24px; }
-  .ws-card-title { font-weight: 700; font-size: 1.02rem; color: var(--text); letter-spacing: -.01em; }
-  .ws-card-desc { font-size: .82rem; color: var(--text2); line-height: 1.45; max-width: 90%; }
-  .ws-card-stat { display: flex; align-items: baseline; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
-  .ws-card-stat-num {
-    font-family: var(--font-head, inherit);
-    font-weight: 800; font-size: 1.7rem; line-height: 1;
-    color: rgb(var(--acc)); font-variant-numeric: tabular-nums;
-    letter-spacing: -.02em;
-  }
-  .ws-card-stat-lbl { font-size: .78rem; color: var(--text3); }
-  .ws-card-pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: rgba(var(--acc), .14); color: rgb(var(--acc)); border-radius: 999px; font-size: .72rem; font-weight: 600; }
-  .ws-card-lock { position: absolute; top: 10px; right: 12px; font-size: .85rem; color: var(--text3); }
-
-  /* Transcribir card (wide, with mini input) */
-  .ws-mini-transcribe { display: flex; gap: 8px; margin-top: 14px; }
-  .ws-mini-transcribe input {
-    flex: 1; padding: 11px 14px; background: var(--bg); border: 1.5px solid var(--border);
-    border-radius: 10px; font-size: .9rem; color: var(--text); outline: none; font-family: inherit;
-    transition: border-color .2s, box-shadow .2s;
-    min-width: 0;
-  }
-  .ws-mini-transcribe input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(249,115,22,.12); }
-  .ws-mini-transcribe button {
-    padding: 11px 18px; background: linear-gradient(135deg, var(--orange), #ea580c);
-    color: #fff; border: 0; border-radius: 10px; font-weight: 600; font-size: .9rem;
-    cursor: pointer; transition: transform .15s, box-shadow .15s; font-family: inherit; white-space: nowrap;
-  }
-  .ws-mini-transcribe button:hover { transform: translateY(-1px); box-shadow: 0 4px 14px -4px rgba(249,115,22,.45); }
-  .ws-mini-transcribe.is-busy input,
-  .ws-mini-transcribe.is-busy button { opacity: .6; cursor: not-allowed; transform: none; }
-  .ws-mini-transcribe.is-busy input { pointer-events: none; }
-  @media (max-width: 720px) {
-    .ws-mini-transcribe { flex-direction: column; gap: 10px; }
-    .ws-mini-transcribe button { width: 100%; padding: 12px 16px; }
-  }
-
-  /* ── Inline transcription feedback widget (dashboard) ───────── */
-  .ws-trans-result {
-    grid-column: 1 / -1;
-    position: relative;
-    padding: 22px 26px;
-    border-radius: 18px;
-    background: linear-gradient(180deg, #1f1a22 0%, #171218 100%);
-    border: 1px solid rgba(239, 106, 41, 0.25);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.04),
-      0 8px 24px rgba(0, 0, 0, 0.35),
-      0 0 60px rgba(239, 106, 41, 0.06);
-    animation: wsTransIn .22s ease both;
-  }
-  @keyframes wsTransIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  [data-theme="light"] .ws-trans-result {
-    background: linear-gradient(180deg, #fbf7ef 0%, #f3ede0 100%);
-    border-color: rgba(239, 106, 41, 0.3);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.6),
-      0 6px 18px rgba(180, 150, 100, 0.14);
-  }
-
-  /* LOADING state */
-  .ws-trans-loading {
-    display: flex; align-items: center; gap: 18px;
-    min-height: 120px;
-  }
-  .ws-trans-loading-hooks {
-    width: 48px; height: 48px;
-    flex-shrink: 0;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-    filter: drop-shadow(0 0 10px rgba(239, 106, 41, 0.35));
-    animation: wsHooksPulse 2s ease-in-out infinite;
-  }
-  @keyframes wsHooksPulse {
-    0%, 100% { transform: translateY(0); filter: drop-shadow(0 0 10px rgba(239, 106, 41, 0.35)); }
-    50%      { transform: translateY(-2px); filter: drop-shadow(0 0 18px rgba(239, 106, 41, 0.55)); }
-  }
-  .ws-trans-loading-text { flex: 1; min-width: 0; }
-  .ws-trans-loading-title {
-    font-family: var(--font-editorial);
-    font-style: italic;
-    font-weight: 500;
-    font-size: 18px;
-    color: var(--ink-editorial);
-    letter-spacing: -0.005em;
-  }
-  .ws-trans-loading-title::after {
-    content: "…";
-    display: inline-block;
-    width: 1.1em;
-    text-align: left;
-    animation: wsDots 1.5s steps(3, end) infinite;
-    overflow: hidden;
-    vertical-align: bottom;
-  }
-  @keyframes wsDots {
-    0%   { content: "."; }
-    33%  { content: ".."; }
-    66%  { content: "…"; }
-    100% { content: "."; }
-  }
-  .ws-trans-loading-phase {
-    margin-top: 6px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--ink-muted);
-    letter-spacing: 0.04em;
-  }
-
-  /* ERROR state */
-  .ws-trans-error {
-    display: flex; align-items: flex-start; gap: 16px;
-    min-height: 110px;
-  }
-  .ws-trans-error-icon {
-    flex-shrink: 0;
-    width: 32px; height: 32px;
-    display: inline-flex; align-items: center; justify-content: center;
-    color: #f09595;
-  }
-  .ws-trans-error-body { flex: 1; min-width: 0; }
-  .ws-trans-error-title {
-    font-family: var(--font-editorial);
-    font-weight: 500;
-    font-size: 18px;
-    color: var(--ink-editorial);
-    letter-spacing: -0.005em;
-    margin-bottom: 6px;
-  }
-  .ws-trans-error-sub {
-    font-family: var(--font-body);
-    font-size: 14px;
-    color: var(--ink-muted);
-    line-height: 1.5;
-    margin-bottom: 14px;
-  }
-  .ws-trans-error-retry {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 9px 18px;
-    border-radius: 10px;
-    border: none;
-    font-family: var(--font-body);
-    font-size: 13px; font-weight: 600;
-    color: #fff;
-    background: linear-gradient(135deg, #ff6b3d 0%, #ef6a29 100%);
-    cursor: pointer;
-    transition: transform .15s, box-shadow .15s;
-    box-shadow: 0 4px 14px rgba(239, 106, 41, 0.3), inset 0 1px 0 rgba(255,255,255,0.2);
-  }
-  .ws-trans-error-retry:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(239, 106, 41, 0.4), inset 0 1px 0 rgba(255,255,255,0.2); }
-  .ws-trans-result.is-error {
-    border-color: rgba(240, 149, 149, 0.28);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.04),
-      0 8px 24px rgba(0, 0, 0, 0.35),
-      0 0 50px rgba(240, 149, 149, 0.06);
-  }
-
-  /* DONE state: saved pointer styling */
-  .trans-saved-pointer {
-    display: inline-flex; align-items: center; gap: 7px;
-    margin-bottom: 14px;
-    font-family: var(--font-mono);
-    font-size: 11px; font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: #5dcaa5;
-    text-decoration: none;
-    padding: 5px 11px;
-    border-radius: 999px;
-    background: rgba(93, 202, 165, 0.08);
-    border: 1px solid rgba(93, 202, 165, 0.22);
-    transition: background .15s, gap .2s, color .15s;
-  }
-  .trans-saved-pointer:hover {
-    background: rgba(93, 202, 165, 0.14);
-    color: #76dbb6;
-    gap: 10px;
-  }
-  .trans-saved-pointer svg { flex-shrink: 0; }
-
-  /* The DONE wrapper hosts the extracted trans-card styles. Neutralize
-     the extra top-level margin and the hover transform inside the
-     dashboard widget so it reads as a single result, not a hoverable
-     list card. */
-  .ws-trans-result .trans-card {
-    border: none;
-    padding: 0;
-    background: transparent;
-    box-shadow: none;
-  }
-  .ws-trans-result .trans-card:hover {
-    transform: none;
-    border: none;
-    box-shadow: none;
-  }
-
-  @media (max-width: 720px) {
-    .ws-trans-result { padding: 18px; }
-    .ws-trans-loading { gap: 14px; }
-    .ws-trans-loading-hooks { width: 40px; height: 40px; }
-    .ws-trans-loading-title { font-size: 16px; }
-  }
-
-  /* Teleprompter "ready" microinteraction */
-  @keyframes wsPulse { 0%, 100% { opacity: .7; } 50% { opacity: 1; } }
-  .ws-card-tp-ready { color: rgb(var(--acc)); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
-  .ws-card-tp-play {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 14px; height: 14px;
-    animation: wsPulse 2s ease-in-out infinite;
-    color: rgb(var(--acc)); font-size: .7rem; line-height: 1;
-  }
 
   /* Attenuate waves on workspace */
   body.workspace #globalAurora { opacity: .35; }
 </style>
-<nav class="ws-tabs" aria-label="Workspace sections">
-  <button class="ws-tab" onclick="wsTabClick('overview')" data-i18n="prof.overview">Resumen</button>
-  <button class="ws-tab" onclick="wsTabClick('transc')" data-i18n="prof.transcriptions">Transcripciones</button>
-  <button class="ws-tab" onclick="wsTabClick('ideas')" data-i18n="prof.ideas">Ideas</button>
-  <button class="ws-tab" onclick="wsTabClick('projects')" data-i18n="prof.projects">Proyectos</button>
-  <button class="ws-tab" onclick="wsTabClick('scripts')">Scripts</button>
-  <button class="ws-tab" onclick="wsTabClick('assistants')" data-i18n="prof.assistants">Asistentes</button>
-  <button class="ws-tab" onclick="wsTabClick('metrics')" data-i18n="prof.metrics">Métricas</button>
-  <button class="ws-tab" onclick="wsTabClick('team')" data-i18n="prof.team">Equipo</button>
-  <button class="ws-tab" onclick="wsTabClick('teleprompter')" data-i18n="prof.teleprompter">Teleprompter</button>
-</nav>
-
-<section class="ws-dash" aria-label="Workspace dashboard">
-  <h1 class="ws-greeting" id="wsGreeting" data-i18n-es="Hola 👋" data-i18n-en="Hi 👋">Hola 👋</h1>
-  <p class="ws-sub" data-i18n="ws.sub">¿Qué toca hoy?</p>
-
-  <div class="ws-grid">
-
-    <!-- Transcribir (wide) -->
-    <div class="ws-card ws-card-wide ws-a-orange" role="region" aria-label="Transcribir">
-      <img class="ws-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-transcribir.svg') }}" alt="" aria-hidden="true" />
-      <div>
-        <div class="ws-card-head">
-          <span class="ws-card-title" data-i18n="ws.card.transcribe.title">Transcribir un reel</span>
-        </div>
-        <div class="ws-card-desc" data-i18n="ws.card.transcribe.desc">Pega el link de Instagram o TikTok y dale.</div>
-      </div>
-      <div class="ws-mini-transcribe">
-        <input id="wsMiniUrl" type="url" autocomplete="off" spellcheck="false"
-               placeholder="🔗 https://www.instagram.com/reel/..."
-               data-i18n-placeholder-es="🔗 https://www.instagram.com/reel/..."
-               data-i18n-placeholder-en="🔗 https://www.instagram.com/reel/..."
-               onkeydown="if(event.key==='Enter'){event.preventDefault();wsMiniTranscribe();}" />
-        <button type="button" onclick="wsMiniTranscribe()" data-i18n="ws.card.transcribe.btn">Transcribir</button>
-      </div>
-    </div>
-
-    <!-- Hazlo tuyo -->
-    <button type="button" class="ws-card ws-a-purple" onclick="wsOpenAdapt()">
-      <img class="ws-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-adapt.svg') }}" alt="" aria-hidden="true" />
-      <div>
-        <div class="ws-card-head">
-          <span class="ws-card-title" data-i18n="ws.card.adapt.title">Hazlo tuyo</span>
-        </div>
-        <div class="ws-card-desc" data-i18n="ws.card.adapt.desc">Reescribe tu guión en otro estilo.</div>
-      </div>
-      <div class="ws-card-stat">
-        <span class="ws-card-stat-lbl" data-i18n="ws.card.adapt.stat">Viral · LinkedIn · Historia · Hooks</span>
-      </div>
-    </button>
-
-    <!-- Inline transcription feedback (dashboard only) -->
-    <div id="wsTranscribeResult" class="ws-trans-result" role="status" aria-live="polite" style="display:none"></div>
-
-    <!-- Ideas -->
-    <button type="button" class="ws-card ws-a-yellow" onclick="wsTabClick('ideas')">
-      <img class="ws-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-ideas.svg') }}" alt="" aria-hidden="true" />
-      <div>
-        <div class="ws-card-head">
-          <span class="ws-card-title" data-i18n="ws.card.ideas.title">Ideas</span>
-        </div>
-        <div class="ws-card-desc" data-i18n="ws.card.ideas.desc">Banco de ideas con desarrollo IA.</div>
-      </div>
-      <div class="ws-card-stat">
-        <span class="ws-card-stat-num" id="wsStatIdeas">—</span>
-        <span class="ws-card-stat-lbl" data-i18n="ws.card.ideas.lbl">ideas</span>
-        <span class="ws-card-pill" id="wsStatIdeasPending" style="display:none"></span>
-      </div>
-    </button>
-
-    <!-- Proyectos -->
-    <button type="button" class="ws-card ws-a-brown" onclick="wsTabClick('projects')">
-      <img class="ws-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-proyectos.svg') }}" alt="" aria-hidden="true" />
-      <div>
-        <div class="ws-card-head">
-          <span class="ws-card-title" data-i18n="ws.card.projects.title">Proyectos</span>
-        </div>
-        <div class="ws-card-desc" data-i18n="ws.card.projects.desc">Organiza tus contenidos en carpetas.</div>
-      </div>
-      <div class="ws-card-stat">
-        <span class="ws-card-stat-num" id="wsStatProjects">—</span>
-        <span class="ws-card-stat-lbl" data-i18n="ws.card.projects.lbl">proyectos</span>
-      </div>
-    </button>
-
-    <!-- Métricas -->
-    <button type="button" class="ws-card ws-a-green" onclick="wsTabClick('metrics')">
-      <img class="ws-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-metricas.svg') }}" alt="" aria-hidden="true" />
-      <div>
-        <div class="ws-card-head">
-          <span class="ws-card-title" data-i18n="ws.card.metrics.title">Métricas</span>
-        </div>
-        <div class="ws-card-desc" data-i18n="ws.card.metrics.desc">Analiza tu perfil de Instagram.</div>
-      </div>
-      <div class="ws-card-stat">
-        <span class="ws-card-stat-num" id="wsStatMetrics">—</span>
-        <span class="ws-card-stat-lbl" id="wsStatMetricsLbl" data-i18n="ws.card.metrics.lbl">análisis esta semana</span>
-      </div>
-    </button>
-
-    <!-- Asistentes -->
-    <button type="button" class="ws-card ws-a-violet" onclick="wsTabClick('assistants')">
-      <img class="ws-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-asistentes.svg') }}" alt="" aria-hidden="true" />
-      <div>
-        <div class="ws-card-head">
-          <span class="ws-card-title" data-i18n="ws.card.assistants.title">Asistentes</span>
-        </div>
-        <div class="ws-card-desc" data-i18n="ws.card.assistants.desc">Tus estilos personalizados.</div>
-      </div>
-      <div class="ws-card-stat">
-        <span class="ws-card-stat-num" id="wsStatAssistants">—</span>
-        <span class="ws-card-stat-lbl" data-i18n="ws.card.assistants.lbl">asistentes</span>
-      </div>
-    </button>
-
-    <!-- Scripts -->
-    <button type="button" class="ws-card ws-a-cream" onclick="wsTabClick('scripts')">
-      <img class="ws-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-scripts.svg') }}" alt="" aria-hidden="true" />
-      <div>
-        <div class="ws-card-head">
-          <span class="ws-card-title" data-i18n="ws.card.scripts.title">Scripts</span>
-        </div>
-        <div class="ws-card-desc" data-i18n="ws.card.scripts.desc">Tus guiones guardados.</div>
-      </div>
-      <div class="ws-card-stat">
-        <span class="ws-card-stat-num" id="wsStatScripts">—</span>
-        <span class="ws-card-stat-lbl" data-i18n="ws.card.scripts.lbl">guardados</span>
-      </div>
-    </button>
-
-    <!-- Teleprompter -->
-    <button type="button" class="ws-card ws-a-blue" onclick="wsTabClick('teleprompter')">
-      <img class="ws-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-teleprompter.svg') }}" alt="" aria-hidden="true" />
-      <div>
-        <div class="ws-card-head">
-          <span class="ws-card-title" data-i18n="ws.card.teleprompter.title">Teleprompter</span>
-        </div>
-        <div class="ws-card-desc" data-i18n="ws.card.teleprompter.desc">Graba con tu guión delante.</div>
-      </div>
-      <div class="ws-card-stat">
-        <span class="ws-card-stat-lbl" id="wsTpStatus"></span>
-      </div>
-    </button>
-
-    <!-- Equipo -->
-    <button type="button" class="ws-card ws-a-coral" onclick="wsOpenTeam()">
-      <img class="ws-card-icon" src="{{ url_for('static', filename='img/hooks/hooks-equipo.svg') }}" alt="" aria-hidden="true" />
-      <div>
-        <div class="ws-card-head">
-          <span class="ws-card-title" data-i18n="ws.card.team.title">Equipo</span>
-        </div>
-        <div class="ws-card-desc" data-i18n="ws.card.team.desc">Invita miembros a tu agencia.</div>
-      </div>
-      <div class="ws-card-stat">
-        <span class="ws-card-stat-num" id="wsStatTeam">—</span>
-        <span class="ws-card-stat-lbl" data-i18n="ws.card.team.lbl">miembros</span>
-        <span class="ws-card-pill" id="wsStatTeamPending" style="display:none"></span>
-      </div>
-    </button>
-
-  </div>
-</section>
 {% endif %}
 
 {% if not workspace %}
@@ -9025,7 +8805,6 @@
       </div>
 
       <div class="prof-sidebar-footer">
-        <button class="btn-3d btn-3d-primary" style="padding:9px;border-radius:8px;background:var(--purple);color:#fff;font-size:.8rem;font-weight:600;border:none;cursor:pointer" onclick="closeProfile();openTopup()" data-i18n="prof.topup">+ Top up</button>
         <button id="profManageSubSidebar" class="btn-3d btn-3d-secondary" style="display:none;padding:8px;border-radius:8px;background:transparent;color:var(--text3);font-size:.75rem;border:1px solid var(--border);cursor:pointer" onclick="manageSub()" data-i18n="prof.manage_sub">Manage subscription</button>
         <button class="btn-3d btn-3d-secondary" style="padding:8px;border-radius:8px;background:transparent;color:var(--text3);font-size:.75rem;border:1px solid var(--border);cursor:pointer" onclick="closeProfile()" data-i18n="prof.back">← Back to app</button>
       </div>
@@ -9034,28 +8813,158 @@
     <!-- Main content -->
     <div class="prof-main" id="profMain">
 
-      <!-- Back to dashboard (all panels) -->
-      <a href="/app" class="panel-back-btn" onclick="backToDashboard(event)">
+      <!-- Back to app (visible solo en paneles ≠ overview; profTab() lo togglea). -->
+      <a href="/app" class="panel-back-btn" onclick="backToDashboard(event)" style="display:none">
         <span class="panel-back-arrow" aria-hidden="true">←</span>
-        <span data-i18n-es="Volver al dashboard" data-i18n-en="Back to dashboard">Volver al dashboard</span>
+        <span data-i18n-es="Volver a la app" data-i18n-en="Back to the app">Volver a la app</span>
       </a>
 
       <!-- Overview panel (default) -->
       <div id="profPanelOverview">
-        <div class="prof-stats-row">
-          <div class="prof-stat-card" style="--stat-accent:#f97316">
-            <div class="prof-stat-icon orange"><svg width="18" height="18" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><rect x="5" y="10" width="6" height="1" fill="currentColor" opacity=".5"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".3"/></svg></div>
-            <div><div class="prof-stat-val" id="profStatTransc">0</div><div class="prof-stat-label" data-i18n="prof.stat_transc">Transcriptions</div></div>
-          </div>
-          <div class="prof-stat-card" style="--stat-accent:#a78bfa">
-            <div class="prof-stat-icon purple"><svg width="18" height="18" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="10" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg></div>
-            <div><div class="prof-stat-val" id="profStatScripts">0</div><div class="prof-stat-label" data-i18n="prof.stat_scripts">Saved scripts</div></div>
-          </div>
-          <div class="prof-stat-card" style="--stat-accent:#22c55e">
-            <div class="prof-stat-icon green"><svg width="18" height="18" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="4" y="2" width="8" height="3" fill="currentColor"/><rect x="6" y="5" width="4" height="6" fill="currentColor"/><rect x="3" y="11" width="10" height="3" fill="currentColor" opacity=".5"/></svg></div>
-            <div><div class="prof-stat-val" id="profStatUsos">0</div><div class="prof-stat-label" data-i18n="prof.stat_uses">Uses left</div></div>
+
+        <!-- v0.14.5a: editorial hero (greeting + Hooks mascot) -->
+        <div class="ov-hero-wrap">
+          <svg class="ov-hero-waves" viewBox="0 0 1200 380" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0,210 Q180,150 360,200 T720,200 T1080,190 L1200,210 L1200,380 L0,380 Z" fill="#ef6a29"/>
+            <path d="M0,250 Q220,200 420,240 T780,240 T1200,250 L1200,380 L0,380 Z" fill="#7d5bb8" opacity="0.6"/>
+            <path d="M0,300 Q200,260 420,290 T820,290 T1200,300 L1200,380 L0,380 Z" fill="#c89968" opacity="0.5"/>
+            <circle cx="980" cy="120" r="3" fill="#ef6a29" opacity="0.7"/>
+            <circle cx="1080" cy="80" r="2" fill="#c4b896" opacity="0.6"/>
+            <circle cx="160" cy="100" r="2.5" fill="#7d5bb8" opacity="0.6"/>
+          </svg>
+          <div class="ov-hero">
+            <div class="ov-hero-left">
+              <div class="ov-eyebrow">
+                <span class="ov-eyebrow-dot"></span>
+                <span data-i18n-es="TU APP · RESUMEN" data-i18n-en="YOUR APP · OVERVIEW">TU APP · RESUMEN</span>
+              </div>
+              <h1 class="ov-h1" id="ovGreeting" data-i18n-es="Hola" data-i18n-en="Hi">Hola</h1>
+              <div class="ov-sub" data-i18n-es="¿Qué toca hoy?" data-i18n-en="What's on the menu today?">¿Qué toca hoy?</div>
+            </div>
+            <div class="ov-hero-right" aria-hidden="true">
+              <div class="ov-hooks-glow"></div>
+              <img class="ov-hooks" src="{{ url_for('static', filename='img/hooks/hooks-transcribir.svg') }}" alt="">
+            </div>
           </div>
         </div>
+
+        <!-- v0.14.5b: 9 rich widgets (data via /api/me/overview).
+             Subs ESTÁTICAS descriptivas; counts viven en body via JS. -->
+        <div class="ov-grid" id="ovGrid">
+
+          <!-- 1. Transcribir -->
+          <button type="button" class="ov-card" style="--ov-acc:249,115,22" onclick="profTab('transc')">
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-transcribir.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Transcribir" data-i18n-en="Transcribe">Transcribir</div>
+                <div class="ov-card-sub" data-i18n-es="Convierte reels en texto" data-i18n-en="Turn reels into text">Convierte reels en texto</div>
+              </div>
+            </div>
+            <div class="ov-card-body" id="ovBodyTransc"><div class="ov-skel"></div></div>
+          </button>
+
+          <!-- 2. Hazlo tuyo (honesto-vacío hasta v0.15) -->
+          <button type="button" class="ov-card" style="--ov-acc:167,139,250" onclick="closeProfile();const el=document.getElementById('adaptCard');if(el)el.scrollIntoView({behavior:'smooth'})">
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-adapt.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Hazlo tuyo" data-i18n-en="Make it yours">Hazlo tuyo</div>
+                <div class="ov-card-sub" data-i18n-es="Reescribe un guion" data-i18n-en="Rewrite a script">Reescribe un guion</div>
+              </div>
+            </div>
+            <div class="ov-card-body">
+              <div class="ov-empty" data-i18n-es="Viral · LinkedIn · Historia · Hooks · Custom" data-i18n-en="Viral · LinkedIn · Story · Hooks · Custom">Viral · LinkedIn · Historia · Hooks · Custom</div>
+            </div>
+          </button>
+
+          <!-- 3. Ideas -->
+          <button type="button" class="ov-card" style="--ov-acc:234,179,8" onclick="profTab('ideas')">
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-ideas.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Ideas" data-i18n-en="Ideas">Ideas</div>
+                <div class="ov-card-sub" data-i18n-es="Captura cualquier chispa" data-i18n-en="Capture any spark">Captura cualquier chispa</div>
+              </div>
+            </div>
+            <div class="ov-card-body" id="ovBodyIdeas"><div class="ov-skel"></div></div>
+          </button>
+
+          <!-- 4. Proyectos -->
+          <button type="button" class="ov-card" style="--ov-acc:200,153,104" onclick="profTab('projects')">
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-proyectos.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Proyectos" data-i18n-en="Projects">Proyectos</div>
+                <div class="ov-card-sub" data-i18n-es="Organiza tu trabajo" data-i18n-en="Organize your work">Organiza tu trabajo</div>
+              </div>
+            </div>
+            <div class="ov-card-body" id="ovBodyProjects"><div class="ov-skel"></div></div>
+          </button>
+
+          <!-- 5. Métricas -->
+          <button type="button" class="ov-card" style="--ov-acc:34,197,94" onclick="profTab('metrics')">
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-metricas.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Métricas" data-i18n-en="Metrics">Métricas</div>
+                <div class="ov-card-sub" data-i18n-es="Mide qué funciona" data-i18n-en="Measure what works">Mide qué funciona</div>
+              </div>
+            </div>
+            <div class="ov-card-body" id="ovBodyMetrics"><div class="ov-skel"></div></div>
+          </button>
+
+          <!-- 6. Asistentes -->
+          <button type="button" class="ov-card" style="--ov-acc:125,91,184" onclick="profTab('assistants')">
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-asistentes.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Asistentes" data-i18n-en="Assistants">Asistentes</div>
+                <div class="ov-card-sub" data-i18n-es="Crea estilos propios" data-i18n-en="Create your own styles">Crea estilos propios</div>
+              </div>
+            </div>
+            <div class="ov-card-body" id="ovBodyAssistants"><div class="ov-skel"></div></div>
+          </button>
+
+          <!-- 7. Guiones -->
+          <button type="button" class="ov-card" style="--ov-acc:236,201,160" onclick="profTab('scripts')">
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-scripts.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Guiones" data-i18n-en="Scripts">Guiones</div>
+                <div class="ov-card-sub" data-i18n-es="Tu archivo de guiones" data-i18n-en="Your script archive">Tu archivo de guiones</div>
+              </div>
+            </div>
+            <div class="ov-card-body" id="ovBodyScripts"><div class="ov-skel"></div></div>
+          </button>
+
+          <!-- 8. Teleprompter (no tabla teleprompter_recordings — layout simple) -->
+          <button type="button" class="ov-card" style="--ov-acc:59,130,246" onclick="openTeleprompterPicker()">
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-teleprompter.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Teleprompter" data-i18n-en="Teleprompter">Teleprompter</div>
+                <div class="ov-card-sub" data-i18n-es="Graba sin improvisar" data-i18n-en="Record without improvising">Graba sin improvisar</div>
+              </div>
+            </div>
+            <div class="ov-card-body">
+              <div class="ov-empty" data-i18n-es="Cualquier guion → cámara" data-i18n-en="Any script → camera">Cualquier guion → cámara</div>
+            </div>
+          </button>
+
+          <!-- 9. Equipo -->
+          <button type="button" class="ov-card" id="ovCardTeam" style="--ov-acc:251,113,133" onclick="ovOpenTeam()">
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-equipo.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Equipo" data-i18n-en="Team">Equipo</div>
+                <div class="ov-card-sub" data-i18n-es="Trabaja con tu gente" data-i18n-en="Work with your team">Trabaja con tu gente</div>
+              </div>
+            </div>
+            <div class="ov-card-body" id="ovBodyTeam"><div class="ov-skel"></div></div>
+          </button>
+        </div>
+
 
         <!-- Quick actions -->
         <div class="prof-quick-grid" id="profQuickGrid">
@@ -9176,10 +9085,10 @@
                 <path d="M8 3 V13 M3 8 H13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
               </svg>
             </span>
-            <span class="trans-cta-text" data-i18n-es="¿Otro reel? Transcribe uno nuevo desde el dashboard." data-i18n-en="Another reel? Transcribe a new one from the dashboard.">¿Otro reel? Transcribe uno nuevo desde el dashboard.</span>
+            <span class="trans-cta-text" data-i18n-es="¿Otro reel? Transcribe uno nuevo desde la app." data-i18n-en="Another reel? Transcribe a new one from the app.">¿Otro reel? Transcribe uno nuevo desde la app.</span>
           </div>
           <span class="trans-cta-go">
-            <span data-i18n-es="Ir al dashboard" data-i18n-en="Go to dashboard">Ir al dashboard</span>
+            <span data-i18n-es="Ir a la app" data-i18n-en="Go to the app">Ir a la app</span>
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
               <path d="M2 5 H8 M5.5 2.5 L8 5 L5.5 7.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
@@ -9580,7 +9489,7 @@
 <div id="settingsView" style="position:fixed;inset:0;z-index:305;background:var(--bg);overflow-y:auto;padding:40px 20px">
   <div style="max-width:520px;margin:0 auto">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px">
-      <a href="/app" class="btn-nav" style="padding:6px 10px;font-size:.82rem">← <span data-i18n-es="Workspace" data-i18n-en="Workspace">Workspace</span></a>
+      <a href="/app" class="btn-nav" style="padding:6px 10px;font-size:.82rem">← <span data-i18n-es="App" data-i18n-en="App">App</span></a>
       <h1 style="font-family:var(--font-display);font-size:1.6rem;margin:0" data-i18n-es="Mi cuenta" data-i18n-en="My account">My account</h1>
     </div>
 
@@ -9795,7 +9704,7 @@ window.__NEXT_URL__ = {{ next_url|tojson if next_url else 'null' }};
 // ── i18n ─────────────────────────────────────────────────────────────────
 const LANGS = {
   es: {
-    "nav.login": "Entrar", "nav.register": "Gratis →", "nav.profile": "Mi perfil", "nav.logout": "Cerrar sesión", "nav.earn": "Ganar 30%", "nav.theme": "Tema", "nav.navigation": "Navegación", "nav.account": "Cuenta", "nav.home": "Inicio", "nav.buy_credits": "Comprar créditos", "nav.workspace": "Ir a mi workspace →", "nav.my_account": "Mi cuenta", "nav.my_plan": "Mi plan", "nav.dark_mode": "Modo oscuro", "nav.language": "Idioma", "nav.affiliates": "Afiliados", "nav.public_web": "Ver web pública",
+    "nav.login": "Entrar", "nav.register": "Gratis →", "nav.profile": "Mi perfil", "nav.logout": "Cerrar sesión", "nav.earn": "Ganar 30%", "nav.theme": "Tema", "nav.navigation": "Navegación", "nav.account": "Cuenta", "nav.home": "Inicio", "nav.buy_credits": "Comprar créditos", "nav.workspace": "Ir a mi app →", "nav.my_account": "Mi cuenta", "nav.my_plan": "Mi plan", "nav.dark_mode": "Modo oscuro", "nav.language": "Idioma", "nav.affiliates": "Afiliados", "nav.public_web": "Ver web pública",
     "hero.badge": "5 gratis al día · Sin tarjeta · Sin suscripción",
     "hero.h1": 'Pega la URL.<br><span class="grad-txt">Obtén el guión.</span>',
     "hero.sub": "Transcribe reels de Instagram y TikTok al instante con IA.",
@@ -9844,35 +9753,6 @@ const LANGS = {
     "ex.storytelling": 'Era 2021. Tenía 0 seguidores y grababa en el baño de mi casa para que nadie me oyera.\n\n<span class="ph">Cada vídeo tardaba 4 horas en editarse.</span> Cada uno tenía 12 vistas.\n\nUn día lo dejé todo. Durante 3 meses, no publiqué nada.\n\nCuando volví, cambié solo una cosa: <span class="ph">el primer segundo.</span>\n\nY todo cambió.',
     "ex.hooks": '<span class="ph">1.</span> ¿Sabías que el 90% de creadores comete este error en el primer segundo?\n\n<span class="ph">2.</span> El error que cometen todos los principiantes (y que yo también cometí)\n\n<span class="ph">3.</span> Lo que nadie te dice sobre crear contenido que realmente funciona\n\n<span class="ph">4.</span> Si hubiera sabido esto antes, tendría el doble de seguidores hoy\n\n<span class="ph">5.</span> Para cuando termines este vídeo, querrás regrabar todo lo que tienes',
     "ex.custom": '<span class="ph">✍️ Tú tienes el control.</span>\n\nEscribe cualquier instrucción en el campo de texto:\n\n<span class="ph">"Escríbelo como carta de ventas"</span>\n<span class="ph">"Hazlo en formato pregunta-respuesta"</span>\n<span class="ph">"Tono motivacional, sin tecnicismos"</span>\n\nLa IA adaptará el guión exactamente a lo que pidas.',
-    // Workspace dashboard
-    "ws.sub": "¿Qué toca hoy?",
-    "ws.card.transcribe.title": "Transcribir un reel",
-    "ws.card.transcribe.desc": "Pega el link de Instagram o TikTok y dale.",
-    "ws.card.transcribe.btn": "Transcribir",
-    "ws.card.adapt.title": "Hazlo tuyo",
-    "ws.card.adapt.desc": "Reescribe tu guión en otro estilo.",
-    "ws.card.adapt.stat": "Viral · LinkedIn · Historia · Hooks",
-    "ws.card.ideas.title": "Ideas",
-    "ws.card.ideas.desc": "Banco de ideas con desarrollo IA.",
-    "ws.card.ideas.lbl": "ideas",
-    "ws.card.projects.title": "Proyectos",
-    "ws.card.projects.desc": "Organiza tus contenidos en carpetas.",
-    "ws.card.projects.lbl": "proyectos",
-    "ws.card.metrics.title": "Métricas",
-    "ws.card.metrics.desc": "Analiza tu perfil de Instagram.",
-    "ws.card.metrics.lbl": "análisis esta semana",
-    "ws.card.assistants.title": "Asistentes",
-    "ws.card.assistants.desc": "Tus estilos personalizados.",
-    "ws.card.assistants.lbl": "asistentes",
-    "ws.card.scripts.title": "Scripts",
-    "ws.card.scripts.desc": "Tus guiones guardados.",
-    "ws.card.scripts.lbl": "guardados",
-    "ws.card.teleprompter.title": "Teleprompter",
-    "ws.card.teleprompter.desc": "Graba con tu guión delante.",
-    "ws.card.teleprompter.lbl": "Abrir →",
-    "ws.card.team.title": "Equipo",
-    "ws.card.team.desc": "Invita miembros a tu agencia.",
-    "ws.card.team.lbl": "miembros",
     // Profile hub
     "prof.overview": "Resumen",
     "prof.saved_scripts": "Guiones",
@@ -10190,7 +10070,7 @@ const LANGS = {
     "auth.forgot": "¿Olvidaste tu contraseña?",
   },
   en: {
-    "nav.login": "Log in", "nav.register": "Free →", "nav.profile": "My profile", "nav.logout": "Log out", "nav.earn": "Earn 30%", "nav.theme": "Theme", "nav.navigation": "Navigation", "nav.account": "Account", "nav.home": "Home", "nav.buy_credits": "Buy credits", "nav.workspace": "Go to workspace →", "nav.my_account": "My account", "nav.my_plan": "My plan", "nav.dark_mode": "Dark mode", "nav.language": "Language", "nav.affiliates": "Affiliates", "nav.public_web": "View public site",
+    "nav.login": "Log in", "nav.register": "Free →", "nav.profile": "My profile", "nav.logout": "Log out", "nav.earn": "Earn 30%", "nav.theme": "Theme", "nav.navigation": "Navigation", "nav.account": "Account", "nav.home": "Home", "nav.buy_credits": "Buy credits", "nav.workspace": "Go to the app →", "nav.my_account": "My account", "nav.my_plan": "My plan", "nav.dark_mode": "Dark mode", "nav.language": "Language", "nav.affiliates": "Affiliates", "nav.public_web": "View public site",
     "hero.badge": "5 free/day · No card · No subscription",
     "hero.h1": 'Paste the URL.<br><span class="grad-txt">Get the script.</span>',
     "hero.sub": "Transcribe Instagram and TikTok reels instantly with AI.",
@@ -10240,35 +10120,6 @@ const LANGS = {
     "ex.hooks": '<span class="ph">1.</span> Did you know 90% of creators make this mistake in the first second?\n\n<span class="ph">2.</span> The mistake every beginner makes (and I made it too)\n\n<span class="ph">3.</span> What nobody tells you about creating content that actually works\n\n<span class="ph">4.</span> If I\'d known this sooner, I\'d have twice the followers today\n\n<span class="ph">5.</span> By the time this video ends, you\'ll want to re-record everything you have',
     "ex.custom": '<span class="ph">✍️ You\'re in control.</span>\n\nType any instruction in the text field:\n\n<span class="ph">"Write it as a sales letter"</span>\n<span class="ph">"Make it Q&A format"</span>\n<span class="ph">"Motivational tone, no jargon"</span>\n\nThe AI will adapt the script to exactly what you ask.',
     // Profile hub
-    // Workspace dashboard
-    "ws.sub": "What's on the menu today?",
-    "ws.card.transcribe.title": "Transcribe a reel",
-    "ws.card.transcribe.desc": "Paste the Instagram or TikTok link and go.",
-    "ws.card.transcribe.btn": "Transcribe",
-    "ws.card.adapt.title": "Make it yours",
-    "ws.card.adapt.desc": "Rewrite your script in another style.",
-    "ws.card.adapt.stat": "Viral · LinkedIn · Story · Hooks",
-    "ws.card.ideas.title": "Ideas",
-    "ws.card.ideas.desc": "Idea bank with AI development.",
-    "ws.card.ideas.lbl": "ideas",
-    "ws.card.projects.title": "Projects",
-    "ws.card.projects.desc": "Organize your content in folders.",
-    "ws.card.projects.lbl": "projects",
-    "ws.card.metrics.title": "Metrics",
-    "ws.card.metrics.desc": "Analyze your Instagram profile.",
-    "ws.card.metrics.lbl": "analyses this week",
-    "ws.card.assistants.title": "Assistants",
-    "ws.card.assistants.desc": "Your custom styles.",
-    "ws.card.assistants.lbl": "assistants",
-    "ws.card.scripts.title": "Scripts",
-    "ws.card.scripts.desc": "Your saved scripts.",
-    "ws.card.scripts.lbl": "saved",
-    "ws.card.teleprompter.title": "Teleprompter",
-    "ws.card.teleprompter.desc": "Record with your script in front.",
-    "ws.card.teleprompter.lbl": "Open →",
-    "ws.card.team.title": "Team",
-    "ws.card.team.desc": "Invite members to your agency.",
-    "ws.card.team.lbl": "members",
     "prof.overview": "Overview",
     "prof.saved_scripts": "Scripts",
     "prof.transcriptions": "Transcriptions",
@@ -11047,15 +10898,15 @@ window.addEventListener("DOMContentLoaded", async () => {
   await refreshMe();
   if (st.user) { loadHistory(); loadAssistants(); loadProjects(); }
   try {
-    if (st.user && window.location.pathname.startsWith("/app")) {
+    const onApp = window.location.pathname.startsWith("/app") || window.location.pathname.startsWith("/profile");
+    if (st.user && onApp) {
       let source = "direct";
       if (sessionStorage.getItem("rs_just_logged_in")) { source = "post_login"; sessionStorage.removeItem("rs_just_logged_in"); }
       else if (sessionStorage.getItem("rs_ws_cta")) { source = "cta_nav"; sessionStorage.removeItem("rs_ws_cta"); }
       else if (document.referrer && /reelscript\.net/i.test(document.referrer)) { source = "internal"; }
       window.track && window.track.workspaceEntered({ source, plan: st.plan });
-      wsRenderGreeting();
-      wsLoadStats();
-      wsRenderTeleprompter();
+      // v0.14.5a: load mini-grid stats for #profPanelOverview
+      if (typeof loadOverviewMiniGrid === "function") loadOverviewMiniGrid();
     }
   } catch(e){}
   animateCounter();
@@ -11596,10 +11447,13 @@ function renderProfileHub() {
     usageWrap.style.display = "none";
   }
 
-  // Stats
-  document.getElementById("profStatTransc").textContent = histCache.length;
-  document.getElementById("profStatScripts").textContent = scriptsCache.length;
-  document.getElementById("profStatUsos").textContent = Math.floor(st.credits / 18);
+  // Stats row (.prof-stats-row) eliminada en v0.14.5b — los datos viven en
+  // los widgets de #profPanelOverview. Las refs antiguas siguen aquí como
+  // optional-set para no romper si alguien restaura los elementos.
+  const _setIf = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  _setIf("profStatTransc", histCache.length);
+  _setIf("profStatScripts", scriptsCache.length);
+  _setIf("profStatUsos", Math.floor(st.credits / 18));
 
   // Show nav items — all features available to all plans
   const hasPaidPlan = ["pro","creator","agency"].includes(plan);
@@ -11669,17 +11523,15 @@ function backToDashboard(e) {
   if (e) e.preventDefault();
   const isWorkspace = document.body.classList.contains("workspace");
   if (!isWorkspace) {
-    window.location.href = "/app";
+    // v0.14.5a: /app redirige server-side a /profile/overview
+    window.location.href = "/profile/overview";
     return;
   }
-  // Workspace: close drawer without closeProfile's URL mutation, then push /app.
-  const page = document.getElementById("profilePage");
-  if (page) page.classList.remove("on");
-  document.body.style.overflow = "";
-  try { closeAvatarPicker(); } catch {}
-  if (location.pathname !== "/app") {
-    try { history.pushState({}, "", "/app"); } catch {}
+  // v0.14.5a: Resumen es el home real. Volver a la app == ir a Overview tab.
+  if (location.pathname !== "/profile/overview") {
+    try { history.pushState({}, "", "/profile/overview"); } catch {}
   }
+  if (typeof profTab === "function") profTab("overview", false);
   document.title = "ReelScript";
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -12603,6 +12455,256 @@ const PROF_TITLES = {
   en: { overview: "Profile", scripts: "Scripts", transc: "Transcriptions", projects: "Projects", assistants: "Assistants", metrics: "Metrics", ideas: "Ideas", team: "Team", privacy: "Privacy", settings: "Settings" },
 };
 
+// v0.14.5a — Overview mini grid loader + Team handler
+function ovGreetingName() {
+  try {
+    const email = (st.user && st.user.email) || "";
+    if (email) {
+      const local = email.split("@")[0].replace(/[._-]+/g, " ").trim();
+      // First token, first letter capitalized
+      const first = local.split(/\s+/)[0] || local;
+      return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+    }
+  } catch (e) {}
+  return "";
+}
+function ovRenderGreeting() {
+  const root = document.getElementById("ovGreeting");
+  if (!root) return;
+  const es = (document.documentElement.lang || "es") === "es";
+  const name = ovGreetingName(); // "" si no hay user
+  let dateStr = "";
+  try {
+    dateStr = new Date().toLocaleDateString(es ? "es-ES" : "en-US", { weekday: "long", day: "numeric", month: "long" });
+  } catch (e) {}
+
+  const hi = es ? "Hola" : "Hi";
+  // Construye el saludo sin comas/puntos sueltos
+  // - con nombre + fecha: "Hola, David. Sábado 26 de abril."
+  // - solo nombre:        "Hola, David."
+  // - solo fecha:         "Hola. Sábado 26 de abril."
+  // - sin nada:           "Hola."
+  const parts = [];
+  if (name) {
+    parts.push(`${hi}, <em>${name.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</em>.`);
+  } else {
+    parts.push(`${hi}.`);
+  }
+  if (dateStr) {
+    parts.push(`<span class="ov-h1-date">${dateStr.charAt(0).toUpperCase()}${dateStr.slice(1)}.</span>`);
+  }
+  root.innerHTML = parts.join(" ");
+}
+
+// v0.14.5b — relative time formatter (es/en)
+function ovRelTime(iso) {
+  if (!iso) return "";
+  const es = (document.documentElement.lang || "es") === "es";
+  const t = new Date(iso).getTime();
+  if (isNaN(t)) return "";
+  const diff = Date.now() - t;
+  const m = Math.floor(diff / 60000);
+  if (m < 1)  return es ? "ahora" : "just now";
+  if (m < 60) return es ? `hace ${m} min`         : `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return es ? `hace ${h}h`            : `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 7)  return es ? (d === 1 ? "ayer" : `hace ${d} días`) : (d === 1 ? "yesterday" : `${d}d ago`);
+  const w = Math.floor(d / 7);
+  if (w < 5)  return es ? (w === 1 ? "hace 1 sem" : `hace ${w} sem`) : (w === 1 ? "1w ago" : `${w}w ago`);
+  const mo = Math.floor(d / 30);
+  return es ? `hace ${mo} mes${mo > 1 ? "es" : ""}` : `${mo}mo ago`;
+}
+
+function ovEsc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function ovRenderSparkline(values, container) {
+  if (!container) return;
+  const w = Math.max(120, container.clientWidth || 200);
+  const h = 40;
+  if (!values || values.length < 2) {
+    container.innerHTML = "";
+    return;
+  }
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  const range = (max - min) || 1;
+  const pts = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * w;
+    const y = h - ((v - min) / range) * h;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const polyline = pts.join(" ");
+  // Filled area under curve for visual weight
+  const fill = `0,${h} ${polyline} ${w},${h}`;
+  container.innerHTML = `
+    <svg class="ov-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+      <polygon class="ov-spark-fill" points="${fill}"/>
+      <polyline points="${polyline}"/>
+    </svg>`;
+}
+
+async function loadOverviewMiniGrid() {
+  ovRenderGreeting();
+  let d;
+  try {
+    const res = await fetch("/api/me/overview", { credentials: "same-origin" });
+    if (!res.ok) return;
+    d = await res.json();
+  } catch (e) { return; }
+
+  const es = (document.documentElement.lang || "es") === "es";
+  const setBody = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  const countLine = (txt) => `<div class="ov-card-count">${txt}</div>`;
+
+  // ── 1. Transcribir ─────────────────────────────────────────────────────
+  const t = d.transcribe || {};
+  let bodyT;
+  if (t.last) {
+    const thumb = t.last.thumbnail_b64
+      ? `<img class="ov-thumb-img" src="${ovEsc(t.last.thumbnail_b64)}" alt="">`
+      : `<div class="ov-thumb-img"></div>`;
+    bodyT = `
+      <div class="ov-thumb-row">
+        ${thumb}
+        <div class="ov-thumb-text">
+          <div class="ov-thumb-title">${ovEsc(t.last.title || (es ? "Sin título" : "Untitled"))}</div>
+          <div class="ov-thumb-time">${ovEsc(ovRelTime(t.last.created_at))} · ${ovEsc(t.last.platform || "")}</div>
+        </div>
+      </div>`;
+  } else {
+    bodyT = `<div class="ov-empty">${es ? "Empieza tu primera transcripción" : "Start your first transcription"}</div>`;
+  }
+  setBody("ovBodyTransc", bodyT + countLine((t.total || 0) + " " + (es ? "transcripciones" : "transcriptions")));
+
+  // ── 3. Ideas ───────────────────────────────────────────────────────────
+  const ideas = d.ideas || {};
+  let bodyI;
+  if (ideas.last) {
+    const status = ideas.last.status || "draft";
+    const statusLbl = ({ draft: es ? "BORRADOR" : "DRAFT", developed: es ? "DESARROLLADA" : "DEVELOPED", scripted: es ? "GUIONIZADA" : "SCRIPTED" })[status] || status.toUpperCase();
+    bodyI = `
+      <div class="ov-mini-prefix">${es ? "ÚLTIMA IDEA" : "LATEST IDEA"}</div>
+      <div class="ov-line italic">${ovEsc(ideas.last.title || "")}</div>
+      <span class="ov-status s-${ovEsc(status)}">${statusLbl}</span>`;
+  } else {
+    bodyI = `<div class="ov-empty">${es ? "Captura tu primera chispa" : "Capture your first spark"}</div>`;
+  }
+  const ideasCount = (ideas.total || 0) + " " + (es ? "guardadas" : "saved")
+    + (ideas.pending ? " · " + ideas.pending + " " + (es ? "pendientes" : "pending") : "");
+  setBody("ovBodyIdeas", bodyI + countLine(ideasCount));
+
+  // ── 4. Proyectos ───────────────────────────────────────────────────────
+  const proj = d.projects || {};
+  let bodyP;
+  if (proj.top && proj.top.length) {
+    const rows = proj.top.map(p => `
+      <div class="ov-proj-row">
+        <span class="ov-proj-dot" style="background:${ovEsc(p.color || "#ef6a29")}"></span>
+        <span class="ov-proj-name">${ovEsc(p.name)}</span>
+      </div>`).join("");
+    const more = (proj.total > proj.top.length)
+      ? `<div class="ov-proj-more">+${proj.total - proj.top.length} ${es ? "más" : "more"}</div>` : "";
+    bodyP = `<div class="ov-proj-list">${rows}</div>${more}`;
+  } else {
+    bodyP = `<div class="ov-empty">${es ? "Crea tu primer proyecto" : "Create your first project"}</div>`;
+  }
+  setBody("ovBodyProjects", bodyP + countLine((proj.total || 0) + " " + (es ? "proyectos" : "projects")));
+
+  // ── 5. Métricas (sparkline o conecta IG) ───────────────────────────────
+  const m = d.metrics || {};
+  let bodyM;
+  let needsSparkline = false;
+  if (!m.has_profile) {
+    bodyM = `
+      <div class="ov-empty">${es ? "Conecta tu Instagram" : "Connect your Instagram"}</div>
+      <span class="ov-cta-inline">${es ? "Conectar →" : "Connect →"}</span>`;
+  } else if (m.sparkline && m.sparkline.length >= 2) {
+    bodyM = `
+      <div class="ov-spark-wrap">
+        <div class="ov-spark-meta">
+          <span class="ov-spark-num">${(m.avg_views_recent || 0).toLocaleString(es ? "es-ES" : "en-US")}</span>
+          <span class="ov-spark-lbl">${es ? "vistas/reel" : "views/reel"}</span>
+        </div>
+        <div id="ovSparkBox"></div>
+      </div>`;
+    needsSparkline = true;
+  } else {
+    bodyM = `<div class="ov-empty">${es ? "Aún sin reels analizados" : "No reels analyzed yet"}</div>`;
+  }
+  setBody("ovBodyMetrics", bodyM);
+  if (needsSparkline) {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {  // doble RAF: garantiza que el card layout aplicó width
+        ovRenderSparkline(m.sparkline, document.getElementById("ovSparkBox"));
+      });
+    });
+  }
+
+  // ── 6. Asistentes ──────────────────────────────────────────────────────
+  const a = d.assistants || {};
+  let bodyA;
+  if (a.last_created) {
+    bodyA = `
+      <div class="ov-mini-prefix">${es ? "ÚLTIMO CREADO" : "LAST CREATED"}</div>
+      <div class="ov-line">${ovEsc(a.last_created.name)}</div>
+      <div class="ov-thumb-time">${ovEsc(ovRelTime(a.last_created.created_at))}</div>`;
+  } else {
+    bodyA = `<div class="ov-empty">${es ? "Crea tu primer asistente" : "Create your first assistant"}</div>`;
+  }
+  setBody("ovBodyAssistants", bodyA + countLine((a.total || 0) + " " + (es ? "creados" : "created")));
+
+  // ── 7. Guiones ─────────────────────────────────────────────────────────
+  const sc = d.scripts || {};
+  let bodyS;
+  if (sc.last) {
+    bodyS = `
+      <div class="ov-mini-prefix">${es ? "ÚLTIMO GUION" : "LAST SCRIPT"}</div>
+      <div class="ov-line">${ovEsc(sc.last.title)}</div>
+      <div class="ov-thumb-time">${ovEsc(ovRelTime(sc.last.created_at))}</div>`;
+  } else {
+    bodyS = `<div class="ov-empty">${es ? "Guarda tu primer guion" : "Save your first script"}</div>`;
+  }
+  setBody("ovBodyScripts", bodyS + countLine((sc.total || 0) + " " + (es ? "guardados" : "saved")));
+
+  // ── 9. Equipo ──────────────────────────────────────────────────────────
+  const tm = d.team || {};
+  let bodyTm;
+  if ((tm.active || 0) > 0 && tm.members && tm.members.length) {
+    const max = 4;
+    const visible = tm.members.slice(0, max);
+    const stack = visible.map(mem => {
+      const seed = String(mem.id || "u");
+      const hash = seed.split("").reduce((acc, c) => (acc * 31 + c.charCodeAt(0)) >>> 0, 0);
+      const hueA = hash % 360;
+      const hueB = (hash * 7) % 360;
+      return `<div class="ov-team-av" style="background:linear-gradient(135deg, hsl(${hueA},70%,55%), hsl(${hueB},65%,45%))"></div>`;
+    }).join("");
+    const more = (tm.active > max) ? `<div class="ov-team-more">+${tm.active - max}</div>` : "";
+    const pending = (tm.pending || 0) > 0
+      ? `<div class="ov-pending-pill">${tm.pending} ${es ? "pendiente" : "pending"}${tm.pending > 1 ? (es ? "s" : "") : ""}</div>` : "";
+    bodyTm = `<div class="ov-team-stack">${stack}${more}</div>${pending}`;
+  } else {
+    bodyTm = `<div class="ov-empty">${es ? "Invita a tu equipo" : "Invite your team"}</div>`;
+  }
+  setBody("ovBodyTeam", bodyTm + countLine((tm.active || 0) + " " + (es ? "activos" : "active")));
+}
+
+function ovOpenTeam() {
+  try { window.track && window.track.workspaceTabClicked({ tab: "team" }); } catch(e){}
+  if (st.plan === "agency") {
+    profTab("team");
+    return;
+  }
+  // Plan no-agency: cierra el drawer y manda a pricing del landing
+  const lang = document.documentElement.lang || "es";
+  window.location.href = "/" + lang + "/#pricingSection";
+}
+
 function profTab(tab, pushHistory) {
   if (pushHistory === undefined) pushHistory = true;
   try {
@@ -12635,6 +12737,16 @@ function profTab(tab, pushHistory) {
   // Show selected
   const target = document.getElementById(panels[tab]);
   if (target) target.style.display = "";
+
+  // v0.14.5a: refresh mini grid counters when entering Overview
+  if (tab === "overview" && typeof loadOverviewMiniGrid === "function") {
+    loadOverviewMiniGrid();
+  }
+
+  // v0.14.5b: ocultar "← Volver a la app" en Overview (estamos EN la app)
+  document.querySelectorAll(".prof-main > .panel-back-btn").forEach(btn => {
+    btn.style.display = (tab === "overview") ? "none" : "";
+  });
 
   // Update nav active state
   document.querySelectorAll(".prof-nav-item").forEach(btn => {
@@ -12786,9 +12898,9 @@ function renderProfTransc() {
     const lang = (document.documentElement.lang || "es").toLowerCase();
     const title = lang === "en" ? "You haven't transcribed anything yet." : "Todavía no has transcrito nada.";
     const sub = lang === "en"
-      ? "Paste an Instagram or TikTok URL on the dashboard and get started."
-      : "Pega una URL de Instagram o TikTok en el dashboard y empieza.";
-    const cta = lang === "en" ? "Go to dashboard" : "Ir al dashboard";
+      ? "Paste an Instagram or TikTok URL in the app and get started."
+      : "Pega una URL de Instagram o TikTok en la app y empieza.";
+    const cta = lang === "en" ? "Go to the app" : "Ir a la app";
     el.innerHTML = `
       <div class="trans-empty">
         <img src="${window.HOOKS_TRANSC_SVG || '/static/img/hooks/hooks-transcribir.svg'}" alt="" aria-hidden="true" />
@@ -12902,7 +13014,7 @@ function renderTranscCardHTML(it, opts) {
         <button class="trans-act" onclick="cpHist(${id},this)">${LBL_COPY}</button>
         <button class="trans-act mob-hide" onclick="tpOpenFromTransc(${id})">${LBL_TP}</button>
         <button class="trans-act mob-hide" onclick="saveTranscToProject(${id})">${LBL_PROJ}</button>
-        <button class="trans-act danger mob-hide" onclick="delItem(${id},this);setTimeout(()=>{renderProfTransc();renderProfOverview();document.getElementById('profStatTransc').textContent=histCache.length},300)">${LBL_DEL}</button>
+        <button class="trans-act danger mob-hide" onclick="delItem(${id},this);setTimeout(()=>{renderProfTransc();renderProfOverview();if(typeof loadOverviewMiniGrid==='function')loadOverviewMiniGrid()},300)">${LBL_DEL}</button>
         <button class="trans-more" onclick="openCardActions(${id},'transc')" aria-label="More">···</button>
       </div>
     </article>`;
@@ -12943,7 +13055,8 @@ async function loadScripts() {
     const r = await fetch("/scripts");
     if (!r.ok) return;
     scriptsCache = await r.json();
-    document.getElementById("profStatScripts").textContent = scriptsCache.length;
+    const _profSS = document.getElementById("profStatScripts");
+    if (_profSS) _profSS.textContent = scriptsCache.length;
     renderProfScripts();
     renderProfOverview();
   } catch {}
@@ -13312,7 +13425,7 @@ function openCardActions(id, type) {
       <button class="cas-btn" onclick="closeCardActions();profAdaptFromTransc(${id})">✨ ${t("act.transform")}</button>
       <button class="cas-btn" onclick="closeCardActions();tpOpenFromTransc(${id})">🎬 ${t("prof.teleprompter")}</button>
       <button class="cas-btn" onclick="closeCardActions();saveTranscToProject(${id})">📁 ${t("act.to_project")}</button>
-      <button class="cas-btn danger" onclick="closeCardActions();delItem(${id});setTimeout(()=>{renderProfTransc();renderProfOverview();document.getElementById('profStatTransc').textContent=histCache.length},300)">🗑 ${t("act.delete")}</button>
+      <button class="cas-btn danger" onclick="closeCardActions();delItem(${id});setTimeout(()=>{renderProfTransc();renderProfOverview();if(typeof loadOverviewMiniGrid==='function')loadOverviewMiniGrid()},300)">🗑 ${t("act.delete")}</button>
     `;
   } else {
     const it = scriptsCache.find(i => i.id === id);
@@ -16831,326 +16944,6 @@ function highlightActiveLang() {
 function ctaWorkspaceClick() {
   try { sessionStorage.setItem("rs_ws_cta", "1"); } catch(e){}
   try { window.track && window.track.ctaWorkspaceClicked(); } catch(e){}
-}
-function wsTabClick(tab) {
-  try { window.track && window.track.workspaceTabClicked({ tab }); } catch(e){}
-  if (tab === "teleprompter") { openTeleprompterPicker(); return; }
-  openProfile();
-  profTab(tab);
-}
-
-// ── Dashboard (workspace cards) ───────────────────────────────────────────
-function wsGreetingName() {
-  try {
-    const email = (st.user && st.user.email) || "";
-    if (email) {
-      const local = email.split("@")[0].replace(/[._-]+/g, " ").trim();
-      return local.charAt(0).toUpperCase() + local.slice(1);
-    }
-  } catch(e){}
-  return "";
-}
-
-function wsRenderGreeting() {
-  const el = document.getElementById("wsGreeting");
-  if (!el) return;
-  const name = wsGreetingName();
-  const es = (document.documentElement.lang || "es") === "es";
-  if (name) {
-    el.innerHTML = (es ? "Hola, " : "Hi, ") + '<span class="grad-txt">' + name + "</span> 👋";
-  } else {
-    el.textContent = es ? "Hola 👋" : "Hi 👋";
-  }
-}
-
-async function wsLoadStats() {
-  try {
-    const res = await fetch("/api/me/stats", { credentials: "same-origin" });
-    if (!res.ok) return;
-    const d = await res.json();
-    const es = (document.documentElement.lang || "es") === "es";
-    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    set("wsStatIdeas", d.ideas && d.ideas.total != null ? d.ideas.total : 0);
-    const pend = d.ideas && d.ideas.pending ? d.ideas.pending : 0;
-    const pendEl = document.getElementById("wsStatIdeasPending");
-    if (pendEl) {
-      if (pend > 0) {
-        pendEl.textContent = pend + (es ? " por desarrollar" : " to develop");
-        pendEl.style.display = "inline-flex";
-      } else pendEl.style.display = "none";
-    }
-    set("wsStatProjects", d.projects || 0);
-    set("wsStatScripts", d.scripts || 0);
-    set("wsStatAssistants", d.assistants || 0);
-    set("wsStatMetrics", d.metrics && d.metrics.weekly_analyses != null ? d.metrics.weekly_analyses : 0);
-    const metricsLbl = document.getElementById("wsStatMetricsLbl");
-    if (metricsLbl && d.metrics && !d.metrics.has_profile) {
-      metricsLbl.textContent = es ? "conecta tu perfil" : "connect your profile";
-    }
-    set("wsStatTeam", d.team && d.team.active != null ? d.team.active : 0);
-    const teamPend = d.team && d.team.pending ? d.team.pending : 0;
-    const teamPendEl = document.getElementById("wsStatTeamPending");
-    if (teamPendEl) {
-      if (teamPend > 0) {
-        teamPendEl.textContent = teamPend + (es ? " pendientes" : " pending");
-        teamPendEl.style.display = "inline-flex";
-      } else teamPendEl.style.display = "none";
-    }
-  } catch(e){}
-}
-
-function wsRenderTeleprompter() {
-  const el = document.getElementById("wsTpStatus");
-  if (!el) return;
-  const es = (document.documentElement.lang || "es") === "es";
-  const raw = localStorage.getItem("rs_tp_last_used");
-  const last = raw ? parseInt(raw, 10) : 0;
-  if (last && !isNaN(last) && last > 0) {
-    const diff = Date.now() - last;
-    const mins = Math.floor(diff / 60000);
-    const hours = Math.floor(mins / 60);
-    const days = Math.floor(hours / 24);
-    let txt;
-    if (days >= 1) txt = es ? ("Última sesión: hace " + days + (days === 1 ? " día" : " días")) : ("Last session: " + days + (days === 1 ? " day ago" : " days ago"));
-    else if (hours >= 1) txt = es ? ("Última sesión: hace " + hours + (hours === 1 ? " hora" : " horas")) : ("Last session: " + hours + (hours === 1 ? " hour ago" : " hours ago"));
-    else txt = es ? "Última sesión: hace unos minutos" : "Last session: minutes ago";
-    el.textContent = txt;
-    el.className = "ws-card-stat-lbl";
-  } else {
-    el.innerHTML = '<span class="ws-card-tp-ready"><span class="ws-card-tp-play" aria-hidden="true">▶</span>' + (es ? "Listo para grabar" : "Ready to record") + '</span>';
-    el.className = "ws-card-stat-lbl";
-  }
-}
-
-function wsMiniTranscribe() {
-  const mini = document.getElementById("wsMiniUrl");
-  if (!mini) return;
-  const url = mini.value.trim();
-
-  const isWorkspace = document.body.classList.contains("workspace");
-  const transcResult = document.getElementById("wsTranscribeResult");
-  if (isWorkspace && transcResult) {
-    if (!url) { showToast(t("toast.paste_url")); return; }
-    const validRx = /^https?:\/\/(www\.)?(instagram\.com\/(reel|p|tv)\/[\w-]+|((vm|vt)\.)?tiktok\.com\/)/i;
-    if (!validRx.test(url)) { showToast(pickRandomError()); return; }
-    mini.value = "";
-    wsTranscribeInline(url);
-    return;
-  }
-
-  // Fallback (shouldn't hit in /app — kept for safety on shared templates).
-  const hidden = document.getElementById("urlInput");
-  if (!hidden) return;
-  hidden.value = url;
-  hidden.dispatchEvent(new Event("input"));
-  doTranscribe();
-  mini.value = "";
-}
-
-function _wsTransSetBusy(busy) {
-  const box = document.querySelector(".ws-mini-transcribe");
-  const input = document.getElementById("wsMiniUrl");
-  const btn = box ? box.querySelector("button") : null;
-  if (box) box.classList.toggle("is-busy", !!busy);
-  if (input) input.disabled = !!busy;
-  if (btn) {
-    btn.disabled = !!busy;
-    const lang = (document.documentElement.lang || "es").toLowerCase();
-    if (busy) {
-      btn._wsOrigLabel = btn.textContent;
-      btn.textContent = lang === "en" ? "Transcribing…" : "Transcribiendo…";
-    } else if (btn._wsOrigLabel) {
-      btn.textContent = btn._wsOrigLabel;
-      delete btn._wsOrigLabel;
-    }
-  }
-}
-
-function _wsTransPlatformFromUrl(url) {
-  return /instagram\.com/i.test(url) ? "instagram"
-       : (/tiktok\.com/i.test(url) ? "tiktok" : "other");
-}
-
-function wsTransRenderLoading(phaseText) {
-  const el = document.getElementById("wsTranscribeResult");
-  if (!el) return;
-  el.classList.remove("is-error");
-  const lang = (document.documentElement.lang || "es").toLowerCase();
-  const title = lang === "en" ? "Transcribing your reel" : "Transcribiendo tu reel";
-  const defaultPhase = lang === "en"
-    ? "This usually takes 15–30 seconds"
-    : "Esto suele tardar 15-30 segundos";
-  el.style.display = "";
-  el.innerHTML = `
-    <div class="ws-trans-loading">
-      <img class="ws-trans-loading-hooks" src="/static/img/hooks/hooks-transcribir.svg" alt="" aria-hidden="true">
-      <div class="ws-trans-loading-text">
-        <div class="ws-trans-loading-title">${esc(title)}</div>
-        <div class="ws-trans-loading-phase" id="wsTransLoadingPhase">${esc(phaseText || defaultPhase)}</div>
-      </div>
-    </div>`;
-  try { el.scrollIntoView({ block: "center", behavior: "smooth" }); } catch {}
-}
-
-function wsTransUpdatePhase(phaseText) {
-  const phaseEl = document.getElementById("wsTransLoadingPhase");
-  if (phaseEl && phaseText) phaseEl.textContent = phaseText;
-}
-
-function wsTransRenderError(url, errorMsg) {
-  const el = document.getElementById("wsTranscribeResult");
-  if (!el) return;
-  const lang = (document.documentElement.lang || "es").toLowerCase();
-  const title = lang === "en"
-    ? "We couldn't transcribe that reel."
-    : "No pudimos transcribir el reel.";
-  const sub = errorMsg || (lang === "en"
-    ? "Check that the URL is valid and the reel is public."
-    : "Verifica que la URL sea válida y que el reel sea público.");
-  const retry = lang === "en" ? "Retry" : "Reintentar";
-  el.classList.add("is-error");
-  el.style.display = "";
-  el.innerHTML = `
-    <div class="ws-trans-error">
-      <div class="ws-trans-error-icon" aria-hidden="true">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="16" r="13"/><path d="M16 9 V17"/><circle cx="16" cy="22" r="1.2" fill="currentColor"/></svg>
-      </div>
-      <div class="ws-trans-error-body">
-        <div class="ws-trans-error-title">${esc(title)}</div>
-        <div class="ws-trans-error-sub">${esc(sub)}</div>
-        <button class="ws-trans-error-retry" onclick="wsTransRetry()">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M9.5 4.5 C8.7 3.1 7 2 5 2 C2.8 2 1 3.8 1 6 M9.5 4.5 L9.5 2 M9.5 4.5 L7 4.5 M2.5 7.5 C3.3 8.9 5 10 7 10 C9.2 10 11 8.2 11 6 M2.5 7.5 L2.5 10 M2.5 7.5 L5 7.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          ${retry}
-        </button>
-      </div>
-    </div>`;
-  // Keep URL in mini-input so user can retry fast.
-  const mini = document.getElementById("wsMiniUrl");
-  if (mini && !mini.value) mini.value = url;
-  el._wsRetryUrl = url;
-  _wsTransSetBusy(false);
-}
-
-function wsTransRetry() {
-  const el = document.getElementById("wsTranscribeResult");
-  const url = el && el._wsRetryUrl;
-  if (!url) return;
-  wsTranscribeInline(url);
-}
-
-async function wsTransRenderDone(url, platform) {
-  const el = document.getElementById("wsTranscribeResult");
-  if (!el) return;
-  el.classList.remove("is-error");
-  // Refresh histCache so the new transcription is included (top of list).
-  try { await loadHistory(); } catch {}
-  const item = (histCache || []).find(h => h.url === url) || (histCache && histCache[0]);
-  if (!item) {
-    // Unexpected: loaded but item not found. Fall back to a plain success pill.
-    el.innerHTML = `<div class="ws-trans-loading"><div class="ws-trans-loading-text"><div class="ws-trans-loading-title">✓</div><div class="ws-trans-loading-phase">Listo</div></div></div>`;
-    return;
-  }
-  el.style.display = "";
-  el.innerHTML = renderTranscCardHTML(item, { savedPointer: true });
-  try { el.scrollIntoView({ block: "center", behavior: "smooth" }); } catch {}
-}
-
-async function wsTranscribeInline(url) {
-  if (!url) return;
-  const platform = _wsTransPlatformFromUrl(url);
-
-  try { window.track && window.track.transcribeClicked({ platform, isAuthenticated: !!st.user }); } catch(e){}
-
-  _wsTransSetBusy(true);
-  wsTransRenderLoading();
-
-  let taskId = null;
-  try {
-    const lang = (document.getElementById("language") && document.getElementById("language").value) || null;
-    const res = await fetch("/transcribe", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url, language: lang }),
-    });
-    const d = await res.json();
-    if (!res.ok) {
-      try { window.track && window.track.transcribeCompleted({ success: false, errorType: _rsErrorTypeFromStatus(res.status) }); } catch(e){}
-      wsTransRenderError(url, d && d.error);
-      return;
-    }
-    taskId = d.task_id;
-  } catch {
-    try { window.track && window.track.transcribeCompleted({ success: false, errorType: "network" }); } catch(e){}
-    wsTransRenderError(url, t("toast.error_connection"));
-    return;
-  }
-
-  const result = await new Promise((resolve) => {
-    const interval = setInterval(async () => {
-      try {
-        const r = await fetch(`/task/${taskId}`);
-        const s = await r.json();
-        if (s.state === "progress") {
-          if (s.step) wsTransUpdatePhase(s.step);
-          return;
-        }
-        if (s.state === "pending") return;
-        clearInterval(interval);
-        resolve(s);
-      } catch {
-        clearInterval(interval);
-        resolve({ state: "error", error: "Connection error" });
-      }
-    }, 2000);
-  });
-
-  if (result.state === "error") {
-    try { window.track && window.track.transcribeCompleted({ success: false, errorType: "unknown", errorMessage: (result.error || "").toString().slice(0, 120) }); } catch(e){}
-    wsTransRenderError(url, result.error);
-    return;
-  }
-
-  try {
-    window.track && window.track.transcribeCompleted({ success: true, platform, transcriptionLength: (result.text || "").length });
-    window.track && window.track.resultViewed({ platform });
-  } catch(e){}
-
-  // Update credit/usage indicators like rsTranscribeOne does.
-  if (result.credits_cents !== undefined) { st.credits = result.credits_cents; st.freeUsed = result.free_used_today; }
-  if (st.monthlyLimit) {
-    st.monthlyUsage = (st.monthlyUsage || 0) + 1;
-    const rem = st.monthlyLimit - st.monthlyUsage;
-    const balDisp = document.getElementById("balDisp");
-    const drawerBal = document.getElementById("drawerBal");
-    if (balDisp) balDisp.textContent = `${rem}/${st.monthlyLimit}`;
-    if (drawerBal) drawerBal.textContent = `${rem}/${st.monthlyLimit} usos`;
-  } else {
-    const balDisp = document.getElementById("balDisp");
-    if (balDisp) balDisp.textContent = usosNum(st.credits);
-  }
-  if (typeof renderFreeBar === "function") renderFreeBar();
-
-  _wsTransSetBusy(false);
-  await wsTransRenderDone(url, platform);
-}
-
-function wsOpenAdapt() {
-  try { window.track && window.track.workspaceTabClicked({ tab: "adapt" }); } catch(e){}
-  if (typeof revealAdaptSection === "function") {
-    revealAdaptSection({ focus: true });
-    const sec = document.getElementById("adaptSection");
-    if (sec && sec.scrollIntoView) sec.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-}
-
-function wsOpenTeam() {
-  try { window.track && window.track.workspaceTabClicked({ tab: "team" }); } catch(e){}
-  if (st.plan === "agency") {
-    openProfile();
-    profTab("team");
-    return;
-  }
-  const lang = document.documentElement.lang || "es";
-  window.location.href = "/" + lang + "/#pricingSection";
 }
 
 async function logout() {
