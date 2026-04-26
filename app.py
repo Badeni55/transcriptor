@@ -688,11 +688,17 @@ def transcribe():
             ).eq("id", user["id"]).execute()
 
     # ── Encolar tarea ─────────────────────────────────────────────────────
+    # v0.14.7: paid plans (pro/creator/agency) → métricas Apify guardadas.
+    is_paid = bool(
+        user
+        and get_profile(user["id"]).get("plan", "free") in ("pro", "creator", "agency")
+    )
     task = transcribe_task.delay(
         url,
         language,
         user["id"] if user else None,
         get_client_ip() if not user else None,
+        is_paid,
     )
 
     return jsonify({"task_id": task.id, "cost_cents": cost_cents})
@@ -796,7 +802,10 @@ def history():
     user = current_user()
     rows = (
         db.table("transcriptions")
-        .select("id, url, platform, language, text, cost_cents, created_at, thumbnail_b64")
+        .select(
+            "id, url, platform, language, text, cost_cents, created_at, thumbnail_b64, "
+            "views, likes, comments, shares, published_at, metrics_updated_at"
+        )
         .eq("user_id", user["id"])
         .order("id", desc=True)
         .limit(50)
@@ -811,6 +820,126 @@ def delete_transcription(tid: int):
     user = current_user()
     db.table("transcriptions").delete().eq("id", tid).eq("user_id", user["id"]).execute()
     return jsonify({"ok": True})
+
+
+# ── v0.14.7: refresh métricas Apify ──────────────────────────────────────────
+
+_metrics_refresh_cooldown: dict = {}  # (uid, tid) -> ts (last refresh)
+_METRICS_REFRESH_TTL = 30  # seconds
+_METRICS_BULK_LIMIT = 50
+
+
+def _is_metrics_plan(profile: dict) -> bool:
+    return profile.get("plan", "free") in ("pro", "creator", "agency")
+
+
+@app.route("/transcriptions/<int:tid>/refresh-metrics", methods=["POST"])
+@require_auth
+@limiter.limit("30 per minute")
+def refresh_transcription_metrics(tid: int):
+    user = current_user()
+    profile = get_profile(user["id"])
+    if not _is_metrics_plan(profile):
+        return jsonify({"error": "Las métricas son una feature de los planes de pago.",
+                        "upgrade_required": True}), 403
+
+    # Cooldown 30s por (uid, tid) para evitar abuso
+    key = (user["id"], tid)
+    now = _time.time()
+    last = _metrics_refresh_cooldown.get(key, 0)
+    if now - last < _METRICS_REFRESH_TTL:
+        wait = int(_METRICS_REFRESH_TTL - (now - last))
+        return jsonify({"error": f"Espera {wait}s antes de refrescar de nuevo.",
+                        "retry_after": wait}), 429
+
+    # Ownership + platform check
+    row_r = (db.table("transcriptions")
+               .select("id, url, platform, user_id")
+               .eq("id", tid)
+               .eq("user_id", user["id"])
+               .limit(1)
+               .execute())
+    if not row_r.data:
+        return jsonify({"error": "Transcripción no encontrada"}), 404
+    row = row_r.data[0]
+    if row.get("platform") != "instagram":
+        return jsonify({"error": "Las métricas solo están disponibles para Instagram",
+                        "platform_unsupported": True}), 400
+
+    # Llamada Apify
+    from tasks import _apify_metrics_only, _extract_metrics  # noqa: E402
+    _metrics_refresh_cooldown[key] = now
+    item = _apify_metrics_only(row["url"])
+    if not item:
+        return jsonify({"error": "No se pudieron obtener las métricas. ¿La URL sigue accesible?"}), 502
+    metrics = _extract_metrics(item)
+    db.table("transcriptions").update(metrics).eq("id", tid).eq("user_id", user["id"]).execute()
+    return jsonify({"ok": True, "metrics": metrics})
+
+
+@app.route("/transcriptions/refresh-metrics-bulk", methods=["POST"])
+@require_auth
+@limiter.limit("3 per hour")
+def refresh_transcription_metrics_bulk():
+    user = current_user()
+    profile = get_profile(user["id"])
+    if not _is_metrics_plan(profile):
+        return jsonify({"error": "Las métricas son una feature de los planes de pago.",
+                        "upgrade_required": True}), 403
+
+    # Selecciona hasta 50 más recientes (instagram only) cuyas métricas sean
+    # NULL o tengan más de 24h.
+    cutoff = (datetime.utcnow() - timedelta(hours=24)).isoformat() + "Z"
+    rows_r = (db.table("transcriptions")
+                .select("id, metrics_updated_at, platform")
+                .eq("user_id", user["id"])
+                .eq("platform", "instagram")
+                .order("created_at", desc=True)
+                .limit(_METRICS_BULK_LIMIT)
+                .execute())
+    rows = rows_r.data or []
+    candidates = [r["id"] for r in rows
+                  if not r.get("metrics_updated_at") or r.get("metrics_updated_at") < cutoff]
+    if not candidates:
+        return jsonify({"ok": True, "queued": 0, "message": "Todas las métricas están al día."})
+
+    # Total de transcripciones IG del user (para informar truncado)
+    total_r = (db.table("transcriptions")
+                 .select("id", count="exact")
+                 .eq("user_id", user["id"])
+                 .eq("platform", "instagram")
+                 .execute())
+    total_ig = total_r.count or 0
+
+    from tasks import refresh_metrics_bulk
+    task = refresh_metrics_bulk.delay(user["id"], candidates)
+    truncated = total_ig > _METRICS_BULK_LIMIT
+    return jsonify({
+        "ok": True,
+        "queued": len(candidates),
+        "task_id": task.id,
+        "truncated": truncated,
+        "total_ig": total_ig,
+        "limit": _METRICS_BULK_LIMIT,
+    })
+
+
+@app.route("/transcriptions/refresh-metrics-bulk/<task_id>")
+@require_auth
+def refresh_transcription_metrics_bulk_status(task_id: str):
+    """Polling endpoint para que el frontend sepa progreso del bulk refresh."""
+    from tasks import refresh_metrics_bulk
+    task = refresh_metrics_bulk.AsyncResult(task_id)
+    if task.state == "PENDING":
+        return jsonify({"state": "pending"})
+    if task.state == "PROGRESS":
+        info = task.info or {}
+        return jsonify({"state": "progress", "updated": info.get("updated", 0), "total": info.get("total", 0)})
+    if task.state == "SUCCESS":
+        return jsonify({"state": "success", **(task.result or {})})
+    if task.state == "FAILURE":
+        return jsonify({"state": "failure", "error": str(task.info)}), 500
+    return jsonify({"state": task.state})
 
 
 @app.route("/download/<int:tid>")

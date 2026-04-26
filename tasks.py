@@ -1,6 +1,8 @@
 import os
+import time
 import logging
 import tempfile
+from datetime import datetime
 import requests
 import yt_dlp
 from celery import Celery
@@ -74,6 +76,9 @@ def _ytdlp(url, output_dir):
     return out + ".mp3", thumbnail_url
 
 def _apify_instagram(url, output_dir):
+    """Returns (mp3_path, thumbnail_url, apify_item) where apify_item is the
+    full Apify response dict (contains views/likes/comments/shares/timestamp).
+    apify_item is None when scraping fails (caller falls back to yt-dlp)."""
     APIFY_TOKEN = os.environ.get("APIFY_TOKEN", "")
     actor_url = (
         f"https://api.apify.com/v2/acts/apify~instagram-scraper"
@@ -103,19 +108,60 @@ def _apify_instagram(url, output_dir):
     ret = os.system(f'ffmpeg -i "{video_path}" -vn -ar 44100 -ac 2 -b:a 128k "{mp3_path}" -y -loglevel quiet')
     if ret != 0 or not os.path.exists(mp3_path):
         raise ValueError("Error al convertir vídeo a audio con FFmpeg")
-    return mp3_path, thumbnail_url
+    return mp3_path, thumbnail_url, item
 
 def download_audio(url, output_dir, platform):
+    """Returns (mp3_path, thumbnail_url, apify_item|None).
+    apify_item is None for tiktok or when apify scrape failed and yt-dlp ran."""
     APIFY_TOKEN = os.environ.get("APIFY_TOKEN", "")
     if platform == "instagram" and APIFY_TOKEN:
         try:
             return _apify_instagram(url, output_dir)
         except Exception:
             pass
-    return _ytdlp(url, output_dir)
+    mp3, thumb = _ytdlp(url, output_dir)
+    return mp3, thumb, None
+
+
+def _apify_metrics_only(url):
+    """Apify call solo para métricas (no audio). Reusa apify~instagram-scraper.
+    Devuelve dict normalizado o None si falla."""
+    APIFY_TOKEN = os.environ.get("APIFY_TOKEN", "")
+    if not APIFY_TOKEN:
+        return None
+    actor_url = (
+        f"https://api.apify.com/v2/acts/apify~instagram-scraper"
+        f"/run-sync-get-dataset-items?token={APIFY_TOKEN}&memory=256"
+    )
+    try:
+        resp = requests.post(actor_url, json={"directUrls": [url], "resultsLimit": 1}, timeout=120)
+        resp.raise_for_status()
+        items = resp.json()
+        if not items:
+            return None
+        return items[0]
+    except Exception as e:
+        logger.warning("apify metrics-only failed for %s: %s", url, e)
+        return None
+
+
+def _extract_metrics(apify_item):
+    """Convierte un item de apify-instagram-scraper en columnas de la tabla."""
+    if not apify_item:
+        return {}
+    return {
+        "views":    apify_item.get("videoPlayCount") or apify_item.get("videoViewCount") or 0,
+        "likes":    apify_item.get("likesCount") or 0,
+        "comments": apify_item.get("commentsCount") or 0,
+        "shares":   apify_item.get("sharesCount") or 0,
+        "published_at": apify_item.get("timestamp"),
+        "metrics_updated_at": datetime.utcnow().isoformat() + "Z",
+    }
 
 @celery_app.task(bind=True)
-def transcribe_task(self, url, language, user_id, ip):
+def transcribe_task(self, url, language, user_id, ip, is_paid=False):
+    """v0.14.7: is_paid=True (plan pro/creator/agency) → guarda métricas
+    Apify (views/likes/comments/shares/published_at) en la fila."""
     GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
     GROQ_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
     SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
@@ -128,9 +174,10 @@ def transcribe_task(self, url, language, user_id, ip):
     self.update_state(state="PROGRESS", meta={"step": "Descargando audio..."})
 
     thumbnail_url = None
+    apify_item = None
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
-            audio_path, thumbnail_url = download_audio(url, tmpdir, platform)
+            audio_path, thumbnail_url, apify_item = download_audio(url, tmpdir, platform)
 
             self.update_state(state="PROGRESS", meta={"step": "Transcribiendo con IA..."})
 
@@ -153,7 +200,7 @@ def transcribe_task(self, url, language, user_id, ip):
     except Exception as e:
         logger.warning("Thumbnail capture failed for %s: %s", url, e)
 
-    db.table("transcriptions").insert({
+    insert_data = {
         "user_id": user_id,
         "ip": ip if not user_id else None,
         "url": url,
@@ -162,6 +209,55 @@ def transcribe_task(self, url, language, user_id, ip):
         "text": text,
         "cost_cents": COST_CENTS if user_id else 0,
         "thumbnail_b64": thumb_b64,
-    }).execute()
+    }
+    # v0.14.7: métricas solo para paid plans con datos Apify reales (Instagram).
+    if is_paid and apify_item and platform == "instagram":
+        insert_data.update(_extract_metrics(apify_item))
+
+    db.table("transcriptions").insert(insert_data).execute()
 
     return {"ok": True, "text": text, "platform": platform}
+
+
+@celery_app.task(bind=True)
+def refresh_metrics_bulk(self, user_id, tid_list):
+    """Refresca métricas Apify para una lista de IDs de transcripciones.
+    Solo Instagram. Sequential con sleep 0.5s entre llamadas para no
+    saturar Apify."""
+    SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+    SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
+    APIFY_TOKEN = os.environ.get("APIFY_TOKEN", "")
+    if not APIFY_TOKEN:
+        return {"ok": False, "reason": "no_apify_token", "updated": 0}
+
+    db = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+    try:
+        rows_r = (db.table("transcriptions")
+                    .select("id, url, platform")
+                    .in_("id", tid_list)
+                    .eq("user_id", user_id)
+                    .execute())
+        rows = [r for r in (rows_r.data or []) if r.get("platform") == "instagram"]
+    except Exception as e:
+        logger.warning("refresh_metrics_bulk fetch failed: %s", e)
+        return {"ok": False, "updated": 0}
+
+    updated = 0
+    for r in rows:
+        try:
+            item = _apify_metrics_only(r["url"])
+            if not item:
+                continue
+            metrics = _extract_metrics(item)
+            (db.table("transcriptions")
+               .update(metrics)
+               .eq("id", r["id"])
+               .eq("user_id", user_id)
+               .execute())
+            updated += 1
+            self.update_state(state="PROGRESS", meta={"updated": updated, "total": len(rows)})
+        except Exception as e:
+            logger.warning("refresh_metrics_bulk row %s failed: %s", r.get("id"), e)
+        time.sleep(0.5)
+
+    return {"ok": True, "updated": updated, "total": len(rows)}
