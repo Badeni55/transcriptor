@@ -661,6 +661,18 @@
       .hero-grid { grid-template-columns: 1fr; gap: 32px; }
       .hero-v2 { padding: 36px 20px 24px; }
     }
+    /* v0.14.8a: refuerzo mobile <640px */
+    @media (max-width: 640px) {
+      .hero-v2 { padding: 24px 16px 16px; }
+      .hero-grid { gap: 24px; }
+      .hero-h1-v2 { font-size: clamp(2rem, 9vw, 2.8rem); line-height: 1.1; letter-spacing: -1px; }
+      .hero-sub-v2 { font-size: .98rem; max-width: 100%; }
+      .hero-ctas { flex-direction: column; align-items: stretch; gap: 10px; }
+      .hero-cta-primary,
+      .hero-cta-secondary { width: 100%; justify-content: center; padding: 14px; }
+      .hero-cta-secondary { gap: 6px; }
+      .scene-rotator { max-width: 380px; margin: 0 auto; width: 100%; }
+    }
     .hero-eyebrow {
       display: inline-flex; align-items: center; gap: 8px;
       color: var(--orange); font-family: var(--font-body); font-size: .72rem; font-weight: 700;
@@ -769,6 +781,7 @@
       overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,.18);
     }
     @media (max-width: 980px) { .scene-stage { aspect-ratio: 9/12; } }
+    @media (max-width: 640px) { .scene-stage { aspect-ratio: 9/16; } }
     .scene-mockup {
       position: absolute; inset: 0;
       opacity: 0; transform: translateY(8px) scale(.99);
@@ -1150,6 +1163,17 @@
       .try-free-grid { grid-template-columns: 1fr; gap: 32px; }
       .try-free-left { text-align: center; }
       .try-free-right { display: none; }
+    }
+    /* v0.14.8a: refuerzo mobile <640px */
+    @media (max-width: 640px) {
+      .try-free-section { padding: 32px 16px 24px; }
+      .try-free-h2 { font-size: clamp(1.6rem, 7vw, 2.2rem); line-height: 1.15; }
+      .try-free-sub { font-size: .95rem; }
+      .try-form { padding: 12px; }
+      .try-form-actions { flex-direction: column; gap: 10px; }
+      .try-form-actions > * { width: 100%; }
+      .try-btn { width: 100%; padding: 13px; justify-content: center; }
+      .try-input { font-size: .9rem; }
     }
     .try-free-section .s-label { display: inline-block; }
     .try-free-h2 {
