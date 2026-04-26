@@ -1407,22 +1407,55 @@
     }
 
     /* ── 4 Pillars (editorial) ──────────────────────────────── */
-    .pillars-section { max-width: 1100px; margin: 24px auto 0; padding: 64px 24px 32px; }
-    .pillars-head { text-align: center; margin-bottom: 48px; }
+    .pillars-section {
+      position: relative;
+      max-width: 1100px; margin: 24px auto 0; padding: 64px 24px 32px;
+      --pillar-acc-1: 239,106,41;
+      --pillar-acc-2: 93,202,165;
+      --pillar-acc-3: 255,107,61;
+      --pillar-acc-4: 239,106,41;
+    }
+    .pillars-section::before {
+      content: ""; position: absolute; left: 50%; top: 0;
+      width: 1px; height: 100%;
+      background: rgba(239,106,41,.15);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 80px, black calc(100% - 80px), transparent 100%);
+              mask-image: linear-gradient(to bottom, transparent 0, black 80px, black calc(100% - 80px), transparent 100%);
+      pointer-events: none; z-index: 0;
+    }
+    .pillars-waves {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      opacity: .04; pointer-events: none; z-index: 0;
+    }
+    .pillars-head { position: relative; z-index: 1; text-align: center; margin-bottom: 48px; }
     .pillars-head h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.1; letter-spacing: -.5px; margin: 0 0 10px; }
     .pillars-head h2 em { font-style: italic; color: #fdba74; -webkit-text-fill-color: #fdba74; }
     [data-theme="light"] .pillars-head h2 em { color: #c2410c; -webkit-text-fill-color: #c2410c; }
     .pillars-head p { color: var(--text2); font-size: 1rem; margin: 0 auto; max-width: 540px; line-height: 1.55; }
 
     .pillar {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 56px;
-      align-items: center; padding: 48px 0;
+      position: relative; z-index: 1;
+      display: grid;
+      grid-template-columns: 120px 1fr 1fr;
+      grid-template-areas: "mascot copy visual";
+      gap: 32px; align-items: center; padding: 48px 0;
     }
-    .pillar.reverse > .pillar-copy { order: 2; }
-    .pillar.reverse > .pillar-visual { order: 1; }
+    .pillar.reverse {
+      grid-template-columns: 1fr 1fr 120px;
+      grid-template-areas: "visual copy mascot";
+    }
+    .pillar > .pillar-mascot-wrap { grid-area: mascot; display: flex; justify-content: center; align-items: center; }
+    .pillar > .pillar-copy   { grid-area: copy; }
+    .pillar > .pillar-visual { grid-area: visual; }
     @media (max-width: 880px) {
-      .pillar { display: flex; flex-direction: column-reverse; gap: 28px; padding: 32px 0; }
-      .pillar.reverse { flex-direction: column-reverse; }
+      .pillar, .pillar.reverse {
+        display: flex; flex-direction: column;
+        gap: 18px; padding: 32px 0;
+      }
+      .pillar > .pillar-mascot-wrap { order: -1; }
+      .pillar > .pillar-copy { order: 0; }
+      .pillar > .pillar-visual { order: 1; }
     }
     .pillar-mascot {
       width: 96px; height: 96px;
@@ -1430,12 +1463,21 @@
       animation: phoneMascotFloat 4s ease-in-out infinite;
     }
     .pillar-eyebrow {
-      display: inline-flex; align-items: center; gap: 8px; margin: 16px 0 14px;
-      color: var(--orange); font-size: .72rem; font-weight: 700;
+      display: inline-flex; align-items: center; gap: 8px; margin: 0 0 14px;
+      color: rgb(var(--pillar-acc, 239,106,41));
+      font-size: .72rem; font-weight: 700;
       letter-spacing: .12em; text-transform: uppercase;
     }
     .pillar-eyebrow::before {
-      content: ""; width: 24px; height: 1px; background: var(--orange); display: inline-block;
+      content: ""; width: 8px; height: 8px; border-radius: 50%;
+      background: rgb(var(--pillar-acc, 239,106,41));
+      box-shadow: 0 0 0 0 rgba(var(--pillar-acc, 239,106,41), .55);
+      animation: pillarDotPulse 2.4s ease-in-out infinite;
+      display: inline-block;
+    }
+    @keyframes pillarDotPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(var(--pillar-acc, 239,106,41), .55); }
+      50%      { box-shadow: 0 0 0 6px rgba(var(--pillar-acc, 239,106,41), 0); }
     }
     .pillar-title {
       font-family: var(--font-display); font-weight: 400;
@@ -1450,11 +1492,12 @@
     }
     .pillar-link {
       display: inline-flex; align-items: center; gap: 6px;
-      color: var(--orange); font-weight: 700; font-size: .88rem;
+      color: rgb(var(--pillar-acc, 239,106,41));
+      font-weight: 700; font-size: .88rem;
       text-decoration: none; padding-bottom: 2px; border-bottom: 1px solid transparent;
       transition: border-color .18s, gap .18s;
     }
-    .pillar-link:hover { border-bottom-color: var(--orange); gap: 10px; }
+    .pillar-link:hover { border-bottom-color: rgb(var(--pillar-acc, 239,106,41)); gap: 10px; }
     .pillar-visual {
       position: relative;
       aspect-ratio: 5/4; max-width: 460px; width: 100%; justify-self: center;
@@ -8785,6 +8828,20 @@
 
 <!-- ── 4 PILARES EDITORIALES ───────────────────────────────────────────── -->
 <section class="pillars-section fade-in">
+  <svg class="pillars-waves" preserveAspectRatio="none" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="pillarsWavesGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"   stop-color="rgb(239,106,41)"/>
+        <stop offset="33%"  stop-color="rgb(93,202,165)"/>
+        <stop offset="66%"  stop-color="rgb(255,107,61)"/>
+        <stop offset="100%" stop-color="rgb(239,106,41)"/>
+      </linearGradient>
+    </defs>
+    <path d="M0,140 Q300,40 600,140 T1200,140" fill="none" stroke="url(#pillarsWavesGrad)" stroke-width="2"/>
+    <path d="M0,330 Q300,230 600,330 T1200,330" fill="none" stroke="url(#pillarsWavesGrad)" stroke-width="2"/>
+    <path d="M0,520 Q300,420 600,520 T1200,520" fill="none" stroke="url(#pillarsWavesGrad)" stroke-width="2"/>
+    <path d="M0,710 Q300,610 600,710 T1200,710" fill="none" stroke="url(#pillarsWavesGrad)" stroke-width="2"/>
+  </svg>
   <div class="pillars-head">
     <h2>
       <span data-i18n-es="De la URL al guion grabado," data-i18n-en="From URL to recorded script,">De la URL al guion grabado,</span>
@@ -8794,9 +8851,11 @@
   </div>
 
   <!-- Pilar 01: TRANSCRIBIR -->
-  <div class="pillar">
-    <div class="pillar-copy">
+  <div class="pillar" style="--pillar-acc:239,106,41">
+    <div class="pillar-mascot-wrap">
       <img class="pillar-mascot" src="/static/img/hooks/hooks-transcribir.svg" alt="" loading="lazy" width="96" height="96">
+    </div>
+    <div class="pillar-copy">
       <div class="pillar-eyebrow"><span data-i18n-es="PILAR 01" data-i18n-en="PILLAR 01">PILAR 01</span></div>
       <h3 class="pillar-title">
         <span data-i18n-es="Transcribe cualquier" data-i18n-en="Transcribe any">Transcribe cualquier</span>
@@ -8820,9 +8879,11 @@
   </div>
 
   <!-- Pilar 02: MÉTRICAS -->
-  <div class="pillar reverse">
-    <div class="pillar-copy">
+  <div class="pillar reverse" style="--pillar-acc:93,202,165">
+    <div class="pillar-mascot-wrap">
       <img class="pillar-mascot" src="/static/img/hooks/hooks-metricas.svg" alt="" loading="lazy" width="96" height="96">
+    </div>
+    <div class="pillar-copy">
       <div class="pillar-eyebrow"><span data-i18n-es="PILAR 02" data-i18n-en="PILLAR 02">PILAR 02</span></div>
       <h3 class="pillar-title">
         <span data-i18n-es="Mide qué" data-i18n-en="Measure what">Mide qué</span>
@@ -8851,9 +8912,11 @@
   </div>
 
   <!-- Pilar 03: IDEAS -->
-  <div class="pillar">
-    <div class="pillar-copy">
+  <div class="pillar" style="--pillar-acc:255,107,61">
+    <div class="pillar-mascot-wrap">
       <img class="pillar-mascot" src="/static/img/hooks/hooks-ideas.svg" alt="" loading="lazy" width="96" height="96">
+    </div>
+    <div class="pillar-copy">
       <div class="pillar-eyebrow"><span data-i18n-es="PILAR 03" data-i18n-en="PILLAR 03">PILAR 03</span></div>
       <h3 class="pillar-title">
         <span data-i18n-es="Tus ideas," data-i18n-en="Your ideas,">Tus ideas,</span>
@@ -8882,9 +8945,11 @@
   </div>
 
   <!-- Pilar 04: GUIONES -->
-  <div class="pillar reverse">
-    <div class="pillar-copy">
+  <div class="pillar reverse" style="--pillar-acc:239,106,41">
+    <div class="pillar-mascot-wrap">
       <img class="pillar-mascot" src="/static/img/hooks/hooks-scripts.svg" alt="" loading="lazy" width="96" height="96">
+    </div>
+    <div class="pillar-copy">
       <div class="pillar-eyebrow"><span data-i18n-es="PILAR 04" data-i18n-en="PILLAR 04">PILAR 04</span></div>
       <h3 class="pillar-title">
         <span data-i18n-es="Guiones que" data-i18n-en="Scripts that">Guiones que</span>
