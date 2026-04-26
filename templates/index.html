@@ -17431,6 +17431,13 @@ function closeUserMenu() {
   // Compat alias: cualquier llamador antiguo cierra el menú nuevo.
   closeAvatarMenu();
 }
+// Alias defensivo por si algún caller usa toggleAvatarMenu
+function toggleAvatarMenu(e) {
+  if (e) e.stopPropagation();
+  const menu = document.getElementById("avatarMenu");
+  if (menu && menu.classList.contains("on")) closeAvatarMenu();
+  else openAvatarMenu();
+}
 
 function openAvatarMenu() {
   const overlay = document.getElementById("avatarMenuOverlay");
@@ -17544,6 +17551,23 @@ document.addEventListener("keydown", (e) => {
     if (menu && menu.classList.contains("on")) closeAvatarMenu();
   }
 });
+
+// v0.14.9a defensive: expose to window para inline onclick + DevTools
+try {
+  window.openAvatarMenu = openAvatarMenu;
+  window.closeAvatarMenu = closeAvatarMenu;
+  window.toggleAvatarMenu = toggleAvatarMenu;
+  window.toggleUserMenu = toggleUserMenu;
+  window.closeUserMenu = closeUserMenu;
+  window.avMenuOpenAvatarPicker = avMenuOpenAvatarPicker;
+  window.avMenuManagePlan = avMenuManagePlan;
+  console.log("[v0.14.9a] avatar menu wired:", {
+    open: typeof window.openAvatarMenu,
+    close: typeof window.closeAvatarMenu,
+    toggle: typeof window.toggleAvatarMenu,
+    el: !!document.getElementById("avatarMenu"),
+  });
+} catch (e) { console.error("[v0.14.9a] expose failed", e); }
 
 function toggleNavMob() {
   const menu = document.getElementById("navMobMenu");
