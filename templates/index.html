@@ -787,89 +787,96 @@
 
     @keyframes fade-up { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
 
-    /* ── Hero v2 (asymmetric) ─────────────────────────────── */
-    .hero-v2 { padding: 56px 24px 40px; text-align: left; max-width: 1240px; margin: 0 auto; align-items: stretch; }
+    /* ── Hero v2 (centered, v0.14.11a) ───────────────────────── */
+    .hero-v2 { padding: 56px 24px 40px; text-align: center; max-width: 1240px; margin: 0 auto; }
     .hero-grid {
-      display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 56px;
-      align-items: center; width: 100%;
+      display: flex; flex-direction: column;
+      gap: 32px; align-items: center; width: 100%;
+    }
+    .hero-copy {
+      display: flex; flex-direction: column; align-items: center;
+      max-width: 760px; width: 100%;
     }
     @media (max-width: 980px) {
-      .hero-grid { grid-template-columns: 1fr; gap: 32px; }
+      .hero-grid { gap: 28px; }
       .hero-v2 { padding: 36px 20px 24px; }
     }
-    /* v0.14.8a: refuerzo mobile <640px */
     @media (max-width: 640px) {
       .hero-v2 { padding: 24px 16px 16px; }
       .hero-grid { gap: 24px; }
       .hero-h1-v2 { font-size: clamp(2rem, 9vw, 2.8rem); line-height: 1.1; letter-spacing: -1px; }
       .hero-sub-v2 { font-size: .98rem; max-width: 100%; }
-      .hero-ctas { flex-direction: column; align-items: stretch; gap: 10px; }
+      .hero-ctas { flex-direction: column; align-items: stretch; gap: 10px; width: 100%; }
       .hero-cta-primary,
       .hero-cta-secondary { width: 100%; justify-content: center; padding: 14px; }
       .hero-cta-secondary { gap: 6px; }
-      .scene-rotator { max-width: 380px; margin: 0 auto; width: 100%; }
     }
-    .hero-eyebrow {
+
+    /* Pill prueba social (v0.14.11a) — sustituye eyebrow */
+    .hero-pill {
       display: inline-flex; align-items: center; gap: 8px;
-      color: var(--orange); font-family: var(--font-body); font-size: .72rem; font-weight: 700;
-      letter-spacing: .12em; text-transform: uppercase;
-      margin-bottom: 18px;
+      padding: 8px 16px; border-radius: 999px;
+      background: rgba(31,26,34,.6);
+      border: 1px solid rgba(241,234,217,.15);
+      color: rgba(241,234,217,.85); font-family: var(--font-body);
+      font-size: .82rem; font-weight: 500;
+      margin-bottom: 24px;
+      backdrop-filter: blur(6px);
     }
-    .hero-eyebrow-pulse {
+    [data-theme="light"] .hero-pill {
+      background: rgba(255,255,255,.55);
+      border-color: rgba(60,40,20,.18);
+      color: var(--text2);
+    }
+    .hero-pill-pulse {
       width: 7px; height: 7px; border-radius: 50%; background: var(--orange);
       box-shadow: 0 0 0 0 rgba(249,115,22,.6);
       animation: heroEyePulse 2s ease infinite;
+      flex-shrink: 0;
     }
     @keyframes heroEyePulse {
       0%   { box-shadow: 0 0 0 0 rgba(249,115,22,.55); }
       70%  { box-shadow: 0 0 0 12px rgba(249,115,22,0); }
       100% { box-shadow: 0 0 0 0 rgba(249,115,22,0); }
     }
+
     .hero-h1-v2 {
       font-family: var(--font-display);
-      font-size: clamp(2.4rem, 5.2vw, 4rem);
+      font-size: clamp(2.4rem, 7vw, 4.5rem);
       font-weight: 400; line-height: 1.05; letter-spacing: -1.5px;
-      color: var(--text); margin: 0 0 18px;
+      color: var(--text); margin: 0 0 16px;
+      text-wrap: balance;
     }
     .hero-h1-v2 em {
       font-style: italic; color: #fdba74; -webkit-text-fill-color: #fdba74;
     }
     [data-theme="light"] .hero-h1-v2 em { color: #c2410c; -webkit-text-fill-color: #c2410c; }
     .hero-sub-v2 {
-      font-size: 1.05rem; color: var(--text2); line-height: 1.55;
-      max-width: 480px; margin: 0 0 26px;
+      font-size: clamp(1rem, 1.4vw, 1.15rem); color: var(--text2); line-height: 1.5;
+      max-width: 640px; margin: 0 auto 32px;
     }
-    .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 22px; }
+    .hero-ctas {
+      display: flex; gap: 12px; flex-wrap: wrap;
+      align-items: center; justify-content: center;
+      margin-bottom: 0;
+    }
     .hero-cta-primary {
-      background: var(--purple); color: #fff; border: 0;
-      padding: 14px 22px; border-radius: 12px;
-      font-family: var(--font-body); font-weight: 700; font-size: .92rem;
-      cursor: pointer; transition: transform .12s, box-shadow .15s, opacity .15s;
+      background: #f97316; color: #fff; border: 0;
+      padding: 16px 32px; border-radius: 12px;
+      font-family: var(--font-body); font-weight: 700; font-size: 1rem;
+      cursor: pointer; transition: transform .12s, box-shadow .15s, opacity .15s, background .15s;
       box-shadow: 0 5px 0 #92400e;
     }
-    .hero-cta-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 0 #92400e, 0 4px 16px rgba(249,115,22,.35); }
+    .hero-cta-primary:hover { transform: translateY(-1px); background: #ea680c; box-shadow: 0 6px 0 #92400e, 0 4px 16px rgba(249,115,22,.35); }
     .hero-cta-primary:active { transform: translateY(4px); box-shadow: 0 1px 0 #92400e; }
     .hero-cta-secondary {
       background: transparent; border: 1px solid var(--border); color: var(--text);
-      padding: 13px 18px; border-radius: 12px; cursor: pointer;
+      padding: 16px 28px; border-radius: 12px; cursor: pointer;
       display: inline-flex; align-items: center; gap: 8px;
-      font-family: var(--font-body); font-weight: 500; font-size: .88rem;
+      font-family: var(--font-body); font-weight: 600; font-size: 1rem;
       transition: border-color .15s, background .15s, color .15s;
     }
-    .hero-cta-secondary:hover { border-color: var(--purple); color: var(--purple); background: rgba(249,115,22,.06); }
-    .hero-cta-secondary .play-circle {
-      width: 22px; height: 22px; border-radius: 50%; background: var(--orange); color: #fff;
-      display: inline-flex; align-items: center; justify-content: center;
-      font-size: .55rem; padding-left: 2px; flex-shrink: 0;
-    }
-    .hero-cta-time { color: var(--text3); font-size: .78rem; }
-    .hero-trust {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      color: var(--text3); font-size: .76rem;
-      display: inline-flex; align-items: center; gap: 6px;
-    }
-    .hero-trust-dot { color: var(--orange); }
-    .hero-trust .counter-num { color: var(--text2); }
+    .hero-cta-secondary:hover { border-color: var(--orange); color: var(--orange); background: rgba(249,115,22,.06); }
 
     /* ── Scene rotator ──────────────────────────────────────── */
     .scene-rotator { position: relative; }
@@ -7956,127 +7963,7 @@
       .tp-box-grabber { width: 32px; height: 16px; }
     }
 
-    /* ── Tutorial bubble widget ─────────────────────────────────── */
-    .tut-bubble {
-      position: fixed; bottom: 24px; left: 24px; z-index: 500;
-      display: flex; align-items: center; gap: 10px;
-      cursor: pointer; opacity: 0; transform: translateY(16px);
-      transition: opacity .4s, transform .4s;
-    }
-    .tut-bubble.on { opacity: 1; transform: translateY(0); }
-    .tut-bubble-circle {
-      width: 56px; height: 56px; border-radius: 50%;
-      background: var(--surf); border: 2px solid rgba(249,115,22,.5);
-      backdrop-filter: blur(12px);
-      display: flex; align-items: center; justify-content: center;
-      transition: transform .2s, box-shadow .2s;
-      flex-shrink: 0; position: relative;
-    }
-    .tut-bubble:hover .tut-bubble-circle {
-      transform: scale(1.05);
-      box-shadow: 0 0 20px rgba(249,115,22,.2);
-    }
-    .tut-bubble-play {
-      width: 0; height: 0; margin-left: 3px;
-      border-left: 12px solid var(--purple); border-top: 7px solid transparent; border-bottom: 7px solid transparent;
-    }
-    .tut-bubble-text {
-      font-size: .78rem; font-weight: 500; color: var(--text2);
-      white-space: nowrap; transition: opacity .5s; font-family: var(--font-body);
-    }
-    .tut-bubble-text.fade { opacity: 0; pointer-events: none; }
-    .tut-bubble-dismiss {
-      position: absolute; top: -4px; right: -4px;
-      width: 18px; height: 18px; border-radius: 50%;
-      background: rgba(0,0,0,.6); color: #fff; border: none;
-      font-size: .6rem; cursor: pointer; display: none;
-      align-items: center; justify-content: center; line-height: 1;
-    }
-    .tut-bubble:hover .tut-bubble-dismiss { display: flex; }
-    @keyframes tut-ring {
-      0% { box-shadow: 0 0 0 0 rgba(249,115,22,.4); }
-      70% { box-shadow: 0 0 0 8px rgba(249,115,22,0); }
-      100% { box-shadow: 0 0 0 0 rgba(249,115,22,0); }
-    }
-    .tut-bubble-circle.ring { animation: tut-ring 1.5s ease; }
-
-    /* Player — desktop */
-    .tut-player {
-      position: fixed; bottom: 24px; left: 24px; z-index: 501;
-      width: 280px; height: 498px;
-      border-radius: 16px; border: 1px solid var(--border);
-      background: var(--bg);
-      box-shadow: 0 8px 40px rgba(0,0,0,.5);
-      overflow: hidden; display: none;
-      opacity: 0; transform: scale(.6) translateY(40px);
-      transform-origin: bottom left;
-      transition: opacity .3s, transform .3s;
-    }
-    .tut-player.on { display: block; }
-    .tut-player.show { opacity: 1; transform: scale(1) translateY(0); }
-    .tut-player iframe { width: 100%; height: 100%; border: none; border-radius: 14px; }
-    .tut-player-close {
-      position: absolute; top: 8px; right: 8px; z-index: 2;
-      width: 28px; height: 28px; border-radius: 50%;
-      background: rgba(0,0,0,.6); backdrop-filter: blur(8px);
-      color: #fff; border: none; font-size: .85rem;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      transition: background .15s;
-    }
-    .tut-player-close:hover { background: rgba(0,0,0,.8); }
-
-    /* Player — mobile bottom sheet */
-    .tut-sheet-overlay {
-      position: fixed; inset: 0; z-index: 600;
-      background: rgba(0,0,0,.5); display: none; opacity: 0;
-      transition: opacity .3s;
-    }
-    .tut-sheet-overlay.on { display: block; }
-    .tut-sheet-overlay.show { opacity: 1; }
-    .tut-sheet {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 601;
-      height: 80vh; background: var(--bg);
-      border-radius: 20px 20px 0 0;
-      display: none; transform: translateY(100%);
-      transition: transform .35s cubic-bezier(.32,.72,0,1);
-      flex-direction: column; align-items: center;
-      padding: 12px 16px 24px;
-    }
-    .tut-sheet.on { display: flex; }
-    .tut-sheet.show { transform: translateY(0); }
-    .tut-sheet-handle {
-      width: 40px; height: 4px; border-radius: 2px;
-      background: var(--text3); margin-bottom: 16px; flex-shrink: 0;
-      cursor: grab;
-    }
-    .tut-sheet-close {
-      position: absolute; top: 12px; right: 16px;
-      width: 28px; height: 28px; border-radius: 50%;
-      background: var(--surf2); border: none; color: var(--text2);
-      font-size: .85rem; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .tut-sheet iframe {
-      width: 100%; max-width: 300px; flex: 1;
-      border: none; border-radius: 14px;
-    }
-
-    /* Light mode */
-    [data-theme="light"] .tut-bubble-circle {
-      background: rgba(255,255,255,.9);
-      border-color: rgba(249,115,22,.3);
-      box-shadow: 0 2px 12px rgba(0,0,0,.08);
-    }
-    [data-theme="light"] .tut-bubble-dismiss { background: rgba(0,0,0,.5); }
-    [data-theme="light"] .tut-player { box-shadow: 0 8px 40px rgba(0,0,0,.2); }
-    [data-theme="light"] .tut-sheet { box-shadow: 0 -4px 30px rgba(0,0,0,.12); }
-
-    @media (max-width: 768px) {
-      .tut-bubble { bottom: 16px; left: 16px; }
-      .tut-bubble-circle { width: 48px; height: 48px; }
-      .tut-bubble-text { display: none; }
-      .tut-bubble-play { border-left-width: 10px; border-top-width: 6px; border-bottom-width: 6px; }
-    }
+    /* v0.14.11a: tut-bubble widget + YouTube modal CSS removed */
   </style>
 
   {% if clarity_project_id %}
@@ -8365,11 +8252,8 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
         <span data-i18n="nav.buy_credits">Buy credits</span>
       </button>
-      <button onclick="closeNavMob();openTutorial()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Tutorial
-      </button>
       <!-- v0.14.9a: logout vive ahora en #avatarMenu (tap en avatar). -->
+      <!-- v0.14.11a: botón Tutorial eliminado tras retirar modal YouTube. -->
     </div>
   </div>
 </div>
@@ -8386,28 +8270,17 @@
 
   <div class="hero-grid">
     <div class="hero-copy">
-      <div class="hero-eyebrow">
-        <span class="hero-eyebrow-pulse"></span>
-        <span data-i18n-es="REELSCRIPT · GESTIÓN DE CONTENIDO" data-i18n-en="REELSCRIPT · CONTENT MANAGEMENT">REELSCRIPT · GESTIÓN DE CONTENIDO</span>
+      <div class="hero-pill">
+        <span class="hero-pill-pulse" aria-hidden="true"></span>
+        <span data-i18n-es="Más de 70 creadores ya lo usan" data-i18n-en="Over 70 creators already use it">Más de 70 creadores ya lo usan</span>
       </div>
       <p class="hero-h1-v2" aria-hidden="true">
-        <span data-i18n-es="Sé" data-i18n-en="Be">Sé</span>
-        <em data-i18n-es="ordenado" data-i18n-en="organized">ordenado</em>.<br>
-        <span data-i18n-es="Gestiona tu content desde aquí." data-i18n-en="Run your content from here.">Gestiona tu content desde aquí.</span>
+        <span data-i18n-es="Copia los vídeos que ya funcionan." data-i18n-en="Copy the videos that already work.">Copia los vídeos que ya funcionan.</span>
       </p>
-      <p class="hero-sub-v2" data-i18n-es="Transcribe, guarda ideas, genera guiones y mide lo que funciona. Todo desde un sitio." data-i18n-en="Transcribe, capture ideas, generate scripts and measure what works. All from one place.">Transcribe, guarda ideas, genera guiones y mide lo que funciona. Todo desde un sitio.</p>
+      <p class="hero-sub-v2" data-i18n-es="Transcríbelos, mídelos y conviértelos en los tuyos. Sin partir de cero." data-i18n-en="Transcribe, measure, and turn them into yours. No starting from scratch.">Transcríbelos, mídelos y conviértelos en los tuyos. Sin partir de cero.</p>
       <div class="hero-ctas">
-        <button class="hero-cta-primary" onclick="openAuth('register','hero_main')" data-i18n-es="Empezar gratis →" data-i18n-en="Get started free →">Empezar gratis →</button>
-        <button class="hero-cta-secondary" onclick="tutBubbleOpen()">
-          <span class="play-circle" aria-hidden="true">▶</span>
-          <span data-i18n-es="Ver cómo funciona" data-i18n-en="See how it works">Ver cómo funciona</span>
-          <span class="hero-cta-time">(30s)</span>
-        </button>
-      </div>
-      <div class="hero-trust">
-        <span class="hero-trust-dot">•</span>
-        <span id="counterNum" class="counter-num">0</span>
-        <span data-i18n="hero.counter_suffix">reels transcritos hoy</span>
+        <button class="hero-cta-primary" onclick="openAuth('register','hero_main')" data-i18n-es="Pruébalo gratis →" data-i18n-en="Try it free →">Pruébalo gratis →</button>
+        <button class="hero-cta-secondary" onclick="document.getElementById('howItWorks')?.scrollIntoView({behavior:'smooth'})" data-i18n-es="Ver cómo funciona" data-i18n-en="See how it works">Ver cómo funciona</button>
       </div>
     </div>
 
@@ -18557,106 +18430,6 @@ window.addEventListener("DOMContentLoaded", () => {
     <div id="casButtons"></div>
   </div>
 </div>
-<!-- Tutorial floating bubble removed — demo trigger now lives inline in the hero counter block. -->
-
-<!-- Desktop player -->
-<div class="tut-player" id="tutPlayer">
-  <button class="tut-player-close" onclick="tutPlayerClose()">✕</button>
-  <iframe id="tutPlayerIframe" allow="autoplay" allowfullscreen></iframe>
-</div>
-
-<!-- Mobile bottom sheet -->
-<div class="tut-sheet-overlay" id="tutSheetOverlay" onclick="tutSheetClose()"></div>
-<div class="tut-sheet" id="tutSheet">
-  <div class="tut-sheet-handle" id="tutSheetHandle"></div>
-  <button class="tut-sheet-close" onclick="tutSheetClose()">✕</button>
-  <iframe id="tutSheetIframe" allow="autoplay" allowfullscreen></iframe>
-</div>
-
-<script>
-(function() {
-  const EMBED = "https://www.youtube.com/embed/I298j-FEZAo?autoplay=1&loop=1&playlist=I298j-FEZAo&rel=0";
-  const bubble = document.getElementById("tutBubble");
-  const circle = document.getElementById("tutBubbleCircle");
-  const textEl = document.getElementById("tutBubbleText");
-  const player = document.getElementById("tutPlayer");
-  const sheet  = document.getElementById("tutSheet");
-  const overlay = document.getElementById("tutSheetOverlay");
-  const isMob = () => window.innerWidth < 768;
-  let pulseCount = 0;
-  let playerOpen = false;
-
-  // The floating bubble was removed; the inline hero link now triggers tutBubbleOpen().
-  // Guards: every bubble/circle/textEl mutation is no-op when those elements are absent.
-
-  window.tutBubbleOpen = function() {
-    if (playerOpen) return;
-    playerOpen = true;
-    if (bubble) bubble.classList.remove("on");
-    if (isMob()) {
-      overlay.classList.add("on");
-      sheet.classList.add("on");
-      requestAnimationFrame(() => {
-        overlay.classList.add("show");
-        sheet.classList.add("show");
-      });
-      document.getElementById("tutSheetIframe").src = EMBED;
-    } else {
-      player.classList.add("on");
-      requestAnimationFrame(() => player.classList.add("show"));
-      document.getElementById("tutPlayerIframe").src = EMBED;
-    }
-  };
-
-  window.tutPlayerClose = function() {
-    player.classList.remove("show");
-    setTimeout(() => {
-      player.classList.remove("on");
-      document.getElementById("tutPlayerIframe").src = "";
-    }, 300);
-    playerOpen = false;
-  };
-
-  window.tutSheetClose = function() {
-    sheet.classList.remove("show");
-    overlay.classList.remove("show");
-    setTimeout(() => {
-      sheet.classList.remove("on");
-      overlay.classList.remove("on");
-      document.getElementById("tutSheetIframe").src = "";
-    }, 350);
-    playerOpen = false;
-  };
-
-  window.tutBubbleDismiss = function() {
-    if (bubble) bubble.classList.remove("on");
-    sessionStorage.setItem("tutorial_bubble_dismissed", "true");
-  };
-
-  // Swipe-down to close sheet
-  let startY = 0;
-  const handle = document.getElementById("tutSheetHandle");
-  handle.addEventListener("touchstart", e => { startY = e.touches[0].clientY; }, { passive: true });
-  handle.addEventListener("touchmove", e => {
-    const dy = e.touches[0].clientY - startY;
-    if (dy > 60) tutSheetClose();
-  }, { passive: true });
-
-  // Increment uses counter on transcription (kept so future metrics still log; bubble gone).
-  const origDoTranscribe = window.doTranscribe;
-  if (origDoTranscribe) {
-    window.doTranscribe = function() {
-      const n = parseInt(localStorage.getItem("tutorial_uses_seen") || "0", 10);
-      localStorage.setItem("tutorial_uses_seen", String(n + 1));
-      return origDoTranscribe.apply(this, arguments);
-    };
-  }
-})();
-
-// Connect existing tutorial buttons to bubble player
-openTutorial = function() {
-  if (typeof tutBubbleOpen === "function") tutBubbleOpen();
-};
-</script>
+<!-- v0.14.11a: tutorial bubble + YouTube modal removed -->
 </body>
 </html>
