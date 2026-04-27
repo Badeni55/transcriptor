@@ -787,501 +787,262 @@
 
     @keyframes fade-up { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
 
-    /* ── Hero v2 (asymmetric) ─────────────────────────────── */
-    .hero-v2 { padding: 56px 24px 40px; text-align: left; max-width: 1240px; margin: 0 auto; align-items: stretch; }
+    /* ── Hero v2 (centered, v0.14.11a) ───────────────────────── */
+    .hero-v2 {
+      --bg-hero: rgba(10,9,12,1);
+      padding: 56px 24px 40px; text-align: center;
+      max-width: 1240px; margin: 0 auto;
+      background: var(--bg-hero);
+      border-radius: 24px;
+    }
+    [data-theme="light"] .hero-v2 {
+      --bg-hero: transparent;
+      background: transparent;
+    }
     .hero-grid {
-      display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 56px;
-      align-items: center; width: 100%;
+      display: flex; flex-direction: column;
+      gap: 32px; align-items: center; width: 100%;
+    }
+    .hero-copy {
+      display: flex; flex-direction: column; align-items: center;
+      max-width: 760px; width: 100%;
     }
     @media (max-width: 980px) {
-      .hero-grid { grid-template-columns: 1fr; gap: 32px; }
+      .hero-grid { gap: 28px; }
       .hero-v2 { padding: 36px 20px 24px; }
     }
-    /* v0.14.8a: refuerzo mobile <640px */
     @media (max-width: 640px) {
       .hero-v2 { padding: 24px 16px 16px; }
       .hero-grid { gap: 24px; }
       .hero-h1-v2 { font-size: clamp(2rem, 9vw, 2.8rem); line-height: 1.1; letter-spacing: -1px; }
       .hero-sub-v2 { font-size: .98rem; max-width: 100%; }
-      .hero-ctas { flex-direction: column; align-items: stretch; gap: 10px; }
+      .hero-ctas { flex-direction: column; align-items: stretch; gap: 10px; width: 100%; }
       .hero-cta-primary,
       .hero-cta-secondary { width: 100%; justify-content: center; padding: 14px; }
       .hero-cta-secondary { gap: 6px; }
-      .scene-rotator { max-width: 380px; margin: 0 auto; width: 100%; }
     }
-    .hero-eyebrow {
+
+    /* Pill prueba social (v0.14.11a) — sustituye eyebrow */
+    .hero-pill {
       display: inline-flex; align-items: center; gap: 8px;
-      color: var(--orange); font-family: var(--font-body); font-size: .72rem; font-weight: 700;
-      letter-spacing: .12em; text-transform: uppercase;
-      margin-bottom: 18px;
+      padding: 8px 16px; border-radius: 999px;
+      background: rgba(31,26,34,.6);
+      border: 1px solid rgba(241,234,217,.15);
+      color: rgba(241,234,217,.85); font-family: var(--font-body);
+      font-size: .82rem; font-weight: 500;
+      margin-bottom: 24px;
+      backdrop-filter: blur(6px);
     }
-    .hero-eyebrow-pulse {
+    [data-theme="light"] .hero-pill {
+      background: rgba(255,255,255,.55);
+      border-color: rgba(60,40,20,.18);
+      color: var(--text2);
+    }
+    .hero-pill-pulse {
       width: 7px; height: 7px; border-radius: 50%; background: var(--orange);
       box-shadow: 0 0 0 0 rgba(249,115,22,.6);
       animation: heroEyePulse 2s ease infinite;
+      flex-shrink: 0;
     }
     @keyframes heroEyePulse {
       0%   { box-shadow: 0 0 0 0 rgba(249,115,22,.55); }
       70%  { box-shadow: 0 0 0 12px rgba(249,115,22,0); }
       100% { box-shadow: 0 0 0 0 rgba(249,115,22,0); }
     }
+
     .hero-h1-v2 {
       font-family: var(--font-display);
-      font-size: clamp(2.4rem, 5.2vw, 4rem);
+      font-size: clamp(2.4rem, 7vw, 4.5rem);
       font-weight: 400; line-height: 1.05; letter-spacing: -1.5px;
-      color: var(--text); margin: 0 0 18px;
+      color: var(--text); margin: 0 0 16px;
+      text-wrap: balance;
     }
     .hero-h1-v2 em {
       font-style: italic; color: #fdba74; -webkit-text-fill-color: #fdba74;
     }
     [data-theme="light"] .hero-h1-v2 em { color: #c2410c; -webkit-text-fill-color: #c2410c; }
     .hero-sub-v2 {
-      font-size: 1.05rem; color: var(--text2); line-height: 1.55;
-      max-width: 480px; margin: 0 0 26px;
+      font-size: clamp(1rem, 1.4vw, 1.15rem); color: var(--text2); line-height: 1.5;
+      max-width: 640px; margin: 0 auto 32px;
     }
-    .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 22px; }
+    .hero-ctas {
+      display: flex; gap: 12px; flex-wrap: wrap;
+      align-items: center; justify-content: center;
+      margin-bottom: 0;
+    }
     .hero-cta-primary {
-      background: var(--purple); color: #fff; border: 0;
-      padding: 14px 22px; border-radius: 12px;
-      font-family: var(--font-body); font-weight: 700; font-size: .92rem;
-      cursor: pointer; transition: transform .12s, box-shadow .15s, opacity .15s;
-      box-shadow: 0 5px 0 #92400e;
+      background: #f97316; color: #fff; border: 0;
+      padding: 16px 32px; border-radius: 12px;
+      font-family: var(--font-body); font-weight: 700; font-size: 1rem;
+      cursor: pointer; transition: transform .12s, box-shadow .15s, opacity .15s, background .15s;
+      box-shadow: 0 5px 0 #92400e, 0 8px 32px rgba(239,106,41,.4);
     }
-    .hero-cta-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 0 #92400e, 0 4px 16px rgba(249,115,22,.35); }
-    .hero-cta-primary:active { transform: translateY(4px); box-shadow: 0 1px 0 #92400e; }
+    .hero-cta-primary:hover { transform: translateY(-1px); background: #ea680c; box-shadow: 0 6px 0 #92400e, 0 10px 36px rgba(239,106,41,.5); }
+    .hero-cta-primary:active { transform: translateY(4px); box-shadow: 0 1px 0 #92400e, 0 4px 16px rgba(239,106,41,.3); }
     .hero-cta-secondary {
       background: transparent; border: 1px solid var(--border); color: var(--text);
-      padding: 13px 18px; border-radius: 12px; cursor: pointer;
+      padding: 16px 28px; border-radius: 12px; cursor: pointer;
       display: inline-flex; align-items: center; gap: 8px;
-      font-family: var(--font-body); font-weight: 500; font-size: .88rem;
+      font-family: var(--font-body); font-weight: 600; font-size: 1rem;
       transition: border-color .15s, background .15s, color .15s;
     }
-    .hero-cta-secondary:hover { border-color: var(--purple); color: var(--purple); background: rgba(249,115,22,.06); }
-    .hero-cta-secondary .play-circle {
-      width: 22px; height: 22px; border-radius: 50%; background: var(--orange); color: #fff;
-      display: inline-flex; align-items: center; justify-content: center;
-      font-size: .55rem; padding-left: 2px; flex-shrink: 0;
-    }
-    .hero-cta-time { color: var(--text3); font-size: .78rem; }
-    .hero-trust {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      color: var(--text3); font-size: .76rem;
-      display: inline-flex; align-items: center; gap: 6px;
-    }
-    .hero-trust-dot { color: var(--orange); }
-    .hero-trust .counter-num { color: var(--text2); }
+    .hero-cta-secondary:hover { border-color: var(--orange); color: var(--orange); background: rgba(249,115,22,.06); }
 
-    /* ── Scene rotator ──────────────────────────────────────── */
-    .scene-rotator { position: relative; }
-    .scene-waves {
-      position: absolute; inset: 0; width: 100%; height: 100%;
-      opacity: .08; z-index: 0; pointer-events: none;
-    }
-    .scene-tabs {
-      position: relative; z-index: 2;
-      display: grid; grid-template-columns: repeat(4,1fr); gap: 4px;
-      background: var(--surf); border: 1px solid var(--border); border-radius: 14px;
-      padding: 4px; margin-bottom: 12px;
-    }
-    .scene-tab {
+    /* ── Hero rotator (v0.14.11b) — vídeo 16:9 + 3 pill tabs ─── */
+    .hero-rotator {
+      --rot-acc: 239,106,41;
       position: relative;
-      display: flex; align-items: center; justify-content: center; gap: 6px;
-      padding: 10px 6px; border: 0; border-radius: 10px;
-      background: transparent; cursor: pointer;
-      color: var(--text3); font-family: var(--font-body); font-size: .78rem; font-weight: 600;
-      transition: color .18s, background .18s;
-      min-width: 0;
+      width: 100%; max-width: 960px;
+      margin: 0 auto;
     }
-    .scene-tab img { width: 22px; height: 22px; flex-shrink: 0; opacity: .65; transition: opacity .18s; }
-    .scene-tab:hover { color: var(--text2); }
-    .scene-tab:hover img { opacity: .9; }
-    .scene-tab.on {
-      color: var(--text);
-      background: linear-gradient(135deg, rgba(249,115,22,.16), rgba(249,115,22,.06));
+    .hero-rotator-video {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      width: 100%;
+      border-radius: 18px; overflow: hidden;
+      background: #0c0a10;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.05),
+        0 24px 80px rgba(0,0,0,.5),
+        0 0 60px rgba(var(--rot-acc), .15);
+      transition: box-shadow .4s ease;
     }
-    .scene-tab.on img { opacity: 1; }
-    .scene-tab.on::after {
-      content: ""; position: absolute; left: 14%; right: 14%; bottom: -5px;
-      height: 2px; background: var(--orange); border-radius: 2px;
-      transition: opacity .25s;
+    [data-theme="light"] .hero-rotator-video {
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,.05),
+        0 16px 48px rgba(60,40,20,.18),
+        0 0 60px rgba(var(--rot-acc), .12);
     }
-    @media (max-width: 480px) {
-      .scene-tab { font-size: .7rem; padding: 8px 4px; }
-      .scene-tab img { width: 18px; height: 18px; }
-    }
-
-    .scene-stage {
-      position: relative; z-index: 1;
-      aspect-ratio: 4/3; width: 100%;
-      background: var(--surf); border: 1px solid var(--border); border-radius: 16px;
-      overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,.18);
-    }
-    @media (max-width: 980px) { .scene-stage { aspect-ratio: 9/12; } }
-    @media (max-width: 640px) { .scene-stage { aspect-ratio: 9/16; } }
-    .scene-mockup {
+    .hr-video {
       position: absolute; inset: 0;
-      opacity: 0; transform: translateY(8px) scale(.99);
-      transition: opacity .35s ease, transform .35s ease;
-      pointer-events: none;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      opacity: 0; pointer-events: none;
+      transition: opacity .2s ease;
     }
-    .scene-mockup.is-active { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
-    .scene-frame {
-      position: absolute; inset: 18px;
-      background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
-      display: flex; flex-direction: column;
-      overflow: hidden;
-    }
-    .mock-window-bar {
-      display: flex; gap: 6px; padding: 10px 12px;
-      border-bottom: 1px solid var(--border); flex-shrink: 0;
-      align-items: center;
-    }
-    .mock-window-bar span {
-      width: 9px; height: 9px; border-radius: 50%; background: var(--surf2);
-    }
-    .mock-window-bar .mock-window-url {
-      flex: 1; margin-left: 12px;
-      padding: 3px 10px; border-radius: 6px;
-      background: var(--surf); color: var(--text3);
-      font-family: ui-monospace, SFMono-Regular, monospace; font-size: .58rem;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .scene-shot {
-      flex: 1; width: 100%; min-height: 0;
-      object-fit: cover; object-position: top center;
-      display: block;
-    }
-    .scene-mockup.is-active .scene-shot {
-      animation: kenBurnsScene 9s ease-out both;
-    }
-    @keyframes kenBurnsScene {
-      from { transform: scale(1.05); }
-      to   { transform: scale(1); }
-    }
-    .scene-shot-overlay {
-      position: absolute; left: 0; right: 0; bottom: 0; height: 60px;
-      background: linear-gradient(to bottom, transparent, rgba(0,0,0,.35));
-      pointer-events: none;
-    }
-    .scene-mascot {
-      position: absolute; right: 14px; bottom: 14px;
-      width: 60px; height: 60px;
-      opacity: 0; transform: translateY(8px);
-      transition: opacity .4s ease .2s, transform .4s ease .2s;
-      pointer-events: none; z-index: 3;
-      filter: drop-shadow(0 4px 12px rgba(0,0,0,.25));
-    }
-    .scene-mockup.is-active .scene-mascot { opacity: .85; transform: translateY(0); }
+    .hr-video.on { opacity: 1; pointer-events: auto; }
 
-    /* Mockup base UI bits */
-    .mock-input-row { display: flex; gap: 8px; padding: 14px; }
-    .mock-input {
-      flex: 1; min-width: 0;
-      padding: 10px 14px; border-radius: 10px;
-      border: 1px solid var(--border); background: var(--surf);
-      color: var(--text2); font-size: .78rem; font-family: ui-monospace, SFMono-Regular, monospace;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    .hero-rotator-tabs {
+      display: flex; gap: 12px;
+      align-items: center; justify-content: center;
+      flex-wrap: wrap;
+      margin: 24px 0 0;
+      list-style: none; padding: 0;
     }
-    .mock-input .mock-typed { display: inline-block; }
-    .mock-btn-go {
-      padding: 10px 14px; border-radius: 10px;
-      background: var(--purple); color: #fff;
-      font-size: .78rem; font-weight: 700;
-      flex-shrink: 0;
+    .hr-tab {
+      padding: 12px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(241,234,217,.1);
+      background: rgba(31,26,34,.6);
+      color: rgba(241,234,217,.6);
+      font-family: var(--font-body); font-weight: 600; font-size: .9rem;
+      cursor: pointer;
+      transition: opacity .15s, background .25s, border-color .18s, color .2s, box-shadow .25s;
+      backdrop-filter: blur(6px);
+    }
+    [data-theme="light"] .hr-tab {
+      background: rgba(255,255,255,.5);
+      border-color: rgba(60,40,20,.14);
+      color: var(--text3);
+    }
+    .hr-tab:hover {
+      color: var(--text);
+      border-color: rgba(var(--tab-acc, 239,106,41), .55);
+      opacity: 1;
+    }
+    .hr-tab.on {
+      background: rgb(var(--tab-acc, 239,106,41));
+      border-color: rgb(var(--tab-acc, 239,106,41));
+      color: #1a1217;
+      box-shadow: 0 6px 24px rgba(var(--tab-acc, 239,106,41), .35);
+    }
+    [data-theme="light"] .hr-tab.on { color: #fff; }
+
+    @media (max-width: 880px) {
+      .hero-rotator { padding: 0 4px; }
+      .hr-tab { padding: 10px 16px; font-size: .82rem; }
     }
 
-    /* Scene 1: Transcribe */
-    .mock-reel-preview {
-      display: flex; gap: 12px; align-items: center;
-      margin: 0 14px 4px; padding: 12px;
-      background: linear-gradient(135deg, rgba(249,115,22,.08), rgba(125,91,184,.08));
-      border: 1px solid var(--border); border-radius: 12px;
-      opacity: 0;
+    /* ── How it works (v0.14.11c) — 3 pasos con micro-vídeos ───── */
+    .how-section {
+      max-width: 1100px; margin: 0 auto;
+      padding: 56px 24px 40px;
+      position: relative; z-index: 1;
     }
-    .scene-mockup[data-scene="transcribe"].is-active .mock-reel-preview {
-      animation: lineIn .4s ease 1s both;
+    .how-head { text-align: center; margin-bottom: 48px; }
+    .how-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--orange); font-size: .72rem; font-weight: 700;
+      letter-spacing: .12em; text-transform: uppercase;
+      margin-bottom: 14px;
     }
-    .mock-reel-thumb {
-      position: relative; flex-shrink: 0;
-      width: 54px; height: 88px; border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,.35);
-      background: linear-gradient(135deg, #f97316 0%, #c2410c 50%, #7d5bb8 100%);
+    .how-eyebrow::before {
+      content: ""; width: 24px; height: 1px;
+      background: var(--orange); display: inline-block;
     }
-    .mock-reel-thumb img {
-      position: absolute; inset: 0; width: 100%; height: 100%;
-      object-fit: cover; object-position: center;
-      display: block;
+    .how-h2 {
+      font-family: var(--font-display); font-weight: 400;
+      font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.15; letter-spacing: -.5px;
+      margin: 0 auto 12px; max-width: 640px;
+      text-wrap: balance;
     }
-    .mock-reel-handle-row { display: flex; align-items: center; gap: 6px; }
-    .mock-reel-avatar {
-      width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
-      background: linear-gradient(135deg, #fdba74, #c2410c);
-      border: 1.5px solid var(--bg);
+    .how-h2 em { font-style: italic; color: #fdba74; -webkit-text-fill-color: #fdba74; }
+    [data-theme="light"] .how-h2 em { color: #c2410c; -webkit-text-fill-color: #c2410c; }
+    .how-sub {
+      color: var(--text2); font-size: 1rem; line-height: 1.55;
+      margin: 0 auto; max-width: 540px;
     }
-    .mock-reel-thumb::before {
-      content: ""; position: absolute; inset: 0;
-      background:
-        radial-gradient(ellipse at 30% 40%, rgba(255,255,255,.25) 0%, transparent 40%),
-        radial-gradient(ellipse at 70% 80%, rgba(0,0,0,.3) 0%, transparent 50%);
+    .how-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 24px; align-items: stretch;
     }
-    .mock-reel-thumb::after {
-      content: "▶"; position: absolute; top: 50%; left: 50%;
-      transform: translate(-40%,-50%);
-      width: 24px; height: 24px; border-radius: 50%;
-      background: rgba(0,0,0,.55); backdrop-filter: blur(4px);
-      display: flex; align-items: center; justify-content: center;
-      color: #fff; font-size: .68rem; padding-left: 1px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.4);
-      z-index: 2;
+    @media (max-width: 880px) {
+      .how-section { padding: 40px 20px 24px; }
+      .how-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
+      .how-head { margin-bottom: 32px; }
     }
-    .mock-reel-meta { flex: 1; min-width: 0; }
-    .mock-reel-handle { font-size: .76rem; color: var(--text); font-weight: 600; }
-    .mock-reel-handle::before { content: "@"; color: var(--orange); }
-    .mock-reel-stats { font-size: .7rem; color: var(--text3); margin-top: 2px; display: flex; gap: 8px; }
-    .mock-reel-stats span { display: inline-flex; align-items: center; gap: 3px; }
-    .mock-reel-duration {
-      flex-shrink: 0; padding: 3px 8px; border-radius: 999px;
-      background: rgba(0,0,0,.5); color: #fff; font-size: .65rem;
-      font-family: ui-monospace, SFMono-Regular, monospace;
+    .how-step {
+      display: flex; flex-direction: column; gap: 14px;
+      padding: 24px 20px;
+      background: linear-gradient(135deg, #1f1a22 0%, #171218 100%);
+      border: 1px solid rgba(241,234,217,.06);
+      border-left: 3px solid rgb(var(--step-acc, 239,106,41));
+      border-radius: 16px;
+      box-shadow: 0 8px 28px rgba(0,0,0,.25);
     }
-    .scene-mockup[data-scene="transcribe"].is-active .mock-typed {
-      animation: typeIn 1.6s steps(40) both;
+    [data-theme="light"] .how-step {
+      background: linear-gradient(135deg, #fffaf0 0%, #f6efe1 100%);
+      border-color: rgba(60,40,20,.08);
+      box-shadow: 0 6px 18px rgba(60,40,20,.08);
     }
-    @keyframes typeIn { from { width: 0; } to { width: 100%; } }
-    .mock-spinner {
-      display: flex; gap: 5px; justify-content: center; align-items: center;
-      padding: 8px 0;
-      opacity: 0;
+    .how-step-num {
+      font-family: var(--font-display); font-weight: 400;
+      font-size: clamp(2.5rem, 6vw, 3.6rem); line-height: 1;
+      color: rgb(var(--step-acc, 239,106,41));
+      letter-spacing: -1px;
     }
-    .scene-mockup[data-scene="transcribe"].is-active .mock-spinner {
-      animation: mockFadeBetween 1.2s ease 1.6s both;
-    }
-    .mock-spinner div {
-      width: 6px; height: 6px; border-radius: 50%; background: var(--orange);
-      animation: mockBounce .8s infinite alternate;
-    }
-    .mock-spinner div:nth-child(2) { animation-delay: .15s; }
-    .mock-spinner div:nth-child(3) { animation-delay: .3s; }
-    @keyframes mockBounce { 0%{transform:translateY(0)} 100%{transform:translateY(-6px)} }
-    @keyframes mockFadeBetween { 0%{opacity:0} 30%{opacity:1} 80%{opacity:1} 100%{opacity:0} }
-    .mock-output { padding: 4px 18px 14px; flex: 1; overflow: hidden; }
-    .mock-output .mock-line {
-      font-size: .82rem; color: var(--text2); line-height: 1.5;
-      margin: 0 0 6px; opacity: 0;
-    }
-    .scene-mockup[data-scene="transcribe"].is-active .mock-output .l1 { animation: lineIn .35s ease 2.9s both; }
-    .scene-mockup[data-scene="transcribe"].is-active .mock-output .l2 { animation: lineIn .35s ease 3.4s both; }
-    .scene-mockup[data-scene="transcribe"].is-active .mock-output .l3 { animation: lineIn .35s ease 3.9s both; }
-    @keyframes lineIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-
-    /* Scene 2: Metrics */
-    .mock-metrics { padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
-    .mock-metrics-title { color: var(--text3); font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
-    .mock-bars-wrap {
+    .how-step-video {
       position: relative;
-      padding-left: 24px;
-      border-bottom: 1px solid var(--border); padding-bottom: 8px;
+      aspect-ratio: 16 / 9;
+      width: 100%; max-width: 320px;
+      border-radius: 12px; overflow: hidden;
+      background: #0c0a10;
+      box-shadow: 0 6px 18px rgba(0,0,0,.3);
     }
-    .mock-bars-yaxis {
-      position: absolute; left: 0; top: 0; bottom: 8px;
-      display: flex; flex-direction: column; justify-content: space-between;
-      font-size: .56rem; color: var(--text3); font-variant-numeric: tabular-nums;
-      padding: 2px 0;
+    .how-step-video video {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
     }
-    .mock-bars {
-      display: grid; grid-template-columns: repeat(7,1fr); gap: 8px;
-      align-items: end; height: 90px; padding: 4px 0;
+    .how-step-title {
+      font-family: var(--font-display); font-weight: 400;
+      font-size: 1.35rem; line-height: 1.2; color: var(--text);
+      margin: 4px 0 0;
     }
-    .mock-bars-xlabels {
-      display: grid; grid-template-columns: repeat(7,1fr); gap: 8px;
-      margin-top: 4px; font-size: .58rem; color: var(--text3); text-align: center;
+    .how-step-desc {
+      font-family: var(--font-body); font-size: .9rem;
+      line-height: 1.55; color: var(--text2); margin: 0;
     }
-    .mock-bar {
-      width: 100%; background: linear-gradient(180deg, var(--orange), #fdba74);
-      border-radius: 4px 4px 0 0;
-      height: 0;
-    }
-    .scene-mockup[data-scene="metrics"].is-active .mock-bar:nth-child(1) { animation: barRise .5s ease .1s both; }
-    .scene-mockup[data-scene="metrics"].is-active .mock-bar:nth-child(2) { animation: barRise .5s ease .2s both; }
-    .scene-mockup[data-scene="metrics"].is-active .mock-bar:nth-child(3) { animation: barRise .5s ease .3s both; }
-    .scene-mockup[data-scene="metrics"].is-active .mock-bar:nth-child(4) { animation: barRise .5s ease .4s both; }
-    .scene-mockup[data-scene="metrics"].is-active .mock-bar:nth-child(5) { animation: barRise .5s ease .5s both; }
-    .scene-mockup[data-scene="metrics"].is-active .mock-bar:nth-child(6) { animation: barRise .5s ease .6s both; }
-    .scene-mockup[data-scene="metrics"].is-active .mock-bar:nth-child(7) { animation: barRise .5s ease .7s both; }
-    @keyframes barRise { from { height: 0; } to { height: var(--h); } }
-    .mock-kpis { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
-    .mock-kpi { padding: 10px; border-radius: 10px; background: var(--surf); border: 1px solid var(--border); }
-    .mock-kpi-label { font-size: .68rem; color: var(--text3); text-transform: uppercase; letter-spacing: .04em; }
-    .mock-kpi-num { font-family: var(--font-display); font-size: 1.1rem; color: var(--text); margin-top: 2px; font-variant-numeric: tabular-nums; }
-
-    /* Scene 3: Ideas (idea + developed result) */
-    .mock-ideas-v2 {
-      display: flex; flex-direction: column; gap: 10px;
-      padding: 12px 14px 14px; flex: 1; overflow: hidden;
-    }
-    .mock-ideas-input-card {
-      border: 1px solid var(--border); border-radius: 10px;
-      padding: 8px 10px; background: var(--surf);
-    }
-    .mock-ideas-input-label {
-      font-size: .58rem; color: var(--text3); letter-spacing: .1em; text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-    .mock-ideas-input-text {
-      font-size: .8rem; color: var(--text); font-style: italic; line-height: 1.3; min-height: 1em;
-    }
-    .mock-ideas-input-row {
-      display: flex; gap: 6px; align-items: center; margin-top: 8px;
-    }
-    .mock-chip {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 3px 8px; border-radius: 999px;
-      font-size: .62rem; font-weight: 500; white-space: nowrap;
-    }
-    .mock-chip.purple { background: rgba(125,91,184,.12); color: #a78bfa; border: 1px solid rgba(125,91,184,.35); }
-    .mock-chip.orange { background: rgba(249,115,22,.12); color: #fed7aa; border: 1px solid rgba(249,115,22,.35); }
-    .mock-chip-spacer { flex: 1; }
-    .mock-ideas-cta {
-      padding: 5px 10px; border-radius: 8px;
-      background: linear-gradient(135deg, #f97316, #fb923c); color: #fff;
-      font-size: .68rem; font-weight: 700;
-      box-shadow: 0 2px 8px rgba(249,115,22,.3);
-    }
-    .mock-ideas-result {
-      flex: 1; min-height: 0;
-      border: 1px solid var(--border); border-radius: 10px;
-      padding: 10px 12px; background: var(--surf);
-      display: flex; flex-direction: column; gap: 8px; overflow: hidden;
-    }
-    .mock-ideas-badges {
-      display: flex; gap: 5px; flex-wrap: wrap;
-    }
-    .mock-ideas-badges .b {
-      display: inline-flex; align-items: center; gap: 3px;
-      font-size: .58rem; font-weight: 700; letter-spacing: .04em;
-      padding: 2px 7px; border-radius: 999px;
-    }
-    .mock-ideas-badges .b.ok { background: rgba(34,197,94,.14); color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
-    .mock-ideas-badges .b.cy { background: rgba(45,212,191,.14); color: #5eead4; border: 1px solid rgba(45,212,191,.3); }
-    .mock-ideas-badges .b.gr { background: rgba(34,197,94,.14); color: #86efac; border: 1px solid rgba(34,197,94,.3); }
-    .mock-ideas-result-title {
-      font-family: var(--font-display); font-size: .92rem; line-height: 1.2;
-      color: var(--text); font-weight: 400;
-    }
-    .mock-ideas-blocks {
-      flex: 1; min-height: 0;
-      display: flex; flex-direction: column; gap: 6px;
-      padding: 8px 10px;
-      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-      overflow: hidden;
-    }
-    .mock-ideas-block-lbl {
-      font-size: .56rem; font-weight: 700; letter-spacing: .1em;
-      color: #4ade80; margin-bottom: 0;
-    }
-    .mock-ideas-block-txt {
-      font-size: .72rem; color: var(--text2); font-style: italic; line-height: 1.4;
-      margin: 0 0 2px;
-    }
-    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-input-card { animation: lineIn .35s ease .15s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-result    { animation: lineIn .4s ease .55s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-blocks > *:nth-child(1) { animation: lineIn .3s ease 1.1s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-blocks > *:nth-child(2) { animation: lineIn .3s ease 1.3s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-blocks > *:nth-child(3) { animation: lineIn .3s ease 1.5s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-blocks > *:nth-child(4) { animation: lineIn .3s ease 1.7s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-blocks > *:nth-child(5) { animation: lineIn .3s ease 1.9s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-blocks > *:nth-child(6) { animation: lineIn .3s ease 2.1s both; }
-
-    /* (legacy) Scene 3 simpler: kept for rare edge cases */
-    .mock-ideas { display: flex; flex-direction: column; gap: 8px; flex: 1; padding: 14px 18px; }
-    .mock-ideas-head {
-      display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
-    }
-    .mock-ideas-icon { font-size: 1rem; }
-    .mock-ideas-title { font-family: var(--font-display); font-size: .95rem; color: var(--text); flex: 1; }
-    .mock-ideas-count {
-      background: rgba(249,115,22,.14); color: var(--orange);
-      padding: 2px 9px; border-radius: 999px;
-      font-size: .68rem; font-weight: 700; font-variant-numeric: tabular-nums;
-    }
-    .mock-idea-card {
-      display: flex; gap: 10px; align-items: flex-start;
-      padding: 10px 12px;
-      background: var(--surf); border: 1px solid var(--border); border-radius: 10px;
-      opacity: 0; transform: translateX(-10px);
-    }
-    .mock-idea-card-tag {
-      flex-shrink: 0; padding: 3px 8px; border-radius: 999px;
-      font-size: .62rem; font-weight: 700; letter-spacing: .04em;
-      background: color-mix(in srgb, var(--c) 16%, transparent);
-      color: var(--c); border: 1px solid color-mix(in srgb, var(--c) 32%, transparent);
-    }
-    .mock-idea-card p { font-size: .78rem; color: var(--text2); line-height: 1.45; margin: 0; flex: 1; min-width: 0; }
-    .mock-idea-time { font-size: .62rem; color: var(--text3); flex-shrink: 0; font-variant-numeric: tabular-nums; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-idea-card:nth-of-type(1) { animation: ideaIn .35s ease .3s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-idea-card:nth-of-type(2) { animation: ideaIn .35s ease .55s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-idea-card:nth-of-type(3) { animation: ideaIn .35s ease .8s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-idea-card:nth-of-type(4) { animation: ideaIn .35s ease 1.05s both; }
-    @keyframes ideaIn { from{opacity:0;transform:translateX(-10px)} to{opacity:1;transform:translateX(0)} }
-
-    /* Scene 4: Scripts */
-    .mock-scripts { padding: 14px 18px; flex: 1; }
-    .mock-script-card {
-      padding: 14px; background: var(--surf); border: 1px solid var(--border);
-      border-radius: 12px;
-    }
-    .mock-script-title { font-family: var(--font-display); font-size: 1.05rem; color: var(--text); margin-bottom: 8px; }
-    .mock-script-body { font-size: .8rem; color: var(--text2); line-height: 1.5; margin: 0 0 12px; }
-    .mock-script-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-    .mock-badge {
-      font-size: .62rem; font-weight: 700; letter-spacing: .04em;
-      padding: 3px 8px; border-radius: 999px;
-      opacity: 0;
-    }
-    .mock-badge.b1 { background: rgba(34,197,94,.16); color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
-    .mock-badge.b2 { background: rgba(59,130,246,.16); color: #60a5fa; border: 1px solid rgba(59,130,246,.3); }
-    .mock-badge.b3 { background: rgba(167,139,250,.16); color: #a78bfa; border: 1px solid rgba(167,139,250,.3); }
-    .scene-mockup[data-scene="scripts"].is-active .mock-badge.b1 { animation: badgeIn .3s ease .9s both; }
-    .scene-mockup[data-scene="scripts"].is-active .mock-badge.b2 { animation: badgeIn .3s ease 1.2s both; }
-    .scene-mockup[data-scene="scripts"].is-active .mock-badge.b3 { animation: badgeIn .3s ease 1.5s both; }
-    @keyframes badgeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
-    .mock-script-prompter {
-      position: relative;
-      margin-bottom: 12px; padding: 8px 12px;
-      background: linear-gradient(135deg, rgba(249,115,22,.1), rgba(125,91,184,.08));
-      border: 1px dashed var(--border); border-radius: 8px;
-      display: flex; align-items: center; gap: 10px;
-      font-size: .7rem; color: var(--text3);
-    }
-    .mock-script-prompter-icon {
-      width: 28px; height: 28px; border-radius: 6px;
-      background: var(--surf); border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .mock-script-prompter-bar {
-      flex: 1; height: 4px; border-radius: 2px;
-      background: var(--surf2); position: relative; overflow: hidden;
-    }
-    .mock-script-prompter-bar::after {
-      content: ""; position: absolute; left: 0; top: 0; bottom: 0;
-      width: 38%; background: var(--orange);
-      animation: scriptProgress 4s ease-in-out infinite;
-    }
-    @keyframes scriptProgress {
-      0%   { width: 0; }
-      50%  { width: 70%; }
-      100% { width: 100%; opacity: .3; }
-    }
-    .mock-script-actions { display: flex; gap: 8px; opacity: 0; }
-    .scene-mockup[data-scene="scripts"].is-active .mock-script-actions { animation: lineIn .4s ease 1.9s both; }
-    .mock-script-btn {
-      flex: 1; padding: 8px; border-radius: 8px; cursor: pointer;
-      background: transparent; border: 1px solid var(--border); color: var(--text2);
-      font-family: var(--font-body); font-size: .76rem; font-weight: 600;
-    }
-    .mock-script-btn.primary { background: var(--purple); color: #fff; border-color: var(--purple); }
 
     /* ── Try Free (preview transcribe) ──────────────────────── */
     .try-free-section {
@@ -1406,185 +1167,26 @@
       margin: 0 0 12px; color: var(--text2); font-size: .88rem; line-height: 1.5;
     }
 
-    /* ── 4 Pillars (editorial) ──────────────────────────────── */
-    .pillars-section {
-      position: relative;
-      max-width: 1100px; margin: 24px auto 0; padding: 64px 24px 32px;
-      --pillar-acc-1: 239,106,41;
-      --pillar-acc-2: 93,202,165;
-      --pillar-acc-3: 255,107,61;
-      --pillar-acc-4: 239,106,41;
-    }
-    .pillars-waves {
-      position: absolute; inset: 0;
-      width: 100%; height: 100%;
-      opacity: .04; pointer-events: none; z-index: 0;
-    }
-    .pillars-head { position: relative; z-index: 1; text-align: center; margin-bottom: 48px; }
-    .pillars-head h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.1; letter-spacing: -.5px; margin: 0 0 10px; }
-    .pillars-head h2 em { font-style: italic; color: #fdba74; -webkit-text-fill-color: #fdba74; }
-    [data-theme="light"] .pillars-head h2 em { color: #c2410c; -webkit-text-fill-color: #c2410c; }
-    .pillars-head p { color: var(--text2); font-size: 1rem; margin: 0 auto; max-width: 540px; line-height: 1.55; }
+    /* v0.14.11f: bloque pilares editoriales eliminado (sustituidos por hero rotator + how-it-works). */
 
-    .pillar {
-      position: relative; z-index: 1;
-      display: grid;
-      grid-template-columns: 120px 1fr 1fr;
-      grid-template-areas: "mascot copy visual";
-      gap: 32px; align-items: center; padding: 48px 0;
-    }
-    .pillar.reverse {
-      grid-template-columns: 1fr 1fr 120px;
-      grid-template-areas: "visual copy mascot";
-    }
-    .pillar > .pillar-mascot-wrap { grid-area: mascot; display: flex; justify-content: center; align-items: center; }
-    .pillar > .pillar-copy   { grid-area: copy; }
-    .pillar > .pillar-visual { grid-area: visual; }
-    @media (max-width: 880px) {
-      .pillar, .pillar.reverse {
-        display: flex; flex-direction: column;
-        gap: 18px; padding: 32px 0;
-      }
-      .pillar > .pillar-mascot-wrap { order: -1; }
-      .pillar > .pillar-copy { order: 0; }
-      .pillar > .pillar-visual { order: 1; }
-    }
-    .pillar-mascot {
+    /* Hooks mascot peek — overlay corner del hero rotator */
+    .hero-mascot-peek {
+      position: absolute; top: -32px; right: -24px;
       width: 96px; height: 96px;
-      filter: drop-shadow(0 6px 16px rgba(0,0,0,.25));
-      animation: phoneMascotFloat 4s ease-in-out infinite;
+      pointer-events: none; z-index: 3;
+      filter: drop-shadow(0 8px 20px rgba(0,0,0,.35));
+      animation: heroMascotFloat 3.4s ease-in-out infinite;
     }
-    .pillar-eyebrow {
-      display: inline-flex; align-items: center; gap: 8px; margin: 0 0 14px;
-      color: rgb(var(--pillar-acc, 239,106,41));
-      font-size: .72rem; font-weight: 700;
-      letter-spacing: .12em; text-transform: uppercase;
+    [data-theme="light"] .hero-mascot-peek {
+      filter: drop-shadow(0 6px 16px rgba(60,40,20,.18));
     }
-    .pillar-eyebrow::before {
-      content: ""; width: 8px; height: 8px; border-radius: 50%;
-      background: rgb(var(--pillar-acc, 239,106,41));
-      box-shadow: 0 0 0 0 rgba(var(--pillar-acc, 239,106,41), .55);
-      animation: pillarDotPulse 2.4s ease-in-out infinite;
-      display: inline-block;
+    @keyframes heroMascotFloat {
+      0%, 100% { transform: translateY(0) rotate(-6deg); }
+      50%      { transform: translateY(-6px) rotate(2deg); }
     }
-    @keyframes pillarDotPulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(var(--pillar-acc, 239,106,41), .55); }
-      50%      { box-shadow: 0 0 0 6px rgba(var(--pillar-acc, 239,106,41), 0); }
+    @media (max-width: 640px) {
+      .hero-mascot-peek { width: 64px; height: 64px; top: -22px; right: -10px; }
     }
-    .pillar-title {
-      font-family: var(--font-display); font-weight: 400;
-      font-size: clamp(1.6rem, 3.4vw, 2.2rem); line-height: 1.12; letter-spacing: -.5px;
-      color: var(--text); margin: 0 0 14px;
-    }
-    .pillar-title em { font-style: italic; color: #fdba74; -webkit-text-fill-color: #fdba74; }
-    [data-theme="light"] .pillar-title em { color: #c2410c; -webkit-text-fill-color: #c2410c; }
-    .pillar-text {
-      color: var(--text2); font-size: 1rem; line-height: 1.6; margin: 0 0 18px;
-      max-width: 460px;
-    }
-    .pillar-link {
-      display: inline-flex; align-items: center; gap: 6px;
-      color: rgb(var(--pillar-acc, 239,106,41));
-      font-weight: 700; font-size: .88rem;
-      text-decoration: none; padding-bottom: 2px; border-bottom: 1px solid transparent;
-      transition: border-color .18s, gap .18s;
-    }
-    .pillar-link:hover { border-bottom-color: rgb(var(--pillar-acc, 239,106,41)); gap: 10px; }
-    .pillar-visual {
-      position: relative;
-      aspect-ratio: 5/4; max-width: 460px; width: 100%; justify-self: center;
-      border-radius: 16px; overflow: hidden;
-      background: var(--surf); border: 1px solid var(--border);
-      box-shadow: 0 16px 40px rgba(0,0,0,.18);
-    }
-    .pillar-visual .pmock-bar { padding: 8px 12px; border-bottom: 1px solid var(--border); display: flex; gap: 5px; align-items: center; }
-    .pillar-visual .pmock-bar span { width: 8px; height: 8px; border-radius: 50%; background: var(--surf2); }
-    .pillar-visual-img {
-      position: absolute; inset: 30px 0 0 0; width: 100%; height: calc(100% - 30px);
-      object-fit: cover; object-position: top center; display: block;
-    }
-    /* Pillar 1: pull-quote treatment */
-    .pillar-visual-quote {
-      background: linear-gradient(135deg, rgba(249,115,22,.06), rgba(125,91,184,.04));
-    }
-    .pquote-wrap {
-      position: absolute; inset: 30px 0 0 0;
-      display: flex; flex-direction: column; justify-content: center;
-      padding: 28px 32px;
-    }
-    .pquote-tag {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: .68rem; font-weight: 700; letter-spacing: .08em; color: var(--orange);
-      margin-bottom: 14px;
-    }
-    .pquote-text {
-      font-family: var(--font-display); font-size: 1.15rem; line-height: 1.45;
-      color: var(--text); margin: 0 0 14px; font-weight: 400;
-      position: relative; padding-left: 14px;
-    }
-    .pquote-text::before {
-      content: ""; position: absolute; left: 0; top: 4px; bottom: 4px;
-      width: 3px; background: var(--orange); border-radius: 2px;
-    }
-    .pquote-meta {
-      font-family: ui-monospace, SFMono-Regular, monospace;
-      font-size: .68rem; color: var(--text3);
-    }
-
-    /* Pillar 2: stat callout */
-    .pillar-visual-stat {
-      background: linear-gradient(135deg, rgba(125,91,184,.06), rgba(34,197,94,.04));
-    }
-    .pstat-wrap {
-      position: absolute; inset: 30px 0 0 0;
-      display: flex; flex-direction: column; justify-content: center;
-      padding: 24px 28px;
-    }
-    .pstat-label {
-      font-size: .65rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
-      color: var(--text3); margin-bottom: 10px;
-    }
-    .pstat-num {
-      font-family: var(--font-display); font-size: 3.2rem; line-height: 1;
-      color: var(--orange); font-weight: 400; margin-bottom: 4px;
-      font-variant-numeric: tabular-nums; letter-spacing: -2px;
-    }
-    [data-theme="light"] .pstat-num { color: #c2410c; }
-    .pstat-sub { color: var(--text2); font-size: .9rem; margin-bottom: 16px; }
-    .pstat-bars {
-      display: grid; grid-template-columns: repeat(7,1fr); gap: 5px;
-      align-items: end; height: 50px;
-    }
-    .pstat-bar {
-      background: linear-gradient(180deg, var(--orange), #fdba74);
-      border-radius: 3px 3px 0 0;
-    }
-    .pstat-xlabels {
-      display: grid; grid-template-columns: repeat(7,1fr); gap: 5px;
-      margin-top: 4px; font-size: .58rem; color: var(--text3); text-align: center;
-    }
-
-    /* Pillar 3: idea structure card */
-    .pillar-visual-idea {
-      background: linear-gradient(135deg, rgba(34,197,94,.04), rgba(249,115,22,.04));
-    }
-    .pidea-wrap {
-      position: absolute; inset: 30px 0 0 0;
-      display: flex; flex-direction: column; padding: 22px 28px; gap: 10px; justify-content: center;
-    }
-    .pidea-title {
-      font-family: var(--font-display); font-size: 1.05rem; color: var(--text);
-      margin-bottom: 6px; font-weight: 400; line-height: 1.2;
-    }
-    .pidea-block {
-      padding: 8px 12px;
-      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-    }
-    .pidea-block .lbl {
-      font-size: .58rem; font-weight: 700; letter-spacing: .1em; color: #4ade80;
-      margin-bottom: 2px;
-    }
-    .pidea-block p { font-size: .76rem; color: var(--text2); line-height: 1.4; margin: 0; font-style: italic; }
 
     /* ── Social proof (counter) ─────────────────────────────── */
     .social-proof-section {
@@ -2884,14 +2486,14 @@
     .cta-pill .ck { color: var(--green); }
     .cta-btn-final {
       display: inline-block;
-      background: var(--purple); color: #fff; border: 0;
+      background: #f97316; color: #fff; border: 0;
       padding: 16px 32px; border-radius: 14px; cursor: pointer;
       font-family: var(--font-body); font-weight: 700; font-size: 1rem;
-      box-shadow: 0 6px 0 #92400e;
-      transition: transform .12s, box-shadow .15s;
+      box-shadow: 0 6px 0 #92400e, 0 8px 32px rgba(239,106,41,.4);
+      transition: transform .12s, box-shadow .15s, background .15s;
     }
-    .cta-btn-final:hover { transform: translateY(-1px); box-shadow: 0 7px 0 #92400e, 0 6px 20px rgba(249,115,22,.35); }
-    .cta-btn-final:active { transform: translateY(5px); box-shadow: 0 1px 0 #92400e; }
+    .cta-btn-final:hover { transform: translateY(-1px); background: #ea680c; box-shadow: 0 7px 0 #92400e, 0 10px 36px rgba(239,106,41,.5); }
+    .cta-btn-final:active { transform: translateY(5px); box-shadow: 0 1px 0 #92400e, 0 4px 16px rgba(239,106,41,.3); }
 
     /* ── FAQ section ──────────────────────────────────────────── */
     .faq-section-v2 {
@@ -7268,6 +6870,8 @@
       .nav-r #userEmail { display: none; }
       .nav-r #balBadge { display: none; }
       .nav-r #themeBtn { display: none; }
+      /* v0.14.11g — landing mobile: theme toggle visible (en workspace vive dentro del menú avatar) */
+      body:not(.workspace) .nav-r #themeBtn { display: inline-flex !important; }
       .nav-upgrade-btn { padding: 6px 12px; font-size: .72rem; }
       .user-menu-dropdown { display: none !important; }
       .bal-unit { display: none; }
@@ -7956,127 +7560,7 @@
       .tp-box-grabber { width: 32px; height: 16px; }
     }
 
-    /* ── Tutorial bubble widget ─────────────────────────────────── */
-    .tut-bubble {
-      position: fixed; bottom: 24px; left: 24px; z-index: 500;
-      display: flex; align-items: center; gap: 10px;
-      cursor: pointer; opacity: 0; transform: translateY(16px);
-      transition: opacity .4s, transform .4s;
-    }
-    .tut-bubble.on { opacity: 1; transform: translateY(0); }
-    .tut-bubble-circle {
-      width: 56px; height: 56px; border-radius: 50%;
-      background: var(--surf); border: 2px solid rgba(249,115,22,.5);
-      backdrop-filter: blur(12px);
-      display: flex; align-items: center; justify-content: center;
-      transition: transform .2s, box-shadow .2s;
-      flex-shrink: 0; position: relative;
-    }
-    .tut-bubble:hover .tut-bubble-circle {
-      transform: scale(1.05);
-      box-shadow: 0 0 20px rgba(249,115,22,.2);
-    }
-    .tut-bubble-play {
-      width: 0; height: 0; margin-left: 3px;
-      border-left: 12px solid var(--purple); border-top: 7px solid transparent; border-bottom: 7px solid transparent;
-    }
-    .tut-bubble-text {
-      font-size: .78rem; font-weight: 500; color: var(--text2);
-      white-space: nowrap; transition: opacity .5s; font-family: var(--font-body);
-    }
-    .tut-bubble-text.fade { opacity: 0; pointer-events: none; }
-    .tut-bubble-dismiss {
-      position: absolute; top: -4px; right: -4px;
-      width: 18px; height: 18px; border-radius: 50%;
-      background: rgba(0,0,0,.6); color: #fff; border: none;
-      font-size: .6rem; cursor: pointer; display: none;
-      align-items: center; justify-content: center; line-height: 1;
-    }
-    .tut-bubble:hover .tut-bubble-dismiss { display: flex; }
-    @keyframes tut-ring {
-      0% { box-shadow: 0 0 0 0 rgba(249,115,22,.4); }
-      70% { box-shadow: 0 0 0 8px rgba(249,115,22,0); }
-      100% { box-shadow: 0 0 0 0 rgba(249,115,22,0); }
-    }
-    .tut-bubble-circle.ring { animation: tut-ring 1.5s ease; }
-
-    /* Player — desktop */
-    .tut-player {
-      position: fixed; bottom: 24px; left: 24px; z-index: 501;
-      width: 280px; height: 498px;
-      border-radius: 16px; border: 1px solid var(--border);
-      background: var(--bg);
-      box-shadow: 0 8px 40px rgba(0,0,0,.5);
-      overflow: hidden; display: none;
-      opacity: 0; transform: scale(.6) translateY(40px);
-      transform-origin: bottom left;
-      transition: opacity .3s, transform .3s;
-    }
-    .tut-player.on { display: block; }
-    .tut-player.show { opacity: 1; transform: scale(1) translateY(0); }
-    .tut-player iframe { width: 100%; height: 100%; border: none; border-radius: 14px; }
-    .tut-player-close {
-      position: absolute; top: 8px; right: 8px; z-index: 2;
-      width: 28px; height: 28px; border-radius: 50%;
-      background: rgba(0,0,0,.6); backdrop-filter: blur(8px);
-      color: #fff; border: none; font-size: .85rem;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      transition: background .15s;
-    }
-    .tut-player-close:hover { background: rgba(0,0,0,.8); }
-
-    /* Player — mobile bottom sheet */
-    .tut-sheet-overlay {
-      position: fixed; inset: 0; z-index: 600;
-      background: rgba(0,0,0,.5); display: none; opacity: 0;
-      transition: opacity .3s;
-    }
-    .tut-sheet-overlay.on { display: block; }
-    .tut-sheet-overlay.show { opacity: 1; }
-    .tut-sheet {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 601;
-      height: 80vh; background: var(--bg);
-      border-radius: 20px 20px 0 0;
-      display: none; transform: translateY(100%);
-      transition: transform .35s cubic-bezier(.32,.72,0,1);
-      flex-direction: column; align-items: center;
-      padding: 12px 16px 24px;
-    }
-    .tut-sheet.on { display: flex; }
-    .tut-sheet.show { transform: translateY(0); }
-    .tut-sheet-handle {
-      width: 40px; height: 4px; border-radius: 2px;
-      background: var(--text3); margin-bottom: 16px; flex-shrink: 0;
-      cursor: grab;
-    }
-    .tut-sheet-close {
-      position: absolute; top: 12px; right: 16px;
-      width: 28px; height: 28px; border-radius: 50%;
-      background: var(--surf2); border: none; color: var(--text2);
-      font-size: .85rem; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .tut-sheet iframe {
-      width: 100%; max-width: 300px; flex: 1;
-      border: none; border-radius: 14px;
-    }
-
-    /* Light mode */
-    [data-theme="light"] .tut-bubble-circle {
-      background: rgba(255,255,255,.9);
-      border-color: rgba(249,115,22,.3);
-      box-shadow: 0 2px 12px rgba(0,0,0,.08);
-    }
-    [data-theme="light"] .tut-bubble-dismiss { background: rgba(0,0,0,.5); }
-    [data-theme="light"] .tut-player { box-shadow: 0 8px 40px rgba(0,0,0,.2); }
-    [data-theme="light"] .tut-sheet { box-shadow: 0 -4px 30px rgba(0,0,0,.12); }
-
-    @media (max-width: 768px) {
-      .tut-bubble { bottom: 16px; left: 16px; }
-      .tut-bubble-circle { width: 48px; height: 48px; }
-      .tut-bubble-text { display: none; }
-      .tut-bubble-play { border-left-width: 10px; border-top-width: 6px; border-bottom-width: 6px; }
-    }
+    /* v0.14.11a: tut-bubble widget + YouTube modal CSS removed */
   </style>
 
   {% if clarity_project_id %}
@@ -8365,11 +7849,8 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
         <span data-i18n="nav.buy_credits">Buy credits</span>
       </button>
-      <button onclick="closeNavMob();openTutorial()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Tutorial
-      </button>
       <!-- v0.14.9a: logout vive ahora en #avatarMenu (tap en avatar). -->
+      <!-- v0.14.11a: botón Tutorial eliminado tras retirar modal YouTube. -->
     </div>
   </div>
 </div>
@@ -8386,173 +7867,37 @@
 
   <div class="hero-grid">
     <div class="hero-copy">
-      <div class="hero-eyebrow">
-        <span class="hero-eyebrow-pulse"></span>
-        <span data-i18n-es="REELSCRIPT · GESTIÓN DE CONTENIDO" data-i18n-en="REELSCRIPT · CONTENT MANAGEMENT">REELSCRIPT · GESTIÓN DE CONTENIDO</span>
+      <div class="hero-pill">
+        <span class="hero-pill-pulse" aria-hidden="true"></span>
+        <span data-i18n-es="Más de 70 creadores ya lo usan" data-i18n-en="Over 70 creators already use it">Más de 70 creadores ya lo usan</span>
       </div>
       <p class="hero-h1-v2" aria-hidden="true">
-        <span data-i18n-es="Sé" data-i18n-en="Be">Sé</span>
-        <em data-i18n-es="ordenado" data-i18n-en="organized">ordenado</em>.<br>
-        <span data-i18n-es="Gestiona tu content desde aquí." data-i18n-en="Run your content from here.">Gestiona tu content desde aquí.</span>
+        <span data-i18n-es="Copia los vídeos que ya funcionan." data-i18n-en="Copy the videos that already work.">Copia los vídeos que ya funcionan.</span>
       </p>
-      <p class="hero-sub-v2" data-i18n-es="Transcribe, guarda ideas, genera guiones y mide lo que funciona. Todo desde un sitio." data-i18n-en="Transcribe, capture ideas, generate scripts and measure what works. All from one place.">Transcribe, guarda ideas, genera guiones y mide lo que funciona. Todo desde un sitio.</p>
+      <p class="hero-sub-v2" data-i18n-es="Transcríbelos, mídelos y conviértelos en los tuyos. Sin partir de cero." data-i18n-en="Transcribe, measure, and turn them into yours. No starting from scratch.">Transcríbelos, mídelos y conviértelos en los tuyos. Sin partir de cero.</p>
       <div class="hero-ctas">
-        <button class="hero-cta-primary" onclick="openAuth('register','hero_main')" data-i18n-es="Empezar gratis →" data-i18n-en="Get started free →">Empezar gratis →</button>
-        <button class="hero-cta-secondary" onclick="tutBubbleOpen()">
-          <span class="play-circle" aria-hidden="true">▶</span>
-          <span data-i18n-es="Ver cómo funciona" data-i18n-en="See how it works">Ver cómo funciona</span>
-          <span class="hero-cta-time">(30s)</span>
-        </button>
-      </div>
-      <div class="hero-trust">
-        <span class="hero-trust-dot">•</span>
-        <span id="counterNum" class="counter-num">0</span>
-        <span data-i18n="hero.counter_suffix">reels transcritos hoy</span>
+        <button class="hero-cta-primary" onclick="openAuth('register','hero_main')" data-i18n-es="Pruébalo gratis →" data-i18n-en="Try it free →">Pruébalo gratis →</button>
+        <button class="hero-cta-secondary" onclick="document.getElementById('howItWorks')?.scrollIntoView({behavior:'smooth'})" data-i18n-es="Ver cómo funciona" data-i18n-en="See how it works">Ver cómo funciona</button>
       </div>
     </div>
 
-    <div class="scene-rotator" id="sceneRotator" onmouseenter="pauseSceneRotator()" onmouseleave="resumeSceneRotator()">
-      <svg class="scene-waves" viewBox="0 0 600 400" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M0,250 Q150,200 300,240 T600,250 L600,400 L0,400 Z" fill="#f97316"/>
-        <path d="M0,290 Q150,260 300,280 T600,290 L600,400 L0,400 Z" fill="#7d5bb8" opacity=".6"/>
-      </svg>
-      <div class="scene-tabs" role="tablist">
-        <button class="scene-tab on" data-scene="transcribe" onclick="setScene('transcribe', true)" role="tab">
-          <img src="/static/img/hooks/hooks-transcribir.svg" alt="" loading="lazy" width="22" height="22">
-          <span data-i18n-es="Transcribir" data-i18n-en="Transcribe">Transcribir</span>
-        </button>
-        <button class="scene-tab" data-scene="metrics" onclick="setScene('metrics', true)" role="tab">
-          <img src="/static/img/hooks/hooks-metricas.svg" alt="" loading="lazy" width="22" height="22">
-          <span data-i18n-es="Métricas" data-i18n-en="Metrics">Métricas</span>
-        </button>
-        <button class="scene-tab" data-scene="ideas" onclick="setScene('ideas', true)" role="tab">
-          <img src="/static/img/hooks/hooks-ideas.svg" alt="" loading="lazy" width="22" height="22">
-          <span data-i18n-es="Ideas" data-i18n-en="Ideas">Ideas</span>
-        </button>
-        <button class="scene-tab" data-scene="scripts" onclick="setScene('scripts', true)" role="tab">
-          <img src="/static/img/hooks/hooks-scripts.svg" alt="" loading="lazy" width="22" height="22">
-          <span data-i18n-es="Guiones" data-i18n-en="Scripts">Guiones</span>
-        </button>
+    <div class="hero-rotator" id="heroRotator">
+      <img class="hero-mascot-peek" src="/static/img/hooks/hooks-transcribir.svg" alt="" aria-hidden="true" loading="lazy" width="96" height="96">
+      <div class="hero-rotator-video">
+        <video class="hr-video on" data-key="transcribe" autoplay loop muted playsinline preload="auto"
+               data-src="/static/img/landing/videos/transcribir.mp4"
+               aria-label="Transcribir"></video>
+        <video class="hr-video" data-key="metrics" loop muted playsinline preload="metadata"
+               data-src="/static/img/landing/videos/metricas.mp4"
+               aria-label="Métricas"></video>
+        <video class="hr-video" data-key="teleprompter" loop muted playsinline preload="metadata"
+               data-src="/static/img/landing/videos/teleprompter.mp4"
+               aria-label="Teleprompter"></video>
       </div>
-
-      <div class="scene-stage">
-        <!-- TRANSCRIBE (HTML mockup with real creator photo as reel thumb) -->
-        <div class="scene-mockup is-active" data-scene="transcribe">
-          <div class="scene-frame">
-            <div class="mock-window-bar">
-              <span></span><span></span><span></span>
-              <div class="mock-window-url">reelscript.net/app · transcripción</div>
-            </div>
-            <div class="mock-input-row">
-              <div class="mock-input"><span class="mock-typed">https://www.instagram.com/reel/abc123…</span></div>
-              <div class="mock-btn-go">✦ Transcribir</div>
-            </div>
-            <div class="mock-reel-preview" aria-hidden="true">
-              <div class="mock-reel-thumb">
-                <img src="/static/img/landing/reel-thumb-creator.jpg" alt="" loading="lazy">
-              </div>
-              <div class="mock-reel-meta">
-                <div class="mock-reel-handle-row">
-                  <div class="mock-reel-avatar"></div>
-                  <div class="mock-reel-handle">davidayalac</div>
-                </div>
-                <div class="mock-reel-stats">
-                  <span>♥ 2,4 K</span>
-                  <span>💬 128</span>
-                  <span>↗ 412</span>
-                </div>
-              </div>
-              <div class="mock-reel-duration">0:42</div>
-            </div>
-            <div class="mock-spinner"><div></div><div></div><div></div></div>
-            <div class="mock-output">
-              <p class="mock-line l1" data-i18n-es="Lo que voy a contarte cambió mi forma de grabar reels." data-i18n-en="What I'm about to share changed how I shoot reels.">Lo que voy a contarte cambió mi forma de grabar reels.</p>
-              <p class="mock-line l2" data-i18n-es="Antes me pasaba dos horas con cada guion." data-i18n-en="Before I'd spend two hours on every script.">Antes me pasaba dos horas con cada guion.</p>
-              <p class="mock-line l3" data-i18n-es="Ahora son diez minutos. Igual de bueno o mejor." data-i18n-en="Now ten minutes. Same quality or better.">Ahora son diez minutos. Igual de bueno o mejor.</p>
-            </div>
-          </div>
-          <img class="scene-mascot" src="/static/img/hooks/hooks-transcribir.svg" alt="" loading="lazy" width="60" height="60">
-        </div>
-
-        <!-- METRICS (real screenshot) -->
-        <div class="scene-mockup" data-scene="metrics">
-          <div class="scene-frame">
-            <div class="mock-window-bar">
-              <span></span><span></span><span></span>
-              <div class="mock-window-url">reelscript.net/app · métricas</div>
-            </div>
-            <img class="scene-shot" src="/static/img/landing/screen-metrics.jpg" alt="" loading="lazy">
-            <div class="scene-shot-overlay"></div>
-          </div>
-          <img class="scene-mascot" src="/static/img/hooks/hooks-metricas.svg" alt="" loading="lazy" width="60" height="60">
-        </div>
-
-        <!-- IDEAS (HTML mockup: input idea → desarrollada con INTRO/DESARROLLO/CIERRE) -->
-        <div class="scene-mockup" data-scene="ideas">
-          <div class="scene-frame">
-            <div class="mock-window-bar">
-              <span></span><span></span><span></span>
-              <div class="mock-window-url">reelscript.net/app · ideas</div>
-            </div>
-            <div class="mock-ideas-v2">
-              <div class="mock-ideas-input-card">
-                <div class="mock-ideas-input-label" data-i18n-es="NUEVA IDEA" data-i18n-en="NEW IDEA">NUEVA IDEA</div>
-                <div class="mock-ideas-input-text" data-i18n-es="cómo conseguir mis primeros usuarios" data-i18n-en="how to get my first users">cómo conseguir mis primeros usuarios</div>
-                <div class="mock-ideas-input-row">
-                  <span class="mock-chip purple" data-i18n-es="◉ Asistente por defecto" data-i18n-en="◉ Default assistant">◉ Asistente por defecto</span>
-                  <span class="mock-chip orange" data-i18n-es="📁 Sin proyecto" data-i18n-en="📁 No project">📁 Sin proyecto</span>
-                  <span class="mock-chip-spacer"></span>
-                  <span class="mock-ideas-cta" data-i18n-es="Desarrollar →" data-i18n-en="Expand →">Desarrollar →</span>
-                </div>
-              </div>
-              <div class="mock-ideas-result">
-                <div class="mock-ideas-badges">
-                  <span class="b ok" data-i18n-es="✓ DESARROLLADA" data-i18n-en="✓ EXPANDED">✓ DESARROLLADA</span>
-                  <span class="b cy" data-i18n-es="EDUCATIVO" data-i18n-en="EDUCATIONAL">EDUCATIVO</span>
-                  <span class="b gr" data-i18n-es="● GRABADA" data-i18n-en="● RECORDED">● GRABADA</span>
-                </div>
-                <div class="mock-ideas-result-title" data-i18n-es="3 pasos para conseguir los primeros usuarios" data-i18n-en="3 steps to get your first users">3 pasos para conseguir los primeros usuarios</div>
-                <div class="mock-ideas-blocks">
-                  <div class="mock-ideas-block-lbl">INTRO</div>
-                  <p class="mock-ideas-block-txt" data-i18n-es="Lanzaste tu app y no tienes usuarios. Sigue estos 3 pasos." data-i18n-en="You launched your app and have no users. Follow these 3 steps.">Lanzaste tu app y no tienes usuarios. Sigue estos 3 pasos.</p>
-                  <div class="mock-ideas-block-lbl" data-i18n-es="DESARROLLO" data-i18n-en="BODY">DESARROLLO</div>
-                  <p class="mock-ideas-block-txt" data-i18n-es="Empieza por tu círculo. Busca comunidades del nicho. Aporta valor." data-i18n-en="Start with your circle. Find niche communities. Bring value first.">Empieza por tu círculo. Busca comunidades del nicho. Aporta valor.</p>
-                  <div class="mock-ideas-block-lbl" data-i18n-es="CIERRE" data-i18n-en="CLOSING">CIERRE</div>
-                  <p class="mock-ideas-block-txt" data-i18n-es="Esos primeros usuarios son tu base. Guarda este vídeo." data-i18n-en="Those first users are your base. Save this video.">Esos primeros usuarios son tu base. Guarda este vídeo.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <img class="scene-mascot" src="/static/img/hooks/hooks-ideas.svg" alt="" loading="lazy" width="60" height="60">
-        </div>
-
-        <!-- SCRIPTS -->
-        <div class="scene-mockup" data-scene="scripts">
-          <div class="scene-frame">
-            <div class="mock-window-bar"><span></span><span></span><span></span></div>
-            <div class="mock-scripts">
-              <div class="mock-script-card">
-                <div class="mock-script-title" data-i18n-es="Cómo grabé este reel sin guion" data-i18n-en="How I shot this reel with no script">Cómo grabé este reel sin guion</div>
-                <p class="mock-script-body" data-i18n-es="Lo importante no es lo que dices. Es lo que tu audiencia ya sabía y nunca había escuchado en voz alta." data-i18n-en="It's not what you say. It's what your audience already knew and never heard out loud.">Lo importante no es lo que dices. Es lo que tu audiencia ya sabía y nunca había escuchado en voz alta.</p>
-                <div class="mock-script-badges">
-                  <span class="mock-badge b1" data-i18n-es="DESARROLLADA" data-i18n-en="EXPANDED">DESARROLLADA</span>
-                  <span class="mock-badge b2" data-i18n-es="EDUCATIVO" data-i18n-en="EDUCATIONAL">EDUCATIVO</span>
-                  <span class="mock-badge b3" data-i18n-es="GRABADA" data-i18n-en="RECORDED">GRABADA</span>
-                </div>
-                <div class="mock-script-prompter" aria-hidden="true">
-                  <div class="mock-script-prompter-icon">📺</div>
-                  <div class="mock-script-prompter-bar"></div>
-                  <span style="font-variant-numeric:tabular-nums">0:42 / 1:15</span>
-                </div>
-                <div class="mock-script-actions">
-                  <button class="mock-script-btn" data-i18n-es="Editar" data-i18n-en="Edit">Editar</button>
-                  <button class="mock-script-btn primary">Teleprompter</button>
-                </div>
-              </div>
-            </div>
-          </div>
-          <img class="scene-mascot" src="/static/img/hooks/hooks-scripts.svg" alt="" loading="lazy" width="60" height="60">
-        </div>
+      <div class="hero-rotator-tabs" role="tablist">
+        <button class="hr-tab on" data-key="transcribe" data-acc="239,106,41" style="--tab-acc:239,106,41" onclick="setHeroRotator('transcribe', true)" role="tab" aria-selected="true" data-i18n-es="Transcribir" data-i18n-en="Transcribe">Transcribir</button>
+        <button class="hr-tab" data-key="metrics" data-acc="93,202,165" style="--tab-acc:93,202,165" onclick="setHeroRotator('metrics', true)" role="tab" aria-selected="false" data-i18n-es="Métricas" data-i18n-en="Metrics">Métricas</button>
+        <button class="hr-tab" data-key="teleprompter" data-acc="244,199,94" style="--tab-acc:244,199,94" onclick="setHeroRotator('teleprompter', true)" role="tab" aria-selected="false" data-i18n-es="Teleprompter" data-i18n-en="Teleprompter">Teleprompter</button>
       </div>
     </div>
   </div>
@@ -8609,6 +7954,45 @@
 <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(249,115,22,.12),transparent);max-width:600px;margin:0 auto"></div>
 
 {% if not workspace %}
+<!-- ── HOW IT WORKS (v0.14.11c) ──────────────────────────────────────── -->
+<section class="how-section fade-in" id="howItWorks">
+  <div class="how-head">
+    <div class="how-eyebrow"><span data-i18n-es="CÓMO FUNCIONA" data-i18n-en="HOW IT WORKS">CÓMO FUNCIONA</span></div>
+    <h2 class="how-h2">
+      <span data-i18n-es="De reel a guión propio." data-i18n-en="From reel to your own script.">De reel a guión propio.</span>
+      <em data-i18n-es="En 3 pasos." data-i18n-en="In 3 steps.">En 3 pasos.</em>
+    </h2>
+    <p class="how-sub" data-i18n-es="Sin descargas. Sin extensiones. En tu navegador." data-i18n-en="No downloads. No extensions. In your browser.">Sin descargas. Sin extensiones. En tu navegador.</p>
+  </div>
+  <div class="how-grid">
+    <div class="how-step" style="--step-acc:239,106,41">
+      <div class="how-step-num">01</div>
+      <div class="how-step-video">
+        <video class="how-vid" data-src="/static/img/landing/videos/transcribir.mp4" loop muted playsinline preload="metadata" aria-label="Transcribe y adapta"></video>
+      </div>
+      <h3 class="how-step-title" data-i18n-es="Transcribe y adapta." data-i18n-en="Transcribe and adapt.">Transcribe y adapta.</h3>
+      <p class="how-step-desc" data-i18n-es="Pega un reel y recibe el texto en segundos." data-i18n-en="Paste a reel and get the text in seconds.">Pega un reel y recibe el texto en segundos.</p>
+    </div>
+    <div class="how-step" style="--step-acc:93,202,165">
+      <div class="how-step-num">02</div>
+      <div class="how-step-video">
+        <video class="how-vid" data-src="/static/img/landing/videos/metricas.mp4" loop muted playsinline preload="metadata" aria-label="Mide qué te funciona"></video>
+      </div>
+      <h3 class="how-step-title" data-i18n-es="Mide qué te funciona." data-i18n-en="Measure what works for you.">Mide qué te funciona.</h3>
+      <p class="how-step-desc" data-i18n-es="Conecta tu Instagram y analiza los reels que escalan." data-i18n-en="Plug in your Instagram and analyze the reels that scale.">Conecta tu Instagram y analiza los reels que escalan.</p>
+    </div>
+    <div class="how-step" style="--step-acc:244,199,94">
+      <div class="how-step-num">03</div>
+      <div class="how-step-video">
+        <video class="how-vid" data-src="/static/img/landing/videos/teleprompter.mp4" loop muted playsinline preload="metadata" aria-label="Hazlo tuyo y grábalo"></video>
+      </div>
+      <h3 class="how-step-title" data-i18n-es="Hazlo tuyo y grábalo." data-i18n-en="Make it yours and record.">Hazlo tuyo y grábalo.</h3>
+      <p class="how-step-desc" data-i18n-es="Reescribe en tu voz y graba con teleprompter integrado." data-i18n-en="Rewrite in your voice and record with the built-in teleprompter.">Reescribe en tu voz y graba con teleprompter integrado.</p>
+    </div>
+  </div>
+</section>
+<div style="height:1px;background:linear-gradient(90deg,transparent,rgba(249,115,22,.12),transparent);max-width:600px;margin:0 auto"></div>
+
 <!-- ── TRY FREE (preview transcribe) ─────────────────────────────────── -->
 <section class="try-free-section fade-in" id="tryFree">
   <div class="try-free-grid">
@@ -8845,159 +8229,6 @@
 {% endif %}
 
 {% if not workspace %}
-<div style="height:1px;background:linear-gradient(90deg,transparent,rgba(249,115,22,.12),transparent);max-width:600px;margin:0 auto"></div>
-
-<!-- ── 4 PILARES EDITORIALES ───────────────────────────────────────────── -->
-<section class="pillars-section fade-in">
-  <svg class="pillars-waves" preserveAspectRatio="none" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-    <defs>
-      <linearGradient id="pillarsWavesGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%"   stop-color="rgb(239,106,41)"/>
-        <stop offset="33%"  stop-color="rgb(93,202,165)"/>
-        <stop offset="66%"  stop-color="rgb(255,107,61)"/>
-        <stop offset="100%" stop-color="rgb(239,106,41)"/>
-      </linearGradient>
-    </defs>
-    <path d="M0,140 Q300,40 600,140 T1200,140" fill="none" stroke="url(#pillarsWavesGrad)" stroke-width="2"/>
-    <path d="M0,330 Q300,230 600,330 T1200,330" fill="none" stroke="url(#pillarsWavesGrad)" stroke-width="2"/>
-    <path d="M0,520 Q300,420 600,520 T1200,520" fill="none" stroke="url(#pillarsWavesGrad)" stroke-width="2"/>
-    <path d="M0,710 Q300,610 600,710 T1200,710" fill="none" stroke="url(#pillarsWavesGrad)" stroke-width="2"/>
-  </svg>
-  <div class="pillars-head">
-    <h2>
-      <span data-i18n-es="De la URL al guion grabado," data-i18n-en="From URL to recorded script,">De la URL al guion grabado,</span>
-      <em data-i18n-es="sin abrir cinco pestañas" data-i18n-en="without opening five tabs">sin abrir cinco pestañas</em>.
-    </h2>
-    <p data-i18n-es="Cuatro funciones que se hablan entre sí. Lo que transcribes, mides, escribes y grabas vive en el mismo sitio." data-i18n-en="Four features that talk to each other. What you transcribe, measure, write and record lives in the same place.">Cuatro funciones que se hablan entre sí. Lo que transcribes, mides, escribes y grabas vive en el mismo sitio.</p>
-  </div>
-
-  <!-- Pilar 01: TRANSCRIBIR -->
-  <div class="pillar" style="--pillar-acc:239,106,41">
-    <div class="pillar-mascot-wrap">
-      <img class="pillar-mascot" src="/static/img/hooks/hooks-transcribir.svg" alt="" loading="lazy" width="96" height="96">
-    </div>
-    <div class="pillar-copy">
-      <div class="pillar-eyebrow"><span data-i18n-es="PILAR 01" data-i18n-en="PILLAR 01">PILAR 01</span></div>
-      <h3 class="pillar-title">
-        <span data-i18n-es="Transcribe cualquier" data-i18n-en="Transcribe any">Transcribe cualquier</span>
-        <em data-i18n-es="reel" data-i18n-en="reel">reel</em>.
-      </h3>
-      <p class="pillar-text" data-i18n-es="Pegas la URL de Instagram o TikTok y en 10 segundos tienes el guión. Sin descargas, sin extensiones, sin marca de agua." data-i18n-en="Paste an Instagram or TikTok URL — 10 seconds later you've got the script. No downloads, no extensions, no watermark.">Pegas la URL de Instagram o TikTok y en 10 segundos tienes el guión. Sin descargas, sin extensiones, sin marca de agua.</p>
-      {% if lang == 'en' %}
-      <a class="pillar-link" href="/en/instagram-reel-transcript">Saber más →</a>
-      {% else %}
-      <a class="pillar-link" href="/es/transcribir-reel-instagram">Saber más →</a>
-      {% endif %}
-    </div>
-    <div class="pillar-visual pillar-visual-quote">
-      <div class="pmock-bar"><span></span><span></span><span></span></div>
-      <div class="pquote-wrap">
-        <div class="pquote-tag">↘ INSTAGRAM · 0:42</div>
-        <p class="pquote-text" data-i18n-es="Lo que voy a contarte cambió mi forma de grabar reels. Antes me pasaba dos horas con cada guion. Ahora, diez minutos." data-i18n-en="What I'm about to share changed how I shoot reels. Before, two hours per script. Now, ten minutes.">Lo que voy a contarte cambió mi forma de grabar reels. Antes me pasaba dos horas con cada guion. Ahora, diez minutos.</p>
-        <div class="pquote-meta" data-i18n-es="@davidayalac · 213 palabras · 8 segundos" data-i18n-en="@davidayalac · 213 words · 8 seconds">@davidayalac · 213 palabras · 8 segundos</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Pilar 02: MÉTRICAS -->
-  <div class="pillar reverse" style="--pillar-acc:93,202,165">
-    <div class="pillar-mascot-wrap">
-      <img class="pillar-mascot" src="/static/img/hooks/hooks-metricas.svg" alt="" loading="lazy" width="96" height="96">
-    </div>
-    <div class="pillar-copy">
-      <div class="pillar-eyebrow"><span data-i18n-es="PILAR 02" data-i18n-en="PILLAR 02">PILAR 02</span></div>
-      <h3 class="pillar-title">
-        <span data-i18n-es="Mide qué" data-i18n-en="Measure what">Mide qué</span>
-        <em data-i18n-es="funciona" data-i18n-en="works">funciona</em>.
-      </h3>
-      <p class="pillar-text" data-i18n-es="Conecta tu Instagram y mira qué hooks generan retención, qué temas escalan y cuáles no. Decisiones con datos, no intuición." data-i18n-en="Plug in your Instagram and see which hooks drive retention, which topics scale and which don't. Data over hunches.">Conecta tu Instagram y mira qué hooks generan retención, qué temas escalan y cuáles no. Decisiones con datos, no intuición.</p>
-    </div>
-    <div class="pillar-visual pillar-visual-stat">
-      <div class="pmock-bar"><span></span><span></span><span></span></div>
-      <div class="pstat-wrap">
-        <div class="pstat-label" data-i18n-es="TU MEJOR REEL · ÚLT. 7 DÍAS" data-i18n-en="TOP REEL · LAST 7 DAYS">TU MEJOR REEL · ÚLT. 7 DÍAS</div>
-        <div class="pstat-num">2,1<span style="font-size:1.6rem"> K</span></div>
-        <div class="pstat-sub" data-i18n-es="comentarios · +185% vs media" data-i18n-en="comments · +185% vs average">comentarios · +185% vs media</div>
-        <div class="pstat-bars">
-          <div class="pstat-bar" style="height:42%"></div>
-          <div class="pstat-bar" style="height:68%"></div>
-          <div class="pstat-bar" style="height:54%"></div>
-          <div class="pstat-bar" style="height:82%"></div>
-          <div class="pstat-bar" style="height:100%"></div>
-          <div class="pstat-bar" style="height:71%"></div>
-          <div class="pstat-bar" style="height:88%"></div>
-        </div>
-        <div class="pstat-xlabels"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Pilar 03: IDEAS -->
-  <div class="pillar" style="--pillar-acc:255,107,61">
-    <div class="pillar-mascot-wrap">
-      <img class="pillar-mascot" src="/static/img/hooks/hooks-ideas.svg" alt="" loading="lazy" width="96" height="96">
-    </div>
-    <div class="pillar-copy">
-      <div class="pillar-eyebrow"><span data-i18n-es="PILAR 03" data-i18n-en="PILLAR 03">PILAR 03</span></div>
-      <h3 class="pillar-title">
-        <span data-i18n-es="Tus ideas," data-i18n-en="Your ideas,">Tus ideas,</span>
-        <em data-i18n-es="en un sitio" data-i18n-en="in one place">en un sitio</em>.
-      </h3>
-      <p class="pillar-text" data-i18n-es="Capta una idea en una frase. Hooks la desarrolla en intro, desarrollo y cierre — listo para grabar. Cuéntale a Hooks." data-i18n-en="Capture an idea in one line. Hooks expands it into intro, body and closing — ready to record. Tell Hooks.">Capta una idea en una frase. Hooks la desarrolla en intro, desarrollo y cierre — listo para grabar. Cuéntale a Hooks.</p>
-    </div>
-    <div class="pillar-visual pillar-visual-idea">
-      <div class="pmock-bar"><span></span><span></span><span></span></div>
-      <div class="pidea-wrap">
-        <div class="pidea-title" data-i18n-es="3 pasos para conseguir tus primeros usuarios" data-i18n-en="3 steps to get your first users">3 pasos para conseguir tus primeros usuarios</div>
-        <div class="pidea-block">
-          <div class="lbl">INTRO</div>
-          <p data-i18n-es="Lanzaste tu app y no tienes usuarios." data-i18n-en="You launched your app and have no users.">Lanzaste tu app y no tienes usuarios.</p>
-        </div>
-        <div class="pidea-block">
-          <div class="lbl" data-i18n-es="DESARROLLO" data-i18n-en="BODY">DESARROLLO</div>
-          <p data-i18n-es="Empieza por tu círculo. Comunidades del nicho. Aporta valor." data-i18n-en="Start with your circle. Niche communities. Bring value.">Empieza por tu círculo. Comunidades del nicho. Aporta valor.</p>
-        </div>
-        <div class="pidea-block">
-          <div class="lbl" data-i18n-es="CIERRE" data-i18n-en="CLOSING">CIERRE</div>
-          <p data-i18n-es="Esos primeros usuarios son tu base." data-i18n-en="Those first users are your base.">Esos primeros usuarios son tu base.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Pilar 04: GUIONES -->
-  <div class="pillar reverse" style="--pillar-acc:239,106,41">
-    <div class="pillar-mascot-wrap">
-      <img class="pillar-mascot" src="/static/img/hooks/hooks-scripts.svg" alt="" loading="lazy" width="96" height="96">
-    </div>
-    <div class="pillar-copy">
-      <div class="pillar-eyebrow"><span data-i18n-es="PILAR 04" data-i18n-en="PILLAR 04">PILAR 04</span></div>
-      <h3 class="pillar-title">
-        <span data-i18n-es="Guiones que" data-i18n-en="Scripts that">Guiones que</span>
-        <em data-i18n-es="te esperan" data-i18n-en="wait for you">te esperan</em>.
-      </h3>
-      <p class="pillar-text" data-i18n-es="Cada transcripción y cada idea se guarda. Etiquetadas por estado, abrelas en el teleprompter integrado y graba sin improvisar. Hooks ya tiene guiones esperándote." data-i18n-en="Every transcription and every idea is saved. Tagged by status, open them in the built-in teleprompter and record without improvising. Hooks has scripts waiting for you.">Cada transcripción y cada idea se guarda. Etiquetadas por estado, abrelas en el teleprompter integrado y graba sin improvisar. Hooks ya tiene guiones esperándote.</p>
-    </div>
-    <div class="pillar-visual">
-      <div class="pmock-bar"><span></span><span></span><span></span></div>
-      <div style="position:absolute;inset:30px 0 0 0;padding:18px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px">
-        <div style="width:90%;background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:14px">
-          <div style="font-family:var(--font-display);font-size:1rem;color:var(--text);margin-bottom:8px">3 pasos para conseguir tus primeros usuarios</div>
-          <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-            <span style="font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:999px;background:rgba(34,197,94,.14);color:#4ade80;border:1px solid rgba(34,197,94,.3)">✓ DESARROLLADA</span>
-            <span style="font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:999px;background:rgba(45,212,191,.14);color:#5eead4;border:1px solid rgba(45,212,191,.3)">EDUCATIVO</span>
-            <span style="font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:999px;background:rgba(34,197,94,.14);color:#86efac;border:1px solid rgba(34,197,94,.3)">● GRABADA</span>
-          </div>
-          <div style="display:flex;gap:6px">
-            <button style="flex:1;padding:6px;border-radius:6px;background:rgba(34,197,94,.14);border:1px solid rgba(34,197,94,.3);color:#4ade80;font-family:var(--font-body);font-size:.7rem;font-weight:600">▶ Teleprompter</button>
-            <button style="flex:1;padding:6px;border-radius:6px;background:transparent;border:1px solid var(--border);color:var(--text2);font-family:var(--font-body);font-size:.7rem;font-weight:500">Editar</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ── SOCIAL PROOF (counter real) ─────────────────────────────────────── -->
 <!-- Sección oculta por defecto: animateCounter() la muestra solo si hay números reales (>=25) -->
 <section class="social-proof-section fade-in" id="socialProof" style="display:none">
@@ -9129,7 +8360,7 @@
     <em data-i18n-es="Es gratis." data-i18n-en="It's free.">Es gratis.</em>
   </h2>
   <p class="cta-sub" data-i18n-es="5 transcripciones al día. Sin tarjeta. Sin suscripción." data-i18n-en="5 transcriptions a day. No card. No subscription.">5 transcripciones al día. Sin tarjeta. Sin suscripción.</p>
-  <button class="cta-btn-final" onclick="openAuth('register','cta_final')" data-i18n-es="Crear cuenta gratis →" data-i18n-en="Sign up free →">Crear cuenta gratis →</button>
+  <button class="cta-btn-final" onclick="openAuth('register','cta_final')" data-i18n-es="Pruébalo gratis →" data-i18n-en="Try it free →">Pruébalo gratis →</button>
 </div>
 {% endif %}
 
@@ -11390,40 +10621,91 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// ── Hero scene rotator ────────────────────────────────────────────────────
-const _SCENES = ["transcribe", "metrics", "ideas", "scripts"];
-let _sceneTimer = null;
-let _scenePaused = false;
+// ── Hero rotator (v0.14.11b) — vídeos 16:9 + sticky pause manual ────────
+const _HR_TABS = ["transcribe", "metrics", "teleprompter"];
+let _hrTimer = null;
+let _hrManualPause = false;
+let _hrManualResumeTimer = null;
 
-function setScene(name, userClick) {
-  document.querySelectorAll(".scene-tab").forEach(t => t.classList.toggle("on", t.dataset.scene === name));
-  document.querySelectorAll(".scene-mockup").forEach(m => {
-    const wasActive = m.classList.contains("is-active");
-    const willActive = m.dataset.scene === name;
-    m.classList.toggle("is-active", willActive);
-    // Restart CSS animations on entering scene by toggling a class
-    if (!wasActive && willActive) {
-      m.classList.remove("is-active");
-      void m.offsetWidth;
-      m.classList.add("is-active");
+function setHeroRotator(key, manual) {
+  const root = document.getElementById("heroRotator");
+  if (!root) return;
+  root.querySelectorAll(".hr-tab").forEach(t => {
+    const on = t.dataset.key === key;
+    t.classList.toggle("on", on);
+    t.setAttribute("aria-selected", on ? "true" : "false");
+    if (on && t.dataset.acc) root.style.setProperty("--rot-acc", t.dataset.acc);
+  });
+  root.querySelectorAll(".hr-video").forEach(v => {
+    const on = v.dataset.key === key;
+    v.classList.toggle("on", on);
+    if (on) {
+      if (!v.src && v.dataset.src) v.src = v.dataset.src;
+      v.preload = "auto";
+      try { v.currentTime = 0; v.play().catch(() => {}); } catch (e) {}
+    } else {
+      try { v.pause(); } catch (e) {}
     }
   });
-  if (userClick) startSceneRotator();
+  if (manual) {
+    _hrManualPause = true;
+    if (_hrManualResumeTimer) clearTimeout(_hrManualResumeTimer);
+    _hrManualResumeTimer = setTimeout(() => { _hrManualPause = false; }, 15000);
+  }
 }
-function startSceneRotator() {
-  if (_sceneTimer) clearInterval(_sceneTimer);
-  _sceneTimer = setInterval(() => {
-    if (_scenePaused) return;
-    const cur = document.querySelector(".scene-tab.on")?.dataset.scene || _SCENES[0];
-    const next = _SCENES[(_SCENES.indexOf(cur) + 1) % _SCENES.length];
-    setScene(next, false);
+
+function startHeroRotatorAuto() {
+  if (_hrTimer) clearInterval(_hrTimer);
+  _hrTimer = setInterval(() => {
+    if (_hrManualPause) return;
+    const cur = document.querySelector(".hr-tab.on")?.dataset.key || _HR_TABS[0];
+    const next = _HR_TABS[(_HR_TABS.indexOf(cur) + 1) % _HR_TABS.length];
+    setHeroRotator(next, false);
   }, 6000);
 }
-function pauseSceneRotator() { _scenePaused = true; }
-function resumeSceneRotator() { _scenePaused = false; }
-window.addEventListener("DOMContentLoaded", () => {
-  if (document.getElementById("sceneRotator")) startSceneRotator();
-});
+
+// v0.14.11c — How it works mini-videos: lazy-load + autoplay/pause via viewport
+function initHowItWorks() {
+  const section = document.getElementById("howItWorks");
+  if (!section) return;
+  const vids = section.querySelectorAll(".how-vid");
+  if (!vids.length) return;
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      const v = e.target;
+      if (e.isIntersecting) {
+        if (!v.src && v.dataset.src) v.src = v.dataset.src;
+        try { v.play().catch(() => {}); } catch (err) {}
+      } else {
+        try { v.pause(); } catch (err) {}
+      }
+    });
+  }, { threshold: 0.3 });
+  vids.forEach(v => obs.observe(v));
+}
+window.addEventListener("DOMContentLoaded", initHowItWorks);
+
+function initHeroRotator() {
+  const root = document.getElementById("heroRotator");
+  if (!root) return;
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      root.querySelectorAll(".hr-video").forEach(v => {
+        if (!v.src && v.dataset.src) {
+          v.src = v.dataset.src;
+          v.preload = v.classList.contains("on") ? "auto" : "metadata";
+        }
+      });
+      const active = root.querySelector(".hr-video.on");
+      if (active) { try { active.play().catch(() => {}); } catch (e) {} }
+      startHeroRotatorAuto();
+      obs.disconnect();
+    });
+  }, { threshold: 0.1 });
+  obs.observe(root);
+}
+window.addEventListener("DOMContentLoaded", initHeroRotator);
 
 // ── Try Free (anonymous preview transcribe) ──────────────────────────────
 let _tryActiveTask = null;
@@ -18557,106 +17839,6 @@ window.addEventListener("DOMContentLoaded", () => {
     <div id="casButtons"></div>
   </div>
 </div>
-<!-- Tutorial floating bubble removed — demo trigger now lives inline in the hero counter block. -->
-
-<!-- Desktop player -->
-<div class="tut-player" id="tutPlayer">
-  <button class="tut-player-close" onclick="tutPlayerClose()">✕</button>
-  <iframe id="tutPlayerIframe" allow="autoplay" allowfullscreen></iframe>
-</div>
-
-<!-- Mobile bottom sheet -->
-<div class="tut-sheet-overlay" id="tutSheetOverlay" onclick="tutSheetClose()"></div>
-<div class="tut-sheet" id="tutSheet">
-  <div class="tut-sheet-handle" id="tutSheetHandle"></div>
-  <button class="tut-sheet-close" onclick="tutSheetClose()">✕</button>
-  <iframe id="tutSheetIframe" allow="autoplay" allowfullscreen></iframe>
-</div>
-
-<script>
-(function() {
-  const EMBED = "https://www.youtube.com/embed/I298j-FEZAo?autoplay=1&loop=1&playlist=I298j-FEZAo&rel=0";
-  const bubble = document.getElementById("tutBubble");
-  const circle = document.getElementById("tutBubbleCircle");
-  const textEl = document.getElementById("tutBubbleText");
-  const player = document.getElementById("tutPlayer");
-  const sheet  = document.getElementById("tutSheet");
-  const overlay = document.getElementById("tutSheetOverlay");
-  const isMob = () => window.innerWidth < 768;
-  let pulseCount = 0;
-  let playerOpen = false;
-
-  // The floating bubble was removed; the inline hero link now triggers tutBubbleOpen().
-  // Guards: every bubble/circle/textEl mutation is no-op when those elements are absent.
-
-  window.tutBubbleOpen = function() {
-    if (playerOpen) return;
-    playerOpen = true;
-    if (bubble) bubble.classList.remove("on");
-    if (isMob()) {
-      overlay.classList.add("on");
-      sheet.classList.add("on");
-      requestAnimationFrame(() => {
-        overlay.classList.add("show");
-        sheet.classList.add("show");
-      });
-      document.getElementById("tutSheetIframe").src = EMBED;
-    } else {
-      player.classList.add("on");
-      requestAnimationFrame(() => player.classList.add("show"));
-      document.getElementById("tutPlayerIframe").src = EMBED;
-    }
-  };
-
-  window.tutPlayerClose = function() {
-    player.classList.remove("show");
-    setTimeout(() => {
-      player.classList.remove("on");
-      document.getElementById("tutPlayerIframe").src = "";
-    }, 300);
-    playerOpen = false;
-  };
-
-  window.tutSheetClose = function() {
-    sheet.classList.remove("show");
-    overlay.classList.remove("show");
-    setTimeout(() => {
-      sheet.classList.remove("on");
-      overlay.classList.remove("on");
-      document.getElementById("tutSheetIframe").src = "";
-    }, 350);
-    playerOpen = false;
-  };
-
-  window.tutBubbleDismiss = function() {
-    if (bubble) bubble.classList.remove("on");
-    sessionStorage.setItem("tutorial_bubble_dismissed", "true");
-  };
-
-  // Swipe-down to close sheet
-  let startY = 0;
-  const handle = document.getElementById("tutSheetHandle");
-  handle.addEventListener("touchstart", e => { startY = e.touches[0].clientY; }, { passive: true });
-  handle.addEventListener("touchmove", e => {
-    const dy = e.touches[0].clientY - startY;
-    if (dy > 60) tutSheetClose();
-  }, { passive: true });
-
-  // Increment uses counter on transcription (kept so future metrics still log; bubble gone).
-  const origDoTranscribe = window.doTranscribe;
-  if (origDoTranscribe) {
-    window.doTranscribe = function() {
-      const n = parseInt(localStorage.getItem("tutorial_uses_seen") || "0", 10);
-      localStorage.setItem("tutorial_uses_seen", String(n + 1));
-      return origDoTranscribe.apply(this, arguments);
-    };
-  }
-})();
-
-// Connect existing tutorial buttons to bubble player
-openTutorial = function() {
-  if (typeof tutBubbleOpen === "function") tutBubbleOpen();
-};
-</script>
+<!-- v0.14.11a: tutorial bubble + YouTube modal removed -->
 </body>
 </html>
