@@ -952,6 +952,87 @@
       .hr-tab { padding: 10px 16px; font-size: .82rem; }
     }
 
+    /* ── How it works (v0.14.11c) — 3 pasos con micro-vídeos ───── */
+    .how-section {
+      max-width: 1100px; margin: 0 auto;
+      padding: 56px 24px 40px;
+      position: relative; z-index: 1;
+    }
+    .how-head { text-align: center; margin-bottom: 48px; }
+    .how-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--orange); font-size: .72rem; font-weight: 700;
+      letter-spacing: .12em; text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .how-eyebrow::before {
+      content: ""; width: 24px; height: 1px;
+      background: var(--orange); display: inline-block;
+    }
+    .how-h2 {
+      font-family: var(--font-display); font-weight: 400;
+      font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.15; letter-spacing: -.5px;
+      margin: 0 auto 12px; max-width: 640px;
+      text-wrap: balance;
+    }
+    .how-h2 em { font-style: italic; color: #fdba74; -webkit-text-fill-color: #fdba74; }
+    [data-theme="light"] .how-h2 em { color: #c2410c; -webkit-text-fill-color: #c2410c; }
+    .how-sub {
+      color: var(--text2); font-size: 1rem; line-height: 1.55;
+      margin: 0 auto; max-width: 540px;
+    }
+    .how-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 24px; align-items: stretch;
+    }
+    @media (max-width: 880px) {
+      .how-section { padding: 40px 20px 24px; }
+      .how-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
+      .how-head { margin-bottom: 32px; }
+    }
+    .how-step {
+      display: flex; flex-direction: column; gap: 14px;
+      padding: 24px 20px;
+      background: linear-gradient(135deg, #1f1a22 0%, #171218 100%);
+      border: 1px solid rgba(241,234,217,.06);
+      border-left: 3px solid rgb(var(--step-acc, 239,106,41));
+      border-radius: 16px;
+      box-shadow: 0 8px 28px rgba(0,0,0,.25);
+    }
+    [data-theme="light"] .how-step {
+      background: linear-gradient(135deg, #fffaf0 0%, #f6efe1 100%);
+      border-color: rgba(60,40,20,.08);
+      box-shadow: 0 6px 18px rgba(60,40,20,.08);
+    }
+    .how-step-num {
+      font-family: var(--font-display); font-weight: 400;
+      font-size: clamp(2.5rem, 6vw, 3.6rem); line-height: 1;
+      color: rgb(var(--step-acc, 239,106,41));
+      letter-spacing: -1px;
+    }
+    .how-step-video {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      width: 100%; max-width: 320px;
+      border-radius: 12px; overflow: hidden;
+      background: #0c0a10;
+      box-shadow: 0 6px 18px rgba(0,0,0,.3);
+    }
+    .how-step-video video {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
+    }
+    .how-step-title {
+      font-family: var(--font-display); font-weight: 400;
+      font-size: 1.35rem; line-height: 1.2; color: var(--text);
+      margin: 4px 0 0;
+    }
+    .how-step-desc {
+      font-family: var(--font-body); font-size: .9rem;
+      line-height: 1.55; color: var(--text2); margin: 0;
+    }
+
     /* ── Try Free (preview transcribe) ──────────────────────── */
     .try-free-section {
       max-width: 1100px; margin: 0 auto; padding: 64px 24px 48px;
@@ -8018,6 +8099,45 @@
 <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(249,115,22,.12),transparent);max-width:600px;margin:0 auto"></div>
 
 {% if not workspace %}
+<!-- ── HOW IT WORKS (v0.14.11c) ──────────────────────────────────────── -->
+<section class="how-section fade-in" id="howItWorks">
+  <div class="how-head">
+    <div class="how-eyebrow"><span data-i18n-es="CÓMO FUNCIONA" data-i18n-en="HOW IT WORKS">CÓMO FUNCIONA</span></div>
+    <h2 class="how-h2">
+      <span data-i18n-es="De reel a guión propio." data-i18n-en="From reel to your own script.">De reel a guión propio.</span>
+      <em data-i18n-es="En 3 pasos." data-i18n-en="In 3 steps.">En 3 pasos.</em>
+    </h2>
+    <p class="how-sub" data-i18n-es="Sin descargas. Sin extensiones. En tu navegador." data-i18n-en="No downloads. No extensions. In your browser.">Sin descargas. Sin extensiones. En tu navegador.</p>
+  </div>
+  <div class="how-grid">
+    <div class="how-step" style="--step-acc:239,106,41">
+      <div class="how-step-num">01</div>
+      <div class="how-step-video">
+        <video class="how-vid" data-src="/static/img/landing/videos/transcribir.mp4" loop muted playsinline preload="metadata" aria-label="Transcribe y adapta"></video>
+      </div>
+      <h3 class="how-step-title" data-i18n-es="Transcribe y adapta." data-i18n-en="Transcribe and adapt.">Transcribe y adapta.</h3>
+      <p class="how-step-desc" data-i18n-es="Pega un reel y recibe el texto en segundos." data-i18n-en="Paste a reel and get the text in seconds.">Pega un reel y recibe el texto en segundos.</p>
+    </div>
+    <div class="how-step" style="--step-acc:93,202,165">
+      <div class="how-step-num">02</div>
+      <div class="how-step-video">
+        <video class="how-vid" data-src="/static/img/landing/videos/metricas.mp4" loop muted playsinline preload="metadata" aria-label="Mide qué te funciona"></video>
+      </div>
+      <h3 class="how-step-title" data-i18n-es="Mide qué te funciona." data-i18n-en="Measure what works for you.">Mide qué te funciona.</h3>
+      <p class="how-step-desc" data-i18n-es="Conecta tu Instagram y analiza los reels que escalan." data-i18n-en="Plug in your Instagram and analyze the reels that scale.">Conecta tu Instagram y analiza los reels que escalan.</p>
+    </div>
+    <div class="how-step" style="--step-acc:244,199,94">
+      <div class="how-step-num">03</div>
+      <div class="how-step-video">
+        <video class="how-vid" data-src="/static/img/landing/videos/teleprompter.mp4" loop muted playsinline preload="metadata" aria-label="Hazlo tuyo y grábalo"></video>
+      </div>
+      <h3 class="how-step-title" data-i18n-es="Hazlo tuyo y grábalo." data-i18n-en="Make it yours and record.">Hazlo tuyo y grábalo.</h3>
+      <p class="how-step-desc" data-i18n-es="Reescribe en tu voz y graba con teleprompter integrado." data-i18n-en="Rewrite in your voice and record with the built-in teleprompter.">Reescribe en tu voz y graba con teleprompter integrado.</p>
+    </div>
+  </div>
+</section>
+<div style="height:1px;background:linear-gradient(90deg,transparent,rgba(249,115,22,.12),transparent);max-width:600px;margin:0 auto"></div>
+
 <!-- ── TRY FREE (preview transcribe) ─────────────────────────────────── -->
 <section class="try-free-section fade-in" id="tryFree">
   <div class="try-free-grid">
@@ -10841,6 +10961,27 @@ function startHeroRotatorAuto() {
     setHeroRotator(next, false);
   }, 6000);
 }
+
+// v0.14.11c — How it works mini-videos: lazy-load + autoplay/pause via viewport
+function initHowItWorks() {
+  const section = document.getElementById("howItWorks");
+  if (!section) return;
+  const vids = section.querySelectorAll(".how-vid");
+  if (!vids.length) return;
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      const v = e.target;
+      if (e.isIntersecting) {
+        if (!v.src && v.dataset.src) v.src = v.dataset.src;
+        try { v.play().catch(() => {}); } catch (err) {}
+      } else {
+        try { v.pause(); } catch (err) {}
+      }
+    });
+  }, { threshold: 0.3 });
+  vids.forEach(v => obs.observe(v));
+}
+window.addEventListener("DOMContentLoaded", initHowItWorks);
 
 function initHeroRotator() {
   const root = document.getElementById("heroRotator");
