@@ -6870,6 +6870,8 @@
       .nav-r #userEmail { display: none; }
       .nav-r #balBadge { display: none; }
       .nav-r #themeBtn { display: none; }
+      /* v0.14.11g — landing mobile: theme toggle visible (en workspace vive dentro del menú avatar) */
+      body:not(.workspace) .nav-r #themeBtn { display: inline-flex !important; }
       .nav-upgrade-btn { padding: 6px 12px; font-size: .72rem; }
       .user-menu-dropdown { display: none !important; }
       .bal-unit { display: none; }
