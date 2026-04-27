@@ -1415,14 +1415,6 @@
       --pillar-acc-3: 255,107,61;
       --pillar-acc-4: 239,106,41;
     }
-    .pillars-section::before {
-      content: ""; position: absolute; left: 50%; top: 0;
-      width: 1px; height: 100%;
-      background: rgba(239,106,41,.15);
-      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 80px, black calc(100% - 80px), transparent 100%);
-              mask-image: linear-gradient(to bottom, transparent 0, black 80px, black calc(100% - 80px), transparent 100%);
-      pointer-events: none; z-index: 0;
-    }
     .pillars-waves {
       position: absolute; inset: 0;
       width: 100%; height: 100%;
@@ -7154,6 +7146,23 @@
       align-items: center; justify-content: center; transition: border-color .2s;
     }
     .nav-hamburger:hover { border-color: var(--purple); }
+    /* v0.14.10 — mobile auth CTAs en nav top (sustituyen hamburguesa en landing) */
+    .nav-mob-cta {
+      display: none;
+      padding: 0 12px; height: 34px;
+      border-radius: 8px;
+      font-family: var(--font-body); font-weight: 700; font-size: .78rem;
+      background: transparent; border: 1px solid var(--border); color: var(--text2);
+      cursor: pointer; text-decoration: none;
+      align-items: center; justify-content: center;
+      white-space: nowrap;
+      transition: border-color .15s, background .15s, color .15s;
+    }
+    .nav-mob-cta:hover { border-color: var(--purple); }
+    .nav-mob-cta-primary {
+      background: #f97316; border-color: #f97316; color: #fff;
+    }
+    .nav-mob-cta-primary:hover { background: #ea680c; border-color: #ea680c; color: #fff; }
     /* Mobile slide-out menu */
     .nav-mob-menu {
       display: none; position: fixed; inset: 0; z-index: 250;
@@ -7251,7 +7260,7 @@
 
     @media (max-width: 640px) {
       .logo span { display: none; }
-      .nav-r { gap: 12px; }
+      .nav-r { gap: 8px; }
       .nav-r .lang-switch { display: none; }
       .nav-r #navAffiliate { display: none !important; }
       .nav-r .btn-nav { display: none; }
@@ -7263,10 +7272,17 @@
       .user-menu-dropdown { display: none !important; }
       .bal-unit { display: none; }
       .nav-hamburger { display: flex; }
+      /* v0.14.10 — fuera del workspace ocultamos hamburguesa; landing usa nav-mob-cta */
+      body:not(.workspace) .nav-hamburger { display: none !important; }
+      .nav-mob-cta { display: inline-flex; }
       /* Hero input row — select + button stacked full-width so nothing is cut off */
       .hero-lang-row { flex-direction: column; gap: 10px; }
       .hero-lang-row > select,
       .hero-lang-row > button { width: 100%; flex: none; }
+      /* v0.14.10 — workspace transcribe input wrap no debe sacar el botón */
+      .trans-input-actions { flex-direction: column; gap: 10px; }
+      .trans-input-actions > * { width: 100%; }
+      .trans-input-btn { width: 100%; justify-content: center; }
     }
     @media (max-width: 360px) {
       .nav-r { gap: 6px; }
@@ -8139,6 +8155,11 @@
     {% if not workspace %}<a class="btn-nav hi" id="btnWorkspace" href="/app" onclick="ctaWorkspaceClick()" style="display:none;text-decoration:none" data-i18n="nav.workspace">Ir a mi app →</a>{% endif %}
     <button class="btn-nav" id="btnLogin" onclick="openAuth('login','nav_login')" data-i18n="nav.login">Log in</button>
     <button class="btn-nav hi" id="btnReg" onclick="openAuth('register','nav_login')" data-i18n="nav.register">Free →</button>
+    {% if not workspace %}
+    <a class="nav-mob-cta nav-mob-cta-primary" id="navMobApp" href="/app" onclick="ctaWorkspaceClick()" style="display:none" data-i18n-es="Entrar app" data-i18n-en="Open app">Entrar app</a>
+    <button class="nav-mob-cta" id="navMobLoginBtn" onclick="openAuth('login','nav_mob')" data-i18n-es="Entrar" data-i18n-en="Sign in">Entrar</button>
+    <button class="nav-mob-cta nav-mob-cta-primary" id="navMobRegBtn" onclick="openAuth('register','nav_mob')" data-i18n-es="Empezar gratis" data-i18n-en="Get started">Empezar gratis</button>
+    {% endif %}
     {% if workspace %}<button class="nav-upgrade-btn" id="navUpgradeBtn" onclick="openUpgradeModal('nav')" style="display:none" data-i18n-es="✦ Upgrade" data-i18n-en="✦ Upgrade">✦ Upgrade</button>{% endif %}
     <button class="theme-btn" id="themeBtn" title="Theme">🌙</button>
     <div class="user-menu-wrap">
@@ -11660,6 +11681,12 @@ function renderLoggedIn() {
   document.getElementById("btnReg").style.display = "none";
   const btnWs = document.getElementById("btnWorkspace");
   if (btnWs) btnWs.style.display = "";
+  const navMobApp = document.getElementById("navMobApp");
+  if (navMobApp) navMobApp.style.display = "";
+  const navMobLoginBtn = document.getElementById("navMobLoginBtn");
+  if (navMobLoginBtn) navMobLoginBtn.style.display = "none";
+  const navMobRegBtn = document.getElementById("navMobRegBtn");
+  if (navMobRegBtn) navMobRegBtn.style.display = "none";
   const navMobAuth = document.getElementById("navMobAuth");
   if (navMobAuth) navMobAuth.style.display = "none";
   updateIdeaFab();
@@ -15106,6 +15133,12 @@ function renderLoggedOut() {
   document.getElementById("btnReg").style.display = "";
   const btnWs = document.getElementById("btnWorkspace");
   if (btnWs) btnWs.style.display = "none";
+  const navMobApp = document.getElementById("navMobApp");
+  if (navMobApp) navMobApp.style.display = "none";
+  const navMobLoginBtn = document.getElementById("navMobLoginBtn");
+  if (navMobLoginBtn) navMobLoginBtn.style.display = "";
+  const navMobRegBtn = document.getElementById("navMobRegBtn");
+  if (navMobRegBtn) navMobRegBtn.style.display = "";
   const navMobAuth = document.getElementById("navMobAuth");
   if (navMobAuth) navMobAuth.style.display = "";
   document.getElementById("userPill").classList.remove("on");
@@ -17648,8 +17681,28 @@ function closeNavMob() {
 function syncNavMob() {
   const email = st.user ? st.user.email : "";
   document.getElementById("navMobEmail").textContent = email;
-  document.getElementById("navMobPlan").textContent = (st.plan || "free").toUpperCase();
-  document.getElementById("navMobCredits").textContent = usos(st.credits || 0);
+  const planRow = document.querySelector(".nav-mob-header-plan");
+  const planLabel = (st.plan || "free").toUpperCase();
+  // v0.14.10 — counter coherente:
+  //  · agency unlimited (sin monthlyLimit) → solo plan, sin contador
+  //  · plan paid con monthlyLimit → "used/limit"
+  //  · free / legacy → "N usos" (créditos / 18)
+  let counterText;
+  if (st.plan === "agency" && !st.monthlyLimit) {
+    counterText = "";
+  } else if (st.monthlyLimit) {
+    const used = st.monthlyUsage || 0;
+    counterText = `${used}/${st.monthlyLimit}`;
+  } else {
+    counterText = usos(st.credits || 0);
+  }
+  if (planRow) {
+    if (counterText) {
+      planRow.innerHTML = `<b id="navMobPlan">${planLabel}</b> · <span id="navMobCredits">${counterText}</span>`;
+    } else {
+      planRow.innerHTML = `<b id="navMobPlan">${planLabel}</b>`;
+    }
+  }
   const av = document.getElementById("navMobAvatar");
   const srcAv = document.getElementById("userAv");
   if (srcAv && av) av.innerHTML = srcAv.innerHTML;
