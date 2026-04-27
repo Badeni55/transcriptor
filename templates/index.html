@@ -1415,18 +1415,40 @@
       --pillar-acc-3: 255,107,61;
       --pillar-acc-4: 239,106,41;
     }
-    .pillars-section::before {
-      content: ""; position: absolute; left: 50%; top: 0;
-      width: 1px; height: 100%;
-      background: rgba(239,106,41,.15);
-      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 80px, black calc(100% - 80px), transparent 100%);
-              mask-image: linear-gradient(to bottom, transparent 0, black 80px, black calc(100% - 80px), transparent 100%);
-      pointer-events: none; z-index: 0;
-    }
     .pillars-waves {
       position: absolute; inset: 0;
       width: 100%; height: 100%;
       opacity: .04; pointer-events: none; z-index: 0;
+    }
+    .pillars-thread {
+      position: absolute; left: 0; top: 0;
+      width: 100%; height: 100%;
+      pointer-events: none; z-index: 0;
+      overflow: visible;
+    }
+    .pillars-thread .pthread-main {
+      fill: none;
+      stroke: rgba(241,234,217,.85);
+      stroke-width: 2;
+      stroke-linecap: round;
+      filter: drop-shadow(0 0 8px rgba(241,234,217,.4));
+      transition: stroke-dashoffset 2.5s ease-out;
+    }
+    .pillars-thread .pthread-glow {
+      fill: none;
+      stroke: rgba(239,106,41,.3);
+      stroke-width: 4;
+      stroke-linecap: round;
+      filter: blur(6px);
+      transition: stroke-dashoffset 2.5s ease-out;
+    }
+    [data-theme="light"] .pillars-thread .pthread-main {
+      stroke: rgba(60,40,20,.55);
+      filter: drop-shadow(0 0 6px rgba(239,106,41,.25));
+    }
+    @media (max-width: 768px) {
+      .pillars-thread .pthread-main { stroke-width: 1.5; }
+      .pillars-thread .pthread-glow { stroke-width: 3; }
     }
     .pillars-head { position: relative; z-index: 1; text-align: center; margin-bottom: 48px; }
     .pillars-head h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.1; letter-spacing: -.5px; margin: 0 0 10px; }
@@ -8842,6 +8864,10 @@
     <path d="M0,520 Q300,420 600,520 T1200,520" fill="none" stroke="url(#pillarsWavesGrad)" stroke-width="2"/>
     <path d="M0,710 Q300,610 600,710 T1200,710" fill="none" stroke="url(#pillarsWavesGrad)" stroke-width="2"/>
   </svg>
+  <svg class="pillars-thread" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <path class="pthread-glow" d=""></path>
+    <path class="pthread-main" d=""></path>
+  </svg>
   <div class="pillars-head">
     <h2>
       <span data-i18n-es="De la URL al guion grabado," data-i18n-en="From URL to recorded script,">De la URL al guion grabado,</span>
@@ -11622,6 +11648,87 @@ function initScrollReveal() {
     });
   }, { threshold: 0.15 });
   document.querySelectorAll(".fade-in").forEach(el => obs.observe(el));
+  initPillarsThread();
+}
+
+// ── Pillars thread (organic flowing line) ─────────────────────────────────
+function initPillarsThread() {
+  const section = document.querySelector(".pillars-section");
+  if (!section) return;
+  const svg = section.querySelector(".pillars-thread");
+  if (!svg) return;
+  const pMain = svg.querySelector(".pthread-main");
+  const pGlow = svg.querySelector(".pthread-glow");
+  if (!pMain || !pGlow) return;
+
+  let drawn = false;
+
+  function buildD(h, isMobile) {
+    const W = 1200;
+    if (isMobile) {
+      const cx = W / 2;
+      return [
+        `M ${cx} 0`,
+        `Q ${cx - 240} ${h * 0.20}, ${cx} ${h * 0.40}`,
+        `Q ${cx + 240} ${h * 0.60}, ${cx} ${h * 0.80}`,
+        `Q ${cx - 180} ${h * 0.92}, ${cx} ${h}`
+      ].join(" ");
+    }
+    // desktop: serpenteo izq-der-izq-der pasando cerca de cada Hooks
+    return [
+      `M 600 0`,
+      `C 600 ${h * 0.05}, 300 ${h * 0.10}, 110 ${h * 0.20}`,
+      `C -60 ${h * 0.30}, 1260 ${h * 0.32}, 1090 ${h * 0.40}`,
+      `C 1260 ${h * 0.50}, -60 ${h * 0.52}, 110 ${h * 0.60}`,
+      `C -60 ${h * 0.70}, 1260 ${h * 0.72}, 1090 ${h * 0.80}`,
+      `C 1260 ${h * 0.90}, 600 ${h * 0.95}, 600 ${h}`
+    ].join(" ");
+  }
+
+  function update() {
+    const h = section.scrollHeight;
+    if (h < 100) return;
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    svg.setAttribute("viewBox", `0 0 1200 ${h}`);
+    const d = buildD(h, isMobile);
+    pMain.setAttribute("d", d);
+    pGlow.setAttribute("d", d);
+    const len = pMain.getTotalLength();
+    pMain.style.strokeDasharray = len;
+    pGlow.style.strokeDasharray = len;
+    if (drawn) {
+      pMain.style.strokeDashoffset = 0;
+      pGlow.style.strokeDashoffset = 0;
+    } else {
+      pMain.style.transition = "none";
+      pGlow.style.transition = "none";
+      pMain.style.strokeDashoffset = len;
+      pGlow.style.strokeDashoffset = len;
+      void pMain.getBoundingClientRect();
+      pMain.style.transition = "";
+      pGlow.style.transition = "";
+    }
+  }
+
+  update();
+
+  const drawObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting && !drawn) {
+        drawn = true;
+        pMain.style.strokeDashoffset = 0;
+        pGlow.style.strokeDashoffset = 0;
+        drawObs.disconnect();
+      }
+    });
+  }, { threshold: 0.15 });
+  drawObs.observe(section);
+
+  let rt = null;
+  window.addEventListener("resize", () => {
+    if (rt) clearTimeout(rt);
+    rt = setTimeout(update, 200);
+  });
 }
 
 // ── Auth state ────────────────────────────────────────────────────────────
