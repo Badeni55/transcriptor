@@ -788,7 +788,17 @@
     @keyframes fade-up { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
 
     /* ── Hero v2 (centered, v0.14.11a) ───────────────────────── */
-    .hero-v2 { padding: 56px 24px 40px; text-align: center; max-width: 1240px; margin: 0 auto; }
+    .hero-v2 {
+      --bg-hero: rgba(10,9,12,1);
+      padding: 56px 24px 40px; text-align: center;
+      max-width: 1240px; margin: 0 auto;
+      background: var(--bg-hero);
+      border-radius: 24px;
+    }
+    [data-theme="light"] .hero-v2 {
+      --bg-hero: transparent;
+      background: transparent;
+    }
     .hero-grid {
       display: flex; flex-direction: column;
       gap: 32px; align-items: center; width: 100%;
@@ -865,10 +875,10 @@
       padding: 16px 32px; border-radius: 12px;
       font-family: var(--font-body); font-weight: 700; font-size: 1rem;
       cursor: pointer; transition: transform .12s, box-shadow .15s, opacity .15s, background .15s;
-      box-shadow: 0 5px 0 #92400e;
+      box-shadow: 0 5px 0 #92400e, 0 8px 32px rgba(239,106,41,.4);
     }
-    .hero-cta-primary:hover { transform: translateY(-1px); background: #ea680c; box-shadow: 0 6px 0 #92400e, 0 4px 16px rgba(249,115,22,.35); }
-    .hero-cta-primary:active { transform: translateY(4px); box-shadow: 0 1px 0 #92400e; }
+    .hero-cta-primary:hover { transform: translateY(-1px); background: #ea680c; box-shadow: 0 6px 0 #92400e, 0 10px 36px rgba(239,106,41,.5); }
+    .hero-cta-primary:active { transform: translateY(4px); box-shadow: 0 1px 0 #92400e, 0 4px 16px rgba(239,106,41,.3); }
     .hero-cta-secondary {
       background: transparent; border: 1px solid var(--border); color: var(--text);
       padding: 16px 28px; border-radius: 12px; cursor: pointer;
@@ -2634,14 +2644,14 @@
     .cta-pill .ck { color: var(--green); }
     .cta-btn-final {
       display: inline-block;
-      background: var(--purple); color: #fff; border: 0;
+      background: #f97316; color: #fff; border: 0;
       padding: 16px 32px; border-radius: 14px; cursor: pointer;
       font-family: var(--font-body); font-weight: 700; font-size: 1rem;
-      box-shadow: 0 6px 0 #92400e;
-      transition: transform .12s, box-shadow .15s;
+      box-shadow: 0 6px 0 #92400e, 0 8px 32px rgba(239,106,41,.4);
+      transition: transform .12s, box-shadow .15s, background .15s;
     }
-    .cta-btn-final:hover { transform: translateY(-1px); box-shadow: 0 7px 0 #92400e, 0 6px 20px rgba(249,115,22,.35); }
-    .cta-btn-final:active { transform: translateY(5px); box-shadow: 0 1px 0 #92400e; }
+    .cta-btn-final:hover { transform: translateY(-1px); background: #ea680c; box-shadow: 0 7px 0 #92400e, 0 10px 36px rgba(239,106,41,.5); }
+    .cta-btn-final:active { transform: translateY(5px); box-shadow: 0 1px 0 #92400e, 0 4px 16px rgba(239,106,41,.3); }
 
     /* ── FAQ section ──────────────────────────────────────────── */
     .faq-section-v2 {
@@ -8657,7 +8667,7 @@
     <em data-i18n-es="Es gratis." data-i18n-en="It's free.">Es gratis.</em>
   </h2>
   <p class="cta-sub" data-i18n-es="5 transcripciones al día. Sin tarjeta. Sin suscripción." data-i18n-en="5 transcriptions a day. No card. No subscription.">5 transcripciones al día. Sin tarjeta. Sin suscripción.</p>
-  <button class="cta-btn-final" onclick="openAuth('register','cta_final')" data-i18n-es="Crear cuenta gratis →" data-i18n-en="Sign up free →">Crear cuenta gratis →</button>
+  <button class="cta-btn-final" onclick="openAuth('register','cta_final')" data-i18n-es="Pruébalo gratis →" data-i18n-en="Try it free →">Pruébalo gratis →</button>
 </div>
 {% endif %}
 
