@@ -878,417 +878,79 @@
     }
     .hero-cta-secondary:hover { border-color: var(--orange); color: var(--orange); background: rgba(249,115,22,.06); }
 
-    /* ── Scene rotator ──────────────────────────────────────── */
-    .scene-rotator { position: relative; }
-    .scene-waves {
-      position: absolute; inset: 0; width: 100%; height: 100%;
-      opacity: .08; z-index: 0; pointer-events: none;
+    /* ── Hero rotator (v0.14.11b) — vídeo 16:9 + 3 pill tabs ─── */
+    .hero-rotator {
+      --rot-acc: 239,106,41;
+      width: 100%; max-width: 960px;
+      margin: 0 auto;
     }
-    .scene-tabs {
-      position: relative; z-index: 2;
-      display: grid; grid-template-columns: repeat(4,1fr); gap: 4px;
-      background: var(--surf); border: 1px solid var(--border); border-radius: 14px;
-      padding: 4px; margin-bottom: 12px;
-    }
-    .scene-tab {
+    .hero-rotator-video {
       position: relative;
-      display: flex; align-items: center; justify-content: center; gap: 6px;
-      padding: 10px 6px; border: 0; border-radius: 10px;
-      background: transparent; cursor: pointer;
-      color: var(--text3); font-family: var(--font-body); font-size: .78rem; font-weight: 600;
-      transition: color .18s, background .18s;
-      min-width: 0;
+      aspect-ratio: 16 / 9;
+      width: 100%;
+      border-radius: 18px; overflow: hidden;
+      background: #0c0a10;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.05),
+        0 24px 80px rgba(0,0,0,.5),
+        0 0 60px rgba(var(--rot-acc), .15);
+      transition: box-shadow .4s ease;
     }
-    .scene-tab img { width: 22px; height: 22px; flex-shrink: 0; opacity: .65; transition: opacity .18s; }
-    .scene-tab:hover { color: var(--text2); }
-    .scene-tab:hover img { opacity: .9; }
-    .scene-tab.on {
-      color: var(--text);
-      background: linear-gradient(135deg, rgba(249,115,22,.16), rgba(249,115,22,.06));
+    [data-theme="light"] .hero-rotator-video {
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,.05),
+        0 16px 48px rgba(60,40,20,.18),
+        0 0 60px rgba(var(--rot-acc), .12);
     }
-    .scene-tab.on img { opacity: 1; }
-    .scene-tab.on::after {
-      content: ""; position: absolute; left: 14%; right: 14%; bottom: -5px;
-      height: 2px; background: var(--orange); border-radius: 2px;
-      transition: opacity .25s;
-    }
-    @media (max-width: 480px) {
-      .scene-tab { font-size: .7rem; padding: 8px 4px; }
-      .scene-tab img { width: 18px; height: 18px; }
-    }
-
-    .scene-stage {
-      position: relative; z-index: 1;
-      aspect-ratio: 4/3; width: 100%;
-      background: var(--surf); border: 1px solid var(--border); border-radius: 16px;
-      overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,.18);
-    }
-    @media (max-width: 980px) { .scene-stage { aspect-ratio: 9/12; } }
-    @media (max-width: 640px) { .scene-stage { aspect-ratio: 9/16; } }
-    .scene-mockup {
+    .hr-video {
       position: absolute; inset: 0;
-      opacity: 0; transform: translateY(8px) scale(.99);
-      transition: opacity .35s ease, transform .35s ease;
-      pointer-events: none;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      opacity: 0; pointer-events: none;
+      transition: opacity .2s ease;
     }
-    .scene-mockup.is-active { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
-    .scene-frame {
-      position: absolute; inset: 18px;
-      background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
-      display: flex; flex-direction: column;
-      overflow: hidden;
-    }
-    .mock-window-bar {
-      display: flex; gap: 6px; padding: 10px 12px;
-      border-bottom: 1px solid var(--border); flex-shrink: 0;
-      align-items: center;
-    }
-    .mock-window-bar span {
-      width: 9px; height: 9px; border-radius: 50%; background: var(--surf2);
-    }
-    .mock-window-bar .mock-window-url {
-      flex: 1; margin-left: 12px;
-      padding: 3px 10px; border-radius: 6px;
-      background: var(--surf); color: var(--text3);
-      font-family: ui-monospace, SFMono-Regular, monospace; font-size: .58rem;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .scene-shot {
-      flex: 1; width: 100%; min-height: 0;
-      object-fit: cover; object-position: top center;
-      display: block;
-    }
-    .scene-mockup.is-active .scene-shot {
-      animation: kenBurnsScene 9s ease-out both;
-    }
-    @keyframes kenBurnsScene {
-      from { transform: scale(1.05); }
-      to   { transform: scale(1); }
-    }
-    .scene-shot-overlay {
-      position: absolute; left: 0; right: 0; bottom: 0; height: 60px;
-      background: linear-gradient(to bottom, transparent, rgba(0,0,0,.35));
-      pointer-events: none;
-    }
-    .scene-mascot {
-      position: absolute; right: 14px; bottom: 14px;
-      width: 60px; height: 60px;
-      opacity: 0; transform: translateY(8px);
-      transition: opacity .4s ease .2s, transform .4s ease .2s;
-      pointer-events: none; z-index: 3;
-      filter: drop-shadow(0 4px 12px rgba(0,0,0,.25));
-    }
-    .scene-mockup.is-active .scene-mascot { opacity: .85; transform: translateY(0); }
+    .hr-video.on { opacity: 1; pointer-events: auto; }
 
-    /* Mockup base UI bits */
-    .mock-input-row { display: flex; gap: 8px; padding: 14px; }
-    .mock-input {
-      flex: 1; min-width: 0;
-      padding: 10px 14px; border-radius: 10px;
-      border: 1px solid var(--border); background: var(--surf);
-      color: var(--text2); font-size: .78rem; font-family: ui-monospace, SFMono-Regular, monospace;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    .hero-rotator-tabs {
+      display: flex; gap: 12px;
+      align-items: center; justify-content: center;
+      flex-wrap: wrap;
+      margin: 24px 0 0;
+      list-style: none; padding: 0;
     }
-    .mock-input .mock-typed { display: inline-block; }
-    .mock-btn-go {
-      padding: 10px 14px; border-radius: 10px;
-      background: var(--purple); color: #fff;
-      font-size: .78rem; font-weight: 700;
-      flex-shrink: 0;
+    .hr-tab {
+      padding: 12px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(241,234,217,.1);
+      background: rgba(31,26,34,.6);
+      color: rgba(241,234,217,.6);
+      font-family: var(--font-body); font-weight: 600; font-size: .9rem;
+      cursor: pointer;
+      transition: opacity .15s, background .25s, border-color .18s, color .2s, box-shadow .25s;
+      backdrop-filter: blur(6px);
     }
+    [data-theme="light"] .hr-tab {
+      background: rgba(255,255,255,.5);
+      border-color: rgba(60,40,20,.14);
+      color: var(--text3);
+    }
+    .hr-tab:hover {
+      color: var(--text);
+      border-color: rgba(var(--tab-acc, 239,106,41), .55);
+      opacity: 1;
+    }
+    .hr-tab.on {
+      background: rgb(var(--tab-acc, 239,106,41));
+      border-color: rgb(var(--tab-acc, 239,106,41));
+      color: #1a1217;
+      box-shadow: 0 6px 24px rgba(var(--tab-acc, 239,106,41), .35);
+    }
+    [data-theme="light"] .hr-tab.on { color: #fff; }
 
-    /* Scene 1: Transcribe */
-    .mock-reel-preview {
-      display: flex; gap: 12px; align-items: center;
-      margin: 0 14px 4px; padding: 12px;
-      background: linear-gradient(135deg, rgba(249,115,22,.08), rgba(125,91,184,.08));
-      border: 1px solid var(--border); border-radius: 12px;
-      opacity: 0;
+    @media (max-width: 880px) {
+      .hero-rotator { padding: 0 4px; }
+      .hr-tab { padding: 10px 16px; font-size: .82rem; }
     }
-    .scene-mockup[data-scene="transcribe"].is-active .mock-reel-preview {
-      animation: lineIn .4s ease 1s both;
-    }
-    .mock-reel-thumb {
-      position: relative; flex-shrink: 0;
-      width: 54px; height: 88px; border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,.35);
-      background: linear-gradient(135deg, #f97316 0%, #c2410c 50%, #7d5bb8 100%);
-    }
-    .mock-reel-thumb img {
-      position: absolute; inset: 0; width: 100%; height: 100%;
-      object-fit: cover; object-position: center;
-      display: block;
-    }
-    .mock-reel-handle-row { display: flex; align-items: center; gap: 6px; }
-    .mock-reel-avatar {
-      width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
-      background: linear-gradient(135deg, #fdba74, #c2410c);
-      border: 1.5px solid var(--bg);
-    }
-    .mock-reel-thumb::before {
-      content: ""; position: absolute; inset: 0;
-      background:
-        radial-gradient(ellipse at 30% 40%, rgba(255,255,255,.25) 0%, transparent 40%),
-        radial-gradient(ellipse at 70% 80%, rgba(0,0,0,.3) 0%, transparent 50%);
-    }
-    .mock-reel-thumb::after {
-      content: "▶"; position: absolute; top: 50%; left: 50%;
-      transform: translate(-40%,-50%);
-      width: 24px; height: 24px; border-radius: 50%;
-      background: rgba(0,0,0,.55); backdrop-filter: blur(4px);
-      display: flex; align-items: center; justify-content: center;
-      color: #fff; font-size: .68rem; padding-left: 1px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.4);
-      z-index: 2;
-    }
-    .mock-reel-meta { flex: 1; min-width: 0; }
-    .mock-reel-handle { font-size: .76rem; color: var(--text); font-weight: 600; }
-    .mock-reel-handle::before { content: "@"; color: var(--orange); }
-    .mock-reel-stats { font-size: .7rem; color: var(--text3); margin-top: 2px; display: flex; gap: 8px; }
-    .mock-reel-stats span { display: inline-flex; align-items: center; gap: 3px; }
-    .mock-reel-duration {
-      flex-shrink: 0; padding: 3px 8px; border-radius: 999px;
-      background: rgba(0,0,0,.5); color: #fff; font-size: .65rem;
-      font-family: ui-monospace, SFMono-Regular, monospace;
-    }
-    .scene-mockup[data-scene="transcribe"].is-active .mock-typed {
-      animation: typeIn 1.6s steps(40) both;
-    }
-    @keyframes typeIn { from { width: 0; } to { width: 100%; } }
-    .mock-spinner {
-      display: flex; gap: 5px; justify-content: center; align-items: center;
-      padding: 8px 0;
-      opacity: 0;
-    }
-    .scene-mockup[data-scene="transcribe"].is-active .mock-spinner {
-      animation: mockFadeBetween 1.2s ease 1.6s both;
-    }
-    .mock-spinner div {
-      width: 6px; height: 6px; border-radius: 50%; background: var(--orange);
-      animation: mockBounce .8s infinite alternate;
-    }
-    .mock-spinner div:nth-child(2) { animation-delay: .15s; }
-    .mock-spinner div:nth-child(3) { animation-delay: .3s; }
-    @keyframes mockBounce { 0%{transform:translateY(0)} 100%{transform:translateY(-6px)} }
-    @keyframes mockFadeBetween { 0%{opacity:0} 30%{opacity:1} 80%{opacity:1} 100%{opacity:0} }
-    .mock-output { padding: 4px 18px 14px; flex: 1; overflow: hidden; }
-    .mock-output .mock-line {
-      font-size: .82rem; color: var(--text2); line-height: 1.5;
-      margin: 0 0 6px; opacity: 0;
-    }
-    .scene-mockup[data-scene="transcribe"].is-active .mock-output .l1 { animation: lineIn .35s ease 2.9s both; }
-    .scene-mockup[data-scene="transcribe"].is-active .mock-output .l2 { animation: lineIn .35s ease 3.4s both; }
-    .scene-mockup[data-scene="transcribe"].is-active .mock-output .l3 { animation: lineIn .35s ease 3.9s both; }
-    @keyframes lineIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-
-    /* Scene 2: Metrics */
-    .mock-metrics { padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
-    .mock-metrics-title { color: var(--text3); font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
-    .mock-bars-wrap {
-      position: relative;
-      padding-left: 24px;
-      border-bottom: 1px solid var(--border); padding-bottom: 8px;
-    }
-    .mock-bars-yaxis {
-      position: absolute; left: 0; top: 0; bottom: 8px;
-      display: flex; flex-direction: column; justify-content: space-between;
-      font-size: .56rem; color: var(--text3); font-variant-numeric: tabular-nums;
-      padding: 2px 0;
-    }
-    .mock-bars {
-      display: grid; grid-template-columns: repeat(7,1fr); gap: 8px;
-      align-items: end; height: 90px; padding: 4px 0;
-    }
-    .mock-bars-xlabels {
-      display: grid; grid-template-columns: repeat(7,1fr); gap: 8px;
-      margin-top: 4px; font-size: .58rem; color: var(--text3); text-align: center;
-    }
-    .mock-bar {
-      width: 100%; background: linear-gradient(180deg, var(--orange), #fdba74);
-      border-radius: 4px 4px 0 0;
-      height: 0;
-    }
-    .scene-mockup[data-scene="metrics"].is-active .mock-bar:nth-child(1) { animation: barRise .5s ease .1s both; }
-    .scene-mockup[data-scene="metrics"].is-active .mock-bar:nth-child(2) { animation: barRise .5s ease .2s both; }
-    .scene-mockup[data-scene="metrics"].is-active .mock-bar:nth-child(3) { animation: barRise .5s ease .3s both; }
-    .scene-mockup[data-scene="metrics"].is-active .mock-bar:nth-child(4) { animation: barRise .5s ease .4s both; }
-    .scene-mockup[data-scene="metrics"].is-active .mock-bar:nth-child(5) { animation: barRise .5s ease .5s both; }
-    .scene-mockup[data-scene="metrics"].is-active .mock-bar:nth-child(6) { animation: barRise .5s ease .6s both; }
-    .scene-mockup[data-scene="metrics"].is-active .mock-bar:nth-child(7) { animation: barRise .5s ease .7s both; }
-    @keyframes barRise { from { height: 0; } to { height: var(--h); } }
-    .mock-kpis { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
-    .mock-kpi { padding: 10px; border-radius: 10px; background: var(--surf); border: 1px solid var(--border); }
-    .mock-kpi-label { font-size: .68rem; color: var(--text3); text-transform: uppercase; letter-spacing: .04em; }
-    .mock-kpi-num { font-family: var(--font-display); font-size: 1.1rem; color: var(--text); margin-top: 2px; font-variant-numeric: tabular-nums; }
-
-    /* Scene 3: Ideas (idea + developed result) */
-    .mock-ideas-v2 {
-      display: flex; flex-direction: column; gap: 10px;
-      padding: 12px 14px 14px; flex: 1; overflow: hidden;
-    }
-    .mock-ideas-input-card {
-      border: 1px solid var(--border); border-radius: 10px;
-      padding: 8px 10px; background: var(--surf);
-    }
-    .mock-ideas-input-label {
-      font-size: .58rem; color: var(--text3); letter-spacing: .1em; text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-    .mock-ideas-input-text {
-      font-size: .8rem; color: var(--text); font-style: italic; line-height: 1.3; min-height: 1em;
-    }
-    .mock-ideas-input-row {
-      display: flex; gap: 6px; align-items: center; margin-top: 8px;
-    }
-    .mock-chip {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 3px 8px; border-radius: 999px;
-      font-size: .62rem; font-weight: 500; white-space: nowrap;
-    }
-    .mock-chip.purple { background: rgba(125,91,184,.12); color: #a78bfa; border: 1px solid rgba(125,91,184,.35); }
-    .mock-chip.orange { background: rgba(249,115,22,.12); color: #fed7aa; border: 1px solid rgba(249,115,22,.35); }
-    .mock-chip-spacer { flex: 1; }
-    .mock-ideas-cta {
-      padding: 5px 10px; border-radius: 8px;
-      background: linear-gradient(135deg, #f97316, #fb923c); color: #fff;
-      font-size: .68rem; font-weight: 700;
-      box-shadow: 0 2px 8px rgba(249,115,22,.3);
-    }
-    .mock-ideas-result {
-      flex: 1; min-height: 0;
-      border: 1px solid var(--border); border-radius: 10px;
-      padding: 10px 12px; background: var(--surf);
-      display: flex; flex-direction: column; gap: 8px; overflow: hidden;
-    }
-    .mock-ideas-badges {
-      display: flex; gap: 5px; flex-wrap: wrap;
-    }
-    .mock-ideas-badges .b {
-      display: inline-flex; align-items: center; gap: 3px;
-      font-size: .58rem; font-weight: 700; letter-spacing: .04em;
-      padding: 2px 7px; border-radius: 999px;
-    }
-    .mock-ideas-badges .b.ok { background: rgba(34,197,94,.14); color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
-    .mock-ideas-badges .b.cy { background: rgba(45,212,191,.14); color: #5eead4; border: 1px solid rgba(45,212,191,.3); }
-    .mock-ideas-badges .b.gr { background: rgba(34,197,94,.14); color: #86efac; border: 1px solid rgba(34,197,94,.3); }
-    .mock-ideas-result-title {
-      font-family: var(--font-display); font-size: .92rem; line-height: 1.2;
-      color: var(--text); font-weight: 400;
-    }
-    .mock-ideas-blocks {
-      flex: 1; min-height: 0;
-      display: flex; flex-direction: column; gap: 6px;
-      padding: 8px 10px;
-      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-      overflow: hidden;
-    }
-    .mock-ideas-block-lbl {
-      font-size: .56rem; font-weight: 700; letter-spacing: .1em;
-      color: #4ade80; margin-bottom: 0;
-    }
-    .mock-ideas-block-txt {
-      font-size: .72rem; color: var(--text2); font-style: italic; line-height: 1.4;
-      margin: 0 0 2px;
-    }
-    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-input-card { animation: lineIn .35s ease .15s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-result    { animation: lineIn .4s ease .55s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-blocks > *:nth-child(1) { animation: lineIn .3s ease 1.1s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-blocks > *:nth-child(2) { animation: lineIn .3s ease 1.3s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-blocks > *:nth-child(3) { animation: lineIn .3s ease 1.5s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-blocks > *:nth-child(4) { animation: lineIn .3s ease 1.7s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-blocks > *:nth-child(5) { animation: lineIn .3s ease 1.9s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-ideas-blocks > *:nth-child(6) { animation: lineIn .3s ease 2.1s both; }
-
-    /* (legacy) Scene 3 simpler: kept for rare edge cases */
-    .mock-ideas { display: flex; flex-direction: column; gap: 8px; flex: 1; padding: 14px 18px; }
-    .mock-ideas-head {
-      display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
-    }
-    .mock-ideas-icon { font-size: 1rem; }
-    .mock-ideas-title { font-family: var(--font-display); font-size: .95rem; color: var(--text); flex: 1; }
-    .mock-ideas-count {
-      background: rgba(249,115,22,.14); color: var(--orange);
-      padding: 2px 9px; border-radius: 999px;
-      font-size: .68rem; font-weight: 700; font-variant-numeric: tabular-nums;
-    }
-    .mock-idea-card {
-      display: flex; gap: 10px; align-items: flex-start;
-      padding: 10px 12px;
-      background: var(--surf); border: 1px solid var(--border); border-radius: 10px;
-      opacity: 0; transform: translateX(-10px);
-    }
-    .mock-idea-card-tag {
-      flex-shrink: 0; padding: 3px 8px; border-radius: 999px;
-      font-size: .62rem; font-weight: 700; letter-spacing: .04em;
-      background: color-mix(in srgb, var(--c) 16%, transparent);
-      color: var(--c); border: 1px solid color-mix(in srgb, var(--c) 32%, transparent);
-    }
-    .mock-idea-card p { font-size: .78rem; color: var(--text2); line-height: 1.45; margin: 0; flex: 1; min-width: 0; }
-    .mock-idea-time { font-size: .62rem; color: var(--text3); flex-shrink: 0; font-variant-numeric: tabular-nums; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-idea-card:nth-of-type(1) { animation: ideaIn .35s ease .3s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-idea-card:nth-of-type(2) { animation: ideaIn .35s ease .55s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-idea-card:nth-of-type(3) { animation: ideaIn .35s ease .8s both; }
-    .scene-mockup[data-scene="ideas"].is-active .mock-idea-card:nth-of-type(4) { animation: ideaIn .35s ease 1.05s both; }
-    @keyframes ideaIn { from{opacity:0;transform:translateX(-10px)} to{opacity:1;transform:translateX(0)} }
-
-    /* Scene 4: Scripts */
-    .mock-scripts { padding: 14px 18px; flex: 1; }
-    .mock-script-card {
-      padding: 14px; background: var(--surf); border: 1px solid var(--border);
-      border-radius: 12px;
-    }
-    .mock-script-title { font-family: var(--font-display); font-size: 1.05rem; color: var(--text); margin-bottom: 8px; }
-    .mock-script-body { font-size: .8rem; color: var(--text2); line-height: 1.5; margin: 0 0 12px; }
-    .mock-script-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-    .mock-badge {
-      font-size: .62rem; font-weight: 700; letter-spacing: .04em;
-      padding: 3px 8px; border-radius: 999px;
-      opacity: 0;
-    }
-    .mock-badge.b1 { background: rgba(34,197,94,.16); color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
-    .mock-badge.b2 { background: rgba(59,130,246,.16); color: #60a5fa; border: 1px solid rgba(59,130,246,.3); }
-    .mock-badge.b3 { background: rgba(167,139,250,.16); color: #a78bfa; border: 1px solid rgba(167,139,250,.3); }
-    .scene-mockup[data-scene="scripts"].is-active .mock-badge.b1 { animation: badgeIn .3s ease .9s both; }
-    .scene-mockup[data-scene="scripts"].is-active .mock-badge.b2 { animation: badgeIn .3s ease 1.2s both; }
-    .scene-mockup[data-scene="scripts"].is-active .mock-badge.b3 { animation: badgeIn .3s ease 1.5s both; }
-    @keyframes badgeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
-    .mock-script-prompter {
-      position: relative;
-      margin-bottom: 12px; padding: 8px 12px;
-      background: linear-gradient(135deg, rgba(249,115,22,.1), rgba(125,91,184,.08));
-      border: 1px dashed var(--border); border-radius: 8px;
-      display: flex; align-items: center; gap: 10px;
-      font-size: .7rem; color: var(--text3);
-    }
-    .mock-script-prompter-icon {
-      width: 28px; height: 28px; border-radius: 6px;
-      background: var(--surf); border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .mock-script-prompter-bar {
-      flex: 1; height: 4px; border-radius: 2px;
-      background: var(--surf2); position: relative; overflow: hidden;
-    }
-    .mock-script-prompter-bar::after {
-      content: ""; position: absolute; left: 0; top: 0; bottom: 0;
-      width: 38%; background: var(--orange);
-      animation: scriptProgress 4s ease-in-out infinite;
-    }
-    @keyframes scriptProgress {
-      0%   { width: 0; }
-      50%  { width: 70%; }
-      100% { width: 100%; opacity: .3; }
-    }
-    .mock-script-actions { display: flex; gap: 8px; opacity: 0; }
-    .scene-mockup[data-scene="scripts"].is-active .mock-script-actions { animation: lineIn .4s ease 1.9s both; }
-    .mock-script-btn {
-      flex: 1; padding: 8px; border-radius: 8px; cursor: pointer;
-      background: transparent; border: 1px solid var(--border); color: var(--text2);
-      font-family: var(--font-body); font-size: .76rem; font-weight: 600;
-    }
-    .mock-script-btn.primary { background: var(--purple); color: #fff; border-color: var(--purple); }
 
     /* ── Try Free (preview transcribe) ──────────────────────── */
     .try-free-section {
@@ -8284,148 +7946,22 @@
       </div>
     </div>
 
-    <div class="scene-rotator" id="sceneRotator" onmouseenter="pauseSceneRotator()" onmouseleave="resumeSceneRotator()">
-      <svg class="scene-waves" viewBox="0 0 600 400" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M0,250 Q150,200 300,240 T600,250 L600,400 L0,400 Z" fill="#f97316"/>
-        <path d="M0,290 Q150,260 300,280 T600,290 L600,400 L0,400 Z" fill="#7d5bb8" opacity=".6"/>
-      </svg>
-      <div class="scene-tabs" role="tablist">
-        <button class="scene-tab on" data-scene="transcribe" onclick="setScene('transcribe', true)" role="tab">
-          <img src="/static/img/hooks/hooks-transcribir.svg" alt="" loading="lazy" width="22" height="22">
-          <span data-i18n-es="Transcribir" data-i18n-en="Transcribe">Transcribir</span>
-        </button>
-        <button class="scene-tab" data-scene="metrics" onclick="setScene('metrics', true)" role="tab">
-          <img src="/static/img/hooks/hooks-metricas.svg" alt="" loading="lazy" width="22" height="22">
-          <span data-i18n-es="Métricas" data-i18n-en="Metrics">Métricas</span>
-        </button>
-        <button class="scene-tab" data-scene="ideas" onclick="setScene('ideas', true)" role="tab">
-          <img src="/static/img/hooks/hooks-ideas.svg" alt="" loading="lazy" width="22" height="22">
-          <span data-i18n-es="Ideas" data-i18n-en="Ideas">Ideas</span>
-        </button>
-        <button class="scene-tab" data-scene="scripts" onclick="setScene('scripts', true)" role="tab">
-          <img src="/static/img/hooks/hooks-scripts.svg" alt="" loading="lazy" width="22" height="22">
-          <span data-i18n-es="Guiones" data-i18n-en="Scripts">Guiones</span>
-        </button>
+    <div class="hero-rotator" id="heroRotator">
+      <div class="hero-rotator-video">
+        <video class="hr-video on" data-key="transcribe" autoplay loop muted playsinline preload="auto"
+               data-src="/static/img/landing/videos/transcribir.mp4"
+               aria-label="Transcribir"></video>
+        <video class="hr-video" data-key="metrics" loop muted playsinline preload="metadata"
+               data-src="/static/img/landing/videos/metricas.mp4"
+               aria-label="Métricas"></video>
+        <video class="hr-video" data-key="teleprompter" loop muted playsinline preload="metadata"
+               data-src="/static/img/landing/videos/teleprompter.mp4"
+               aria-label="Teleprompter"></video>
       </div>
-
-      <div class="scene-stage">
-        <!-- TRANSCRIBE (HTML mockup with real creator photo as reel thumb) -->
-        <div class="scene-mockup is-active" data-scene="transcribe">
-          <div class="scene-frame">
-            <div class="mock-window-bar">
-              <span></span><span></span><span></span>
-              <div class="mock-window-url">reelscript.net/app · transcripción</div>
-            </div>
-            <div class="mock-input-row">
-              <div class="mock-input"><span class="mock-typed">https://www.instagram.com/reel/abc123…</span></div>
-              <div class="mock-btn-go">✦ Transcribir</div>
-            </div>
-            <div class="mock-reel-preview" aria-hidden="true">
-              <div class="mock-reel-thumb">
-                <img src="/static/img/landing/reel-thumb-creator.jpg" alt="" loading="lazy">
-              </div>
-              <div class="mock-reel-meta">
-                <div class="mock-reel-handle-row">
-                  <div class="mock-reel-avatar"></div>
-                  <div class="mock-reel-handle">davidayalac</div>
-                </div>
-                <div class="mock-reel-stats">
-                  <span>♥ 2,4 K</span>
-                  <span>💬 128</span>
-                  <span>↗ 412</span>
-                </div>
-              </div>
-              <div class="mock-reel-duration">0:42</div>
-            </div>
-            <div class="mock-spinner"><div></div><div></div><div></div></div>
-            <div class="mock-output">
-              <p class="mock-line l1" data-i18n-es="Lo que voy a contarte cambió mi forma de grabar reels." data-i18n-en="What I'm about to share changed how I shoot reels.">Lo que voy a contarte cambió mi forma de grabar reels.</p>
-              <p class="mock-line l2" data-i18n-es="Antes me pasaba dos horas con cada guion." data-i18n-en="Before I'd spend two hours on every script.">Antes me pasaba dos horas con cada guion.</p>
-              <p class="mock-line l3" data-i18n-es="Ahora son diez minutos. Igual de bueno o mejor." data-i18n-en="Now ten minutes. Same quality or better.">Ahora son diez minutos. Igual de bueno o mejor.</p>
-            </div>
-          </div>
-          <img class="scene-mascot" src="/static/img/hooks/hooks-transcribir.svg" alt="" loading="lazy" width="60" height="60">
-        </div>
-
-        <!-- METRICS (real screenshot) -->
-        <div class="scene-mockup" data-scene="metrics">
-          <div class="scene-frame">
-            <div class="mock-window-bar">
-              <span></span><span></span><span></span>
-              <div class="mock-window-url">reelscript.net/app · métricas</div>
-            </div>
-            <img class="scene-shot" src="/static/img/landing/screen-metrics.jpg" alt="" loading="lazy">
-            <div class="scene-shot-overlay"></div>
-          </div>
-          <img class="scene-mascot" src="/static/img/hooks/hooks-metricas.svg" alt="" loading="lazy" width="60" height="60">
-        </div>
-
-        <!-- IDEAS (HTML mockup: input idea → desarrollada con INTRO/DESARROLLO/CIERRE) -->
-        <div class="scene-mockup" data-scene="ideas">
-          <div class="scene-frame">
-            <div class="mock-window-bar">
-              <span></span><span></span><span></span>
-              <div class="mock-window-url">reelscript.net/app · ideas</div>
-            </div>
-            <div class="mock-ideas-v2">
-              <div class="mock-ideas-input-card">
-                <div class="mock-ideas-input-label" data-i18n-es="NUEVA IDEA" data-i18n-en="NEW IDEA">NUEVA IDEA</div>
-                <div class="mock-ideas-input-text" data-i18n-es="cómo conseguir mis primeros usuarios" data-i18n-en="how to get my first users">cómo conseguir mis primeros usuarios</div>
-                <div class="mock-ideas-input-row">
-                  <span class="mock-chip purple" data-i18n-es="◉ Asistente por defecto" data-i18n-en="◉ Default assistant">◉ Asistente por defecto</span>
-                  <span class="mock-chip orange" data-i18n-es="📁 Sin proyecto" data-i18n-en="📁 No project">📁 Sin proyecto</span>
-                  <span class="mock-chip-spacer"></span>
-                  <span class="mock-ideas-cta" data-i18n-es="Desarrollar →" data-i18n-en="Expand →">Desarrollar →</span>
-                </div>
-              </div>
-              <div class="mock-ideas-result">
-                <div class="mock-ideas-badges">
-                  <span class="b ok" data-i18n-es="✓ DESARROLLADA" data-i18n-en="✓ EXPANDED">✓ DESARROLLADA</span>
-                  <span class="b cy" data-i18n-es="EDUCATIVO" data-i18n-en="EDUCATIONAL">EDUCATIVO</span>
-                  <span class="b gr" data-i18n-es="● GRABADA" data-i18n-en="● RECORDED">● GRABADA</span>
-                </div>
-                <div class="mock-ideas-result-title" data-i18n-es="3 pasos para conseguir los primeros usuarios" data-i18n-en="3 steps to get your first users">3 pasos para conseguir los primeros usuarios</div>
-                <div class="mock-ideas-blocks">
-                  <div class="mock-ideas-block-lbl">INTRO</div>
-                  <p class="mock-ideas-block-txt" data-i18n-es="Lanzaste tu app y no tienes usuarios. Sigue estos 3 pasos." data-i18n-en="You launched your app and have no users. Follow these 3 steps.">Lanzaste tu app y no tienes usuarios. Sigue estos 3 pasos.</p>
-                  <div class="mock-ideas-block-lbl" data-i18n-es="DESARROLLO" data-i18n-en="BODY">DESARROLLO</div>
-                  <p class="mock-ideas-block-txt" data-i18n-es="Empieza por tu círculo. Busca comunidades del nicho. Aporta valor." data-i18n-en="Start with your circle. Find niche communities. Bring value first.">Empieza por tu círculo. Busca comunidades del nicho. Aporta valor.</p>
-                  <div class="mock-ideas-block-lbl" data-i18n-es="CIERRE" data-i18n-en="CLOSING">CIERRE</div>
-                  <p class="mock-ideas-block-txt" data-i18n-es="Esos primeros usuarios son tu base. Guarda este vídeo." data-i18n-en="Those first users are your base. Save this video.">Esos primeros usuarios son tu base. Guarda este vídeo.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <img class="scene-mascot" src="/static/img/hooks/hooks-ideas.svg" alt="" loading="lazy" width="60" height="60">
-        </div>
-
-        <!-- SCRIPTS -->
-        <div class="scene-mockup" data-scene="scripts">
-          <div class="scene-frame">
-            <div class="mock-window-bar"><span></span><span></span><span></span></div>
-            <div class="mock-scripts">
-              <div class="mock-script-card">
-                <div class="mock-script-title" data-i18n-es="Cómo grabé este reel sin guion" data-i18n-en="How I shot this reel with no script">Cómo grabé este reel sin guion</div>
-                <p class="mock-script-body" data-i18n-es="Lo importante no es lo que dices. Es lo que tu audiencia ya sabía y nunca había escuchado en voz alta." data-i18n-en="It's not what you say. It's what your audience already knew and never heard out loud.">Lo importante no es lo que dices. Es lo que tu audiencia ya sabía y nunca había escuchado en voz alta.</p>
-                <div class="mock-script-badges">
-                  <span class="mock-badge b1" data-i18n-es="DESARROLLADA" data-i18n-en="EXPANDED">DESARROLLADA</span>
-                  <span class="mock-badge b2" data-i18n-es="EDUCATIVO" data-i18n-en="EDUCATIONAL">EDUCATIVO</span>
-                  <span class="mock-badge b3" data-i18n-es="GRABADA" data-i18n-en="RECORDED">GRABADA</span>
-                </div>
-                <div class="mock-script-prompter" aria-hidden="true">
-                  <div class="mock-script-prompter-icon">📺</div>
-                  <div class="mock-script-prompter-bar"></div>
-                  <span style="font-variant-numeric:tabular-nums">0:42 / 1:15</span>
-                </div>
-                <div class="mock-script-actions">
-                  <button class="mock-script-btn" data-i18n-es="Editar" data-i18n-en="Edit">Editar</button>
-                  <button class="mock-script-btn primary">Teleprompter</button>
-                </div>
-              </div>
-            </div>
-          </div>
-          <img class="scene-mascot" src="/static/img/hooks/hooks-scripts.svg" alt="" loading="lazy" width="60" height="60">
-        </div>
+      <div class="hero-rotator-tabs" role="tablist">
+        <button class="hr-tab on" data-key="transcribe" data-acc="239,106,41" style="--tab-acc:239,106,41" onclick="setHeroRotator('transcribe', true)" role="tab" aria-selected="true" data-i18n-es="Transcribir" data-i18n-en="Transcribe">Transcribir</button>
+        <button class="hr-tab" data-key="metrics" data-acc="93,202,165" style="--tab-acc:93,202,165" onclick="setHeroRotator('metrics', true)" role="tab" aria-selected="false" data-i18n-es="Métricas" data-i18n-en="Metrics">Métricas</button>
+        <button class="hr-tab" data-key="teleprompter" data-acc="244,199,94" style="--tab-acc:244,199,94" onclick="setHeroRotator('teleprompter', true)" role="tab" aria-selected="false" data-i18n-es="Teleprompter" data-i18n-en="Teleprompter">Teleprompter</button>
       </div>
     </div>
   </div>
@@ -11263,40 +10799,70 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// ── Hero scene rotator ────────────────────────────────────────────────────
-const _SCENES = ["transcribe", "metrics", "ideas", "scripts"];
-let _sceneTimer = null;
-let _scenePaused = false;
+// ── Hero rotator (v0.14.11b) — vídeos 16:9 + sticky pause manual ────────
+const _HR_TABS = ["transcribe", "metrics", "teleprompter"];
+let _hrTimer = null;
+let _hrManualPause = false;
+let _hrManualResumeTimer = null;
 
-function setScene(name, userClick) {
-  document.querySelectorAll(".scene-tab").forEach(t => t.classList.toggle("on", t.dataset.scene === name));
-  document.querySelectorAll(".scene-mockup").forEach(m => {
-    const wasActive = m.classList.contains("is-active");
-    const willActive = m.dataset.scene === name;
-    m.classList.toggle("is-active", willActive);
-    // Restart CSS animations on entering scene by toggling a class
-    if (!wasActive && willActive) {
-      m.classList.remove("is-active");
-      void m.offsetWidth;
-      m.classList.add("is-active");
+function setHeroRotator(key, manual) {
+  const root = document.getElementById("heroRotator");
+  if (!root) return;
+  root.querySelectorAll(".hr-tab").forEach(t => {
+    const on = t.dataset.key === key;
+    t.classList.toggle("on", on);
+    t.setAttribute("aria-selected", on ? "true" : "false");
+    if (on && t.dataset.acc) root.style.setProperty("--rot-acc", t.dataset.acc);
+  });
+  root.querySelectorAll(".hr-video").forEach(v => {
+    const on = v.dataset.key === key;
+    v.classList.toggle("on", on);
+    if (on) {
+      if (!v.src && v.dataset.src) v.src = v.dataset.src;
+      v.preload = "auto";
+      try { v.currentTime = 0; v.play().catch(() => {}); } catch (e) {}
+    } else {
+      try { v.pause(); } catch (e) {}
     }
   });
-  if (userClick) startSceneRotator();
+  if (manual) {
+    _hrManualPause = true;
+    if (_hrManualResumeTimer) clearTimeout(_hrManualResumeTimer);
+    _hrManualResumeTimer = setTimeout(() => { _hrManualPause = false; }, 15000);
+  }
 }
-function startSceneRotator() {
-  if (_sceneTimer) clearInterval(_sceneTimer);
-  _sceneTimer = setInterval(() => {
-    if (_scenePaused) return;
-    const cur = document.querySelector(".scene-tab.on")?.dataset.scene || _SCENES[0];
-    const next = _SCENES[(_SCENES.indexOf(cur) + 1) % _SCENES.length];
-    setScene(next, false);
+
+function startHeroRotatorAuto() {
+  if (_hrTimer) clearInterval(_hrTimer);
+  _hrTimer = setInterval(() => {
+    if (_hrManualPause) return;
+    const cur = document.querySelector(".hr-tab.on")?.dataset.key || _HR_TABS[0];
+    const next = _HR_TABS[(_HR_TABS.indexOf(cur) + 1) % _HR_TABS.length];
+    setHeroRotator(next, false);
   }, 6000);
 }
-function pauseSceneRotator() { _scenePaused = true; }
-function resumeSceneRotator() { _scenePaused = false; }
-window.addEventListener("DOMContentLoaded", () => {
-  if (document.getElementById("sceneRotator")) startSceneRotator();
-});
+
+function initHeroRotator() {
+  const root = document.getElementById("heroRotator");
+  if (!root) return;
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      root.querySelectorAll(".hr-video").forEach(v => {
+        if (!v.src && v.dataset.src) {
+          v.src = v.dataset.src;
+          v.preload = v.classList.contains("on") ? "auto" : "metadata";
+        }
+      });
+      const active = root.querySelector(".hr-video.on");
+      if (active) { try { active.play().catch(() => {}); } catch (e) {} }
+      startHeroRotatorAuto();
+      obs.disconnect();
+    });
+  }, { threshold: 0.1 });
+  obs.observe(root);
+}
+window.addEventListener("DOMContentLoaded", initHeroRotator);
 
 // ── Try Free (anonymous preview transcribe) ──────────────────────────────
 let _tryActiveTask = null;
