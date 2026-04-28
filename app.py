@@ -16,7 +16,7 @@ from urllib.parse import urlparse, urlencode
 import requests
 import yt_dlp
 from dotenv import load_dotenv
-from flask import Flask, Response, abort, jsonify, make_response, redirect, render_template, request, session
+from flask import Flask, Response, abort, g, jsonify, make_response, redirect, render_template, request, session
 
 load_dotenv()
 
@@ -495,11 +495,18 @@ def forgot_password():
     email = (body.get("email") or "").strip().lower()
     if not email or not validate_email(email):
         return jsonify({"error": "Valid email required"}), 400
+    # v0.14.12: pass lang into Supabase template via .Data.lang for ES/EN conditional
+    lang = _resolve_lang()
+    redirect_to = request.host_url.rstrip("/") + "/reset-password?lang=" + lang
     try:
         resp = requests.post(
             f"{SUPABASE_URL}/auth/v1/recover",
             headers={"apikey": SUPABASE_SERVICE_KEY, "Content-Type": "application/json"},
-            json={"email": email, "redirect_to": request.host_url.rstrip("/") + "/reset-password"},
+            json={
+                "email": email,
+                "redirect_to": redirect_to,
+                "data": {"lang": lang},
+            },
             timeout=10,
         )
         if resp.status_code not in (200, 204):
@@ -2691,13 +2698,42 @@ def index():
 
 
 LANG_COOKIE = "rs_lang"
+SUPPORTED_LANGS = ("es", "en")
+
+
+@app.before_request
+def _resolve_lang_setup():
+    """Resolve lang for every request. Order: ?lang= > cookie > Accept-Language.
+    If ?lang= is set, mark for cookie persist via after_request hook."""
+    q = (request.args.get("lang") or "").lower()
+    if q in SUPPORTED_LANGS:
+        g.lang = q
+        g.persist_lang = True
+        return
+    c = request.cookies.get(LANG_COOKIE)
+    if c in SUPPORTED_LANGS:
+        g.lang = c
+    else:
+        accept = request.headers.get("Accept-Language", "")
+        g.lang = "en" if accept.lower().startswith("en") else "es"
+    g.persist_lang = False
+
+
+@app.after_request
+def _persist_lang_cookie(resp):
+    """Persist resolved lang in cookie when querystring chose it."""
+    if getattr(g, "persist_lang", False) and getattr(g, "lang", None) in SUPPORTED_LANGS:
+        resp.set_cookie(LANG_COOKIE, g.lang, max_age=365 * 24 * 3600, samesite="Lax")
+    return resp
 
 
 def _resolve_lang():
-    """Cookie wins over Accept-Language so the user's toggle choice persists
-    across /app and /profile/* routes."""
+    """Return lang resolved by before_request hook. Falls back if hook didn't run."""
+    lang = getattr(g, "lang", None)
+    if lang in SUPPORTED_LANGS:
+        return lang
     c = request.cookies.get(LANG_COOKIE)
-    if c in ("es", "en"):
+    if c in SUPPORTED_LANGS:
         return c
     accept = request.headers.get("Accept-Language", "")
     return "en" if accept.lower().startswith("en") else "es"
@@ -3560,14 +3596,85 @@ def legal_notice_page():
     return render_template("legal.html")
 
 
+# v0.14.12 — i18n strings for forgot/reset password (server-side render)
+FORGOT_RESET_STRINGS = {
+    "es": {
+        # forgot-password
+        "fp_meta_title": "Restablecer contraseña — ReelScript",
+        "fp_title": "Restablece tu contraseña",
+        "fp_sub": "Introduce tu email y te enviaremos un enlace para restablecerla.",
+        "fp_email_label": "EMAIL",
+        "fp_email_placeholder": "tu@ejemplo.com",
+        "fp_submit": "Enviar enlace",
+        "fp_submitting": "Enviando…",
+        "fp_back": "Volver al inicio",
+        "fp_success_title": "Mira tu bandeja de entrada",
+        "fp_success_text_pre": "Te hemos enviado un enlace a",
+        "fp_success_text_post": ". Caduca en 1 hora.",
+        "fp_email_required": "Email obligatorio",
+        # reset-password
+        "rp_meta_title": "Nueva contraseña — ReelScript",
+        "rp_title": "Nueva contraseña",
+        "rp_sub": "Elige una contraseña segura para tu cuenta.",
+        "rp_pass_label": "NUEVA CONTRASEÑA",
+        "rp_pass_placeholder": "Mín. 6 caracteres",
+        "rp_confirm_label": "CONFIRMAR CONTRASEÑA",
+        "rp_confirm_placeholder": "Repite tu contraseña",
+        "rp_submit": "Actualizar contraseña",
+        "rp_submitting": "Actualizando…",
+        "rp_min_chars_err": "La contraseña debe tener al menos 6 caracteres",
+        "rp_mismatch_err": "Las contraseñas no coinciden",
+        "rp_success_title": "Contraseña actualizada",
+        "rp_success_text": "Redirigiendo a la app…",
+        "rp_invalid_title": "Enlace caducado o no válido",
+        "rp_invalid_text": "Este enlace ya no es válido. Solicita uno nuevo.",
+        "rp_request_new": "Solicitar uno nuevo",
+        "error_generic": "Error",
+    },
+    "en": {
+        "fp_meta_title": "Reset password — ReelScript",
+        "fp_title": "Reset your password",
+        "fp_sub": "Enter your email and we'll send you a reset link.",
+        "fp_email_label": "EMAIL",
+        "fp_email_placeholder": "you@example.com",
+        "fp_submit": "Send reset link",
+        "fp_submitting": "Sending…",
+        "fp_back": "Back to login",
+        "fp_success_title": "Check your inbox",
+        "fp_success_text_pre": "We sent a reset link to",
+        "fp_success_text_post": ". It expires in 1 hour.",
+        "fp_email_required": "Email required",
+        "rp_meta_title": "New password — ReelScript",
+        "rp_title": "New password",
+        "rp_sub": "Choose a strong password for your account.",
+        "rp_pass_label": "NEW PASSWORD",
+        "rp_pass_placeholder": "Min. 6 characters",
+        "rp_confirm_label": "CONFIRM PASSWORD",
+        "rp_confirm_placeholder": "Repeat your password",
+        "rp_submit": "Update password",
+        "rp_submitting": "Updating…",
+        "rp_min_chars_err": "Password must be at least 6 characters",
+        "rp_mismatch_err": "Passwords do not match",
+        "rp_success_title": "Password updated",
+        "rp_success_text": "Redirecting you to the app…",
+        "rp_invalid_title": "Invalid or expired link",
+        "rp_invalid_text": "This reset link is no longer valid. Request a new one.",
+        "rp_request_new": "Request new reset link",
+        "error_generic": "Error",
+    },
+}
+
+
 @app.route("/forgot-password")
 def forgot_password_page():
-    return render_template("forgot-password.html")
+    lang = _resolve_lang()
+    return render_template("forgot-password.html", lang=lang, s=FORGOT_RESET_STRINGS[lang])
 
 
 @app.route("/reset-password")
 def reset_password_page():
-    return render_template("reset-password.html")
+    lang = _resolve_lang()
+    return render_template("reset-password.html", lang=lang, s=FORGOT_RESET_STRINGS[lang])
 
 
 if __name__ == "__main__":
