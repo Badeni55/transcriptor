@@ -7,11 +7,13 @@
       try {
         var k = "rs-theme";
         var p = localStorage.getItem(k);
-        if (p !== "light" && p !== "dark") {
-          p = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
-          try { localStorage.setItem(k, p); } catch(_){}
+        // v0.14.12: 3-state theme — "light" | "dark" | "system" (default)
+        if (p !== "light" && p !== "dark" && p !== "system") p = "system";
+        var resolved = p;
+        if (p === "system") {
+          resolved = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
         }
-        document.documentElement.setAttribute("data-theme", p);
+        document.documentElement.setAttribute("data-theme", resolved);
       } catch(e){
         document.documentElement.setAttribute("data-theme", "dark");
       }
@@ -7699,8 +7701,9 @@
       <span data-i18n-es="Tema" data-i18n-en="Theme">Tema</span>
     </span>
     <div class="theme-seg" role="group" aria-label="Theme">
-      <button type="button" class="theme-seg-opt" data-val="light" onclick="setThemeBinary('light', event)" aria-label="Light">☀️</button>
-      <button type="button" class="theme-seg-opt" data-val="dark" onclick="setThemeBinary('dark', event)" aria-label="Dark">🌙</button>
+      <button type="button" class="theme-seg-opt" data-val="light" onclick="setThemeBinary('light', event)" data-i18n-aria-es="Claro" data-i18n-aria-en="Light" aria-label="Light">☀️</button>
+      <button type="button" class="theme-seg-opt" data-val="system" onclick="setThemeBinary('system', event)" data-i18n-aria-es="Sistema" data-i18n-aria-en="System" aria-label="System">🖥️</button>
+      <button type="button" class="theme-seg-opt" data-val="dark" onclick="setThemeBinary('dark', event)" data-i18n-aria-es="Oscuro" data-i18n-aria-en="Dark" aria-label="Dark">🌙</button>
     </div>
   </div>
 
@@ -8504,7 +8507,7 @@
           </button>
 
           <!-- 2. Hazlo tuyo (honesto-vacío hasta v0.15) -->
-          <button type="button" class="ov-card" style="--ov-acc:192,132,252" onclick="closeProfile();const el=document.getElementById('adaptCard');if(el)el.scrollIntoView({behavior:'smooth'})">
+          <button type="button" class="ov-card" style="--ov-acc:192,132,252" onclick="closeProfile();revealAdaptSection({focus:true})">
             <div class="ov-card-head">
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-adapt.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
@@ -8954,26 +8957,26 @@
         <div id="profTeamList"></div>
       </div>
 
-      <!-- Privacy & Data panel -->
+      <!-- Privacy & Data panel (v0.14.12: i18n) -->
       <div id="profPanelPrivacy" style="display:none">
         <div class="prof-section-head">
-          <div><div class="prof-section-title">Privacy &amp; Data</div></div>
+          <div><div class="prof-section-title" data-i18n-es="Privacidad y datos" data-i18n-en="Privacy &amp; Data">Privacidad y datos</div></div>
         </div>
 
         <div class="prof-card" style="margin-bottom:12px">
           <div style="margin-bottom:12px">
-            <div style="font-family:var(--font-display);font-size:1rem;margin-bottom:4px">Export your data</div>
-            <div style="font-size:.82rem;color:var(--text2);font-weight:300">Download all your data as a JSON file — transcriptions, scripts, projects, profile.</div>
+            <div style="font-family:var(--font-display);font-size:1rem;margin-bottom:4px" data-i18n-es="Exporta tus datos" data-i18n-en="Export your data">Exporta tus datos</div>
+            <div style="font-size:.82rem;color:var(--text2);font-weight:300" data-i18n-es="Descarga todos tus datos en JSON — transcripciones, guiones, proyectos, perfil." data-i18n-en="Download all your data as a JSON file — transcriptions, scripts, projects, profile.">Descarga todos tus datos en JSON — transcripciones, guiones, proyectos, perfil.</div>
           </div>
-          <button class="btn-sm btn-3d btn-3d-primary" style="background:var(--purple);color:#fff;border:none;padding:8px 16px" onclick="exportMyData()">Download my data</button>
+          <button class="btn-sm btn-3d btn-3d-primary" style="background:var(--purple);color:#fff;border:none;padding:8px 16px" onclick="exportMyData()" data-i18n-es="Descargar mis datos" data-i18n-en="Download my data">Descargar mis datos</button>
         </div>
 
         <div class="prof-card" style="border-color:rgba(239,68,68,.2)">
           <div style="margin-bottom:12px">
-            <div style="font-family:var(--font-display);font-size:1rem;margin-bottom:4px;color:#f87171">Delete account</div>
-            <div style="font-size:.82rem;color:var(--text2);font-weight:300">Permanently delete your account, all projects, scripts, and transcriptions. Your active subscription will be cancelled. This cannot be undone.</div>
+            <div style="font-family:var(--font-display);font-size:1rem;margin-bottom:4px;color:#f87171" data-i18n-es="Eliminar cuenta" data-i18n-en="Delete account">Eliminar cuenta</div>
+            <div style="font-size:.82rem;color:var(--text2);font-weight:300" data-i18n-es="Elimina permanentemente tu cuenta, proyectos, guiones y transcripciones. Se cancelará tu suscripción activa. No se puede deshacer." data-i18n-en="Permanently delete your account, all projects, scripts, and transcriptions. Your active subscription will be cancelled. This cannot be undone.">Elimina permanentemente tu cuenta, proyectos, guiones y transcripciones. Se cancelará tu suscripción activa. No se puede deshacer.</div>
           </div>
-          <button class="btn-sm btn-3d btn-3d-danger" style="background:transparent;border:1px solid rgba(239,68,68,.3);color:#f87171;padding:8px 16px" onclick="openDeleteAccountModal()">Delete my account</button>
+          <button class="btn-sm btn-3d btn-3d-danger" style="background:transparent;border:1px solid rgba(239,68,68,.3);color:#f87171;padding:8px 16px" onclick="openDeleteAccountModal()" data-i18n-es="Eliminar mi cuenta" data-i18n-en="Delete my account">Eliminar mi cuenta</button>
         </div>
       </div>
 
@@ -9028,11 +9031,12 @@
         <div class="settings-card">
           <div class="settings-card-head">
             <div class="settings-card-title" data-i18n-es="Tema" data-i18n-en="Theme">Tema</div>
-            <div class="settings-card-sub" data-i18n-es="Claro u oscuro. Persistente entre sesiones." data-i18n-en="Light or dark. Persists across sessions.">Claro u oscuro. Persistente entre sesiones.</div>
+            <div class="settings-card-sub" data-i18n-es="Claro, oscuro o automático según tu sistema." data-i18n-en="Light, dark or auto based on your system.">Claro, oscuro o automático según tu sistema.</div>
           </div>
           <div class="theme-seg settings-seg" role="group" aria-label="Theme">
-            <button type="button" class="theme-seg-opt" data-val="light" onclick="setThemeBinary('light', event)" aria-label="Light">☀️</button>
-            <button type="button" class="theme-seg-opt" data-val="dark" onclick="setThemeBinary('dark', event)" aria-label="Dark">🌙</button>
+            <button type="button" class="theme-seg-opt" data-val="light" onclick="setThemeBinary('light', event)" data-i18n-aria-es="Claro" data-i18n-aria-en="Light" aria-label="Light">☀️</button>
+            <button type="button" class="theme-seg-opt" data-val="system" onclick="setThemeBinary('system', event)" data-i18n-aria-es="Sistema" data-i18n-aria-en="System" aria-label="System">🖥️</button>
+            <button type="button" class="theme-seg-opt" data-val="dark" onclick="setThemeBinary('dark', event)" data-i18n-aria-es="Oscuro" data-i18n-aria-en="Dark" aria-label="Dark">🌙</button>
           </div>
         </div>
       </div>
@@ -9547,6 +9551,15 @@ const LANGS = {
     "team.invited": "Invitación enviada",
     "team.removed": "Miembro eliminado",
     "team.copied": "¡Enlace de invitación copiado!",
+    "team.role_owner": "Propietario",
+    "team.status_active": "Activo",
+    "team.status_pending": "Pendiente",
+    "team.uses_this_month": "{n} usos este mes",
+    "team.remove": "Eliminar",
+    "team.confirm_remove": "¿Eliminar este miembro del equipo?",
+    "team.invite_failed": "No se pudo enviar la invitación",
+    "team.invite_link_failed": "No se pudo obtener el enlace",
+    "team.email_required": "El email es requerido",
     // Metrics
     "metrics.title": "Métricas",
     "metrics.link_title": "Conecta tu Instagram",
@@ -9642,7 +9655,11 @@ const LANGS = {
     "toast.welcome": "¡Bienvenido!",
     "toast.account_created": "¡Cuenta creada!",
     "toast.error_transform": "Error al transformar",
+    "toast.error": "Error",
     "toast.error_connection": "Error de conexión.",
+    "toast.transcription_done": "Transcripción completada",
+    "toast.account_deleted": "Cuenta eliminada",
+    "toast.no_text": "Sin texto",
     "toast.error_save": "Error al guardar",
     "toast.paste_url": "Pega una URL primero",
     "toast.invalid_url": [
@@ -9913,6 +9930,15 @@ const LANGS = {
     "team.invited": "Invitation sent",
     "team.removed": "Member removed",
     "team.copied": "Invite link copied!",
+    "team.role_owner": "Owner",
+    "team.status_active": "Active",
+    "team.status_pending": "Pending",
+    "team.uses_this_month": "{n} uses this month",
+    "team.remove": "Remove",
+    "team.confirm_remove": "Remove this member from your team?",
+    "team.invite_failed": "Could not send invite",
+    "team.invite_link_failed": "Could not get invite link",
+    "team.email_required": "Email is required",
     // Metrics
     "metrics.title": "Metrics",
     "metrics.link_title": "Connect your Instagram",
@@ -10008,7 +10034,11 @@ const LANGS = {
     "toast.welcome": "Welcome!",
     "toast.account_created": "Account created!",
     "toast.error_transform": "Error transforming",
+    "toast.error": "Error",
     "toast.error_connection": "Connection error.",
+    "toast.transcription_done": "Transcription done",
+    "toast.account_deleted": "Account deleted",
+    "toast.no_text": "No text",
     "toast.error_save": "Error saving",
     "toast.paste_url": "Paste a URL first",
     "toast.invalid_url": [
@@ -10107,46 +10137,69 @@ function setLang(lang) {
   document.querySelectorAll("[data-i18n-placeholder-" + lang + "]").forEach(el => {
     el.placeholder = el.getAttribute("data-i18n-placeholder-" + lang);
   });
+  // v0.14.12: aria-label translation
+  document.querySelectorAll("[data-i18n-aria-" + lang + "]").forEach(el => {
+    el.setAttribute("aria-label", el.getAttribute("data-i18n-aria-" + lang));
+  });
   if (typeof initPrices === "function") initPrices();
 }
 
-// ── Theme ─────────────────────────────────────────────────────────────────
+// ── Theme (v0.14.12: 3-state — light | dark | system) ─────────────────────
 const themeBtn = document.getElementById("themeBtn");
-const themeIcons = { light: "☀️", dark: "🌙" };
+const themeIcons = { light: "☀️", dark: "🌙", system: "🖥️" };
+const _systemMQ = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
 
 function resolveTheme(pref) {
-  return (pref === "light" || pref === "dark") ? pref : "dark";
+  if (pref === "light" || pref === "dark") return pref;
+  // "system" or anything else → resolve from media query
+  return _systemMQ && _systemMQ.matches ? "dark" : "light";
 }
 
 function applyTheme(pref) {
   const t = resolveTheme(pref);
   document.documentElement.setAttribute("data-theme", t);
   if (themeBtn) {
-    themeBtn.textContent = themeIcons[t];
-    themeBtn.title = t === "dark" ? "Theme: Dark" : "Theme: Light";
+    // System pref shows the resolved icon so user sees what's active
+    themeBtn.textContent = themeIcons[pref] || themeIcons[t];
+    themeBtn.title = pref === "system" ? "Theme: System" : (t === "dark" ? "Theme: Dark" : "Theme: Light");
   }
+  // Sync segmented controls (light/dark/system buttons)
   document.querySelectorAll(".theme-seg-opt").forEach(el => {
-    el.classList.toggle("on", el.dataset.val === t);
+    if (el.dataset.val === "es" || el.dataset.val === "en") return; // skip lang seg
+    el.classList.toggle("on", el.dataset.val === pref);
   });
 }
 
 let themePref = localStorage.getItem("rs-theme");
-if (themePref !== "light" && themePref !== "dark") {
-  themePref = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+if (themePref !== "light" && themePref !== "dark" && themePref !== "system") {
+  themePref = "system";
   try { localStorage.setItem("rs-theme", themePref); } catch(_){}
 }
 applyTheme(themePref);
 
+// React to OS theme changes when in system mode
+if (_systemMQ && _systemMQ.addEventListener) {
+  _systemMQ.addEventListener("change", () => {
+    if (themePref === "system") applyTheme("system");
+  });
+} else if (_systemMQ && _systemMQ.addListener) {
+  _systemMQ.addListener(() => {
+    if (themePref === "system") applyTheme("system");
+  });
+}
+
 function setThemeBinary(val, e) {
   if (e) { e.stopPropagation(); e.preventDefault(); }
-  if (val !== "light" && val !== "dark") return;
+  if (val !== "light" && val !== "dark" && val !== "system") return;
   themePref = val;
   try { localStorage.setItem("rs-theme", val); } catch(_){}
   applyTheme(val);
 }
 function toggleTheme(e) {
   if (e) e.stopPropagation();
-  setThemeBinary(themePref === "dark" ? "light" : "dark");
+  // Cycle: light → system → dark → light
+  const next = themePref === "light" ? "system" : (themePref === "system" ? "dark" : "light");
+  setThemeBinary(next);
 }
 // Legacy alias — kept so older onclick handlers don't break.
 function cycleTheme(e) { toggleTheme(e); }
@@ -10532,7 +10585,9 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   setLang(currentLang);
   initPrices();
+  highlightActiveLang();
   await refreshMe();
+  highlightActiveLang();
   if (st.user) { loadHistory(); loadAssistants(); loadProjects(); }
   try {
     const onApp = window.location.pathname.startsWith("/app") || window.location.pathname.startsWith("/profile");
@@ -11711,7 +11766,7 @@ async function igDeleteVideo(vid) {
     renderIgGrid();
     renderIgChart();
     showToast(t("metrics.delete") + " ✓");
-  } catch { showToast("Error"); }
+  } catch { showToast(t("toast.error")); }
 }
 
 function igShowDetail(vid) {
@@ -11934,7 +11989,7 @@ async function igSaveAllManual(vid, btn) {
         method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ [field]: val }),
       });
-      if (!r.ok) { showToast("Error"); btn.disabled = false; btn.textContent = t("metrics.save_btn"); return; }
+      if (!r.ok) { showToast(t("toast.error")); btn.disabled = false; btn.textContent = t("metrics.save_btn"); return; }
       const v = igVideosCache.find(x => x.ig_video_id === vid);
       if (v) v[field] = val;
     }
@@ -11981,7 +12036,7 @@ async function igTranscribe(vid) {
     const v = igVideosCache.find(x => x.ig_video_id === vid);
     if (v) v.transcription = d.transcript;
     renderIgGrid();
-    showToast("Transcription done");
+    showToast(t("toast.transcription_done"));
   } catch { btn.textContent = t("metrics.transcribe"); btn.disabled = false; }
 }
 
@@ -12024,7 +12079,7 @@ function loadMetricsSummary() { loadMetricsPanel(); }
 async function exportMyData() {
   showToast(t("toast.loading"));
   const res = await fetch("/account/export");
-  if (!res.ok) { showToast("Error"); return; }
+  if (!res.ok) { showToast(t("toast.error")); return; }
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -12072,7 +12127,7 @@ async function confirmDeleteAccount() {
   }
   closeModal("deleteAccountOverlay");
   closeProfile();
-  showToast("Account deleted");
+  showToast(t("toast.account_deleted"));
   setTimeout(() => window.location.reload(), 1000);
 }
 
@@ -12605,7 +12660,7 @@ async function refreshTransMetrics(tid, btn) {
       if (card) card.outerHTML = renderTranscCardHTML(it);
     }
   } catch (e) {
-    showToast("Error de red");
+    showToast(t("toast.error_connection"));
   } finally {
     if (btn) { btn.classList.remove("is-busy"); btn.disabled = false; }
   }
@@ -12644,7 +12699,7 @@ async function refreshAllTransMetrics() {
     if (_bulkRefreshPolling) clearInterval(_bulkRefreshPolling);
     _bulkRefreshPolling = setInterval(() => pollBulkRefresh(data.task_id, data.queued, btn), 3000);
   } catch (e) {
-    showToast("Error de red");
+    showToast(t("toast.error_connection"));
     if (btn) { btn.classList.remove("is-busy"); btn.disabled = false; }
   }
 }
@@ -14305,17 +14360,22 @@ function renderTeamMembers() {
       ? `<img src="${dicebearUrl(seed)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />`
       : `<div style="width:100%;height:100%;background:var(--grad);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:.85rem">${(m.email||"?")[0].toUpperCase()}</div>`;
     const statusClass = m.role === "owner" ? "owner" : (m.status === "active" ? "active" : "pending");
-    const statusLabel = m.role === "owner" ? "Owner" : (m.status === "active" ? "Active" : "Pending");
+    const statusLabel = m.role === "owner"
+      ? t("team.role_owner")
+      : (m.status === "active" ? t("team.status_active") : t("team.status_pending"));
+    const usageTxt = m.monthly_usage !== undefined
+      ? t("team.uses_this_month").replace("{n}", m.monthly_usage)
+      : "";
     return `<div class="team-member">
       <div class="team-member-av">${avatarHtml}</div>
       <div class="team-member-info">
         <div class="team-member-email">${esc(m.email || "—")}</div>
         <div class="team-member-meta">
           <span class="status-badge ${statusClass}">${statusLabel}</span>
-          ${m.monthly_usage !== undefined ? `<span>${m.monthly_usage} uses this month</span>` : ""}
+          ${usageTxt ? `<span>${usageTxt}</span>` : ""}
         </div>
       </div>
-      ${m.role !== "owner" ? `<button class="btn-sm del" onclick="removeMember('${m.id}')">Remove</button>` : ""}
+      ${m.role !== "owner" ? `<button class="btn-sm del" onclick="removeMember('${m.id}')">${t("team.remove")}</button>` : ""}
     </div>`;
   }).join("");
 }
@@ -14331,7 +14391,7 @@ async function submitInvite() {
   const email = document.getElementById("inviteEmail").value.trim();
   const err = document.getElementById("inviteErr");
   err.classList.remove("on");
-  if (!email) { err.textContent = currentLang === "es" ? "El email es requerido" : "Email is required"; err.classList.add("on"); return; }
+  if (!email) { err.textContent = t("team.email_required"); err.classList.add("on"); return; }
   await inviteMember(email);
 }
 
@@ -14344,8 +14404,9 @@ async function inviteMember(email) {
     });
     const d = await res.json();
     if (!res.ok) {
-      if (err) { err.textContent = d.error || "Could not send invite"; err.classList.add("on"); }
-      else showToast(d.error || "Could not send invite");
+      const msg = d.error || t("team.invite_failed");
+      if (err) { err.textContent = msg; err.classList.add("on"); }
+      else showToast(msg);
       return;
     }
     try { window.track && window.track.featureUsed({ feature: "team", action: "invite" }); } catch(e){}
@@ -14356,7 +14417,7 @@ async function inviteMember(email) {
 }
 
 async function removeMember(memberId) {
-  if (!confirm(currentLang === "es" ? "¿Eliminar este miembro del equipo?" : "Remove this member from your team?")) return;
+  if (!confirm(t("team.confirm_remove"))) return;
   try {
     const res = await fetch(`/agency/members/${memberId}`, { method: "DELETE" });
     if (!res.ok) { const d = await res.json(); showToast(d.error || "Error"); return; }
@@ -14373,7 +14434,7 @@ async function copyInviteLink() {
       navigator.clipboard.writeText(d.link);
       showToast(t("team.copied"));
     } else {
-      showToast(d.error || "Could not get invite link");
+      showToast(d.error || t("team.invite_link_failed"));
     }
   } catch { showToast(t("toast.error_connection")); }
 }
@@ -14534,7 +14595,7 @@ async function rsQuickTransform(idx, style, btn) {
     }
   } catch {
     chips.forEach(c => c.classList.remove("loading"));
-    showToast("Error");
+    showToast(t("toast.error"));
   }
 }
 
@@ -16038,14 +16099,14 @@ function tpOpenFromScript(id) {
   const item = scriptsCache.find(i => i.id === id);
   if (!item) return;
   const text = _scriptText(item);
-  if (!text) { showToast("No text"); return; }
+  if (!text) { showToast(t("toast.no_text")); return; }
   closeProfile();
   tpOpen(text);
 }
 
 function tpOpenFromTransc(id) {
   const item = histCache.find(i => i.id === id);
-  if (!item || !item.text) { showToast("No text"); return; }
+  if (!item || !item.text) { showToast(t("toast.no_text")); return; }
   closeProfile();
   tpOpen(item.text);
 }
@@ -16503,7 +16564,7 @@ async function regenHookOnly() {
     } else {
       showToast(d.error || "Error");
     }
-  } catch { showToast("Error"); }
+  } catch { showToast(t("toast.error")); }
   btn.disabled = false; btn.textContent = t("adapt.regen_hook");
 }
 
@@ -16712,7 +16773,7 @@ async function loginWithGoogle() {
     const res = await fetch("/auth/google");
     const d = await res.json();
     if (d.url) window.location.href = d.url;
-    else showToast("Error");
+    else showToast(t("toast.error"));
   } catch { showToast(t("toast.error_connection")); }
 }
 
@@ -16846,10 +16907,9 @@ function openAvatarMenu() {
       }
     }
   }
-  // Sync theme/lang seg state
-  const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
-  document.querySelectorAll("#avatarMenu .theme-seg-opt[data-val='light'], #avatarMenu .theme-seg-opt[data-val='dark']").forEach(b => {
-    b.classList.toggle("on", b.dataset.val === currentTheme);
+  // Sync theme/lang seg state — v0.14.12: highlight stored pref (light/dark/system)
+  document.querySelectorAll("#avatarMenu .theme-seg-opt[data-val='light'], #avatarMenu .theme-seg-opt[data-val='dark'], #avatarMenu .theme-seg-opt[data-val='system']").forEach(b => {
+    b.classList.toggle("on", b.dataset.val === themePref);
   });
   const currentLangSel = (document.documentElement.lang || "es").toLowerCase();
   document.querySelectorAll("#avatarMenu .settings-lang-opt").forEach(b => {
@@ -17011,7 +17071,9 @@ function setLangBinary(val, e) {
 }
 
 function highlightActiveLang() {
-  const curr = (document.documentElement.lang || "es").toLowerCase();
+  // v0.14.12: prefer cookie over <html lang> (cookie persists user's last toggle)
+  const cookie = (document.cookie.match(/(?:^|;\s*)rs_lang=(\w+)/) || [])[1];
+  const curr = (cookie || document.documentElement.lang || "es").toLowerCase();
   document.querySelectorAll(".settings-lang-opt").forEach(el => {
     el.classList.toggle("on", el.dataset.val === curr);
   });
