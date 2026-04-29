@@ -167,7 +167,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/static/img/branding/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Instrument+Serif&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Instrument+Serif&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     /* ── Reset & tokens ─────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -453,11 +453,23 @@
       .nav-c-landing { display: none; }
     }
 
-    .brand-link { display: inline-flex; align-items: center; line-height: 1; }
+    .brand-link { display: inline-flex; align-items: center; gap: 10px; line-height: 1; color: inherit; }
     .brand-logo {
-      height: 32px; width: 32px;
+      height: 40px; width: 40px;
       display: block;
       flex-shrink: 0;
+    }
+    .brand-text {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      line-height: 1;
+    }
+    @media (max-width: 640px) {
+      .brand-logo { height: 36px; width: 36px; }
+      .brand-text { font-size: 19px; }
     }
 
     .nav-r { display: flex; align-items: center; gap: 8px; }
@@ -7586,7 +7598,7 @@
 <!-- ── NAV ──────────────────────────────────────────────────────────────── -->
 <nav id="topNav">
   <div style="display:flex;align-items:center;gap:16px">
-    <a href="/" class="brand-link" style="text-decoration:none"><img src="/static/img/branding/isotipo-128.png" srcset="/static/img/branding/isotipo-128.png 1x, /static/img/branding/isotipo-256.png 2x" alt="Reelscript" width="32" height="32" class="brand-logo"></a>
+    <a href="/" class="brand-link" style="text-decoration:none"><img src="/static/img/branding/isotipo-128.png" srcset="/static/img/branding/isotipo-128.png 1x, /static/img/branding/isotipo-256.png 2x" alt="Reelscript" width="40" height="40" class="brand-logo"><span class="brand-text">Reelscript</span></a>
   </div>
   {% if not workspace %}
   <div class="nav-c-landing">
