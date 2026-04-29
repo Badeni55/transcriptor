@@ -39,10 +39,10 @@
   <meta name="twitter:description" content="{{ pillar.description }}">
   {% else %}
   {% if lang == 'en' %}
-  <title>ReelScript · Content management for creators</title>
+  <title>Reelscript · Content management for creators</title>
   <meta name="description" content="Be organized. Run your content from one place: transcribe reels, capture ideas, generate scripts and measure what works. Free, no card.">
   {% else %}
-  <title>ReelScript · Gestión de contenido para creadores</title>
+  <title>Reelscript · Gestión de contenido para creadores</title>
   <meta name="description" content="Sé ordenado. Gestiona tu contenido desde un sitio: transcribe reels, guarda ideas, genera guiones y mide lo que funciona. Gratis, sin tarjeta.">
   {% endif %}
   <link rel="canonical" href="https://reelscript.net/{{ lang|default('es') }}/">
@@ -53,35 +53,34 @@
 
   <!-- Open Graph (shared) -->
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="ReelScript">
+  <meta property="og:site_name" content="Reelscript">
   {% if not pillar %}
   {% if lang == 'en' %}
-  <meta property="og:title" content="ReelScript · Content management for creators">
+  <meta property="og:title" content="Reelscript · Content management for creators">
   <meta property="og:description" content="Be organized. Run your content from one place: transcribe reels, capture ideas, generate scripts and measure what works. Free, no card.">
   <meta property="og:url" content="https://reelscript.net/en/">
   <meta property="og:locale" content="en_US">
   <meta property="og:locale:alternate" content="es_ES">
-  <meta property="og:image" content="https://reelscript.net/static/og-image-en.png">
-  <meta property="og:image:alt" content="ReelScript — Content management for creators">
+  <meta property="og:image" content="https://reelscript.net/static/img/branding/og-image.png">
+  <meta property="og:image:alt" content="Reelscript — Content management for creators">
   {% else %}
-  <meta property="og:title" content="ReelScript · Gestión de contenido para creadores">
+  <meta property="og:title" content="Reelscript · Gestión de contenido para creadores">
   <meta property="og:description" content="Sé ordenado. Gestiona tu contenido desde un sitio: transcribe reels, guarda ideas, genera guiones y mide lo que funciona. Gratis, sin tarjeta.">
   <meta property="og:url" content="https://reelscript.net/es/">
   <meta property="og:locale" content="es_ES">
   <meta property="og:locale:alternate" content="en_US">
-  <meta property="og:image" content="https://reelscript.net/static/og-image-es.png">
-  <meta property="og:image:alt" content="ReelScript — Gestión de contenido para creadores">
+  <meta property="og:image" content="https://reelscript.net/static/img/branding/og-image.png">
+  <meta property="og:image:alt" content="Reelscript — Gestión de contenido para creadores">
   {% endif %}
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   {% else %}
   {% if lang == 'en' %}
   <meta property="og:locale" content="en_US">
-  <meta property="og:image" content="https://reelscript.net/static/og-image-en.png">
   {% else %}
   <meta property="og:locale" content="es_ES">
-  <meta property="og:image" content="https://reelscript.net/static/og-image-es.png">
   {% endif %}
+  <meta property="og:image" content="https://reelscript.net/static/img/branding/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   {% endif %}
@@ -90,28 +89,21 @@
   <meta name="twitter:card" content="summary_large_image">
   {% if not pillar %}
   {% if lang == 'en' %}
-  <meta name="twitter:title" content="ReelScript · Transcribe Instagram and TikTok reels in seconds">
+  <meta name="twitter:title" content="Reelscript · Transcribe Instagram and TikTok reels in seconds">
   <meta name="twitter:description" content="Paste an Instagram or TikTok reel and get the transcript instantly. Turn it into a viral post, LinkedIn article, story or hooks with one click. Free, no card required.">
-  <meta name="twitter:image" content="https://reelscript.net/static/og-image-en.png">
   {% else %}
-  <meta name="twitter:title" content="ReelScript · Transcribe reels de Instagram y TikTok en segundos">
+  <meta name="twitter:title" content="Reelscript · Transcribe reels de Instagram y TikTok en segundos">
   <meta name="twitter:description" content="Pega un reel de Instagram o TikTok y obtén la transcripción al instante. Conviértela en post viral, LinkedIn, historia o hooks con un click. Gratis sin tarjeta.">
-  <meta name="twitter:image" content="https://reelscript.net/static/og-image-es.png">
-  {% endif %}
-  {% else %}
-  {% if lang == 'en' %}
-  <meta name="twitter:image" content="https://reelscript.net/static/og-image-en.png">
-  {% else %}
-  <meta name="twitter:image" content="https://reelscript.net/static/og-image-es.png">
   {% endif %}
   {% endif %}
+  <meta name="twitter:image" content="https://reelscript.net/static/img/branding/og-image.png">
 
   <!-- JSON-LD: WebApplication -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    "name": "ReelScript",
+    "name": "Reelscript",
     "url": "https://reelscript.net",
     {% if lang == 'en' %}
     "description": "Transcribe Instagram and TikTok reels instantly and turn the script into viral posts, LinkedIn articles, stories or hooks.",
@@ -134,9 +126,9 @@
   {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "ReelScript",
+    "name": "Reelscript",
     "url": "https://reelscript.net",
-    "logo": "https://reelscript.net/static/logo.png"
+    "logo": "https://reelscript.net/static/img/branding/isotipo-512.png"
   }
   </script>
 
@@ -168,11 +160,11 @@
     ]
   }
   </script>
-  <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
-  <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="/static/favicon-192.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/img/branding/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="/static/img/branding/favicon-48.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/img/branding/favicon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/static/img/branding/favicon-512.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/img/branding/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Instrument+Serif&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -461,12 +453,12 @@
       .nav-c-landing { display: none; }
     }
 
-    .logo {
-      font-family: var(--font-display);
-      font-size: 1.2rem; font-weight: 400; letter-spacing: -.5px;
-      color: var(--text); -webkit-text-fill-color: var(--text);
+    .brand-link { display: inline-flex; align-items: center; line-height: 1; }
+    .brand-logo {
+      height: 32px; width: 32px;
+      display: block;
+      flex-shrink: 0;
     }
-    .logo span { font-family: var(--font-body); font-size: .6rem; font-weight: 500; color: var(--text3); vertical-align: super; margin-left: 3px; -webkit-text-fill-color: var(--text3); letter-spacing: .5px; }
 
     .nav-r { display: flex; align-items: center; gap: 8px; }
 
@@ -6856,7 +6848,6 @@
     }
 
     @media (max-width: 640px) {
-      .logo span { display: none; }
       .nav-r { gap: 8px; }
       .nav-r .lang-switch { display: none; }
       .nav-r #navAffiliate { display: none !important; }
@@ -7595,7 +7586,7 @@
 <!-- ── NAV ──────────────────────────────────────────────────────────────── -->
 <nav id="topNav">
   <div style="display:flex;align-items:center;gap:16px">
-    <a href="/" style="text-decoration:none"><span class="logo">RS<span>ReelScript</span></span></a>
+    <a href="/" class="brand-link" style="text-decoration:none"><img src="/static/img/branding/isotipo-128.png" srcset="/static/img/branding/isotipo-128.png 1x, /static/img/branding/isotipo-256.png 2x" alt="Reelscript" width="32" height="32" class="brand-logo"></a>
   </div>
   {% if not workspace %}
   <div class="nav-c-landing">
@@ -8030,7 +8021,7 @@
         <div class="phone-screen">
           <div class="phone-screen-header">
             <span class="ph-dot"></span>
-            <span>ReelScript</span>
+            <span>Reelscript</span>
           </div>
           <div class="phone-url-bar">instagram.com/reel/abc123…</div>
           <div class="phone-reel-card">

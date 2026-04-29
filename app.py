@@ -3600,7 +3600,7 @@ def legal_notice_page():
 FORGOT_RESET_STRINGS = {
     "es": {
         # forgot-password
-        "fp_meta_title": "Restablecer contraseña — ReelScript",
+        "fp_meta_title": "Restablecer contraseña — Reelscript",
         "fp_title": "Restablece tu contraseña",
         "fp_sub": "Introduce tu email y te enviaremos un enlace para restablecerla.",
         "fp_email_label": "EMAIL",
@@ -3613,7 +3613,7 @@ FORGOT_RESET_STRINGS = {
         "fp_success_text_post": ". Caduca en 1 hora.",
         "fp_email_required": "Email obligatorio",
         # reset-password
-        "rp_meta_title": "Nueva contraseña — ReelScript",
+        "rp_meta_title": "Nueva contraseña — Reelscript",
         "rp_title": "Nueva contraseña",
         "rp_sub": "Elige una contraseña segura para tu cuenta.",
         "rp_pass_label": "NUEVA CONTRASEÑA",
@@ -3632,7 +3632,7 @@ FORGOT_RESET_STRINGS = {
         "error_generic": "Error",
     },
     "en": {
-        "fp_meta_title": "Reset password — ReelScript",
+        "fp_meta_title": "Reset password — Reelscript",
         "fp_title": "Reset your password",
         "fp_sub": "Enter your email and we'll send you a reset link.",
         "fp_email_label": "EMAIL",
@@ -3644,7 +3644,7 @@ FORGOT_RESET_STRINGS = {
         "fp_success_text_pre": "We sent a reset link to",
         "fp_success_text_post": ". It expires in 1 hour.",
         "fp_email_required": "Email required",
-        "rp_meta_title": "New password — ReelScript",
+        "rp_meta_title": "New password — Reelscript",
         "rp_title": "New password",
         "rp_sub": "Choose a strong password for your account.",
         "rp_pass_label": "NEW PASSWORD",
