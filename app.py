@@ -505,7 +505,7 @@ def forgot_password():
             json={
                 "email": email,
                 "redirect_to": redirect_to,
-                "data": {"lang": lang},
+                "data": {"lang": lang, "language": lang},
             },
             timeout=10,
         )
