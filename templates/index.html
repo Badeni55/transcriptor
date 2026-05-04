@@ -3284,6 +3284,159 @@
     }
     [data-theme="light"] .ov-card-count { border-top-color: rgba(0,0,0,.05); }
 
+    /* ── v0.14.15 — Empty state Resumen ──────────────────────── */
+    #ovEmptyState { display: flex; flex-direction: column; gap: 16px; }
+    .ov-empty-card {
+      background: linear-gradient(180deg, rgba(239,106,41,.06), rgba(239,106,41,.02));
+      border: 1px solid rgba(239,106,41,.18);
+      border-left: 3px solid #ef6a29;
+      border-radius: 16px;
+      padding: 28px 28px 24px;
+      box-shadow: 0 6px 22px rgba(0,0,0,.18);
+    }
+    [data-theme="light"] .ov-empty-card {
+      background: linear-gradient(180deg, rgba(239,106,41,.04), rgba(255,255,255,.5));
+      box-shadow: 0 4px 16px rgba(180,150,100,.12);
+    }
+    .ov-empty-h2 {
+      font-family: var(--font-display);
+      font-size: clamp(1.3rem, 2.3vw, 1.7rem); font-weight: 400;
+      line-height: 1.25; letter-spacing: -.3px;
+      margin: 0 0 18px;
+      color: var(--text); text-wrap: balance;
+    }
+    .ov-empty-input-wrap {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 4px 4px 4px 14px;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .ov-empty-input-wrap:focus-within { border-color: #ef6a29; box-shadow: 0 0 0 3px rgba(239,106,41,.18); }
+    .ov-empty-input-icon { font-size: .9rem; opacity: .7; flex-shrink: 0; }
+    .ov-empty-input {
+      flex: 1; min-width: 0;
+      background: transparent; border: 0; outline: 0;
+      color: var(--text); font-family: var(--font-body); font-size: .95rem;
+      padding: 12px 0;
+    }
+    .ov-empty-input::placeholder { color: var(--text3); font-family: ui-monospace, SFMono-Regular, monospace; font-size: .82rem; }
+    .ov-empty-lang {
+      flex: 0 0 auto;
+      background: var(--surf); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); font-family: var(--font-body); font-size: .8rem;
+      padding: 8px 10px; outline: none;
+    }
+    .ov-empty-btn {
+      flex: 0 0 auto; padding: 12px 22px; border-radius: 10px;
+      background: #f97316; color: #fff; border: 0; cursor: pointer;
+      font-family: var(--font-body); font-weight: 700; font-size: .9rem;
+      box-shadow: 0 4px 0 #92400e, 0 6px 20px rgba(239,106,41,.3);
+      transition: transform .12s, box-shadow .15s, background .15s, opacity .15s;
+    }
+    .ov-empty-btn:hover:not(:disabled) { transform: translateY(-1px); background: #ea680c; box-shadow: 0 5px 0 #92400e, 0 8px 26px rgba(239,106,41,.4); }
+    .ov-empty-btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #92400e; }
+    .ov-empty-btn:disabled { opacity: .65; cursor: default; }
+    .ov-empty-status {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 8px; margin-top: 12px;
+      background: rgba(239,106,41,.06); border: 1px solid rgba(239,106,41,.2);
+      font-size: .85rem; color: var(--text2);
+    }
+    .ov-empty-status.is-error { background: rgba(239,68,68,.07); border-color: rgba(239,68,68,.25); color: #fca5a5; }
+    .ov-empty-status.is-ok { background: rgba(34,197,94,.07); border-color: rgba(34,197,94,.25); color: #86efac; }
+    .ov-empty-status .panel-transc-spinner {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid rgba(239,106,41,.3); border-top-color: #ef6a29;
+      animation: ovSpin .7s linear infinite; flex-shrink: 0;
+    }
+    @keyframes ovSpin { to { transform: rotate(360deg); } }
+    .ov-empty-example {
+      display: inline-block; margin-top: 14px;
+      background: none; border: 0; padding: 0;
+      color: rgba(239,106,41,.85);
+      font-family: var(--font-body); font-size: .82rem;
+      cursor: pointer; transition: color .15s;
+    }
+    .ov-empty-example:hover { color: #ef6a29; text-decoration: underline; }
+
+    /* Locked rows */
+    .ov-empty-row2, .ov-empty-row6 { display: grid; gap: 12px; }
+    .ov-empty-row2 { grid-template-columns: 1fr 1fr; }
+    .ov-empty-row6 { grid-template-columns: repeat(6, 1fr); }
+    @media (max-width: 880px) {
+      .ov-empty-row2 { grid-template-columns: 1fr; }
+      .ov-empty-row6 { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    }
+    @media (max-width: 480px) {
+      .ov-empty-row6 { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .ov-empty-locked {
+      position: relative; display: flex; flex-direction: column; gap: 6px;
+      padding: 16px; border-radius: 14px;
+      background: rgba(255,255,255,.02);
+      border: 1px solid rgba(255,255,255,.06);
+      cursor: not-allowed;
+      text-align: left; font-family: var(--font-body);
+      transition: opacity .2s, border-color .2s;
+    }
+    [data-theme="light"] .ov-empty-locked { background: rgba(0,0,0,.02); border-color: rgba(0,0,0,.06); }
+    .ov-locked-md { opacity: .42; min-height: 110px; padding: 18px 18px 16px; }
+    .ov-locked-sm { opacity: .32; align-items: center; flex-direction: column; min-height: 80px; padding: 14px 8px 12px; gap: 6px; font-size: .78rem; color: var(--text2); }
+    .ov-empty-locked:hover { opacity: .55; border-color: rgba(var(--ov-acc, 239,106,41), .25); }
+
+    .ov-locked-badge {
+      align-self: flex-start;
+      font-size: .62rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+      color: var(--text2);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      padding: 3px 8px; border-radius: 999px;
+    }
+    [data-theme="light"] .ov-locked-badge { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.06); }
+    .ov-locked-hooks { width: 36px; height: 36px; opacity: .85; }
+    .ov-locked-hooks-sm { width: 26px; height: 26px; opacity: .7; }
+    .ov-locked-label {
+      font-family: var(--font-display); font-size: 1.1rem; font-weight: 400; color: var(--text);
+    }
+    .ov-locked-sub { font-size: .82rem; color: var(--text3); }
+
+    /* First-success modal */
+    .first-success-icon {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: rgba(34,197,94,.15); border: 1px solid rgba(34,197,94,.4);
+      color: #4ade80; font-size: 1.6rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 18px;
+    }
+    .first-success-title {
+      font-family: var(--font-display); font-weight: 400; font-size: 1.4rem;
+      line-height: 1.25; text-align: center; margin: 0 0 14px; color: var(--text);
+    }
+    .first-success-preview {
+      background: var(--surf2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 16px; margin-bottom: 18px;
+      font-family: var(--font-body); font-size: .88rem; line-height: 1.55;
+      color: var(--text2); font-style: italic;
+      max-height: 110px; overflow: hidden;
+    }
+    .first-success-cta-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .first-success-cta-primary {
+      flex: 1 1 auto; padding: 13px 18px; border-radius: 12px;
+      background: #f97316; color: #fff; border: 0; cursor: pointer;
+      font-family: var(--font-body); font-weight: 700; font-size: .92rem;
+      box-shadow: 0 4px 0 #92400e, 0 6px 20px rgba(239,106,41,.3);
+      transition: transform .12s, box-shadow .15s, background .15s;
+    }
+    .first-success-cta-primary:hover { transform: translateY(-1px); background: #ea680c; }
+    .first-success-cta-secondary {
+      flex: 0 1 auto; padding: 13px 18px; border-radius: 12px;
+      background: transparent; color: var(--text); border: 1px solid var(--border);
+      cursor: pointer; font-family: var(--font-body); font-weight: 600; font-size: .9rem;
+      transition: border-color .15s, color .15s;
+    }
+    .first-success-cta-secondary:hover { border-color: #ef6a29; color: #ef6a29; }
+
     /* Loading skeleton */
     .ov-skel {
       height: 12px; border-radius: 4px;
@@ -8469,7 +8622,8 @@
       <div id="profPanelOverview">
 
         <!-- v0.14.5a: editorial hero (greeting + Hooks mascot) -->
-        <div class="ov-hero-wrap">
+        <!-- v0.14.15: Estado 1 hero. Estado 0 hero abajo, JS-toggled. -->
+        <div class="ov-hero-wrap" id="ovHeroEstado1">
           <svg class="ov-hero-waves" viewBox="0 0 1200 380" preserveAspectRatio="none" aria-hidden="true">
             <path d="M0,210 Q180,150 360,200 T720,200 T1080,190 L1200,210 L1200,380 L0,380 Z" fill="#ef6a29"/>
             <path d="M0,250 Q220,200 420,240 T780,240 T1200,250 L1200,380 L0,380 Z" fill="#7d5bb8" opacity="0.6"/>
@@ -8491,6 +8645,97 @@
               <div class="ov-hooks-glow"></div>
               <img class="ov-hooks" src="{{ url_for('static', filename='img/hooks/hooks-transcribir.svg') }}" alt="">
             </div>
+          </div>
+        </div>
+
+        <!-- v0.14.15: Estado 0 hero (usuario sin transcripciones) -->
+        <div class="ov-hero-wrap" id="ovHeroEstado0" style="display:none">
+          <svg class="ov-hero-waves" viewBox="0 0 1200 380" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0,210 Q180,150 360,200 T720,200 T1080,190 L1200,210 L1200,380 L0,380 Z" fill="#ef6a29"/>
+            <path d="M0,250 Q220,200 420,240 T780,240 T1200,250 L1200,380 L0,380 Z" fill="#7d5bb8" opacity="0.6"/>
+            <path d="M0,300 Q200,260 420,290 T820,290 T1200,300 L1200,380 L0,380 Z" fill="#c89968" opacity="0.5"/>
+          </svg>
+          <div class="ov-hero">
+            <div class="ov-hero-left">
+              <div class="ov-eyebrow">
+                <span class="ov-eyebrow-dot"></span>
+                <span data-i18n-es="EMPIEZA AQUÍ" data-i18n-en="START HERE">EMPIEZA AQUÍ</span>
+              </div>
+              <h1 class="ov-h1" id="ovGreetingEmpty" data-i18n-es="Hola" data-i18n-en="Hi">Hola</h1>
+              <div class="ov-sub" data-i18n-es="Empieza por tu primer reel." data-i18n-en="Start with your first reel.">Empieza por tu primer reel.</div>
+            </div>
+            <div class="ov-hero-right" aria-hidden="true">
+              <div class="ov-hooks-glow"></div>
+              <img class="ov-hooks" src="{{ url_for('static', filename='img/hooks/hooks-transcribir.svg') }}" alt="">
+            </div>
+          </div>
+        </div>
+
+        <!-- v0.14.15: Estado 0 — empty state pirámide (oculto por defecto, JS toggle) -->
+        <div id="ovEmptyState" style="display:none">
+          <div class="ov-empty-card">
+            <h2 class="ov-empty-h2" data-i18n-es="Pega una URL y la transformamos en texto en segundos." data-i18n-en="Paste a URL and we'll turn it into text in seconds.">Pega una URL y la transformamos en texto en segundos.</h2>
+            <div class="ov-empty-input-wrap">
+              <span class="ov-empty-input-icon" aria-hidden="true">🔗</span>
+              <input id="ovEmptyUrlInput" type="url" class="ov-empty-input ph-no-capture" data-clarity-mask="true"
+                     placeholder="https://www.instagram.com/reel/… · https://www.tiktok.com/…"
+                     autocomplete="off" spellcheck="false"
+                     onkeydown="if(event.key==='Enter'){event.preventDefault();doTranscribeFromOverview();}" />
+              <select id="ovEmptyLang" class="ov-empty-lang" aria-label="Language">
+                <option value="" data-i18n-es="✨ Auto" data-i18n-en="✨ Auto">✨ Auto</option>
+                <option value="es" data-i18n-es="Español" data-i18n-en="Spanish">Español</option>
+                <option value="en" data-i18n-es="Inglés" data-i18n-en="English">English</option>
+                <option value="fr" data-i18n-es="Francés" data-i18n-en="French">French</option>
+                <option value="pt" data-i18n-es="Portugués" data-i18n-en="Portuguese">Portuguese</option>
+                <option value="de" data-i18n-es="Alemán" data-i18n-en="German">German</option>
+                <option value="it" data-i18n-es="Italiano" data-i18n-en="Italian">Italian</option>
+              </select>
+              <button id="ovEmptyTranscribeBtn" class="ov-empty-btn" onclick="doTranscribeFromOverview()" data-i18n-es="Transcribir →" data-i18n-en="Transcribe →">Transcribir →</button>
+            </div>
+            <div id="ovEmptyStatus" class="ov-empty-status" style="display:none"></div>
+            <button type="button" class="ov-empty-example" onclick="useExampleReel()" data-i18n-es="¿Sin uno a mano? Prueba con este reel viral →" data-i18n-en="No reel handy? Try this viral one →">¿Sin uno a mano? Prueba con este reel viral →</button>
+          </div>
+
+          <div class="ov-empty-row2">
+            <button type="button" class="ov-empty-locked ov-locked-md" style="--ov-acc:192,132,252" role="button" aria-disabled="true" onclick="showLockedTooltip('hazlo_tuyo')">
+              <div class="ov-locked-badge">🔒 <span data-i18n-es="Desbloquea al transcribir" data-i18n-en="Unlock when you transcribe">Desbloquea al transcribir</span></div>
+              <img class="ov-locked-hooks" src="{{ url_for('static', filename='img/hooks/hooks-adapt.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-locked-label" data-i18n-es="Hazlo tuyo" data-i18n-en="Make it yours">Hazlo tuyo</div>
+              <div class="ov-locked-sub" data-i18n-es="Reescribe un guion" data-i18n-en="Rewrite a script">Reescribe un guion</div>
+            </button>
+            <button type="button" class="ov-empty-locked ov-locked-md" style="--ov-acc:93,202,165" role="button" aria-disabled="true" onclick="showLockedTooltip('metricas')">
+              <div class="ov-locked-badge">🔒 <span data-i18n-es="Desbloquea al transcribir" data-i18n-en="Unlock when you transcribe">Desbloquea al transcribir</span></div>
+              <img class="ov-locked-hooks" src="{{ url_for('static', filename='img/hooks/hooks-metricas.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-locked-label" data-i18n-es="Métricas" data-i18n-en="Metrics">Métricas</div>
+              <div class="ov-locked-sub" data-i18n-es="Mide qué funciona" data-i18n-en="Measure what works">Mide qué funciona</div>
+            </button>
+          </div>
+
+          <div class="ov-empty-row6">
+            <button type="button" class="ov-empty-locked ov-locked-sm" style="--ov-acc:34,197,94" role="button" aria-disabled="true" onclick="showLockedTooltip('guiones')">
+              <img class="ov-locked-hooks-sm" src="{{ url_for('static', filename='img/hooks/hooks-scripts.svg') }}" alt="" aria-hidden="true">
+              <span data-i18n-es="Guiones" data-i18n-en="Scripts">Guiones</span>
+            </button>
+            <button type="button" class="ov-empty-locked ov-locked-sm" style="--ov-acc:139,92,246" role="button" aria-disabled="true" onclick="showLockedTooltip('asistentes')">
+              <img class="ov-locked-hooks-sm" src="{{ url_for('static', filename='img/hooks/hooks-asistentes.svg') }}" alt="" aria-hidden="true">
+              <span data-i18n-es="Asistentes" data-i18n-en="Assistants">Asistentes</span>
+            </button>
+            <button type="button" class="ov-empty-locked ov-locked-sm" style="--ov-acc:200,153,104" role="button" aria-disabled="true" onclick="showLockedTooltip('proyectos')">
+              <img class="ov-locked-hooks-sm" src="{{ url_for('static', filename='img/hooks/hooks-proyectos.svg') }}" alt="" aria-hidden="true">
+              <span data-i18n-es="Proyectos" data-i18n-en="Projects">Proyectos</span>
+            </button>
+            <button type="button" class="ov-empty-locked ov-locked-sm" style="--ov-acc:255,107,61" role="button" aria-disabled="true" onclick="showLockedTooltip('equipo')">
+              <img class="ov-locked-hooks-sm" src="{{ url_for('static', filename='img/hooks/hooks-equipo.svg') }}" alt="" aria-hidden="true">
+              <span data-i18n-es="Equipo" data-i18n-en="Team">Equipo</span>
+            </button>
+            <button type="button" class="ov-empty-locked ov-locked-sm" style="--ov-acc:244,199,94" role="button" aria-disabled="true" onclick="showLockedTooltip('teleprompter')">
+              <img class="ov-locked-hooks-sm" src="{{ url_for('static', filename='img/hooks/hooks-teleprompter.svg') }}" alt="" aria-hidden="true">
+              <span data-i18n-es="Teleprompter" data-i18n-en="Teleprompter">Teleprompter</span>
+            </button>
+            <button type="button" class="ov-empty-locked ov-locked-sm" style="--ov-acc:239,106,41" role="button" aria-disabled="true" onclick="showLockedTooltip('ideas')">
+              <img class="ov-locked-hooks-sm" src="{{ url_for('static', filename='img/hooks/hooks-ideas.svg') }}" alt="" aria-hidden="true">
+              <span data-i18n-es="Ideas" data-i18n-en="Ideas">Ideas</span>
+            </button>
           </div>
         </div>
 
@@ -9061,6 +9306,20 @@
 </div>
 
 <!-- New Project modal -->
+<!-- v0.14.15: First transcribe success modal (Estado 0 → Estado 1) -->
+<div class="overlay" id="firstSuccessOverlay" onclick="if(event.target===this)firstSuccessClose()">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-x" onclick="firstSuccessClose()">✕</button>
+    <div class="first-success-icon" aria-hidden="true">✓</div>
+    <h2 class="first-success-title" data-i18n-es="¡Listo! Tu primera transcripción está guardada." data-i18n-en="Done! Your first transcription is saved.">¡Listo! Tu primera transcripción está guardada.</h2>
+    <div class="first-success-preview" id="firstSuccessPreview"></div>
+    <div class="first-success-cta-row">
+      <button class="first-success-cta-primary" onclick="firstSuccessTransform()" data-i18n-es="Transformar con Hazlo tuyo →" data-i18n-en="Transform with Make it yours →">Transformar con Hazlo tuyo →</button>
+      <button class="first-success-cta-secondary" onclick="firstSuccessViewFull()" data-i18n-es="Ver completa" data-i18n-en="View full">Ver completa</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="newProjectOverlay" onclick="if(event.target===this)closeModal('newProjectOverlay')">
   <div class="modal">
     <button class="modal-x" onclick="closeModal('newProjectOverlay')">✕</button>
@@ -9662,6 +9921,7 @@ const LANGS = {
     "toast.error": "Error",
     "toast.error_connection": "Error de conexión.",
     "toast.transcription_done": "Transcripción completada",
+    "ov_locked_msg": "Transcribe tu primer reel para desbloquear",
     "toast.account_deleted": "Cuenta eliminada",
     "toast.no_text": "Sin texto",
     "toast.error_save": "Error al guardar",
@@ -10040,6 +10300,7 @@ const LANGS = {
     "toast.error_transform": "Error transforming",
     "toast.error": "Error",
     "toast.error_connection": "Connection error.",
+    "ov_locked_msg": "Transcribe your first reel to unlock",
     "toast.transcription_done": "Transcription done",
     "toast.account_deleted": "Account deleted",
     "toast.no_text": "No text",
@@ -12222,7 +12483,8 @@ function ovGreetingName() {
 }
 function ovRenderGreeting() {
   const root = document.getElementById("ovGreeting");
-  if (!root) return;
+  const rootEmpty = document.getElementById("ovGreetingEmpty");
+  if (!root && !rootEmpty) return;
   const es = (document.documentElement.lang || "es") === "es";
   const name = ovGreetingName(); // "" si no hay user
   let dateStr = "";
@@ -12231,21 +12493,19 @@ function ovRenderGreeting() {
   } catch (e) {}
 
   const hi = es ? "Hola" : "Hi";
-  // Construye el saludo sin comas/puntos sueltos
-  // - con nombre + fecha: "Hola, David. Sábado 26 de abril."
-  // - solo nombre:        "Hola, David."
-  // - solo fecha:         "Hola. Sábado 26 de abril."
-  // - sin nada:           "Hola."
   const parts = [];
   if (name) {
     parts.push(`${hi}, <em>${name.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</em>.`);
   } else {
     parts.push(`${hi}.`);
   }
-  if (dateStr) {
-    parts.push(`<span class="ov-h1-date">${dateStr.charAt(0).toUpperCase()}${dateStr.slice(1)}.</span>`);
+  // Estado 1: greeting + date. Estado 0: only greeting (sub explicit "Empieza por…")
+  if (root) {
+    const partsEstado1 = parts.slice();
+    if (dateStr) partsEstado1.push(`<span class="ov-h1-date">${dateStr.charAt(0).toUpperCase()}${dateStr.slice(1)}.</span>`);
+    root.innerHTML = partsEstado1.join(" ");
   }
-  root.innerHTML = parts.join(" ");
+  if (rootEmpty) rootEmpty.innerHTML = parts.join(" ");
 }
 
 // v0.14.5b — relative time formatter (es/en)
@@ -12308,6 +12568,37 @@ async function loadOverviewMiniGrid() {
     if (!res.ok) return;
     d = await res.json();
   } catch (e) { return; }
+
+  // v0.14.15: Estado 0 vs Estado 1 swap based on transcribe.total
+  const transcribeTotal = (d.transcribe && d.transcribe.total) || 0;
+  window._userStats = window._userStats || {};
+  // Use existing in-memory count if user just transcribed (race-safe vs Celery write lag)
+  if ((window._userStats.transcriptions || 0) > transcribeTotal) {
+    // local count higher → trust local
+  } else {
+    window._userStats.transcriptions = transcribeTotal;
+  }
+  if (window._userStats.transcriptions === 0) {
+    const empty = document.getElementById("ovEmptyState");
+    const grid = document.getElementById("ovGrid");
+    const heroWrap = document.getElementById("ovHeroEstado0");
+    const heroDefault = document.getElementById("ovHeroEstado1");
+    if (empty) empty.style.display = "";
+    if (grid) grid.style.display = "none";
+    if (heroWrap) heroWrap.style.display = "";
+    if (heroDefault) heroDefault.style.display = "none";
+    try { window.posthog && window.posthog.capture("resumen_empty_state_viewed", {}); } catch (e) {}
+    return; // don't render the grid bodies; they're hidden
+  } else {
+    const empty = document.getElementById("ovEmptyState");
+    const grid = document.getElementById("ovGrid");
+    const heroWrap = document.getElementById("ovHeroEstado0");
+    const heroDefault = document.getElementById("ovHeroEstado1");
+    if (empty) empty.style.display = "none";
+    if (grid) grid.style.display = "";
+    if (heroWrap) heroWrap.style.display = "none";
+    if (heroDefault) heroDefault.style.display = "";
+  }
 
   const es = (document.documentElement.lang || "es") === "es";
   const setBody = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
@@ -12818,18 +13109,17 @@ function renderProfTransc() {
 }
 
 // v0.14.7 — Transcribir desde el panel (input embebido)
-async function doTranscribeFromPanel() {
-  const input = document.getElementById("panelUrlInput");
-  const langSel = document.getElementById("panelLang");
-  const btn = document.getElementById("panelTranscribeBtn");
-  const statusEl = document.getElementById("panelTranscribeStatus");
-  if (!input || !btn || !statusEl) return;
-  const url = (input.value || "").trim();
+// v0.14.15: shared transcribe flow used by both Transcribir panel and Resumen empty state.
+// Required opts: { inputEl, btnEl, statusEl, onSuccess }. Optional: { langEl, onError }.
+// onSuccess receives ({ url, taskResult }). taskResult is the /task/<id> success payload.
+async function doTranscribeShared({ inputEl, langEl, btnEl, statusEl, onSuccess, onError }) {
+  if (!inputEl || !btnEl || !statusEl) return;
+  const url = (inputEl.value || "").trim();
   if (!url) { showToast(t("toast.paste_url")); return; }
   const validRx = /^https?:\/\/(www\.)?(instagram\.com\/(reel|p|tv)\/[\w-]+|((vm|vt)\.)?tiktok\.com\/)/i;
   if (!validRx.test(url)) { showToast(pickRandomError()); return; }
 
-  btn.disabled = true;
+  btnEl.disabled = true;
   statusEl.style.display = "";
   statusEl.classList.remove("is-error", "is-ok");
   const es = (document.documentElement.lang || "es") === "es";
@@ -12839,45 +13129,40 @@ async function doTranscribeFromPanel() {
     const res = await fetch("/transcribe", {
       method: "POST", headers: { "Content-Type": "application/json" },
       credentials: "same-origin",
-      body: JSON.stringify({ url, language: langSel ? langSel.value : "" }),
+      body: JSON.stringify({ url, language: langEl ? langEl.value : "" }),
     });
     const data = await res.json();
     if (!res.ok) {
       statusEl.classList.add("is-error");
       statusEl.innerHTML = `<span>${esc(data.error || "Error")}</span>`;
-      btn.disabled = false;
+      btnEl.disabled = false;
+      if (onError) onError({ stage: "submit", error: data.error || "submit_failed" });
       return;
     }
-    pollPanelTask(data.task_id, statusEl, () => {
-      input.value = "";
-      btn.disabled = false;
-      statusEl.classList.add("is-ok");
-      statusEl.innerHTML = `<span>${es ? "✓ Transcripción guardada" : "✓ Transcription saved"}</span>`;
-      setTimeout(() => { statusEl.style.display = "none"; statusEl.classList.remove("is-ok"); }, 2200);
-      if (typeof loadHistory === "function") {
-        loadHistory().then(() => { if (typeof renderProfTransc === "function") renderProfTransc(); });
-      }
-    });
+    pollSharedTask(data.task_id, statusEl, btnEl, (taskResult) => {
+      if (onSuccess) onSuccess({ url, taskResult });
+    }, onError);
   } catch (e) {
     statusEl.classList.add("is-error");
     statusEl.innerHTML = `<span>${(document.documentElement.lang === "en") ? "Network error" : "Error de red"}</span>`;
-    btn.disabled = false;
+    btnEl.disabled = false;
+    if (onError) onError({ stage: "network", error: "network_error" });
   }
 }
 
-async function pollPanelTask(taskId, statusEl, onDone) {
+async function pollSharedTask(taskId, statusEl, btnEl, onDone, onError) {
   const start = Date.now();
   const es = (document.documentElement.lang || "es") === "es";
   while (Date.now() - start < 90000) {
     try {
       const r = await fetch(`/task/${taskId}`);
       const d = await r.json();
-      if (d.state === "success") { onDone(); return; }
-      if (d.state === "failure") {
+      if (d.state === "success") { onDone(d); return; }
+      if (d.state === "failure" || d.state === "error") {
         statusEl.classList.add("is-error");
         statusEl.innerHTML = `<span>${esc(d.error || "Error")}</span>`;
-        const btn = document.getElementById("panelTranscribeBtn");
-        if (btn) btn.disabled = false;
+        if (btnEl) btnEl.disabled = false;
+        if (onError) onError({ stage: "task", error: d.error || "task_failed" });
         return;
       }
       if (d.step) {
@@ -12889,8 +13174,134 @@ async function pollPanelTask(taskId, statusEl, onDone) {
   }
   statusEl.classList.add("is-error");
   statusEl.innerHTML = `<span>${es ? "Tardó demasiado. Inténtalo de nuevo." : "Took too long. Try again."}</span>`;
-  const btn = document.getElementById("panelTranscribeBtn");
-  if (btn) btn.disabled = false;
+  if (btnEl) btnEl.disabled = false;
+  if (onError) onError({ stage: "timeout", error: "timeout" });
+}
+
+async function doTranscribeFromPanel() {
+  return doTranscribeShared({
+    inputEl: document.getElementById("panelUrlInput"),
+    langEl: document.getElementById("panelLang"),
+    btnEl: document.getElementById("panelTranscribeBtn"),
+    statusEl: document.getElementById("panelTranscribeStatus"),
+    onSuccess: () => {
+      const inputEl = document.getElementById("panelUrlInput");
+      const btnEl = document.getElementById("panelTranscribeBtn");
+      const statusEl = document.getElementById("panelTranscribeStatus");
+      const es = (document.documentElement.lang || "es") === "es";
+      if (inputEl) inputEl.value = "";
+      if (btnEl) btnEl.disabled = false;
+      if (statusEl) {
+        statusEl.classList.add("is-ok");
+        statusEl.innerHTML = `<span>${es ? "✓ Transcripción guardada" : "✓ Transcription saved"}</span>`;
+        setTimeout(() => { statusEl.style.display = "none"; statusEl.classList.remove("is-ok"); }, 2200);
+      }
+      if (typeof loadHistory === "function") {
+        loadHistory().then(() => { if (typeof renderProfTransc === "function") renderProfTransc(); });
+      }
+    },
+  });
+}
+
+// v0.14.15: Resumen empty-state transcribe. Differs from panel: shows success modal
+// instead of inline "saved" feedback, and increments client-side count to swap to Estado 1.
+const EXAMPLE_REEL_URL = "https://www.instagram.com/reel/DWtwkd7CF3D/";
+
+async function doTranscribeFromOverview() {
+  try { window.posthog && window.posthog.capture("transcribe_from_resumen_started", {}); } catch (e) {}
+  return doTranscribeShared({
+    inputEl: document.getElementById("ovEmptyUrlInput"),
+    langEl: document.getElementById("ovEmptyLang"),
+    btnEl: document.getElementById("ovEmptyTranscribeBtn"),
+    statusEl: document.getElementById("ovEmptyStatus"),
+    onSuccess: ({ taskResult }) => {
+      // In-memory increment — avoids race with Celery/DB lag if we refetch
+      window._userStats = window._userStats || {};
+      window._userStats.transcriptions = (window._userStats.transcriptions || 0) + 1;
+
+      const txt = (taskResult.text || "").trim();
+      const preview = txt.split(/(?<=[.!?])\s+/).slice(0, 2).join(" ").slice(0, 260);
+      const previewEl = document.getElementById("firstSuccessPreview");
+      if (previewEl) previewEl.textContent = preview + (txt.length > preview.length ? "…" : "");
+      window._lastTranscribedText = txt;
+
+      const btnEl = document.getElementById("ovEmptyTranscribeBtn");
+      const statusEl = document.getElementById("ovEmptyStatus");
+      const inputEl = document.getElementById("ovEmptyUrlInput");
+      if (btnEl) btnEl.disabled = false;
+      if (statusEl) statusEl.style.display = "none";
+      if (inputEl) inputEl.value = "";
+
+      // Refresh history in background so Estado 1 has the new transcription when shown
+      if (typeof loadHistory === "function") {
+        loadHistory().then(() => { if (typeof renderProfTransc === "function") renderProfTransc(); });
+      }
+
+      try { window.posthog && window.posthog.capture("transcribe_from_resumen_completed", {}); } catch (e) {}
+      try { window.posthog && window.posthog.capture("success_modal_viewed", {}); } catch (e) {}
+      openModal("firstSuccessOverlay");
+    },
+    onError: (info) => {
+      try { window.posthog && window.posthog.capture("transcribe_from_resumen_failed", { error_type: info.error || "unknown" }); } catch (e) {}
+    },
+  });
+}
+
+function useExampleReel() {
+  const inputEl = document.getElementById("ovEmptyUrlInput");
+  if (inputEl) {
+    inputEl.value = EXAMPLE_REEL_URL;
+    inputEl.focus();
+  }
+  try { window.posthog && window.posthog.capture("example_reel_clicked", {}); } catch (e) {}
+}
+
+function showLockedTooltip(cardName) {
+  showToast(t("ov_locked_msg"));
+  try { window.posthog && window.posthog.capture("locked_card_clicked", { card_name: cardName }); } catch (e) {}
+}
+
+function firstSuccessTransform() {
+  try { window.posthog && window.posthog.capture("success_modal_cta_clicked", { cta: "transform" }); } catch (e) {}
+  closeModal("firstSuccessOverlay");
+  // Pre-load text into adapt textarea + reveal
+  const txt = window._lastTranscribedText || "";
+  const adaptInput = document.getElementById("adaptInput");
+  if (adaptInput) adaptInput.value = txt;
+  if (typeof revealAdaptSection === "function") revealAdaptSection({ focus: true });
+  ovSwapToEstado1();
+}
+
+function firstSuccessViewFull() {
+  try { window.posthog && window.posthog.capture("success_modal_cta_clicked", { cta: "view_full" }); } catch (e) {}
+  closeModal("firstSuccessOverlay");
+  if (typeof profTab === "function") profTab("transc");
+  // Scroll to most recent transcription (top of list, id `t-${histCache[0].id}`)
+  setTimeout(() => {
+    const first = (typeof histCache !== "undefined" && histCache.length) ? histCache[0] : null;
+    if (first) {
+      const el = document.getElementById("t-" + first.id);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, 250);
+  ovSwapToEstado1();
+}
+
+function firstSuccessClose() {
+  closeModal("firstSuccessOverlay");
+  ovSwapToEstado1();
+}
+
+// Swap Resumen Estado 0 → Estado 1 in-place (no refetch — local increment used)
+function ovSwapToEstado1() {
+  const empty = document.getElementById("ovEmptyState");
+  const grid = document.getElementById("ovGrid");
+  const heroWrap = document.getElementById("ovHeroEstado0");
+  const heroDefault = document.getElementById("ovHeroEstado1");
+  if (empty) empty.style.display = "none";
+  if (grid) grid.style.display = "";
+  if (heroWrap) heroWrap.style.display = "none";
+  if (heroDefault) heroDefault.style.display = "";
 }
 
 function scrollTranscHashIntoView() {
