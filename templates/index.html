@@ -2445,14 +2445,14 @@
       color: #92660d;
     }
 
-    .sub-free-state {
+    .sub-free-state, .sub-comp-state {
       display: flex; align-items: center; justify-content: space-between; gap: 16px;
       flex-wrap: wrap;
     }
     .sub-free-info { display: flex; flex-direction: column; gap: 4px; }
     .sub-free-label { font-size: .68rem; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
     .sub-free-plan { display: flex; align-items: center; gap: 8px; }
-    .sub-free-msg { font-size: .85rem; color: var(--text2); }
+    .sub-free-msg, .sub-comp-msg { font-size: .85rem; color: var(--text2); }
 
     /* ── Marquee ─────────────────────────────────────────────── */
     .marquee-section { padding: 0 0 80px; overflow: hidden; }
@@ -3349,13 +3349,22 @@
       margin: 0 0 18px;
       color: var(--text); text-wrap: balance;
     }
-    .ov-empty-input-wrap {
-      display: flex; align-items: center; gap: 8px;
+    /* v0.14.17 — input row split en 2 wrappers para mobile responsive */
+    .ov-empty-input-row {
+      display: flex; align-items: stretch; gap: 8px;
       background: var(--bg); border: 1px solid var(--border);
       border-radius: 12px; padding: 4px 4px 4px 14px;
       transition: border-color .15s, box-shadow .15s;
     }
-    .ov-empty-input-wrap:focus-within { border-color: #ef6a29; box-shadow: 0 0 0 3px rgba(239,106,41,.18); }
+    .ov-empty-input-row:focus-within { border-color: #ef6a29; box-shadow: 0 0 0 3px rgba(239,106,41,.18); }
+    .ov-empty-input-wrap {
+      flex: 1; min-width: 0;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .ov-empty-controls-wrapper {
+      flex: 0 0 auto;
+      display: flex; align-items: stretch; gap: 8px;
+    }
     .ov-empty-input-icon { font-size: .9rem; opacity: .7; flex-shrink: 0; }
     .ov-empty-input {
       flex: 1; min-width: 0;
@@ -3402,6 +3411,20 @@
       cursor: pointer; transition: color .15s;
     }
     .ov-empty-example:hover { color: #ef6a29; text-decoration: underline; }
+
+    /* v0.14.17 — mobile: input fila completa arriba, controls debajo */
+    @media (max-width: 640px) {
+      .ov-empty-input-row {
+        flex-direction: column; gap: 12px;
+        padding: 12px;
+        align-items: stretch;
+      }
+      .ov-empty-input-wrap { width: 100%; order: 1; }
+      .ov-empty-controls-wrapper { width: 100%; order: 2; }
+      .ov-empty-input-row .ov-empty-input { padding: 6px 0; font-size: 1rem; }
+      .ov-empty-input-row .ov-empty-lang { flex: 0 0 auto; min-width: 110px; }
+      .ov-empty-input-row .ov-empty-btn { flex: 1; min-height: 48px; }
+    }
 
     /* Locked rows */
     .ov-empty-row2, .ov-empty-row6 { display: grid; gap: 12px; }
@@ -8715,17 +8738,18 @@
       </div>
 
       <div class="prof-sidebar-nav" id="profSidebarNav">
-        <button class="prof-nav-item on" onclick="profTab('overview')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="1" width="6" height="6" fill="currentColor"/><rect x="9" y="1" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.overview">Overview</span></button>
-        <button class="prof-nav-item" onclick="profTab('scripts')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="10" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.saved_scripts">Saved scripts</span></button>
-        <button class="prof-nav-item" onclick="profTab('transc')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.transcriptions">Transcriptions</span></button>
-        <button class="prof-nav-item" id="profNavProjects" style="display:none" onclick="profTab('projects')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="3" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="6" height="3" fill="currentColor"/></svg><span data-i18n="prof.projects">Projects</span></button>
-        <button class="prof-nav-item" id="profNavAssistants" style="display:none" onclick="profTab('assistants')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="5" y="1" width="6" height="6" rx="3" fill="currentColor"/><rect x="3" y="9" width="10" height="6" rx="2" fill="currentColor" opacity=".6"/><rect x="6" y="3" width="1.5" height="1.5" fill="#0a0b0f"/><rect x="9" y="3" width="1.5" height="1.5" fill="#0a0b0f"/></svg><span data-i18n="prof.assistants">Assistants</span></button>
-        <button class="prof-nav-item" id="profNavMetrics" style="display:none" onclick="profTab('metrics')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="10" width="3" height="5" fill="currentColor" opacity=".4"/><rect x="5" y="7" width="3" height="8" fill="currentColor" opacity=".6"/><rect x="9" y="4" width="3" height="11" fill="currentColor" opacity=".8"/><rect x="13" y="1" width="3" height="14" fill="currentColor"/></svg><span data-i18n="prof.metrics">Metrics</span></button>
+        <button class="prof-nav-item on" onclick="profTab('overview')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="1" width="6" height="6" fill="currentColor"/><rect x="9" y="1" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.overview">Dashboard</span></button>
+        <button class="prof-nav-item" onclick="profTab('transc')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.transcriptions">Transcribir</span></button>
+        <button class="prof-nav-item" onclick="goAdaptFromSidebar()"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><path d="M8 1 L9 5 L13 6 L9 7 L8 11 L7 7 L3 6 L7 5 Z" fill="currentColor"/><circle cx="13" cy="13" r="1.2" fill="currentColor" opacity=".5"/><circle cx="3" cy="2" r="1" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.adapt">Hazlo tuyo</span></button>
+        <button class="prof-nav-item" id="profNavMetrics" style="display:none" onclick="profTab('metrics')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="10" width="3" height="5" fill="currentColor" opacity=".4"/><rect x="5" y="7" width="3" height="8" fill="currentColor" opacity=".6"/><rect x="9" y="4" width="3" height="11" fill="currentColor" opacity=".8"/><rect x="13" y="1" width="3" height="14" fill="currentColor"/></svg><span data-i18n="prof.metrics">Métricas</span></button>
         <button class="prof-nav-item" id="profNavIdeas" style="display:none" onclick="profTab('ideas')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="3" y="1" width="10" height="2" fill="currentColor"/><rect x="2" y="3" width="12" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="6" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="9" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.ideas">Ideas</span></button>
-        <button class="prof-nav-item" id="profNavTeam" style="display:none" onclick="profTab('team')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><circle cx="5" cy="4" r="2.5" fill="currentColor"/><circle cx="11" cy="4" r="2.5" fill="currentColor" opacity=".6"/><rect x="1" y="8" width="8" height="5" rx="2" fill="currentColor"/><rect x="7" y="8" width="8" height="5" rx="2" fill="currentColor" opacity=".5"/></svg><span data-i18n="prof.team">Team</span></button>
+        <button class="prof-nav-item" onclick="profTab('scripts')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="10" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.saved_scripts">Guiones</span></button>
+        <button class="prof-nav-item" id="profNavAssistants" style="display:none" onclick="profTab('assistants')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="5" y="1" width="6" height="6" rx="3" fill="currentColor"/><rect x="3" y="9" width="10" height="6" rx="2" fill="currentColor" opacity=".6"/><rect x="6" y="3" width="1.5" height="1.5" fill="#0a0b0f"/><rect x="9" y="3" width="1.5" height="1.5" fill="#0a0b0f"/></svg><span data-i18n="prof.assistants">Asistentes</span></button>
+        <button class="prof-nav-item" id="profNavProjects" style="display:none" onclick="profTab('projects')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="3" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="6" height="3" fill="currentColor"/></svg><span data-i18n="prof.projects">Proyectos</span></button>
+        <button class="prof-nav-item" id="profNavTeam" style="display:none" onclick="profTab('team')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><circle cx="5" cy="4" r="2.5" fill="currentColor"/><circle cx="11" cy="4" r="2.5" fill="currentColor" opacity=".6"/><rect x="1" y="8" width="8" height="5" rx="2" fill="currentColor"/><rect x="7" y="8" width="8" height="5" rx="2" fill="currentColor" opacity=".5"/></svg><span data-i18n="prof.team">Equipo</span></button>
         <button class="prof-nav-item" id="profNavTeleprompter" onclick="openTeleprompterPicker()" style="display:none"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="1" width="14" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="8" height="1.5" fill="currentColor" opacity=".5"/><rect x="4" y="7" width="6" height="1.5" fill="currentColor" opacity=".3"/><rect x="5" y="13" width="6" height="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.teleprompter">Teleprompter</span></button>
-        <button class="prof-nav-item" id="profNavPrivacy" onclick="profTab('privacy')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="3" y="6" width="10" height="9" rx="1" fill="currentColor" opacity=".6"/><rect x="5" y="1" width="6" height="7" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="7" y="9" width="2" height="3" fill="#0a0b0f"/></svg><span data-i18n="prof.privacy">Privacy &amp; Data</span></button>
-        <button class="prof-nav-item" id="profNavSettings" onclick="profTab('settings')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><circle cx="8" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1 V3 M8 13 V15 M1 8 H3 M13 8 H15 M3 3 L4.5 4.5 M11.5 11.5 L13 13 M3 13 L4.5 11.5 M11.5 4.5 L13 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span data-i18n="prof.settings">Settings</span></button>
+        <button class="prof-nav-item" id="profNavPrivacy" onclick="profTab('privacy')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="3" y="6" width="10" height="9" rx="1" fill="currentColor" opacity=".6"/><rect x="5" y="1" width="6" height="7" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="7" y="9" width="2" height="3" fill="#0a0b0f"/></svg><span data-i18n="prof.privacy">Privacidad y datos</span></button>
+        <button class="prof-nav-item" id="profNavSettings" onclick="profTab('settings')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><circle cx="8" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1 V3 M8 13 V15 M1 8 H3 M13 8 H15 M3 3 L4.5 4.5 M11.5 11.5 L13 13 M3 13 L4.5 11.5 M11.5 4.5 L13 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span data-i18n="prof.settings">Configuración</span></button>
       </div>
 
       <div class="prof-sidebar-footer">
@@ -8796,22 +8820,26 @@
         <div id="ovEmptyState" style="display:none">
           <div class="ov-empty-card">
             <h2 class="ov-empty-h2" data-i18n-es="Pega una URL y la transformamos en texto en segundos." data-i18n-en="Paste a URL and we'll turn it into text in seconds.">Pega una URL y la transformamos en texto en segundos.</h2>
-            <div class="ov-empty-input-wrap">
-              <span class="ov-empty-input-icon" aria-hidden="true">🔗</span>
-              <input id="ovEmptyUrlInput" type="url" class="ov-empty-input ph-no-capture" data-clarity-mask="true"
-                     placeholder="https://www.instagram.com/reel/… · https://www.tiktok.com/…"
-                     autocomplete="off" spellcheck="false"
-                     onkeydown="if(event.key==='Enter'){event.preventDefault();doTranscribeFromOverview();}" />
-              <select id="ovEmptyLang" class="ov-empty-lang" aria-label="Language">
-                <option value="" data-i18n-es="✨ Auto" data-i18n-en="✨ Auto">✨ Auto</option>
-                <option value="es" data-i18n-es="Español" data-i18n-en="Spanish">Español</option>
-                <option value="en" data-i18n-es="Inglés" data-i18n-en="English">English</option>
-                <option value="fr" data-i18n-es="Francés" data-i18n-en="French">French</option>
-                <option value="pt" data-i18n-es="Portugués" data-i18n-en="Portuguese">Portuguese</option>
-                <option value="de" data-i18n-es="Alemán" data-i18n-en="German">German</option>
-                <option value="it" data-i18n-es="Italiano" data-i18n-en="Italian">Italian</option>
-              </select>
-              <button id="ovEmptyTranscribeBtn" class="ov-empty-btn" onclick="doTranscribeFromOverview()" data-i18n-es="Transcribir →" data-i18n-en="Transcribe →">Transcribir →</button>
+            <div class="ov-empty-input-row">
+              <div class="ov-empty-input-wrap">
+                <span class="ov-empty-input-icon" aria-hidden="true">🔗</span>
+                <input id="ovEmptyUrlInput" type="url" class="ov-empty-input ph-no-capture" data-clarity-mask="true"
+                       placeholder="https://www.instagram.com/reel/… · https://www.tiktok.com/…"
+                       autocomplete="off" spellcheck="false"
+                       onkeydown="if(event.key==='Enter'){event.preventDefault();doTranscribeFromOverview();}" />
+              </div>
+              <div class="ov-empty-controls-wrapper">
+                <select id="ovEmptyLang" class="ov-empty-lang" aria-label="Language">
+                  <option value="" data-i18n-es="✨ Auto" data-i18n-en="✨ Auto">✨ Auto</option>
+                  <option value="es" data-i18n-es="Español" data-i18n-en="Spanish">Español</option>
+                  <option value="en" data-i18n-es="Inglés" data-i18n-en="English">English</option>
+                  <option value="fr" data-i18n-es="Francés" data-i18n-en="French">French</option>
+                  <option value="pt" data-i18n-es="Portugués" data-i18n-en="Portuguese">Portuguese</option>
+                  <option value="de" data-i18n-es="Alemán" data-i18n-en="German">German</option>
+                  <option value="it" data-i18n-es="Italiano" data-i18n-en="Italian">Italian</option>
+                </select>
+                <button id="ovEmptyTranscribeBtn" class="ov-empty-btn" onclick="doTranscribeFromOverview()" data-i18n-es="Transcribir →" data-i18n-en="Transcribe →">Transcribir →</button>
+              </div>
             </div>
             <div id="ovEmptyStatus" class="ov-empty-status" style="display:none"></div>
             <button type="button" class="ov-empty-example" onclick="useExampleReel()" data-i18n-es="¿Sin uno a mano? Prueba con este reel viral →" data-i18n-en="No reel handy? Try this viral one →">¿Sin uno a mano? Prueba con este reel viral →</button>
@@ -9471,6 +9499,15 @@
             <div class="sub-free-msg" data-i18n-es="Estás usando la versión gratuita." data-i18n-en="You're on the free plan.">Estás usando la versión gratuita.</div>
           </div>
 
+          <!-- v0.14.17: estado plan cortesía (paid sin Stripe sub) -->
+          <div class="sub-comp-state" id="subCompState" style="display:none">
+            <div class="sub-free-info">
+              <div class="sub-free-label" data-i18n-es="Plan actual" data-i18n-en="Current plan">Plan actual</div>
+              <div class="sub-free-plan"><span class="plan-badge" id="subCompBadge">—</span></div>
+            </div>
+            <div class="sub-comp-msg" data-i18n-es="Acceso de cortesía. Sin facturación recurrente." data-i18n-en="Complimentary access. No recurring billing.">Acceso de cortesía. Sin facturación recurrente.</div>
+          </div>
+
           <div class="settings-billing-actions">
             <button class="btn-3d btn-3d-primary" id="settingsChangePlanBtn" onclick="openUpgradeModal('settings')" style="display:none;padding:8px 14px;border-radius:8px;font-size:.82rem" data-i18n-es="Cambiar plan" data-i18n-en="Change plan">Cambiar plan</button>
             <button class="btn-3d btn-3d-primary" id="settingsViewPlansBtn" onclick="settingsViewPlans()" style="display:none;padding:8px 14px;border-radius:8px;font-size:.82rem" data-i18n-es="Ver planes →" data-i18n-en="View plans →">Ver planes →</button>
@@ -9860,7 +9897,9 @@ const LANGS = {
     "ex.hooks": '<span class="ph">1.</span> ¿Sabías que el 90% de creadores comete este error en el primer segundo?\n\n<span class="ph">2.</span> El error que cometen todos los principiantes (y que yo también cometí)\n\n<span class="ph">3.</span> Lo que nadie te dice sobre crear contenido que realmente funciona\n\n<span class="ph">4.</span> Si hubiera sabido esto antes, tendría el doble de seguidores hoy\n\n<span class="ph">5.</span> Para cuando termines este vídeo, querrás regrabar todo lo que tienes',
     "ex.custom": '<span class="ph">✍️ Tú tienes el control.</span>\n\nEscribe cualquier instrucción en el campo de texto:\n\n<span class="ph">"Escríbelo como carta de ventas"</span>\n<span class="ph">"Hazlo en formato pregunta-respuesta"</span>\n<span class="ph">"Tono motivacional, sin tecnicismos"</span>\n\nLa IA adaptará el guión exactamente a lo que pidas.',
     // Profile hub
-    "prof.overview": "Resumen",
+    "prof.overview": "Dashboard",
+    "prof.adapt": "Hazlo tuyo",
+    "greet_fallback": "Hola, creador.",
     "prof.saved_scripts": "Guiones",
     "prof.transcriptions": "Transcribir",
     "prof.projects": "Proyectos",
@@ -10240,7 +10279,9 @@ const LANGS = {
     "ex.hooks": '<span class="ph">1.</span> Did you know 90% of creators make this mistake in the first second?\n\n<span class="ph">2.</span> The mistake every beginner makes (and I made it too)\n\n<span class="ph">3.</span> What nobody tells you about creating content that actually works\n\n<span class="ph">4.</span> If I\'d known this sooner, I\'d have twice the followers today\n\n<span class="ph">5.</span> By the time this video ends, you\'ll want to re-record everything you have',
     "ex.custom": '<span class="ph">✍️ You\'re in control.</span>\n\nType any instruction in the text field:\n\n<span class="ph">"Write it as a sales letter"</span>\n<span class="ph">"Make it Q&A format"</span>\n<span class="ph">"Motivational tone, no jargon"</span>\n\nThe AI will adapt the script to exactly what you ask.',
     // Profile hub
-    "prof.overview": "Overview",
+    "prof.overview": "Dashboard",
+    "prof.adapt": "Make it yours",
+    "greet_fallback": "Hi there.",
     "prof.saved_scripts": "Scripts",
     "prof.transcriptions": "Transcribe",
     "prof.projects": "Projects",
@@ -12676,15 +12717,18 @@ const PROF_TITLES = {
 };
 
 // v0.14.5a — Overview mini grid loader + Team handler
+// v0.14.17 — saneado: corta en el primer caracter no alfabético (+, _, -, ., dígito) para
+// evitar saludos raros tipo "Hola, Test+v0145" o "Hola, Dav1d2024". Si tras limpiar
+// queda <2 chars, devuelve "" → caller usa fallback "creador" / "there".
 function ovGreetingName() {
   try {
     const email = (st.user && st.user.email) || "";
-    if (email) {
-      const local = email.split("@")[0].replace(/[._-]+/g, " ").trim();
-      // First token, first letter capitalized
-      const first = local.split(/\s+/)[0] || local;
-      return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
-    }
+    if (!email) return "";
+    const local = email.split("@")[0] || "";
+    // Corta en el primer caracter no alfabético: +, _, -, ., dígito → ignora el resto
+    const clean = local.replace(/[+_\-.0-9].*/, "");
+    if (!clean || clean.length < 2) return "";
+    return clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase();
   } catch (e) {}
   return "";
 }
@@ -12704,7 +12748,8 @@ function ovRenderGreeting() {
   if (name) {
     parts.push(`${hi}, <em>${name.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</em>.`);
   } else {
-    parts.push(`${hi}.`);
+    // v0.14.17: fallback genérico si el local-part del email no produce nombre legible
+    parts.push(t("greet_fallback") || (es ? "Hola, creador." : "Hi there."));
   }
   // Estado 1: greeting + date. Estado 0: only greeting (sub explicit "Empieza por…")
   if (root) {
@@ -13471,32 +13516,58 @@ function showLockedTooltip(cardName) {
 function firstSuccessTransform() {
   try { window.posthog && window.posthog.capture("success_modal_cta_clicked", { cta: "transform" }); } catch (e) {}
   closeModal("firstSuccessOverlay");
-  // Pre-load text into adapt textarea + reveal
+  ovSwapToEstado1();
+  // FIX v0.14.17: cerrar profile overlay primero. #adaptSection vive en <body> FUERA de
+  // #profilePage (overlay z-index:300, position:fixed, full screen). Sin closeProfile el
+  // reveal queda invisible detrás del overlay → user veía solo el dashboard.
+  // profile-overlay alterna display:block↔none sin CSS transition, así que el cambio es
+  // síncrono — no hace falta esperar transitionend ni setTimeout extra. revealAdaptSection
+  // ya tiene su propio inner setTimeout (120ms) para focus+scroll que da margen al layout.
+  if (typeof closeProfile === "function") closeProfile();
   const txt = window._lastTranscribedText || "";
   const adaptInput = document.getElementById("adaptInput");
   if (adaptInput) adaptInput.value = txt;
   if (typeof revealAdaptSection === "function") revealAdaptSection({ focus: true });
-  ovSwapToEstado1();
 }
 
 function firstSuccessViewFull() {
   try { window.posthog && window.posthog.capture("success_modal_cta_clicked", { cta: "view_full" }); } catch (e) {}
   closeModal("firstSuccessOverlay");
-  if (typeof profTab === "function") profTab("transc");
-  // Scroll to most recent transcription (top of list, id `t-${histCache[0].id}`)
-  setTimeout(() => {
-    const first = (typeof histCache !== "undefined" && histCache.length) ? histCache[0] : null;
-    if (first) {
-      const el = document.getElementById("t-" + first.id);
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }, 250);
   ovSwapToEstado1();
+  // FIX v0.14.17: refrescar histCache antes de navegar+scroll. onSuccess de
+  // doTranscribeFromOverview lanza loadHistory() async sin await; si user clica rápido
+  // "Ver completa", histCache[0] aún no contiene la transcripción nueva → scroll
+  // silencioso a target undefined. Esperar loadHistory (con catch fallback) garantiza
+  // que el id está disponible.
+  const go = () => {
+    if (typeof profTab === "function") profTab("transc");
+    setTimeout(() => {
+      const first = (typeof histCache !== "undefined" && histCache.length) ? histCache[0] : null;
+      if (first) {
+        const el = document.getElementById("t-" + first.id);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 300);
+  };
+  if (typeof loadHistory === "function") {
+    loadHistory().then(go).catch(go);
+  } else {
+    go();
+  }
 }
 
 function firstSuccessClose() {
   closeModal("firstSuccessOverlay");
   ovSwapToEstado1();
+}
+
+// v0.14.17 — sidebar "Hazlo tuyo" entry. Cierra workspace overlay y revela #adaptSection
+// (que vive fuera del #profilePage), sin pre-focus del textarea para no robar atención.
+function goAdaptFromSidebar() {
+  if (typeof closeProfile === "function") closeProfile();
+  setTimeout(() => {
+    if (typeof revealAdaptSection === "function") revealAdaptSection({ focus: false });
+  }, 80);
 }
 
 // Swap Resumen Estado 0 → Estado 1 in-place (no refetch — local increment used)
@@ -17820,6 +17891,8 @@ function fmtSubAmount(cents, currency, cycle, lng) {
 async function loadSubscriptionInfo() {
   const grid = document.getElementById("subDetailGrid");
   const free = document.getElementById("subFreeState");
+  const comp = document.getElementById("subCompState");
+  const compBadge = document.getElementById("subCompBadge");
   const banner = document.getElementById("subCancelBanner");
   const bannerText = document.getElementById("subCancelBannerText");
   const badge = document.getElementById("settingsPlanBadge");
@@ -17841,12 +17914,29 @@ async function loadSubscriptionInfo() {
   const lng = (document.documentElement.lang || "es") === "es" ? "es" : "en";
   const plan = d.plan || "free";
 
-  try { window.posthog && window.posthog.capture("subscription_view_loaded", { plan }); } catch (e) {}
+  try { window.posthog && window.posthog.capture("subscription_view_loaded", { plan, is_complimentary: !!d.is_complimentary }); } catch (e) {}
+
+  // v0.14.17: courtesy plan (paid tier sin Stripe sub) — third state
+  if (d.is_complimentary) {
+    grid.style.display = "none";
+    free.style.display = "none";
+    if (comp) comp.style.display = "";
+    if (compBadge) {
+      compBadge.textContent = planLabel(plan);
+      compBadge.className = "plan-badge " + plan;
+    }
+    banner.style.display = "none";
+    if (changeBtn) changeBtn.style.display = "none";
+    if (manageBtn) manageBtn.style.display = "none";
+    if (viewBtn) viewBtn.style.display = "none";
+    return;
+  }
 
   if (plan === "free" || !d.has_stripe_sub) {
     grid.style.display = "none";
     banner.style.display = "none";
     free.style.display = "";
+    if (comp) comp.style.display = "none";
     if (changeBtn) changeBtn.style.display = "none";
     if (manageBtn) manageBtn.style.display = "none";
     if (viewBtn) viewBtn.style.display = "";
@@ -17856,6 +17946,7 @@ async function loadSubscriptionInfo() {
   // Paid: render detail
   grid.style.display = "";
   free.style.display = "none";
+  if (comp) comp.style.display = "none";
   if (badge) {
     badge.textContent = planLabel(plan);
     badge.className = "plan-badge " + plan;
