@@ -2316,8 +2316,13 @@ def develop_idea(raw_text, assistant_id=None, user_id=None, language="es"):
             {"role": "user", "content": f"Idioma de salida: {language}. Idea cruda del usuario: {raw_text}"},
         ],
         "temperature": 0.7,
-        "max_tokens": 2000,
+        # v0.14.15a: was 2000 — Gemini truncating long structured outputs (Unterminated string)
+        "max_tokens": 4000,
     }
+    # v0.14.15a: force JSON output. Gemini via OpenRouter supports response_format
+    # json_object; Llama-3.3 fallback (Groq) ignores it silently. Condicionado a Gemini.
+    if "gemini" in (model or "").lower():
+        payload["response_format"] = {"type": "json_object"}
     resp = requests.post(url, headers=headers, json=payload, timeout=60)
     resp.raise_for_status()
     content = resp.json()["choices"][0]["message"]["content"].strip()
@@ -2327,7 +2332,12 @@ def develop_idea(raw_text, assistant_id=None, user_id=None, language="es"):
     # Strip markdown fences if present
     if content.startswith("```"):
         content = content.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
-    return json_mod.loads(content)
+    try:
+        return json_mod.loads(content)
+    except json_mod.JSONDecodeError:
+        # v0.14.15a: log first 500 chars of raw LLM output for postmortem before re-raising
+        logger.error("develop_idea raw LLM response (first 500 chars): %s", repr(content[:500]))
+        raise
 
 
 @app.route("/ideas", methods=["POST"])
@@ -2458,6 +2468,15 @@ def develop_idea_endpoint(idea_id):
 
     try:
         result = develop_idea(idea["raw_text"], assistant_id, user["id"], language)
+    except json.JSONDecodeError as e:
+        # v0.14.15a: LLM returned malformed/truncated JSON. Keep idea as draft,
+        # don't return 502 — user retries vs. seeing a hard error.
+        logger.error(f"develop_idea JSON parse failed: {e}", exc_info=True)
+        return jsonify({
+            "ok": False,
+            "fallback": "draft",
+            "message": "La idea sigue guardada como borrador. Inténtalo de nuevo en unos minutos."
+        }), 200
     except Exception as e:
         logger.error(f"Idea development failed: {e}", exc_info=True)
         return jsonify({"error": "Failed to develop. Try again."}), 502
