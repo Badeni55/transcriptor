@@ -635,6 +635,11 @@ def api_me_subscription():
     plan = profile.get("plan", "free")
     sub_id = profile.get("stripe_subscription_id")
 
+    # v0.14.17: courtesy / complimentary plan = paid plan tier sin stripe_subscription_id
+    # (admin grants, partnerships, agency-internal, etc.). Frontend renderiza un estado
+    # dedicado: muestra plan name + msg "sin facturación recurrente", sin botones Stripe.
+    is_complimentary = bool(plan and plan != "free" and not sub_id)
+
     payload = {
         "plan": plan,
         "billing_cycle": None,
@@ -643,6 +648,7 @@ def api_me_subscription():
         "currency": None,
         "cancel_at_period_end": False,
         "has_stripe_sub": bool(sub_id),
+        "is_complimentary": is_complimentary,
     }
 
     if sub_id and STRIPE_OK:
