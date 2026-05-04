@@ -2408,7 +2408,51 @@
     .settings-billing-info { display: flex; flex-direction: column; gap: 4px; }
     .settings-billing-label { font-size: .72rem; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; }
     .settings-billing-plan { display: flex; align-items: center; gap: 8px; }
-    .settings-billing-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .settings-billing-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+
+    /* v0.14.16 — Subscription detail */
+    .sub-detail-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px;
+      padding: 14px 16px; border-radius: 12px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.06);
+      margin-bottom: 4px;
+    }
+    [data-theme="light"] .sub-detail-grid { background: rgba(0,0,0,.025); border-color: rgba(0,0,0,.06); }
+    @media (max-width: 540px) {
+      .sub-detail-grid { grid-template-columns: 1fr; gap: 10px; }
+    }
+    .sub-detail-row { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .sub-detail-label {
+      font-size: .68rem; color: var(--text3);
+      letter-spacing: .06em; text-transform: uppercase;
+    }
+    .sub-detail-value {
+      font-size: .92rem; color: var(--text); font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+    .sub-detail-foot { font-size: .72rem; color: var(--text3); margin-top: 8px; }
+
+    .sub-cancel-banner {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 10px 14px; border-radius: 10px;
+      background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.3);
+      color: #fbbf24; font-size: .85rem; line-height: 1.4;
+      margin-bottom: 14px;
+    }
+    [data-theme="light"] .sub-cancel-banner {
+      background: rgba(180,140,10,.06); border-color: rgba(180,140,10,.25);
+      color: #92660d;
+    }
+
+    .sub-free-state {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      flex-wrap: wrap;
+    }
+    .sub-free-info { display: flex; flex-direction: column; gap: 4px; }
+    .sub-free-label { font-size: .68rem; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
+    .sub-free-plan { display: flex; align-items: center; gap: 8px; }
+    .sub-free-msg { font-size: .85rem; color: var(--text2); }
 
     /* ── Marquee ─────────────────────────────────────────────── */
     .marquee-section { padding: 0 0 80px; overflow: hidden; }
@@ -3385,8 +3429,8 @@
     .ov-locked-sm { opacity: .32; align-items: center; flex-direction: column; min-height: 80px; padding: 14px 8px 12px; gap: 6px; font-size: .78rem; color: var(--text2); }
     .ov-empty-locked:hover { opacity: .55; border-color: rgba(var(--ov-acc, 239,106,41), .25); }
 
+    .ov-locked-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
     .ov-locked-badge {
-      align-self: flex-start;
       font-size: .62rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
       color: var(--text2);
       background: rgba(255,255,255,.06);
@@ -3394,12 +3438,89 @@
       padding: 3px 8px; border-radius: 999px;
     }
     [data-theme="light"] .ov-locked-badge { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.06); }
-    .ov-locked-hooks { width: 36px; height: 36px; opacity: .85; }
+    .ov-locked-hooks { width: 36px; height: 36px; opacity: .85; flex-shrink: 0; }
     .ov-locked-hooks-sm { width: 26px; height: 26px; opacity: .7; }
     .ov-locked-label {
       font-family: var(--font-display); font-size: 1.1rem; font-weight: 400; color: var(--text);
     }
     .ov-locked-sub { font-size: .82rem; color: var(--text3); }
+
+    /* v0.14.16 — mockups internos en cards locked Hazlo tuyo + Métricas */
+    .ov-mock-adapt, .ov-mock-metrics {
+      margin-top: 12px; padding: 10px 12px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.04);
+      border-radius: 10px;
+    }
+    [data-theme="light"] .ov-mock-adapt,
+    [data-theme="light"] .ov-mock-metrics {
+      background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.06);
+    }
+
+    /* Hazlo tuyo mockup */
+    .ov-mock-adapt { display: flex; flex-direction: column; gap: 6px; }
+    .ov-mock-box {
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06);
+      border-radius: 8px; padding: 8px 10px;
+    }
+    [data-theme="light"] .ov-mock-box { background: rgba(255,255,255,.6); border-color: rgba(0,0,0,.05); }
+    .ov-mock-box-orig { border-left: 2px solid rgba(148,163,184,.5); }
+    .ov-mock-box-out  { border-left: 2px solid rgba(var(--ov-acc, 192,132,252), .65); }
+    .ov-mock-box-label {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: .58rem; letter-spacing: .08em; color: var(--text3);
+      text-transform: uppercase; margin-bottom: 3px;
+    }
+    .ov-mock-box-text {
+      font-size: .72rem; line-height: 1.4; color: var(--text2);
+      font-style: italic;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .ov-mock-arrow {
+      align-self: center;
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: .58rem; letter-spacing: .06em; text-transform: uppercase;
+      color: var(--text3); padding: 2px 8px;
+      border: 1px dashed rgba(var(--ov-acc, 192,132,252), .35);
+      border-radius: 999px;
+    }
+    .ov-mock-pills {
+      display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;
+    }
+    .ov-mock-pill {
+      font-family: var(--font-body); font-size: .58rem; font-weight: 600;
+      letter-spacing: .04em;
+      padding: 2px 7px; border-radius: 999px;
+      background: rgba(var(--ov-acc, 192,132,252), .12);
+      color: rgba(var(--ov-acc, 192,132,252), 1);
+      border: 1px solid rgba(var(--ov-acc, 192,132,252), .22);
+    }
+
+    /* Métricas mockup */
+    .ov-mock-metrics { display: flex; flex-direction: column; gap: 6px; }
+    .ov-mock-metrics-row { display: flex; align-items: baseline; gap: 10px; }
+    .ov-mock-metrics-num {
+      font-family: var(--font-display); font-size: 1.6rem; font-weight: 400;
+      line-height: 1; color: var(--text); letter-spacing: -.5px;
+      font-variant-numeric: tabular-nums;
+    }
+    .ov-mock-metrics-meta { display: flex; flex-direction: column; gap: 2px; }
+    .ov-mock-metrics-lbl { font-size: .58rem; color: var(--text3); letter-spacing: .04em; text-transform: uppercase; }
+    .ov-mock-metrics-up {
+      font-size: .68rem; font-weight: 700; color: #4ade80;
+      font-variant-numeric: tabular-nums;
+    }
+    .ov-mock-spark { width: 100%; height: 36px; display: block; }
+    .ov-mock-metrics-foot {
+      font-size: .62rem; color: var(--text3); line-height: 1.3;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+    }
+
+    /* Mobile: ocultar mockup interno (caben mal en cards <540px) */
+    @media (max-width: 540px) {
+      .ov-mock-adapt, .ov-mock-metrics { display: none; }
+    }
 
     /* First-success modal */
     .first-success-icon {
@@ -8403,8 +8524,8 @@
     <p style="color:var(--text3);font-size:.85rem;margin-top:8px" data-i18n="pricing.all_included">Teleprompter, Projects and Ideas included in all plans.</p>
   </div>
   <div class="billing-toggle" data-host="pricingSection">
-    <button type="button" class="billing-toggle-opt on" data-cycle="month" onclick="setBillingCycle('month','pricingSection')" data-i18n-es="Mensual" data-i18n-en="Monthly">Mensual</button>
-    <button type="button" class="billing-toggle-opt" data-cycle="year" onclick="setBillingCycle('year','pricingSection')">
+    <button type="button" class="billing-toggle-opt" data-cycle="month" onclick="setBillingCycle('month','pricingSection')" data-i18n-es="Mensual" data-i18n-en="Monthly">Mensual</button>
+    <button type="button" class="billing-toggle-opt on" data-cycle="year" onclick="setBillingCycle('year','pricingSection')">
       <span data-i18n-es="Anual" data-i18n-en="Annual">Anual</span>
       <span class="billing-toggle-save" data-i18n-es="Ahorra 20%" data-i18n-en="Save 20%">Ahorra 20%</span>
     </button>
@@ -8698,16 +8819,65 @@
 
           <div class="ov-empty-row2">
             <button type="button" class="ov-empty-locked ov-locked-md" style="--ov-acc:192,132,252" role="button" aria-disabled="true" onclick="showLockedTooltip('hazlo_tuyo')">
-              <div class="ov-locked-badge">🔒 <span data-i18n-es="Desbloquea al transcribir" data-i18n-en="Unlock when you transcribe">Desbloquea al transcribir</span></div>
-              <img class="ov-locked-hooks" src="{{ url_for('static', filename='img/hooks/hooks-adapt.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-locked-head">
+                <div class="ov-locked-badge">🔒 <span data-i18n-es="DESBLOQUEA AL TRANSCRIBIR" data-i18n-en="UNLOCK WHEN YOU TRANSCRIBE">DESBLOQUEA AL TRANSCRIBIR</span></div>
+                <img class="ov-locked-hooks" src="{{ url_for('static', filename='img/hooks/hooks-adapt.svg') }}" alt="" aria-hidden="true">
+              </div>
               <div class="ov-locked-label" data-i18n-es="Hazlo tuyo" data-i18n-en="Make it yours">Hazlo tuyo</div>
               <div class="ov-locked-sub" data-i18n-es="Reescribe un guion" data-i18n-en="Rewrite a script">Reescribe un guion</div>
+              <div class="ov-mock-adapt" aria-hidden="true">
+                <div class="ov-mock-box ov-mock-box-orig">
+                  <div class="ov-mock-box-label" data-i18n-es="ORIGINAL" data-i18n-en="ORIGINAL">ORIGINAL</div>
+                  <div class="ov-mock-box-text" data-i18n-es="Si quieres dormir mejor, esto es lo único que necesitas…" data-i18n-en="If you want to sleep better, this is the only thing you need…">Si quieres dormir mejor, esto es lo único que necesitas…</div>
+                </div>
+                <div class="ov-mock-arrow" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1V13M7 13L2 8M7 13L12 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span data-i18n-es="Transformar" data-i18n-en="Transform">Transformar</span>
+                </div>
+                <div class="ov-mock-box ov-mock-box-out">
+                  <div class="ov-mock-box-label" data-i18n-es="VERSIÓN LINKEDIN" data-i18n-en="LINKEDIN VERSION">VERSIÓN LINKEDIN</div>
+                  <div class="ov-mock-box-text" data-i18n-es="Llevo 3 años durmiendo mal. Probé todo. Esto sí funcionó." data-i18n-en="I slept badly for 3 years. Tried everything. This actually worked.">Llevo 3 años durmiendo mal. Probé todo. Esto sí funcionó.</div>
+                </div>
+                <div class="ov-mock-pills">
+                  <span class="ov-mock-pill">Viral</span>
+                  <span class="ov-mock-pill">LinkedIn</span>
+                  <span class="ov-mock-pill">Hooks</span>
+                  <span class="ov-mock-pill">Custom</span>
+                </div>
+              </div>
             </button>
             <button type="button" class="ov-empty-locked ov-locked-md" style="--ov-acc:93,202,165" role="button" aria-disabled="true" onclick="showLockedTooltip('metricas')">
-              <div class="ov-locked-badge">🔒 <span data-i18n-es="Desbloquea al transcribir" data-i18n-en="Unlock when you transcribe">Desbloquea al transcribir</span></div>
-              <img class="ov-locked-hooks" src="{{ url_for('static', filename='img/hooks/hooks-metricas.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-locked-head">
+                <div class="ov-locked-badge">🔒 <span data-i18n-es="DESBLOQUEA AL TRANSCRIBIR" data-i18n-en="UNLOCK WHEN YOU TRANSCRIBE">DESBLOQUEA AL TRANSCRIBIR</span></div>
+                <img class="ov-locked-hooks" src="{{ url_for('static', filename='img/hooks/hooks-metricas.svg') }}" alt="" aria-hidden="true">
+              </div>
               <div class="ov-locked-label" data-i18n-es="Métricas" data-i18n-en="Metrics">Métricas</div>
               <div class="ov-locked-sub" data-i18n-es="Mide qué funciona" data-i18n-en="Measure what works">Mide qué funciona</div>
+              <div class="ov-mock-metrics" aria-hidden="true">
+                <div class="ov-mock-metrics-row">
+                  <div class="ov-mock-metrics-num">45.327</div>
+                  <div class="ov-mock-metrics-meta">
+                    <div class="ov-mock-metrics-lbl" data-i18n-es="vistas/reel" data-i18n-en="views/reel">vistas/reel</div>
+                    <div class="ov-mock-metrics-up">↑ 312%</div>
+                  </div>
+                </div>
+                <svg class="ov-mock-spark" viewBox="0 0 240 60" preserveAspectRatio="none" aria-hidden="true">
+                  <rect x="2"   y="48" width="14" height="10" rx="2" fill="#ef6a29" opacity="0.35"/>
+                  <rect x="20"  y="44" width="14" height="14" rx="2" fill="#ef6a29" opacity="0.40"/>
+                  <rect x="38"  y="42" width="14" height="16" rx="2" fill="#ef6a29" opacity="0.46"/>
+                  <rect x="56"  y="38" width="14" height="20" rx="2" fill="#ef6a29" opacity="0.52"/>
+                  <rect x="74"  y="34" width="14" height="24" rx="2" fill="#ef6a29" opacity="0.58"/>
+                  <rect x="92"  y="30" width="14" height="28" rx="2" fill="#ef6a29" opacity="0.64"/>
+                  <rect x="110" y="32" width="14" height="26" rx="2" fill="#ef6a29" opacity="0.70"/>
+                  <rect x="128" y="26" width="14" height="32" rx="2" fill="#ef6a29" opacity="0.76"/>
+                  <rect x="146" y="22" width="14" height="36" rx="2" fill="#ef6a29" opacity="0.82"/>
+                  <rect x="164" y="16" width="14" height="42" rx="2" fill="#ef6a29" opacity="0.88"/>
+                  <rect x="182" y="12" width="14" height="46" rx="2" fill="#ef6a29" opacity="0.94"/>
+                  <rect x="200" y="6"  width="14" height="52" rx="2" fill="#ef6a29" opacity="1"/>
+                  <rect x="218" y="2"  width="14" height="56" rx="2" fill="#ef6a29" opacity="1"/>
+                </svg>
+                <div class="ov-mock-metrics-foot" data-i18n-es="Top reel: «Lo que nadie te…» · 55,7K vistas" data-i18n-en="Top reel: ‘What nobody tells you…’ · 55.7K views">Top reel: «Lo que nadie te…» · 55,7K vistas</div>
+              </div>
             </button>
           </div>
 
@@ -9262,19 +9432,51 @@
 
         <div class="settings-card settings-billing-card">
           <div class="settings-card-head">
-            <div class="settings-card-title" data-i18n-es="Plan y facturación" data-i18n-en="Plan & Billing">Plan y facturación</div>
+            <div class="settings-card-title" data-i18n-es="Tu suscripción" data-i18n-en="Your subscription">Tu suscripción</div>
             <div class="settings-card-sub" data-i18n-es="Cambia de plan o gestiona tu suscripción." data-i18n-en="Change plan or manage your subscription.">Cambia de plan o gestiona tu suscripción.</div>
           </div>
-          <div class="settings-billing-row">
-            <div class="settings-billing-info">
-              <div class="settings-billing-label" data-i18n-es="Plan actual" data-i18n-en="Current plan">Plan actual</div>
-              <div class="settings-billing-plan"><span id="settingsPlanBadge" class="plan-badge free">Free</span> <span id="settingsPlanPrice" style="font-size:.82rem;color:var(--text3)"></span></div>
+
+          <!-- v0.14.16: cancel_at_period_end banner -->
+          <div class="sub-cancel-banner" id="subCancelBanner" style="display:none">
+            <span aria-hidden="true">⚠️</span>
+            <span id="subCancelBannerText"></span>
+          </div>
+
+          <!-- v0.14.16: filas de detalle (paid users) -->
+          <div class="sub-detail-grid" id="subDetailGrid" style="display:none">
+            <div class="sub-detail-row">
+              <div class="sub-detail-label" data-i18n-es="Plan actual" data-i18n-en="Current plan">Plan actual</div>
+              <div class="sub-detail-value"><span id="settingsPlanBadge" class="plan-badge free">Free</span></div>
             </div>
-            <div class="settings-billing-actions">
-              <button class="btn-3d btn-3d-primary" id="settingsChangePlanBtn" onclick="openUpgradeModal('settings')" style="padding:8px 14px;border-radius:8px;font-size:.82rem" data-i18n-es="Cambiar plan" data-i18n-en="Change plan">Cambiar plan</button>
-              <button class="btn-3d btn-3d-secondary" id="settingsManageSubBtn" onclick="manageSub()" style="display:none;padding:8px 14px;border-radius:8px;font-size:.82rem;background:transparent;border:1px solid var(--border);color:var(--text2)" data-i18n-es="Gestionar suscripción" data-i18n-en="Manage subscription">Gestionar suscripción</button>
+            <div class="sub-detail-row">
+              <div class="sub-detail-label" data-i18n-es="Facturación" data-i18n-en="Billing">Facturación</div>
+              <div class="sub-detail-value" id="subBillingCycle">—</div>
+            </div>
+            <div class="sub-detail-row">
+              <div class="sub-detail-label" data-i18n-es="Próxima renovación" data-i18n-en="Next renewal">Próxima renovación</div>
+              <div class="sub-detail-value" id="subNextRenewal">—</div>
+            </div>
+            <div class="sub-detail-row">
+              <div class="sub-detail-label" data-i18n-es="Importe" data-i18n-en="Amount">Importe</div>
+              <div class="sub-detail-value" id="subAmount">—</div>
             </div>
           </div>
+
+          <!-- v0.14.16: estado free -->
+          <div class="sub-free-state" id="subFreeState" style="display:none">
+            <div class="sub-free-info">
+              <div class="sub-free-label" data-i18n-es="Plan actual" data-i18n-en="Current plan">Plan actual</div>
+              <div class="sub-free-plan"><span class="plan-badge free" data-i18n-es="Gratis" data-i18n-en="Free">Gratis</span></div>
+            </div>
+            <div class="sub-free-msg" data-i18n-es="Estás usando la versión gratuita." data-i18n-en="You're on the free plan.">Estás usando la versión gratuita.</div>
+          </div>
+
+          <div class="settings-billing-actions">
+            <button class="btn-3d btn-3d-primary" id="settingsChangePlanBtn" onclick="openUpgradeModal('settings')" style="display:none;padding:8px 14px;border-radius:8px;font-size:.82rem" data-i18n-es="Cambiar plan" data-i18n-en="Change plan">Cambiar plan</button>
+            <button class="btn-3d btn-3d-primary" id="settingsViewPlansBtn" onclick="settingsViewPlans()" style="display:none;padding:8px 14px;border-radius:8px;font-size:.82rem" data-i18n-es="Ver planes →" data-i18n-en="View plans →">Ver planes →</button>
+            <button class="btn-3d btn-3d-secondary" id="settingsManageSubBtn" onclick="settingsManageSub()" style="display:none;padding:8px 14px;border-radius:8px;font-size:.82rem;background:transparent;border:1px solid var(--border);color:var(--text2)" data-i18n-es="Gestionar suscripción" data-i18n-en="Manage subscription">Gestionar suscripción</button>
+          </div>
+          <div class="sub-detail-foot" data-i18n-es="Cambiar plan, cancelar o actualizar tu método de pago." data-i18n-en="Change plan, cancel or update payment method.">Cambiar plan, cancelar o actualizar tu método de pago.</div>
         </div>
 
         <div class="settings-card">
@@ -9588,8 +9790,8 @@
     <h2 data-i18n-es="Mejorar plan" data-i18n-en="Upgrade plan">Mejorar plan</h2>
     <p data-i18n-es="Elige el plan que mejor se adapte. Cancela cuando quieras." data-i18n-en="Pick the plan that fits. Cancel anytime.">Elige el plan que mejor se adapte. Cancela cuando quieras.</p>
     <div class="billing-toggle" data-host="upgradeOverlay" style="margin:8px auto 18px">
-      <button type="button" class="billing-toggle-opt on" data-cycle="month" onclick="setBillingCycle('month','upgradeOverlay')" data-i18n-es="Mensual" data-i18n-en="Monthly">Mensual</button>
-      <button type="button" class="billing-toggle-opt" data-cycle="year" onclick="setBillingCycle('year','upgradeOverlay')">
+      <button type="button" class="billing-toggle-opt" data-cycle="month" onclick="setBillingCycle('month','upgradeOverlay')" data-i18n-es="Mensual" data-i18n-en="Monthly">Mensual</button>
+      <button type="button" class="billing-toggle-opt on" data-cycle="year" onclick="setBillingCycle('year','upgradeOverlay')">
         <span data-i18n-es="Anual" data-i18n-en="Annual">Anual</span>
         <span class="billing-toggle-save" data-i18n-es="Ahorra 20%" data-i18n-en="Save 20%">Ahorra 20%</span>
       </button>
@@ -10748,9 +10950,11 @@ function renderProfAssistants() {
 }
 
 // ── Init ─────────────────────────────────────────────────────────────────
-let billingCycle = "month";
+// v0.14.16: default anual (mejor conversión LTV).
+let billingCycle = "year";
 
 function setBillingCycle(cycle, hostId) {
+  const prev = billingCycle;
   billingCycle = (cycle === "year") ? "year" : "month";
   document.querySelectorAll(`.billing-toggle[data-host="${hostId}"] .billing-toggle-opt`).forEach(b => {
     b.classList.toggle("on", b.dataset.cycle === billingCycle);
@@ -10761,6 +10965,9 @@ function setBillingCycle(cycle, hostId) {
   });
   initPrices();
   if (typeof renderUpgradeCards === "function") renderUpgradeCards();
+  if (prev !== billingCycle) {
+    try { window.posthog && window.posthog.capture("pricing_toggle_changed", { cycle: billingCycle === "year" ? "yearly" : "monthly" }); } catch (e) {}
+  }
 }
 
 function initPrices() {
@@ -12809,7 +13016,7 @@ function profTab(tab, pushHistory) {
 
   // Load data for specific tabs
   if (tab === "scripts") { readScrProjectFilterFromUrl(); renderProfScripts(); }
-  if (tab === "settings") { highlightActiveLang(); applyTheme(themePref); }
+  if (tab === "settings") { highlightActiveLang(); applyTheme(themePref); loadSubscriptionInfo(); }
   if (tab === "transc") renderProfTransc();
   if (tab === "projects") renderProfProjects();
   if (tab === "assistants") renderProfAssistants();
@@ -17568,6 +17775,114 @@ async function manageSub() {
   const d = await res.json();
   if (!res.ok) { showToast(d.error || "Error"); return; }
   window.location.href = d.url;
+}
+
+// v0.14.16 — Subscription panel (Settings)
+const PLAN_LABELS = {
+  es: { free: "Gratis", pro: "Pro", creator: "Creator", agency: "Agency" },
+  en: { free: "Free",   pro: "Pro", creator: "Creator", agency: "Agency" },
+};
+
+function planLabel(plan) {
+  const lng = (document.documentElement.lang || "es") === "es" ? "es" : "en";
+  return (PLAN_LABELS[lng] && PLAN_LABELS[lng][plan]) || plan;
+}
+
+function fmtRenewalDate(iso, lng) {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleDateString(lng === "es" ? "es-ES" : "en-US",
+      { day: "2-digit", month: "short", year: "numeric" });
+  } catch (e) { return "—"; }
+}
+
+function fmtSubAmount(cents, currency, cycle, lng) {
+  if (cents == null) return "—";
+  const sym = (currency || "eur").toLowerCase() === "usd" ? "$" : "€";
+  const val = (cents / 100).toFixed(2).replace(".", lng === "es" ? "," : ".");
+  const per = cycle === "yearly"
+    ? (lng === "es" ? "/año" : "/yr")
+    : (lng === "es" ? "/mes" : "/mo");
+  return sym + val + per;
+}
+
+async function loadSubscriptionInfo() {
+  const grid = document.getElementById("subDetailGrid");
+  const free = document.getElementById("subFreeState");
+  const banner = document.getElementById("subCancelBanner");
+  const bannerText = document.getElementById("subCancelBannerText");
+  const badge = document.getElementById("settingsPlanBadge");
+  const cycleEl = document.getElementById("subBillingCycle");
+  const renewalEl = document.getElementById("subNextRenewal");
+  const amountEl = document.getElementById("subAmount");
+  const changeBtn = document.getElementById("settingsChangePlanBtn");
+  const viewBtn = document.getElementById("settingsViewPlansBtn");
+  const manageBtn = document.getElementById("settingsManageSubBtn");
+  if (!grid || !free) return;
+
+  let d;
+  try {
+    const r = await fetch("/api/me/subscription", { credentials: "same-origin" });
+    if (!r.ok) return;
+    d = await r.json();
+  } catch (e) { return; }
+
+  const lng = (document.documentElement.lang || "es") === "es" ? "es" : "en";
+  const plan = d.plan || "free";
+
+  try { window.posthog && window.posthog.capture("subscription_view_loaded", { plan }); } catch (e) {}
+
+  if (plan === "free" || !d.has_stripe_sub) {
+    grid.style.display = "none";
+    banner.style.display = "none";
+    free.style.display = "";
+    if (changeBtn) changeBtn.style.display = "none";
+    if (manageBtn) manageBtn.style.display = "none";
+    if (viewBtn) viewBtn.style.display = "";
+    return;
+  }
+
+  // Paid: render detail
+  grid.style.display = "";
+  free.style.display = "none";
+  if (badge) {
+    badge.textContent = planLabel(plan);
+    badge.className = "plan-badge " + plan;
+  }
+  if (cycleEl) {
+    cycleEl.textContent = d.billing_cycle === "yearly"
+      ? (lng === "es" ? "Anual" : "Yearly")
+      : (d.billing_cycle === "monthly" ? (lng === "es" ? "Mensual" : "Monthly") : "—");
+  }
+  if (renewalEl) renewalEl.textContent = fmtRenewalDate(d.next_renewal_date, lng);
+  if (amountEl) amountEl.textContent = fmtSubAmount(d.amount_cents, d.currency, d.billing_cycle, lng);
+
+  if (d.cancel_at_period_end) {
+    banner.style.display = "";
+    if (bannerText) {
+      const dateStr = fmtRenewalDate(d.next_renewal_date, lng);
+      bannerText.textContent = lng === "es"
+        ? `Tu suscripción está cancelada y terminará el ${dateStr}. Reactiva desde Gestionar suscripción.`
+        : `Your subscription is canceled and will end on ${dateStr}. Reactivate from Manage subscription.`;
+    }
+  } else {
+    banner.style.display = "none";
+  }
+
+  if (changeBtn) changeBtn.style.display = "";
+  if (manageBtn) manageBtn.style.display = "";
+  if (viewBtn) viewBtn.style.display = "none";
+}
+
+function settingsManageSub() {
+  try { window.posthog && window.posthog.capture("manage_subscription_clicked", {}); } catch (e) {}
+  manageSub();
+}
+
+function settingsViewPlans() {
+  try { window.posthog && window.posthog.capture("view_plans_clicked", {}); } catch (e) {}
+  // Open upgrade modal in-app (sin navegar fuera del workspace)
+  if (typeof openUpgradeModal === "function") openUpgradeModal("settings_free");
 }
 
 // ── Upgrade modal ─────────────────────────────────────────────────────────

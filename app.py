@@ -614,6 +614,58 @@ def auth_me():
     })
 
 
+# v0.14.16 — Subscription detail (Settings panel "Tu suscripción")
+_subscription_cache: dict = {}  # uid -> (data, ts)
+_SUBSCRIPTION_TTL_S = 60
+
+
+@app.route("/api/me/subscription")
+@require_auth
+def api_me_subscription():
+    """Detalle de suscripción para Settings. Cacheado 60s por user_id
+    para no martillar la API de Stripe en cada apertura del panel."""
+    user = current_user()
+    uid = user["id"]
+    now_ts = _time.time()
+    cached = _subscription_cache.get(uid)
+    if cached and (now_ts - cached[1]) < _SUBSCRIPTION_TTL_S:
+        return jsonify(cached[0])
+
+    profile = get_profile(uid)
+    plan = profile.get("plan", "free")
+    sub_id = profile.get("stripe_subscription_id")
+
+    payload = {
+        "plan": plan,
+        "billing_cycle": None,
+        "next_renewal_date": None,
+        "amount_cents": None,
+        "currency": None,
+        "cancel_at_period_end": False,
+        "has_stripe_sub": bool(sub_id),
+    }
+
+    if sub_id and STRIPE_OK:
+        try:
+            sub = stripe_lib.Subscription.retrieve(sub_id, expand=["items.data.price"])
+            item = (sub.get("items") or {}).get("data") or []
+            price = (item[0].get("price") if item else {}) or {}
+            recurring = price.get("recurring") or {}
+            interval = recurring.get("interval")  # "month" | "year"
+            payload["billing_cycle"] = "yearly" if interval == "year" else ("monthly" if interval == "month" else None)
+            cpe = sub.get("current_period_end")
+            if cpe:
+                payload["next_renewal_date"] = datetime.fromtimestamp(cpe, tz=timezone.utc).isoformat()
+            payload["amount_cents"] = price.get("unit_amount")
+            payload["currency"] = price.get("currency")
+            payload["cancel_at_period_end"] = bool(sub.get("cancel_at_period_end"))
+        except Exception as e:
+            logger.warning("subscription fetch failed for %s: %s", uid, e)
+
+    _subscription_cache[uid] = (payload, now_ts)
+    return jsonify(payload)
+
+
 # ── Transcription route ───────────────────────────────────────────────────────
 
 from tasks import transcribe_task  # noqa: E402
@@ -1158,7 +1210,7 @@ def manage_subscription():
         sub = stripe_lib.Subscription.retrieve(sub_id)
         portal = stripe_lib.billing_portal.Session.create(
             customer=sub.customer,
-            return_url=request.host_url,
+            return_url=request.host_url.rstrip("/") + "/profile/settings",
         )
         return jsonify({"url": portal.url})
     except Exception as e:
