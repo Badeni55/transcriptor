@@ -614,6 +614,58 @@ def auth_me():
     })
 
 
+# v0.14.16 — Subscription detail (Settings panel "Tu suscripción")
+_subscription_cache: dict = {}  # uid -> (data, ts)
+_SUBSCRIPTION_TTL_S = 60
+
+
+@app.route("/api/me/subscription")
+@require_auth
+def api_me_subscription():
+    """Detalle de suscripción para Settings. Cacheado 60s por user_id
+    para no martillar la API de Stripe en cada apertura del panel."""
+    user = current_user()
+    uid = user["id"]
+    now_ts = _time.time()
+    cached = _subscription_cache.get(uid)
+    if cached and (now_ts - cached[1]) < _SUBSCRIPTION_TTL_S:
+        return jsonify(cached[0])
+
+    profile = get_profile(uid)
+    plan = profile.get("plan", "free")
+    sub_id = profile.get("stripe_subscription_id")
+
+    payload = {
+        "plan": plan,
+        "billing_cycle": None,
+        "next_renewal_date": None,
+        "amount_cents": None,
+        "currency": None,
+        "cancel_at_period_end": False,
+        "has_stripe_sub": bool(sub_id),
+    }
+
+    if sub_id and STRIPE_OK:
+        try:
+            sub = stripe_lib.Subscription.retrieve(sub_id, expand=["items.data.price"])
+            item = (sub.get("items") or {}).get("data") or []
+            price = (item[0].get("price") if item else {}) or {}
+            recurring = price.get("recurring") or {}
+            interval = recurring.get("interval")  # "month" | "year"
+            payload["billing_cycle"] = "yearly" if interval == "year" else ("monthly" if interval == "month" else None)
+            cpe = sub.get("current_period_end")
+            if cpe:
+                payload["next_renewal_date"] = datetime.fromtimestamp(cpe, tz=timezone.utc).isoformat()
+            payload["amount_cents"] = price.get("unit_amount")
+            payload["currency"] = price.get("currency")
+            payload["cancel_at_period_end"] = bool(sub.get("cancel_at_period_end"))
+        except Exception as e:
+            logger.warning("subscription fetch failed for %s: %s", uid, e)
+
+    _subscription_cache[uid] = (payload, now_ts)
+    return jsonify(payload)
+
+
 # ── Transcription route ───────────────────────────────────────────────────────
 
 from tasks import transcribe_task  # noqa: E402
@@ -1158,7 +1210,7 @@ def manage_subscription():
         sub = stripe_lib.Subscription.retrieve(sub_id)
         portal = stripe_lib.billing_portal.Session.create(
             customer=sub.customer,
-            return_url=request.host_url,
+            return_url=request.host_url.rstrip("/") + "/profile/settings",
         )
         return jsonify({"url": portal.url})
     except Exception as e:
@@ -2264,8 +2316,13 @@ def develop_idea(raw_text, assistant_id=None, user_id=None, language="es"):
             {"role": "user", "content": f"Idioma de salida: {language}. Idea cruda del usuario: {raw_text}"},
         ],
         "temperature": 0.7,
-        "max_tokens": 2000,
+        # v0.14.15a: was 2000 — Gemini truncating long structured outputs (Unterminated string)
+        "max_tokens": 4000,
     }
+    # v0.14.15a: force JSON output. Gemini via OpenRouter supports response_format
+    # json_object; Llama-3.3 fallback (Groq) ignores it silently. Condicionado a Gemini.
+    if "gemini" in (model or "").lower():
+        payload["response_format"] = {"type": "json_object"}
     resp = requests.post(url, headers=headers, json=payload, timeout=60)
     resp.raise_for_status()
     content = resp.json()["choices"][0]["message"]["content"].strip()
@@ -2275,7 +2332,12 @@ def develop_idea(raw_text, assistant_id=None, user_id=None, language="es"):
     # Strip markdown fences if present
     if content.startswith("```"):
         content = content.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
-    return json_mod.loads(content)
+    try:
+        return json_mod.loads(content)
+    except json_mod.JSONDecodeError:
+        # v0.14.15a: log first 500 chars of raw LLM output for postmortem before re-raising
+        logger.error("develop_idea raw LLM response (first 500 chars): %s", repr(content[:500]))
+        raise
 
 
 @app.route("/ideas", methods=["POST"])
@@ -2406,6 +2468,15 @@ def develop_idea_endpoint(idea_id):
 
     try:
         result = develop_idea(idea["raw_text"], assistant_id, user["id"], language)
+    except json.JSONDecodeError as e:
+        # v0.14.15a: LLM returned malformed/truncated JSON. Keep idea as draft,
+        # don't return 502 — user retries vs. seeing a hard error.
+        logger.error(f"develop_idea JSON parse failed: {e}", exc_info=True)
+        return jsonify({
+            "ok": False,
+            "fallback": "draft",
+            "message": "La idea sigue guardada como borrador. Inténtalo de nuevo en unos minutos."
+        }), 200
     except Exception as e:
         logger.error(f"Idea development failed: {e}", exc_info=True)
         return jsonify({"error": "Failed to develop. Try again."}), 502

@@ -2408,7 +2408,51 @@
     .settings-billing-info { display: flex; flex-direction: column; gap: 4px; }
     .settings-billing-label { font-size: .72rem; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; }
     .settings-billing-plan { display: flex; align-items: center; gap: 8px; }
-    .settings-billing-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .settings-billing-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+
+    /* v0.14.16 — Subscription detail */
+    .sub-detail-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px;
+      padding: 14px 16px; border-radius: 12px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.06);
+      margin-bottom: 4px;
+    }
+    [data-theme="light"] .sub-detail-grid { background: rgba(0,0,0,.025); border-color: rgba(0,0,0,.06); }
+    @media (max-width: 540px) {
+      .sub-detail-grid { grid-template-columns: 1fr; gap: 10px; }
+    }
+    .sub-detail-row { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .sub-detail-label {
+      font-size: .68rem; color: var(--text3);
+      letter-spacing: .06em; text-transform: uppercase;
+    }
+    .sub-detail-value {
+      font-size: .92rem; color: var(--text); font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+    .sub-detail-foot { font-size: .72rem; color: var(--text3); margin-top: 8px; }
+
+    .sub-cancel-banner {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 10px 14px; border-radius: 10px;
+      background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.3);
+      color: #fbbf24; font-size: .85rem; line-height: 1.4;
+      margin-bottom: 14px;
+    }
+    [data-theme="light"] .sub-cancel-banner {
+      background: rgba(180,140,10,.06); border-color: rgba(180,140,10,.25);
+      color: #92660d;
+    }
+
+    .sub-free-state {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      flex-wrap: wrap;
+    }
+    .sub-free-info { display: flex; flex-direction: column; gap: 4px; }
+    .sub-free-label { font-size: .68rem; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
+    .sub-free-plan { display: flex; align-items: center; gap: 8px; }
+    .sub-free-msg { font-size: .85rem; color: var(--text2); }
 
     /* ── Marquee ─────────────────────────────────────────────── */
     .marquee-section { padding: 0 0 80px; overflow: hidden; }
@@ -3283,6 +3327,236 @@
       font-variant-numeric: tabular-nums;
     }
     [data-theme="light"] .ov-card-count { border-top-color: rgba(0,0,0,.05); }
+
+    /* ── v0.14.15 — Empty state Resumen ──────────────────────── */
+    #ovEmptyState { display: flex; flex-direction: column; gap: 16px; }
+    .ov-empty-card {
+      background: linear-gradient(180deg, rgba(239,106,41,.06), rgba(239,106,41,.02));
+      border: 1px solid rgba(239,106,41,.18);
+      border-left: 3px solid #ef6a29;
+      border-radius: 16px;
+      padding: 28px 28px 24px;
+      box-shadow: 0 6px 22px rgba(0,0,0,.18);
+    }
+    [data-theme="light"] .ov-empty-card {
+      background: linear-gradient(180deg, rgba(239,106,41,.04), rgba(255,255,255,.5));
+      box-shadow: 0 4px 16px rgba(180,150,100,.12);
+    }
+    .ov-empty-h2 {
+      font-family: var(--font-display);
+      font-size: clamp(1.3rem, 2.3vw, 1.7rem); font-weight: 400;
+      line-height: 1.25; letter-spacing: -.3px;
+      margin: 0 0 18px;
+      color: var(--text); text-wrap: balance;
+    }
+    .ov-empty-input-wrap {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 4px 4px 4px 14px;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .ov-empty-input-wrap:focus-within { border-color: #ef6a29; box-shadow: 0 0 0 3px rgba(239,106,41,.18); }
+    .ov-empty-input-icon { font-size: .9rem; opacity: .7; flex-shrink: 0; }
+    .ov-empty-input {
+      flex: 1; min-width: 0;
+      background: transparent; border: 0; outline: 0;
+      color: var(--text); font-family: var(--font-body); font-size: .95rem;
+      padding: 12px 0;
+    }
+    .ov-empty-input::placeholder { color: var(--text3); font-family: ui-monospace, SFMono-Regular, monospace; font-size: .82rem; }
+    .ov-empty-lang {
+      flex: 0 0 auto;
+      background: var(--surf); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); font-family: var(--font-body); font-size: .8rem;
+      padding: 8px 10px; outline: none;
+    }
+    .ov-empty-btn {
+      flex: 0 0 auto; padding: 12px 22px; border-radius: 10px;
+      background: #f97316; color: #fff; border: 0; cursor: pointer;
+      font-family: var(--font-body); font-weight: 700; font-size: .9rem;
+      box-shadow: 0 4px 0 #92400e, 0 6px 20px rgba(239,106,41,.3);
+      transition: transform .12s, box-shadow .15s, background .15s, opacity .15s;
+    }
+    .ov-empty-btn:hover:not(:disabled) { transform: translateY(-1px); background: #ea680c; box-shadow: 0 5px 0 #92400e, 0 8px 26px rgba(239,106,41,.4); }
+    .ov-empty-btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #92400e; }
+    .ov-empty-btn:disabled { opacity: .65; cursor: default; }
+    .ov-empty-status {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 8px; margin-top: 12px;
+      background: rgba(239,106,41,.06); border: 1px solid rgba(239,106,41,.2);
+      font-size: .85rem; color: var(--text2);
+    }
+    .ov-empty-status.is-error { background: rgba(239,68,68,.07); border-color: rgba(239,68,68,.25); color: #fca5a5; }
+    .ov-empty-status.is-ok { background: rgba(34,197,94,.07); border-color: rgba(34,197,94,.25); color: #86efac; }
+    .ov-empty-status .panel-transc-spinner {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid rgba(239,106,41,.3); border-top-color: #ef6a29;
+      animation: ovSpin .7s linear infinite; flex-shrink: 0;
+    }
+    @keyframes ovSpin { to { transform: rotate(360deg); } }
+    .ov-empty-example {
+      display: inline-block; margin-top: 14px;
+      background: none; border: 0; padding: 0;
+      color: rgba(239,106,41,.85);
+      font-family: var(--font-body); font-size: .82rem;
+      cursor: pointer; transition: color .15s;
+    }
+    .ov-empty-example:hover { color: #ef6a29; text-decoration: underline; }
+
+    /* Locked rows */
+    .ov-empty-row2, .ov-empty-row6 { display: grid; gap: 12px; }
+    .ov-empty-row2 { grid-template-columns: 1fr 1fr; }
+    .ov-empty-row6 { grid-template-columns: repeat(6, 1fr); }
+    @media (max-width: 880px) {
+      .ov-empty-row2 { grid-template-columns: 1fr; }
+      .ov-empty-row6 { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    }
+    @media (max-width: 480px) {
+      .ov-empty-row6 { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .ov-empty-locked {
+      position: relative; display: flex; flex-direction: column; gap: 6px;
+      padding: 16px; border-radius: 14px;
+      background: rgba(255,255,255,.02);
+      border: 1px solid rgba(255,255,255,.06);
+      cursor: not-allowed;
+      text-align: left; font-family: var(--font-body);
+      transition: opacity .2s, border-color .2s;
+    }
+    [data-theme="light"] .ov-empty-locked { background: rgba(0,0,0,.02); border-color: rgba(0,0,0,.06); }
+    .ov-locked-md { opacity: .42; min-height: 110px; padding: 18px 18px 16px; }
+    .ov-locked-sm { opacity: .32; align-items: center; flex-direction: column; min-height: 80px; padding: 14px 8px 12px; gap: 6px; font-size: .78rem; color: var(--text2); }
+    .ov-empty-locked:hover { opacity: .55; border-color: rgba(var(--ov-acc, 239,106,41), .25); }
+
+    .ov-locked-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .ov-locked-badge {
+      font-size: .62rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+      color: var(--text2);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      padding: 3px 8px; border-radius: 999px;
+    }
+    [data-theme="light"] .ov-locked-badge { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.06); }
+    .ov-locked-hooks { width: 36px; height: 36px; opacity: .85; flex-shrink: 0; }
+    .ov-locked-hooks-sm { width: 26px; height: 26px; opacity: .7; }
+    .ov-locked-label {
+      font-family: var(--font-display); font-size: 1.1rem; font-weight: 400; color: var(--text);
+    }
+    .ov-locked-sub { font-size: .82rem; color: var(--text3); }
+
+    /* v0.14.16 — mockups internos en cards locked Hazlo tuyo + Métricas */
+    .ov-mock-adapt, .ov-mock-metrics {
+      margin-top: 12px; padding: 10px 12px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.04);
+      border-radius: 10px;
+    }
+    [data-theme="light"] .ov-mock-adapt,
+    [data-theme="light"] .ov-mock-metrics {
+      background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.06);
+    }
+
+    /* Hazlo tuyo mockup */
+    .ov-mock-adapt { display: flex; flex-direction: column; gap: 6px; }
+    .ov-mock-box {
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06);
+      border-radius: 8px; padding: 8px 10px;
+    }
+    [data-theme="light"] .ov-mock-box { background: rgba(255,255,255,.6); border-color: rgba(0,0,0,.05); }
+    .ov-mock-box-orig { border-left: 2px solid rgba(148,163,184,.5); }
+    .ov-mock-box-out  { border-left: 2px solid rgba(var(--ov-acc, 192,132,252), .65); }
+    .ov-mock-box-label {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: .58rem; letter-spacing: .08em; color: var(--text3);
+      text-transform: uppercase; margin-bottom: 3px;
+    }
+    .ov-mock-box-text {
+      font-size: .72rem; line-height: 1.4; color: var(--text2);
+      font-style: italic;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .ov-mock-arrow {
+      align-self: center;
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: .58rem; letter-spacing: .06em; text-transform: uppercase;
+      color: var(--text3); padding: 2px 8px;
+      border: 1px dashed rgba(var(--ov-acc, 192,132,252), .35);
+      border-radius: 999px;
+    }
+    .ov-mock-pills {
+      display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;
+    }
+    .ov-mock-pill {
+      font-family: var(--font-body); font-size: .58rem; font-weight: 600;
+      letter-spacing: .04em;
+      padding: 2px 7px; border-radius: 999px;
+      background: rgba(var(--ov-acc, 192,132,252), .12);
+      color: rgba(var(--ov-acc, 192,132,252), 1);
+      border: 1px solid rgba(var(--ov-acc, 192,132,252), .22);
+    }
+
+    /* Métricas mockup */
+    .ov-mock-metrics { display: flex; flex-direction: column; gap: 6px; }
+    .ov-mock-metrics-row { display: flex; align-items: baseline; gap: 10px; }
+    .ov-mock-metrics-num {
+      font-family: var(--font-display); font-size: 1.6rem; font-weight: 400;
+      line-height: 1; color: var(--text); letter-spacing: -.5px;
+      font-variant-numeric: tabular-nums;
+    }
+    .ov-mock-metrics-meta { display: flex; flex-direction: column; gap: 2px; }
+    .ov-mock-metrics-lbl { font-size: .58rem; color: var(--text3); letter-spacing: .04em; text-transform: uppercase; }
+    .ov-mock-metrics-up {
+      font-size: .68rem; font-weight: 700; color: #4ade80;
+      font-variant-numeric: tabular-nums;
+    }
+    .ov-mock-spark { width: 100%; height: 36px; display: block; }
+    .ov-mock-metrics-foot {
+      font-size: .62rem; color: var(--text3); line-height: 1.3;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+    }
+
+    /* Mobile: ocultar mockup interno (caben mal en cards <540px) */
+    @media (max-width: 540px) {
+      .ov-mock-adapt, .ov-mock-metrics { display: none; }
+    }
+
+    /* First-success modal */
+    .first-success-icon {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: rgba(34,197,94,.15); border: 1px solid rgba(34,197,94,.4);
+      color: #4ade80; font-size: 1.6rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 18px;
+    }
+    .first-success-title {
+      font-family: var(--font-display); font-weight: 400; font-size: 1.4rem;
+      line-height: 1.25; text-align: center; margin: 0 0 14px; color: var(--text);
+    }
+    .first-success-preview {
+      background: var(--surf2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 16px; margin-bottom: 18px;
+      font-family: var(--font-body); font-size: .88rem; line-height: 1.55;
+      color: var(--text2); font-style: italic;
+      max-height: 110px; overflow: hidden;
+    }
+    .first-success-cta-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .first-success-cta-primary {
+      flex: 1 1 auto; padding: 13px 18px; border-radius: 12px;
+      background: #f97316; color: #fff; border: 0; cursor: pointer;
+      font-family: var(--font-body); font-weight: 700; font-size: .92rem;
+      box-shadow: 0 4px 0 #92400e, 0 6px 20px rgba(239,106,41,.3);
+      transition: transform .12s, box-shadow .15s, background .15s;
+    }
+    .first-success-cta-primary:hover { transform: translateY(-1px); background: #ea680c; }
+    .first-success-cta-secondary {
+      flex: 0 1 auto; padding: 13px 18px; border-radius: 12px;
+      background: transparent; color: var(--text); border: 1px solid var(--border);
+      cursor: pointer; font-family: var(--font-body); font-weight: 600; font-size: .9rem;
+      transition: border-color .15s, color .15s;
+    }
+    .first-success-cta-secondary:hover { border-color: #ef6a29; color: #ef6a29; }
 
     /* Loading skeleton */
     .ov-skel {
@@ -8250,8 +8524,8 @@
     <p style="color:var(--text3);font-size:.85rem;margin-top:8px" data-i18n="pricing.all_included">Teleprompter, Projects and Ideas included in all plans.</p>
   </div>
   <div class="billing-toggle" data-host="pricingSection">
-    <button type="button" class="billing-toggle-opt on" data-cycle="month" onclick="setBillingCycle('month','pricingSection')" data-i18n-es="Mensual" data-i18n-en="Monthly">Mensual</button>
-    <button type="button" class="billing-toggle-opt" data-cycle="year" onclick="setBillingCycle('year','pricingSection')">
+    <button type="button" class="billing-toggle-opt" data-cycle="month" onclick="setBillingCycle('month','pricingSection')" data-i18n-es="Mensual" data-i18n-en="Monthly">Mensual</button>
+    <button type="button" class="billing-toggle-opt on" data-cycle="year" onclick="setBillingCycle('year','pricingSection')">
       <span data-i18n-es="Anual" data-i18n-en="Annual">Anual</span>
       <span class="billing-toggle-save" data-i18n-es="Ahorra 20%" data-i18n-en="Save 20%">Ahorra 20%</span>
     </button>
@@ -8469,7 +8743,8 @@
       <div id="profPanelOverview">
 
         <!-- v0.14.5a: editorial hero (greeting + Hooks mascot) -->
-        <div class="ov-hero-wrap">
+        <!-- v0.14.15: Estado 1 hero. Estado 0 hero abajo, JS-toggled. -->
+        <div class="ov-hero-wrap" id="ovHeroEstado1">
           <svg class="ov-hero-waves" viewBox="0 0 1200 380" preserveAspectRatio="none" aria-hidden="true">
             <path d="M0,210 Q180,150 360,200 T720,200 T1080,190 L1200,210 L1200,380 L0,380 Z" fill="#ef6a29"/>
             <path d="M0,250 Q220,200 420,240 T780,240 T1200,250 L1200,380 L0,380 Z" fill="#7d5bb8" opacity="0.6"/>
@@ -8491,6 +8766,146 @@
               <div class="ov-hooks-glow"></div>
               <img class="ov-hooks" src="{{ url_for('static', filename='img/hooks/hooks-transcribir.svg') }}" alt="">
             </div>
+          </div>
+        </div>
+
+        <!-- v0.14.15: Estado 0 hero (usuario sin transcripciones) -->
+        <div class="ov-hero-wrap" id="ovHeroEstado0" style="display:none">
+          <svg class="ov-hero-waves" viewBox="0 0 1200 380" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0,210 Q180,150 360,200 T720,200 T1080,190 L1200,210 L1200,380 L0,380 Z" fill="#ef6a29"/>
+            <path d="M0,250 Q220,200 420,240 T780,240 T1200,250 L1200,380 L0,380 Z" fill="#7d5bb8" opacity="0.6"/>
+            <path d="M0,300 Q200,260 420,290 T820,290 T1200,300 L1200,380 L0,380 Z" fill="#c89968" opacity="0.5"/>
+          </svg>
+          <div class="ov-hero">
+            <div class="ov-hero-left">
+              <div class="ov-eyebrow">
+                <span class="ov-eyebrow-dot"></span>
+                <span data-i18n-es="EMPIEZA AQUÍ" data-i18n-en="START HERE">EMPIEZA AQUÍ</span>
+              </div>
+              <h1 class="ov-h1" id="ovGreetingEmpty" data-i18n-es="Hola" data-i18n-en="Hi">Hola</h1>
+              <div class="ov-sub" data-i18n-es="Empieza por tu primer reel." data-i18n-en="Start with your first reel.">Empieza por tu primer reel.</div>
+            </div>
+            <div class="ov-hero-right" aria-hidden="true">
+              <div class="ov-hooks-glow"></div>
+              <img class="ov-hooks" src="{{ url_for('static', filename='img/hooks/hooks-transcribir.svg') }}" alt="">
+            </div>
+          </div>
+        </div>
+
+        <!-- v0.14.15: Estado 0 — empty state pirámide (oculto por defecto, JS toggle) -->
+        <div id="ovEmptyState" style="display:none">
+          <div class="ov-empty-card">
+            <h2 class="ov-empty-h2" data-i18n-es="Pega una URL y la transformamos en texto en segundos." data-i18n-en="Paste a URL and we'll turn it into text in seconds.">Pega una URL y la transformamos en texto en segundos.</h2>
+            <div class="ov-empty-input-wrap">
+              <span class="ov-empty-input-icon" aria-hidden="true">🔗</span>
+              <input id="ovEmptyUrlInput" type="url" class="ov-empty-input ph-no-capture" data-clarity-mask="true"
+                     placeholder="https://www.instagram.com/reel/… · https://www.tiktok.com/…"
+                     autocomplete="off" spellcheck="false"
+                     onkeydown="if(event.key==='Enter'){event.preventDefault();doTranscribeFromOverview();}" />
+              <select id="ovEmptyLang" class="ov-empty-lang" aria-label="Language">
+                <option value="" data-i18n-es="✨ Auto" data-i18n-en="✨ Auto">✨ Auto</option>
+                <option value="es" data-i18n-es="Español" data-i18n-en="Spanish">Español</option>
+                <option value="en" data-i18n-es="Inglés" data-i18n-en="English">English</option>
+                <option value="fr" data-i18n-es="Francés" data-i18n-en="French">French</option>
+                <option value="pt" data-i18n-es="Portugués" data-i18n-en="Portuguese">Portuguese</option>
+                <option value="de" data-i18n-es="Alemán" data-i18n-en="German">German</option>
+                <option value="it" data-i18n-es="Italiano" data-i18n-en="Italian">Italian</option>
+              </select>
+              <button id="ovEmptyTranscribeBtn" class="ov-empty-btn" onclick="doTranscribeFromOverview()" data-i18n-es="Transcribir →" data-i18n-en="Transcribe →">Transcribir →</button>
+            </div>
+            <div id="ovEmptyStatus" class="ov-empty-status" style="display:none"></div>
+            <button type="button" class="ov-empty-example" onclick="useExampleReel()" data-i18n-es="¿Sin uno a mano? Prueba con este reel viral →" data-i18n-en="No reel handy? Try this viral one →">¿Sin uno a mano? Prueba con este reel viral →</button>
+          </div>
+
+          <div class="ov-empty-row2">
+            <button type="button" class="ov-empty-locked ov-locked-md" style="--ov-acc:192,132,252" role="button" aria-disabled="true" onclick="showLockedTooltip('hazlo_tuyo')">
+              <div class="ov-locked-head">
+                <div class="ov-locked-badge">🔒 <span data-i18n-es="DESBLOQUEA AL TRANSCRIBIR" data-i18n-en="UNLOCK WHEN YOU TRANSCRIBE">DESBLOQUEA AL TRANSCRIBIR</span></div>
+                <img class="ov-locked-hooks" src="{{ url_for('static', filename='img/hooks/hooks-adapt.svg') }}" alt="" aria-hidden="true">
+              </div>
+              <div class="ov-locked-label" data-i18n-es="Hazlo tuyo" data-i18n-en="Make it yours">Hazlo tuyo</div>
+              <div class="ov-locked-sub" data-i18n-es="Reescribe un guion" data-i18n-en="Rewrite a script">Reescribe un guion</div>
+              <div class="ov-mock-adapt" aria-hidden="true">
+                <div class="ov-mock-box ov-mock-box-orig">
+                  <div class="ov-mock-box-label" data-i18n-es="ORIGINAL" data-i18n-en="ORIGINAL">ORIGINAL</div>
+                  <div class="ov-mock-box-text" data-i18n-es="Si quieres dormir mejor, esto es lo único que necesitas…" data-i18n-en="If you want to sleep better, this is the only thing you need…">Si quieres dormir mejor, esto es lo único que necesitas…</div>
+                </div>
+                <div class="ov-mock-arrow" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1V13M7 13L2 8M7 13L12 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span data-i18n-es="Transformar" data-i18n-en="Transform">Transformar</span>
+                </div>
+                <div class="ov-mock-box ov-mock-box-out">
+                  <div class="ov-mock-box-label" data-i18n-es="VERSIÓN LINKEDIN" data-i18n-en="LINKEDIN VERSION">VERSIÓN LINKEDIN</div>
+                  <div class="ov-mock-box-text" data-i18n-es="Llevo 3 años durmiendo mal. Probé todo. Esto sí funcionó." data-i18n-en="I slept badly for 3 years. Tried everything. This actually worked.">Llevo 3 años durmiendo mal. Probé todo. Esto sí funcionó.</div>
+                </div>
+                <div class="ov-mock-pills">
+                  <span class="ov-mock-pill">Viral</span>
+                  <span class="ov-mock-pill">LinkedIn</span>
+                  <span class="ov-mock-pill">Hooks</span>
+                  <span class="ov-mock-pill">Custom</span>
+                </div>
+              </div>
+            </button>
+            <button type="button" class="ov-empty-locked ov-locked-md" style="--ov-acc:93,202,165" role="button" aria-disabled="true" onclick="showLockedTooltip('metricas')">
+              <div class="ov-locked-head">
+                <div class="ov-locked-badge">🔒 <span data-i18n-es="DESBLOQUEA AL TRANSCRIBIR" data-i18n-en="UNLOCK WHEN YOU TRANSCRIBE">DESBLOQUEA AL TRANSCRIBIR</span></div>
+                <img class="ov-locked-hooks" src="{{ url_for('static', filename='img/hooks/hooks-metricas.svg') }}" alt="" aria-hidden="true">
+              </div>
+              <div class="ov-locked-label" data-i18n-es="Métricas" data-i18n-en="Metrics">Métricas</div>
+              <div class="ov-locked-sub" data-i18n-es="Mide qué funciona" data-i18n-en="Measure what works">Mide qué funciona</div>
+              <div class="ov-mock-metrics" aria-hidden="true">
+                <div class="ov-mock-metrics-row">
+                  <div class="ov-mock-metrics-num">45.327</div>
+                  <div class="ov-mock-metrics-meta">
+                    <div class="ov-mock-metrics-lbl" data-i18n-es="vistas/reel" data-i18n-en="views/reel">vistas/reel</div>
+                    <div class="ov-mock-metrics-up">↑ 312%</div>
+                  </div>
+                </div>
+                <svg class="ov-mock-spark" viewBox="0 0 240 60" preserveAspectRatio="none" aria-hidden="true">
+                  <rect x="2"   y="48" width="14" height="10" rx="2" fill="#ef6a29" opacity="0.35"/>
+                  <rect x="20"  y="44" width="14" height="14" rx="2" fill="#ef6a29" opacity="0.40"/>
+                  <rect x="38"  y="42" width="14" height="16" rx="2" fill="#ef6a29" opacity="0.46"/>
+                  <rect x="56"  y="38" width="14" height="20" rx="2" fill="#ef6a29" opacity="0.52"/>
+                  <rect x="74"  y="34" width="14" height="24" rx="2" fill="#ef6a29" opacity="0.58"/>
+                  <rect x="92"  y="30" width="14" height="28" rx="2" fill="#ef6a29" opacity="0.64"/>
+                  <rect x="110" y="32" width="14" height="26" rx="2" fill="#ef6a29" opacity="0.70"/>
+                  <rect x="128" y="26" width="14" height="32" rx="2" fill="#ef6a29" opacity="0.76"/>
+                  <rect x="146" y="22" width="14" height="36" rx="2" fill="#ef6a29" opacity="0.82"/>
+                  <rect x="164" y="16" width="14" height="42" rx="2" fill="#ef6a29" opacity="0.88"/>
+                  <rect x="182" y="12" width="14" height="46" rx="2" fill="#ef6a29" opacity="0.94"/>
+                  <rect x="200" y="6"  width="14" height="52" rx="2" fill="#ef6a29" opacity="1"/>
+                  <rect x="218" y="2"  width="14" height="56" rx="2" fill="#ef6a29" opacity="1"/>
+                </svg>
+                <div class="ov-mock-metrics-foot" data-i18n-es="Top reel: «Lo que nadie te…» · 55,7K vistas" data-i18n-en="Top reel: ‘What nobody tells you…’ · 55.7K views">Top reel: «Lo que nadie te…» · 55,7K vistas</div>
+              </div>
+            </button>
+          </div>
+
+          <div class="ov-empty-row6">
+            <button type="button" class="ov-empty-locked ov-locked-sm" style="--ov-acc:34,197,94" role="button" aria-disabled="true" onclick="showLockedTooltip('guiones')">
+              <img class="ov-locked-hooks-sm" src="{{ url_for('static', filename='img/hooks/hooks-scripts.svg') }}" alt="" aria-hidden="true">
+              <span data-i18n-es="Guiones" data-i18n-en="Scripts">Guiones</span>
+            </button>
+            <button type="button" class="ov-empty-locked ov-locked-sm" style="--ov-acc:139,92,246" role="button" aria-disabled="true" onclick="showLockedTooltip('asistentes')">
+              <img class="ov-locked-hooks-sm" src="{{ url_for('static', filename='img/hooks/hooks-asistentes.svg') }}" alt="" aria-hidden="true">
+              <span data-i18n-es="Asistentes" data-i18n-en="Assistants">Asistentes</span>
+            </button>
+            <button type="button" class="ov-empty-locked ov-locked-sm" style="--ov-acc:200,153,104" role="button" aria-disabled="true" onclick="showLockedTooltip('proyectos')">
+              <img class="ov-locked-hooks-sm" src="{{ url_for('static', filename='img/hooks/hooks-proyectos.svg') }}" alt="" aria-hidden="true">
+              <span data-i18n-es="Proyectos" data-i18n-en="Projects">Proyectos</span>
+            </button>
+            <button type="button" class="ov-empty-locked ov-locked-sm" style="--ov-acc:255,107,61" role="button" aria-disabled="true" onclick="showLockedTooltip('equipo')">
+              <img class="ov-locked-hooks-sm" src="{{ url_for('static', filename='img/hooks/hooks-equipo.svg') }}" alt="" aria-hidden="true">
+              <span data-i18n-es="Equipo" data-i18n-en="Team">Equipo</span>
+            </button>
+            <button type="button" class="ov-empty-locked ov-locked-sm" style="--ov-acc:244,199,94" role="button" aria-disabled="true" onclick="showLockedTooltip('teleprompter')">
+              <img class="ov-locked-hooks-sm" src="{{ url_for('static', filename='img/hooks/hooks-teleprompter.svg') }}" alt="" aria-hidden="true">
+              <span data-i18n-es="Teleprompter" data-i18n-en="Teleprompter">Teleprompter</span>
+            </button>
+            <button type="button" class="ov-empty-locked ov-locked-sm" style="--ov-acc:239,106,41" role="button" aria-disabled="true" onclick="showLockedTooltip('ideas')">
+              <img class="ov-locked-hooks-sm" src="{{ url_for('static', filename='img/hooks/hooks-ideas.svg') }}" alt="" aria-hidden="true">
+              <span data-i18n-es="Ideas" data-i18n-en="Ideas">Ideas</span>
+            </button>
           </div>
         </div>
 
@@ -9017,19 +9432,51 @@
 
         <div class="settings-card settings-billing-card">
           <div class="settings-card-head">
-            <div class="settings-card-title" data-i18n-es="Plan y facturación" data-i18n-en="Plan & Billing">Plan y facturación</div>
+            <div class="settings-card-title" data-i18n-es="Tu suscripción" data-i18n-en="Your subscription">Tu suscripción</div>
             <div class="settings-card-sub" data-i18n-es="Cambia de plan o gestiona tu suscripción." data-i18n-en="Change plan or manage your subscription.">Cambia de plan o gestiona tu suscripción.</div>
           </div>
-          <div class="settings-billing-row">
-            <div class="settings-billing-info">
-              <div class="settings-billing-label" data-i18n-es="Plan actual" data-i18n-en="Current plan">Plan actual</div>
-              <div class="settings-billing-plan"><span id="settingsPlanBadge" class="plan-badge free">Free</span> <span id="settingsPlanPrice" style="font-size:.82rem;color:var(--text3)"></span></div>
+
+          <!-- v0.14.16: cancel_at_period_end banner -->
+          <div class="sub-cancel-banner" id="subCancelBanner" style="display:none">
+            <span aria-hidden="true">⚠️</span>
+            <span id="subCancelBannerText"></span>
+          </div>
+
+          <!-- v0.14.16: filas de detalle (paid users) -->
+          <div class="sub-detail-grid" id="subDetailGrid" style="display:none">
+            <div class="sub-detail-row">
+              <div class="sub-detail-label" data-i18n-es="Plan actual" data-i18n-en="Current plan">Plan actual</div>
+              <div class="sub-detail-value"><span id="settingsPlanBadge" class="plan-badge free">Free</span></div>
             </div>
-            <div class="settings-billing-actions">
-              <button class="btn-3d btn-3d-primary" id="settingsChangePlanBtn" onclick="openUpgradeModal('settings')" style="padding:8px 14px;border-radius:8px;font-size:.82rem" data-i18n-es="Cambiar plan" data-i18n-en="Change plan">Cambiar plan</button>
-              <button class="btn-3d btn-3d-secondary" id="settingsManageSubBtn" onclick="manageSub()" style="display:none;padding:8px 14px;border-radius:8px;font-size:.82rem;background:transparent;border:1px solid var(--border);color:var(--text2)" data-i18n-es="Gestionar suscripción" data-i18n-en="Manage subscription">Gestionar suscripción</button>
+            <div class="sub-detail-row">
+              <div class="sub-detail-label" data-i18n-es="Facturación" data-i18n-en="Billing">Facturación</div>
+              <div class="sub-detail-value" id="subBillingCycle">—</div>
+            </div>
+            <div class="sub-detail-row">
+              <div class="sub-detail-label" data-i18n-es="Próxima renovación" data-i18n-en="Next renewal">Próxima renovación</div>
+              <div class="sub-detail-value" id="subNextRenewal">—</div>
+            </div>
+            <div class="sub-detail-row">
+              <div class="sub-detail-label" data-i18n-es="Importe" data-i18n-en="Amount">Importe</div>
+              <div class="sub-detail-value" id="subAmount">—</div>
             </div>
           </div>
+
+          <!-- v0.14.16: estado free -->
+          <div class="sub-free-state" id="subFreeState" style="display:none">
+            <div class="sub-free-info">
+              <div class="sub-free-label" data-i18n-es="Plan actual" data-i18n-en="Current plan">Plan actual</div>
+              <div class="sub-free-plan"><span class="plan-badge free" data-i18n-es="Gratis" data-i18n-en="Free">Gratis</span></div>
+            </div>
+            <div class="sub-free-msg" data-i18n-es="Estás usando la versión gratuita." data-i18n-en="You're on the free plan.">Estás usando la versión gratuita.</div>
+          </div>
+
+          <div class="settings-billing-actions">
+            <button class="btn-3d btn-3d-primary" id="settingsChangePlanBtn" onclick="openUpgradeModal('settings')" style="display:none;padding:8px 14px;border-radius:8px;font-size:.82rem" data-i18n-es="Cambiar plan" data-i18n-en="Change plan">Cambiar plan</button>
+            <button class="btn-3d btn-3d-primary" id="settingsViewPlansBtn" onclick="settingsViewPlans()" style="display:none;padding:8px 14px;border-radius:8px;font-size:.82rem" data-i18n-es="Ver planes →" data-i18n-en="View plans →">Ver planes →</button>
+            <button class="btn-3d btn-3d-secondary" id="settingsManageSubBtn" onclick="settingsManageSub()" style="display:none;padding:8px 14px;border-radius:8px;font-size:.82rem;background:transparent;border:1px solid var(--border);color:var(--text2)" data-i18n-es="Gestionar suscripción" data-i18n-en="Manage subscription">Gestionar suscripción</button>
+          </div>
+          <div class="sub-detail-foot" data-i18n-es="Cambiar plan, cancelar o actualizar tu método de pago." data-i18n-en="Change plan, cancel or update payment method.">Cambiar plan, cancelar o actualizar tu método de pago.</div>
         </div>
 
         <div class="settings-card">
@@ -9061,6 +9508,20 @@
 </div>
 
 <!-- New Project modal -->
+<!-- v0.14.15: First transcribe success modal (Estado 0 → Estado 1) -->
+<div class="overlay" id="firstSuccessOverlay" onclick="if(event.target===this)firstSuccessClose()">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-x" onclick="firstSuccessClose()">✕</button>
+    <div class="first-success-icon" aria-hidden="true">✓</div>
+    <h2 class="first-success-title" data-i18n-es="¡Listo! Tu primera transcripción está guardada." data-i18n-en="Done! Your first transcription is saved.">¡Listo! Tu primera transcripción está guardada.</h2>
+    <div class="first-success-preview" id="firstSuccessPreview"></div>
+    <div class="first-success-cta-row">
+      <button class="first-success-cta-primary" onclick="firstSuccessTransform()" data-i18n-es="Transformar con Hazlo tuyo →" data-i18n-en="Transform with Make it yours →">Transformar con Hazlo tuyo →</button>
+      <button class="first-success-cta-secondary" onclick="firstSuccessViewFull()" data-i18n-es="Ver completa" data-i18n-en="View full">Ver completa</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="newProjectOverlay" onclick="if(event.target===this)closeModal('newProjectOverlay')">
   <div class="modal">
     <button class="modal-x" onclick="closeModal('newProjectOverlay')">✕</button>
@@ -9329,8 +9790,8 @@
     <h2 data-i18n-es="Mejorar plan" data-i18n-en="Upgrade plan">Mejorar plan</h2>
     <p data-i18n-es="Elige el plan que mejor se adapte. Cancela cuando quieras." data-i18n-en="Pick the plan that fits. Cancel anytime.">Elige el plan que mejor se adapte. Cancela cuando quieras.</p>
     <div class="billing-toggle" data-host="upgradeOverlay" style="margin:8px auto 18px">
-      <button type="button" class="billing-toggle-opt on" data-cycle="month" onclick="setBillingCycle('month','upgradeOverlay')" data-i18n-es="Mensual" data-i18n-en="Monthly">Mensual</button>
-      <button type="button" class="billing-toggle-opt" data-cycle="year" onclick="setBillingCycle('year','upgradeOverlay')">
+      <button type="button" class="billing-toggle-opt" data-cycle="month" onclick="setBillingCycle('month','upgradeOverlay')" data-i18n-es="Mensual" data-i18n-en="Monthly">Mensual</button>
+      <button type="button" class="billing-toggle-opt on" data-cycle="year" onclick="setBillingCycle('year','upgradeOverlay')">
         <span data-i18n-es="Anual" data-i18n-en="Annual">Anual</span>
         <span class="billing-toggle-save" data-i18n-es="Ahorra 20%" data-i18n-en="Save 20%">Ahorra 20%</span>
       </button>
@@ -9662,6 +10123,7 @@ const LANGS = {
     "toast.error": "Error",
     "toast.error_connection": "Error de conexión.",
     "toast.transcription_done": "Transcripción completada",
+    "ov_locked_msg": "Transcribe tu primer reel para desbloquear",
     "toast.account_deleted": "Cuenta eliminada",
     "toast.no_text": "Sin texto",
     "toast.error_save": "Error al guardar",
@@ -10040,6 +10502,7 @@ const LANGS = {
     "toast.error_transform": "Error transforming",
     "toast.error": "Error",
     "toast.error_connection": "Connection error.",
+    "ov_locked_msg": "Transcribe your first reel to unlock",
     "toast.transcription_done": "Transcription done",
     "toast.account_deleted": "Account deleted",
     "toast.no_text": "No text",
@@ -10487,9 +10950,11 @@ function renderProfAssistants() {
 }
 
 // ── Init ─────────────────────────────────────────────────────────────────
-let billingCycle = "month";
+// v0.14.16: default anual (mejor conversión LTV).
+let billingCycle = "year";
 
 function setBillingCycle(cycle, hostId) {
+  const prev = billingCycle;
   billingCycle = (cycle === "year") ? "year" : "month";
   document.querySelectorAll(`.billing-toggle[data-host="${hostId}"] .billing-toggle-opt`).forEach(b => {
     b.classList.toggle("on", b.dataset.cycle === billingCycle);
@@ -10500,6 +10965,9 @@ function setBillingCycle(cycle, hostId) {
   });
   initPrices();
   if (typeof renderUpgradeCards === "function") renderUpgradeCards();
+  if (prev !== billingCycle) {
+    try { window.posthog && window.posthog.capture("pricing_toggle_changed", { cycle: billingCycle === "year" ? "yearly" : "monthly" }); } catch (e) {}
+  }
 }
 
 function initPrices() {
@@ -12222,7 +12690,8 @@ function ovGreetingName() {
 }
 function ovRenderGreeting() {
   const root = document.getElementById("ovGreeting");
-  if (!root) return;
+  const rootEmpty = document.getElementById("ovGreetingEmpty");
+  if (!root && !rootEmpty) return;
   const es = (document.documentElement.lang || "es") === "es";
   const name = ovGreetingName(); // "" si no hay user
   let dateStr = "";
@@ -12231,21 +12700,19 @@ function ovRenderGreeting() {
   } catch (e) {}
 
   const hi = es ? "Hola" : "Hi";
-  // Construye el saludo sin comas/puntos sueltos
-  // - con nombre + fecha: "Hola, David. Sábado 26 de abril."
-  // - solo nombre:        "Hola, David."
-  // - solo fecha:         "Hola. Sábado 26 de abril."
-  // - sin nada:           "Hola."
   const parts = [];
   if (name) {
     parts.push(`${hi}, <em>${name.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</em>.`);
   } else {
     parts.push(`${hi}.`);
   }
-  if (dateStr) {
-    parts.push(`<span class="ov-h1-date">${dateStr.charAt(0).toUpperCase()}${dateStr.slice(1)}.</span>`);
+  // Estado 1: greeting + date. Estado 0: only greeting (sub explicit "Empieza por…")
+  if (root) {
+    const partsEstado1 = parts.slice();
+    if (dateStr) partsEstado1.push(`<span class="ov-h1-date">${dateStr.charAt(0).toUpperCase()}${dateStr.slice(1)}.</span>`);
+    root.innerHTML = partsEstado1.join(" ");
   }
-  root.innerHTML = parts.join(" ");
+  if (rootEmpty) rootEmpty.innerHTML = parts.join(" ");
 }
 
 // v0.14.5b — relative time formatter (es/en)
@@ -12308,6 +12775,37 @@ async function loadOverviewMiniGrid() {
     if (!res.ok) return;
     d = await res.json();
   } catch (e) { return; }
+
+  // v0.14.15: Estado 0 vs Estado 1 swap based on transcribe.total
+  const transcribeTotal = (d.transcribe && d.transcribe.total) || 0;
+  window._userStats = window._userStats || {};
+  // Use existing in-memory count if user just transcribed (race-safe vs Celery write lag)
+  if ((window._userStats.transcriptions || 0) > transcribeTotal) {
+    // local count higher → trust local
+  } else {
+    window._userStats.transcriptions = transcribeTotal;
+  }
+  if (window._userStats.transcriptions === 0) {
+    const empty = document.getElementById("ovEmptyState");
+    const grid = document.getElementById("ovGrid");
+    const heroWrap = document.getElementById("ovHeroEstado0");
+    const heroDefault = document.getElementById("ovHeroEstado1");
+    if (empty) empty.style.display = "";
+    if (grid) grid.style.display = "none";
+    if (heroWrap) heroWrap.style.display = "";
+    if (heroDefault) heroDefault.style.display = "none";
+    try { window.posthog && window.posthog.capture("resumen_empty_state_viewed", {}); } catch (e) {}
+    return; // don't render the grid bodies; they're hidden
+  } else {
+    const empty = document.getElementById("ovEmptyState");
+    const grid = document.getElementById("ovGrid");
+    const heroWrap = document.getElementById("ovHeroEstado0");
+    const heroDefault = document.getElementById("ovHeroEstado1");
+    if (empty) empty.style.display = "none";
+    if (grid) grid.style.display = "";
+    if (heroWrap) heroWrap.style.display = "none";
+    if (heroDefault) heroDefault.style.display = "";
+  }
 
   const es = (document.documentElement.lang || "es") === "es";
   const setBody = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
@@ -12518,7 +13016,7 @@ function profTab(tab, pushHistory) {
 
   // Load data for specific tabs
   if (tab === "scripts") { readScrProjectFilterFromUrl(); renderProfScripts(); }
-  if (tab === "settings") { highlightActiveLang(); applyTheme(themePref); }
+  if (tab === "settings") { highlightActiveLang(); applyTheme(themePref); loadSubscriptionInfo(); }
   if (tab === "transc") renderProfTransc();
   if (tab === "projects") renderProfProjects();
   if (tab === "assistants") renderProfAssistants();
@@ -12818,18 +13316,17 @@ function renderProfTransc() {
 }
 
 // v0.14.7 — Transcribir desde el panel (input embebido)
-async function doTranscribeFromPanel() {
-  const input = document.getElementById("panelUrlInput");
-  const langSel = document.getElementById("panelLang");
-  const btn = document.getElementById("panelTranscribeBtn");
-  const statusEl = document.getElementById("panelTranscribeStatus");
-  if (!input || !btn || !statusEl) return;
-  const url = (input.value || "").trim();
+// v0.14.15: shared transcribe flow used by both Transcribir panel and Resumen empty state.
+// Required opts: { inputEl, btnEl, statusEl, onSuccess }. Optional: { langEl, onError }.
+// onSuccess receives ({ url, taskResult }). taskResult is the /task/<id> success payload.
+async function doTranscribeShared({ inputEl, langEl, btnEl, statusEl, onSuccess, onError }) {
+  if (!inputEl || !btnEl || !statusEl) return;
+  const url = (inputEl.value || "").trim();
   if (!url) { showToast(t("toast.paste_url")); return; }
   const validRx = /^https?:\/\/(www\.)?(instagram\.com\/(reel|p|tv)\/[\w-]+|((vm|vt)\.)?tiktok\.com\/)/i;
   if (!validRx.test(url)) { showToast(pickRandomError()); return; }
 
-  btn.disabled = true;
+  btnEl.disabled = true;
   statusEl.style.display = "";
   statusEl.classList.remove("is-error", "is-ok");
   const es = (document.documentElement.lang || "es") === "es";
@@ -12839,45 +13336,40 @@ async function doTranscribeFromPanel() {
     const res = await fetch("/transcribe", {
       method: "POST", headers: { "Content-Type": "application/json" },
       credentials: "same-origin",
-      body: JSON.stringify({ url, language: langSel ? langSel.value : "" }),
+      body: JSON.stringify({ url, language: langEl ? langEl.value : "" }),
     });
     const data = await res.json();
     if (!res.ok) {
       statusEl.classList.add("is-error");
       statusEl.innerHTML = `<span>${esc(data.error || "Error")}</span>`;
-      btn.disabled = false;
+      btnEl.disabled = false;
+      if (onError) onError({ stage: "submit", error: data.error || "submit_failed" });
       return;
     }
-    pollPanelTask(data.task_id, statusEl, () => {
-      input.value = "";
-      btn.disabled = false;
-      statusEl.classList.add("is-ok");
-      statusEl.innerHTML = `<span>${es ? "✓ Transcripción guardada" : "✓ Transcription saved"}</span>`;
-      setTimeout(() => { statusEl.style.display = "none"; statusEl.classList.remove("is-ok"); }, 2200);
-      if (typeof loadHistory === "function") {
-        loadHistory().then(() => { if (typeof renderProfTransc === "function") renderProfTransc(); });
-      }
-    });
+    pollSharedTask(data.task_id, statusEl, btnEl, (taskResult) => {
+      if (onSuccess) onSuccess({ url, taskResult });
+    }, onError);
   } catch (e) {
     statusEl.classList.add("is-error");
     statusEl.innerHTML = `<span>${(document.documentElement.lang === "en") ? "Network error" : "Error de red"}</span>`;
-    btn.disabled = false;
+    btnEl.disabled = false;
+    if (onError) onError({ stage: "network", error: "network_error" });
   }
 }
 
-async function pollPanelTask(taskId, statusEl, onDone) {
+async function pollSharedTask(taskId, statusEl, btnEl, onDone, onError) {
   const start = Date.now();
   const es = (document.documentElement.lang || "es") === "es";
   while (Date.now() - start < 90000) {
     try {
       const r = await fetch(`/task/${taskId}`);
       const d = await r.json();
-      if (d.state === "success") { onDone(); return; }
-      if (d.state === "failure") {
+      if (d.state === "success") { onDone(d); return; }
+      if (d.state === "failure" || d.state === "error") {
         statusEl.classList.add("is-error");
         statusEl.innerHTML = `<span>${esc(d.error || "Error")}</span>`;
-        const btn = document.getElementById("panelTranscribeBtn");
-        if (btn) btn.disabled = false;
+        if (btnEl) btnEl.disabled = false;
+        if (onError) onError({ stage: "task", error: d.error || "task_failed" });
         return;
       }
       if (d.step) {
@@ -12889,8 +13381,134 @@ async function pollPanelTask(taskId, statusEl, onDone) {
   }
   statusEl.classList.add("is-error");
   statusEl.innerHTML = `<span>${es ? "Tardó demasiado. Inténtalo de nuevo." : "Took too long. Try again."}</span>`;
-  const btn = document.getElementById("panelTranscribeBtn");
-  if (btn) btn.disabled = false;
+  if (btnEl) btnEl.disabled = false;
+  if (onError) onError({ stage: "timeout", error: "timeout" });
+}
+
+async function doTranscribeFromPanel() {
+  return doTranscribeShared({
+    inputEl: document.getElementById("panelUrlInput"),
+    langEl: document.getElementById("panelLang"),
+    btnEl: document.getElementById("panelTranscribeBtn"),
+    statusEl: document.getElementById("panelTranscribeStatus"),
+    onSuccess: () => {
+      const inputEl = document.getElementById("panelUrlInput");
+      const btnEl = document.getElementById("panelTranscribeBtn");
+      const statusEl = document.getElementById("panelTranscribeStatus");
+      const es = (document.documentElement.lang || "es") === "es";
+      if (inputEl) inputEl.value = "";
+      if (btnEl) btnEl.disabled = false;
+      if (statusEl) {
+        statusEl.classList.add("is-ok");
+        statusEl.innerHTML = `<span>${es ? "✓ Transcripción guardada" : "✓ Transcription saved"}</span>`;
+        setTimeout(() => { statusEl.style.display = "none"; statusEl.classList.remove("is-ok"); }, 2200);
+      }
+      if (typeof loadHistory === "function") {
+        loadHistory().then(() => { if (typeof renderProfTransc === "function") renderProfTransc(); });
+      }
+    },
+  });
+}
+
+// v0.14.15: Resumen empty-state transcribe. Differs from panel: shows success modal
+// instead of inline "saved" feedback, and increments client-side count to swap to Estado 1.
+const EXAMPLE_REEL_URL = "https://www.instagram.com/reel/DWtwkd7CF3D/";
+
+async function doTranscribeFromOverview() {
+  try { window.posthog && window.posthog.capture("transcribe_from_resumen_started", {}); } catch (e) {}
+  return doTranscribeShared({
+    inputEl: document.getElementById("ovEmptyUrlInput"),
+    langEl: document.getElementById("ovEmptyLang"),
+    btnEl: document.getElementById("ovEmptyTranscribeBtn"),
+    statusEl: document.getElementById("ovEmptyStatus"),
+    onSuccess: ({ taskResult }) => {
+      // In-memory increment — avoids race with Celery/DB lag if we refetch
+      window._userStats = window._userStats || {};
+      window._userStats.transcriptions = (window._userStats.transcriptions || 0) + 1;
+
+      const txt = (taskResult.text || "").trim();
+      const preview = txt.split(/(?<=[.!?])\s+/).slice(0, 2).join(" ").slice(0, 260);
+      const previewEl = document.getElementById("firstSuccessPreview");
+      if (previewEl) previewEl.textContent = preview + (txt.length > preview.length ? "…" : "");
+      window._lastTranscribedText = txt;
+
+      const btnEl = document.getElementById("ovEmptyTranscribeBtn");
+      const statusEl = document.getElementById("ovEmptyStatus");
+      const inputEl = document.getElementById("ovEmptyUrlInput");
+      if (btnEl) btnEl.disabled = false;
+      if (statusEl) statusEl.style.display = "none";
+      if (inputEl) inputEl.value = "";
+
+      // Refresh history in background so Estado 1 has the new transcription when shown
+      if (typeof loadHistory === "function") {
+        loadHistory().then(() => { if (typeof renderProfTransc === "function") renderProfTransc(); });
+      }
+
+      try { window.posthog && window.posthog.capture("transcribe_from_resumen_completed", {}); } catch (e) {}
+      try { window.posthog && window.posthog.capture("success_modal_viewed", {}); } catch (e) {}
+      openModal("firstSuccessOverlay");
+    },
+    onError: (info) => {
+      try { window.posthog && window.posthog.capture("transcribe_from_resumen_failed", { error_type: info.error || "unknown" }); } catch (e) {}
+    },
+  });
+}
+
+function useExampleReel() {
+  const inputEl = document.getElementById("ovEmptyUrlInput");
+  if (inputEl) {
+    inputEl.value = EXAMPLE_REEL_URL;
+    inputEl.focus();
+  }
+  try { window.posthog && window.posthog.capture("example_reel_clicked", {}); } catch (e) {}
+}
+
+function showLockedTooltip(cardName) {
+  showToast(t("ov_locked_msg"));
+  try { window.posthog && window.posthog.capture("locked_card_clicked", { card_name: cardName }); } catch (e) {}
+}
+
+function firstSuccessTransform() {
+  try { window.posthog && window.posthog.capture("success_modal_cta_clicked", { cta: "transform" }); } catch (e) {}
+  closeModal("firstSuccessOverlay");
+  // Pre-load text into adapt textarea + reveal
+  const txt = window._lastTranscribedText || "";
+  const adaptInput = document.getElementById("adaptInput");
+  if (adaptInput) adaptInput.value = txt;
+  if (typeof revealAdaptSection === "function") revealAdaptSection({ focus: true });
+  ovSwapToEstado1();
+}
+
+function firstSuccessViewFull() {
+  try { window.posthog && window.posthog.capture("success_modal_cta_clicked", { cta: "view_full" }); } catch (e) {}
+  closeModal("firstSuccessOverlay");
+  if (typeof profTab === "function") profTab("transc");
+  // Scroll to most recent transcription (top of list, id `t-${histCache[0].id}`)
+  setTimeout(() => {
+    const first = (typeof histCache !== "undefined" && histCache.length) ? histCache[0] : null;
+    if (first) {
+      const el = document.getElementById("t-" + first.id);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, 250);
+  ovSwapToEstado1();
+}
+
+function firstSuccessClose() {
+  closeModal("firstSuccessOverlay");
+  ovSwapToEstado1();
+}
+
+// Swap Resumen Estado 0 → Estado 1 in-place (no refetch — local increment used)
+function ovSwapToEstado1() {
+  const empty = document.getElementById("ovEmptyState");
+  const grid = document.getElementById("ovGrid");
+  const heroWrap = document.getElementById("ovHeroEstado0");
+  const heroDefault = document.getElementById("ovHeroEstado1");
+  if (empty) empty.style.display = "none";
+  if (grid) grid.style.display = "";
+  if (heroWrap) heroWrap.style.display = "none";
+  if (heroDefault) heroDefault.style.display = "";
 }
 
 function scrollTranscHashIntoView() {
@@ -14328,8 +14946,19 @@ async function developIdeaNow(id) {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ language: currentLang }),
     });
-    if (res.ok) { showToast(t("ideas.developed_toast")); await loadIdeas(); }
-    else { const d = await res.json(); showToast(d.error || "Error"); }
+    if (res.ok) {
+      const d = await res.json().catch(() => ({}));
+      // v0.14.15a: backend devuelve 200 con fallback="draft" si el LLM truncó JSON
+      if (d && d.fallback === "draft") {
+        showToast(d.message || t("toast.error"));
+      } else {
+        showToast(t("ideas.developed_toast"));
+      }
+      await loadIdeas();
+    } else {
+      const d = await res.json();
+      showToast(d.error || "Error");
+    }
   } catch { showToast(t("toast.error_connection")); }
 }
 
@@ -17157,6 +17786,114 @@ async function manageSub() {
   const d = await res.json();
   if (!res.ok) { showToast(d.error || "Error"); return; }
   window.location.href = d.url;
+}
+
+// v0.14.16 — Subscription panel (Settings)
+const PLAN_LABELS = {
+  es: { free: "Gratis", pro: "Pro", creator: "Creator", agency: "Agency" },
+  en: { free: "Free",   pro: "Pro", creator: "Creator", agency: "Agency" },
+};
+
+function planLabel(plan) {
+  const lng = (document.documentElement.lang || "es") === "es" ? "es" : "en";
+  return (PLAN_LABELS[lng] && PLAN_LABELS[lng][plan]) || plan;
+}
+
+function fmtRenewalDate(iso, lng) {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleDateString(lng === "es" ? "es-ES" : "en-US",
+      { day: "2-digit", month: "short", year: "numeric" });
+  } catch (e) { return "—"; }
+}
+
+function fmtSubAmount(cents, currency, cycle, lng) {
+  if (cents == null) return "—";
+  const sym = (currency || "eur").toLowerCase() === "usd" ? "$" : "€";
+  const val = (cents / 100).toFixed(2).replace(".", lng === "es" ? "," : ".");
+  const per = cycle === "yearly"
+    ? (lng === "es" ? "/año" : "/yr")
+    : (lng === "es" ? "/mes" : "/mo");
+  return sym + val + per;
+}
+
+async function loadSubscriptionInfo() {
+  const grid = document.getElementById("subDetailGrid");
+  const free = document.getElementById("subFreeState");
+  const banner = document.getElementById("subCancelBanner");
+  const bannerText = document.getElementById("subCancelBannerText");
+  const badge = document.getElementById("settingsPlanBadge");
+  const cycleEl = document.getElementById("subBillingCycle");
+  const renewalEl = document.getElementById("subNextRenewal");
+  const amountEl = document.getElementById("subAmount");
+  const changeBtn = document.getElementById("settingsChangePlanBtn");
+  const viewBtn = document.getElementById("settingsViewPlansBtn");
+  const manageBtn = document.getElementById("settingsManageSubBtn");
+  if (!grid || !free) return;
+
+  let d;
+  try {
+    const r = await fetch("/api/me/subscription", { credentials: "same-origin" });
+    if (!r.ok) return;
+    d = await r.json();
+  } catch (e) { return; }
+
+  const lng = (document.documentElement.lang || "es") === "es" ? "es" : "en";
+  const plan = d.plan || "free";
+
+  try { window.posthog && window.posthog.capture("subscription_view_loaded", { plan }); } catch (e) {}
+
+  if (plan === "free" || !d.has_stripe_sub) {
+    grid.style.display = "none";
+    banner.style.display = "none";
+    free.style.display = "";
+    if (changeBtn) changeBtn.style.display = "none";
+    if (manageBtn) manageBtn.style.display = "none";
+    if (viewBtn) viewBtn.style.display = "";
+    return;
+  }
+
+  // Paid: render detail
+  grid.style.display = "";
+  free.style.display = "none";
+  if (badge) {
+    badge.textContent = planLabel(plan);
+    badge.className = "plan-badge " + plan;
+  }
+  if (cycleEl) {
+    cycleEl.textContent = d.billing_cycle === "yearly"
+      ? (lng === "es" ? "Anual" : "Yearly")
+      : (d.billing_cycle === "monthly" ? (lng === "es" ? "Mensual" : "Monthly") : "—");
+  }
+  if (renewalEl) renewalEl.textContent = fmtRenewalDate(d.next_renewal_date, lng);
+  if (amountEl) amountEl.textContent = fmtSubAmount(d.amount_cents, d.currency, d.billing_cycle, lng);
+
+  if (d.cancel_at_period_end) {
+    banner.style.display = "";
+    if (bannerText) {
+      const dateStr = fmtRenewalDate(d.next_renewal_date, lng);
+      bannerText.textContent = lng === "es"
+        ? `Tu suscripción está cancelada y terminará el ${dateStr}. Reactiva desde Gestionar suscripción.`
+        : `Your subscription is canceled and will end on ${dateStr}. Reactivate from Manage subscription.`;
+    }
+  } else {
+    banner.style.display = "none";
+  }
+
+  if (changeBtn) changeBtn.style.display = "";
+  if (manageBtn) manageBtn.style.display = "";
+  if (viewBtn) viewBtn.style.display = "none";
+}
+
+function settingsManageSub() {
+  try { window.posthog && window.posthog.capture("manage_subscription_clicked", {}); } catch (e) {}
+  manageSub();
+}
+
+function settingsViewPlans() {
+  try { window.posthog && window.posthog.capture("view_plans_clicked", {}); } catch (e) {}
+  // Open upgrade modal in-app (sin navegar fuera del workspace)
+  if (typeof openUpgradeModal === "function") openUpgradeModal("settings_free");
 }
 
 // ── Upgrade modal ─────────────────────────────────────────────────────────
