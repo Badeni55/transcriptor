@@ -2034,7 +2034,7 @@ def api_me_overview():
     def _w_transcribe():
         try:
             r = (db.table("transcriptions")
-                   .select("id, url, text, platform, thumbnail_b64, created_at", count="exact")
+                   .select("id, url, text, platform, thumbnail_b64, created_at, views", count="exact")
                    .eq("user_id", uid)
                    .order("created_at", desc=True)
                    .limit(1)
@@ -2044,10 +2044,13 @@ def api_me_overview():
             if r.data:
                 row = r.data[0]
                 last = {
+                    "id": row.get("id"),
+                    "url": row.get("url"),
                     "title": _derive_title_from_text(row.get("text") or ""),
                     "platform": row.get("platform"),
                     "thumbnail_b64": row.get("thumbnail_b64"),
                     "created_at": row.get("created_at"),
+                    "views": row.get("views"),
                 }
             return {"total": total, "last": last}
         except Exception as e:
@@ -2102,6 +2105,7 @@ def api_me_overview():
             has_profile = bool(prof_r.data)
             sparkline = []
             avg_views = 0
+            top_reel = None
             if has_profile:
                 vids_r = (db.table("ig_videos")
                             .select("views, published_at")
@@ -2115,14 +2119,29 @@ def api_me_overview():
                 sparkline = [int(v.get("views") or 0) for v in rows]
                 if sparkline:
                     avg_views = sum(sparkline) // len(sparkline)
+                top_r = (db.table("ig_videos")
+                           .select("caption, views, published_at")
+                           .eq("user_id", uid)
+                           .order("views", desc=True)
+                           .limit(1)
+                           .execute())
+                if top_r.data:
+                    top = top_r.data[0]
+                    caption = (top.get("caption") or "").strip()
+                    top_reel = {
+                        "caption_snippet": caption[:40] + ("…" if len(caption) > 40 else ""),
+                        "views": int(top.get("views") or 0),
+                        "published_at": top.get("published_at"),
+                    }
             return {
                 "has_profile": has_profile,
                 "sparkline": sparkline,
                 "avg_views_recent": avg_views,
+                "top_reel": top_reel,
             }
         except Exception as e:
             logger.warning("ov_metrics error: %s", e)
-            return {"has_profile": False, "sparkline": [], "avg_views_recent": 0}
+            return {"has_profile": False, "sparkline": [], "avg_views_recent": 0, "top_reel": None}
 
     def _w_assistants():
         try:
@@ -2186,6 +2205,32 @@ def api_me_overview():
             logger.warning("ov_team error: %s", e)
             return {"active": 0, "pending": 0, "members": []}
 
+    def _w_adapt():
+        try:
+            total_r = (db.table("saved_scripts")
+                         .select("id", count="exact")
+                         .eq("user_id", uid)
+                         .execute())
+            last_r = (db.table("saved_scripts")
+                        .select("id, style, content, created_at")
+                        .eq("user_id", uid)
+                        .order("created_at", desc=True)
+                        .limit(1)
+                        .execute())
+            last = None
+            if last_r.data:
+                row = last_r.data[0]
+                content = (row.get("content") or "").strip()
+                last = {
+                    "text_snippet": content[:60] + ("…" if len(content) > 60 else ""),
+                    "style": row.get("style") or "",
+                    "created_at": row.get("created_at"),
+                }
+            return {"total": total_r.count or 0, "last": last}
+        except Exception as e:
+            logger.warning("ov_adapt error: %s", e)
+            return {"total": 0, "last": None}
+
     tasks = {
         "transcribe": _w_transcribe,
         "ideas":      _w_ideas,
@@ -2194,6 +2239,7 @@ def api_me_overview():
         "assistants": _w_assistants,
         "scripts":    _w_scripts,
         "team":       _w_team,
+        "adapt":      _w_adapt,
     }
     out: dict = {}
     with ThreadPoolExecutor(max_workers=len(tasks)) as ex:
@@ -2205,8 +2251,7 @@ def api_me_overview():
                 logger.warning("ov_task %s timeout/error: %s", k, e)
                 out[k] = None
 
-    # Hazlo tuyo / teleprompter — honestos-vacíos por ahora (deuda v0.15)
-    out["adapt"] = None
+    # teleprompter — sin tabla todavía
     out["teleprompter"] = None
 
     _ov_set_cached(uid, out)

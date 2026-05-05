@@ -3236,11 +3236,50 @@
 
     /* v0.14.5b — Overview rich widgets */
     .ov-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr);
+      display: grid; grid-template-columns: repeat(6, 1fr);
       gap: 14px; margin: 8px 0 28px;
     }
-    @media (max-width: 1024px) { .ov-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 720px)  { .ov-grid { grid-template-columns: 1fr; gap: 10px; } }
+    /* v0.14.18: jerarquía F1/F2/F3 */
+    .ov-card-f1 { grid-column: 1 / -1; }
+    .ov-card-f2 { grid-column: span 3; }
+    .ov-card-f3 { grid-column: span 2; }
+    @media (max-width: 1024px) {
+      .ov-grid { grid-template-columns: repeat(2, 1fr); }
+      .ov-card-f1 { grid-column: 1 / -1; }
+      .ov-card-f2 { grid-column: 1 / -1; }
+      .ov-card-f3 { grid-column: span 1; }
+    }
+    @media (max-width: 720px) {
+      .ov-grid { grid-template-columns: 1fr; gap: 10px; }
+      .ov-card-f1, .ov-card-f2, .ov-card-f3 { grid-column: 1 / -1; }
+    }
+    /* F1: input row dentro de la card */
+    .ov-hero-input-row { display: flex; gap: 8px; align-items: center; margin: 12px 0 8px; flex-wrap: wrap; }
+    .ov-hero-input-wrap { flex: 1; min-width: 180px; position: relative; }
+    .ov-hero-input-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: .9rem; pointer-events: none; }
+    .ov-hero-input {
+      width: 100%; padding: 8px 10px 8px 32px; border-radius: 8px;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+      color: var(--text); font-size: .84rem; outline: none;
+    }
+    .ov-hero-input:focus { border-color: rgba(239,106,41,.6); }
+    .ov-hero-btns { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .ov-hero-action-btn {
+      padding: 6px 14px; border-radius: 8px; font-size: .8rem; font-weight: 600;
+      background: rgba(var(--ov-acc),.18); border: 1px solid rgba(var(--ov-acc),.3);
+      color: rgb(var(--ov-acc)); cursor: pointer; transition: background .15s;
+    }
+    .ov-hero-action-btn:hover { background: rgba(var(--ov-acc),.28); }
+    .ov-hero-action-btn--sec { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.12); color: var(--text2); }
+    .ov-hero-action-btn--sec:hover { background: rgba(255,255,255,.1); }
+    .ov-hero-status { font-size: .78rem; color: var(--text3); margin-top: 4px; }
+    /* Hazlo tuyo: lista de estilos */
+    .ov-adapt-styles { font-size: .72rem; color: var(--text3); margin-top: 6px; }
+    /* Métricas: top reel */
+    .ov-top-reel { margin-top: 8px; }
+    [data-theme="light"] .ov-hero-input {
+      background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.12); color: var(--text);
+    }
     .ov-card {
       position: relative;
       display: flex; flex-direction: column;
@@ -8937,24 +8976,44 @@
           </div>
         </div>
 
-        <!-- v0.14.5b: 9 rich widgets (data via /api/me/overview).
-             Subs ESTÁTICAS descriptivas; counts viven en body via JS. -->
+        <!-- v0.14.18: jerarquía F1/F2/F3 con datos reales. Un solo call /api/me/overview. -->
         <div class="ov-grid" id="ovGrid">
 
-          <!-- 1. Transcribir -->
-          <button type="button" class="ov-card" style="--ov-acc:239,106,41" onclick="profTab('transc')">
+          <!-- F1: Transcribir — hero full-width con input + última transcripción -->
+          <div class="ov-card ov-card-f1" style="--ov-acc:239,106,41">
             <div class="ov-card-head">
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-transcribir.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
-                <div class="ov-card-label" data-i18n-es="Transcribir" data-i18n-en="Transcribe">Transcribir</div>
-                <div class="ov-card-sub" data-i18n-es="Convierte reels en texto" data-i18n-en="Turn reels into text">Convierte reels en texto</div>
+                <div class="ov-card-label" data-i18n-es="EMPIEZA AQUÍ" data-i18n-en="START HERE">EMPIEZA AQUÍ</div>
+                <div class="ov-card-sub" data-i18n-es="Transcribe lo siguiente." data-i18n-en="Transcribe next.">Transcribe lo siguiente.</div>
               </div>
             </div>
+            <div class="ov-hero-input-row">
+              <div class="ov-hero-input-wrap">
+                <span class="ov-hero-input-icon" aria-hidden="true">🔗</span>
+                <input id="ovHeroUrlInput" type="url" class="ov-hero-input ph-no-capture" data-clarity-mask="true"
+                       data-i18n-placeholder-es="https://www.instagram.com/reel/… · https://www.tiktok.com/…"
+                       data-i18n-placeholder-en="https://www.instagram.com/reel/… · https://www.tiktok.com/…"
+                       placeholder="https://www.instagram.com/reel/…"
+                       autocomplete="off" spellcheck="false"
+                       onkeydown="if(event.key==='Enter'){event.preventDefault();doTranscribeFromHero();}" />
+              </div>
+              <select id="ovHeroLang" class="ov-empty-lang" aria-label="Language">
+                <option value="" data-i18n-es="✨ Auto" data-i18n-en="✨ Auto">✨ Auto</option>
+                <option value="es" data-i18n-es="Español" data-i18n-en="Spanish">Español</option>
+                <option value="en" data-i18n-es="Inglés" data-i18n-en="English">English</option>
+                <option value="fr" data-i18n-es="Francés" data-i18n-en="French">French</option>
+                <option value="pt" data-i18n-es="Portugués" data-i18n-en="Portuguese">Portuguese</option>
+              </select>
+              <button id="ovHeroTranscribeBtn" class="ov-empty-btn" onclick="doTranscribeFromHero()"
+                      data-i18n-es="✦ Transcribir →" data-i18n-en="✦ Transcribe →">✦ Transcribir →</button>
+            </div>
+            <div id="ovHeroStatus" class="ov-hero-status" style="display:none"></div>
             <div class="ov-card-body" id="ovBodyTransc"><div class="ov-skel"></div></div>
-          </button>
+          </div>
 
-          <!-- 2. Hazlo tuyo (honesto-vacío hasta v0.15) -->
-          <button type="button" class="ov-card" style="--ov-acc:192,132,252" onclick="closeProfile();revealAdaptSection({focus:true})">
+          <!-- F2a: Hazlo tuyo — con datos reales de saved_scripts -->
+          <button type="button" class="ov-card ov-card-f2" style="--ov-acc:192,132,252" onclick="closeProfile();revealAdaptSection({focus:true})">
             <div class="ov-card-head">
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-adapt.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
@@ -8962,37 +9021,11 @@
                 <div class="ov-card-sub" data-i18n-es="Reescribe un guion" data-i18n-en="Rewrite a script">Reescribe un guion</div>
               </div>
             </div>
-            <div class="ov-card-body">
-              <div class="ov-empty" data-i18n-es="Viral · LinkedIn · Historia · Hooks · Custom" data-i18n-en="Viral · LinkedIn · Story · Hooks · Custom">Viral · LinkedIn · Historia · Hooks · Custom</div>
-            </div>
+            <div class="ov-card-body" id="ovBodyHazloTuyo"><div class="ov-skel"></div></div>
           </button>
 
-          <!-- 3. Ideas -->
-          <button type="button" class="ov-card" style="--ov-acc:255,107,61" onclick="profTab('ideas')">
-            <div class="ov-card-head">
-              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-ideas.svg') }}" alt="" aria-hidden="true">
-              <div class="ov-card-meta">
-                <div class="ov-card-label" data-i18n-es="Ideas" data-i18n-en="Ideas">Ideas</div>
-                <div class="ov-card-sub" data-i18n-es="Captura cualquier chispa" data-i18n-en="Capture any spark">Captura cualquier chispa</div>
-              </div>
-            </div>
-            <div class="ov-card-body" id="ovBodyIdeas"><div class="ov-skel"></div></div>
-          </button>
-
-          <!-- 4. Proyectos -->
-          <button type="button" class="ov-card" style="--ov-acc:200,153,104" onclick="profTab('projects')">
-            <div class="ov-card-head">
-              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-proyectos.svg') }}" alt="" aria-hidden="true">
-              <div class="ov-card-meta">
-                <div class="ov-card-label" data-i18n-es="Proyectos" data-i18n-en="Projects">Proyectos</div>
-                <div class="ov-card-sub" data-i18n-es="Organiza tu trabajo" data-i18n-en="Organize your work">Organiza tu trabajo</div>
-              </div>
-            </div>
-            <div class="ov-card-body" id="ovBodyProjects"><div class="ov-skel"></div></div>
-          </button>
-
-          <!-- 5. Métricas -->
-          <button type="button" class="ov-card" style="--ov-acc:93,202,165" onclick="profTab('metrics')">
+          <!-- F2b: Métricas — sparkline + top reel -->
+          <button type="button" class="ov-card ov-card-f2" style="--ov-acc:93,202,165" onclick="profTab('metrics')">
             <div class="ov-card-head">
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-metricas.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
@@ -9003,8 +9036,8 @@
             <div class="ov-card-body" id="ovBodyMetrics"><div class="ov-skel"></div></div>
           </button>
 
-          <!-- 6. Asistentes -->
-          <button type="button" class="ov-card" style="--ov-acc:244,199,94" onclick="profTab('assistants')">
+          <!-- F3: 6 cards pequeñas — Asistentes · Equipo · Guiones · Ideas · Proyectos · Teleprompter -->
+          <button type="button" class="ov-card ov-card-f3" style="--ov-acc:244,199,94" onclick="profTab('assistants')">
             <div class="ov-card-head">
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-asistentes.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
@@ -9015,8 +9048,18 @@
             <div class="ov-card-body" id="ovBodyAssistants"><div class="ov-skel"></div></div>
           </button>
 
-          <!-- 7. Guiones -->
-          <button type="button" class="ov-card" style="--ov-acc:239,106,41" onclick="profTab('scripts')">
+          <button type="button" class="ov-card ov-card-f3" id="ovCardTeam" style="--ov-acc:192,132,252" onclick="ovOpenTeam()">
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-equipo.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Equipo" data-i18n-en="Team">Equipo</div>
+                <div class="ov-card-sub" data-i18n-es="Trabaja con tu gente" data-i18n-en="Work with your team">Trabaja con tu gente</div>
+              </div>
+            </div>
+            <div class="ov-card-body" id="ovBodyTeam"><div class="ov-skel"></div></div>
+          </button>
+
+          <button type="button" class="ov-card ov-card-f3" style="--ov-acc:239,106,41" onclick="profTab('scripts')">
             <div class="ov-card-head">
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-scripts.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
@@ -9027,8 +9070,29 @@
             <div class="ov-card-body" id="ovBodyScripts"><div class="ov-skel"></div></div>
           </button>
 
-          <!-- 8. Teleprompter (no tabla teleprompter_recordings — layout simple) -->
-          <button type="button" class="ov-card" style="--ov-acc:93,202,165" onclick="openTeleprompterPicker()">
+          <button type="button" class="ov-card ov-card-f3" style="--ov-acc:255,107,61" onclick="profTab('ideas')">
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-ideas.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Ideas" data-i18n-en="Ideas">Ideas</div>
+                <div class="ov-card-sub" data-i18n-es="Captura cualquier chispa" data-i18n-en="Capture any spark">Captura cualquier chispa</div>
+              </div>
+            </div>
+            <div class="ov-card-body" id="ovBodyIdeas"><div class="ov-skel"></div></div>
+          </button>
+
+          <button type="button" class="ov-card ov-card-f3" style="--ov-acc:200,153,104" onclick="profTab('projects')">
+            <div class="ov-card-head">
+              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-proyectos.svg') }}" alt="" aria-hidden="true">
+              <div class="ov-card-meta">
+                <div class="ov-card-label" data-i18n-es="Proyectos" data-i18n-en="Projects">Proyectos</div>
+                <div class="ov-card-sub" data-i18n-es="Organiza tu trabajo" data-i18n-en="Organize your work">Organiza tu trabajo</div>
+              </div>
+            </div>
+            <div class="ov-card-body" id="ovBodyProjects"><div class="ov-skel"></div></div>
+          </button>
+
+          <button type="button" class="ov-card ov-card-f3" style="--ov-acc:93,202,165" onclick="openTeleprompterPicker()">
             <div class="ov-card-head">
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-teleprompter.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
@@ -9039,18 +9103,6 @@
             <div class="ov-card-body">
               <div class="ov-empty" data-i18n-es="Cualquier guion → cámara" data-i18n-en="Any script → camera">Cualquier guion → cámara</div>
             </div>
-          </button>
-
-          <!-- 9. Equipo -->
-          <button type="button" class="ov-card" id="ovCardTeam" style="--ov-acc:192,132,252" onclick="ovOpenTeam()">
-            <div class="ov-card-head">
-              <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-equipo.svg') }}" alt="" aria-hidden="true">
-              <div class="ov-card-meta">
-                <div class="ov-card-label" data-i18n-es="Equipo" data-i18n-en="Team">Equipo</div>
-                <div class="ov-card-sub" data-i18n-es="Trabaja con tu gente" data-i18n-en="Work with your team">Trabaja con tu gente</div>
-              </div>
-            </div>
-            <div class="ov-card-body" id="ovBodyTeam"><div class="ov-skel"></div></div>
           </button>
         </div>
 
@@ -12856,25 +12908,51 @@ async function loadOverviewMiniGrid() {
   const setBody = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
   const countLine = (txt) => `<div class="ov-card-count">${txt}</div>`;
 
-  // ── 1. Transcribir ─────────────────────────────────────────────────────
+  // ── 1. Transcribir (F1 hero) ───────────────────────────────────────────
   const t = d.transcribe || {};
   let bodyT;
   if (t.last) {
     const thumb = t.last.thumbnail_b64
       ? `<img class="ov-thumb-img" src="${ovEsc(t.last.thumbnail_b64)}" alt="">`
       : `<div class="ov-thumb-img"></div>`;
+    const viewsTxt = t.last.views
+      ? `${Number(t.last.views).toLocaleString(es ? "es-ES" : "en-US")} ${es ? "vistas" : "views"} · `
+      : "";
+    const lastId = t.last.id;
     bodyT = `
+      <div class="ov-mini-prefix">${es ? "ÚLTIMA TRANSCRIPCIÓN" : "LAST TRANSCRIPTION"}</div>
       <div class="ov-thumb-row">
         ${thumb}
         <div class="ov-thumb-text">
           <div class="ov-thumb-title">${ovEsc(t.last.title || (es ? "Sin título" : "Untitled"))}</div>
-          <div class="ov-thumb-time">${ovEsc(ovRelTime(t.last.created_at))} · ${ovEsc(t.last.platform || "")}</div>
+          <div class="ov-thumb-time">${viewsTxt}${ovEsc(ovRelTime(t.last.created_at))} · ${ovEsc(t.last.platform || "")}</div>
         </div>
+      </div>
+      <div class="ov-hero-btns">
+        <button class="ov-hero-action-btn" onclick="ovHeroTransform(${lastId});event.stopPropagation()">${es ? "Transformar" : "Transform"}</button>
+        <button class="ov-hero-action-btn ov-hero-action-btn--sec" onclick="ovHeroViewFull(${lastId});event.stopPropagation()">${es ? "Ver completa" : "View full"}</button>
       </div>`;
   } else {
-    bodyT = `<div class="ov-empty">${es ? "Empieza tu primera transcripción" : "Start your first transcription"}</div>`;
+    bodyT = `<div class="ov-empty">${es ? "Transcribe tu primer reel" : "Transcribe your first reel"}</div>`;
   }
   setBody("ovBodyTransc", bodyT + countLine((t.total || 0) + " " + (es ? "transcripciones" : "transcriptions")));
+
+  // ── 2. Hazlo tuyo (F2a) — datos reales de saved_scripts ───────────────
+  const adapt = d.adapt || {};
+  let bodyAdapt;
+  if (adapt.last) {
+    const styleLabel = (adapt.last.style || "").replace(/_/g, " ");
+    const styleCap = styleLabel ? styleLabel.charAt(0).toUpperCase() + styleLabel.slice(1) : "";
+    bodyAdapt = `
+      <div class="ov-mini-prefix">${es ? "ÚLTIMA ADAPTACIÓN" : "LAST ADAPTATION"}</div>
+      <div class="ov-line italic">"${ovEsc(adapt.last.text_snippet)}"</div>
+      ${styleCap ? `<span class="ov-status s-scripted">→ ${ovEsc(styleCap)}</span>` : ""}`;
+  } else {
+    bodyAdapt = `<div class="ov-empty">${es ? "Adapta tu primera transcripción" : "Adapt your first transcription"}</div>`;
+  }
+  const adaptCountLine = countLine((adapt.total || 0) + " " + (es ? "adaptaciones" : "adaptations"));
+  const adaptStylesLine = `<div class="ov-adapt-styles">Viral · LinkedIn · ${es ? "Historia" : "Story"} · Hooks · Custom</div>`;
+  setBody("ovBodyHazloTuyo", bodyAdapt + adaptStylesLine + adaptCountLine);
 
   // ── 3. Ideas ───────────────────────────────────────────────────────────
   const ideas = d.ideas || {};
@@ -12910,11 +12988,16 @@ async function loadOverviewMiniGrid() {
   }
   setBody("ovBodyProjects", bodyP + countLine((proj.total || 0) + " " + (es ? "proyectos" : "projects")));
 
-  // ── 5. Métricas (sparkline o conecta IG) ───────────────────────────────
+  // ── 5. Métricas (F2b) — sparkline + top reel, threshold 3 transcripciones ──
   const m = d.metrics || {};
   let bodyM;
   let needsSparkline = false;
-  if (!m.has_profile) {
+  const transcribedCount = (d.transcribe && d.transcribe.total) || 0;
+  if (transcribedCount < 3) {
+    bodyM = `
+      <div class="ov-empty">${es ? "Necesitas al menos 3 reels transcribidos para ver métricas" : "You need at least 3 transcribed reels to see metrics"}</div>
+      <span class="ov-cta-inline">${es ? "Sigue transcribiendo →" : "Keep transcribing →"}</span>`;
+  } else if (!m.has_profile) {
     bodyM = `
       <div class="ov-empty">${es ? "Conecta tu Instagram" : "Connect your Instagram"}</div>
       <span class="ov-cta-inline">${es ? "Conectar →" : "Connect →"}</span>`;
@@ -12927,6 +13010,14 @@ async function loadOverviewMiniGrid() {
         </div>
         <div id="ovSparkBox"></div>
       </div>`;
+    if (m.top_reel) {
+      bodyM += `
+        <div class="ov-top-reel">
+          <div class="ov-mini-prefix">TOP REEL</div>
+          <div class="ov-line">«${ovEsc(m.top_reel.caption_snippet)}» · ${Number(m.top_reel.views).toLocaleString(es ? "es-ES" : "en-US")} ${es ? "vistas" : "views"}</div>
+        </div>`;
+    }
+    bodyM += `<span class="ov-cta-inline" onclick="profTab('metrics');event.stopPropagation()">${es ? "Ver todas →" : "See all →"}</span>`;
     needsSparkline = true;
   } else {
     bodyM = `<div class="ov-empty">${es ? "Aún sin reels analizados" : "No reels analyzed yet"}</div>`;
@@ -13497,6 +13588,62 @@ async function doTranscribeFromOverview() {
       try { window.posthog && window.posthog.capture("transcribe_from_resumen_failed", { error_type: info.error || "unknown" }); } catch (e) {}
     },
   });
+}
+
+// v0.14.18: transcribir desde el hero de Estado 1 (F1 card)
+async function doTranscribeFromHero() {
+  try { window.posthog && window.posthog.capture("transcribe_from_hero_started", {}); } catch (e) {}
+  return doTranscribeShared({
+    inputEl: document.getElementById("ovHeroUrlInput"),
+    langEl: document.getElementById("ovHeroLang"),
+    btnEl: document.getElementById("ovHeroTranscribeBtn"),
+    statusEl: document.getElementById("ovHeroStatus"),
+    onSuccess: ({ taskResult }) => {
+      window._userStats = window._userStats || {};
+      window._userStats.transcriptions = (window._userStats.transcriptions || 0) + 1;
+      const btnEl = document.getElementById("ovHeroTranscribeBtn");
+      const statusEl = document.getElementById("ovHeroStatus");
+      const inputEl = document.getElementById("ovHeroUrlInput");
+      if (btnEl) btnEl.disabled = false;
+      if (statusEl) statusEl.style.display = "none";
+      if (inputEl) inputEl.value = "";
+      // Recargar overview para mostrar nueva transcripción en el hero
+      if (typeof loadOverviewData === "function") loadOverviewData();
+      else if (typeof loadHistory === "function") {
+        loadHistory().then(() => { if (typeof renderProfTransc === "function") renderProfTransc(); });
+      }
+      try { window.posthog && window.posthog.capture("transcribe_from_hero_completed", {}); } catch (e) {}
+    },
+    onError: (info) => {
+      try { window.posthog && window.posthog.capture("transcribe_from_hero_failed", { error_type: info.error || "unknown" }); } catch (e) {}
+    },
+  });
+}
+
+// v0.14.18: botones de acción en el body de la F1 card
+function ovHeroTransform(transcriptionId) {
+  try { window.posthog && window.posthog.capture("hero_transform_clicked", { transcription_id: transcriptionId }); } catch (e) {}
+  closeProfile();
+  if (transcriptionId && typeof renderProfTransc === "function") {
+    // Seleccionar la transcripción en el historial y abrir adapt
+    const item = (window.histCache || []).find(r => r.id === transcriptionId);
+    const txt = item ? (item.text || "") : "";
+    if (txt) {
+      window._lastTranscribedText = txt;
+      const adaptInput = document.getElementById("adaptInput");
+      if (adaptInput) adaptInput.value = txt;
+    }
+  }
+  if (typeof revealAdaptSection === "function") revealAdaptSection({ focus: true });
+}
+
+function ovHeroViewFull(transcriptionId) {
+  try { window.posthog && window.posthog.capture("hero_view_full_clicked", { transcription_id: transcriptionId }); } catch (e) {}
+  ovSwapToEstado1();
+  profTab("transc");
+  if (transcriptionId && typeof selectTranscription === "function") {
+    requestAnimationFrame(() => selectTranscription(transcriptionId));
+  }
 }
 
 function useExampleReel() {
