@@ -1664,11 +1664,8 @@
 
     /* ── Hazlo tuyo — full viewport ────────────────────────────── */
     .adapt-section {
-      min-height: 100vh;
-      background: transparent;
+      /* v0.14.19: now inside #profPanelAdapt — full-screen styles removed */
       position: relative; overflow: hidden;
-      display: flex; align-items: center;
-      padding: 80px 24px;
     }
 
     .adapt-inner {
@@ -7243,7 +7240,7 @@
       .btn-queue-add { width: 44px; }
 
       /* Adapt — mobile compact layout */
-      .adapt-section { padding: 40px 16px; min-height: auto; overflow: visible; }
+      .adapt-section { overflow: visible; }
       .adapt-inner { grid-template-columns: 1fr; gap: 16px; min-width: 0; }
       .adapt-left { min-width: 0; }
       .adapt-header h2 { font-size: 1.6rem; }
@@ -8392,166 +8389,7 @@
 </section>
 {% endif %}
 
-<!-- ── HAZLO TUYO ─────────────────────────────────────────────────────── -->
-<div class="adapt-section" id="adaptSection" style="display:none">
-  <div class="adapt-inner fade-in" id="adaptCard">
-
-    <!-- v0.14.9a: panel-back-btn-adapt eliminado. -->
-
-    <!-- ROW 1: headers -->
-    <div class="adapt-header">
-      <h2 data-i18n="adapt.h2">
-        Hazlo tuyo.<br>
-        <span class="grad-txt">Elige el estilo, transforma.</span>
-      </h2>
-      <p style="margin-top:10px" data-i18n="adapt.p">El guión ya lo tienes. Ahora dile a la IA cómo lo quieres — viral, profesional, gracioso o lo que necesites.</p>
-    </div>
-
-    <!-- ROW 2: input + style grid -->
-    <div class="adapt-left">
-      <div style="font-size:.78rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px"
-           data-i18n-es="Tu guión" data-i18n-en="Your script">Tu guión</div>
-      <textarea id="adaptInput" class="script-ta"
-        placeholder="Pega aquí el guión o la transcripción que quieres transformar…"
-        data-i18n-placeholder-es="Pega aquí el guión o la transcripción que quieres transformar…"
-        data-i18n-placeholder-en="Paste your script or transcription here to transform it…"></textarea>
-
-      <input type="text" class="style-search" id="styleSearch" placeholder="Search styles..." style="display:none" oninput="renderStyleGrid()" />
-      <div class="style-grid">
-        <button class="style-pill" data-s="viral"
-          onclick="selectStyle(this)">
-          <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#1a1a2e"/><rect x="20" y="8" width="32" height="4" fill="#1a1a2e"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#1a1a2e"/><rect x="16" y="20" width="12" height="6" fill="#1a1a2e"/><rect x="44" y="20" width="12" height="6" fill="#1a1a2e"/><rect x="17" y="21" width="10" height="4" fill="#60a5fa"/><rect x="45" y="21" width="10" height="4" fill="#60a5fa"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="10" y="40" width="8" height="20" fill="#f97316"/><rect x="54" y="40" width="8" height="20" fill="#f97316"/><rect x="18" y="40" width="36" height="4" fill="#f97316"/><rect x="14" y="44" width="44" height="16" fill="#f97316"/><rect x="18" y="60" width="14" height="20" fill="#f97316"/><rect x="40" y="60" width="14" height="20" fill="#f97316"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
-          <span class="sp-name">Viral</span>
-          <span class="sp-hint" data-i18n="sh.viral">Hook + tensión + CTA brutal</span>
-        </button>
-        <button class="style-pill" data-s="divertido"
-          onclick="selectStyle(this)">
-          <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#f4a400"/><rect x="20" y="8" width="32" height="4" fill="#f4a400"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#92400e"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="22" y="28" width="4" height="4" fill="#fcd9a0"/><rect x="46" y="28" width="4" height="4" fill="#fcd9a0"/><rect x="24" y="32" width="24" height="6" fill="#f97316"/><rect x="26" y="36" width="20" height="2" fill="#fff"/><rect x="10" y="40" width="6" height="4" fill="#fcd9a0"/><rect x="56" y="40" width="6" height="4" fill="#fcd9a0"/><rect x="6" y="44" width="6" height="4" fill="#fcd9a0"/><rect x="60" y="44" width="6" height="4" fill="#fcd9a0"/><rect x="18" y="40" width="36" height="4" fill="#f4a400"/><rect x="14" y="44" width="44" height="16" fill="#f4a400"/><rect x="18" y="60" width="14" height="20" fill="#f4a400"/><rect x="40" y="60" width="14" height="20" fill="#f4a400"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
-          <span class="sp-name" data-i18n="sn.divertido">Divertido</span>
-          <span class="sp-hint" data-i18n="sh.divertido">Tono relajado, humor ligero</span>
-        </button>
-        <button class="style-pill" data-s="linkedin"
-          onclick="selectStyle(this)">
-          <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#1a1a2e"/><rect x="20" y="8" width="32" height="4" fill="#1a1a2e"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#1a1a2e"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="16" y="40" width="40" height="4" fill="#1e3a5f"/><rect x="10" y="40" width="8" height="24" fill="#fcd9a0"/><rect x="54" y="40" width="8" height="24" fill="#fcd9a0"/><rect x="18" y="44" width="36" height="16" fill="#1e3a5f"/><rect x="30" y="38" width="12" height="6" fill="#fff"/><rect x="32" y="36" width="8" height="2" fill="#e2e8f0"/><rect x="18" y="60" width="14" height="20" fill="#334155"/><rect x="40" y="60" width="14" height="20" fill="#334155"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
-          <span class="sp-name">LinkedIn</span>
-          <span class="sp-hint" data-i18n="sh.linkedin">Profesional, reflexivo, red</span>
-        </button>
-        <button class="style-pill" data-s="storytelling"
-          onclick="selectStyle(this)">
-          <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#7c3aed"/><rect x="20" y="8" width="32" height="4" fill="#7c3aed"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#4c1d95"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="10" y="40" width="8" height="20" fill="#7c3aed"/><rect x="54" y="40" width="8" height="20" fill="#7c3aed"/><rect x="18" y="40" width="36" height="4" fill="#7c3aed"/><rect x="14" y="44" width="44" height="16" fill="#7c3aed"/><rect x="54" y="32" width="14" height="18" fill="#fef3c7"/><rect x="54" y="32" width="2" height="18" fill="#d97706"/><rect x="54" y="32" width="14" height="2" fill="#d97706"/><rect x="66" y="32" width="2" height="18" fill="#d97706"/><rect x="54" y="48" width="14" height="2" fill="#d97706"/><rect x="58" y="36" width="8" height="2" fill="#94a3b8"/><rect x="58" y="40" width="10" height="2" fill="#94a3b8"/><rect x="58" y="44" width="6" height="2" fill="#94a3b8"/><rect x="18" y="60" width="14" height="20" fill="#7c3aed"/><rect x="40" y="60" width="14" height="20" fill="#7c3aed"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
-          <span class="sp-name" data-i18n="sn.storytelling">Historia</span>
-          <span class="sp-hint" data-i18n="sh.storytelling">Narrativa emocional, escenas</span>
-        </button>
-        <button class="style-pill" data-s="hooks"
-          onclick="selectStyle(this)">
-          <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#0369a1"/><rect x="20" y="8" width="32" height="4" fill="#0369a1"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#0c4a6e"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="10" y="40" width="8" height="20" fill="#0369a1"/><rect x="54" y="40" width="8" height="20" fill="#0369a1"/><rect x="18" y="40" width="36" height="4" fill="#0369a1"/><rect x="14" y="44" width="44" height="16" fill="#0369a1"/><rect x="56" y="20" width="2" height="44" fill="#92400e"/><rect x="58" y="18" width="12" height="2" fill="#92400e"/><rect x="68" y="18" width="2" height="14" fill="#64748b"/><rect x="64" y="30" width="6" height="2" fill="#64748b"/><rect x="66" y="32" width="2" height="4" fill="#22c55e"/><rect x="56" y="60" width="12" height="8" fill="#60a5fa"/><rect x="54" y="62" width="16" height="4" fill="#60a5fa"/><rect x="18" y="60" width="14" height="20" fill="#0369a1"/><rect x="40" y="60" width="14" height="20" fill="#0369a1"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
-          <span class="sp-name">5 Hooks</span>
-          <span class="sp-hint" data-i18n="sh.hooks">5 aperturas que atrapan</span>
-        </button>
-        <button class="style-pill" data-s="custom"
-          onclick="selectStyle(this)">
-          <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#0d9488"/><rect x="20" y="8" width="32" height="4" fill="#0d9488"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#134e4a"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="32" y="20" width="4" height="4" fill="#f97316"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="10" y="40" width="8" height="20" fill="#0d9488"/><rect x="54" y="40" width="8" height="20" fill="#0d9488"/><rect x="18" y="40" width="36" height="4" fill="#0d9488"/><rect x="14" y="44" width="44" height="16" fill="#0d9488"/><rect x="4" y="34" width="12" height="6" fill="#94a3b8"/><rect x="2" y="36" width="4" height="4" fill="#94a3b8"/><rect x="6" y="30" width="8" height="6" fill="#cbd5e1"/><rect x="8" y="28" width="4" height="2" fill="#f97316"/><rect x="18" y="60" width="14" height="20" fill="#0d9488"/><rect x="40" y="60" width="14" height="20" fill="#0d9488"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
-          <span class="sp-name">Custom</span>
-          <span class="sp-hint" data-i18n="sh.custom">Tú decides las instrucciones</span>
-        </button>
-      </div>
-      <div class="style-dots" id="styleDots"></div>
-
-      <div class="custom-row" id="customRow">
-        <input type="text" id="customPrompt" class="ph-no-capture" data-clarity-mask="true" placeholder="Ej: Escríbelo como una carta de ventas…" />
-        <button class="btn-grad" onclick="runAdapt()">→</button>
-      </div>
-
-      <!-- Mobile result (shown inline after transform on mobile) -->
-      <div id="mobileAdaptResult" class="mobile-adapt-result ph-no-capture" data-clarity-mask="true" style="display:none">
-        <div class="mobile-adapt-result-head">
-          <span class="mobile-adapt-result-label">Result</span>
-          <button class="rs-card-copy" onclick="copyMobileResult()">
-            <span class="rs-tip">Copy</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-          </button>
-        </div>
-        <div id="mobileAdaptResultTxt" class="mobile-adapt-result-body"></div>
-      </div>
-
-      <!-- result kept in DOM for adaptFromView compatibility, rendered in right panel -->
-      <div id="adaptSpinner" style="display:none"></div>
-      <div id="adaptRes" style="display:none">
-        <div id="adaptResTxt"></div>
-        <div id="adaptActs"></div>
-      </div>
-
-      <div id="styleDescLine" style="display:none;font-size:.82rem;color:var(--text3);margin-top:8px;line-height:1.5;font-weight:300"></div>
-      <button class="adapt-run-btn" id="btnRunAdapt" onclick="runAdapt()" style="display:none">
-        Transform
-      </button>
-    </div>
-
-    <!-- ROW 1 right: preview label -->
-    <div class="preview-label-wrap">
-      <div class="preview-label" data-i18n="preview.label">This is how your script would look →</div>
-    </div>
-
-    <!-- ROW 2 right: live preview -->
-    <div class="adapt-right">
-      <div class="preview-card" id="previewCard" data-active="viral">
-        <div class="preview-top-bar"></div>
-
-        <!-- Loading spinner overlay inside card -->
-        <div class="preview-card-spinner" id="previewSpinner">
-          <div class="sq-loader">
-            <div class="sq-el sq-el1"></div>
-            <div class="sq-el sq-el2"></div>
-          </div>
-          <p>Transformando…</p>
-        </div>
-
-        <div class="preview-header">
-          <span style="font-size:.8rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px" id="previewCardLabel">Ejemplo</span>
-          <span class="pc-badge" id="previewBadge" data-s="viral">🔥 Viral</span>
-        </div>
-        <div class="preview-content" id="previewContent">
-          <!-- Actual AI result (shown after adaptation) -->
-          <div class="preview-result-text" id="previewResultText"></div>
-
-          <div class="preview-slide on" data-style="viral">
-            <div class="preview-text" data-i18n="ex.viral"></div>
-          </div>
-          <div class="preview-slide" data-style="divertido">
-            <div class="preview-text" data-i18n="ex.divertido"></div>
-          </div>
-          <div class="preview-slide" data-style="linkedin">
-            <div class="preview-text" data-i18n="ex.linkedin"></div>
-          </div>
-          <div class="preview-slide" data-style="storytelling">
-            <div class="preview-text" data-i18n="ex.storytelling"></div>
-          </div>
-          <div class="preview-slide" data-style="hooks">
-            <div class="preview-text" data-i18n="ex.hooks"></div>
-          </div>
-          <div class="preview-slide" data-style="custom">
-            <div class="preview-text" data-i18n="ex.custom"></div>
-          </div>
-
-        </div>
-        <div class="preview-footer" id="previewFooter">
-          <div class="pf-dot"></div>
-          <span id="previewFooterTxt">Ejemplo · El tuyo será único</span>
-          <button class="pf-copy" id="pfRegenBtn" style="display:none" onclick="regenAdapt()" data-i18n="adapt.regen">Regenerar</button>
-          <button class="pf-copy" id="pfRegenHookBtn" style="display:none" onclick="regenHookOnly()" data-i18n="adapt.regen_hook">Nuevo hook</button>
-          <button class="pf-copy" id="pfCopyBtn" style="display:none" onclick="copyPreviewResult()">Copiar</button>
-          <button class="pf-copy" id="pfSaveBtn" style="display:none" onclick="saveScript()">💾 Guardar</button>
-          <button class="pf-copy" id="pfTpBtn" style="display:none" onclick="tpOpenFromAdapt()">Teleprompter</button>
-        </div>
-      </div>
-      <button class="adapt-run-btn adapt-run-desktop" id="btnRunAdaptDesktop" onclick="runAdapt()" style="display:none">
-        Transform
-      </button>
-    </div>
-
-  </div>
-</div>
-
+<!-- profPanelAdapt moved into #profMain (v0.14.19) -->
 {% if workspace %}
 <style>
   /* Hide public hero on workspace (kept in DOM so #urlInput stays functional) */
@@ -8779,7 +8617,7 @@
       <div class="prof-sidebar-nav" id="profSidebarNav">
         <button class="prof-nav-item on" onclick="profTab('overview')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="1" width="6" height="6" fill="currentColor"/><rect x="9" y="1" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.overview">Dashboard</span></button>
         <button class="prof-nav-item" onclick="profTab('transc')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.transcriptions">Transcribir</span></button>
-        <button class="prof-nav-item" onclick="goAdaptFromSidebar()"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><path d="M8 1 L9 5 L13 6 L9 7 L8 11 L7 7 L3 6 L7 5 Z" fill="currentColor"/><circle cx="13" cy="13" r="1.2" fill="currentColor" opacity=".5"/><circle cx="3" cy="2" r="1" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.adapt">Hazlo tuyo</span></button>
+        <button class="prof-nav-item" id="profNavAdapt" onclick="profTab('adapt')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><path d="M8 1 L9 5 L13 6 L9 7 L8 11 L7 7 L3 6 L7 5 Z" fill="currentColor"/><circle cx="13" cy="13" r="1.2" fill="currentColor" opacity=".5"/><circle cx="3" cy="2" r="1" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.adapt">Hazlo tuyo</span></button>
         <button class="prof-nav-item" id="profNavMetrics" style="display:none" onclick="profTab('metrics')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="10" width="3" height="5" fill="currentColor" opacity=".4"/><rect x="5" y="7" width="3" height="8" fill="currentColor" opacity=".6"/><rect x="9" y="4" width="3" height="11" fill="currentColor" opacity=".8"/><rect x="13" y="1" width="3" height="14" fill="currentColor"/></svg><span data-i18n="prof.metrics">Métricas</span></button>
         <button class="prof-nav-item" id="profNavIdeas" style="display:none" onclick="profTab('ideas')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="3" y="1" width="10" height="2" fill="currentColor"/><rect x="2" y="3" width="12" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="6" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="9" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.ideas">Ideas</span></button>
         <button class="prof-nav-item" onclick="profTab('scripts')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="10" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.saved_scripts">Guiones</span></button>
@@ -9013,7 +8851,7 @@
           </div>
 
           <!-- F2a: Hazlo tuyo — con datos reales de saved_scripts -->
-          <button type="button" class="ov-card ov-card-f2" style="--ov-acc:192,132,252" onclick="closeProfile();revealAdaptSection({focus:true})">
+          <button type="button" class="ov-card ov-card-f2" style="--ov-acc:192,132,252" onclick="profTab('adapt')">
             <div class="ov-card-head">
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-adapt.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
@@ -9579,6 +9417,167 @@
             <button type="button" class="theme-seg-opt" data-val="dark" onclick="setThemeBinary('dark', event)" data-i18n-aria-es="Oscuro" data-i18n-aria-en="Dark" aria-label="Dark">🌙</button>
           </div>
         </div>
+      </div>
+
+
+      <!-- v0.14.19: Hazlo tuyo como panel SPA nativo -->
+      <div id="profPanelAdapt" style="display:none">
+        <div class="adapt-inner fade-in" id="adaptCard">
+        
+            <!-- v0.14.9a: panel-back-btn-adapt eliminado. -->
+        
+            <!-- ROW 1: headers -->
+            <div class="adapt-header">
+              <h2 data-i18n="adapt.h2">
+                Hazlo tuyo.<br>
+                <span class="grad-txt">Elige el estilo, transforma.</span>
+              </h2>
+              <p style="margin-top:10px" data-i18n="adapt.p">El guión ya lo tienes. Ahora dile a la IA cómo lo quieres — viral, profesional, gracioso o lo que necesites.</p>
+            </div>
+        
+            <!-- ROW 2: input + style grid -->
+            <div class="adapt-left">
+              <div style="font-size:.78rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px"
+                   data-i18n-es="Tu guión" data-i18n-en="Your script">Tu guión</div>
+              <textarea id="adaptInput" class="script-ta"
+                placeholder="Pega aquí el guión o la transcripción que quieres transformar…"
+                data-i18n-placeholder-es="Pega aquí el guión o la transcripción que quieres transformar…"
+                data-i18n-placeholder-en="Paste your script or transcription here to transform it…"></textarea>
+        
+              <input type="text" class="style-search" id="styleSearch" placeholder="Search styles..." style="display:none" oninput="renderStyleGrid()" />
+              <div class="style-grid">
+                <button class="style-pill" data-s="viral"
+                  onclick="selectStyle(this)">
+                  <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#1a1a2e"/><rect x="20" y="8" width="32" height="4" fill="#1a1a2e"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#1a1a2e"/><rect x="16" y="20" width="12" height="6" fill="#1a1a2e"/><rect x="44" y="20" width="12" height="6" fill="#1a1a2e"/><rect x="17" y="21" width="10" height="4" fill="#60a5fa"/><rect x="45" y="21" width="10" height="4" fill="#60a5fa"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="10" y="40" width="8" height="20" fill="#f97316"/><rect x="54" y="40" width="8" height="20" fill="#f97316"/><rect x="18" y="40" width="36" height="4" fill="#f97316"/><rect x="14" y="44" width="44" height="16" fill="#f97316"/><rect x="18" y="60" width="14" height="20" fill="#f97316"/><rect x="40" y="60" width="14" height="20" fill="#f97316"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
+                  <span class="sp-name">Viral</span>
+                  <span class="sp-hint" data-i18n="sh.viral">Hook + tensión + CTA brutal</span>
+                </button>
+                <button class="style-pill" data-s="divertido"
+                  onclick="selectStyle(this)">
+                  <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#f4a400"/><rect x="20" y="8" width="32" height="4" fill="#f4a400"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#92400e"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="22" y="28" width="4" height="4" fill="#fcd9a0"/><rect x="46" y="28" width="4" height="4" fill="#fcd9a0"/><rect x="24" y="32" width="24" height="6" fill="#f97316"/><rect x="26" y="36" width="20" height="2" fill="#fff"/><rect x="10" y="40" width="6" height="4" fill="#fcd9a0"/><rect x="56" y="40" width="6" height="4" fill="#fcd9a0"/><rect x="6" y="44" width="6" height="4" fill="#fcd9a0"/><rect x="60" y="44" width="6" height="4" fill="#fcd9a0"/><rect x="18" y="40" width="36" height="4" fill="#f4a400"/><rect x="14" y="44" width="44" height="16" fill="#f4a400"/><rect x="18" y="60" width="14" height="20" fill="#f4a400"/><rect x="40" y="60" width="14" height="20" fill="#f4a400"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
+                  <span class="sp-name" data-i18n="sn.divertido">Divertido</span>
+                  <span class="sp-hint" data-i18n="sh.divertido">Tono relajado, humor ligero</span>
+                </button>
+                <button class="style-pill" data-s="linkedin"
+                  onclick="selectStyle(this)">
+                  <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#1a1a2e"/><rect x="20" y="8" width="32" height="4" fill="#1a1a2e"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#1a1a2e"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="16" y="40" width="40" height="4" fill="#1e3a5f"/><rect x="10" y="40" width="8" height="24" fill="#fcd9a0"/><rect x="54" y="40" width="8" height="24" fill="#fcd9a0"/><rect x="18" y="44" width="36" height="16" fill="#1e3a5f"/><rect x="30" y="38" width="12" height="6" fill="#fff"/><rect x="32" y="36" width="8" height="2" fill="#e2e8f0"/><rect x="18" y="60" width="14" height="20" fill="#334155"/><rect x="40" y="60" width="14" height="20" fill="#334155"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
+                  <span class="sp-name">LinkedIn</span>
+                  <span class="sp-hint" data-i18n="sh.linkedin">Profesional, reflexivo, red</span>
+                </button>
+                <button class="style-pill" data-s="storytelling"
+                  onclick="selectStyle(this)">
+                  <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#7c3aed"/><rect x="20" y="8" width="32" height="4" fill="#7c3aed"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#4c1d95"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="10" y="40" width="8" height="20" fill="#7c3aed"/><rect x="54" y="40" width="8" height="20" fill="#7c3aed"/><rect x="18" y="40" width="36" height="4" fill="#7c3aed"/><rect x="14" y="44" width="44" height="16" fill="#7c3aed"/><rect x="54" y="32" width="14" height="18" fill="#fef3c7"/><rect x="54" y="32" width="2" height="18" fill="#d97706"/><rect x="54" y="32" width="14" height="2" fill="#d97706"/><rect x="66" y="32" width="2" height="18" fill="#d97706"/><rect x="54" y="48" width="14" height="2" fill="#d97706"/><rect x="58" y="36" width="8" height="2" fill="#94a3b8"/><rect x="58" y="40" width="10" height="2" fill="#94a3b8"/><rect x="58" y="44" width="6" height="2" fill="#94a3b8"/><rect x="18" y="60" width="14" height="20" fill="#7c3aed"/><rect x="40" y="60" width="14" height="20" fill="#7c3aed"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
+                  <span class="sp-name" data-i18n="sn.storytelling">Historia</span>
+                  <span class="sp-hint" data-i18n="sh.storytelling">Narrativa emocional, escenas</span>
+                </button>
+                <button class="style-pill" data-s="hooks"
+                  onclick="selectStyle(this)">
+                  <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#0369a1"/><rect x="20" y="8" width="32" height="4" fill="#0369a1"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#0c4a6e"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="10" y="40" width="8" height="20" fill="#0369a1"/><rect x="54" y="40" width="8" height="20" fill="#0369a1"/><rect x="18" y="40" width="36" height="4" fill="#0369a1"/><rect x="14" y="44" width="44" height="16" fill="#0369a1"/><rect x="56" y="20" width="2" height="44" fill="#92400e"/><rect x="58" y="18" width="12" height="2" fill="#92400e"/><rect x="68" y="18" width="2" height="14" fill="#64748b"/><rect x="64" y="30" width="6" height="2" fill="#64748b"/><rect x="66" y="32" width="2" height="4" fill="#22c55e"/><rect x="56" y="60" width="12" height="8" fill="#60a5fa"/><rect x="54" y="62" width="16" height="4" fill="#60a5fa"/><rect x="18" y="60" width="14" height="20" fill="#0369a1"/><rect x="40" y="60" width="14" height="20" fill="#0369a1"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
+                  <span class="sp-name">5 Hooks</span>
+                  <span class="sp-hint" data-i18n="sh.hooks">5 aperturas que atrapan</span>
+                </button>
+                <button class="style-pill" data-s="custom"
+                  onclick="selectStyle(this)">
+                  <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#0d9488"/><rect x="20" y="8" width="32" height="4" fill="#0d9488"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#134e4a"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="32" y="20" width="4" height="4" fill="#f97316"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="10" y="40" width="8" height="20" fill="#0d9488"/><rect x="54" y="40" width="8" height="20" fill="#0d9488"/><rect x="18" y="40" width="36" height="4" fill="#0d9488"/><rect x="14" y="44" width="44" height="16" fill="#0d9488"/><rect x="4" y="34" width="12" height="6" fill="#94a3b8"/><rect x="2" y="36" width="4" height="4" fill="#94a3b8"/><rect x="6" y="30" width="8" height="6" fill="#cbd5e1"/><rect x="8" y="28" width="4" height="2" fill="#f97316"/><rect x="18" y="60" width="14" height="20" fill="#0d9488"/><rect x="40" y="60" width="14" height="20" fill="#0d9488"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
+                  <span class="sp-name">Custom</span>
+                  <span class="sp-hint" data-i18n="sh.custom">Tú decides las instrucciones</span>
+                </button>
+              </div>
+              <div class="style-dots" id="styleDots"></div>
+        
+              <div class="custom-row" id="customRow">
+                <input type="text" id="customPrompt" class="ph-no-capture" data-clarity-mask="true" placeholder="Ej: Escríbelo como una carta de ventas…" />
+                <button class="btn-grad" onclick="runAdapt()">→</button>
+              </div>
+        
+              <!-- Mobile result (shown inline after transform on mobile) -->
+              <div id="mobileAdaptResult" class="mobile-adapt-result ph-no-capture" data-clarity-mask="true" style="display:none">
+                <div class="mobile-adapt-result-head">
+                  <span class="mobile-adapt-result-label">Result</span>
+                  <button class="rs-card-copy" onclick="copyMobileResult()">
+                    <span class="rs-tip">Copy</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                  </button>
+                </div>
+                <div id="mobileAdaptResultTxt" class="mobile-adapt-result-body"></div>
+              </div>
+        
+              <!-- result kept in DOM for adaptFromView compatibility, rendered in right panel -->
+              <div id="adaptSpinner" style="display:none"></div>
+              <div id="adaptRes" style="display:none">
+                <div id="adaptResTxt"></div>
+                <div id="adaptActs"></div>
+              </div>
+        
+              <div id="styleDescLine" style="display:none;font-size:.82rem;color:var(--text3);margin-top:8px;line-height:1.5;font-weight:300"></div>
+              <button class="adapt-run-btn" id="btnRunAdapt" onclick="runAdapt()" style="display:none">
+                Transform
+              </button>
+            </div>
+        
+            <!-- ROW 1 right: preview label -->
+            <div class="preview-label-wrap">
+              <div class="preview-label" data-i18n="preview.label">This is how your script would look →</div>
+            </div>
+        
+            <!-- ROW 2 right: live preview -->
+            <div class="adapt-right">
+              <div class="preview-card" id="previewCard" data-active="viral">
+                <div class="preview-top-bar"></div>
+        
+                <!-- Loading spinner overlay inside card -->
+                <div class="preview-card-spinner" id="previewSpinner">
+                  <div class="sq-loader">
+                    <div class="sq-el sq-el1"></div>
+                    <div class="sq-el sq-el2"></div>
+                  </div>
+                  <p>Transformando…</p>
+                </div>
+        
+                <div class="preview-header">
+                  <span style="font-size:.8rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px" id="previewCardLabel">Ejemplo</span>
+                  <span class="pc-badge" id="previewBadge" data-s="viral">🔥 Viral</span>
+                </div>
+                <div class="preview-content" id="previewContent">
+                  <!-- Actual AI result (shown after adaptation) -->
+                  <div class="preview-result-text" id="previewResultText"></div>
+        
+                  <div class="preview-slide on" data-style="viral">
+                    <div class="preview-text" data-i18n="ex.viral"></div>
+                  </div>
+                  <div class="preview-slide" data-style="divertido">
+                    <div class="preview-text" data-i18n="ex.divertido"></div>
+                  </div>
+                  <div class="preview-slide" data-style="linkedin">
+                    <div class="preview-text" data-i18n="ex.linkedin"></div>
+                  </div>
+                  <div class="preview-slide" data-style="storytelling">
+                    <div class="preview-text" data-i18n="ex.storytelling"></div>
+                  </div>
+                  <div class="preview-slide" data-style="hooks">
+                    <div class="preview-text" data-i18n="ex.hooks"></div>
+                  </div>
+                  <div class="preview-slide" data-style="custom">
+                    <div class="preview-text" data-i18n="ex.custom"></div>
+                  </div>
+        
+                </div>
+                <div class="preview-footer" id="previewFooter">
+                  <div class="pf-dot"></div>
+                  <span id="previewFooterTxt">Ejemplo · El tuyo será único</span>
+                  <button class="pf-copy" id="pfRegenBtn" style="display:none" onclick="regenAdapt()" data-i18n="adapt.regen">Regenerar</button>
+                  <button class="pf-copy" id="pfRegenHookBtn" style="display:none" onclick="regenHookOnly()" data-i18n="adapt.regen_hook">Nuevo hook</button>
+                  <button class="pf-copy" id="pfCopyBtn" style="display:none" onclick="copyPreviewResult()">Copiar</button>
+                  <button class="pf-copy" id="pfSaveBtn" style="display:none" onclick="saveScript()">💾 Guardar</button>
+                  <button class="pf-copy" id="pfTpBtn" style="display:none" onclick="tpOpenFromAdapt()">Teleprompter</button>
+                </div>
+              </div>
+              <button class="adapt-run-btn adapt-run-desktop" id="btnRunAdaptDesktop" onclick="runAdapt()" style="display:none">
+                Transform
+              </button>
+            </div>
+        
+          </div>
       </div>
 
     </div><!-- /.prof-main -->
@@ -12760,12 +12759,13 @@ function updateAllAvatars(seed) {
 const PROF_SECTION_MAP = {
   overview: "overview", scripts: "scripts", transcriptions: "transc",
   projects: "projects", assistants: "assistants", metrics: "metrics",
-  ideas: "ideas", team: "team", privacy: "privacy", settings: "settings"
+  ideas: "ideas", team: "team", privacy: "privacy", settings: "settings",
+  adapt: "adapt"
 };
 const PROF_TAB_TO_SLUG = Object.fromEntries(Object.entries(PROF_SECTION_MAP).map(([k, v]) => [v, k]));
 const PROF_TITLES = {
-  es: { overview: "Perfil", scripts: "Scripts", transc: "Transcripciones", projects: "Proyectos", assistants: "Asistentes", metrics: "Métricas", ideas: "Ideas", team: "Equipo", privacy: "Privacidad", settings: "Configuración" },
-  en: { overview: "Profile", scripts: "Scripts", transc: "Transcriptions", projects: "Projects", assistants: "Assistants", metrics: "Metrics", ideas: "Ideas", team: "Team", privacy: "Privacy", settings: "Settings" },
+  es: { overview: "Perfil", scripts: "Scripts", transc: "Transcripciones", projects: "Proyectos", assistants: "Asistentes", metrics: "Métricas", ideas: "Ideas", team: "Equipo", privacy: "Privacidad", settings: "Configuración", adapt: "Hazlo tuyo" },
+  en: { overview: "Profile", scripts: "Scripts", transc: "Transcriptions", projects: "Projects", assistants: "Assistants", metrics: "Metrics", ideas: "Ideas", team: "Team", privacy: "Privacy", settings: "Settings", adapt: "Make it yours" },
 };
 
 // v0.14.5a — Overview mini grid loader + Team handler
@@ -13114,6 +13114,7 @@ function profTab(tab, pushHistory) {
     team: "profPanelTeam",
     privacy: "profPanelPrivacy",
     settings: "profPanelSettings",
+    adapt: "profPanelAdapt",
   };
   // Hide all panels
   Object.values(panels).forEach(id => {
@@ -13620,21 +13621,17 @@ async function doTranscribeFromHero() {
   });
 }
 
-// v0.14.18: botones de acción en el body de la F1 card
+// v0.14.18/v0.14.19: botones de acción en el body de la F1 card
 function ovHeroTransform(transcriptionId) {
   try { window.posthog && window.posthog.capture("hero_transform_clicked", { transcription_id: transcriptionId }); } catch (e) {}
-  closeProfile();
-  if (transcriptionId && typeof renderProfTransc === "function") {
-    // Seleccionar la transcripción en el historial y abrir adapt
+  if (transcriptionId) {
     const item = (window.histCache || []).find(r => r.id === transcriptionId);
     const txt = item ? (item.text || "") : "";
-    if (txt) {
-      window._lastTranscribedText = txt;
-      const adaptInput = document.getElementById("adaptInput");
-      if (adaptInput) adaptInput.value = txt;
-    }
+    const adaptInput = document.getElementById("adaptInput");
+    if (adaptInput && txt) adaptInput.value = txt;
   }
-  if (typeof revealAdaptSection === "function") revealAdaptSection({ focus: true });
+  profTab("adapt");
+  setTimeout(() => { const ta = document.getElementById("adaptInput"); if (ta) ta.focus(); }, 50);
 }
 
 function ovHeroViewFull(transcriptionId) {
@@ -13664,19 +13661,13 @@ function firstSuccessTransform() {
   try { window.posthog && window.posthog.capture("success_modal_cta_clicked", { cta: "transform" }); } catch (e) {}
   closeModal("firstSuccessOverlay");
   ovSwapToEstado1();
-  // FIX v0.14.17: cerrar profile overlay primero. #adaptSection vive en <body> FUERA de
-  // #profilePage (overlay z-index:300, position:fixed, full screen). Sin closeProfile el
-  // reveal queda invisible detrás del overlay → user veía solo el dashboard.
-  // profile-overlay alterna display:block↔none sin CSS transition, así que el cambio es
-  // síncrono — no hace falta esperar transitionend ni setTimeout extra. revealAdaptSection
-  // ya tiene su propio inner setTimeout (120ms) para focus+scroll que da margen al layout.
-  if (typeof closeProfile === "function") closeProfile();
+  // v0.14.19: adapt vive en #profilePage — sin necesidad de cerrar overlay ni setTimeout
   const txt = window._lastTranscribedText || "";
   const adaptInput = document.getElementById("adaptInput");
   if (adaptInput) adaptInput.value = txt;
-  if (typeof revealAdaptSection === "function") revealAdaptSection({ focus: true });
+  profTab("adapt");
+  setTimeout(() => { const ta = document.getElementById("adaptInput"); if (ta) ta.focus(); }, 50);
 }
-
 function firstSuccessViewFull() {
   try { window.posthog && window.posthog.capture("success_modal_cta_clicked", { cta: "view_full" }); } catch (e) {}
   closeModal("firstSuccessOverlay");
@@ -13708,14 +13699,7 @@ function firstSuccessClose() {
   ovSwapToEstado1();
 }
 
-// v0.14.17 — sidebar "Hazlo tuyo" entry. Cierra workspace overlay y revela #adaptSection
-// (que vive fuera del #profilePage), sin pre-focus del textarea para no robar atención.
-function goAdaptFromSidebar() {
-  if (typeof closeProfile === "function") closeProfile();
-  setTimeout(() => {
-    if (typeof revealAdaptSection === "function") revealAdaptSection({ focus: false });
-  }, 80);
-}
+// v0.14.19: goAdaptFromSidebar replaced by direct profTab("adapt") in sidebar onclick.
 
 // Swap Resumen Estado 0 → Estado 1 in-place (no refetch — local increment used)
 function ovSwapToEstado1() {
@@ -15797,31 +15781,19 @@ const STYLE_LABELS = {
   storytelling: "📖 Historia", hooks: "🪝 5 Hooks", custom: "✍️ Custom",
 };
 
+// v0.14.19: revealAdaptSection is now a compat wrapper around profTab("adapt").
+// Old call sites (ideas→script, historial, rsToggleTransform, adaptFromView, etc.)
+// continue to work unchanged. New call sites use profTab("adapt") directly.
 function revealAdaptSection(opts = {}) {
-  const sec = document.getElementById("adaptSection");
-  if (!sec) return;
-  if (sec.style.display === "none") {
-    sec.style.display = "";
-    sec.style.opacity = "0";
-    sec.style.transform = "translateY(-8px)";
-    sec.style.transition = "opacity .35s ease, transform .35s ease";
-    requestAnimationFrame(() => {
-      sec.style.opacity = "1";
-      sec.style.transform = "translateY(0)";
-    });
+  if (opts.sourceText !== undefined) {
+    const ta = document.getElementById("adaptInput");
+    if (ta) ta.value = opts.sourceText;
   }
   const row = document.getElementById("haveScriptRow");
   if (row) row.style.display = "none";
+  if (typeof profTab === "function") profTab("adapt");
   if (opts.focus) {
-    const ta = document.getElementById("adaptInput");
-    if (ta) {
-      setTimeout(() => { ta.focus(); ta.scrollIntoView({ behavior: "smooth", block: "center" }); }, 120);
-    }
-  } else if (opts.scroll !== false) {
-    setTimeout(() => {
-      const card = document.getElementById("adaptCard");
-      if (card) card.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 120);
+    setTimeout(() => { const ta = document.getElementById("adaptInput"); if (ta) ta.focus(); }, 50);
   }
 }
 window.revealAdaptSection = revealAdaptSection;
