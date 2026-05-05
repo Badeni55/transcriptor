@@ -224,7 +224,6 @@
     [data-theme="light"] .ig-card:hover { border-color: rgba(249,115,22,.35); box-shadow: 0 2px 8px rgba(249,115,22,.1); }
     [data-theme="light"] .ig-stat-card { background: #fff; border-color: rgba(0,0,0,.08); }
     [data-theme="light"] .ig-perf-badge { box-shadow: 0 1px 4px rgba(0,0,0,.15); }
-    [data-theme="light"] .ig-card-eng-label { color: var(--text3); }
     [data-theme="light"] .ig-chart-tab { background: #fff; }
     [data-theme="light"] .ig-card-overlay { background: linear-gradient(transparent 70%, rgba(0,0,0,.25)); }
     [data-theme="light"] .prof-tabs,
@@ -3246,9 +3245,14 @@
       .ov-card-f2 { grid-column: 1 / -1; }
       .ov-card-f3 { grid-column: span 1; }
     }
-    @media (max-width: 720px) {
-      .ov-grid { grid-template-columns: 1fr; gap: 10px; }
-      .ov-card-f1, .ov-card-f2, .ov-card-f3 { grid-column: 1 / -1; }
+    /* v0.14.20 — mobile 2-en-2: F1 full, F2/F3 cada uno mitad */
+    @media (max-width: 640px) {
+      .ov-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .ov-card-f1 { grid-column: 1 / -1; }
+      .ov-card-f2 { grid-column: span 1; }
+      .ov-card-f3 { grid-column: span 1; }
+      /* safety: si el sparkline o números compiten por espacio, se corta limpio */
+      .ov-spark-wrap { overflow: hidden; }
     }
     /* F1: input row dentro de la card */
     .ov-hero-input-row { display: flex; gap: 8px; align-items: center; margin: 12px 0 8px; flex-wrap: wrap; }
@@ -3363,6 +3367,19 @@
       font-variant-numeric: tabular-nums;
     }
     [data-theme="light"] .ov-card-count { border-top-color: rgba(0,0,0,.05); }
+    /* v0.14.20 — clickable count link en F1 (transcripciones) */
+    .ov-count-link {
+      display: inline-block; margin-top: 10px; padding-top: 8px;
+      border: none; background: none; cursor: pointer;
+      border-top: 1px solid rgba(255,255,255,.05);
+      width: 100%; text-align: left;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .68rem; color: rgb(var(--ov-acc, 239,106,41));
+      letter-spacing: .02em; font-variant-numeric: tabular-nums;
+      transition: color .15s, opacity .15s;
+    }
+    .ov-count-link:hover { opacity: .8; }
+    [data-theme="light"] .ov-count-link { border-top-color: rgba(0,0,0,.05); }
 
     /* ── v0.14.15 — Empty state Resumen ──────────────────────── */
     #ovEmptyState { display: flex; flex-direction: column; gap: 16px; }
@@ -4321,18 +4338,6 @@
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
       overflow: hidden; margin-bottom: 10px; min-height: 2.1em;
     }
-    .ig-card-eng-bar {
-      height: 14px; border-radius: 4px; background: var(--surf2); margin-bottom: 10px;
-      overflow: hidden; position: relative; cursor: default;
-    }
-    .ig-card-eng-fill {
-      height: 100%; border-radius: 4px; transition: width .4s ease;
-    }
-    .ig-card-eng-label {
-      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
-      font-size: .58rem; font-weight: 700; color: var(--text2);
-      font-family: var(--font-display); letter-spacing: .02em;
-    }
     .ig-card-stats {
       display: flex; gap: 12px; font-size: .72rem; color: var(--text3); margin-bottom: 10px;
     }
@@ -4577,7 +4582,6 @@
       .ig-card-body { padding: 10px 12px; }
       .ig-card-caption { font-size: .78rem; -webkit-line-clamp: 2; min-height: 1em; margin-bottom: 6px; }
       .ig-card-stats { gap: 8px; font-size: .7rem; flex-wrap: wrap; margin-bottom: 6px; }
-      .ig-card-eng-bar { height: 12px; margin-bottom: 6px; }
       .ig-card-actions { flex-direction: row; gap: 6px; }
       .ig-card-btn { font-size: .75rem; padding: 7px 10px; border-radius: 8px; }
       .ig-card .ig-badges-row { gap: 4px; margin-bottom: 6px; }
@@ -6927,6 +6931,7 @@
     @media (max-width: 640px) {
       .settings-card { flex-direction: column; align-items: flex-start; gap: 14px; }
       .settings-seg { align-self: flex-end; }
+      .prof-bottom-bar { display: block; }
     }
 
     /* Team members list */
@@ -6962,7 +6967,7 @@
       padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
     }
     .prof-bottom-bar-inner {
-      display: grid; grid-template-columns: repeat(5, 1fr);
+      display: grid; grid-template-columns: repeat(4, 1fr);
     }
     .prof-bottom-tab {
       display: flex; flex-direction: column; align-items: center; gap: 3px;
@@ -6972,6 +6977,65 @@
     }
     .prof-bottom-tab.on { color: var(--purple); }
     .prof-bottom-tab-icon { width: 20px; height: 20px; }
+
+    /* v0.14.21 — Mobile SPA nav drawer (left-side) */
+    #profMobDrawer {
+      display: none; position: fixed; inset: 0; z-index: 400;
+    }
+    #profMobDrawer.on { display: block; }
+    #profMobDrawer .pmob-backdrop {
+      position: absolute; inset: 0; background: rgba(0,0,0,.5);
+      opacity: 0; transition: opacity .22s ease-out;
+    }
+    #profMobDrawer.on .pmob-backdrop { opacity: 1; }
+    #profMobDrawer .pmob-panel {
+      position: absolute; top: 0; left: 0; bottom: 0; z-index: 1;
+      width: 78%; max-width: 300px; height: 100dvh;
+      background: var(--surf); border-right: 1px solid var(--border);
+      box-shadow: 12px 0 32px rgba(0,0,0,.4);
+      backdrop-filter: blur(12px);
+      display: flex; flex-direction: column;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-left: env(safe-area-inset-left, 0px);
+      transform: translateX(-100%); transition: transform .22s ease-out;
+      overflow-y: auto;
+    }
+    #profMobDrawer.on .pmob-panel { transform: translateX(0); }
+    .pmob-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 16px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .pmob-title {
+      font-size: .72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--text3);
+    }
+    .pmob-close {
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text2); width: 32px; height: 32px; font-size: .9rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: border-color .15s; flex-shrink: 0;
+    }
+    .pmob-close:hover { border-color: var(--purple); }
+    .pmob-nav { display: flex; flex-direction: column; flex: 1; }
+    .pmob-nav button {
+      display: flex; align-items: center; gap: 14px; height: 50px;
+      padding: 0 18px; background: none; border: none;
+      border-bottom: 1px solid var(--border);
+      color: var(--text2); font-size: .88rem; font-weight: 500;
+      font-family: var(--font-body); cursor: pointer; text-align: left; width: 100%;
+      transition: background .12s;
+    }
+    .pmob-nav button:active { background: rgba(255,255,255,.06); }
+    .pmob-nav button svg { flex-shrink: 0; }
+    .pmob-separator { height: 1px; background: var(--border); margin-top: auto; flex-shrink: 0; }
+    .pmob-logout {
+      display: flex; align-items: center; gap: 14px; height: 50px;
+      padding: 0 18px; background: none; border: none;
+      color: #dc2626; font-size: .88rem; font-weight: 600;
+      font-family: var(--font-body); cursor: pointer; text-align: left; width: 100%;
+      transition: background .12s; flex-shrink: 0;
+    }
+    .pmob-logout:active { background: rgba(220,38,38,.08); }
 
     /* Mobile responsive — Profile Hub */
     @media (max-width: 768px) {
@@ -7017,7 +7081,6 @@
       .prof-stat-label { font-size: .6rem; }
       .proj-cards-grid { grid-template-columns: 1fr; }
       .asst-cards-grid { grid-template-columns: 1fr; }
-      .prof-bottom-bar { display: block; }
       /* View modal on mobile */
       .view-overlay { align-items: flex-end; padding: 0; }
       .view-modal {
@@ -9583,14 +9646,36 @@
     </div><!-- /.prof-main -->
   </div><!-- /.prof-layout -->
 
-  <!-- Mobile bottom tab bar -->
+  <!-- v0.14.21 — Mobile SPA nav drawer (left-side, triggered by header hamburger) -->
+  <div id="profMobDrawer">
+    <div class="pmob-backdrop" onclick="closeProfMobDrawer()"></div>
+    <div class="pmob-panel">
+      <div class="pmob-header">
+        <span class="pmob-title" data-i18n-es="Menú" data-i18n-en="Menu">Menú</span>
+        <button class="pmob-close" onclick="closeProfMobDrawer()" aria-label="Cerrar">✕</button>
+      </div>
+      <nav class="pmob-nav">
+        <button onclick="closeProfMobDrawer();profTab('adapt')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><path d="M8 1 L9 5 L13 6 L9 7 L8 11 L7 7 L3 6 L7 5 Z" fill="currentColor"/><circle cx="13" cy="13" r="1.2" fill="currentColor" opacity=".5"/><circle cx="3" cy="2" r="1" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.adapt">Hazlo tuyo</span></button>
+        <button id="pmobNavMetrics" style="display:none" onclick="closeProfMobDrawer();profTab('metrics')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="10" width="3" height="5" fill="currentColor" opacity=".4"/><rect x="5" y="7" width="3" height="8" fill="currentColor" opacity=".6"/><rect x="9" y="4" width="3" height="11" fill="currentColor" opacity=".8"/><rect x="13" y="1" width="3" height="14" fill="currentColor"/></svg><span data-i18n="prof.metrics">Métricas</span></button>
+        <button onclick="closeProfMobDrawer();profTab('scripts')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="10" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.saved_scripts">Guiones</span></button>
+        <button id="pmobNavAssistants" style="display:none" onclick="closeProfMobDrawer();profTab('assistants')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="5" y="1" width="6" height="6" rx="3" fill="currentColor"/><rect x="3" y="9" width="10" height="6" rx="2" fill="currentColor" opacity=".6"/><rect x="6" y="3" width="1.5" height="1.5" fill="#0a0b0f"/><rect x="9" y="3" width="1.5" height="1.5" fill="#0a0b0f"/></svg><span data-i18n="prof.assistants">Asistentes</span></button>
+        <button id="pmobNavProjects" style="display:none" onclick="closeProfMobDrawer();profTab('projects')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="3" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="6" height="3" fill="currentColor"/></svg><span data-i18n="prof.projects">Proyectos</span></button>
+        <button id="pmobNavTeam" style="display:none" onclick="closeProfMobDrawer();profTab('team')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><circle cx="5" cy="4" r="2.5" fill="currentColor"/><circle cx="11" cy="4" r="2.5" fill="currentColor" opacity=".6"/><rect x="1" y="8" width="8" height="5" rx="2" fill="currentColor"/><rect x="7" y="8" width="8" height="5" rx="2" fill="currentColor" opacity=".5"/></svg><span data-i18n="prof.team">Equipo</span></button>
+        <button id="pmobNavTeleprompter" style="display:none" onclick="closeProfMobDrawer();openTeleprompterPicker()"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="1" width="14" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="8" height="1.5" fill="currentColor" opacity=".5"/><rect x="4" y="7" width="6" height="1.5" fill="currentColor" opacity=".3"/><rect x="5" y="13" width="6" height="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.teleprompter">Teleprompter</span></button>
+        <button onclick="closeProfMobDrawer();profTab('privacy')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="3" y="6" width="10" height="9" rx="1" fill="currentColor" opacity=".6"/><rect x="5" y="1" width="6" height="7" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="7" y="9" width="2" height="3" fill="#0a0b0f"/></svg><span data-i18n="prof.privacy">Privacidad y datos</span></button>
+      </nav>
+      <div class="pmob-separator"></div>
+      <button class="pmob-logout" onclick="closeProfMobDrawer();logout()"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges" style="flex-shrink:0"><rect x="1" y="2" width="8" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 5 L14 8 L10 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M6 8 L14 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span data-i18n-es="Cerrar sesión" data-i18n-en="Log out">Cerrar sesión</span></button>
+    </div>
+  </div>
+
+  <!-- Mobile bottom tab bar (v0.14.21: 4 icons, breakpoint 640px) -->
   <div class="prof-bottom-bar" id="profBottomBar">
     <div class="prof-bottom-bar-inner">
-      <button class="prof-bottom-tab on" onclick="profTabMobile('overview')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="1" width="6" height="6" fill="currentColor"/><rect x="9" y="1" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.overview">Overview</span></button>
-      <button class="prof-bottom-tab" onclick="profTabMobile('scripts')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="10" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.saved_scripts">Scripts</span></button>
-      <button class="prof-bottom-tab" onclick="profTabMobile('projects')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="3" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="6" height="3" fill="currentColor"/><rect x="5" y="8" width="6" height="1.5" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.projects">Projects</span></button>
+      <button class="prof-bottom-tab on" onclick="profTabMobile('overview')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="1" width="6" height="6" fill="currentColor"/><rect x="9" y="1" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.overview">Dashboard</span></button>
+      <button class="prof-bottom-tab" onclick="profTabMobile('transc')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.transcriptions">Transcribir</span></button>
       <button class="prof-bottom-tab" onclick="profTabMobile('ideas')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="3" y="1" width="10" height="2" fill="currentColor"/><rect x="2" y="3" width="12" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="6" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="9" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.ideas">Ideas</span></button>
-      <button class="prof-bottom-tab" onclick="profTabMobile('metrics')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="10" width="3" height="5" fill="currentColor" opacity=".4"/><rect x="5" y="7" width="3" height="8" fill="currentColor" opacity=".6"/><rect x="9" y="4" width="3" height="11" fill="currentColor" opacity=".8"/><rect x="13" y="1" width="3" height="14" fill="currentColor"/></svg><span data-i18n="prof.metrics">Metrics</span></button>
+      <button class="prof-bottom-tab" onclick="profTabMobile('settings')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><circle cx="8" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1 V3 M8 13 V15 M1 8 H3 M13 8 H15 M3 3 L4.5 4.5 M11.5 11.5 L13 13 M3 13 L4.5 11.5 M11.5 4.5 L13 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span data-i18n="prof.settings">Ajustes</span></button>
     </div>
   </div>
 </div>
@@ -10171,8 +10256,11 @@ const LANGS = {
     "metrics.err_network": "Error de conexión. Comprueba tu red.",
     "metrics.unlink_confirm": "¿Desvincular perfil de Instagram? Se borrarán todos los datos de métricas.",
     "metrics.unlinked": "Perfil desvinculado",
-    "metrics.vs_best": "vs mejor reel",
     "metrics.save_btn": "Guardar métricas",
+    // v0.14.20 — Hero F1 state-aware
+    "hero_f1_label_state1": "TRANSCRIBIR",
+    "hero_f1_sub_state1": "Copia reels virales.",
+    "hero_f1_view_all": "Ver tus {count} transcripciones →",
     "metrics.saving": "Guardando...",
     "metrics.saved": "¡Guardado!",
     // View modal
@@ -10553,8 +10641,11 @@ const LANGS = {
     "metrics.err_network": "Connection error. Check your network.",
     "metrics.unlink_confirm": "Unlink Instagram profile? All metrics data will be deleted.",
     "metrics.unlinked": "Profile unlinked",
-    "metrics.vs_best": "vs best reel",
     "metrics.save_btn": "Save metrics",
+    // v0.14.20 — Hero F1 state-aware
+    "hero_f1_label_state1": "TRANSCRIBE",
+    "hero_f1_sub_state1": "Copy viral reels.",
+    "hero_f1_view_all": "View your {count} transcriptions →",
     "metrics.saving": "Saving...",
     "metrics.saved": "Saved!",
     // View modal
@@ -12022,7 +12113,6 @@ function renderIgGrid() {
     return;
   }
 
-  const maxViews = Math.max(...igVideosCache.map(v => v.views || 0), 1);
   const avgViews = igVideosCache.reduce((s, v) => s + (v.views || 0), 0) / (igVideosCache.length || 1);
   const avgEng = igVideosCache.reduce((s, v) => s + (v.views ? (v.likes + v.comments + (v.shares || 0)) / v.views : 0), 0) / (igVideosCache.length || 1);
   const topVid = [...igVideosCache].sort((a, b) => (b.views || 0) - (a.views || 0))[0]?.ig_video_id;
@@ -12030,9 +12120,6 @@ function renderIgGrid() {
   grid.innerHTML = filtered.map(v => {
     const hasTranscript = !!v.transcription;
     const date = v.published_at ? new Date(v.published_at).toLocaleDateString() : "";
-    const engPct = Math.min(100, Math.round(((v.views || 0) / maxViews) * 100));
-    const vEng = v.views ? (v.likes + v.comments + (v.shares || 0)) / v.views : 0;
-    const engColor = vEng > avgEng * 1.1 ? "#22c55e" : vEng < avgEng * 0.9 ? "#ef4444" : "#f97316";
     const badges = igGetPerfBadges(v, avgViews, avgEng, topVid);
     const badgesHtml = badges.length ? `<div class="ig-badges-row">${badges.map(b => `<span class="ig-perf-badge" style="background:${b.bg};color:${b.color}">${b.label}</span>`).join("")}</div>` : "";
     const dur = v.duration ? `${Math.floor(v.duration / 60)}:${String(Math.floor(v.duration % 60)).padStart(2, "0")}` : "";
@@ -12067,7 +12154,6 @@ function renderIgGrid() {
           ${v.saves != null ? `<span style="font-size:.6rem;color:#ec4899;background:rgba(236,72,153,.08);padding:1px 5px;border-radius:3px" title="Guardados">🔖${fmtNum(v.saves)}</span>` : ""}
           ${v.note ? `<span style="font-size:.6rem;color:var(--text3)" title="${esc(v.note)}">📝</span>` : ""}
         </div>
-        <div class="ig-card-eng-bar" title="${engPct}% ${t("metrics.vs_best")}"><div class="ig-card-eng-fill" style="width:${engPct}%;background:${engColor}"></div><span class="ig-card-eng-label">${engPct}% ${t("metrics.vs_best")}</span></div>
         <div class="ig-card-actions" onclick="event.stopPropagation()">
           ${hasTranscript
             ? `<button class="ig-card-btn" onclick="igShowTranscript('${v.ig_video_id}')">${t("metrics.view_transcript")}</button>`
@@ -12910,6 +12996,26 @@ async function loadOverviewMiniGrid() {
 
   // ── 1. Transcribir (F1 hero) ───────────────────────────────────────────
   const t = d.transcribe || {};
+  // v0.14.20: Hero F1 copy state-aware. Estado 1 = ya tiene transcripciones.
+  const f1Card = document.querySelector(".ov-card-f1");
+  if (f1Card) {
+    const lblEl = f1Card.querySelector(".ov-card-label");
+    const subEl = f1Card.querySelector(".ov-card-sub");
+    if ((t.total || 0) >= 1) {
+      const newLblEs = "TRANSCRIBIR", newLblEn = "TRANSCRIBE";
+      const newSubEs = "Copia reels virales.", newSubEn = "Copy viral reels.";
+      if (lblEl) {
+        lblEl.setAttribute("data-i18n-es", newLblEs);
+        lblEl.setAttribute("data-i18n-en", newLblEn);
+        lblEl.textContent = es ? newLblEs : newLblEn;
+      }
+      if (subEl) {
+        subEl.setAttribute("data-i18n-es", newSubEs);
+        subEl.setAttribute("data-i18n-en", newSubEn);
+        subEl.textContent = es ? newSubEs : newSubEn;
+      }
+    }
+  }
   let bodyT;
   if (t.last) {
     const thumb = t.last.thumbnail_b64
@@ -12935,7 +13041,12 @@ async function loadOverviewMiniGrid() {
   } else {
     bodyT = `<div class="ov-empty">${es ? "Transcribe tu primer reel" : "Transcribe your first reel"}</div>`;
   }
-  setBody("ovBodyTransc", bodyT + countLine((t.total || 0) + " " + (es ? "transcripciones" : "transcriptions")));
+  // v0.14.20 PARTE 2: link clickable a /profile/transcriptions; oculto si total === 0
+  const tTotal = t.total || 0;
+  const tLinkLine = tTotal > 0
+    ? `<button type="button" class="ov-count-link" onclick="profTab('transc')">${(es ? "Ver tus " + tTotal + " transcripciones →" : "View your " + tTotal + " transcriptions →")}</button>`
+    : "";
+  setBody("ovBodyTransc", bodyT + tLinkLine);
 
   // ── 2. Hazlo tuyo (F2a) — datos reales de saved_scripts ───────────────
   const adapt = d.adapt || {};
@@ -17826,6 +17937,7 @@ try {
 } catch (e) { console.error("[v0.14.9a] expose failed", e); }
 
 function toggleNavMob() {
+  if (document.body.classList.contains("workspace")) { openProfMobDrawer(); return; }
   const menu = document.getElementById("navMobMenu");
   const opening = !menu.classList.contains("on");
   if (opening) syncNavMob();
@@ -17834,6 +17946,24 @@ function toggleNavMob() {
 }
 function closeNavMob() {
   document.getElementById("navMobMenu").classList.remove("on");
+  document.body.style.overflow = "";
+}
+function openProfMobDrawer() {
+  const drawer = document.getElementById("profMobDrawer");
+  if (!drawer) return;
+  const pairs = [["Metrics","profNavMetrics"],["Assistants","profNavAssistants"],["Projects","profNavProjects"],["Team","profNavTeam"],["Teleprompter","profNavTeleprompter"]];
+  pairs.forEach(([pmob, sid]) => {
+    const sidebar = document.getElementById(sid);
+    const btn = document.getElementById("pmobNav" + pmob);
+    if (sidebar && btn) btn.style.display = sidebar.style.display;
+  });
+  drawer.classList.add("on");
+  document.body.style.overflow = "hidden";
+}
+function closeProfMobDrawer() {
+  const drawer = document.getElementById("profMobDrawer");
+  if (!drawer) return;
+  drawer.classList.remove("on");
   document.body.style.overflow = "";
 }
 function syncNavMob() {
