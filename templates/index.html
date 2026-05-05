@@ -2860,6 +2860,13 @@
       transition: opacity .3s ease; line-height: 1.4;
     }
     .loading-msg.fade { opacity: 0; }
+    /* v0.14.22 BUG 6: helper para inyectar fade en spans existentes
+       (transcribe inline status) sin pisar tipografía del padre. */
+    .loading-msg-rot { transition: opacity .3s ease; }
+    .loading-msg-rot.fade { opacity: 0; }
+    /* Reutilizado por previewSpinner p y resultBlock para fade entre frases. */
+    .preview-card-spinner p { transition: opacity .3s ease; }
+    .preview-card-spinner p.fade { opacity: 0; }
 
     .loading-progress-wrap {
       flex: 1; height: 3px;
@@ -4573,8 +4580,8 @@
       .ig-chart-toolbar .ig-chart-tab { padding: 4px 10px; font-size: .65rem; }
       .ig-chart-toolbar .ig-scale-group { margin-left: 0 !important; }
       .ig-chart-toolbar .ig-scale-group .ig-chart-tab { font-size: .6rem; padding: 3px 8px; }
-      /* 4. Cards — 1 col on mobile so thumb + stats fit legibly */
-      .ig-grid { grid-template-columns: 1fr; gap: 10px; }
+      /* v0.14.22: 2-col en mobile, alineado con Dashboard */
+      .ig-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
       .ig-card { border-radius: 10px; }
       .ig-card-thumb { max-height: 220px; border-radius: 10px 10px 0 0; }
       .ig-thumb-placeholder { max-height: 220px; border-radius: 10px 10px 0 0; }
@@ -4623,7 +4630,6 @@
       .ig-best-reel .ig-best-full { display: inline; }
     }
     @media (max-width: 420px) {
-      /* .ig-grid stays 1fr from the <=768 rule — do NOT re-split to 2 cols. */
       .ig-card-caption { -webkit-line-clamp: 2; min-height: 2em; }
       .ig-detail-metrics { grid-template-columns: repeat(2, 1fr); }
     }
@@ -6931,7 +6937,9 @@
     @media (max-width: 640px) {
       .settings-card { flex-direction: column; align-items: flex-start; gap: 14px; }
       .settings-seg { align-self: flex-end; }
-      .prof-bottom-bar { display: block; }
+      /* v0.14.22 BUG 2+3: gated por body.workspace para que la barra solo
+         aparezca en /profile/* — nunca en landing/login/signup. */
+      body.workspace .prof-bottom-bar { display: block; }
     }
 
     /* Team members list */
@@ -6963,7 +6971,7 @@
     .prof-bottom-bar {
       display: none; position: fixed; bottom: 0; left: 0; right: 0;
       background: var(--surf); backdrop-filter: blur(20px);
-      border-top: 1px solid var(--border); z-index: 350;
+      border-top: 1px solid var(--border); z-index: 1000;
       padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
     }
     .prof-bottom-bar-inner {
@@ -6973,6 +6981,7 @@
       display: flex; flex-direction: column; align-items: center; gap: 3px;
       background: none; border: none; color: var(--text3); cursor: pointer;
       font-size: .6rem; font-family: var(--font-body); padding: 4px 0;
+      min-height: 48px; justify-content: center;
       transition: color .15s;
     }
     .prof-bottom-tab.on { color: var(--purple); }
@@ -9594,7 +9603,7 @@
                     <div class="sq-el sq-el1"></div>
                     <div class="sq-el sq-el2"></div>
                   </div>
-                  <p>Transformando…</p>
+                  <p id="previewSpinnerMsg">Transformando…</p>
                 </div>
         
                 <div class="preview-header">
@@ -9669,14 +9678,16 @@
     </div>
   </div>
 
-  <!-- Mobile bottom tab bar (v0.14.21: 4 icons, breakpoint 640px) -->
-  <div class="prof-bottom-bar" id="profBottomBar">
-    <div class="prof-bottom-bar-inner">
-      <button class="prof-bottom-tab on" onclick="profTabMobile('overview')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="1" width="6" height="6" fill="currentColor"/><rect x="9" y="1" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.overview">Dashboard</span></button>
-      <button class="prof-bottom-tab" onclick="profTabMobile('transc')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.transcriptions">Transcribir</span></button>
-      <button class="prof-bottom-tab" onclick="profTabMobile('ideas')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="3" y="1" width="10" height="2" fill="currentColor"/><rect x="2" y="3" width="12" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="6" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="9" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.ideas">Ideas</span></button>
-      <button class="prof-bottom-tab" onclick="profTabMobile('settings')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><circle cx="8" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1 V3 M8 13 V15 M1 8 H3 M13 8 H15 M3 3 L4.5 4.5 M11.5 11.5 L13 13 M3 13 L4.5 11.5 M11.5 4.5 L13 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span data-i18n="prof.settings">Ajustes</span></button>
-    </div>
+</div>
+
+<!-- v0.14.22: bottom-bar movida FUERA de #profilePage para que position:fixed se ancle al viewport.
+     Visible solo en mobile (<=640px) Y solo en workspace (body.workspace). -->
+<div class="prof-bottom-bar" id="profBottomBar">
+  <div class="prof-bottom-bar-inner">
+    <button class="prof-bottom-tab on" onclick="profTabMobile('overview')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="1" width="6" height="6" fill="currentColor"/><rect x="9" y="1" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.overview">Dashboard</span></button>
+    <button class="prof-bottom-tab" onclick="profTabMobile('transc')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.transcriptions">Transcribir</span></button>
+    <button class="prof-bottom-tab" onclick="profTabMobile('ideas')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="3" y="1" width="10" height="2" fill="currentColor"/><rect x="2" y="3" width="12" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="6" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="9" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.ideas">Ideas</span></button>
+    <button class="prof-bottom-tab" onclick="profTabMobile('settings')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><circle cx="8" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1 V3 M8 13 V15 M1 8 H3 M13 8 H15 M3 3 L4.5 4.5 M11.5 11.5 L13 13 M3 13 L4.5 11.5 M11.5 4.5 L13 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span data-i18n="prof.settings">Ajustes</span></button>
   </div>
 </div>
 
@@ -10986,6 +10997,7 @@ async function runAdaptWithAssistant(id) {
   document.getElementById("pfRegenBtn").style.display = "none";
   document.getElementById("pfRegenHookBtn").style.display = "none";
   previewLabel.textContent = t("toast.generating");
+  const _rot = startLoadingRotator(document.getElementById("previewSpinnerMsg"));
 
   try {
     const r = await fetch("/adapt", {
@@ -10993,6 +11005,7 @@ async function runAdaptWithAssistant(id) {
       body: JSON.stringify({ text, style: "custom", assistant_id: id }),
     });
     const d = await r.json();
+    stopLoadingRotator(_rot);
     previewSpinner.classList.remove("on");
     previewContent.style.visibility = "visible";
     if (!r.ok) {
@@ -11018,6 +11031,7 @@ async function runAdaptWithAssistant(id) {
       }
     }
   } catch {
+    stopLoadingRotator(_rot);
     previewSpinner.classList.remove("on");
     previewContent.style.visibility = "visible";
     previewLabel.textContent = t("adapt.example");
@@ -11738,15 +11752,32 @@ function renderLoggedIn() {
   }
 }
 
+// v0.14.22 BUG 4: bodyLockStack — contador para evitar lock-leaks cuando hay
+// overlays anidados (modal sobre profile sobre drawer). Cada open llama lock,
+// cada close llama unlock; el body solo desbloquea cuando llegue a 0.
+let _bodyLockStack = 0;
+function lockBodyScroll() {
+  _bodyLockStack += 1;
+  if (_bodyLockStack === 1) document.body.style.overflow = "hidden";
+}
+function unlockBodyScroll() {
+  _bodyLockStack = Math.max(0, _bodyLockStack - 1);
+  if (_bodyLockStack === 0) document.body.style.overflow = "";
+}
+function forceUnlockBodyScroll() {
+  _bodyLockStack = 0;
+  document.body.style.overflow = "";
+}
+
 function openDrawer() {
   document.getElementById("drawerOverlay").classList.add("on");
   document.getElementById("profileDrawer").classList.add("on");
-  document.body.style.overflow = "hidden";
+  lockBodyScroll();
 }
 function closeDrawer() {
   document.getElementById("drawerOverlay").classList.remove("on");
   document.getElementById("profileDrawer").classList.remove("on");
-  document.body.style.overflow = "";
+  unlockBodyScroll();
 }
 
 // ── DiceBear avatar helpers ───────────────────────────────────────────────
@@ -11780,7 +11811,9 @@ function openProfile() {
   closeDrawer();
   const page = document.getElementById("profilePage");
   page.classList.add("on");
-  document.body.style.overflow = "hidden";
+  // v0.14.22: marca workspace para que la bottom-bar mobile aparezca (CSS gating).
+  document.body.classList.add("workspace");
+  lockBodyScroll();
   closeAvatarPicker();
 
   if (!location.pathname.startsWith("/profile")) {
@@ -11913,7 +11946,8 @@ function renderProfileHub() {
 
 function closeProfile() {
   document.getElementById("profilePage").classList.remove("on");
-  document.body.style.overflow = "";
+  document.body.classList.remove("workspace");
+  unlockBodyScroll();
   closeAvatarPicker();
   if (location.pathname.startsWith("/profile")) {
     const lang = document.documentElement.lang || "es";
@@ -13578,7 +13612,9 @@ async function doTranscribeShared({ inputEl, langEl, btnEl, statusEl, onSuccess,
   statusEl.style.display = "";
   statusEl.classList.remove("is-error", "is-ok");
   const es = (document.documentElement.lang || "es") === "es";
-  statusEl.innerHTML = `<div class="panel-transc-spinner"></div><span>${es ? "Descargando audio…" : "Downloading audio…"}</span>`;
+  statusEl.innerHTML = `<div class="panel-transc-spinner"></div><span class="loading-msg-rot"></span>`;
+  // v0.14.22 BUG 6: arrancar rotador. pollSharedTask lo detiene cuando llega un d.step real.
+  statusEl._rot = startLoadingRotator(statusEl.querySelector(".loading-msg-rot"));
 
   try {
     const res = await fetch("/transcribe", {
@@ -13588,6 +13624,7 @@ async function doTranscribeShared({ inputEl, langEl, btnEl, statusEl, onSuccess,
     });
     const data = await res.json();
     if (!res.ok) {
+      stopLoadingRotator(statusEl._rot); statusEl._rot = null;
       statusEl.classList.add("is-error");
       statusEl.innerHTML = `<span>${esc(data.error || "Error")}</span>`;
       btnEl.disabled = false;
@@ -13595,9 +13632,11 @@ async function doTranscribeShared({ inputEl, langEl, btnEl, statusEl, onSuccess,
       return;
     }
     pollSharedTask(data.task_id, statusEl, btnEl, (taskResult) => {
+      stopLoadingRotator(statusEl._rot); statusEl._rot = null;
       if (onSuccess) onSuccess({ url, taskResult });
     }, onError);
   } catch (e) {
+    stopLoadingRotator(statusEl._rot); statusEl._rot = null;
     statusEl.classList.add("is-error");
     statusEl.innerHTML = `<span>${(document.documentElement.lang === "en") ? "Network error" : "Error de red"}</span>`;
     btnEl.disabled = false;
@@ -13614,6 +13653,8 @@ async function pollSharedTask(taskId, statusEl, btnEl, onDone, onError) {
       const d = await r.json();
       if (d.state === "success") { onDone(d); return; }
       if (d.state === "failure" || d.state === "error") {
+        // v0.14.22: detén el rotador antes de pintar error.
+        if (statusEl && statusEl._rot) { stopLoadingRotator(statusEl._rot); statusEl._rot = null; }
         statusEl.classList.add("is-error");
         statusEl.innerHTML = `<span>${esc(d.error || "Error")}</span>`;
         if (btnEl) btnEl.disabled = false;
@@ -13621,12 +13662,16 @@ async function pollSharedTask(taskId, statusEl, btnEl, onDone, onError) {
         return;
       }
       if (d.step) {
+        // v0.14.22: backend reporta step real → para el rotador, los mensajes
+        // graciosos ceden paso al estado real.
+        if (statusEl && statusEl._rot) { stopLoadingRotator(statusEl._rot); statusEl._rot = null; }
         const sp = statusEl.querySelector("span");
-        if (sp) sp.textContent = d.step;
+        if (sp) { sp.classList.remove("loading-msg-rot"); sp.textContent = d.step; }
       }
     } catch {}
     await new Promise(r => setTimeout(r, 1500));
   }
+  if (statusEl && statusEl._rot) { stopLoadingRotator(statusEl._rot); statusEl._rot = null; }
   statusEl.classList.add("is-error");
   statusEl.innerHTML = `<span>${es ? "Tardó demasiado. Inténtalo de nuevo." : "Took too long. Try again."}</span>`;
   if (btnEl) btnEl.disabled = false;
@@ -14642,7 +14687,7 @@ async function openProjDetail(projectId) {
   document.getElementById("projDetailStyle").value = proj.style_prompt || "";
   document.getElementById("projDetailOverlay").classList.add("on");
 
-  document.body.style.overflow = "hidden";
+  lockBodyScroll();
 
   // Populate assistant selector
   const sel = document.getElementById("projDetailAssistant");
@@ -14662,7 +14707,7 @@ async function openProjDetail(projectId) {
 
 function closeProjDetail() {
   document.getElementById("projDetailOverlay").classList.remove("on");
-  document.body.style.overflow = "";
+  unlockBodyScroll();
   currentProjId = null;
 }
 
@@ -15231,17 +15276,36 @@ async function regenerateIdea(id) {
   } catch { showToast(t("toast.error_connection")); }
 }
 
+// v0.14.22 BUG 6: helper para rotador en botones (preserva SVG con innerHTML save/restore).
+function _btnRotateStart(btn) {
+  if (!btn) return null;
+  btn._origHtml = btn.innerHTML;
+  btn.disabled = true;
+  // Reemplaza contenido por un span donde rote el mensaje (preserva clases del btn).
+  btn.innerHTML = '<span class="loading-msg-rot"></span>';
+  return startLoadingRotator(btn.querySelector(".loading-msg-rot"));
+}
+function _btnRotateStop(btn, handle) {
+  stopLoadingRotator(handle);
+  if (btn) {
+    btn.disabled = false;
+    if (btn._origHtml != null) { btn.innerHTML = btn._origHtml; delete btn._origHtml; }
+  }
+}
+
 async function ideaToScript(id) {
-  showToast(t("toast.generating"));
+  const btn = document.querySelector(`[onclick="ideaToScript('${id}')"]`);
+  const _rot = _btnRotateStart(btn);
+  if (!btn) showToast(t("toast.generating"));
   try {
     const res = await fetch(`/ideas/${id}/to-script`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ style: "viral" }),
     });
     const d = await res.json();
+    _btnRotateStop(btn, _rot);
     if (res.ok) {
       showToast(t("ideas.scripted"));
-      // Copy the script to the adapt textarea
       const adaptInput = document.getElementById("adaptInput");
       if (adaptInput && d.script) {
         adaptInput.value = d.script;
@@ -15249,16 +15313,22 @@ async function ideaToScript(id) {
       }
       await loadIdeas();
     } else { showToast(d.error || "Error"); }
-  } catch { showToast(t("toast.error_connection")); }
+  } catch {
+    _btnRotateStop(btn, _rot);
+    showToast(t("toast.error_connection"));
+  }
 }
 
 async function developIdeaNow(id) {
-  showToast(t("ideas.saving_develop"));
+  const btn = document.querySelector(`[onclick="developIdeaNow('${id}')"]`);
+  const _rot = _btnRotateStart(btn);
+  if (!btn) showToast(t("ideas.saving_develop"));
   try {
     const res = await fetch(`/ideas/${id}/develop`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ language: currentLang }),
     });
+    _btnRotateStop(btn, _rot);
     if (res.ok) {
       const d = await res.json().catch(() => ({}));
       // v0.14.15a: backend devuelve 200 con fallback="draft" si el LLM truncó JSON
@@ -15272,7 +15342,10 @@ async function developIdeaNow(id) {
       const d = await res.json();
       showToast(d.error || "Error");
     }
-  } catch { showToast(t("toast.error_connection")); }
+  } catch {
+    _btnRotateStop(btn, _rot);
+    showToast(t("toast.error_connection"));
+  }
 }
 
 async function deleteIdea(id) {
@@ -16105,6 +16178,7 @@ async function runAdapt() {
   document.getElementById("pfRegenBtn").style.display = "none";
   document.getElementById("pfRegenHookBtn").style.display = "none";
   previewLabel.textContent = t("toast.generating");
+  const _rot = startLoadingRotator(document.getElementById("previewSpinnerMsg"));
 
   _lastAdaptText = text;
   try { if (activeStyle === "custom" && selectedAssistantId) { window.track && window.track.styleCustomUsed({ assistant_id: selectedAssistantId }); } } catch(e){}
@@ -16114,6 +16188,7 @@ async function runAdapt() {
       body: JSON.stringify({ text, style: activeStyle, custom_prompt: custom, assistant_id: selectedAssistantId }),
     });
     const d = await r.json();
+    stopLoadingRotator(_rot);
     previewSpinner.classList.remove("on");
     previewContent.style.visibility = "visible";
     if (!r.ok) {
@@ -16144,6 +16219,7 @@ async function runAdapt() {
       }
     }
   } catch {
+    stopLoadingRotator(_rot);
     previewSpinner.classList.remove("on");
     previewContent.style.visibility = "visible";
     previewLabel.textContent = t("adapt.example");
@@ -16584,7 +16660,7 @@ function tpOpen(text) {
   TP.isOpen = true; TP.isPlaying = false; TP.currentY = 0;
   const overlay = document.getElementById("tpOverlay");
   overlay.classList.add("on");
-  document.body.style.overflow = "hidden";
+  lockBodyScroll();
   document.getElementById("tpEnd").classList.remove("on");
   document.getElementById("tpPlayBtn").textContent = "▶";
 
@@ -16615,7 +16691,7 @@ function tpClose() {
   document.getElementById("tpOverlay").classList.remove("on", "tp-fullcam");
   document.getElementById("tpSettings").classList.remove("on", "tp-mode-fullcam");
   TP.settingsOpen = false;
-  document.body.style.overflow = "";
+  unlockBodyScroll();
   document.getElementById("tpTextBox").hidden = true;
   document.getElementById("tpCamBox").hidden = true;
   const v = document.getElementById("tpCamBoxVideo");
@@ -17853,7 +17929,11 @@ function openAvatarMenu() {
   if (overlay) overlay.classList.add("on");
   menu.classList.add("on");
   menu.setAttribute("aria-hidden", "false");
-  if (window.innerWidth <= 768) document.body.style.overflow = "hidden";
+  // v0.14.22: tracking de lock para evitar leaks (especialmente al cerrar
+  // por click-outside, ESC, o avMenuManagePlan).
+  if (window.innerWidth <= 768) {
+    if (!menu.dataset.locked) { menu.dataset.locked = "1"; lockBodyScroll(); }
+  }
   try { window.track && window.track.avatarDropdownOpened && window.track.avatarDropdownOpened(); } catch(err){}
 }
 
@@ -17864,8 +17944,8 @@ function closeAvatarMenu() {
   if (menu) {
     menu.classList.remove("on");
     menu.setAttribute("aria-hidden", "true");
+    if (menu.dataset.locked) { delete menu.dataset.locked; unlockBodyScroll(); }
   }
-  document.body.style.overflow = "";
 }
 
 // "Cambiar avatar" del menú → abre el picker existente
@@ -17942,11 +18022,16 @@ function toggleNavMob() {
   const opening = !menu.classList.contains("on");
   if (opening) syncNavMob();
   menu.classList.toggle("on");
-  document.body.style.overflow = opening ? "hidden" : "";
+  if (opening) {
+    if (!menu.dataset.locked) { menu.dataset.locked = "1"; lockBodyScroll(); }
+  } else {
+    if (menu.dataset.locked) { delete menu.dataset.locked; unlockBodyScroll(); }
+  }
 }
 function closeNavMob() {
-  document.getElementById("navMobMenu").classList.remove("on");
-  document.body.style.overflow = "";
+  const menu = document.getElementById("navMobMenu");
+  menu.classList.remove("on");
+  if (menu.dataset.locked) { delete menu.dataset.locked; unlockBodyScroll(); }
 }
 function openProfMobDrawer() {
   const drawer = document.getElementById("profMobDrawer");
@@ -17958,13 +18043,13 @@ function openProfMobDrawer() {
     if (sidebar && btn) btn.style.display = sidebar.style.display;
   });
   drawer.classList.add("on");
-  document.body.style.overflow = "hidden";
+  if (!drawer.dataset.locked) { drawer.dataset.locked = "1"; lockBodyScroll(); }
 }
 function closeProfMobDrawer() {
   const drawer = document.getElementById("profMobDrawer");
   if (!drawer) return;
   drawer.classList.remove("on");
-  document.body.style.overflow = "";
+  if (drawer.dataset.locked) { delete drawer.dataset.locked; unlockBodyScroll(); }
 }
 function syncNavMob() {
   const email = st.user ? st.user.email : "";
@@ -18000,7 +18085,12 @@ function syncNavMob() {
 }
 
 function goMyPlan() {
+  // v0.14.22 BUG 4: cerrar profile y desbloquear body antes de scrollear o navegar.
+  // Si pricingSection está en el DOM (landing renderizada), cerrar profile y scroll.
+  // Si no, asignar URL para forzar reload limpio sin estados colgados.
   const pricing = document.getElementById("pricingSection");
+  if (typeof closeProfile === "function") closeProfile();
+  forceUnlockBodyScroll();
   if (pricing) {
     pricing.scrollIntoView({ behavior: "smooth" });
   } else {
@@ -18039,10 +18129,12 @@ function ctaWorkspaceClick() {
 }
 
 async function logout() {
-  await fetch("/auth/logout", { method: "POST" });
+  try { await fetch("/auth/logout", { method: "POST" }); } catch(e){}
   try { window.track && window.track.resetUser(); } catch(e){}
-  st = { user: null, credits: 0, freeUsed: 0, freeLimit: 5, freeDailyAnon: 3, plan: "free" };
-  renderLoggedOut(); renderFreeBar(); renderPlanCards(); showToast(t("toast.session_closed"));
+  // v0.14.22 BUG 1: redirect explícito a la landing tras cerrar sesión.
+  // No depender de re-renders en cliente — asegura URL limpia y body fresco.
+  const lang = document.documentElement.lang || "es";
+  window.location.href = "/" + lang + "/";
 }
 
 // ── Topup ──────────────────────────────────────────────────────────────────
@@ -18389,6 +18481,47 @@ function showToast(msg) {
   const t = document.getElementById("toast");
   t.textContent = msg; t.classList.add("on");
   setTimeout(() => t.classList.remove("on"), 3000);
+}
+
+// v0.14.22 BUG 6: rotador de mensajes para operaciones IA pesadas (>2s).
+// Reusa la animación CSS .loading-msg / .loading-msg.fade que ya existe (línea ~2862).
+const LOADING_MSGS_ES = [
+  "Cocinando…",
+  "Afilando lápices…",
+  "Tirando de la palanca…",
+  "Pidiéndole a las musas…",
+  "Convocando palabras…",
+  "Reorganizando el caos…",
+];
+const LOADING_MSGS_EN = [
+  "Cooking…",
+  "Sharpening pencils…",
+  "Pulling the lever…",
+  "Asking the muses…",
+  "Conjuring words…",
+  "Reorganizing chaos…",
+];
+function startLoadingRotator(el, intervalMs) {
+  if (!el) return null;
+  intervalMs = intervalMs || 2400;
+  const isEn = (document.documentElement.lang || "es") === "en";
+  const msgs = isEn ? LOADING_MSGS_EN : LOADING_MSGS_ES;
+  // Shuffle start so consecutive runs no muestran el mismo orden.
+  let i = Math.floor(Math.random() * msgs.length);
+  el.textContent = msgs[i];
+  el.classList.remove("fade");
+  const handle = setInterval(() => {
+    el.classList.add("fade");
+    setTimeout(() => {
+      i = (i + 1) % msgs.length;
+      el.textContent = msgs[i];
+      el.classList.remove("fade");
+    }, 280);
+  }, intervalMs);
+  return handle;
+}
+function stopLoadingRotator(handle) {
+  if (handle) clearInterval(handle);
 }
 
 // ── Global aurora background ──────────────────────────────────────────────
