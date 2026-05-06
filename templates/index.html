@@ -3264,6 +3264,8 @@
     /* F1: input row dentro de la card */
     .ov-hero-input-row { display: flex; gap: 8px; align-items: center; margin: 12px 0 8px; flex-wrap: wrap; }
     .ov-hero-input-wrap { flex: 1; min-width: 180px; position: relative; }
+    /* v0.14.23: agrupador select+btn — alineación correcta en mobile (orden 2). */
+    .ov-hero-controls-wrapper { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
     .ov-hero-input-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: .9rem; pointer-events: none; }
     .ov-hero-input {
       width: 100%; padding: 8px 10px 8px 32px; border-radius: 8px;
@@ -3484,6 +3486,33 @@
       .ov-empty-input-row .ov-empty-input { padding: 6px 0; font-size: 1rem; }
       .ov-empty-input-row .ov-empty-lang { flex: 0 0 auto; min-width: 110px; }
       .ov-empty-input-row .ov-empty-btn { flex: 1; min-height: 48px; }
+    }
+
+    /* v0.14.23 BUG 1 — hero F1 Estado 1 mobile: input fila 1 / select+btn fila 2 */
+    @media (max-width: 640px) {
+      .ov-hero-input-row { flex-direction: column; gap: 10px; align-items: stretch; flex-wrap: nowrap; }
+      .ov-hero-input-wrap { width: 100%; min-width: 0; order: 1; }
+      .ov-hero-controls-wrapper { width: 100%; order: 2; }
+      .ov-hero-input-row .ov-empty-lang { flex: 0 0 auto; min-width: 110px; }
+      .ov-hero-input-row .ov-empty-btn { flex: 1; min-height: 48px; }
+    }
+
+    /* v0.14.23 BUG 2 — F2/F3 cards compactas en grid 2-col mobile.
+       Mantiene tipografía Instrument Serif, solo escala el tamaño y permite
+       wrap del subtítulo (desktop usa elipsis nowrap). */
+    @media (max-width: 640px) {
+      .ov-card-f2, .ov-card-f3 {
+        min-height: 0; padding: 14px; padding-left: 16px; gap: 8px;
+      }
+      .ov-card-f2 .ov-card-head, .ov-card-f3 .ov-card-head { gap: 8px; }
+      .ov-card-f2 .ov-card-hooks, .ov-card-f3 .ov-card-hooks { width: 36px; height: 36px; }
+      .ov-card-f2 .ov-card-label, .ov-card-f3 .ov-card-label {
+        font-size: 1.1rem; line-height: 1.1;
+      }
+      .ov-card-f2 .ov-card-sub, .ov-card-f3 .ov-card-sub {
+        white-space: normal; overflow: visible; text-overflow: clip;
+        line-height: 1.3;
+      }
     }
 
     /* Locked rows */
@@ -8908,15 +8937,17 @@
                        autocomplete="off" spellcheck="false"
                        onkeydown="if(event.key==='Enter'){event.preventDefault();doTranscribeFromHero();}" />
               </div>
-              <select id="ovHeroLang" class="ov-empty-lang" aria-label="Language">
-                <option value="" data-i18n-es="✨ Auto" data-i18n-en="✨ Auto">✨ Auto</option>
-                <option value="es" data-i18n-es="Español" data-i18n-en="Spanish">Español</option>
-                <option value="en" data-i18n-es="Inglés" data-i18n-en="English">English</option>
-                <option value="fr" data-i18n-es="Francés" data-i18n-en="French">French</option>
-                <option value="pt" data-i18n-es="Portugués" data-i18n-en="Portuguese">Portuguese</option>
-              </select>
-              <button id="ovHeroTranscribeBtn" class="ov-empty-btn" onclick="doTranscribeFromHero()"
-                      data-i18n-es="✦ Transcribir →" data-i18n-en="✦ Transcribe →">✦ Transcribir →</button>
+              <div class="ov-hero-controls-wrapper">
+                <select id="ovHeroLang" class="ov-empty-lang" aria-label="Language">
+                  <option value="" data-i18n-es="✨ Auto" data-i18n-en="✨ Auto">✨ Auto</option>
+                  <option value="es" data-i18n-es="Español" data-i18n-en="Spanish">Español</option>
+                  <option value="en" data-i18n-es="Inglés" data-i18n-en="English">English</option>
+                  <option value="fr" data-i18n-es="Francés" data-i18n-en="French">French</option>
+                  <option value="pt" data-i18n-es="Portugués" data-i18n-en="Portuguese">Portuguese</option>
+                </select>
+                <button id="ovHeroTranscribeBtn" class="ov-empty-btn" onclick="doTranscribeFromHero()"
+                        data-i18n-es="✦ Transcribir →" data-i18n-en="✦ Transcribe →">✦ Transcribir →</button>
+              </div>
             </div>
             <div id="ovHeroStatus" class="ov-hero-status" style="display:none"></div>
             <div class="ov-card-body" id="ovBodyTransc"><div class="ov-skel"></div></div>
