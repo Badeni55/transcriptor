@@ -34,6 +34,18 @@ services:
     networks:
       - traefik-public
 
+  beat:
+    build: .
+    restart: always
+    env_file: .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+    command: celery -A tasks beat --loglevel=info --schedule=/tmp/celerybeat-schedule
+    networks:
+      - traefik-public
+
 networks:
   traefik-public:
     external: true

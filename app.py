@@ -426,6 +426,39 @@ def transcribe_with_groq(audio_path: str, language: str | None = None) -> str:
 
 # ── Auth routes ───────────────────────────────────────────────────────────────
 
+# v0.14.24: hook centralizado de signup completion
+def _on_signup_complete(user_id, lang):
+    """
+    Idempotente: re-llamadas no insertan duplicados (UNIQUE en email_log).
+    Genera unsubscribe_token solo si no existe ya en profiles.
+    Encola 3 emails: welcome (T+0), day1_pending (T+24h), day7_pending (T+7d).
+    Welcome se envía en background vía Celery (no bloquea response).
+    """
+    try:
+        import emails as _emails
+        # 1) ensure unsubscribe_token exists + lang persisted
+        prof = db.table("profiles").select("unsubscribe_token, lang").eq("id", user_id).execute()
+        existing = (prof.data or [{}])[0]
+        updates = {}
+        if not existing.get("unsubscribe_token"):
+            updates["unsubscribe_token"] = _emails.gen_unsubscribe_token()
+        if not existing.get("lang"):
+            updates["lang"] = lang or "es"
+        if updates:
+            db.table("profiles").update(updates).eq("id", user_id).execute()
+        # 2) enqueue email_log rows (idempotente vía UNIQUE)
+        _emails.enqueue_signup_emails(user_id, lang or "es")
+        # 3) dispatch welcome a Celery (fire-and-forget, no bloquea signup response)
+        try:
+            from tasks import send_email_now
+            send_email_now.delay(user_id, "welcome")
+        except Exception as e:
+            logger.warning("send_email_now dispatch failed user=%s err=%s", user_id, e)
+    except Exception as e:
+        # NUNCA romper el signup por errores en el flujo de email.
+        logger.warning("_on_signup_complete failed user=%s err=%s", user_id, e)
+
+
 @app.route("/auth/register", methods=["POST"])
 @limiter.limit("5 per minute;20 per hour")
 def auth_register():
@@ -453,6 +486,8 @@ def auth_register():
         if affiliate_ref:
             upsert_data["affiliate_ref"] = affiliate_ref
         db.table("profiles").upsert(upsert_data).execute()
+        # v0.14.24: trigger email activation flow
+        _on_signup_complete(str(user.id), _resolve_lang())
         return jsonify({"ok": True, "email": user.email})
     except Exception as e:
         msg = str(e).lower()
@@ -579,8 +614,11 @@ def auth_callback():
 
         # Ensure profile exists
         prof = db.table("profiles").select("id").eq("id", user["id"]).execute()
-        if not prof.data:
+        is_new_signup = not prof.data
+        if is_new_signup:
             db.table("profiles").insert({"id": user["id"]}).execute()
+            # v0.14.24: trigger email activation flow solo en nuevo signup
+            _on_signup_complete(user["id"], _resolve_lang())
 
         return jsonify({"ok": True, "email": user.get("email", "")})
     except Exception as e:
@@ -3797,6 +3835,127 @@ def forgot_password_page():
 def reset_password_page():
     lang = _resolve_lang()
     return render_template("reset-password.html", lang=lang, s=FORGOT_RESET_STRINGS[lang])
+
+
+# ── v0.14.24: Email activation flow ────────────────────────────────────────
+
+@app.route("/unsubscribe")
+@limiter.limit("30 per minute;200 per hour")
+def unsubscribe_page():
+    """Sin login. Token único en profiles.unsubscribe_token → email_marketing=false."""
+    token = (request.args.get("token") or "").strip()
+    lang = _resolve_lang()
+    if not token:
+        return render_template("unsubscribe.html", lang=lang, ok=False, reason="missing_token"), 400
+    try:
+        prof = db.table("profiles").select("id, email_marketing").eq(
+            "unsubscribe_token", token
+        ).single().execute()
+        if not prof.data:
+            return render_template("unsubscribe.html", lang=lang, ok=False, reason="invalid_token"), 404
+        # idempotente: si ya estaba opted-out, devuelve ok=True igualmente
+        db.table("profiles").update({"email_marketing": False}).eq("id", prof.data["id"]).execute()
+        try:
+            import emails as _emails
+            _emails.track("email_unsubscribed", prof.data["id"], {})
+        except Exception:
+            pass
+        return render_template("unsubscribe.html", lang=lang, ok=True)
+    except Exception as e:
+        logger.warning("unsubscribe failed: %s", e)
+        return render_template("unsubscribe.html", lang=lang, ok=False, reason="error"), 500
+
+
+def _verify_resend_signature(headers, body_bytes):
+    """Resend usa Svix. Header svix-signature = 'v1,<base64sig> v1,<base64sig> ...'.
+    Devuelve True si alguna firma coincide con HMAC-SHA256 del payload."""
+    import base64
+    import hashlib
+    import hmac
+    secret = os.environ.get("RESEND_WEBHOOK_SECRET", "")
+    if not secret:
+        return False
+    if secret.startswith("whsec_"):
+        secret_b64 = secret[6:]
+    else:
+        secret_b64 = secret
+    try:
+        secret_raw = base64.b64decode(secret_b64)
+    except Exception:
+        return False
+    svix_id = headers.get("svix-id") or headers.get("Svix-Id") or ""
+    svix_ts = headers.get("svix-timestamp") or headers.get("Svix-Timestamp") or ""
+    svix_sig = headers.get("svix-signature") or headers.get("Svix-Signature") or ""
+    if not (svix_id and svix_ts and svix_sig):
+        return False
+    body_str = body_bytes.decode("utf-8", errors="replace") if isinstance(body_bytes, (bytes, bytearray)) else str(body_bytes)
+    signed_payload = f"{svix_id}.{svix_ts}.{body_str}".encode()
+    expected = base64.b64encode(
+        hmac.new(secret_raw, signed_payload, hashlib.sha256).digest()
+    ).decode()
+    for sig_pair in svix_sig.split(" "):
+        parts = sig_pair.split(",", 1)
+        if len(parts) != 2:
+            continue
+        version, sig = parts
+        if version == "v1" and hmac.compare_digest(sig, expected):
+            return True
+    return False
+
+
+@app.route("/webhooks/resend", methods=["POST"])
+@limiter.limit("60 per minute")
+def resend_webhook():
+    """Resend webhooks: email.opened, email.clicked, email.delivered, email.bounced, etc."""
+    raw = request.get_data()
+    if not _verify_resend_signature(request.headers, raw):
+        return jsonify({"error": "invalid_signature"}), 401
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except Exception:
+        return jsonify({"error": "invalid_json"}), 400
+
+    event_type = payload.get("type", "")
+    data = payload.get("data", {}) or {}
+    resend_id = data.get("email_id") or data.get("id")
+    if not resend_id:
+        return jsonify({"ok": True, "skipped": "no_email_id"}), 200
+
+    try:
+        log_row = db.table("email_log").select(
+            "id, user_id, template_key"
+        ).eq("resend_id", resend_id).single().execute()
+        log = log_row.data
+    except Exception:
+        log = None
+    if not log:
+        return jsonify({"ok": True, "skipped": "no_log_match"}), 200
+
+    now = datetime.now(timezone.utc).isoformat()
+    try:
+        import emails as _emails
+        if event_type == "email.opened" and not log.get("opened_at"):
+            db.table("email_log").update({"opened_at": now}).eq("id", log["id"]).execute()
+            _emails.track("email_opened", log["user_id"], {"template_key": log["template_key"]})
+        elif event_type == "email.clicked":
+            updates = {"clicked_at": now}
+            db.table("email_log").update(updates).eq("id", log["id"]).execute()
+            _emails.track("email_clicked", log["user_id"], {
+                "template_key": log["template_key"],
+                "url": data.get("click", {}).get("link") or data.get("link") or "",
+            })
+        elif event_type == "email.bounced":
+            db.table("email_log").update({
+                "status": "failed", "error": "bounced"
+            }).eq("id", log["id"]).execute()
+            db.table("profiles").update({"email_marketing": False}).eq(
+                "id", log["user_id"]
+            ).execute()
+            _emails.track("email_bounced", log["user_id"], {"template_key": log["template_key"]})
+    except Exception as e:
+        logger.warning("resend_webhook update failed: %s", e)
+
+    return jsonify({"ok": True}), 200
 
 
 if __name__ == "__main__":
