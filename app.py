@@ -1983,6 +1983,9 @@ def api_me_stats():
     def _transcriptions():
         return _count(db.table("transcriptions").select("id", count="exact").eq("user_id", uid))
 
+    def _ig_videos():
+        return _count(db.table("ig_videos").select("id", count="exact").eq("user_id", uid))
+
     def _has_ig_profile():
         try:
             r = db.table("ig_profiles").select("id", count="exact").eq("user_id", uid).execute()
@@ -2006,6 +2009,7 @@ def api_me_stats():
         "scripts":        _scripts,
         "assistants":     _assistants,
         "transcriptions": _transcriptions,
+        "ig_videos":      _ig_videos,
         "has_ig_profile": _has_ig_profile,
         "team_active":    _team_active,
         "team_pending":   _team_pending,
@@ -2025,6 +2029,7 @@ def api_me_stats():
         "scripts":        out["scripts"],
         "assistants":     out["assistants"],
         "transcriptions": out["transcriptions"],
+        "ig_videos":      out["ig_videos"],
         "metrics":        {"has_profile": out["has_ig_profile"], "weekly_analyses": weekly},
         "team":           {"active": out["team_active"], "pending": out["team_pending"]},
     })
@@ -2692,8 +2697,9 @@ SUGGEST_IDEAS_SYSTEM = (
     "Eres un experto en contenido de Instagram Reels y TikTok. "
     "El usuario te enviará data de sus reels que mejor han funcionado "
     "(o transcripciones de reels que ha consumido).\n\n"
-    "Tu tarea: generar 8-10 ideas de NUEVOS reels que el user podría "
-    "grabar, inspiradas en patrones de éxito que detectes en sus datos.\n\n"
+    "Tu tarea: generar 5-8 ideas (no más, no menos) de NUEVOS reels que "
+    "el user podría grabar, inspiradas en patrones de éxito que detectes "
+    "en sus datos.\n\n"
     "Para cada idea, devuelve:\n"
     "- title: título corto y atractivo del reel propuesto\n"
     "- hook: primera frase del reel (la que engancha en los primeros 3 segundos)\n"
@@ -2806,7 +2812,7 @@ def api_ideas_suggest():
     }
     user_prompt = (
         "Datos del usuario:\n" + _json_mod.dumps(user_payload, ensure_ascii=False) +
-        "\n\nGenera 8-10 ideas siguiendo el formato JSON especificado en el system prompt."
+        "\n\nGenera 5-8 ideas siguiendo el formato JSON especificado en el system prompt."
     )
 
     # 4) Llamar LLM. Si falla → 502 sin deducir créditos.
@@ -2835,11 +2841,16 @@ def api_ideas_suggest():
     raw_ideas = result.get("ideas") if isinstance(result, dict) else None
     if not isinstance(raw_ideas, list) or not raw_ideas:
         logger.warning("suggest: empty ideas array user=%s result=%s", uid, repr(result)[:200])
+        try:
+            from emails import track as _ph_track
+            _ph_track("ideas_generated_failed", uid, {"error": "llm_empty"})
+        except Exception:
+            pass
         return jsonify({"error": "llm_empty", "message": "No se pudieron generar ideas. Vuelve a intentarlo."}), 502
 
-    # 5) Enriquecer con metadata del item inspirador.
+    # 5) Enriquecer con metadata del item inspirador. Slice a 8 max (spec 5-8).
     enriched = []
-    for idea in raw_ideas[:10]:
+    for idea in raw_ideas[:8]:
         if not isinstance(idea, dict):
             continue
         idx = idea.get("inspired_by_index")
@@ -2864,7 +2875,17 @@ def api_ideas_suggest():
         })
 
     if not enriched:
+        try:
+            from emails import track as _ph_track
+            _ph_track("ideas_generated_failed", uid, {"error": "llm_empty_enriched"})
+        except Exception:
+            pass
         return jsonify({"error": "llm_empty", "message": "No se pudieron generar ideas. Vuelve a intentarlo."}), 502
+
+    # v0.14.26a: warning si el LLM se sale del rango 5-8 (no bloqueamos, devolvemos lo que hay).
+    if len(enriched) < 5 or len(enriched) > 8:
+        logger.warning("suggest: unexpected count user=%s count=%d (expected 5-8)",
+                       uid, len(enriched))
 
     # 6) Cobrar créditos (SOLO tras parse exitoso).
     try:

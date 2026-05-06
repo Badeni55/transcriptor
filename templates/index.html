@@ -15203,6 +15203,8 @@ function ideasTab(name, persist) {
     panSug.style.display = ""; panSav.style.display = "none";
     // Refresca estado interno (empty vs results)
     _renderSuggestionsState();
+    // v0.14.26a: oculta textarea user_context si el user ya tiene reels/transcripciones
+    _refreshSuggestContextVisibility();
   } else {
     tabSav.classList.add("on"); tabSug.classList.remove("on");
     panSav.style.display = ""; panSug.style.display = "none";
@@ -15210,6 +15212,22 @@ function ideasTab(name, persist) {
   try {
     window.posthog && window.posthog.capture("ideas_tab_switched", { tab: name });
   } catch (e) {}
+}
+
+// v0.14.26a: textarea solo aparece si user no tiene NADA. Si tiene reels o
+// transcripciones, /api/ideas/suggest tiene contexto sin necesidad de textarea.
+async function _refreshSuggestContextVisibility() {
+  const ctxEl = document.getElementById("ideasSuggestContext");
+  if (!ctxEl) return;
+  try {
+    const r = await fetch("/api/me/stats", { credentials: "same-origin" });
+    if (!r.ok) return;
+    const d = await r.json();
+    const hasSources = (d.transcriptions || 0) > 0 || (d.ig_videos || 0) > 0;
+    ctxEl.style.display = hasSources ? "none" : "";
+  } catch (e) {
+    // Silent fail: deja textarea visible (default conservador)
+  }
 }
 
 function _renderSuggestionsState() {
