@@ -86,12 +86,38 @@ CREATE TABLE IF NOT EXISTS public.saved_scripts (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- v0.14.24: email activation flow (Resend)
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS lang              TEXT    NOT NULL DEFAULT 'es',
+  ADD COLUMN IF NOT EXISTS email_marketing   BOOLEAN NOT NULL DEFAULT TRUE,
+  ADD COLUMN IF NOT EXISTS unsubscribe_token TEXT    UNIQUE;
+
+CREATE TABLE IF NOT EXISTS public.email_log (
+  id             UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id        UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  template_key   TEXT        NOT NULL,
+  status         TEXT        NOT NULL DEFAULT 'queued',  -- queued | sent | failed | skipped
+  scheduled_for  TIMESTAMPTZ NOT NULL,
+  sent_at        TIMESTAMPTZ,
+  resend_id      TEXT,
+  opened_at      TIMESTAMPTZ,
+  clicked_at     TIMESTAMPTZ,
+  error          TEXT,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, template_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_email_log_pending
+  ON public.email_log(status, scheduled_for)
+  WHERE status = 'queued';
+
 -- RLS activado (el backend usa service role, así que bypassa)
 ALTER TABLE public.profiles       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.transcriptions  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payments        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ip_usage        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.saved_scripts   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.email_log       ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users see own scripts" ON public.saved_scripts
   FOR ALL USING (auth.uid() = user_id);

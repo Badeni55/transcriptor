@@ -46,6 +46,54 @@ celery_app.conf.update(
     task_track_started=True,
 )
 
+# v0.14.24: beat schedule — process_pending_emails cada 1h
+celery_app.conf.beat_schedule = {
+    "process-pending-emails": {
+        "task": "tasks.process_pending_emails",
+        "schedule": 3600.0,
+    },
+}
+celery_app.conf.timezone = "UTC"
+
+
+# v0.14.24: email tasks
+@celery_app.task(name="tasks.send_email_now")
+def send_email_now(user_id, template_key):
+    """Welcome email (T+0) — disparado fire-and-forget desde signup.
+    Para day1/day7 usar process_pending_emails (beat)."""
+    try:
+        from emails import send_template, process_pending_row
+        if template_key in ("day1_pending", "day7_pending"):
+            process_pending_row({"user_id": user_id, "template_key": template_key})
+        else:
+            send_template(user_id, template_key)
+    except Exception as e:
+        logger.warning("send_email_now failed user=%s template=%s err=%s",
+                       user_id, template_key, e)
+
+
+@celery_app.task(name="tasks.process_pending_emails")
+def process_pending_emails():
+    """Beat task: cada 1h chequea email_log queued and due.
+    Bifurca day1_pending / day7_pending y envía. Idempotente."""
+    try:
+        from emails import fetch_pending_emails, process_pending_row
+        rows = fetch_pending_emails(limit=200)
+        if not rows:
+            return {"processed": 0}
+        sent = 0
+        for row in rows:
+            try:
+                process_pending_row(row)
+                sent += 1
+            except Exception as e:
+                logger.warning("process row failed user=%s template=%s err=%s",
+                               row.get("user_id"), row.get("template_key"), e)
+        return {"processed": sent}
+    except Exception as e:
+        logger.error("process_pending_emails failed: %s", e, exc_info=True)
+        return {"error": str(e)[:200]}
+
 def detect_platform(url):
     if "instagram.com" in url:
         return "instagram"
