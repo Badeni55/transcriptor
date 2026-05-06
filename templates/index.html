@@ -5006,6 +5006,144 @@
     [data-theme="light"] .ideas-rec { border-color: rgba(0, 0, 0, 0.1); }
     [data-theme="light"] .ideas-rec:hover { border-color: rgba(0, 0, 0, 0.22); }
 
+    /* v0.14.26 — Suggest Ideas Phase 1 ─────────────────────── */
+    .ideas-tabs {
+      display: flex; gap: 4px; margin: 0 0 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .ideas-tab {
+      background: none; border: none; cursor: pointer;
+      padding: 10px 16px; font-size: .82rem; font-weight: 600;
+      color: var(--text3); font-family: var(--font-body);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color .15s, border-color .15s;
+    }
+    .ideas-tab:hover { color: var(--text2); }
+    .ideas-tab.on { color: var(--text); border-bottom-color: #ef6a29; }
+    [data-theme="light"] .ideas-tab.on { border-bottom-color: #c2410c; }
+
+    .ideas-suggest-empty {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px 24px; text-align: center;
+      max-width: 540px; margin: 0 auto;
+    }
+    .ideas-suggest-empty-title {
+      font-family: var(--font-display); font-size: 1.4rem;
+      letter-spacing: -.015em; line-height: 1.15; margin-bottom: 6px;
+    }
+    .ideas-suggest-empty-sub {
+      font-size: .88rem; color: var(--text3); margin-bottom: 16px; line-height: 1.5;
+    }
+    .ideas-suggest-context {
+      width: 100%; padding: 10px 12px; border-radius: 8px;
+      background: var(--surf2); border: 1px solid var(--border);
+      color: var(--text); font-family: inherit; font-size: .88rem;
+      resize: vertical; min-height: 56px; outline: none;
+      margin-bottom: 14px;
+    }
+    .ideas-suggest-context:focus { border-color: rgba(239,106,41,.6); }
+    .ideas-suggest-btn {
+      padding: 12px 24px; border-radius: 10px; border: 1px solid #92400e;
+      background: #ef6a29; color: #fff; font-weight: 700; font-size: .92rem;
+      cursor: pointer; box-shadow: 0 4px 0 #92400e;
+      transition: transform .15s, box-shadow .15s, opacity .15s;
+    }
+    .ideas-suggest-btn:hover:not(:disabled) {
+      transform: translateY(-1px); background: #ea680c;
+      box-shadow: 0 5px 0 #92400e, 0 6px 18px rgba(239,106,41,.3);
+    }
+    .ideas-suggest-btn:active:not(:disabled) {
+      transform: translateY(3px); box-shadow: 0 1px 0 #92400e;
+    }
+    .ideas-suggest-btn:disabled { opacity: .65; cursor: default; }
+    .ideas-suggest-err {
+      margin-top: 10px; font-size: .82rem; color: #f87171; min-height: 0;
+    }
+    .ideas-suggest-err.on { min-height: 1.4em; }
+
+    .ideas-suggest-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px; gap: 12px; flex-wrap: wrap;
+    }
+    .ideas-suggest-head-title {
+      font-family: var(--font-display); font-size: 1.3rem; letter-spacing: -.015em;
+    }
+    .ideas-suggest-more-btn {
+      padding: 8px 14px; border-radius: 8px;
+      background: rgba(239,106,41,.12); border: 1px solid rgba(239,106,41,.3);
+      color: #ef6a29; font-weight: 600; font-size: .78rem; cursor: pointer;
+      font-family: var(--font-body); transition: background .15s;
+    }
+    .ideas-suggest-more-btn:hover:not(:disabled) { background: rgba(239,106,41,.2); }
+    .ideas-suggest-more-btn:disabled { opacity: .55; cursor: default; }
+
+    .ideas-suggest-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;
+    }
+    @media (max-width: 640px) {
+      .ideas-suggest-grid { grid-template-columns: 1fr; gap: 10px; }
+    }
+
+    .idea-suggest-card {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px;
+      display: flex; gap: 14px; align-items: flex-start;
+      transition: border-color .15s, transform .25s ease, opacity .25s ease;
+    }
+    .idea-suggest-card:hover { border-color: rgba(239,106,41,.35); }
+    .idea-suggest-card.fading { opacity: 0; transform: translateY(-6px); }
+
+    .idea-suggest-thumb {
+      width: 72px; height: 72px; flex-shrink: 0;
+      border-radius: 10px; overflow: hidden;
+      background: var(--surf2); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .idea-suggest-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .idea-suggest-thumb-placeholder {
+      color: var(--text3); opacity: .5;
+    }
+
+    .idea-suggest-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+    .idea-suggest-title {
+      font-family: var(--font-display); font-size: 1.05rem;
+      line-height: 1.2; letter-spacing: -.01em; color: var(--text);
+    }
+    .idea-suggest-hook {
+      font-size: .82rem; color: var(--text2); line-height: 1.4;
+      font-style: italic;
+    }
+    .idea-suggest-meta {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      font-size: .68rem; color: var(--text3); letter-spacing: .02em;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      text-transform: uppercase; margin-top: 2px;
+    }
+    .idea-suggest-meta-style {
+      padding: 2px 6px; border-radius: 4px;
+      background: rgba(239,106,41,.12); color: #ef6a29;
+    }
+    .idea-suggest-source { font-size: .7rem; color: var(--text3); }
+    .idea-suggest-actions {
+      display: flex; gap: 6px; margin-top: 8px;
+    }
+    .idea-suggest-act {
+      flex: 1; padding: 7px 10px; border-radius: 8px;
+      font-size: .76rem; font-weight: 600; cursor: pointer;
+      font-family: var(--font-body); transition: background .15s;
+    }
+    .idea-suggest-act-save {
+      background: #ef6a29; color: #fff; border: 1px solid #92400e;
+    }
+    .idea-suggest-act-save:hover:not(:disabled) { background: #ea680c; }
+    .idea-suggest-act-save:disabled { opacity: .55; cursor: default; }
+    .idea-suggest-act-discard {
+      background: transparent; color: var(--text3);
+      border: 1px solid var(--border);
+    }
+    .idea-suggest-act-discard:hover { color: var(--text2); border-color: rgba(255,255,255,.18); }
+
     /* Ideas list ─────────────────────────────────────────── */
     .ideas-list { display: flex; flex-direction: column; gap: 16px; }
     .ideas-card {
@@ -9326,6 +9464,40 @@
           </div>
         </div>
 
+        <!-- v0.14.26: Tab navigator Sugeridas / Guardadas -->
+        <div class="ideas-tabs">
+          <button class="ideas-tab" id="ideasTabSuggested" onclick="ideasTab('suggested')" data-i18n-es="Sugeridas" data-i18n-en="Suggested">Sugeridas</button>
+          <button class="ideas-tab on" id="ideasTabSaved" onclick="ideasTab('saved')" data-i18n-es="Guardadas" data-i18n-en="Saved">Guardadas</button>
+        </div>
+
+        <!-- v0.14.26: Panel sugeridas (Phase 1) -->
+        <div id="ideasPanelSuggested" style="display:none">
+
+          <!-- Empty state (default cuando no hay sugerencias en memoria) -->
+          <div id="ideasSuggestEmpty" class="ideas-suggest-empty">
+            <div class="ideas-suggest-empty-title" data-i18n-es="Genero ideas por ti" data-i18n-en="I'll generate ideas for you">Genero ideas por ti</div>
+            <div class="ideas-suggest-empty-sub" data-i18n-es="Basado en tus reels que más vistas tienen." data-i18n-en="Based on your top performing reels.">Basado en tus reels que más vistas tienen.</div>
+            <textarea id="ideasSuggestContext" class="ideas-suggest-context" rows="2"
+              placeholder="Cuéntame sobre qué va tu contenido (opcional)"
+              data-i18n-placeholder-es="Cuéntame sobre qué va tu contenido (opcional)"
+              data-i18n-placeholder-en="Tell me what your content is about (optional)"></textarea>
+            <button id="ideasSuggestBtn" class="ideas-suggest-btn" onclick="generateSuggestions()" data-i18n-es="Generar ideas (3 créditos)" data-i18n-en="Generate ideas (3 credits)">Generar ideas (3 créditos)</button>
+            <div id="ideasSuggestErr" class="ideas-suggest-err"></div>
+          </div>
+
+          <!-- Generated state (visible cuando window._suggestionsCache tiene ideas) -->
+          <div id="ideasSuggestResults" style="display:none">
+            <div class="ideas-suggest-head">
+              <div class="ideas-suggest-head-title" data-i18n-es="Sugerencias generadas" data-i18n-en="Generated suggestions">Sugerencias generadas</div>
+              <button class="ideas-suggest-more-btn" onclick="generateSuggestions()" data-i18n-es="Generar más (3 créditos)" data-i18n-en="Generate more (3 credits)">Generar más (3 créditos)</button>
+            </div>
+            <div id="ideasSuggestGrid" class="ideas-suggest-grid"></div>
+          </div>
+        </div>
+
+        <!-- Panel guardadas (existente, sin cambios funcionales) -->
+        <div id="ideasPanelSaved">
+
         <!-- New idea input card -->
         <div class="ideas-input-card">
           <div class="ideas-input-body">
@@ -9384,6 +9556,8 @@
 
         <!-- Ideas list -->
         <div id="ideasList" class="ideas-list"></div>
+
+        </div><!-- /#ideasPanelSaved -->
       </div>
 
       <!-- Team panel -->
@@ -10109,6 +10283,12 @@ const LANGS = {
     "ideas.develop_toggle": "Desarrollar con IA",
     "ideas.save_develop": "Guardar y desarrollar",
     "ideas.save_only": "Guardar",
+    // v0.14.26 — Suggest Ideas Phase 1
+    "ideas.discard": "Descartar",
+    "ideas.inspired_by": "Inspirado en tu reel del {date} ({views})",
+    "ideas.inspired_by_transc": "Inspirado en una transcripción tuya",
+    "ideas.no_credits": "Necesitas 3 créditos para generar ideas. Compra créditos o sube de plan.",
+    "ideas.generate_failed": "Algo falló generando ideas. Vuelve a intentarlo.",
     "ideas.saving_develop": "Desarrollando idea...",
     "ideas.saving_draft": "Guardando idea...",
     "ideas.saved_as_draft_fallback": "No se pudo desarrollar — guardada como borrador",
@@ -10494,6 +10674,12 @@ const LANGS = {
     "ideas.develop_toggle": "Develop with AI",
     "ideas.save_develop": "Save & develop",
     "ideas.save_only": "Save",
+    // v0.14.26 — Suggest Ideas Phase 1
+    "ideas.discard": "Discard",
+    "ideas.inspired_by": "Inspired by your reel from {date} ({views})",
+    "ideas.inspired_by_transc": "Inspired by one of your transcriptions",
+    "ideas.no_credits": "You need 3 credits to generate ideas. Buy credits or upgrade plan.",
+    "ideas.generate_failed": "Something failed generating ideas. Try again.",
     "ideas.saving_develop": "Developing idea...",
     "ideas.saving_draft": "Saving idea...",
     "ideas.saved_as_draft_fallback": "Could not develop — saved as draft",
@@ -14989,6 +15175,232 @@ async function loadIdeas() {
     else ideasCache = [];
   } catch { ideasCache = []; }
   renderIdeas();
+  // v0.14.26: aplicar tab persistido al entrar
+  if (typeof applyIdeasTab === "function") applyIdeasTab();
+}
+
+// ── v0.14.26: Suggest Ideas Phase 1 ───────────────────────────────────────
+window._suggestionsCache = window._suggestionsCache || [];
+
+function applyIdeasTab() {
+  let last = "suggested";
+  try { last = localStorage.getItem("lastIdeasTab") || "suggested"; } catch (e) {}
+  if (last !== "suggested" && last !== "saved") last = "suggested";
+  ideasTab(last, /*persist*/ false);
+}
+
+function ideasTab(name, persist) {
+  if (persist !== false) {
+    try { localStorage.setItem("lastIdeasTab", name); } catch (e) {}
+  }
+  const tabSug = document.getElementById("ideasTabSuggested");
+  const tabSav = document.getElementById("ideasTabSaved");
+  const panSug = document.getElementById("ideasPanelSuggested");
+  const panSav = document.getElementById("ideasPanelSaved");
+  if (!tabSug || !tabSav || !panSug || !panSav) return;
+  if (name === "suggested") {
+    tabSug.classList.add("on"); tabSav.classList.remove("on");
+    panSug.style.display = ""; panSav.style.display = "none";
+    // Refresca estado interno (empty vs results)
+    _renderSuggestionsState();
+  } else {
+    tabSav.classList.add("on"); tabSug.classList.remove("on");
+    panSav.style.display = ""; panSug.style.display = "none";
+  }
+  try {
+    window.posthog && window.posthog.capture("ideas_tab_switched", { tab: name });
+  } catch (e) {}
+}
+
+function _renderSuggestionsState() {
+  const empty = document.getElementById("ideasSuggestEmpty");
+  const results = document.getElementById("ideasSuggestResults");
+  if (!empty || !results) return;
+  if ((window._suggestionsCache || []).length > 0) {
+    empty.style.display = "none";
+    results.style.display = "";
+    renderSuggestionCards();
+  } else {
+    empty.style.display = "";
+    results.style.display = "none";
+  }
+}
+
+async function generateSuggestions() {
+  const btn = document.getElementById("ideasSuggestBtn");
+  const moreBtn = document.querySelector(".ideas-suggest-more-btn");
+  const errEl = document.getElementById("ideasSuggestErr");
+  const ctxEl = document.getElementById("ideasSuggestContext");
+  const userContext = ctxEl ? (ctxEl.value || "").trim() : "";
+
+  if (errEl) { errEl.textContent = ""; errEl.classList.remove("on"); }
+
+  // Loading state — reusa rotador v0.14.22
+  const target = btn && btn.offsetParent !== null ? btn : moreBtn;
+  let _rot = null;
+  if (target) {
+    target._origText = target._origText || target.textContent;
+    target.disabled = true;
+    target.innerHTML = '<span class="loading-msg-rot"></span>';
+    _rot = startLoadingRotator(target.querySelector(".loading-msg-rot"));
+  }
+
+  try {
+    window.posthog && window.posthog.capture("ideas_suggested_clicked", {
+      ideas_count_existing: (typeof ideasCache !== "undefined" ? ideasCache.length : 0),
+    });
+  } catch (e) {}
+
+  try {
+    const r = await fetch("/api/ideas/suggest", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_context: userContext }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      const msg = d.message || (r.status === 402
+        ? t("ideas.no_credits")
+        : t("ideas.generate_failed"));
+      if (errEl) { errEl.textContent = msg; errEl.classList.add("on"); }
+      return;
+    }
+    window._suggestionsCache = Array.isArray(d.ideas) ? d.ideas : [];
+    _renderSuggestionsState();
+    // Refresh credits balance in header
+    try { if (typeof loadAuth === "function") loadAuth(); } catch (e) {}
+  } catch (err) {
+    if (errEl) { errEl.textContent = t("ideas.generate_failed"); errEl.classList.add("on"); }
+  } finally {
+    stopLoadingRotator(_rot);
+    if (target && target._origText != null) {
+      target.disabled = false;
+      target.textContent = target._origText;
+    }
+  }
+}
+
+function _suggestThumbHtml(meta) {
+  if (meta && meta.thumbnail_b64) {
+    return `<img src="${esc(meta.thumbnail_b64)}" alt="">`;
+  }
+  if (meta && meta.thumbnail_url) {
+    return `<img src="${esc(meta.thumbnail_url)}" alt="" loading="lazy">`;
+  }
+  // Fallback SVG (R isotipo silueta) — gris discreto
+  return '<svg class="idea-suggest-thumb-placeholder" width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">'
+    + '<rect x="3" y="3" width="26" height="26" rx="6" stroke="currentColor" stroke-width="1.5"/>'
+    + '<path d="M11 9 H17.5 C19.4 9 21 10.6 21 12.5 S19.4 16 17.5 16 H13 L19.5 23" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>'
+    + '</svg>';
+}
+
+function _suggestSourceLine(meta) {
+  if (!meta) return "";
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  if (meta.kind === "reel" && (meta.published_at || meta.views != null)) {
+    let dateStr = "";
+    if (meta.published_at) {
+      try {
+        const d = new Date(meta.published_at);
+        const day = String(d.getDate()).padStart(2, "0");
+        const mon = String(d.getMonth() + 1).padStart(2, "0");
+        dateStr = `${day}/${mon}`;
+      } catch (e) {}
+    }
+    const views = meta.views != null
+      ? Number(meta.views).toLocaleString(lang === "en" ? "en-US" : "es-ES") + " views"
+      : "";
+    const tpl = t("ideas.inspired_by");
+    return tpl.replace("{date}", dateStr || "-").replace("{views}", views || "-");
+  }
+  return t("ideas.inspired_by_transc");
+}
+
+function renderSuggestionCards() {
+  const grid = document.getElementById("ideasSuggestGrid");
+  if (!grid) return;
+  const items = window._suggestionsCache || [];
+  if (!items.length) { grid.innerHTML = ""; return; }
+  grid.innerHTML = items.map((idea, idx) => {
+    const meta = idea.inspired_by || null;
+    const thumb = _suggestThumbHtml(meta);
+    const sourceLine = _suggestSourceLine(meta);
+    const styleLbl = (idea.style || "").toUpperCase();
+    return `
+      <div class="idea-suggest-card" data-idx="${idx}">
+        <div class="idea-suggest-thumb">${thumb}</div>
+        <div class="idea-suggest-body">
+          <div class="idea-suggest-title">${esc(idea.title || "")}</div>
+          ${idea.hook ? `<div class="idea-suggest-hook">"${esc(idea.hook)}"</div>` : ""}
+          <div class="idea-suggest-meta">
+            ${styleLbl ? `<span class="idea-suggest-meta-style">${esc(styleLbl)}</span>` : ""}
+            ${sourceLine ? `<span class="idea-suggest-source">${esc(sourceLine)}</span>` : ""}
+          </div>
+          <div class="idea-suggest-actions">
+            <button class="idea-suggest-act idea-suggest-act-save" onclick="saveSuggestion(${idx})" data-i18n="ideas.save">${t("ideas.save")}</button>
+            <button class="idea-suggest-act idea-suggest-act-discard" onclick="discardSuggestion(${idx})" data-i18n="ideas.discard">${t("ideas.discard")}</button>
+          </div>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+async function saveSuggestion(idx) {
+  const items = window._suggestionsCache || [];
+  const idea = items[idx];
+  if (!idea) return;
+  const card = document.querySelector(`.idea-suggest-card[data-idx="${idx}"]`);
+  const saveBtn = card ? card.querySelector(".idea-suggest-act-save") : null;
+  if (saveBtn) saveBtn.disabled = true;
+
+  try {
+    const meta = idea.inspired_by || {};
+    const r = await fetch("/api/ideas/save", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: idea.title || "",
+        hook: idea.hook || "",
+        style: idea.style || "",
+        inspired_by_id: meta.id || null,
+        inspired_by_type: meta.kind || null,
+      }),
+    });
+    if (!r.ok) {
+      if (saveBtn) saveBtn.disabled = false;
+      const d = await r.json().catch(() => ({}));
+      showToast(d.error || t("ideas.generate_failed"));
+      return;
+    }
+    showToast(t("ideas.saved_toast"));
+    _removeSuggestionCard(idx);
+    // Refresh saved ideas cache silenciosamente
+    if (typeof loadIdeas === "function") loadIdeas();
+  } catch (e) {
+    if (saveBtn) saveBtn.disabled = false;
+    showToast(t("toast.error_connection"));
+  }
+}
+
+function discardSuggestion(idx) {
+  try {
+    window.posthog && window.posthog.capture("idea_discarded_from_suggestion", {
+      position_in_list: idx,
+    });
+  } catch (e) {}
+  _removeSuggestionCard(idx);
+}
+
+function _removeSuggestionCard(idx) {
+  const card = document.querySelector(`.idea-suggest-card[data-idx="${idx}"]`);
+  if (card) {
+    card.classList.add("fading");
+    setTimeout(() => {
+      window._suggestionsCache.splice(idx, 1);
+      _renderSuggestionsState();
+    }, 260);
+  } else {
+    window._suggestionsCache.splice(idx, 1);
+    _renderSuggestionsState();
+  }
 }
 
 const IDEAS_CAT_LABELS = {

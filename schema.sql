@@ -86,6 +86,15 @@ CREATE TABLE IF NOT EXISTS public.saved_scripts (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- v0.14.26: Suggest Ideas Phase 1 — columnas para sugerencias guardadas
+ALTER TABLE public.ideas
+  ADD COLUMN IF NOT EXISTS hook              TEXT,
+  ADD COLUMN IF NOT EXISTS style             TEXT,
+  ADD COLUMN IF NOT EXISTS inspired_by_id    TEXT,
+  ADD COLUMN IF NOT EXISTS inspired_by_type  TEXT,   -- 'reel' | 'transcription'
+  ADD COLUMN IF NOT EXISTS source            TEXT NOT NULL DEFAULT 'manual';
+-- source: 'manual' (existentes) | 'suggestion' (creadas desde Sugerir Ideas)
+
 -- v0.14.24: email activation flow (Resend)
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS lang              TEXT    NOT NULL DEFAULT 'es',
