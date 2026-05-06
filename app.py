@@ -2816,10 +2816,12 @@ def api_ideas_suggest():
     )
 
     # 4) Llamar LLM. Si falla → 502 sin deducir créditos.
+    # v0.14.26b: max_tokens=4000 (subido desde 3000) — Gemini truncaba JSON con
+    # 5-8 ideas + reasoning. develop_idea sin tocar (su default ya es 4000).
     try:
         result = _call_llm_json(
             SUGGEST_IDEAS_SYSTEM, user_prompt,
-            max_tokens=3000, temperature=0.8,
+            max_tokens=4000, temperature=0.8,
         )
     except _json_mod.JSONDecodeError:
         logger.error("suggest: LLM JSON parse failed user=%s", uid)
