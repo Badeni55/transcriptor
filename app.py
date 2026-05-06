@@ -2648,6 +2648,297 @@ def idea_to_script(idea_id):
     return jsonify({"script": result, "idea_id": idea_id})
 
 
+# ── v0.14.26: Suggest Ideas (Phase 1) ─────────────────────────────────────
+
+def _call_llm_json(system_prompt, user_prompt, max_tokens=4000, temperature=0.7):
+    """Helper centralizado para llamadas LLM con response_format json_object.
+    Reusa env vars OpenRouter / Groq fallback. Devuelve dict parseado.
+    Levanta json.JSONDecodeError si Gemini trunca; el caller decide qué hacer."""
+    api_key = OPENROUTER_API_KEY or GROQ_API_KEY
+    url = OPENROUTER_URL if OPENROUTER_API_KEY else "https://api.groq.com/openai/v1/chat/completions"
+    model = OPENROUTER_MODEL if OPENROUTER_API_KEY else "llama-3.3-70b-versatile"
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        **({"HTTP-Referer": "https://reelscript.net", "X-Title": "ReelScript"} if OPENROUTER_API_KEY else {}),
+    }
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    if "gemini" in (model or "").lower():
+        payload["response_format"] = {"type": "json_object"}
+
+    resp = requests.post(url, headers=headers, json=payload, timeout=60)
+    resp.raise_for_status()
+    content = resp.json()["choices"][0]["message"]["content"].strip()
+    if content.startswith("```"):
+        content = content.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+    import json as _json_mod
+    try:
+        return _json_mod.loads(content)
+    except _json_mod.JSONDecodeError:
+        logger.error("_call_llm_json raw response (first 500): %s", repr(content[:500]))
+        raise
+
+
+SUGGEST_IDEAS_SYSTEM = (
+    "Eres un experto en contenido de Instagram Reels y TikTok. "
+    "El usuario te enviará data de sus reels que mejor han funcionado "
+    "(o transcripciones de reels que ha consumido).\n\n"
+    "Tu tarea: generar 8-10 ideas de NUEVOS reels que el user podría "
+    "grabar, inspiradas en patrones de éxito que detectes en sus datos.\n\n"
+    "Para cada idea, devuelve:\n"
+    "- title: título corto y atractivo del reel propuesto\n"
+    "- hook: primera frase del reel (la que engancha en los primeros 3 segundos)\n"
+    "- style: uno de [educativo, storytelling, listas, hooks, controversia, tutorial, comparativa]\n"
+    "- inspired_by_index: índice del reel/transcripción que más inspira esta idea (0-indexed)\n"
+    "- reasoning: 1 frase corta explicando por qué esta idea conecta con el patrón del user\n\n"
+    "Devuelve SOLO JSON válido en este formato exacto:\n"
+    '{"ideas":[{"title":"...","hook":"...","style":"...","inspired_by_index":0,"reasoning":"..."}, ...]}'
+)
+
+
+@app.route("/api/ideas/suggest", methods=["POST"])
+@require_auth
+@limiter.limit("5 per minute;30 per day")
+def api_ideas_suggest():
+    user = current_user()
+    uid = user["id"]
+    body = request.get_json(silent=True) or {}
+    user_context = (body.get("user_context") or "").strip()[:1000]
+
+    profile = get_profile(uid)
+    plan = profile.get("plan", "free")
+
+    # 1) Verificar costo (3 créditos = 54 cents). Plan pago paga con monthly_usage.
+    SUGGEST_COST = 3 * COST_CENTS  # 54 cents
+    SUGGEST_USAGE_UNITS = 3
+    is_paid_unlimited = plan in ("pro", "creator", "agency")
+    if not is_paid_unlimited and (profile.get("credits_cents") or 0) < SUGGEST_COST:
+        return jsonify({
+            "error": "no_credits",
+            "message": "Necesitas 3 créditos para generar ideas. Compra créditos o sube de plan.",
+        }), 402
+
+    # 2) Cargar contexto: top 5 ig_videos por views, fallback transcriptions.
+    sources = []
+    source_kind = None
+    try:
+        vids_r = db.table("ig_videos").select(
+            "ig_video_id, caption, views, likes, comments, published_at, "
+            "thumbnail_b64, thumbnail_url, transcription"
+        ).eq("user_id", uid).order("views", desc=True).limit(5).execute()
+        if vids_r.data and len(vids_r.data) >= 2:
+            source_kind = "ig_videos"
+            for v in vids_r.data:
+                sources.append({
+                    "kind": "reel",
+                    "id": v.get("ig_video_id") or "",
+                    "caption": (v.get("caption") or "")[:600],
+                    "transcription": (v.get("transcription") or "")[:1500],
+                    "views": int(v.get("views") or 0),
+                    "likes": int(v.get("likes") or 0),
+                    "comments": int(v.get("comments") or 0),
+                    "published_at": v.get("published_at"),
+                    "thumbnail_b64": v.get("thumbnail_b64"),
+                    "thumbnail_url": v.get("thumbnail_url"),
+                })
+    except Exception as e:
+        logger.warning("suggest: ig_videos query failed user=%s err=%s", uid, e)
+
+    if not sources:
+        try:
+            tr_r = db.table("transcriptions").select(
+                "id, url, platform, text, thumbnail_b64, created_at, views"
+            ).eq("user_id", uid).order("created_at", desc=True).limit(5).execute()
+            if tr_r.data:
+                source_kind = "transcriptions"
+                for t in tr_r.data:
+                    sources.append({
+                        "kind": "transcription",
+                        "id": str(t.get("id") or ""),
+                        "url": t.get("url") or "",
+                        "platform": t.get("platform") or "",
+                        "text": (t.get("text") or "")[:1500],
+                        "views": int(t.get("views") or 0) if t.get("views") else None,
+                        "created_at": t.get("created_at"),
+                        "thumbnail_b64": t.get("thumbnail_b64"),
+                    })
+        except Exception as e:
+            logger.warning("suggest: transcriptions query failed user=%s err=%s", uid, e)
+
+    if not sources and not user_context:
+        return jsonify({
+            "error": "no_context",
+            "message": "Transcribe al menos 1 reel primero o cuéntame sobre qué va tu contenido.",
+        }), 400
+
+    # 3) Build user prompt — payload JSON estructurado, sin thumbnails (no relevantes para LLM).
+    import json as _json_mod
+    sources_for_llm = []
+    for i, s in enumerate(sources):
+        sl = {"index": i, "kind": s["kind"]}
+        if s["kind"] == "reel":
+            sl["caption"] = s.get("caption", "")
+            sl["transcription"] = s.get("transcription", "")
+            sl["views"] = s.get("views")
+            sl["likes"] = s.get("likes")
+            sl["comments"] = s.get("comments")
+            sl["published_at"] = s.get("published_at")
+        else:
+            sl["text"] = s.get("text", "")
+            sl["platform"] = s.get("platform", "")
+            sl["created_at"] = s.get("created_at")
+            if s.get("views") is not None:
+                sl["views"] = s["views"]
+        sources_for_llm.append(sl)
+
+    user_payload = {
+        "sources": sources_for_llm,
+        "extra_context": user_context or None,
+    }
+    user_prompt = (
+        "Datos del usuario:\n" + _json_mod.dumps(user_payload, ensure_ascii=False) +
+        "\n\nGenera 8-10 ideas siguiendo el formato JSON especificado en el system prompt."
+    )
+
+    # 4) Llamar LLM. Si falla → 502 sin deducir créditos.
+    try:
+        result = _call_llm_json(
+            SUGGEST_IDEAS_SYSTEM, user_prompt,
+            max_tokens=3000, temperature=0.8,
+        )
+    except _json_mod.JSONDecodeError:
+        logger.error("suggest: LLM JSON parse failed user=%s", uid)
+        try:
+            from emails import track as _ph_track
+            _ph_track("ideas_generated_failed", uid, {"error": "llm_parse"})
+        except Exception:
+            pass
+        return jsonify({"error": "llm_parse", "message": "Algo falló generando ideas. Vuelve a intentarlo."}), 502
+    except Exception as e:
+        logger.error("suggest: LLM call failed user=%s err=%s", uid, e, exc_info=True)
+        try:
+            from emails import track as _ph_track
+            _ph_track("ideas_generated_failed", uid, {"error": "llm_error"})
+        except Exception:
+            pass
+        return jsonify({"error": "llm_error", "message": "Algo falló generando ideas. Vuelve a intentarlo."}), 502
+
+    raw_ideas = result.get("ideas") if isinstance(result, dict) else None
+    if not isinstance(raw_ideas, list) or not raw_ideas:
+        logger.warning("suggest: empty ideas array user=%s result=%s", uid, repr(result)[:200])
+        return jsonify({"error": "llm_empty", "message": "No se pudieron generar ideas. Vuelve a intentarlo."}), 502
+
+    # 5) Enriquecer con metadata del item inspirador.
+    enriched = []
+    for idea in raw_ideas[:10]:
+        if not isinstance(idea, dict):
+            continue
+        idx = idea.get("inspired_by_index")
+        src_meta = None
+        if isinstance(idx, int) and 0 <= idx < len(sources):
+            src = sources[idx]
+            src_meta = {
+                "kind": src["kind"],
+                "id": src.get("id"),
+                "thumbnail_b64": src.get("thumbnail_b64"),
+                "thumbnail_url": src.get("thumbnail_url"),
+                "views": src.get("views"),
+                "published_at": src.get("published_at") or src.get("created_at"),
+            }
+        enriched.append({
+            "title": (idea.get("title") or "").strip()[:200],
+            "hook": (idea.get("hook") or "").strip()[:500],
+            "style": (idea.get("style") or "").strip()[:50],
+            "reasoning": (idea.get("reasoning") or "").strip()[:300],
+            "inspired_by_index": idx if isinstance(idx, int) else None,
+            "inspired_by": src_meta,
+        })
+
+    if not enriched:
+        return jsonify({"error": "llm_empty", "message": "No se pudieron generar ideas. Vuelve a intentarlo."}), 502
+
+    # 6) Cobrar créditos (SOLO tras parse exitoso).
+    try:
+        if is_paid_unlimited:
+            db.table("profiles").update({
+                "monthly_usage": (profile.get("monthly_usage") or 0) + SUGGEST_USAGE_UNITS
+            }).eq("id", uid).execute()
+        else:
+            db.table("profiles").update({
+                "credits_cents": (profile.get("credits_cents") or 0) - SUGGEST_COST
+            }).eq("id", uid).execute()
+    except Exception as e:
+        logger.error("suggest: credit deduction failed user=%s err=%s", uid, e, exc_info=True)
+        # No bloqueamos — el LLM ya respondió. Loggeamos y seguimos.
+
+    # 7) PostHog
+    try:
+        from emails import track as _ph_track
+        _ph_track("ideas_generated", uid, {
+            "count": len(enriched),
+            "source": source_kind or "context_only",
+            "credits_spent": SUGGEST_USAGE_UNITS,
+        })
+    except Exception:
+        pass
+
+    return jsonify({"ideas": enriched, "source": source_kind or "context_only"})
+
+
+@app.route("/api/ideas/save", methods=["POST"])
+@require_auth
+@limiter.limit("30 per minute")
+def api_ideas_save():
+    user = current_user()
+    body = request.get_json(silent=True) or {}
+    title = (body.get("title") or "").strip()
+    hook = (body.get("hook") or "").strip()
+    style = (body.get("style") or "").strip()
+    inspired_by_id = (body.get("inspired_by_id") or "").strip() or None
+    inspired_by_type = (body.get("inspired_by_type") or "").strip() or None
+
+    if len(title) < 3 or len(title) > 200:
+        return jsonify({"error": "Title invalid (3-200 chars)"}), 400
+    if len(hook) > 500:
+        return jsonify({"error": "Hook too long (max 500 chars)"}), 400
+    if inspired_by_type and inspired_by_type not in ("reel", "transcription"):
+        return jsonify({"error": "Invalid inspired_by_type"}), 400
+
+    raw_text = title if not hook else f"{title} — {hook}"
+
+    row = db.table("ideas").insert({
+        "user_id": user["id"],
+        "raw_text": raw_text,
+        "title": title,
+        "hook": hook or None,
+        "style": style or None,
+        "inspired_by_id": inspired_by_id,
+        "inspired_by_type": inspired_by_type,
+        "source": "suggestion",
+        "status": "developed",
+    }).execute()
+
+    try:
+        from emails import track as _ph_track
+        _ph_track("idea_saved_from_suggestion", user["id"], {
+            "style": style or "unknown",
+            "inspired_by_type": inspired_by_type or "none",
+        })
+    except Exception:
+        pass
+
+    return jsonify(row.data[0] if row.data else {"ok": True})
+
+
 @app.route("/me/preferences")
 @require_auth
 def get_preferences():
