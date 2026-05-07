@@ -2248,14 +2248,24 @@ def api_me_overview():
             logger.warning("ov_team error: %s", e)
             return {"active": 0, "pending": 0, "members": []}
 
+    # scripts.title se inserta en /save-script como "Guión adaptado · {style} · {fecha}".
+    # Como no hay columna style explícita, derivamos el style del título por regex.
+    _STYLE_RE = re.compile(r"Guión adaptado · (.+?) ·")
+
+    def _extract_style(title: str) -> str:
+        if not title:
+            return ""
+        m = _STYLE_RE.search(title)
+        return m.group(1).strip() if m else ""
+
     def _w_adapt():
         try:
-            total_r = (db.table("saved_scripts")
+            total_r = (db.table("scripts")
                          .select("id", count="exact")
                          .eq("user_id", uid)
                          .execute())
-            last_r = (db.table("saved_scripts")
-                        .select("id, style, content, created_at")
+            last_r = (db.table("scripts")
+                        .select("id, title, script, created_at")
                         .eq("user_id", uid)
                         .order("created_at", desc=True)
                         .limit(1)
@@ -2263,10 +2273,10 @@ def api_me_overview():
             last = None
             if last_r.data:
                 row = last_r.data[0]
-                content = (row.get("content") or "").strip()
+                content = (row.get("script") or "").strip()
                 last = {
                     "text_snippet": content[:60] + ("…" if len(content) > 60 else ""),
-                    "style": row.get("style") or "",
+                    "style": _extract_style(row.get("title") or ""),
                     "created_at": row.get("created_at"),
                 }
             return {"total": total_r.count or 0, "last": last}
