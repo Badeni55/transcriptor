@@ -5287,6 +5287,16 @@
       background: transparent;
       color: var(--ink-muted);
     }
+    /* v0.14.28: selector de asistente al lado del botón Guionizar */
+    .ideas-guionizar-asst {
+      padding: 6px 10px; border-radius: 8px;
+      background: var(--surf2); border: 1px solid var(--border);
+      color: var(--text); font-family: var(--font-body);
+      font-size: 12.5px; cursor: pointer; outline: none;
+      transition: border-color .15s;
+    }
+    .ideas-guionizar-asst:hover { border-color: rgba(255,255,255,.18); }
+    .ideas-guionizar-asst:focus { border-color: rgba(239,106,41,.6); }
     .ideas-act:hover { transform: translateY(-1px); }
     .ideas-act.primary-orange {
       background: var(--ideas-accent-soft);
@@ -6702,6 +6712,15 @@
       transition: transform .22s, box-shadow .22s, border-color .22s;
     }
     .scr-card.has-proj { border-left: 3px solid var(--pc, #8a7e72); }
+    /* v0.14.28: highlight transitorio al navegar desde idea scripted → script */
+    .scr-card.scr-card-highlight {
+      animation: scrCardFlash 2s ease-out;
+    }
+    @keyframes scrCardFlash {
+      0%   { box-shadow: 0 0 0 2px rgba(239,106,41,.55), 0 6px 20px rgba(239,106,41,.25); }
+      80%  { box-shadow: 0 0 0 2px rgba(239,106,41,.18), 0 6px 20px rgba(239,106,41,.05); }
+      100% { box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 4px 16px rgba(0,0,0,.3); }
+    }
     .scr-card:hover {
       transform: translateY(-2px);
       border-color: color-mix(in srgb, var(--pc, #ef6a29) 25%, transparent);
@@ -9541,11 +9560,10 @@
               </div>
             </div>
             <div class="ideas-input-col-right">
-              <button id="ideaAddOnlyBtn" class="ideas-btn-add" onclick="submitIdea({develop:false})">
-                <span data-i18n-es="Añadir" data-i18n-en="Add">Añadir</span>
-              </button>
-              <button id="ideaSubmitBtn" class="ideas-btn-develop" onclick="submitIdea({develop:true})">
-                <span data-i18n="ideas.develop">Desarrollar</span>
+              <!-- v0.14.28: solo "Guardar" (eliminado Desarrollar). El selector de
+                   asistente de arriba persiste en la idea para usar al guionizar. -->
+              <button id="ideaAddOnlyBtn" class="ideas-btn-develop" onclick="submitIdea({develop:false})">
+                <span data-i18n-es="Guardar" data-i18n-en="Save">Guardar</span>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <path d="M3 8 H12.5 M8.5 4 L13 8 L8.5 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
@@ -15174,6 +15192,13 @@ async function loadIdeas() {
     if (r.ok) ideasCache = await r.json();
     else ideasCache = [];
   } catch { ideasCache = []; }
+  // v0.14.28-5: garantizar userAssistants poblado antes de renderIdeas
+  // (el selector de Guionizar lo necesita para mostrar custom assistants).
+  // Caso típico: deep-link directo a /profile/ideas donde el boot
+  // loadAssistants aún no ha resuelto.
+  if (typeof loadAssistants === "function" && (!userAssistants || userAssistants.length === 0)) {
+    try { await loadAssistants(); } catch (e) {}
+  }
   renderIdeas();
   // v0.14.26: aplicar tab persistido al entrar
   if (typeof applyIdeasTab === "function") applyIdeasTab();
@@ -15530,9 +15555,8 @@ function renderIdeas() {
   const LBL_DEV         = lang === "en" ? "DEVELOPMENT": "DESARROLLO";
   const LBL_CLOSE       = lang === "en" ? "CLOSE"      : "CIERRE";
   const ACT_DEVELOP     = lang === "en" ? "Develop with Hooks" : "Desarrollar con Hooks";
-  const ACT_SCRIPT      = lang === "en" ? "Create script"      : "Crear guión";
+  const ACT_SCRIPT      = lang === "en" ? "Generate script"    : "Guionizar";
   const ACT_DELETE      = lang === "en" ? "Delete"              : "Eliminar";
-  const ACT_REGEN       = lang === "en" ? "Regenerate"          : "Regenerar";
   const ACT_TP          = lang === "en" ? "Teleprompter"        : "Al teleprompter";
   const POINTER_SCRIPTED= lang === "en" ? "→ SCRIPT CREATED · OPEN IN SCRIPTS" : "→ GUIÓN CREADO · VER EN SCRIPTS";
   const REC_ON          = lang === "en" ? "RECORDED" : "GRABADA";
@@ -15560,6 +15584,8 @@ function renderIdeas() {
     const recChip = recChipFor(idea);
 
     if (status === "draft") {
+      // v0.14.28: card draft no muestra "Crear guión" — sin script_draft no se
+      // puede guionizar. Forzamos al user a Desarrollar primero.
       return `
       <article class="ideas-card is-draft" data-id="${id}">
         <div class="ideas-card-head">
@@ -15574,7 +15600,6 @@ function renderIdeas() {
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true"><path d="M6.5 1.2 L7.6 4.9 L11.3 5.1 L8.4 7.4 L9.3 11 L6.5 8.9 L3.7 11 L4.6 7.4 L1.7 5.1 L5.4 4.9 Z" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linejoin="round"/></svg>
             ${ACT_DEVELOP}
           </button>
-          <button class="ideas-act ghost" onclick="ideaToScript('${id}')">${ACT_SCRIPT}</button>
           <button class="ideas-act ghost danger" onclick="deleteIdea('${id}')">${ACT_DELETE}</button>
         </div>
       </article>`;
@@ -15622,6 +15647,13 @@ function renderIdeas() {
           </div>` : ""}
       </div>` : `<div class="ideas-card-raw">${raw}</div>`;
 
+    // v0.14.28: card developed — selector de asistente + Guionizar.
+    // Default seleccionado = idea.assistant_id si existe, si no "viral".
+    const presetAsst = idea.assistant_id || "viral";
+    const customAsstOpts = ((typeof userAssistants !== "undefined") ? userAssistants : [])
+      .map(a => `<option value="${esc(a.id)}"${a.id === presetAsst ? " selected" : ""}>${esc(a.name)}</option>`)
+      .join("");
+    const builtinSel = (val) => presetAsst === val ? " selected" : "";
     return `
     <article class="ideas-card is-developed" data-id="${id}">
       <div class="ideas-card-head">
@@ -15640,7 +15672,14 @@ function renderIdeas() {
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 2.3 L3 9.7 L9.5 6 Z" fill="currentColor"/></svg>
           ${ACT_TP}
         </button>
-        <button class="ideas-act ghost" onclick="regenerateIdea('${id}')">${ACT_REGEN}</button>
+        <select class="ideas-guionizar-asst" id="guionizar-asst-${id}" aria-label="Asistente">
+          <option value="viral"${builtinSel("viral")}>🔥 Viral</option>
+          <option value="divertido"${builtinSel("divertido")}>😂 Divertido</option>
+          <option value="linkedin"${builtinSel("linkedin")}>💼 LinkedIn</option>
+          <option value="storytelling"${builtinSel("storytelling")}>📖 Historia</option>
+          <option value="hooks"${builtinSel("hooks")}>🪝 5 Hooks</option>
+          ${customAsstOpts}
+        </select>
         <button class="ideas-act ghost" onclick="ideaToScript('${id}')">${ACT_SCRIPT}</button>
         <button class="ideas-act ghost danger" onclick="deleteIdea('${id}')">${ACT_DELETE}</button>
       </div>
@@ -15648,17 +15687,41 @@ function renderIdeas() {
   }).join("");
 }
 
-function ideaOpenScripted(id) {
-  try { profTab("scripts"); } catch {}
+async function ideaOpenScripted(ideaId) {
+  // v0.14.28: navega a Scripts y hace highlight/scroll al script más reciente
+  // vinculado a esta idea (scripts.idea_id). Si scriptsCache aún no cargó,
+  // espera a loadScripts() antes de buscar.
+  try { profTab("scripts"); } catch (e) {}
+  try {
+    if (!Array.isArray(scriptsCache) || scriptsCache.length === 0) {
+      if (typeof loadScripts === "function") await loadScripts();
+    }
+    const matches = (scriptsCache || []).filter(s => s.idea_id === ideaId);
+    if (!matches.length) return;
+    matches.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+    const target = matches[0];
+    setTimeout(() => {
+      const el = document.getElementById(`s-${target.id}`);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("scr-card-highlight");
+      setTimeout(() => el.classList.remove("scr-card-highlight"), 2000);
+    }, 80);
+  } catch (e) {
+    // Silent: la navegación al tab Scripts ya ocurrió, el highlight es best-effort.
+  }
 }
 
 async function submitIdea(opts) {
+  // v0.14.28: develop siempre false desde el caller. Mantengo el flag por compat
+  // con call sites antiguos que aún pasan develop:true (no rompo backend).
   opts = opts || {};
-  const develop = opts.develop !== false;
+  const develop = !!opts.develop;
   const input = document.getElementById("ideaInput");
-  const btnPrimary = document.getElementById("ideaSubmitBtn");
+  const btnPrimary = document.getElementById("ideaSubmitBtn");   // v0.14.28: ya no existe en DOM
   const btnAdd = document.getElementById("ideaAddOnlyBtn");
-  const btn = develop ? btnPrimary : btnAdd;
+  const btn = (develop && btnPrimary) ? btnPrimary : btnAdd;
+  if (!btn) return;
   const text = input.value.trim();
   if (!text || text.length < 5) { showToast(t("ideas.too_short")); return; }
 
@@ -15758,21 +15821,26 @@ async function ideaToScript(id) {
   const btn = document.querySelector(`[onclick="ideaToScript('${id}')"]`);
   const _rot = _btnRotateStart(btn);
   if (!btn) showToast(t("toast.generating"));
+  // v0.14.28: leer asistente seleccionado en el selector de la card.
+  const sel = document.getElementById(`guionizar-asst-${id}`);
+  const assistant_id = sel ? sel.value : null;
   try {
     const res = await fetch(`/ideas/${id}/to-script`, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ style: "viral" }),
+      body: JSON.stringify(assistant_id ? { assistant_id } : {}),
     });
     const d = await res.json();
     _btnRotateStop(btn, _rot);
     if (res.ok) {
       showToast(t("ideas.scripted"));
-      const adaptInput = document.getElementById("adaptInput");
-      if (adaptInput && d.script) {
-        adaptInput.value = d.script;
-        revealAdaptSection({ scroll: false });
-      }
-      await loadIdeas();
+      // v0.14.28: el guion ya queda persistido en `scripts` (con idea_id).
+      // No abrimos Hazlo tuyo automáticamente — el user va a Scripts vía la card.
+      // v0.14.28-5: refrescar también scriptsCache para que el pointer
+      // "→ GUIÓN CREADO · VER EN SCRIPTS" encuentre el script recién persistido.
+      await Promise.all([
+        loadIdeas(),
+        (typeof loadScripts === "function") ? loadScripts() : Promise.resolve(),
+      ]);
     } else { showToast(d.error || "Error"); }
   } catch {
     _btnRotateStop(btn, _rot);
