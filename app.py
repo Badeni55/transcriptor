@@ -2629,10 +2629,15 @@ def regenerate_idea(idea_id):
     return jsonify(result)
 
 
+_BUILTIN_SCRIPT_STYLES = {"viral", "divertido", "linkedin", "storytelling", "hooks"}
+
+
 @app.route("/ideas/<idea_id>/to-script", methods=["POST"])
 @require_auth
 @limiter.limit("10 per minute")
 def idea_to_script(idea_id):
+    """v0.14.28 — Guionizar idea developed con asistente elegido.
+    Persiste el guion en `scripts` vinculado a la idea (scripts.idea_id)."""
     user = current_user()
     row = db.table("ideas").select("*").eq("id", idea_id).eq("user_id", user["id"]).execute()
     if not row.data:
@@ -2640,27 +2645,91 @@ def idea_to_script(idea_id):
 
     idea = row.data[0]
     body = request.get_json() or {}
-    style = body.get("style", "viral")
+
+    # Resolución de asistente: body > idea.assistant_id > profile.default > None
+    assistant_id = body.get("assistant_id") or idea.get("assistant_id")
+    if not assistant_id:
+        try:
+            prof = db.table("profiles").select("default_idea_assistant").eq("id", user["id"]).execute()
+            if prof.data and prof.data[0].get("default_idea_assistant"):
+                assistant_id = prof.data[0]["default_idea_assistant"]
+        except Exception:
+            assistant_id = None
+
+    # Decide style/custom_prompt/label según tipo de assistant_id.
+    style_arg = "viral"
+    custom_prompt = ""
+    style_label = "viral"
+    if assistant_id in _BUILTIN_SCRIPT_STYLES:
+        style_arg = assistant_id
+        style_label = assistant_id
+    elif assistant_id:
+        try:
+            asst_r = db.table("assistants").select("name, instructions").eq(
+                "id", assistant_id
+            ).eq("user_id", user["id"]).execute()
+            if asst_r.data and asst_r.data[0].get("instructions"):
+                style_arg = "custom"
+                custom_prompt = asst_r.data[0]["instructions"]
+                style_label = asst_r.data[0].get("name") or "custom"
+        except Exception as e:
+            logger.warning(
+                "idea_to_script: asst lookup failed user=%s asst=%s err=%s",
+                user["id"], assistant_id, e,
+            )
+            # fall through to default "viral"
+
     draft = idea.get("script_draft") or {}
     full_text = f"{draft.get('intro', '')}\n{draft.get('desarrollo', '')}\n{draft.get('cierre', '')}"
 
     try:
-        result = adapt_with_ai(full_text, style)
+        result = adapt_with_ai(full_text, style_arg, custom_prompt)
     except Exception as e:
         logger.error(f"Idea to script failed: {e}", exc_info=True)
         return jsonify({"error": "Failed to generate script. Try again."}), 502
 
-    # Flatten to text for ideas flow (ideas expects plain string)
+    # Flatten a plano para storage + return (el frontend espera string).
     if isinstance(result, dict) and "hook" in result:
         flat = result["hook"] + "\n" + "\n".join(result.get("body", [])) + "\n" + result.get("closing", "")
         result = flat.strip()
+    elif isinstance(result, dict) and isinstance(result.get("hooks"), list):
+        # style="hooks" devuelve {"hooks": [{"type": "...", "text": "..."}, ...]}
+        lines = []
+        for h in result["hooks"]:
+            if isinstance(h, dict) and h.get("text"):
+                lines.append(h["text"])
+        result = "\n".join(lines).strip()
+    elif not isinstance(result, str):
+        result = str(result)
+
+    # v0.14.28: persistir guion automáticamente en `scripts` (idea_id link).
+    today = datetime.now(timezone.utc).strftime("%d %b %Y").lower()
+    script_title = f"Guión adaptado · {style_label} · {today}"
+    script_id = None
+    try:
+        script_row = db.table("scripts").insert({
+            "user_id":    user["id"],
+            "idea_id":    idea_id,
+            "title":      script_title,
+            "script":     result,
+            "project_id": idea.get("project_id"),
+        }).execute()
+        if script_row.data:
+            script_id = script_row.data[0].get("id")
+    except Exception as e:
+        # No bloqueamos: el guion ya está generado, fallar el insert es recoverable
+        # (usuario puede copiar el script desde la response). Loggeamos para postmortem.
+        logger.error(
+            "idea_to_script: scripts insert failed user=%s idea=%s err=%s",
+            user["id"], idea_id, e, exc_info=True,
+        )
 
     db.table("ideas").update({
         "status": "scripted",
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }).eq("id", idea_id).execute()
 
-    return jsonify({"script": result, "idea_id": idea_id})
+    return jsonify({"script": result, "idea_id": idea_id, "script_id": script_id})
 
 
 # ── v0.14.26: Suggest Ideas (Phase 1) ─────────────────────────────────────
