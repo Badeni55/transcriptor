@@ -6712,6 +6712,15 @@
       transition: transform .22s, box-shadow .22s, border-color .22s;
     }
     .scr-card.has-proj { border-left: 3px solid var(--pc, #8a7e72); }
+    /* v0.14.28: highlight transitorio al navegar desde idea scripted → script */
+    .scr-card.scr-card-highlight {
+      animation: scrCardFlash 2s ease-out;
+    }
+    @keyframes scrCardFlash {
+      0%   { box-shadow: 0 0 0 2px rgba(239,106,41,.55), 0 6px 20px rgba(239,106,41,.25); }
+      80%  { box-shadow: 0 0 0 2px rgba(239,106,41,.18), 0 6px 20px rgba(239,106,41,.05); }
+      100% { box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 4px 16px rgba(0,0,0,.3); }
+    }
     .scr-card:hover {
       transform: translateY(-2px);
       border-color: color-mix(in srgb, var(--pc, #ef6a29) 25%, transparent);
@@ -15671,8 +15680,29 @@ function renderIdeas() {
   }).join("");
 }
 
-function ideaOpenScripted(id) {
-  try { profTab("scripts"); } catch {}
+async function ideaOpenScripted(ideaId) {
+  // v0.14.28: navega a Scripts y hace highlight/scroll al script más reciente
+  // vinculado a esta idea (scripts.idea_id). Si scriptsCache aún no cargó,
+  // espera a loadScripts() antes de buscar.
+  try { profTab("scripts"); } catch (e) {}
+  try {
+    if (!Array.isArray(scriptsCache) || scriptsCache.length === 0) {
+      if (typeof loadScripts === "function") await loadScripts();
+    }
+    const matches = (scriptsCache || []).filter(s => s.idea_id === ideaId);
+    if (!matches.length) return;
+    matches.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+    const target = matches[0];
+    setTimeout(() => {
+      const el = document.getElementById(`s-${target.id}`);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("scr-card-highlight");
+      setTimeout(() => el.classList.remove("scr-card-highlight"), 2000);
+    }, 80);
+  } catch (e) {
+    // Silent: la navegación al tab Scripts ya ocurrió, el highlight es best-effort.
+  }
 }
 
 async function submitIdea(opts) {
