@@ -9541,11 +9541,10 @@
               </div>
             </div>
             <div class="ideas-input-col-right">
-              <button id="ideaAddOnlyBtn" class="ideas-btn-add" onclick="submitIdea({develop:false})">
-                <span data-i18n-es="Añadir" data-i18n-en="Add">Añadir</span>
-              </button>
-              <button id="ideaSubmitBtn" class="ideas-btn-develop" onclick="submitIdea({develop:true})">
-                <span data-i18n="ideas.develop">Desarrollar</span>
+              <!-- v0.14.28: solo "Guardar" (eliminado Desarrollar). El selector de
+                   asistente de arriba persiste en la idea para usar al guionizar. -->
+              <button id="ideaAddOnlyBtn" class="ideas-btn-develop" onclick="submitIdea({develop:false})">
+                <span data-i18n-es="Guardar" data-i18n-en="Save">Guardar</span>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                   <path d="M3 8 H12.5 M8.5 4 L13 8 L8.5 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
@@ -15653,12 +15652,15 @@ function ideaOpenScripted(id) {
 }
 
 async function submitIdea(opts) {
+  // v0.14.28: develop siempre false desde el caller. Mantengo el flag por compat
+  // con call sites antiguos que aún pasan develop:true (no rompo backend).
   opts = opts || {};
-  const develop = opts.develop !== false;
+  const develop = !!opts.develop;
   const input = document.getElementById("ideaInput");
-  const btnPrimary = document.getElementById("ideaSubmitBtn");
+  const btnPrimary = document.getElementById("ideaSubmitBtn");   // v0.14.28: ya no existe en DOM
   const btnAdd = document.getElementById("ideaAddOnlyBtn");
-  const btn = develop ? btnPrimary : btnAdd;
+  const btn = (develop && btnPrimary) ? btnPrimary : btnAdd;
+  if (!btn) return;
   const text = input.value.trim();
   if (!text || text.length < 5) { showToast(t("ideas.too_short")); return; }
 
