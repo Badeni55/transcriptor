@@ -338,11 +338,25 @@ def _send_via_resend(to_email, subject, html, text):
 
 # ── Decision logic ───────────────────────────────────────────────────────
 
+class MissingTableError(Exception):
+    """Raised when Supabase reports the queried table doesn't exist (PGRST205).
+    Distinta de errores de red/timeout — un nombre de tabla mal escrito debe
+    fallar ruidosamente en vez de devolver 0 silenciosamente."""
+
+
 def _count(table, user_id):
     try:
         r = _db().table(table).select("id", count="exact").eq("user_id", user_id).execute()
         return r.count or 0
     except Exception as e:
+        # PGRST205 = "Could not find the table ... in the schema cache".
+        # Re-lanzamos para evitar que un typo de tabla cause comportamiento
+        # silenciosamente incorrecto (e.g. emails day7_no_adapt enviados a
+        # users con scripts porque el count siempre era 0).
+        err_str = str(e)
+        if "PGRST205" in err_str or "schema cache" in err_str:
+            logger.error("count: missing table table=%s err=%s", table, err_str)
+            raise MissingTableError(f"table {table!r} not found: {err_str}") from e
         logger.warning("count failed table=%s user=%s err=%s", table, user_id, e)
         return 0
 
@@ -358,7 +372,7 @@ def decide_template(user_id, slot):
     if slot == "day7":
         if transcribe_count == 0:
             return "day7_no_transcribe"
-        adapt_count = _count("saved_scripts", user_id)
+        adapt_count = _count("scripts", user_id)
         if adapt_count == 0:
             return "day7_no_adapt"
         return None
