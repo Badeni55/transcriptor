@@ -2636,23 +2636,37 @@ _BUILTIN_SCRIPT_STYLES = {"viral", "divertido", "linkedin", "storytelling", "hoo
 @require_auth
 @limiter.limit("10 per minute")
 def idea_to_script(idea_id):
-    """v0.14.28 — Guionizar idea developed con asistente elegido.
-    Persiste el guion en `scripts` vinculado a la idea (scripts.idea_id)."""
+    """v0.14.29 — Guionizar idea con asistente elegido. Cobra 1 crédito antes
+    del LLM y refunda si la generación falla. Persiste guion en `scripts`
+    vinculado a la idea (scripts.idea_id)."""
     user = current_user()
-    row = db.table("ideas").select("*").eq("id", idea_id).eq("user_id", user["id"]).execute()
+    uid = user["id"]
+    row = db.table("ideas").select("*").eq("id", idea_id).eq("user_id", uid).execute()
     if not row.data:
         return jsonify({"error": "Not found"}), 404
 
     idea = row.data[0]
     body = request.get_json() or {}
 
+    profile = get_profile(uid)
+    plan = profile.get("plan", "free")
+
+    # v0.14.29: cobro 1 crédito (patrón de /api/ideas/suggest pero con 1 unit).
+    SCRIPT_COST = COST_CENTS              # 18 cents por guion
+    SCRIPT_USAGE_UNITS = 1
+    is_paid_unlimited = plan in ("pro", "creator", "agency")
+    if not is_paid_unlimited and (profile.get("credits_cents") or 0) < SCRIPT_COST:
+        return jsonify({
+            "error": "no_credits",
+            "message": "Necesitas 1 crédito para generar un guion. Compra créditos o sube de plan.",
+        }), 402
+
     # Resolución de asistente: body > idea.assistant_id > profile.default > None
     assistant_id = body.get("assistant_id") or idea.get("assistant_id")
     if not assistant_id:
         try:
-            prof = db.table("profiles").select("default_idea_assistant").eq("id", user["id"]).execute()
-            if prof.data and prof.data[0].get("default_idea_assistant"):
-                assistant_id = prof.data[0]["default_idea_assistant"]
+            if profile.get("default_idea_assistant"):
+                assistant_id = profile["default_idea_assistant"]
         except Exception:
             assistant_id = None
 
@@ -2667,7 +2681,7 @@ def idea_to_script(idea_id):
         try:
             asst_r = db.table("assistants").select("name, instructions").eq(
                 "id", assistant_id
-            ).eq("user_id", user["id"]).execute()
+            ).eq("user_id", uid).execute()
             if asst_r.data and asst_r.data[0].get("instructions"):
                 style_arg = "custom"
                 custom_prompt = asst_r.data[0]["instructions"]
@@ -2675,17 +2689,58 @@ def idea_to_script(idea_id):
         except Exception as e:
             logger.warning(
                 "idea_to_script: asst lookup failed user=%s asst=%s err=%s",
-                user["id"], assistant_id, e,
+                uid, assistant_id, e,
             )
             # fall through to default "viral"
 
-    draft = idea.get("script_draft") or {}
-    full_text = f"{draft.get('intro', '')}\n{draft.get('desarrollo', '')}\n{draft.get('cierre', '')}"
+    # v0.14.29: cobrar ANTES del LLM. Si LLM falla, refundar abajo.
+    try:
+        if is_paid_unlimited:
+            db.table("profiles").update({
+                "monthly_usage": (profile.get("monthly_usage") or 0) + SCRIPT_USAGE_UNITS
+            }).eq("id", uid).execute()
+        else:
+            db.table("profiles").update({
+                "credits_cents": (profile.get("credits_cents") or 0) - SCRIPT_COST
+            }).eq("id", uid).execute()
+    except Exception as e:
+        logger.error("idea_to_script: pre-charge failed user=%s err=%s", uid, e, exc_info=True)
+        return jsonify({"error": "Internal error", "message": "Inténtalo de nuevo."}), 500
+
+    def _refund():
+        """Revertir el descuento aplicado arriba. Best-effort."""
+        try:
+            if is_paid_unlimited:
+                db.table("profiles").update({
+                    "monthly_usage": max(0, (profile.get("monthly_usage") or 0))
+                }).eq("id", uid).execute()
+            else:
+                db.table("profiles").update({
+                    "credits_cents": (profile.get("credits_cents") or 0)
+                }).eq("id", uid).execute()
+        except Exception as e:
+            logger.error("idea_to_script: refund failed user=%s err=%s", uid, e, exc_info=True)
+
+    # v0.14.29: nuevo user_content. Pasamos contexto rico (raw_text + title +
+    # category) en lugar del script_draft cortito que limitaba el output del LLM.
+    title = idea.get("title") or ""
+    category = idea.get("category") or ""
+    raw_text = idea.get("raw_text") or ""
+    user_content = (
+        f"[Idea original del usuario]\n{raw_text}\n\n"
+        f"[Título]\n{title}\n\n"
+        f"[Categoría]\n{category or '—'}\n\n"
+        f"Tarea: convierte esto en un guion completo de 30-45 segundos hablados "
+        f"para un reel de Instagram. Tu output debe tener desarrollo real, "
+        f"ejemplos concretos (sin inventar datos numéricos), profundidad y ritmo. "
+        f"El campo body del JSON debe tener mínimo 6 frases."
+    )
 
     try:
-        result = adapt_with_ai(full_text, style_arg, custom_prompt)
+        result = adapt_with_ai(user_content, style_arg, custom_prompt)
     except Exception as e:
         logger.error(f"Idea to script failed: {e}", exc_info=True)
+        _refund()
         return jsonify({"error": "Failed to generate script. Try again."}), 502
 
     # Flatten a plano para storage + return (el frontend espera string).
@@ -2708,7 +2763,7 @@ def idea_to_script(idea_id):
     script_id = None
     try:
         script_row = db.table("scripts").insert({
-            "user_id":    user["id"],
+            "user_id":    uid,
             "idea_id":    idea_id,
             "title":      script_title,
             "script":     result,
@@ -2717,11 +2772,11 @@ def idea_to_script(idea_id):
         if script_row.data:
             script_id = script_row.data[0].get("id")
     except Exception as e:
-        # No bloqueamos: el guion ya está generado, fallar el insert es recoverable
-        # (usuario puede copiar el script desde la response). Loggeamos para postmortem.
+        # No refundamos aquí: el LLM SÍ funcionó (el user tiene el guion en la
+        # response). Persistencia es recoverable. Loggeamos para postmortem.
         logger.error(
             "idea_to_script: scripts insert failed user=%s idea=%s err=%s",
-            user["id"], idea_id, e, exc_info=True,
+            uid, idea_id, e, exc_info=True,
         )
 
     db.table("ideas").update({
