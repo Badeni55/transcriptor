@@ -1314,6 +1314,7 @@ STYLE_PROMPTS = {
         "'es fundamental entender que', 'descubre cómo', 'cree en ti'. "
         "El resultado tiene que poder leerse frase por frase con viñetas (▸). "
         "Si lo lees en voz alta y no para el scroll en los primeros 3 segundos, reescríbelo. "
+        "Output mínimo: 6-8 frases en body, 100+ palabras totales en el guion. "
         + _JSON_SCRIPT_SCHEMA
     ),
 
@@ -1326,6 +1327,7 @@ STYLE_PROMPTS = {
         "Nunca uses entusiasmo artificial, emojis, exclamaciones ni motivacional. "
         "El guión tiene que sonar exactamente igual que un audio de WhatsApp a un colega. "
         "Si lo lees en voz alta y suena raro o artificial, reescríbelo. "
+        "Output mínimo: 6-8 frases en body, 100+ palabras totales en el guion. "
         + _JSON_SCRIPT_SCHEMA
     ),
 
@@ -1349,6 +1351,7 @@ STYLE_PROMPTS = {
         "Sin 'y esto me enseñó que...', sin conclusiones explícitas, sin motivacional. "
         "El cierre es una frase corta que deja el peso de la historia caer. "
         "Si la historia no genera tensión, no es una historia — es un resumen. Reescríbela. "
+        "Output mínimo: 6-8 frases en body, 100+ palabras totales en el guion. "
         + _JSON_SCRIPT_SCHEMA
     ),
 
@@ -1502,16 +1505,21 @@ def adapt():
     if not style and not custom_prompt and not assistant_id:
         return jsonify({"error": "Select a style"}), 400
 
-    # If assistant_id, override style to use assistant's instructions
+    user = current_user()
+
+    # v0.14.30 D.1: filtrar por user_id para evitar que un user use asistentes ajenos.
+    # Antes (buggy): SELECT instructions WHERE id = assistant_id (sin user_id).
     if assistant_id:
-        ast_result = db.table("assistants").select("instructions").eq("id", assistant_id).execute()
+        if not user:
+            return jsonify({"error": "Auth required"}), 401
+        ast_result = db.table("assistants").select("instructions").eq(
+            "id", assistant_id
+        ).eq("user_id", user["id"]).execute()
         if ast_result.data:
             style = "custom"
             custom_prompt = ast_result.data[0]["instructions"]
         else:
             return jsonify({"error": "Assistant not found"}), 404
-
-    user = current_user()
     cost_cents = 0
 
     # ── Comprobar límites / saldo (adapt usa free_adapt_used_today) ──────────
@@ -2629,7 +2637,9 @@ def regenerate_idea(idea_id):
     return jsonify(result)
 
 
-_BUILTIN_SCRIPT_STYLES = {"viral", "divertido", "linkedin", "storytelling", "hooks"}
+# v0.14.30: linkedin queda fuera del set para to-script (no encaja con reel
+# 30-45s). El estilo sigue disponible vía /adapt directo para retrocompat.
+_BUILTIN_SCRIPT_STYLES = {"viral", "divertido", "storytelling", "hooks"}
 
 
 @app.route("/ideas/<idea_id>/to-script", methods=["POST"])
@@ -2733,7 +2743,8 @@ def idea_to_script(idea_id):
         f"Tarea: convierte esto en un guion completo de 30-45 segundos hablados "
         f"para un reel de Instagram. Tu output debe tener desarrollo real, "
         f"ejemplos concretos (sin inventar datos numéricos), profundidad y ritmo. "
-        f"El campo body del JSON debe tener mínimo 6 frases."
+        f"Total: 100-140 palabras, mínimo 8 frases en body. "
+        f"Incluye al menos 1 ejemplo concreto o anécdota dentro del desarrollo."
     )
 
     try:
