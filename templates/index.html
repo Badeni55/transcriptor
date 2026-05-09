@@ -8236,14 +8236,16 @@
       <a class="lang-btn{% if lang|default('es') == 'en' %} active{% endif %}" href="/en/">EN</a>
     </div>
     <a href="/affiliate" id="navAffiliate" style="display:none;color:var(--text3);font-size:.78rem;font-weight:500;text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--purple)'" onmouseout="this.style.color='var(--text3)'">Earn 30% &rarr;</a>
-    {% if not workspace %}<a class="btn-nav hi" id="btnWorkspace" href="/app" onclick="ctaWorkspaceClick()" style="display:none;text-decoration:none" data-i18n="nav.workspace">Ir a mi app →</a>{% endif %}
+    {# v0.14.30.a-2: #btnWorkspace y los CTA mobile siempre en DOM. JS
+       renderLoggedIn/Out controla visibilidad. Antes: guard {% if not workspace %}
+       los excluía cuando se renderizaba /profile/*, dejando al user sin botón
+       "Ir a mi app" tras navegación SPA hacia la landing. #}
+    <a class="btn-nav hi" id="btnWorkspace" href="/app" onclick="ctaWorkspaceClick()" style="display:none;text-decoration:none" data-i18n="nav.workspace">Ir a mi app →</a>
     <button class="btn-nav" id="btnLogin" onclick="openAuth('login','nav_login')" data-i18n="nav.login">Log in</button>
     <button class="btn-nav hi" id="btnReg" onclick="openAuth('register','nav_login')" data-i18n="nav.register">Free →</button>
-    {% if not workspace %}
     <a class="nav-mob-cta nav-mob-cta-primary" id="navMobApp" href="/app" onclick="ctaWorkspaceClick()" style="display:none" data-i18n-es="Entrar app" data-i18n-en="Open app">Entrar app</a>
     <button class="nav-mob-cta" id="navMobLoginBtn" onclick="openAuth('login','nav_mob')" data-i18n-es="Entrar" data-i18n-en="Sign in">Entrar</button>
     <button class="nav-mob-cta nav-mob-cta-primary" id="navMobRegBtn" onclick="openAuth('register','nav_mob')" data-i18n-es="Empezar gratis" data-i18n-en="Get started">Empezar gratis</button>
-    {% endif %}
     {% if workspace %}<button class="nav-upgrade-btn" id="navUpgradeBtn" onclick="openUpgradeModal('nav')" style="display:none" data-i18n-es="✦ Upgrade" data-i18n-en="✦ Upgrade">✦ Upgrade</button>{% endif %}
     <button class="theme-btn" id="themeBtn" title="Theme">🌙</button>
     <div class="user-menu-wrap">
@@ -14122,7 +14124,6 @@ function renderTranscCardHTML(it, opts) {
   const lang = (document.documentElement.lang || "es").toLowerCase();
   const LBL_WORDS  = lang === "en" ? "words" : "palabras";
   const LBL_COPY   = lang === "en" ? "Copy" : "Copiar";
-  const LBL_TFORM  = lang === "en" ? "Transform" : "Transformar";
   const LBL_GUION  = lang === "en" ? "Generate script" : "Guionizar";
   const LBL_TP     = lang === "en" ? "Teleprompter" : "Teleprompter";
   const LBL_PROJ   = lang === "en" ? "To project" : "Al proyecto";
@@ -14207,10 +14208,6 @@ function renderTranscCardHTML(it, opts) {
           ${customAsstOptsT}
         </select>
         <button class="trans-act primary" onclick="transcriptionToScript(${id})">${LBL_GUION}</button>
-        <button class="trans-act" onclick="profAdaptFromTransc(${id})">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="6" cy="6" r="1.2" fill="currentColor"/></svg>
-          ${LBL_TFORM}
-        </button>
         <button class="trans-act" onclick="cpHist(${id},this)">${LBL_COPY}</button>
         <button class="trans-act mob-hide" onclick="tpOpenFromTransc(${id})">${LBL_TP}</button>
         <button class="trans-act mob-hide" onclick="saveTranscToProject(${id})">${LBL_PROJ}</button>
@@ -14626,7 +14623,6 @@ function openCardActions(id, type) {
       <button class="cas-btn" onclick="closeCardActions();transcriptionToScript(${id},{assistant_id:'${esc(lastAsst)}'})">✦ ${(document.documentElement.lang||'es')==='en'?'Generate script':'Guionizar'}</button>
       <button class="cas-btn" onclick="closeCardActions();cpHist(${id})">📋 ${t("act.copy")}</button>
       <button class="cas-btn" onclick="closeCardActions();viewItem(${id})">👁 ${t("act.view")}</button>
-      <button class="cas-btn" onclick="closeCardActions();profAdaptFromTransc(${id})">✨ ${t("act.transform")}</button>
       <button class="cas-btn" onclick="closeCardActions();tpOpenFromTransc(${id})">🎬 ${t("prof.teleprompter")}</button>
       <button class="cas-btn" onclick="closeCardActions();saveTranscToProject(${id})">📁 ${t("act.to_project")}</button>
       <button class="cas-btn danger" onclick="closeCardActions();delItem(${id});setTimeout(()=>{renderProfTransc();if(typeof loadOverviewMiniGrid==='function')loadOverviewMiniGrid()},300)">🗑 ${t("act.delete")}</button>
