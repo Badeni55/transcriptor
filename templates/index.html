@@ -14122,7 +14122,6 @@ function renderTranscCardHTML(it, opts) {
   const lang = (document.documentElement.lang || "es").toLowerCase();
   const LBL_WORDS  = lang === "en" ? "words" : "palabras";
   const LBL_COPY   = lang === "en" ? "Copy" : "Copiar";
-  const LBL_TFORM  = lang === "en" ? "Transform" : "Transformar";
   const LBL_GUION  = lang === "en" ? "Generate script" : "Guionizar";
   const LBL_TP     = lang === "en" ? "Teleprompter" : "Teleprompter";
   const LBL_PROJ   = lang === "en" ? "To project" : "Al proyecto";
@@ -14207,10 +14206,6 @@ function renderTranscCardHTML(it, opts) {
           ${customAsstOptsT}
         </select>
         <button class="trans-act primary" onclick="transcriptionToScript(${id})">${LBL_GUION}</button>
-        <button class="trans-act" onclick="profAdaptFromTransc(${id})">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="6" cy="6" r="1.2" fill="currentColor"/></svg>
-          ${LBL_TFORM}
-        </button>
         <button class="trans-act" onclick="cpHist(${id},this)">${LBL_COPY}</button>
         <button class="trans-act mob-hide" onclick="tpOpenFromTransc(${id})">${LBL_TP}</button>
         <button class="trans-act mob-hide" onclick="saveTranscToProject(${id})">${LBL_PROJ}</button>
@@ -14626,7 +14621,6 @@ function openCardActions(id, type) {
       <button class="cas-btn" onclick="closeCardActions();transcriptionToScript(${id},{assistant_id:'${esc(lastAsst)}'})">✦ ${(document.documentElement.lang||'es')==='en'?'Generate script':'Guionizar'}</button>
       <button class="cas-btn" onclick="closeCardActions();cpHist(${id})">📋 ${t("act.copy")}</button>
       <button class="cas-btn" onclick="closeCardActions();viewItem(${id})">👁 ${t("act.view")}</button>
-      <button class="cas-btn" onclick="closeCardActions();profAdaptFromTransc(${id})">✨ ${t("act.transform")}</button>
       <button class="cas-btn" onclick="closeCardActions();tpOpenFromTransc(${id})">🎬 ${t("prof.teleprompter")}</button>
       <button class="cas-btn" onclick="closeCardActions();saveTranscToProject(${id})">📁 ${t("act.to_project")}</button>
       <button class="cas-btn danger" onclick="closeCardActions();delItem(${id});setTimeout(()=>{renderProfTransc();if(typeof loadOverviewMiniGrid==='function')loadOverviewMiniGrid()},300)">🗑 ${t("act.delete")}</button>
