@@ -11109,6 +11109,17 @@ async function loadAssistants() {
     if (r.ok) userAssistants = await r.json();
   } catch {}
   renderStyleGrid();
+  // v0.14.30 D.4: las cards de Ideas y Transcripción tienen selectores que
+  // dependen de userAssistants. Si ya hay items en cache, re-render para que
+  // los selects muestren los asistentes recién cargados.
+  try {
+    if (Array.isArray(ideasCache) && ideasCache.length > 0 && typeof renderIdeas === "function") {
+      renderIdeas();
+    }
+    if (Array.isArray(histCache) && histCache.length > 0 && typeof renderProfTransc === "function") {
+      renderProfTransc();
+    }
+  } catch (e) {}
 }
 
 function renderStyleGrid() {
@@ -11311,6 +11322,9 @@ async function saveAssistant() {
   closeModal("assistantOverlay");
   showToast(editingAssistantId ? t("asst.updated") : t("asst.created"));
   await loadAssistants();
+  // v0.14.30 D.3: refrescar la lista del tab Asistentes tras crear/editar
+  // (loadAssistants ya repinta el style grid de Hazlo tuyo, pero NO esta lista).
+  try { renderProfAssistants(); } catch (e) {}
 }
 
 async function deleteAssistant(id) {
@@ -15604,9 +15618,7 @@ function renderIdeas() {
         <select class="ideas-guionizar-asst" id="guionizar-asst-${id}" aria-label="Asistente">
           <option value="viral"${builtinSel("viral")}>🔥 Viral</option>
           <option value="divertido"${builtinSel("divertido")}>😂 Divertido</option>
-          <option value="linkedin"${builtinSel("linkedin")}>💼 LinkedIn</option>
           <option value="storytelling"${builtinSel("storytelling")}>📖 Historia</option>
-          <option value="hooks"${builtinSel("hooks")}>🪝 5 Hooks</option>
           ${customAsstOpts}
         </select>
         <button class="ideas-act ghost" onclick="ideaToScript('${id}')">${ACT_SCRIPT}</button>
