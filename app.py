@@ -1286,7 +1286,8 @@ def cancel_subscription():
 
 _JSON_SCRIPT_SCHEMA = (
     'Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura exacta: '
-    '{"hook": "las primeras 1-3 líneas que paran el scroll", '
+    '{"title": "string corto 3-7 palabras describiendo el guion (sin comillas, sin emojis)", '
+    '"hook": "las primeras 1-3 líneas que paran el scroll", '
     '"body": ["línea 1 del desarrollo", "línea 2", "..."], '
     '"closing": "la línea final que ancla"}. '
     'Sin markdown, sin ```json, sin texto antes ni después. Solo el JSON.'
@@ -2754,12 +2755,18 @@ def idea_to_script(idea_id):
         _refund()
         return jsonify({"error": "Failed to generate script. Try again."}), 502
 
+    # v0.14.30.b: capturar title del LLM antes del flatten (que reasigna result a string).
+    llm_title = ""
+    if isinstance(result, dict) and result.get("title"):
+        llm_title = str(result["title"]).strip()[:80]
+
     # Flatten a plano para storage + return (el frontend espera string).
     if isinstance(result, dict) and "hook" in result:
         flat = result["hook"] + "\n" + "\n".join(result.get("body", [])) + "\n" + result.get("closing", "")
         result = flat.strip()
     elif isinstance(result, dict) and isinstance(result.get("hooks"), list):
         # style="hooks" devuelve {"hooks": [{"type": "...", "text": "..."}, ...]}
+        # No tiene title; cae al fallback de script_title abajo.
         lines = []
         for h in result["hooks"]:
             if isinstance(h, dict) and h.get("text"):
@@ -2769,8 +2776,12 @@ def idea_to_script(idea_id):
         result = str(result)
 
     # v0.14.28: persistir guion automáticamente en `scripts` (idea_id link).
+    # v0.14.30.b: usa llm_title si el LLM lo devolvió, fallback al formato legacy.
     today = datetime.now(timezone.utc).strftime("%d %b %Y").lower()
-    script_title = f"Guión adaptado · {style_label} · {today}"
+    if llm_title:
+        script_title = llm_title
+    else:
+        script_title = f"Guión adaptado · {style_label} · {today}"
     script_id = None
     try:
         script_row = db.table("scripts").insert({
@@ -2916,11 +2927,17 @@ def transcription_to_script(t_id):
         _refund()
         return jsonify({"error": "Failed to generate script. Try again."}), 502
 
+    # v0.14.30.b: capturar title del LLM antes del flatten.
+    llm_title = ""
+    if isinstance(result, dict) and result.get("title"):
+        llm_title = str(result["title"]).strip()[:80]
+
     # Flatten a plano (mismo manejo que /ideas/to-script).
     if isinstance(result, dict) and "hook" in result:
         flat = result["hook"] + "\n" + "\n".join(result.get("body", [])) + "\n" + result.get("closing", "")
         result = flat.strip()
     elif isinstance(result, dict) and isinstance(result.get("hooks"), list):
+        # No tiene title; cae al fallback abajo.
         lines = []
         for h in result["hooks"]:
             if isinstance(h, dict) and h.get("text"):
@@ -2930,8 +2947,12 @@ def transcription_to_script(t_id):
         result = str(result)
 
     # Persistir guion en `scripts` vinculado a la transcripción.
+    # v0.14.30.b: usa llm_title si el LLM lo devolvió, fallback al formato legacy.
     today = datetime.now(timezone.utc).strftime("%d %b %Y").lower()
-    script_title = f"Guión adaptado · {style_label} · {today}"
+    if llm_title:
+        script_title = llm_title
+    else:
+        script_title = f"Guión adaptado · {style_label} · {today}"
     script_id = None
     try:
         script_row = db.table("scripts").insert({
