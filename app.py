@@ -1314,6 +1314,7 @@ STYLE_PROMPTS = {
         "'es fundamental entender que', 'descubre cómo', 'cree en ti'. "
         "El resultado tiene que poder leerse frase por frase con viñetas (▸). "
         "Si lo lees en voz alta y no para el scroll en los primeros 3 segundos, reescríbelo. "
+        "Output mínimo: 6-8 frases en body, 100+ palabras totales en el guion. "
         + _JSON_SCRIPT_SCHEMA
     ),
 
@@ -1326,6 +1327,7 @@ STYLE_PROMPTS = {
         "Nunca uses entusiasmo artificial, emojis, exclamaciones ni motivacional. "
         "El guión tiene que sonar exactamente igual que un audio de WhatsApp a un colega. "
         "Si lo lees en voz alta y suena raro o artificial, reescríbelo. "
+        "Output mínimo: 6-8 frases en body, 100+ palabras totales en el guion. "
         + _JSON_SCRIPT_SCHEMA
     ),
 
@@ -1349,6 +1351,7 @@ STYLE_PROMPTS = {
         "Sin 'y esto me enseñó que...', sin conclusiones explícitas, sin motivacional. "
         "El cierre es una frase corta que deja el peso de la historia caer. "
         "Si la historia no genera tensión, no es una historia — es un resumen. Reescríbela. "
+        "Output mínimo: 6-8 frases en body, 100+ palabras totales en el guion. "
         + _JSON_SCRIPT_SCHEMA
     ),
 
@@ -1502,16 +1505,21 @@ def adapt():
     if not style and not custom_prompt and not assistant_id:
         return jsonify({"error": "Select a style"}), 400
 
-    # If assistant_id, override style to use assistant's instructions
+    user = current_user()
+
+    # v0.14.30 D.1: filtrar por user_id para evitar que un user use asistentes ajenos.
+    # Antes (buggy): SELECT instructions WHERE id = assistant_id (sin user_id).
     if assistant_id:
-        ast_result = db.table("assistants").select("instructions").eq("id", assistant_id).execute()
+        if not user:
+            return jsonify({"error": "Auth required"}), 401
+        ast_result = db.table("assistants").select("instructions").eq(
+            "id", assistant_id
+        ).eq("user_id", user["id"]).execute()
         if ast_result.data:
             style = "custom"
             custom_prompt = ast_result.data[0]["instructions"]
         else:
             return jsonify({"error": "Assistant not found"}), 404
-
-    user = current_user()
     cost_cents = 0
 
     # ── Comprobar límites / saldo (adapt usa free_adapt_used_today) ──────────
@@ -2629,7 +2637,9 @@ def regenerate_idea(idea_id):
     return jsonify(result)
 
 
-_BUILTIN_SCRIPT_STYLES = {"viral", "divertido", "linkedin", "storytelling", "hooks"}
+# v0.14.30: linkedin queda fuera del set para to-script (no encaja con reel
+# 30-45s). El estilo sigue disponible vía /adapt directo para retrocompat.
+_BUILTIN_SCRIPT_STYLES = {"viral", "divertido", "storytelling", "hooks"}
 
 
 @app.route("/ideas/<idea_id>/to-script", methods=["POST"])
@@ -2733,7 +2743,8 @@ def idea_to_script(idea_id):
         f"Tarea: convierte esto en un guion completo de 30-45 segundos hablados "
         f"para un reel de Instagram. Tu output debe tener desarrollo real, "
         f"ejemplos concretos (sin inventar datos numéricos), profundidad y ritmo. "
-        f"El campo body del JSON debe tener mínimo 6 frases."
+        f"Total: 100-140 palabras, mínimo 8 frases en body. "
+        f"Incluye al menos 1 ejemplo concreto o anécdota dentro del desarrollo."
     )
 
     try:
@@ -2785,6 +2796,166 @@ def idea_to_script(idea_id):
     }).eq("id", idea_id).execute()
 
     return jsonify({"script": result, "idea_id": idea_id, "script_id": script_id})
+
+
+# ── v0.14.30: Guionizar desde Transcripción ───────────────────────────────
+
+@app.route("/transcriptions/<int:t_id>/to-script", methods=["POST"])
+@require_auth
+@limiter.limit("10 per minute")
+def transcription_to_script(t_id):
+    """v0.14.30 — Guionizar transcripción con asistente elegido. Cobra 1 crédito
+    antes del LLM y refunda si la generación falla. Persiste el guion en
+    `scripts` vinculado a la transcripción (scripts.transcription_id)."""
+    user = current_user()
+    uid = user["id"]
+    t_row = db.table("transcriptions").select("*").eq("id", t_id).eq("user_id", uid).execute()
+    if not t_row.data:
+        return jsonify({"error": "Transcription not found"}), 404
+
+    t = t_row.data[0]
+    text = (t.get("text") or "").strip()
+    if not text:
+        return jsonify({"error": "Empty transcription"}), 400
+
+    body = request.get_json(silent=True) or {}
+
+    profile = get_profile(uid)
+    plan = profile.get("plan", "free")
+
+    # Cobro 1 crédito (mismo patrón v0.14.29 idea_to_script).
+    SCRIPT_COST = COST_CENTS              # 18 cents por guion
+    SCRIPT_USAGE_UNITS = 1
+    is_paid_unlimited = plan in ("pro", "creator", "agency")
+    if not is_paid_unlimited and (profile.get("credits_cents") or 0) < SCRIPT_COST:
+        return jsonify({
+            "error": "no_credits",
+            "message": "Necesitas 1 crédito para generar un guion. Compra créditos o sube de plan.",
+        }), 402
+
+    # Resolución de asistente: body > profile.default > None.
+    # NOTA: a diferencia de ideas, transcriptions NO guarda assistant_id propio.
+    assistant_id = (body.get("assistant_id") or "").strip() or None
+    if not assistant_id:
+        try:
+            if profile.get("default_idea_assistant"):
+                assistant_id = profile["default_idea_assistant"]
+        except Exception:
+            assistant_id = None
+
+    # Decide style/custom_prompt/label según tipo de assistant_id.
+    style_arg = "viral"
+    custom_prompt = ""
+    style_label = "viral"
+    if assistant_id in _BUILTIN_SCRIPT_STYLES:
+        style_arg = assistant_id
+        style_label = assistant_id
+    elif assistant_id:
+        try:
+            asst_r = db.table("assistants").select("name, instructions").eq(
+                "id", assistant_id
+            ).eq("user_id", uid).execute()
+            if asst_r.data and asst_r.data[0].get("instructions"):
+                style_arg = "custom"
+                custom_prompt = asst_r.data[0]["instructions"]
+                style_label = asst_r.data[0].get("name") or "custom"
+        except Exception as e:
+            logger.warning(
+                "transcription_to_script: asst lookup failed user=%s asst=%s err=%s",
+                uid, assistant_id, e,
+            )
+            # fall through to default "viral"
+
+    # Cobrar ANTES del LLM. Si LLM falla, refundar abajo.
+    try:
+        if is_paid_unlimited:
+            db.table("profiles").update({
+                "monthly_usage": (profile.get("monthly_usage") or 0) + SCRIPT_USAGE_UNITS
+            }).eq("id", uid).execute()
+        else:
+            db.table("profiles").update({
+                "credits_cents": (profile.get("credits_cents") or 0) - SCRIPT_COST
+            }).eq("id", uid).execute()
+    except Exception as e:
+        logger.error(
+            "transcription_to_script: pre-charge failed user=%s err=%s",
+            uid, e, exc_info=True,
+        )
+        return jsonify({"error": "Internal error", "message": "Inténtalo de nuevo."}), 500
+
+    def _refund():
+        """Revertir el descuento aplicado arriba. Best-effort."""
+        try:
+            if is_paid_unlimited:
+                db.table("profiles").update({
+                    "monthly_usage": max(0, (profile.get("monthly_usage") or 0))
+                }).eq("id", uid).execute()
+            else:
+                db.table("profiles").update({
+                    "credits_cents": (profile.get("credits_cents") or 0)
+                }).eq("id", uid).execute()
+        except Exception as e:
+            logger.error(
+                "transcription_to_script: refund failed user=%s err=%s",
+                uid, e, exc_info=True,
+            )
+
+    user_content = (
+        f"[Transcripción del reel original]\n{text}\n\n"
+        f"Tarea: adapta esta transcripción a un guion completo de 30-45 segundos hablados "
+        f"para un reel de Instagram en TU estilo. Reescribe con desarrollo real, "
+        f"ejemplos concretos (sin inventar datos numéricos), profundidad y ritmo. "
+        f"Total: 100-140 palabras, mínimo 8 frases en body. "
+        f"Incluye al menos 1 ejemplo concreto o anécdota dentro del desarrollo."
+    )
+
+    try:
+        result = adapt_with_ai(user_content, style_arg, custom_prompt)
+    except Exception as e:
+        logger.error(f"transcription_to_script LLM failed: {e}", exc_info=True)
+        _refund()
+        return jsonify({"error": "Failed to generate script. Try again."}), 502
+
+    # Flatten a plano (mismo manejo que /ideas/to-script).
+    if isinstance(result, dict) and "hook" in result:
+        flat = result["hook"] + "\n" + "\n".join(result.get("body", [])) + "\n" + result.get("closing", "")
+        result = flat.strip()
+    elif isinstance(result, dict) and isinstance(result.get("hooks"), list):
+        lines = []
+        for h in result["hooks"]:
+            if isinstance(h, dict) and h.get("text"):
+                lines.append(h["text"])
+        result = "\n".join(lines).strip()
+    elif not isinstance(result, str):
+        result = str(result)
+
+    # Persistir guion en `scripts` vinculado a la transcripción.
+    today = datetime.now(timezone.utc).strftime("%d %b %Y").lower()
+    script_title = f"Guión adaptado · {style_label} · {today}"
+    script_id = None
+    try:
+        script_row = db.table("scripts").insert({
+            "user_id":          uid,
+            "transcription_id": t_id,
+            "idea_id":          None,
+            "title":            script_title,
+            "script":           result,
+            "project_id":       t.get("project_id"),
+        }).execute()
+        if script_row.data:
+            script_id = script_row.data[0].get("id")
+    except Exception as e:
+        # No refundamos: el LLM funcionó, el user tiene el guion en la response.
+        logger.error(
+            "transcription_to_script: scripts insert failed user=%s tid=%s err=%s",
+            uid, t_id, e, exc_info=True,
+        )
+
+    return jsonify({
+        "script":           result,
+        "transcription_id": t_id,
+        "script_id":        script_id,
+    })
 
 
 # ── v0.14.26: Suggest Ideas (Phase 1) ─────────────────────────────────────

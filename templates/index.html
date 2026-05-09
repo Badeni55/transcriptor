@@ -5986,6 +5986,16 @@
       display: flex; flex-wrap: wrap; gap: 8px;
       margin-top: 4px;
     }
+    /* v0.14.30: selector de asistente al lado del botón Guionizar */
+    .trans-guionizar-asst {
+      padding: 6px 10px; border-radius: 8px;
+      background: var(--surf2); border: 1px solid var(--border);
+      color: var(--text); font-family: var(--font-body);
+      font-size: 12.5px; cursor: pointer; outline: none;
+      transition: border-color .15s;
+    }
+    .trans-guionizar-asst:hover { border-color: rgba(255,255,255,.18); }
+    .trans-guionizar-asst:focus { border-color: rgba(239,106,41,.6); }
     .trans-act {
       display: inline-flex; align-items: center; gap: 6px;
       padding: 7px 14px;
@@ -11099,6 +11109,17 @@ async function loadAssistants() {
     if (r.ok) userAssistants = await r.json();
   } catch {}
   renderStyleGrid();
+  // v0.14.30 D.4: las cards de Ideas y Transcripción tienen selectores que
+  // dependen de userAssistants. Si ya hay items en cache, re-render para que
+  // los selects muestren los asistentes recién cargados.
+  try {
+    if (Array.isArray(ideasCache) && ideasCache.length > 0 && typeof renderIdeas === "function") {
+      renderIdeas();
+    }
+    if (Array.isArray(histCache) && histCache.length > 0 && typeof renderProfTransc === "function") {
+      renderProfTransc();
+    }
+  } catch (e) {}
 }
 
 function renderStyleGrid() {
@@ -11301,6 +11322,9 @@ async function saveAssistant() {
   closeModal("assistantOverlay");
   showToast(editingAssistantId ? t("asst.updated") : t("asst.created"));
   await loadAssistants();
+  // v0.14.30 D.3: refrescar la lista del tab Asistentes tras crear/editar
+  // (loadAssistants ya repinta el style grid de Hazlo tuyo, pero NO esta lista).
+  try { renderProfAssistants(); } catch (e) {}
 }
 
 async function deleteAssistant(id) {
@@ -14099,6 +14123,7 @@ function renderTranscCardHTML(it, opts) {
   const LBL_WORDS  = lang === "en" ? "words" : "palabras";
   const LBL_COPY   = lang === "en" ? "Copy" : "Copiar";
   const LBL_TFORM  = lang === "en" ? "Transform" : "Transformar";
+  const LBL_GUION  = lang === "en" ? "Generate script" : "Guionizar";
   const LBL_TP     = lang === "en" ? "Teleprompter" : "Teleprompter";
   const LBL_PROJ   = lang === "en" ? "To project" : "Al proyecto";
   const LBL_DEL    = lang === "en" ? "Delete" : "Eliminar";
@@ -14130,6 +14155,15 @@ function renderTranscCardHTML(it, opts) {
     : "";
 
   const metricsHtml = renderTransMetrics(it);
+
+  // v0.14.30: selector asistente + Guionizar.
+  // Built-ins: viral, divertido, storytelling (sin linkedin/hooks).
+  // Default = profile.default_idea_assistant si existe, si no "viral".
+  const presetAsstT = (st && st.default_idea_assistant) || "viral";
+  const customAsstOptsT = ((typeof userAssistants !== "undefined") ? userAssistants : [])
+    .map(a => `<option value="${esc(a.id)}"${a.id === presetAsstT ? " selected" : ""}>${esc(a.name)}</option>`)
+    .join("");
+  const builtinSelT = (val) => presetAsstT === val ? " selected" : "";
 
   return `
     <article class="trans-card" id="t-${id}" data-id="${id}">
@@ -14166,7 +14200,14 @@ function renderTranscCardHTML(it, opts) {
         </div>
       </div>
       <div class="trans-acts">
-        <button class="trans-act primary" onclick="profAdaptFromTransc(${id})">
+        <select class="trans-guionizar-asst" id="trans-guionizar-asst-${id}" aria-label="Asistente">
+          <option value="viral"${builtinSelT("viral")}>🔥 Viral</option>
+          <option value="divertido"${builtinSelT("divertido")}>😂 Divertido</option>
+          <option value="storytelling"${builtinSelT("storytelling")}>📖 Historia</option>
+          ${customAsstOptsT}
+        </select>
+        <button class="trans-act primary" onclick="transcriptionToScript(${id})">${LBL_GUION}</button>
+        <button class="trans-act" onclick="profAdaptFromTransc(${id})">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="6" cy="6" r="1.2" fill="currentColor"/></svg>
           ${LBL_TFORM}
         </button>
@@ -14578,7 +14619,11 @@ function openCardActions(id, type) {
   if (type === "transc") {
     const it = histCache.find(i => i.id === Number(id));
     if (!it) return;
+    // v0.14.30: action sheet mobile añade "Guionizar". Reusa el último asistente
+    // del estado global (window._lastTranscAsst) o cae a "viral".
+    const lastAsst = (typeof window !== "undefined" && window._lastTranscAsst) || "viral";
     btns = `
+      <button class="cas-btn" onclick="closeCardActions();transcriptionToScript(${id},{assistant_id:'${esc(lastAsst)}'})">✦ ${(document.documentElement.lang||'es')==='en'?'Generate script':'Guionizar'}</button>
       <button class="cas-btn" onclick="closeCardActions();cpHist(${id})">📋 ${t("act.copy")}</button>
       <button class="cas-btn" onclick="closeCardActions();viewItem(${id})">👁 ${t("act.view")}</button>
       <button class="cas-btn" onclick="closeCardActions();profAdaptFromTransc(${id})">✨ ${t("act.transform")}</button>
@@ -15573,9 +15618,7 @@ function renderIdeas() {
         <select class="ideas-guionizar-asst" id="guionizar-asst-${id}" aria-label="Asistente">
           <option value="viral"${builtinSel("viral")}>🔥 Viral</option>
           <option value="divertido"${builtinSel("divertido")}>😂 Divertido</option>
-          <option value="linkedin"${builtinSel("linkedin")}>💼 LinkedIn</option>
           <option value="storytelling"${builtinSel("storytelling")}>📖 Historia</option>
-          <option value="hooks"${builtinSel("hooks")}>🪝 5 Hooks</option>
           ${customAsstOpts}
         </select>
         <button class="ideas-act ghost" onclick="ideaToScript('${id}')">${ACT_SCRIPT}</button>
@@ -15907,6 +15950,54 @@ function profAdaptFromTransc(id) {
   closeProfile();
   document.getElementById("adaptInput").value = item.text;
   revealAdaptSection();
+}
+
+// v0.14.30: Guionizar transcripción → POST /transcriptions/<id>/to-script.
+// Lee el asistente del selector de la card (fallback "viral").
+async function transcriptionToScript(id, opts) {
+  opts = opts || {};
+  // Localiza el botón para mostrar rotador.
+  const btn = document.querySelector(
+    `[onclick="transcriptionToScript(${id})"]`
+  );
+  const _rot = (typeof _btnRotateStart === "function") ? _btnRotateStart(btn) : null;
+  if (!btn) showToast(t("toast.generating"));
+  // Asistente: opts.assistant_id (mobile sheet) > selector card > nada (server pone default).
+  let assistant_id = opts.assistant_id || null;
+  if (!assistant_id) {
+    const sel = document.getElementById(`trans-guionizar-asst-${id}`);
+    assistant_id = sel ? sel.value : null;
+  }
+  try {
+    const res = await fetch(`/transcriptions/${id}/to-script`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(assistant_id ? { assistant_id } : {}),
+    });
+    const d = await res.json().catch(() => ({}));
+    if (typeof _btnRotateStop === "function") _btnRotateStop(btn, _rot);
+    if (!res.ok) {
+      const msg = d.message || d.error || (
+        (document.documentElement.lang || "es") === "en"
+          ? "Failed to generate script. Try again."
+          : "No se pudo generar el guion. Vuelve a intentarlo."
+      );
+      showToast(msg);
+      return;
+    }
+    const lang = (document.documentElement.lang || "es").toLowerCase();
+    showToast(lang === "en" ? "1 credit consumed · Script saved" : "1 crédito consumido · Guion guardado");
+    // Refrescar caches en paralelo (history para créditos, scripts para que el
+    // user pueda navegar y ver el guion recién guardado).
+    await Promise.all([
+      (typeof loadHistory === "function") ? loadHistory() : Promise.resolve(),
+      (typeof loadScripts === "function") ? loadScripts() : Promise.resolve(),
+    ]);
+    if (typeof renderProfTransc === "function") renderProfTransc();
+  } catch (e) {
+    if (typeof _btnRotateStop === "function") _btnRotateStop(btn, _rot);
+    showToast(t("toast.error_connection"));
+  }
 }
 
 function renderLoggedOut() {
