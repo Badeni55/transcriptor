@@ -8236,14 +8236,16 @@
       <a class="lang-btn{% if lang|default('es') == 'en' %} active{% endif %}" href="/en/">EN</a>
     </div>
     <a href="/affiliate" id="navAffiliate" style="display:none;color:var(--text3);font-size:.78rem;font-weight:500;text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--purple)'" onmouseout="this.style.color='var(--text3)'">Earn 30% &rarr;</a>
-    {% if not workspace %}<a class="btn-nav hi" id="btnWorkspace" href="/app" onclick="ctaWorkspaceClick()" style="display:none;text-decoration:none" data-i18n="nav.workspace">Ir a mi app →</a>{% endif %}
+    {# v0.14.30.a-2: #btnWorkspace y los CTA mobile siempre en DOM. JS
+       renderLoggedIn/Out controla visibilidad. Antes: guard {% if not workspace %}
+       los excluía cuando se renderizaba /profile/*, dejando al user sin botón
+       "Ir a mi app" tras navegación SPA hacia la landing. #}
+    <a class="btn-nav hi" id="btnWorkspace" href="/app" onclick="ctaWorkspaceClick()" style="display:none;text-decoration:none" data-i18n="nav.workspace">Ir a mi app →</a>
     <button class="btn-nav" id="btnLogin" onclick="openAuth('login','nav_login')" data-i18n="nav.login">Log in</button>
     <button class="btn-nav hi" id="btnReg" onclick="openAuth('register','nav_login')" data-i18n="nav.register">Free →</button>
-    {% if not workspace %}
     <a class="nav-mob-cta nav-mob-cta-primary" id="navMobApp" href="/app" onclick="ctaWorkspaceClick()" style="display:none" data-i18n-es="Entrar app" data-i18n-en="Open app">Entrar app</a>
     <button class="nav-mob-cta" id="navMobLoginBtn" onclick="openAuth('login','nav_mob')" data-i18n-es="Entrar" data-i18n-en="Sign in">Entrar</button>
     <button class="nav-mob-cta nav-mob-cta-primary" id="navMobRegBtn" onclick="openAuth('register','nav_mob')" data-i18n-es="Empezar gratis" data-i18n-en="Get started">Empezar gratis</button>
-    {% endif %}
     {% if workspace %}<button class="nav-upgrade-btn" id="navUpgradeBtn" onclick="openUpgradeModal('nav')" style="display:none" data-i18n-es="✦ Upgrade" data-i18n-en="✦ Upgrade">✦ Upgrade</button>{% endif %}
     <button class="theme-btn" id="themeBtn" title="Theme">🌙</button>
     <div class="user-menu-wrap">
