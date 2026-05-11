@@ -3041,6 +3041,32 @@
     }
     .profile-overlay.on { display: block; }
 
+    /* v0.14.31.b — hamburguesa mobile dedicada DENTRO del overlay del profile.
+       z-index > .profile-overlay (300) para no quedar tapada. Solo visible en
+       body.workspace mobile. El #navHamburger original sigue activo en landing. */
+    .prof-mob-hamburger {
+      display: none;
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      width: 40px;
+      height: 40px;
+      z-index: 350;
+      background: var(--surf);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text2);
+      font-size: 1.25rem;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      transition: border-color .2s, background .2s;
+    }
+    .prof-mob-hamburger:hover { border-color: var(--purple); }
+    @media (max-width: 640px) {
+      body.workspace .prof-mob-hamburger { display: flex; }
+    }
+
     .prof-layout {
       display: grid; grid-template-columns: 260px 1fr;
       height: 100vh; overflow: hidden;
@@ -7503,9 +7529,6 @@
       .nav-hamburger { display: flex; }
       /* v0.14.10 — fuera del workspace ocultamos hamburguesa; landing usa nav-mob-cta */
       body:not(.workspace) .nav-hamburger { display: none !important; }
-      /* v0.14.31.a — dentro del workspace forzamos visible (vence cualquier
-         cascada que la pudiera estar ocultando en mobile real). */
-      body.workspace .nav-hamburger { display: flex !important; }
       .nav-mob-cta { display: inline-flex; }
       /* Hero input row — select + button stacked full-width so nothing is cut off */
       .hero-lang-row { flex-direction: column; gap: 10px; }
@@ -8883,6 +8906,10 @@
 
 <!-- ── PROFILE PAGE ──────────────────────────────────────────────────── -->
 <div class="profile-overlay" id="profilePage">
+  <!-- v0.14.31.b: hamburguesa dedicada (mobile only). El #navHamburger original
+       queda tapado por este overlay (z-index 300). Este botón vive DENTRO del
+       overlay con z-index 350 para ser visible y abre #profMobDrawer. -->
+  <button class="prof-mob-hamburger" id="profMobHamburger" onclick="openProfMobDrawer()" aria-label="Menu">☰</button>
   <div class="prof-layout">
 
     <!-- Sidebar -->
