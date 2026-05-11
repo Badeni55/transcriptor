@@ -3041,31 +3041,7 @@
     }
     .profile-overlay.on { display: block; }
 
-    /* v0.14.31.b — hamburguesa mobile dedicada DENTRO del overlay del profile.
-       z-index > .profile-overlay (300) para no quedar tapada. Solo visible en
-       body.workspace mobile. El #navHamburger original sigue activo en landing. */
-    .prof-mob-hamburger {
-      display: none;
-      position: fixed;
-      top: 12px;
-      left: 12px;
-      width: 40px;
-      height: 40px;
-      z-index: 350;
-      background: var(--surf);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text2);
-      font-size: 1.25rem;
-      cursor: pointer;
-      align-items: center;
-      justify-content: center;
-      transition: border-color .2s, background .2s;
-    }
-    .prof-mob-hamburger:hover { border-color: var(--purple); }
-    @media (max-width: 640px) {
-      body.workspace .prof-mob-hamburger { display: flex; }
-    }
+    /* v0.14.31.d: .prof-mob-hamburger eliminada. Mobile usa bottom-bar 5 items. */
 
     .prof-layout {
       display: grid; grid-template-columns: 260px 1fr;
@@ -7211,72 +7187,99 @@
       padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
     }
     .prof-bottom-bar-inner {
-      display: grid; grid-template-columns: repeat(4, 1fr);
+      display: grid; grid-template-columns: repeat(5, 1fr);
     }
     .prof-bottom-tab {
       display: flex; flex-direction: column; align-items: center; gap: 3px;
       background: none; border: none; color: var(--text3); cursor: pointer;
       font-size: .6rem; font-family: var(--font-body); padding: 4px 0;
       min-height: 48px; justify-content: center;
-      transition: color .15s;
+      transition: color .15s, background .15s;
     }
     .prof-bottom-tab.on { color: var(--purple); }
     .prof-bottom-tab-icon { width: 20px; height: 20px; }
+    /* v0.14.31.d: Dashboard como item central destacado — pill sutil cuando activo. */
+    .prof-bottom-tab--featured {
+      border-radius: 12px;
+      margin: 0 4px;
+    }
+    .prof-bottom-tab--featured.on {
+      background: rgba(249,115,22,.12);
+      color: #ef6a29;
+    }
 
-    /* v0.14.21 — Mobile SPA nav drawer (left-side) */
-    #profMobDrawer {
-      display: none; position: fixed; inset: 0; z-index: 400;
+    /* v0.14.31.d — Bottom sheet "Más" (reemplaza drawer mobile lateral) */
+    .prof-more-sheet {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1099;
     }
-    #profMobDrawer.on { display: block; }
-    #profMobDrawer .pmob-backdrop {
-      position: absolute; inset: 0; background: rgba(0,0,0,.5);
-      opacity: 0; transition: opacity .22s ease-out;
+    .prof-more-sheet.on { display: block; }
+    .prof-more-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(10,11,15,.55);
+      backdrop-filter: blur(4px);
     }
-    #profMobDrawer.on .pmob-backdrop { opacity: 1; }
-    #profMobDrawer .pmob-panel {
-      position: absolute; top: 0; left: 0; bottom: 0; z-index: 1;
-      width: 78%; max-width: 300px; height: 100dvh;
-      background: var(--surf); border-right: 1px solid var(--border);
-      box-shadow: 12px 0 32px rgba(0,0,0,.4);
-      backdrop-filter: blur(12px);
-      display: flex; flex-direction: column;
-      padding-top: env(safe-area-inset-top, 0px);
-      padding-left: env(safe-area-inset-left, 0px);
-      transform: translateX(-100%); transition: transform .22s ease-out;
-      overflow-y: auto;
-    }
-    #profMobDrawer.on .pmob-panel { transform: translateX(0); }
-    .pmob-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 16px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0;
-    }
-    .pmob-title {
-      font-size: .72rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .08em; color: var(--text3);
-    }
-    .pmob-close {
-      background: none; border: 1px solid var(--border); border-radius: 8px;
-      color: var(--text2); width: 32px; height: 32px; font-size: .9rem;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      transition: border-color .15s; flex-shrink: 0;
-    }
-    .pmob-close:hover { border-color: var(--purple); }
-    .pmob-nav {
+    .prof-more-panel {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-height: 75vh;
+      background: var(--surf);
+      border-radius: 18px 18px 0 0;
       display: flex;
       flex-direction: column;
-      flex: 1;
-      /* v0.14.31.c: resets contra la regla global nav { ... } (línea 389)
-         que aplicaba a TODOS los <nav> y causaba space-between vertical.
-         El selector global pone align-items: center, justify-content: space-between,
-         padding: 0 32px, height: 56px — todo eso rompe el drawer mobile. */
-      align-items: stretch;
-      justify-content: flex-start;
-      padding: 0;
-      height: auto;
+      z-index: 1100;
+      transform: translateY(100%);
+      transition: transform .25s ease-out;
+      padding-bottom: env(safe-area-inset-bottom, 0);
     }
-    /* v0.14.31: agrupación en CREAR / MI TRABAJO / CONFIGURACIÓN */
-    .pmob-nav-section { display: flex; flex-direction: column; }
-    .pmob-nav-section-hdr {
+    .prof-more-sheet.on .prof-more-panel { transform: translateY(0); }
+    .prof-more-handle {
+      width: 40px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 10px auto 6px auto;
+      flex-shrink: 0;
+    }
+    .prof-more-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 18px 12px 18px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .prof-more-title {
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--text);
+    }
+    .prof-more-close {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      color: var(--text2);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color .15s;
+    }
+    .prof-more-close:hover { border-color: var(--purple); }
+    .prof-more-body {
+      overflow-y: auto;
+      padding-bottom: 20px;
+    }
+    .prof-more-section {
+      display: flex;
+      flex-direction: column;
+    }
+    .prof-more-section-hdr {
       text-transform: uppercase;
       font-size: 11px;
       letter-spacing: 0.06em;
@@ -7285,25 +7288,28 @@
       padding: 14px 18px 6px 18px;
       user-select: none;
     }
-    .pmob-nav button {
-      display: flex; align-items: center; gap: 14px; height: 50px;
-      padding: 0 18px; background: none; border: none;
+    .prof-more-section button {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      height: 50px;
+      padding: 0 18px;
+      background: none;
+      border: none;
       border-bottom: 1px solid var(--border);
-      color: var(--text2); font-size: .88rem; font-weight: 500;
-      font-family: var(--font-body); cursor: pointer; text-align: left; width: 100%;
+      color: var(--text);
+      font-size: 15px;
+      font-family: var(--font-body);
+      text-align: left;
+      cursor: pointer;
       transition: background .12s;
+      width: 100%;
     }
-    .pmob-nav button:active { background: rgba(255,255,255,.06); }
-    .pmob-nav button svg { flex-shrink: 0; }
-    .pmob-separator { height: 1px; background: var(--border); margin-top: auto; flex-shrink: 0; }
-    .pmob-logout {
-      display: flex; align-items: center; gap: 14px; height: 50px;
-      padding: 0 18px; background: none; border: none;
-      color: #dc2626; font-size: .88rem; font-weight: 600;
-      font-family: var(--font-body); cursor: pointer; text-align: left; width: 100%;
-      transition: background .12s; flex-shrink: 0;
-    }
-    .pmob-logout:active { background: rgba(220,38,38,.08); }
+    .prof-more-section button:active { background: rgba(255,255,255,.06); }
+    .prof-more-section button svg { flex-shrink: 0; }
+
+    /* v0.14.31.d: drawer mobile (#profMobDrawer, .pmob-*) eliminado.
+       Reemplazado por bottom sheet "Más" (#profMoreSheet, .prof-more-*). */
 
     /* Mobile responsive — Profile Hub */
     @media (max-width: 768px) {
@@ -7541,6 +7547,9 @@
       .nav-hamburger { display: flex; }
       /* v0.14.10 — fuera del workspace ocultamos hamburguesa; landing usa nav-mob-cta */
       body:not(.workspace) .nav-hamburger { display: none !important; }
+      /* v0.14.31.d — en workspace mobile la bottom-bar + sheet "Más" reemplazan la nav;
+         escondemos también la hamburguesa original (queda tapada por overlay y sin función). */
+      body.workspace .nav-hamburger { display: none !important; }
       .nav-mob-cta { display: inline-flex; }
       /* Hero input row — select + button stacked full-width so nothing is cut off */
       .hero-lang-row { flex-direction: column; gap: 10px; }
@@ -8918,10 +8927,8 @@
 
 <!-- ── PROFILE PAGE ──────────────────────────────────────────────────── -->
 <div class="profile-overlay" id="profilePage">
-  <!-- v0.14.31.b: hamburguesa dedicada (mobile only). El #navHamburger original
-       queda tapado por este overlay (z-index 300). Este botón vive DENTRO del
-       overlay con z-index 350 para ser visible y abre #profMobDrawer. -->
-  <button class="prof-mob-hamburger" id="profMobHamburger" onclick="openProfMobDrawer()" aria-label="Menu">☰</button>
+  <!-- v0.14.31.d: hamburguesa flotante eliminada. Mobile usa bottom-bar 5 items
+       con sheet "Más" (#profMoreSheet). -->
   <div class="prof-layout">
 
     <!-- Sidebar -->
@@ -9941,54 +9948,50 @@
     </div><!-- /.prof-main -->
   </div><!-- /.prof-layout -->
 
-  <!-- v0.14.21 — Mobile SPA nav drawer (left-side, triggered by header hamburger) -->
-  <div id="profMobDrawer">
-    <div class="pmob-backdrop" onclick="closeProfMobDrawer()"></div>
-    <div class="pmob-panel">
-      <div class="pmob-header">
-        <span class="pmob-title" data-i18n-es="Menú" data-i18n-en="Menu">Menú</span>
-        <button class="pmob-close" onclick="closeProfMobDrawer()" aria-label="Cerrar">✕</button>
-      </div>
-      <nav class="pmob-nav">
-        <!-- v0.14.31: misma agrupación que sidebar desktop. Dashboard / Transcribir
-             / Ideas no aparecen aquí porque ya viven en la bottom-bar mobile.
-             Teleprompter sigue en mobile (deuda futura: v0.14.32+ decidir ubicación). -->
-
-        <div class="pmob-nav-section">
-          <div class="pmob-nav-section-hdr" data-i18n-es="CREAR" data-i18n-en="CREATE">CREAR</div>
-          <button onclick="closeProfMobDrawer();profTab('adapt')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><path d="M8 1 L9 5 L13 6 L9 7 L8 11 L7 7 L3 6 L7 5 Z" fill="currentColor"/><circle cx="13" cy="13" r="1.2" fill="currentColor" opacity=".5"/><circle cx="3" cy="2" r="1" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.adapt">Hazlo tuyo</span></button>
-        </div>
-
-        <div class="pmob-nav-section">
-          <div class="pmob-nav-section-hdr" data-i18n-es="MI TRABAJO" data-i18n-en="MY WORK">MI TRABAJO</div>
-          <button onclick="closeProfMobDrawer();profTab('scripts')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="10" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.saved_scripts">Guiones</span></button>
-          <button id="pmobNavProjects" style="display:none" onclick="closeProfMobDrawer();profTab('projects')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="3" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="6" height="3" fill="currentColor"/></svg><span data-i18n="prof.projects">Proyectos</span></button>
-          <button id="pmobNavMetrics" style="display:none" onclick="closeProfMobDrawer();profTab('metrics')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="10" width="3" height="5" fill="currentColor" opacity=".4"/><rect x="5" y="7" width="3" height="8" fill="currentColor" opacity=".6"/><rect x="9" y="4" width="3" height="11" fill="currentColor" opacity=".8"/><rect x="13" y="1" width="3" height="14" fill="currentColor"/></svg><span data-i18n="prof.metrics">Métricas</span></button>
-        </div>
-
-        <div class="pmob-nav-section">
-          <div class="pmob-nav-section-hdr" data-i18n-es="CONFIGURACIÓN" data-i18n-en="SETTINGS">CONFIGURACIÓN</div>
-          <button id="pmobNavAssistants" style="display:none" onclick="closeProfMobDrawer();profTab('assistants')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="5" y="1" width="6" height="6" rx="3" fill="currentColor"/><rect x="3" y="9" width="10" height="6" rx="2" fill="currentColor" opacity=".6"/><rect x="6" y="3" width="1.5" height="1.5" fill="#0a0b0f"/><rect x="9" y="3" width="1.5" height="1.5" fill="#0a0b0f"/></svg><span data-i18n="prof.assistants">Asistentes</span></button>
-          <button id="pmobNavTeam" style="display:none" onclick="closeProfMobDrawer();profTab('team')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><circle cx="5" cy="4" r="2.5" fill="currentColor"/><circle cx="11" cy="4" r="2.5" fill="currentColor" opacity=".6"/><rect x="1" y="8" width="8" height="5" rx="2" fill="currentColor"/><rect x="7" y="8" width="8" height="5" rx="2" fill="currentColor" opacity=".5"/></svg><span data-i18n="prof.team">Equipo</span></button>
-          <button id="pmobNavTeleprompter" style="display:none" onclick="closeProfMobDrawer();openTeleprompterPicker()"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="1" width="14" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="8" height="1.5" fill="currentColor" opacity=".5"/><rect x="4" y="7" width="6" height="1.5" fill="currentColor" opacity=".3"/><rect x="5" y="13" width="6" height="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.teleprompter">Teleprompter</span></button>
-          <button onclick="closeProfMobDrawer();profTab('privacy')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="3" y="6" width="10" height="9" rx="1" fill="currentColor" opacity=".6"/><rect x="5" y="1" width="6" height="7" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="7" y="9" width="2" height="3" fill="#0a0b0f"/></svg><span data-i18n="prof.privacy">Privacidad y datos</span></button>
-        </div>
-      </nav>
-      <div class="pmob-separator"></div>
-      <button class="pmob-logout" onclick="closeProfMobDrawer();logout()"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges" style="flex-shrink:0"><rect x="1" y="2" width="8" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 5 L14 8 L10 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M6 8 L14 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span data-i18n-es="Cerrar sesión" data-i18n-en="Log out">Cerrar sesión</span></button>
-    </div>
-  </div>
+  <!-- v0.14.31.d: drawer mobile (#profMobDrawer) eliminado.
+       Reemplazado por bottom-bar 5 items + bottom sheet "Más" (#profMoreSheet). -->
 
 </div>
 
 <!-- v0.14.22: bottom-bar movida FUERA de #profilePage para que position:fixed se ancle al viewport.
      Visible solo en mobile (<=640px) Y solo en workspace (body.workspace). -->
+<!-- v0.14.31.d: bottom-bar 5 items. Orden: Hazlo tuyo · Ideas · Dashboard (centro) · Transcribir · Más.
+     Configuración movida a sheet "Más". -->
 <div class="prof-bottom-bar" id="profBottomBar">
   <div class="prof-bottom-bar-inner">
-    <button class="prof-bottom-tab on" onclick="profTabMobile('overview')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="1" width="6" height="6" fill="currentColor"/><rect x="9" y="1" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.overview">Dashboard</span></button>
-    <button class="prof-bottom-tab" onclick="profTabMobile('transc')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.transcriptions">Transcribir</span></button>
+    <button class="prof-bottom-tab" onclick="profTabMobile('adapt')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><path d="M8 1 L9 5 L13 6 L9 7 L8 11 L7 7 L3 6 L7 5 Z" fill="currentColor"/><circle cx="13" cy="13" r="1.2" fill="currentColor" opacity=".5"/><circle cx="3" cy="2" r="1" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.adapt">Hazlo tuyo</span></button>
     <button class="prof-bottom-tab" onclick="profTabMobile('ideas')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="3" y="1" width="10" height="2" fill="currentColor"/><rect x="2" y="3" width="12" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="6" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="9" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.ideas">Ideas</span></button>
-    <button class="prof-bottom-tab" onclick="profTabMobile('settings')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><circle cx="8" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1 V3 M8 13 V15 M1 8 H3 M13 8 H15 M3 3 L4.5 4.5 M11.5 11.5 L13 13 M3 13 L4.5 11.5 M11.5 4.5 L13 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span data-i18n="prof.settings">Ajustes</span></button>
+    <button class="prof-bottom-tab prof-bottom-tab--featured on" onclick="profTabMobile('overview')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="1" width="6" height="6" fill="currentColor"/><rect x="9" y="1" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.overview">Dashboard</span></button>
+    <button class="prof-bottom-tab" onclick="profTabMobile('transc')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.transcriptions">Transcribir</span></button>
+    <button class="prof-bottom-tab" onclick="openProfMoreSheet()"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="7" width="3" height="3" fill="currentColor"/><rect x="7" y="7" width="3" height="3" fill="currentColor"/><rect x="12" y="7" width="3" height="3" fill="currentColor"/></svg><span data-i18n-es="Más" data-i18n-en="More">Más</span></button>
+  </div>
+</div>
+
+<!-- v0.14.31.d: bottom sheet "Más" (reemplaza drawer mobile lateral) -->
+<div class="prof-more-sheet" id="profMoreSheet">
+  <div class="prof-more-backdrop" onclick="closeProfMoreSheet()"></div>
+  <div class="prof-more-panel">
+    <div class="prof-more-handle"></div>
+    <div class="prof-more-header">
+      <div class="prof-more-title" data-i18n-es="Más" data-i18n-en="More">Más</div>
+      <button class="prof-more-close" onclick="closeProfMoreSheet()" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="prof-more-body">
+      <div class="prof-more-section">
+        <div class="prof-more-section-hdr" data-i18n-es="MI TRABAJO" data-i18n-en="MY WORK">MI TRABAJO</div>
+        <button onclick="closeProfMoreSheet();profTab('scripts')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="10" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.saved_scripts">Guiones</span></button>
+        <button id="pmoreNavProjects" onclick="closeProfMoreSheet();profTab('projects')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="3" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="6" height="3" fill="currentColor"/></svg><span data-i18n="prof.projects">Proyectos</span></button>
+        <button id="pmoreNavMetrics" onclick="closeProfMoreSheet();profTab('metrics')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="10" width="3" height="5" fill="currentColor" opacity=".4"/><rect x="5" y="7" width="3" height="8" fill="currentColor" opacity=".6"/><rect x="9" y="4" width="3" height="11" fill="currentColor" opacity=".8"/><rect x="13" y="1" width="3" height="14" fill="currentColor"/></svg><span data-i18n="prof.metrics">Métricas</span></button>
+      </div>
+      <div class="prof-more-section">
+        <div class="prof-more-section-hdr" data-i18n-es="CONFIGURACIÓN" data-i18n-en="SETTINGS">CONFIGURACIÓN</div>
+        <button id="pmoreNavAssistants" style="display:none" onclick="closeProfMoreSheet();profTab('assistants')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="5" y="1" width="6" height="6" rx="3" fill="currentColor"/><rect x="3" y="9" width="10" height="6" rx="2" fill="currentColor" opacity=".6"/><rect x="6" y="3" width="1.5" height="1.5" fill="#0a0b0f"/><rect x="9" y="3" width="1.5" height="1.5" fill="#0a0b0f"/></svg><span data-i18n="prof.assistants">Asistentes</span></button>
+        <button id="pmoreNavTeam" style="display:none" onclick="closeProfMoreSheet();profTab('team')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><circle cx="5" cy="4" r="2.5" fill="currentColor"/><circle cx="11" cy="4" r="2.5" fill="currentColor" opacity=".6"/><rect x="1" y="8" width="8" height="5" rx="2" fill="currentColor"/><rect x="7" y="8" width="8" height="5" rx="2" fill="currentColor" opacity=".5"/></svg><span data-i18n="prof.team">Equipo</span></button>
+        <button id="pmoreNavTeleprompter" style="display:none" onclick="closeProfMoreSheet();openTeleprompterPicker()"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="1" width="14" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="8" height="1.5" fill="currentColor" opacity=".5"/><rect x="4" y="7" width="6" height="1.5" fill="currentColor" opacity=".3"/><rect x="5" y="13" width="6" height="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.teleprompter">Teleprompter</span></button>
+        <button onclick="closeProfMoreSheet();profTab('privacy')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="3" y="6" width="10" height="9" rx="1" fill="currentColor" opacity=".6"/><rect x="5" y="1" width="6" height="7" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="7" y="9" width="2" height="3" fill="#0a0b0f"/></svg><span data-i18n="prof.privacy">Privacidad y datos</span></button>
+        <button onclick="closeProfMoreSheet();profTab('settings')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><circle cx="8" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1 V3 M8 13 V15 M1 8 H3 M13 8 H15 M3 3 L4.5 4.5 M11.5 11.5 L13 13 M3 13 L4.5 11.5 M11.5 4.5 L13 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span data-i18n="prof.settings">Configuración</span></button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -12226,13 +12229,19 @@ function renderProfileHub() {
   document.getElementById("profNavAssistants").style.display = hasPaidPlan ? "" : "none";
   document.getElementById("profNavMetrics").style.display = "";
   document.getElementById("profNavIdeas").style.display = "";
-  // v0.14.31: profNavTeleprompter eliminado de la sidebar desktop. El botón
-  // mobile (pmobNavTeleprompter) ahora se gate-a directamente aquí porque ya
-  // no hay sidebar source para que openProfMobDrawer lo sincronice.
-  const tpMob = document.getElementById("pmobNavTeleprompter");
-  if (tpMob) tpMob.style.display = hasPaidPlan ? "" : "none";
   document.getElementById("profNavTeam").style.display = isAgency ? "" : "none";
   document.getElementById("profNavPrivacy").style.display = "";
+  // v0.14.31.d: gating de los items del sheet "Más" (mobile). Mismos gates
+  // que la sidebar desktop. Projects/Metrics/Scripts/Privacy/Settings: siempre.
+  const _setIfMore = (id, show) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = show ? "" : "none";
+  };
+  _setIfMore("pmoreNavProjects", true);
+  _setIfMore("pmoreNavMetrics", true);
+  _setIfMore("pmoreNavAssistants", hasPaidPlan);
+  _setIfMore("pmoreNavTeam", isAgency);
+  _setIfMore("pmoreNavTeleprompter", hasPaidPlan);
   document.querySelectorAll(".prof-quick-paid").forEach(el => el.style.display = "");
 
   // Manage sub button in sidebar
@@ -13641,6 +13650,12 @@ function profTab(tab, pushHistory) {
   document.querySelectorAll(".prof-bottom-tab").forEach(btn => btn.classList.remove("on"));
   const bottomBtn = document.querySelector(`.prof-bottom-tab[onclick="profTabMobile('${tab}')"]`);
   if (bottomBtn) bottomBtn.classList.add("on");
+  // v0.14.31.d: tabs que viven en el sheet "Más" → iluminar el botón "Más" como feedback.
+  const MORE_TABS = ["scripts","projects","assistants","metrics","team","privacy","settings"];
+  if (MORE_TABS.includes(tab)) {
+    const moreBtn = document.querySelector('.prof-bottom-tab[onclick="openProfMoreSheet()"]');
+    if (moreBtn) moreBtn.classList.add("on");
+  }
 
   // pushState + title
   if (pushHistory) {
@@ -18640,8 +18655,11 @@ try {
 } catch (e) { console.error("[v0.14.9a] expose failed", e); }
 
 function toggleNavMob() {
-  if (document.body.classList.contains("workspace")) { openProfMobDrawer(); return; }
+  // v0.14.31.d: en workspace mobile YA NO se abre el drawer (eliminado).
+  // El user usa la bottom-bar y el sheet "Más" — no la hamburguesa del topnav.
+  // Esta función solo maneja el menú mobile de la landing (#navMobMenu).
   const menu = document.getElementById("navMobMenu");
+  if (!menu) return;
   const opening = !menu.classList.contains("on");
   if (opening) syncNavMob();
   menu.classList.toggle("on");
@@ -18656,25 +18674,22 @@ function closeNavMob() {
   menu.classList.remove("on");
   if (menu.dataset.locked) { delete menu.dataset.locked; unlockBodyScroll(); }
 }
-function openProfMobDrawer() {
-  const drawer = document.getElementById("profMobDrawer");
-  if (!drawer) return;
-  // v0.14.31: profNavTeleprompter eliminado de la sidebar desktop, pero #pmobNavTeleprompter
-  // sigue en el drawer mobile (controlado por su display:none HTML inicial — sin sync porque ya no hay sidebar source).
-  const pairs = [["Metrics","profNavMetrics"],["Assistants","profNavAssistants"],["Projects","profNavProjects"],["Team","profNavTeam"]];
-  pairs.forEach(([pmob, sid]) => {
-    const sidebar = document.getElementById(sid);
-    const btn = document.getElementById("pmobNav" + pmob);
-    if (sidebar && btn) btn.style.display = sidebar.style.display;
-  });
-  drawer.classList.add("on");
-  if (!drawer.dataset.locked) { drawer.dataset.locked = "1"; lockBodyScroll(); }
+
+// v0.14.31.d: bottom sheet "Más" reemplaza el drawer mobile lateral.
+function openProfMoreSheet() {
+  const s = document.getElementById("profMoreSheet");
+  if (!s) return;
+  s.style.display = "block";
+  // requestAnimationFrame para que la transición de transform se dispare
+  requestAnimationFrame(() => s.classList.add("on"));
+  if (!s.dataset.locked) { s.dataset.locked = "1"; lockBodyScroll(); }
 }
-function closeProfMobDrawer() {
-  const drawer = document.getElementById("profMobDrawer");
-  if (!drawer) return;
-  drawer.classList.remove("on");
-  if (drawer.dataset.locked) { delete drawer.dataset.locked; unlockBodyScroll(); }
+function closeProfMoreSheet() {
+  const s = document.getElementById("profMoreSheet");
+  if (!s) return;
+  s.classList.remove("on");
+  setTimeout(() => { if (!s.classList.contains("on")) s.style.display = "none"; }, 250);
+  if (s.dataset.locked) { delete s.dataset.locked; unlockBodyScroll(); }
 }
 function syncNavMob() {
   const email = st.user ? st.user.email : "";
