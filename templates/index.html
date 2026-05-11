@@ -3222,71 +3222,39 @@
     [data-theme="light"] .ov-hero-input {
       background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.12); color: var(--text);
     }
+    /* v0.14.33.a: cards Dashboard simplificadas — sin border-left 3px de color,
+       sin waves decorativos ::before, sin triple sombra, mascotas 24x24 (eran 44x44),
+       hover atenuado. */
     .ov-card {
       position: relative;
       display: flex; flex-direction: column;
       gap: 14px;
       min-height: 160px; padding: 20px;
-      padding-left: 22px; /* compensa el border-left de 3px */
       background: linear-gradient(180deg, #1f1a22 0%, #171218 100%);
-      border-top: 1px solid rgba(255,255,255,.08);
-      border-right: 1px solid rgba(255,255,255,.04);
-      border-bottom: 1px solid rgba(0,0,0,.4);
-      border-left: 3px solid rgb(var(--ov-acc));
+      border: 1px solid rgba(255,255,255,.06);
       border-radius: 16px;
       color: var(--text); text-align: left; cursor: pointer;
       font-family: inherit;
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.03),
-        0 1px 3px rgba(0,0,0,.45),
-        0 4px 14px rgba(0,0,0,.35);
-      transition: transform .2s ease-out, border-color .2s, box-shadow .2s;
-      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+      transition: transform .2s ease-out, box-shadow .2s;
     }
     [data-theme="light"] .ov-card {
       background: linear-gradient(180deg, #faf6ec 0%, #f2ede0 100%);
-      border-top: 1px solid var(--border);
-      border-right: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.8),
-        inset 0 -1px 0 rgba(0,0,0,.05),
-        0 1px 2px rgba(0,0,0,.04),
-        0 4px 12px rgba(0,0,0,.03);
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,.04);
     }
-    /* v0.14.6: capa decorativa de waves (mask-image) en el 60% inferior */
-    .ov-card::before {
-      content: ""; position: absolute;
-      left: 0; right: 0; bottom: 0; height: 60%;
-      background-color: rgb(var(--ov-acc));
-      -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 380' preserveAspectRatio='none'><path d='M0,210 Q180,150 360,200 T720,200 T1080,190 L1200,210 L1200,380 L0,380 Z' fill='black'/><path d='M0,260 Q220,210 420,250 T780,250 T1200,260 L1200,380 L0,380 Z' fill='black' opacity='0.55'/></svg>");
-      -webkit-mask-size: 100% 100%;
-      -webkit-mask-repeat: no-repeat;
-              mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 380' preserveAspectRatio='none'><path d='M0,210 Q180,150 360,200 T720,200 T1080,190 L1200,210 L1200,380 L0,380 Z' fill='black'/><path d='M0,260 Q220,210 420,250 T780,250 T1200,260 L1200,380 L0,380 Z' fill='black' opacity='0.55'/></svg>");
-              mask-size: 100% 100%;
-              mask-repeat: no-repeat;
-      opacity: .05;
-      pointer-events: none;
-      z-index: 0;
-      transition: opacity .2s ease-out;
-    }
-    .ov-card > * { position: relative; z-index: 1; }
     .ov-card:hover {
-      transform: translateY(-4px);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.05),
-        0 8px 32px color-mix(in srgb, rgb(var(--ov-acc)) 25%, transparent);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px color-mix(in srgb, rgb(var(--ov-acc)) 30%, transparent);
     }
-    .ov-card:hover::before { opacity: .08; }
-    .ov-card:active { transform: translateY(-1px); }
+    .ov-card:active { transform: translateY(0); }
     .ov-card:focus-visible { outline: 2px solid rgba(var(--ov-acc), .6); outline-offset: 2px; }
-    .ov-card-head { display: flex; align-items: flex-start; gap: 12px; }
+    .ov-card-head { display: flex; align-items: center; gap: 10px; }
     .ov-card-hooks {
-      width: 44px; height: 44px; flex-shrink: 0;
-      filter: drop-shadow(0 4px 10px rgba(0,0,0,.25));
+      width: 24px; height: 24px; flex-shrink: 0;
       transition: transform .2s;
     }
-    .ov-card:hover .ov-card-hooks { transform: translateY(-2px) rotate(-2deg); }
+    .ov-card:hover .ov-card-hooks { transform: translateY(-1px); }
     .ov-card-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
     .ov-card-label {
       font-family: var(--font-display); font-size: 1.4rem;
@@ -3434,10 +3402,10 @@
        wrap del subtítulo (desktop usa elipsis nowrap). */
     @media (max-width: 640px) {
       .ov-card-f2, .ov-card-f3 {
-        min-height: 0; padding: 14px; padding-left: 16px; gap: 8px;
+        min-height: 0; padding: 14px; gap: 8px;
       }
       .ov-card-f2 .ov-card-head, .ov-card-f3 .ov-card-head { gap: 8px; }
-      .ov-card-f2 .ov-card-hooks, .ov-card-f3 .ov-card-hooks { width: 36px; height: 36px; }
+      .ov-card-f2 .ov-card-hooks, .ov-card-f3 .ov-card-hooks { width: 20px; height: 20px; }
       .ov-card-f2 .ov-card-label, .ov-card-f3 .ov-card-label {
         font-size: 1.1rem; line-height: 1.1;
       }
@@ -3889,6 +3857,15 @@
     }
     .prof-section-sub {
       font-size: .82rem; color: var(--text3); margin-top: 2px;
+    }
+    /* v0.14.33.a: tagline neutra bajo el H1 de cada panel. Clase NUEVA para no chocar
+       con .prof-section-sub que ya usaba #profAsstCount (count pequeño/muted). */
+    .prof-section-tagline {
+      font-family: var(--font-body);
+      font-size: 0.92rem;
+      color: var(--text2);
+      margin-top: 6px;
+      font-weight: 400;
     }
 
     /* Enhanced empty states */
@@ -8374,8 +8351,12 @@
       <div id="profPanelOverview">
 
         <!-- v0.14.32: header limpio. Hero decorativo (eyebrow + greeting + Hooks + waves) eliminado. -->
+        <!-- v0.14.33.a: tagline neutra bajo el H1. -->
         <div class="prof-section-head">
-          <div class="prof-section-title" data-i18n-es="Dashboard" data-i18n-en="Dashboard">Dashboard</div>
+          <div>
+            <div class="prof-section-title" data-i18n-es="Dashboard" data-i18n-en="Dashboard">Dashboard</div>
+            <div class="prof-section-tagline" data-i18n-es="Vista general de tu actividad." data-i18n-en="Overview of your activity.">Vista general de tu actividad.</div>
+          </div>
         </div>
 
         <!-- v0.14.15: Estado 0 — empty state pirámide (oculto por defecto, JS toggle) -->
@@ -8502,13 +8483,14 @@
         <!-- v0.14.18: jerarquía F1/F2/F3 con datos reales. Un solo call /api/me/overview. -->
         <div class="ov-grid" id="ovGrid">
 
-          <!-- F1: Transcribir — hero full-width con input + última transcripción -->
+          <!-- F1: Transcribir — hero full-width con input + última transcripción.
+               v0.14.33.a: label normalizado a "Transcribir" (era eyebrow "EMPIEZA AQUÍ"). Sub se rellena por JS con stat. -->
           <div class="ov-card ov-card-f1" style="--ov-acc:239,106,41">
             <div class="ov-card-head">
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-transcribir.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
-                <div class="ov-card-label" data-i18n-es="EMPIEZA AQUÍ" data-i18n-en="START HERE">EMPIEZA AQUÍ</div>
-                <div class="ov-card-sub" data-i18n-es="Transcribe lo siguiente." data-i18n-en="Transcribe next.">Transcribe lo siguiente.</div>
+                <div class="ov-card-label" data-i18n-es="Transcribir" data-i18n-en="Transcribe">Transcribir</div>
+                <div class="ov-card-sub"></div>
               </div>
             </div>
             <div class="ov-hero-input-row">
@@ -8543,7 +8525,7 @@
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-adapt.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
                 <div class="ov-card-label" data-i18n-es="Hazlo tuyo" data-i18n-en="Make it yours">Hazlo tuyo</div>
-                <div class="ov-card-sub" data-i18n-es="Reescribe un guion" data-i18n-en="Rewrite a script">Reescribe un guion</div>
+                <div class="ov-card-sub"></div>
               </div>
             </div>
             <div class="ov-card-body" id="ovBodyHazloTuyo"><div class="ov-skel"></div></div>
@@ -8555,7 +8537,7 @@
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-metricas.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
                 <div class="ov-card-label" data-i18n-es="Métricas" data-i18n-en="Metrics">Métricas</div>
-                <div class="ov-card-sub" data-i18n-es="Mide qué funciona" data-i18n-en="Measure what works">Mide qué funciona</div>
+                <div class="ov-card-sub"></div>
               </div>
             </div>
             <div class="ov-card-body" id="ovBodyMetrics"><div class="ov-skel"></div></div>
@@ -8567,7 +8549,7 @@
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-asistentes.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
                 <div class="ov-card-label" data-i18n-es="Asistentes" data-i18n-en="Assistants">Asistentes</div>
-                <div class="ov-card-sub" data-i18n-es="Crea estilos propios" data-i18n-en="Create your own styles">Crea estilos propios</div>
+                <div class="ov-card-sub"></div>
               </div>
             </div>
             <div class="ov-card-body" id="ovBodyAssistants"><div class="ov-skel"></div></div>
@@ -8578,7 +8560,7 @@
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-equipo.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
                 <div class="ov-card-label" data-i18n-es="Equipo" data-i18n-en="Team">Equipo</div>
-                <div class="ov-card-sub" data-i18n-es="Trabaja con tu gente" data-i18n-en="Work with your team">Trabaja con tu gente</div>
+                <div class="ov-card-sub"></div>
               </div>
             </div>
             <div class="ov-card-body" id="ovBodyTeam"><div class="ov-skel"></div></div>
@@ -8589,7 +8571,7 @@
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-scripts.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
                 <div class="ov-card-label" data-i18n-es="Guiones" data-i18n-en="Scripts">Guiones</div>
-                <div class="ov-card-sub" data-i18n-es="Tu archivo de guiones" data-i18n-en="Your script archive">Tu archivo de guiones</div>
+                <div class="ov-card-sub"></div>
               </div>
             </div>
             <div class="ov-card-body" id="ovBodyScripts"><div class="ov-skel"></div></div>
@@ -8600,7 +8582,7 @@
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-ideas.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
                 <div class="ov-card-label" data-i18n-es="Ideas" data-i18n-en="Ideas">Ideas</div>
-                <div class="ov-card-sub" data-i18n-es="Captura cualquier chispa" data-i18n-en="Capture any spark">Captura cualquier chispa</div>
+                <div class="ov-card-sub"></div>
               </div>
             </div>
             <div class="ov-card-body" id="ovBodyIdeas"><div class="ov-skel"></div></div>
@@ -8611,7 +8593,7 @@
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-proyectos.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
                 <div class="ov-card-label" data-i18n-es="Proyectos" data-i18n-en="Projects">Proyectos</div>
-                <div class="ov-card-sub" data-i18n-es="Organiza tu trabajo" data-i18n-en="Organize your work">Organiza tu trabajo</div>
+                <div class="ov-card-sub"></div>
               </div>
             </div>
             <div class="ov-card-body" id="ovBodyProjects"><div class="ov-skel"></div></div>
@@ -8622,7 +8604,6 @@
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-teleprompter.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
                 <div class="ov-card-label" data-i18n-es="Teleprompter" data-i18n-en="Teleprompter">Teleprompter</div>
-                <div class="ov-card-sub" data-i18n-es="Graba sin improvisar" data-i18n-en="Record without improvising">Graba sin improvisar</div>
               </div>
             </div>
             <div class="ov-card-body">
@@ -8636,9 +8617,12 @@
       <!-- Scripts panel -->
       <div id="profPanelScripts" style="display:none">
 
-        <!-- v0.14.32: header limpio. -->
+        <!-- v0.14.32: header limpio. v0.14.33.a: tagline. -->
         <div class="prof-section-head">
-          <div class="prof-section-title" data-i18n-es="Guiones" data-i18n-en="Scripts">Guiones</div>
+          <div>
+            <div class="prof-section-title" data-i18n-es="Guiones" data-i18n-en="Scripts">Guiones</div>
+            <div class="prof-section-tagline" data-i18n-es="Tus guiones guardados." data-i18n-en="Your saved scripts.">Tus guiones guardados.</div>
+          </div>
         </div>
 
         <!-- Project filter banner (shown when ?project=<id>) -->
@@ -8651,9 +8635,12 @@
       <!-- Transcriptions panel -->
       <div id="profPanelTransc" style="display:none">
 
-        <!-- v0.14.32: header limpio. -->
+        <!-- v0.14.32: header limpio. v0.14.33.a: tagline. -->
         <div class="prof-section-head">
-          <div class="prof-section-title" data-i18n-es="Transcripciones" data-i18n-en="Transcriptions">Transcripciones</div>
+          <div>
+            <div class="prof-section-title" data-i18n-es="Transcripciones" data-i18n-en="Transcriptions">Transcripciones</div>
+            <div class="prof-section-tagline" data-i18n-es="Todos tus reels convertidos en texto." data-i18n-en="All your reels turned into text.">Todos tus reels convertidos en texto.</div>
+          </div>
         </div>
 
         <!-- v0.14.7: input transcribir embebido en el panel -->
@@ -8706,9 +8693,12 @@
       <!-- Projects panel -->
       <div id="profPanelProjects" style="display:none">
 
-        <!-- v0.14.32: header limpio. -->
+        <!-- v0.14.32: header limpio. v0.14.33.a: tagline. -->
         <div class="prof-section-head">
-          <div class="prof-section-title" data-i18n-es="Proyectos" data-i18n-en="Projects">Proyectos</div>
+          <div>
+            <div class="prof-section-title" data-i18n-es="Proyectos" data-i18n-en="Projects">Proyectos</div>
+            <div class="prof-section-tagline" data-i18n-es="Organiza guiones, transcripciones e ideas." data-i18n-en="Organize scripts, transcriptions and ideas.">Organiza guiones, transcripciones e ideas.</div>
+          </div>
         </div>
 
         <!-- Toolbar -->
@@ -8785,9 +8775,12 @@
       <!-- Ideas panel -->
       <div id="profPanelIdeas" style="display:none">
 
-        <!-- v0.14.32: header limpio. -->
+        <!-- v0.14.32: header limpio. v0.14.33.a: tagline. -->
         <div class="prof-section-head">
-          <div class="prof-section-title" data-i18n-es="Ideas" data-i18n-en="Ideas">Ideas</div>
+          <div>
+            <div class="prof-section-title" data-i18n-es="Ideas" data-i18n-en="Ideas">Ideas</div>
+            <div class="prof-section-tagline" data-i18n-es="Captura ideas sueltas y conviértelas en guiones." data-i18n-en="Capture loose ideas and turn them into scripts.">Captura ideas sueltas y conviértelas en guiones.</div>
+          </div>
         </div>
 
         <!-- v0.14.26: Tab navigator Sugeridas / Guardadas -->
@@ -8892,9 +8885,12 @@
       <!-- Settings panel -->
       <div id="profPanelSettings" style="display:none">
 
-        <!-- v0.14.32: header limpio. -->
+        <!-- v0.14.32: header limpio. v0.14.33.a: tagline. -->
         <div class="prof-section-head">
-          <div class="prof-section-title" data-i18n-es="Configuración" data-i18n-en="Settings">Configuración</div>
+          <div>
+            <div class="prof-section-title" data-i18n-es="Configuración" data-i18n-en="Settings">Configuración</div>
+            <div class="prof-section-tagline" data-i18n-es="Tu cuenta y preferencias." data-i18n-en="Your account and preferences.">Tu cuenta y preferencias.</div>
+          </div>
         </div>
 
         <div class="settings-card">
@@ -12510,28 +12506,21 @@ async function loadOverviewMiniGrid() {
   const setBody = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
   const countLine = (txt) => `<div class="ov-card-count">${txt}</div>`;
 
+  // v0.14.33.a: helper para llenar el sub de cada card con el stat real (en lugar de frase poética).
+  const setSubFromBody = (bodyId, txt) => {
+    const body = document.getElementById(bodyId);
+    if (!body) return;
+    const card = body.closest(".ov-card");
+    const sub = card && card.querySelector(".ov-card-sub");
+    if (sub) sub.textContent = txt;
+  };
+
   // ── 1. Transcribir (F1 hero) ───────────────────────────────────────────
   const t = d.transcribe || {};
-  // v0.14.20: Hero F1 copy state-aware. Estado 1 = ya tiene transcripciones.
-  const f1Card = document.querySelector(".ov-card-f1");
-  if (f1Card) {
-    const lblEl = f1Card.querySelector(".ov-card-label");
-    const subEl = f1Card.querySelector(".ov-card-sub");
-    if ((t.total || 0) >= 1) {
-      const newLblEs = "TRANSCRIBIR", newLblEn = "TRANSCRIBE";
-      const newSubEs = "Copia reels virales.", newSubEn = "Copy viral reels.";
-      if (lblEl) {
-        lblEl.setAttribute("data-i18n-es", newLblEs);
-        lblEl.setAttribute("data-i18n-en", newLblEn);
-        lblEl.textContent = es ? newLblEs : newLblEn;
-      }
-      if (subEl) {
-        subEl.setAttribute("data-i18n-es", newSubEs);
-        subEl.setAttribute("data-i18n-en", newSubEn);
-        subEl.textContent = es ? newSubEs : newSubEn;
-      }
-    }
-  }
+  const tTot = t.total || 0;
+  setSubFromBody("ovBodyTransc",
+    tTot === 0 ? (es ? "Sin transcripciones aún" : "No transcriptions yet")
+    : (es ? `${tTot} ${tTot === 1 ? "transcripción" : "transcripciones"}` : `${tTot} ${tTot === 1 ? "transcription" : "transcriptions"}`));
   let bodyT;
   if (t.last) {
     const thumb = t.last.thumbnail_b64
@@ -12580,6 +12569,10 @@ async function loadOverviewMiniGrid() {
   const adaptCountLine = countLine((adapt.total || 0) + " " + (es ? "adaptaciones" : "adaptations"));
   const adaptStylesLine = `<div class="ov-adapt-styles">Viral · LinkedIn · ${es ? "Historia" : "Story"} · Hooks · Custom</div>`;
   setBody("ovBodyHazloTuyo", bodyAdapt + adaptStylesLine + adaptCountLine);
+  const adaptTot = adapt.total || 0;
+  setSubFromBody("ovBodyHazloTuyo",
+    adaptTot === 0 ? (es ? "Sin adaptaciones aún" : "No adaptations yet")
+    : (es ? `${adaptTot} ${adaptTot === 1 ? "adaptación" : "adaptaciones"}` : `${adaptTot} ${adaptTot === 1 ? "adaptation" : "adaptations"}`));
 
   // ── 3. Ideas ───────────────────────────────────────────────────────────
   const ideas = d.ideas || {};
@@ -12597,6 +12590,8 @@ async function loadOverviewMiniGrid() {
   const ideasCount = (ideas.total || 0) + " " + (es ? "guardadas" : "saved")
     + (ideas.pending ? " · " + ideas.pending + " " + (es ? "pendientes" : "pending") : "");
   setBody("ovBodyIdeas", bodyI + countLine(ideasCount));
+  const ideasTot = ideas.total || 0;
+  setSubFromBody("ovBodyIdeas", `${ideasTot} ${ideasTot === 1 ? "idea" : "ideas"}`);
 
   // ── 4. Proyectos ───────────────────────────────────────────────────────
   const proj = d.projects || {};
@@ -12614,6 +12609,9 @@ async function loadOverviewMiniGrid() {
     bodyP = `<div class="ov-empty">${es ? "Crea tu primer proyecto" : "Create your first project"}</div>`;
   }
   setBody("ovBodyProjects", bodyP + countLine((proj.total || 0) + " " + (es ? "proyectos" : "projects")));
+  const projTot = proj.total || 0;
+  setSubFromBody("ovBodyProjects",
+    es ? `${projTot} ${projTot === 1 ? "proyecto" : "proyectos"}` : `${projTot} ${projTot === 1 ? "project" : "projects"}`);
 
   // ── 5. Métricas (F2b) — sparkline + top reel, threshold 3 transcripciones ──
   const m = d.metrics || {};
@@ -12650,6 +12648,12 @@ async function loadOverviewMiniGrid() {
     bodyM = `<div class="ov-empty">${es ? "Aún sin reels analizados" : "No reels analyzed yet"}</div>`;
   }
   setBody("ovBodyMetrics", bodyM);
+  // v0.14.33.a: sub de F2b refleja métrica real si hay datos, "Sin datos" si no.
+  const avgViews = m.avg_views_recent || 0;
+  setSubFromBody("ovBodyMetrics",
+    (m.has_profile && avgViews > 0)
+      ? (es ? `${avgViews.toLocaleString("es-ES")} vistas/reel` : `${avgViews.toLocaleString("en-US")} views/reel`)
+      : (es ? "Sin datos" : "No data"));
   if (needsSparkline) {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {  // doble RAF: garantiza que el card layout aplicó width
@@ -12670,6 +12674,9 @@ async function loadOverviewMiniGrid() {
     bodyA = `<div class="ov-empty">${es ? "Crea tu primer asistente" : "Create your first assistant"}</div>`;
   }
   setBody("ovBodyAssistants", bodyA + countLine((a.total || 0) + " " + (es ? "creados" : "created")));
+  const aTot = a.total || 0;
+  setSubFromBody("ovBodyAssistants",
+    es ? `${aTot} ${aTot === 1 ? "asistente" : "asistentes"}` : `${aTot} ${aTot === 1 ? "assistant" : "assistants"}`);
 
   // ── 7. Guiones ─────────────────────────────────────────────────────────
   const sc = d.scripts || {};
@@ -12683,6 +12690,9 @@ async function loadOverviewMiniGrid() {
     bodyS = `<div class="ov-empty">${es ? "Guarda tu primer guion" : "Save your first script"}</div>`;
   }
   setBody("ovBodyScripts", bodyS + countLine((sc.total || 0) + " " + (es ? "guardados" : "saved")));
+  const scTot = sc.total || 0;
+  setSubFromBody("ovBodyScripts",
+    es ? `${scTot} ${scTot === 1 ? "guion" : "guiones"}` : `${scTot} ${scTot === 1 ? "script" : "scripts"}`);
 
   // ── 9. Equipo ──────────────────────────────────────────────────────────
   const tm = d.team || {};
@@ -12705,6 +12715,10 @@ async function loadOverviewMiniGrid() {
     bodyTm = `<div class="ov-empty">${es ? "Invita a tu equipo" : "Invite your team"}</div>`;
   }
   setBody("ovBodyTeam", bodyTm + countLine((tm.active || 0) + " " + (es ? "activos" : "active")));
+  const tmAct = tm.active || 0;
+  setSubFromBody("ovBodyTeam",
+    tmAct === 0 ? (es ? "Solo tú" : "Just you")
+    : (es ? `${tmAct} ${tmAct === 1 ? "miembro" : "miembros"}` : `${tmAct} ${tmAct === 1 ? "member" : "members"}`));
 }
 
 function ovOpenTeam() {
