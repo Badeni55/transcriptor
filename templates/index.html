@@ -330,6 +330,18 @@
       font-family: var(--font-display);
     }
 
+    /* v0.14.33 — Workspace usa sans-serif uniforme (DM Sans).
+       Override de variables dentro de #profilePage: --font-display y --font-editorial
+       apuntan a --font-body. Landing intacto (Instrument Serif + Fraunces siguen activos
+       en hero, pricing, FAQ, CTA). Italic se preserva donde estaba (font-style separado). */
+    #profilePage {
+      --font-display: var(--font-body);
+      --font-editorial: var(--font-body);
+    }
+    /* Modales viven en <body>, no en #profilePage. Cuando el user está en workspace
+       (body.workspace), los modales también pasan a sans para coherencia. */
+    body.workspace .modal h2 { font-family: var(--font-body); }
+
     ::selection { background: rgba(249,115,22,.15); color: inherit; }
     :focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
 
@@ -537,7 +549,7 @@
     }
     .av-menu-info { flex: 1; min-width: 0; }
     .av-menu-email {
-      font-family: var(--font-display); font-size: .92rem; color: var(--text);
+      font-family: var(--font-body); font-size: .92rem; color: var(--text);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       margin-bottom: 4px;
     }
@@ -9236,7 +9248,7 @@
     </div>
     <div class="field">
       <label data-i18n-es="Contenido del guión" data-i18n-en="Script content">Contenido del guión</label>
-      <textarea id="scrEditText" class="script-ta" style="min-height:180px;font-size:.9rem;font-family:var(--font-editorial, Fraunces), serif;line-height:1.6"></textarea>
+      <textarea id="scrEditText" class="script-ta" style="min-height:180px;font-size:.9rem;font-family:var(--font-body);line-height:1.6"></textarea>
     </div>
     <div class="form-err" id="scrEditErr"></div>
     <button class="btn-full" onclick="submitScriptEditModal()" data-i18n-es="Guardar cambios" data-i18n-en="Save changes">Guardar cambios</button>
