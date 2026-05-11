@@ -7503,6 +7503,9 @@
       .nav-hamburger { display: flex; }
       /* v0.14.10 — fuera del workspace ocultamos hamburguesa; landing usa nav-mob-cta */
       body:not(.workspace) .nav-hamburger { display: none !important; }
+      /* v0.14.31.a — dentro del workspace forzamos visible (vence cualquier
+         cascada que la pudiera estar ocultando en mobile real). */
+      body.workspace .nav-hamburger { display: flex !important; }
       .nav-mob-cta { display: inline-flex; }
       /* Hero input row — select + button stacked full-width so nothing is cut off */
       .hero-lang-row { flex-direction: column; gap: 10px; }
