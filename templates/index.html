@@ -7261,7 +7261,19 @@
       transition: border-color .15s; flex-shrink: 0;
     }
     .pmob-close:hover { border-color: var(--purple); }
-    .pmob-nav { display: flex; flex-direction: column; flex: 1; }
+    .pmob-nav {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      /* v0.14.31.c: resets contra la regla global nav { ... } (línea 389)
+         que aplicaba a TODOS los <nav> y causaba space-between vertical.
+         El selector global pone align-items: center, justify-content: space-between,
+         padding: 0 32px, height: 56px — todo eso rompe el drawer mobile. */
+      align-items: stretch;
+      justify-content: flex-start;
+      padding: 0;
+      height: auto;
+    }
     /* v0.14.31: agrupación en CREAR / MI TRABAJO / CONFIGURACIÓN */
     .pmob-nav-section { display: flex; flex-direction: column; }
     .pmob-nav-section-hdr {
