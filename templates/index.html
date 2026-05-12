@@ -749,7 +749,8 @@
     }
     .btn-nav:hover { border-color: var(--brand); color: var(--text); }
     .btn-nav.hi {
-      background: var(--grad); color: #fff; border-color: transparent;
+      /* v0.14.35.a: consistencia CTA — antes var(--grad), ahora --brand-cta. */
+      background: var(--brand-cta); color: #fff; border-color: transparent;
       box-shadow: 0 4px 0 #92400e; transform: translateY(0);
       transition: transform .12s, box-shadow .12s, opacity .2s;
     }
@@ -1783,7 +1784,8 @@
     .custom-row input:focus { border-color: var(--sc); }
 
     .btn-grad {
-      padding: 10px 20px; background: var(--grad);
+      /* v0.14.35.a: consistencia CTA — antes var(--grad), ahora --brand-cta. */
+      padding: 10px 20px; background: var(--brand-cta);
       color: #fff; border: none; border-radius: var(--rsm);
       font-size: .9rem; font-weight: 700; cursor: pointer;
       white-space: nowrap;
@@ -1795,7 +1797,8 @@
 
     .adapt-run-btn {
       margin-top: 16px; width: 100%; padding: 16px;
-      background: var(--grad); color: #fff; border: none;
+      /* v0.14.35.a: consistencia CTA — antes var(--grad) brillante, ahora --brand-cta plano WCAG. */
+      background: var(--brand-cta); color: #fff; border: none;
       border-radius: var(--r); font-size: 1rem; font-weight: 800;
       cursor: pointer; letter-spacing: .3px;
       box-shadow: 0 5px 0 #92400e; transform: translateY(0);
@@ -2660,7 +2663,8 @@
     }
     .field input:focus { border-color: var(--brand); box-shadow: var(--glow); }
     .btn-full {
-      width: 100%; padding: 13px; background: var(--grad);
+      /* v0.14.35.a: consistencia CTA — antes var(--grad), ahora --brand-cta. */
+      width: 100%; padding: 13px; background: var(--brand-cta);
       color: #fff; border: none; border-radius: var(--rsm);
       font-size: .95rem; font-weight: 800; cursor: pointer; margin-top: 4px;
       box-shadow: 0 5px 0 #92400e; transform: translateY(0);
@@ -3014,7 +3018,8 @@
     .drawer-balance-lbl { font-size: .75rem; color: var(--text3); margin-top: 2px; }
     .btn-topup-sm {
       margin-left: auto; padding: 8px 16px;
-      background: var(--grad); color: #fff; border: none;
+      /* v0.14.35.a: consistencia CTA — antes var(--grad), ahora --brand-cta. */
+      background: var(--brand-cta); color: #fff; border: none;
       border-radius: var(--rsm); font-size: .8rem; font-weight: 700;
       cursor: pointer; white-space: nowrap;
       box-shadow: 0 4px 0 #92400e; transform: translateY(0);
@@ -7076,7 +7081,8 @@
     .tour-btn-skip { background: transparent; color: var(--text3); padding: 10px 12px; }
     .tour-btn-prev { background: var(--surf2); color: var(--text); border: 1px solid var(--border); }
     .tour-btn-next {
-      background: var(--grad); color: #fff;
+      /* v0.14.35.a: consistencia CTA — antes var(--grad), ahora --brand-cta. */
+      background: var(--brand-cta); color: #fff;
       box-shadow: 0 4px 0 #92400e, 0 2px 10px rgba(249,115,22,.25);
       transform: translateY(0); transition: transform .12s, box-shadow .12s;
     }
