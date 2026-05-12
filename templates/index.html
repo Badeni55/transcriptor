@@ -6828,16 +6828,66 @@
       .metrics-fields { grid-template-columns: repeat(2, 1fr); }
     }
 
-    /* ── Toast ────────────────────────────────────────────────── */
-    .toast {
-      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
-      background: var(--surf); border: 1px solid var(--border);
-      color: var(--text); padding: 11px 22px; border-radius: 24px;
-      font-size: .84rem; font-weight: 600; z-index: 999;
-      opacity: 0; transition: opacity .25s; pointer-events: none; white-space: nowrap;
-      box-shadow: var(--sh);
+    /* ── Toast system (v0.14.38: tipos + stack queue) ─────────── */
+    .toast-container {
+      position: fixed;
+      bottom: 28px; right: 28px;
+      z-index: 9999;
+      display: flex; flex-direction: column-reverse;
+      gap: 8px;
+      pointer-events: none;
     }
-    .toast.on { opacity: 1; }
+    @media (max-width: 640px) {
+      .toast-container {
+        bottom: 84px; /* sobre la bottom-bar workspace */
+        right: 12px; left: 12px;
+        align-items: center;
+      }
+    }
+    .toast {
+      pointer-events: auto;
+      min-width: 280px; max-width: 380px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: var(--surf2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: .88rem;
+      font-family: var(--font-body);
+      box-shadow: 0 8px 24px rgba(0,0,0,.18);
+      display: flex; align-items: flex-start; gap: 10px;
+      animation: toastSlideIn 200ms ease-out;
+      cursor: pointer;
+    }
+    .toast--success { border-left: 3px solid #22c55e; }
+    .toast--error   { border-left: 3px solid #ef4444; }
+    .toast--warning { border-left: 3px solid #f59e0b; }
+    .toast--info    { border-left: 3px solid var(--text2); }
+    .toast-icon { flex-shrink: 0; width: 18px; height: 18px; margin-top: 1px; }
+    .toast--success .toast-icon { color: #22c55e; }
+    .toast--error   .toast-icon { color: #ef4444; }
+    .toast--warning .toast-icon { color: #f59e0b; }
+    .toast--info    .toast-icon { color: var(--text2); }
+    .toast-body { flex: 1; min-width: 0; line-height: 1.4; }
+    .toast-action {
+      background: none; border: 0; color: var(--brand);
+      cursor: pointer; font-weight: 600; font-size: .82rem;
+      padding: 0; margin-left: 8px; flex-shrink: 0;
+    }
+    .toast-action:hover { text-decoration: underline; }
+    .toast--out { animation: toastSlideOut 200ms ease-in forwards; }
+    @keyframes toastSlideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes toastSlideOut {
+      from { opacity: 1; transform: translateY(0); }
+      to   { opacity: 0; transform: translateY(8px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .toast { animation: none; }
+      .toast--out { opacity: 0; transition: opacity .15s; animation: none; }
+    }
 
     /* ── Entrance animations ──────────────────────────────────── */
     .fade-in { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
@@ -9739,7 +9789,21 @@
 </div>
 
 <!-- ── TOAST ──────────────────────────────────────────────────────────── -->
-<div class="toast" id="toast"></div>
+<!-- v0.14.38: nuevo toast container (stack queue, 4 tipos). -->
+<div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+<!-- v0.14.38: modal confirm reutilizable. -->
+<div class="overlay" id="confirmModalOverlay" onclick="backdropCloseConfirmModal(event)">
+  <div class="modal" style="max-width:440px">
+    <button class="modal-x" onclick="_resolveConfirmModal(false)" aria-label="Close">×</button>
+    <h2 id="confirmModalTitle"></h2>
+    <p id="confirmModalBody" style="font-size:.88rem;color:var(--text2);margin:12px 0 20px;line-height:1.5"></p>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn-sm" id="confirmModalCancel" onclick="_resolveConfirmModal(false)"></button>
+      <button class="btn-sm" id="confirmModalConfirm" onclick="_resolveConfirmModal(true)"></button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ── server-injected globals ──────────────────────────────────────────────
@@ -9817,6 +9881,33 @@ const LANGS = {
     "ideas.scripted": "Guión generado",
     "ideas.deleted": "Idea eliminada",
     "ideas.delete_confirm": "¿Eliminar esta idea?",
+    // v0.14.38: nuevas claves para confirmModal + toasts
+    "common.confirm": "Confirmar",
+    "common.cancel": "Cancelar",
+    "scripts.delete_confirm_title": "Eliminar guion",
+    "scripts.delete_confirm_body": "Esta acción no se puede deshacer.",
+    "projects.delete_confirm_title": "Eliminar proyecto",
+    "projects.delete_confirm_body": "Los guiones del proyecto NO se borran, solo se desvinculan.",
+    "projects.delete_with_scripts_confirm_title": "Eliminar proyecto y sus guiones",
+    "projects.delete_with_scripts_confirm_body": "Esta acción borrará el proyecto y todos sus guiones. No se puede deshacer.",
+    "ideas.delete_confirm_title": "Eliminar idea",
+    "ideas.delete_confirm_body": "Esta acción no se puede deshacer.",
+    "ideas.discard_toast": "Idea descartada",
+    "ideas.discard_undo": "Deshacer",
+    "tp.close_confirm_title": "Cerrar teleprompter",
+    "tp.close_confirm_body": "La grabación en curso se perderá.",
+    "tp.stop_recording_confirm_title": "Detener grabación",
+    "tp.stop_recording_confirm_body": "La grabación se perderá.",
+    "asst.delete_confirm_title": "Eliminar asistente",
+    "asst.delete_confirm_body": "Esta acción no se puede deshacer.",
+    "metrics.delete_confirm_title": "Eliminar vídeo",
+    "metrics.delete_confirm_body": "Esta acción no se puede deshacer.",
+    "metrics.unlink_confirm_title": "Desvincular Instagram",
+    "metrics.unlink_confirm_body": "Se borrarán todas las métricas asociadas. Esta acción no se puede deshacer.",
+    "team.remove_confirm_title": "Eliminar miembro",
+    "team.remove_confirm_body": "Perderá acceso al equipo.",
+    "sub.cancel_confirm_title": "Cancelar suscripción",
+    "sub.cancel_confirm_body": "Mantendrás acceso hasta fin del período actual. Después perderás las features premium.",
     "ideas.regenerate": "Regenerar",
     "ideas.to_script": "Crear guión",
     "ideas.fab_tooltip": "Apunta una idea",
@@ -10208,6 +10299,33 @@ const LANGS = {
     "ideas.scripted": "Script generated",
     "ideas.deleted": "Idea deleted",
     "ideas.delete_confirm": "Delete this idea?",
+    // v0.14.38: new keys for confirmModal + toasts
+    "common.confirm": "Confirm",
+    "common.cancel": "Cancel",
+    "scripts.delete_confirm_title": "Delete script",
+    "scripts.delete_confirm_body": "This action cannot be undone.",
+    "projects.delete_confirm_title": "Delete project",
+    "projects.delete_confirm_body": "Scripts inside this project are NOT deleted, only unlinked.",
+    "projects.delete_with_scripts_confirm_title": "Delete project and its scripts",
+    "projects.delete_with_scripts_confirm_body": "This will delete the project and all its scripts. Cannot be undone.",
+    "ideas.delete_confirm_title": "Delete idea",
+    "ideas.delete_confirm_body": "This action cannot be undone.",
+    "ideas.discard_toast": "Idea discarded",
+    "ideas.discard_undo": "Undo",
+    "tp.close_confirm_title": "Close teleprompter",
+    "tp.close_confirm_body": "The current recording will be lost.",
+    "tp.stop_recording_confirm_title": "Stop recording",
+    "tp.stop_recording_confirm_body": "The recording will be lost.",
+    "asst.delete_confirm_title": "Delete assistant",
+    "asst.delete_confirm_body": "This action cannot be undone.",
+    "metrics.delete_confirm_title": "Delete video",
+    "metrics.delete_confirm_body": "This action cannot be undone.",
+    "metrics.unlink_confirm_title": "Unlink Instagram",
+    "metrics.unlink_confirm_body": "All associated metrics will be deleted. This action cannot be undone.",
+    "team.remove_confirm_title": "Remove member",
+    "team.remove_confirm_body": "They will lose access to the team.",
+    "sub.cancel_confirm_title": "Cancel subscription",
+    "sub.cancel_confirm_body": "You'll keep access until the end of the current period. After that, premium features will be lost.",
     "ideas.regenerate": "Regenerate",
     "ideas.to_script": "Create script",
     "ideas.fab_tooltip": "Capture an idea",
@@ -10879,7 +10997,7 @@ async function saveAssistant() {
 }
 
 async function deleteAssistant(id) {
-  if (!confirm(t("asst.delete_confirm"))) return;
+  if (!(await window.confirmModal({ title: t("asst.delete_confirm_title"), body: t("asst.delete_confirm_body"), danger: true }))) return;
   await fetch(`/assistants/${id}`, { method: "DELETE" });
   showToast(t("asst.deleted"));
   if (selectedAssistantId === id) selectedAssistantId = null;
@@ -12232,7 +12350,7 @@ function igShowTranscript(vid) {
 }
 
 async function igDeleteVideo(vid) {
-  if (!confirm(t("metrics.delete_confirm"))) return;
+  if (!(await window.confirmModal({ title: t("metrics.delete_confirm_title"), body: t("metrics.delete_confirm_body"), danger: true }))) return;
   try {
     const r = await fetch(`/metrics/video/${vid}`, { method: "DELETE" });
     if (!r.ok) { const d = await r.json(); showToast(d.error || "Error"); return; }
@@ -12540,7 +12658,7 @@ async function igAnalyze() {
 }
 
 async function igUnlink() {
-  if (!confirm(t("metrics.unlink_confirm"))) return;
+  if (!(await window.confirmModal({ title: t("metrics.unlink_confirm_title"), body: t("metrics.unlink_confirm_body"), danger: true }))) return;
   try {
     const r = await fetch("/metrics/ig-profile", { method: "DELETE" });
     if (r.ok) { igVideosCache = []; loadMetricsPanel(); showToast(t("metrics.unlinked")); }
@@ -14127,7 +14245,7 @@ function viewScript(id) {
 }
 
 async function delScript(id, btn) {
-  if (!confirm(currentLang === "es" ? "¿Eliminar este guión?" : "Delete this script?")) return;
+  if (!(await window.confirmModal({ title: t("scripts.delete_confirm_title"), body: t("scripts.delete_confirm_body"), danger: true }))) return;
   if (btn) btn.disabled = true;
   await fetch(`/scripts/${id}`, { method: "DELETE" });
   await loadScripts();
@@ -14428,7 +14546,7 @@ async function createProject(name, stylePrompt) {
 }
 
 async function delProject(id) {
-  if (!confirm(currentLang === "es" ? "¿Eliminar este proyecto?" : "Delete this project?")) return;
+  if (!(await window.confirmModal({ title: t("projects.delete_confirm_title"), body: t("projects.delete_confirm_body"), danger: true }))) return;
   await fetch(`/projects/${id}`, { method: "DELETE" });
   await loadProjects();
 }
@@ -14519,7 +14637,7 @@ async function saveProjAssistant() {
 }
 
 async function delProjFromDetail() {
-  if (!confirm(currentLang === "es" ? "¿Eliminar este proyecto y todos sus guiones?" : "Delete this project and all its scripts?")) return;
+  if (!(await window.confirmModal({ title: t("projects.delete_with_scripts_confirm_title"), body: t("projects.delete_with_scripts_confirm_body"), danger: true }))) return;
   await fetch(`/projects/${currentProjId}`, { method: "DELETE" });
   closeProjDetail();
   await loadProjects();
@@ -14712,7 +14830,7 @@ function copyProjScript(idx, btn) {
 }
 
 async function delProjScript(scriptId, idx) {
-  if (!confirm(currentLang === "es" ? "¿Eliminar este guión?" : "Delete this script?")) return;
+  if (!(await window.confirmModal({ title: t("scripts.delete_confirm_title"), body: t("scripts.delete_confirm_body"), danger: true }))) return;
   await fetch(`/scripts/${scriptId}`, { method: "DELETE" });
   projScripts.splice(idx, 1);
   renderProjScripts();
@@ -15324,7 +15442,7 @@ async function developIdeaNow(id) {
 }
 
 async function deleteIdea(id) {
-  if (!confirm(t("ideas.delete_confirm"))) return;
+  if (!(await window.confirmModal({ title: t("ideas.delete_confirm_title"), body: t("ideas.delete_confirm_body"), danger: true }))) return;
   await fetch(`/ideas/${id}`, { method: "DELETE" });
   showToast(t("ideas.deleted"));
   await loadIdeas();
@@ -15411,7 +15529,7 @@ async function inviteMember(email) {
 }
 
 async function removeMember(memberId) {
-  if (!confirm(t("team.confirm_remove"))) return;
+  if (!(await window.confirmModal({ title: t("team.remove_confirm_title"), body: t("team.remove_confirm_body"), danger: true }))) return;
   try {
     const res = await fetch(`/agency/members/${memberId}`, { method: "DELETE" });
     if (!res.ok) { const d = await res.json(); showToast(d.error || "Error"); return; }
@@ -16420,8 +16538,22 @@ function openIdeaModal() {
 function closeIdeaModal() {
   if (_ideaRecognition) _ideaRecognition.stop();
   const ta = document.getElementById("ideaCaptureText");
-  if (ta.value.trim().length > 0) {
-    if (!confirm(currentLang === "es" ? "¿Descartar la idea?" : "Discard the idea?")) return;
+  const stashed = ta ? ta.value : "";
+  if (stashed.trim().length > 0) {
+    // v0.14.38: cerrar directo + toast con undo (en lugar de confirm bloqueante).
+    closeModal("ideaCaptureOverlay");
+    window.toast.warning(t("ideas.discard_toast"), {
+      duration: 5000,
+      action: {
+        label: t("ideas.discard_undo"),
+        onClick: () => {
+          openModal("ideaCaptureOverlay");
+          const t2 = document.getElementById("ideaCaptureText");
+          if (t2) { t2.value = stashed; t2.dispatchEvent(new Event("input")); }
+        }
+      }
+    });
+    return;
   }
   closeModal("ideaCaptureOverlay");
 }
@@ -16705,8 +16837,11 @@ function tpOpen(text) {
   tpRecInit();
 }
 
-function tpClose() {
-  if ((TP.isPlaying || TPR.isRecording) && !confirm("Close teleprompter?")) return;
+async function tpClose() {
+  // v0.14.38: solo modal confirm si está grabando (acción crítica). Reproduciendo → cerrar directo.
+  if (TPR.isRecording) {
+    if (!(await window.confirmModal({ title: t("tp.close_confirm_title"), body: t("tp.close_confirm_body"), danger: true }))) return;
+  }
   if (TPR.isRecording) tpRecStop();
   tpRecCleanup();
   tpStop();
@@ -17468,9 +17603,9 @@ function tpRecResultClose() {
   document.getElementById("tpRecPreview").src = "";
 }
 
-function tpRecCancel() {
+async function tpRecCancel() {
   if (TPR.isRecording) {
-    if (!confirm(currentLang === "es" ? "¿Detener la grabación?" : "Stop recording?")) return;
+    if (!(await window.confirmModal({ title: t("tp.stop_recording_confirm_title"), body: t("tp.stop_recording_confirm_body"), danger: true }))) return;
     tpRecStop();
   }
   tpRecCleanup();
@@ -18452,7 +18587,7 @@ function renderUpgradeCards() {
 }
 
 async function cancelSubscription() {
-  if (!confirm(t("sub.cancel_confirm"))) return;
+  if (!(await window.confirmModal({ title: t("sub.cancel_confirm_title"), body: t("sub.cancel_confirm_body"), danger: true }))) return;
   const res = await fetch("/cancel-subscription", {
     method: "POST", headers: { "Content-Type": "application/json" },
   });
@@ -18512,11 +18647,108 @@ function mkBtn(label, cb) {
   b.className = "btn-sm"; b.textContent = label;
   b.addEventListener("click", () => cb(b)); return b;
 }
-function showToast(msg) {
-  const t = document.getElementById("toast");
-  t.textContent = msg; t.classList.add("on");
-  setTimeout(() => t.classList.remove("on"), 3000);
+// v0.14.38: toast system con tipos + stack queue + soporte de action (undo).
+(function setupToastSystem(){
+  const TOAST_ICONS = {
+    success: '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+    error:   '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+    warning: '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    info:    '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+  };
+  function _showToast(msg, type, opts) {
+    opts = opts || {};
+    const container = document.getElementById("toastContainer");
+    if (!container) return;
+    const el = document.createElement("div");
+    el.className = "toast toast--" + (type || "info");
+    const body = document.createElement("div");
+    body.className = "toast-body";
+    body.textContent = String(msg == null ? "" : msg);
+    el.innerHTML = TOAST_ICONS[type] || TOAST_ICONS.info;
+    el.appendChild(body);
+    if (opts.action && opts.action.label && typeof opts.action.onClick === "function") {
+      const btn = document.createElement("button");
+      btn.className = "toast-action";
+      btn.type = "button";
+      btn.textContent = opts.action.label;
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        try { opts.action.onClick(); } catch(err) { console.error(err); }
+        _dismissToast(el);
+      });
+      el.appendChild(btn);
+    }
+    const duration = typeof opts.duration === "number" ? opts.duration : 4000;
+    const timer = setTimeout(() => _dismissToast(el), duration);
+    el.addEventListener("click", () => { clearTimeout(timer); _dismissToast(el); });
+    container.appendChild(el);
+  }
+  function _dismissToast(el) {
+    if (!el || el._out) return;
+    el._out = true;
+    el.classList.add("toast--out");
+    setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 220);
+  }
+  window.toast = {
+    success: (msg, opts) => _showToast(msg, "success", opts),
+    error:   (msg, opts) => _showToast(msg, "error", opts),
+    warning: (msg, opts) => _showToast(msg, "warning", opts),
+    info:    (msg, opts) => _showToast(msg, "info", opts),
+  };
+  // Compatibilidad: showToast(msg) — 40+ call sites siguen funcionando.
+  window.showToast = (msg) => window.toast.info(msg);
+})();
+
+// v0.14.38: modal confirm reutilizable → Promise<bool>.
+let _confirmResolver = null;
+function _resolveConfirmModal(value) {
+  const overlay = document.getElementById("confirmModalOverlay");
+  if (overlay) overlay.classList.remove("on");
+  document.removeEventListener("keydown", _confirmModalEsc);
+  if (_confirmResolver) {
+    const r = _confirmResolver;
+    _confirmResolver = null;
+    r(!!value);
+  }
 }
+function _confirmModalEsc(e) {
+  if (e.key === "Escape") _resolveConfirmModal(false);
+}
+function backdropCloseConfirmModal(e) {
+  if (e.target === e.currentTarget) _resolveConfirmModal(false);
+}
+window.confirmModal = function(opts) {
+  opts = opts || {};
+  return new Promise((resolve) => {
+    // Si ya hay un modal abierto, resolver false antes.
+    if (_confirmResolver) _resolveConfirmModal(false);
+    _confirmResolver = resolve;
+    const title = opts.title || "";
+    const body = opts.body || "";
+    const confirmText = opts.confirmText || t("common.confirm") || "Confirm";
+    const cancelText = opts.cancelText || t("common.cancel") || "Cancel";
+    const danger = !!opts.danger;
+    document.getElementById("confirmModalTitle").textContent = title;
+    const bodyEl = document.getElementById("confirmModalBody");
+    if (opts.html) bodyEl.innerHTML = body;
+    else bodyEl.textContent = body;
+    const cancelBtn = document.getElementById("confirmModalCancel");
+    cancelBtn.textContent = cancelText;
+    const confirmBtn = document.getElementById("confirmModalConfirm");
+    confirmBtn.textContent = confirmText;
+    if (danger) {
+      confirmBtn.style.background = "#dc2626";
+      confirmBtn.style.color = "#fff";
+      confirmBtn.style.borderColor = "#dc2626";
+    } else {
+      confirmBtn.style.background = "var(--brand-cta)";
+      confirmBtn.style.color = "#fff";
+      confirmBtn.style.borderColor = "var(--brand-cta)";
+    }
+    document.getElementById("confirmModalOverlay").classList.add("on");
+    document.addEventListener("keydown", _confirmModalEsc);
+  });
+};
 
 // v0.14.22 BUG 6: rotador de mensajes para operaciones IA pesadas (>2s).
 // Reusa la animación CSS .loading-msg / .loading-msg.fade que ya existe (línea ~2862).
