@@ -3111,7 +3111,14 @@
       padding: 12px 12px; flex: 1;
       display: flex; flex-direction: column; gap: 2px;
     }
-    /* v0.14.31: agrupación de la sidebar en secciones (CREAR / MI TRABAJO / CONFIGURACIÓN) */
+    /* v0.14.39: sidebar plana — separador entre Dashboard / Workspace / Configuración. */
+    .prof-nav-sep {
+      height: 1px;
+      background: var(--border);
+      margin: 12px 8px;
+    }
+    /* v0.14.31: agrupación de la sidebar en secciones (legacy v0.14.38; mantenido por
+       compat con mobile drawer si alguno lo usa). */
     .prof-nav-section {
       display: flex; flex-direction: column; gap: 2px;
       margin-top: 14px;
@@ -4916,6 +4923,45 @@
     .ideas-tab:hover { color: var(--text2); }
     .ideas-tab.on { color: var(--text); border-bottom-color: #ef6a29; }
     [data-theme="light"] .ideas-tab.on { border-bottom-color: #c2410c; }
+
+    /* v0.14.39: tabs nuevas reusables (Scripts + Settings) — replican patrón .ideas-tabs. */
+    .scripts-tabs, .settings-tabs {
+      display: flex; gap: 4px; margin: 0 0 var(--space-lg);
+      border-bottom: 1px solid var(--border);
+    }
+    .scripts-tab, .settings-tab {
+      background: none; border: none; cursor: pointer;
+      padding: 10px 16px; font-size: .82rem; font-weight: 600;
+      color: var(--text3); font-family: var(--font-body);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color .15s, border-color .15s;
+    }
+    .scripts-tab:hover, .settings-tab:hover { color: var(--text2); }
+    .scripts-tab.on, .settings-tab.on { color: var(--text); border-bottom-color: var(--brand); }
+    [data-theme="light"] .scripts-tab.on,
+    [data-theme="light"] .settings-tab.on { border-bottom-color: #c2410c; }
+
+    /* v0.14.39: filtro de proyectos como chips dentro de Scripts. */
+    .scripts-proj-filter {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      margin-bottom: var(--space-md);
+    }
+    .proj-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: 20px;
+      background: var(--surf2); border: 1px solid var(--border);
+      color: var(--text2); font-size: .8rem; font-weight: 500;
+      font-family: var(--font-body); cursor: pointer;
+      transition: background .12s, border-color .12s, color .12s;
+    }
+    .proj-chip:hover { border-color: var(--brand); color: var(--text); }
+    .proj-chip.on { background: var(--brand-cta); color: #fff; border-color: var(--brand-cta); }
+    .proj-chip-new {
+      background: transparent; border: 1px dashed var(--border);
+      color: var(--text3);
+    }
+    .proj-chip-new:hover { color: var(--brand); border-color: var(--brand); }
 
     .ideas-suggest-empty {
       background: var(--surf); border: 1px solid var(--border);
@@ -8461,32 +8507,21 @@
       </div>
 
       <div class="prof-sidebar-nav" id="profSidebarNav">
-        <!-- v0.14.31: reagrupada en CREAR / MI TRABAJO / CONFIGURACIÓN. Dashboard
-             suelto arriba como home. Teleprompter eliminado de la sidebar
-             (alternativas siguen disponibles: card mini-grid Dashboard, drawer mobile). -->
+        <!-- v0.14.39: sidebar plana (6 items + Dashboard). Hazlo tuyo, Proyectos,
+             Equipo, Privacidad eliminados (pasaron a tabs internos en Scripts/Settings). -->
         <button class="prof-nav-item on" onclick="profTab('overview')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="1" width="6" height="6" fill="currentColor"/><rect x="9" y="1" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.overview">Dashboard</span></button>
 
-        <div class="prof-nav-section">
-          <div class="prof-nav-section-hdr" data-i18n-es="CREAR" data-i18n-en="CREATE">CREAR</div>
-          <button class="prof-nav-item" onclick="profTab('transc')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.transcriptions">Transcribir</span></button>
-          <button class="prof-nav-item" id="profNavIdeas" style="display:none" onclick="profTab('ideas')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="3" y="1" width="10" height="2" fill="currentColor"/><rect x="2" y="3" width="12" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="6" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="9" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.ideas">Ideas</span></button>
-          <button class="prof-nav-item" id="profNavAdapt" onclick="profTab('adapt')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><path d="M8 1 L9 5 L13 6 L9 7 L8 11 L7 7 L3 6 L7 5 Z" fill="currentColor"/><circle cx="13" cy="13" r="1.2" fill="currentColor" opacity=".5"/><circle cx="3" cy="2" r="1" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.adapt">Hazlo tuyo</span></button>
-        </div>
+        <div class="prof-nav-sep" aria-hidden="true"></div>
 
-        <div class="prof-nav-section">
-          <div class="prof-nav-section-hdr" data-i18n-es="MI TRABAJO" data-i18n-en="MY WORK">MI TRABAJO</div>
-          <button class="prof-nav-item" onclick="profTab('scripts')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="10" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.saved_scripts">Guiones</span></button>
-          <button class="prof-nav-item" id="profNavProjects" style="display:none" onclick="profTab('projects')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="3" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="6" height="3" fill="currentColor"/></svg><span data-i18n="prof.projects">Proyectos</span></button>
-          <button class="prof-nav-item" id="profNavMetrics" style="display:none" onclick="profTab('metrics')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="10" width="3" height="5" fill="currentColor" opacity=".4"/><rect x="5" y="7" width="3" height="8" fill="currentColor" opacity=".6"/><rect x="9" y="4" width="3" height="11" fill="currentColor" opacity=".8"/><rect x="13" y="1" width="3" height="14" fill="currentColor"/></svg><span data-i18n="prof.metrics">Métricas</span></button>
-        </div>
+        <button class="prof-nav-item" onclick="profTab('transc')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.transcriptions">Transcribir</span></button>
+        <button class="prof-nav-item" onclick="profTab('scripts')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="10" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.saved_scripts">Guiones</span></button>
+        <button class="prof-nav-item" id="profNavIdeas" style="display:none" onclick="profTab('ideas')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="3" y="1" width="10" height="2" fill="currentColor"/><rect x="2" y="3" width="12" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="6" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="9" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.ideas">Ideas</span></button>
+        <button class="prof-nav-item" id="profNavMetrics" style="display:none" onclick="profTab('metrics')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="10" width="3" height="5" fill="currentColor" opacity=".4"/><rect x="5" y="7" width="3" height="8" fill="currentColor" opacity=".6"/><rect x="9" y="4" width="3" height="11" fill="currentColor" opacity=".8"/><rect x="13" y="1" width="3" height="14" fill="currentColor"/></svg><span data-i18n="prof.metrics">Métricas</span></button>
 
-        <div class="prof-nav-section">
-          <div class="prof-nav-section-hdr" data-i18n-es="CONFIGURACIÓN" data-i18n-en="SETTINGS">CONFIGURACIÓN</div>
-          <button class="prof-nav-item" id="profNavAssistants" style="display:none" onclick="profTab('assistants')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="5" y="1" width="6" height="6" rx="3" fill="currentColor"/><rect x="3" y="9" width="10" height="6" rx="2" fill="currentColor" opacity=".6"/><rect x="6" y="3" width="1.5" height="1.5" fill="#0a0b0f"/><rect x="9" y="3" width="1.5" height="1.5" fill="#0a0b0f"/></svg><span data-i18n="prof.assistants">Asistentes</span></button>
-          <button class="prof-nav-item" id="profNavTeam" style="display:none" onclick="profTab('team')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><circle cx="5" cy="4" r="2.5" fill="currentColor"/><circle cx="11" cy="4" r="2.5" fill="currentColor" opacity=".6"/><rect x="1" y="8" width="8" height="5" rx="2" fill="currentColor"/><rect x="7" y="8" width="8" height="5" rx="2" fill="currentColor" opacity=".5"/></svg><span data-i18n="prof.team">Equipo</span></button>
-          <button class="prof-nav-item" id="profNavPrivacy" onclick="profTab('privacy')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="3" y="6" width="10" height="9" rx="1" fill="currentColor" opacity=".6"/><rect x="5" y="1" width="6" height="7" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="7" y="9" width="2" height="3" fill="#0a0b0f"/></svg><span data-i18n="prof.privacy">Privacidad y datos</span></button>
-          <button class="prof-nav-item" id="profNavSettings" onclick="profTab('settings')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><circle cx="8" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1 V3 M8 13 V15 M1 8 H3 M13 8 H15 M3 3 L4.5 4.5 M11.5 11.5 L13 13 M3 13 L4.5 11.5 M11.5 4.5 L13 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span data-i18n="prof.settings">Configuración</span></button>
-        </div>
+        <div class="prof-nav-sep" aria-hidden="true"></div>
+
+        <button class="prof-nav-item" id="profNavAssistants" style="display:none" onclick="profTab('assistants')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="5" y="1" width="6" height="6" rx="3" fill="currentColor"/><rect x="3" y="9" width="10" height="6" rx="2" fill="currentColor" opacity=".6"/><rect x="6" y="3" width="1.5" height="1.5" fill="#0a0b0f"/><rect x="9" y="3" width="1.5" height="1.5" fill="#0a0b0f"/></svg><span data-i18n="prof.assistants">Asistentes</span></button>
+        <button class="prof-nav-item" id="profNavSettings" onclick="profTab('settings')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><circle cx="8" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1 V3 M8 13 V15 M1 8 H3 M13 8 H15 M3 3 L4.5 4.5 M11.5 11.5 L13 13 M3 13 L4.5 11.5 M11.5 4.5 L13 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span data-i18n="prof.settings">Configuración</span></button>
       </div>
 
       <div class="prof-sidebar-footer">
@@ -8778,11 +8813,23 @@
           </div>
         </div>
 
-        <!-- Project filter banner (shown when ?project=<id>) -->
-        <div id="scrFilterBanner" style="display:none"></div>
+        <!-- v0.14.39: tabs internos Tus guiones / Crear guion -->
+        <div class="scripts-tabs">
+          <button class="scripts-tab on" data-tab="list" onclick="scriptsSwitchTab('list')" data-i18n="scripts.tab_list">Tus guiones</button>
+          <button class="scripts-tab" data-tab="create" onclick="scriptsSwitchTab('create')" data-i18n="scripts.tab_create">Crear guion</button>
+        </div>
 
-        <!-- Scripts list -->
-        <div id="profListScripts" class="scr-list">
+        <!-- Tab: lista de guiones -->
+        <div class="scripts-tab-panel" id="scriptsTabList">
+
+          <!-- v0.14.39: filtro proyectos como chips (movido desde panel Proyectos). -->
+          <div class="scripts-proj-filter" id="scriptsProjFilter"></div>
+
+          <!-- Project filter banner (shown when ?project=<id>) -->
+          <div id="scrFilterBanner" style="display:none"></div>
+
+          <!-- Scripts list -->
+          <div id="profListScripts" class="scr-list">
           <!-- v0.14.37: skeleton loaders. JS los sobrescribe al renderizar lista real. -->
           <article class="scr-skel-card">
             <div class="skel skel-line" style="width:60%"></div>
@@ -8814,6 +8861,126 @@
             <div class="skel skel-line" style="width:82%;margin-top:6px"></div>
           </article>
         </div>
+        </div><!-- /#scriptsTabList -->
+
+        <!-- v0.14.39: tab "Crear guion" — contenido movido desde #profPanelAdapt. -->
+        <div class="scripts-tab-panel" id="scriptsTabCreate" style="display:none">
+          <div class="adapt-inner fade-in" id="adaptCard">
+            <div class="adapt-header">
+              <h2 data-i18n="adapt.h2">Hazlo tuyo</h2>
+              <p style="margin-top:10px" data-i18n="adapt.p">Adapta tus guiones al estilo que quieras.</p>
+            </div>
+            <!-- v0.14.39: contenido movido inline desde el antiguo #profPanelAdapt. -->
+            <div class="adapt-left">
+              <div style="font-size:.78rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px"
+                   data-i18n-es="Tu guión" data-i18n-en="Your script">Tu guión</div>
+              <textarea id="adaptInput" class="script-ta"
+                placeholder="Pega aquí el guión o la transcripción que quieres transformar…"
+                data-i18n-placeholder-es="Pega aquí el guión o la transcripción que quieres transformar…"
+                data-i18n-placeholder-en="Paste your script or transcription here to transform it…"></textarea>
+
+              <input type="text" class="style-search" id="styleSearch" placeholder="Search styles..." style="display:none" oninput="renderStyleGrid()" />
+              <div class="style-grid" id="styleGrid">
+                <button class="style-pill" data-s="viral" onclick="selectStyle(this)">
+                  <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#1a1a2e"/><rect x="20" y="8" width="32" height="4" fill="#1a1a2e"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#1a1a2e"/><rect x="16" y="20" width="12" height="6" fill="#1a1a2e"/><rect x="44" y="20" width="12" height="6" fill="#1a1a2e"/><rect x="17" y="21" width="10" height="4" fill="#60a5fa"/><rect x="45" y="21" width="10" height="4" fill="#60a5fa"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="10" y="40" width="8" height="20" fill="#f97316"/><rect x="54" y="40" width="8" height="20" fill="#f97316"/><rect x="18" y="40" width="36" height="4" fill="#f97316"/><rect x="14" y="44" width="44" height="16" fill="#f97316"/><rect x="18" y="60" width="14" height="20" fill="#f97316"/><rect x="40" y="60" width="14" height="20" fill="#f97316"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
+                  <span class="sp-name">Viral</span>
+                  <span class="sp-hint" data-i18n="sh.viral">Hook + tensión + CTA brutal</span>
+                </button>
+                <button class="style-pill" data-s="divertido" onclick="selectStyle(this)">
+                  <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#f4a400"/><rect x="20" y="8" width="32" height="4" fill="#f4a400"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#92400e"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="22" y="28" width="4" height="4" fill="#fcd9a0"/><rect x="46" y="28" width="4" height="4" fill="#fcd9a0"/><rect x="24" y="32" width="24" height="6" fill="#f97316"/><rect x="26" y="36" width="20" height="2" fill="#fff"/><rect x="10" y="40" width="6" height="4" fill="#fcd9a0"/><rect x="56" y="40" width="6" height="4" fill="#fcd9a0"/><rect x="6" y="44" width="6" height="4" fill="#fcd9a0"/><rect x="60" y="44" width="6" height="4" fill="#fcd9a0"/><rect x="18" y="40" width="36" height="4" fill="#f4a400"/><rect x="14" y="44" width="44" height="16" fill="#f4a400"/><rect x="18" y="60" width="14" height="20" fill="#f4a400"/><rect x="40" y="60" width="14" height="20" fill="#f4a400"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
+                  <span class="sp-name" data-i18n="sn.divertido">Divertido</span>
+                  <span class="sp-hint" data-i18n="sh.divertido">Tono relajado, humor ligero</span>
+                </button>
+                <button class="style-pill" data-s="linkedin" onclick="selectStyle(this)">
+                  <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#1a1a2e"/><rect x="20" y="8" width="32" height="4" fill="#1a1a2e"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#1a1a2e"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="16" y="40" width="40" height="4" fill="#1e3a5f"/><rect x="10" y="40" width="8" height="24" fill="#fcd9a0"/><rect x="54" y="40" width="8" height="24" fill="#fcd9a0"/><rect x="18" y="44" width="36" height="16" fill="#1e3a5f"/><rect x="30" y="38" width="12" height="6" fill="#fff"/><rect x="32" y="36" width="8" height="2" fill="#e2e8f0"/><rect x="18" y="60" width="14" height="20" fill="#334155"/><rect x="40" y="60" width="14" height="20" fill="#334155"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
+                  <span class="sp-name">LinkedIn</span>
+                  <span class="sp-hint" data-i18n="sh.linkedin">Profesional, reflexivo, red</span>
+                </button>
+                <button class="style-pill" data-s="storytelling" onclick="selectStyle(this)">
+                  <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#7c3aed"/><rect x="20" y="8" width="32" height="4" fill="#7c3aed"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#4c1d95"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="10" y="40" width="8" height="20" fill="#7c3aed"/><rect x="54" y="40" width="8" height="20" fill="#7c3aed"/><rect x="18" y="40" width="36" height="4" fill="#7c3aed"/><rect x="14" y="44" width="44" height="16" fill="#7c3aed"/><rect x="54" y="32" width="14" height="18" fill="#fef3c7"/><rect x="54" y="32" width="2" height="18" fill="#d97706"/><rect x="54" y="32" width="14" height="2" fill="#d97706"/><rect x="66" y="32" width="2" height="18" fill="#d97706"/><rect x="54" y="48" width="14" height="2" fill="#d97706"/><rect x="58" y="36" width="8" height="2" fill="#94a3b8"/><rect x="58" y="40" width="10" height="2" fill="#94a3b8"/><rect x="58" y="44" width="6" height="2" fill="#94a3b8"/><rect x="18" y="60" width="14" height="20" fill="#7c3aed"/><rect x="40" y="60" width="14" height="20" fill="#7c3aed"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
+                  <span class="sp-name" data-i18n="sn.storytelling">Historia</span>
+                  <span class="sp-hint" data-i18n="sh.storytelling">Narrativa emocional, escenas</span>
+                </button>
+                <button class="style-pill" data-s="hooks" onclick="selectStyle(this)">
+                  <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#0369a1"/><rect x="20" y="8" width="32" height="4" fill="#0369a1"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#0c4a6e"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="10" y="40" width="8" height="20" fill="#0369a1"/><rect x="54" y="40" width="8" height="20" fill="#0369a1"/><rect x="18" y="40" width="36" height="4" fill="#0369a1"/><rect x="14" y="44" width="44" height="16" fill="#0369a1"/><rect x="56" y="20" width="2" height="44" fill="#92400e"/><rect x="58" y="18" width="12" height="2" fill="#92400e"/><rect x="68" y="18" width="2" height="14" fill="#64748b"/><rect x="64" y="30" width="6" height="2" fill="#64748b"/><rect x="66" y="32" width="2" height="4" fill="#22c55e"/><rect x="56" y="60" width="12" height="8" fill="#60a5fa"/><rect x="54" y="62" width="16" height="4" fill="#60a5fa"/><rect x="18" y="60" width="14" height="20" fill="#0369a1"/><rect x="40" y="60" width="14" height="20" fill="#0369a1"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
+                  <span class="sp-name">5 Hooks</span>
+                  <span class="sp-hint" data-i18n="sh.hooks">5 aperturas que atrapan</span>
+                </button>
+                <button class="style-pill" data-s="custom" onclick="selectStyle(this)">
+                  <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#0d9488"/><rect x="20" y="8" width="32" height="4" fill="#0d9488"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#134e4a"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="32" y="20" width="4" height="4" fill="#f97316"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="10" y="40" width="8" height="20" fill="#0d9488"/><rect x="54" y="40" width="8" height="20" fill="#0d9488"/><rect x="18" y="40" width="36" height="4" fill="#0d9488"/><rect x="14" y="44" width="44" height="16" fill="#0d9488"/><rect x="4" y="34" width="12" height="6" fill="#94a3b8"/><rect x="2" y="36" width="4" height="4" fill="#94a3b8"/><rect x="6" y="30" width="8" height="6" fill="#cbd5e1"/><rect x="8" y="28" width="4" height="2" fill="#f97316"/><rect x="18" y="60" width="14" height="20" fill="#0d9488"/><rect x="40" y="60" width="14" height="20" fill="#0d9488"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
+                  <span class="sp-name">Custom</span>
+                  <span class="sp-hint" data-i18n="sh.custom">Tú decides las instrucciones</span>
+                </button>
+              </div>
+              <div class="style-dots" id="styleDots"></div>
+
+              <div class="custom-row" id="customRow">
+                <input type="text" id="customPrompt" class="ph-no-capture" data-clarity-mask="true" placeholder="Ej: Escríbelo como una carta de ventas…" />
+                <button class="btn-grad" onclick="runAdapt()">→</button>
+              </div>
+
+              <div id="mobileAdaptResult" class="mobile-adapt-result ph-no-capture" data-clarity-mask="true" style="display:none">
+                <div class="mobile-adapt-result-head">
+                  <span class="mobile-adapt-result-label">Result</span>
+                  <button class="rs-card-copy" onclick="copyMobileResult()">
+                    <span class="rs-tip">Copy</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                  </button>
+                </div>
+                <div id="mobileAdaptResultTxt" class="mobile-adapt-result-body"></div>
+              </div>
+
+              <div id="adaptSpinner" style="display:none"></div>
+              <div id="adaptRes" style="display:none">
+                <div id="adaptResTxt"></div>
+                <div id="adaptActs"></div>
+              </div>
+
+              <div id="styleDescLine" style="display:none;font-size:.82rem;color:var(--text3);margin-top:8px;line-height:1.5;font-weight:300"></div>
+              <button class="adapt-run-btn" id="btnRunAdapt" onclick="runAdapt()" style="display:none">Transform</button>
+            </div>
+
+            <div class="preview-label-wrap">
+              <div class="preview-label" data-i18n="preview.label">This is how your script would look →</div>
+            </div>
+
+            <div class="adapt-right">
+              <div class="preview-card" id="previewCard" data-active="viral">
+                <div class="preview-top-bar"></div>
+                <div class="preview-card-spinner" id="previewSpinner">
+                  <div class="sq-loader">
+                    <div class="sq-el sq-el1"></div>
+                    <div class="sq-el sq-el2"></div>
+                  </div>
+                  <p id="previewSpinnerMsg">Transformando…</p>
+                </div>
+                <div class="preview-header">
+                  <span style="font-size:.8rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px" id="previewCardLabel">Ejemplo</span>
+                  <span class="pc-badge" id="previewBadge" data-s="viral">🔥 Viral</span>
+                </div>
+                <div class="preview-content" id="previewContent">
+                  <div class="preview-result-text" id="previewResultText"></div>
+                  <div class="preview-slide on" data-style="viral"><div class="preview-text" data-i18n="ex.viral"></div></div>
+                  <div class="preview-slide" data-style="divertido"><div class="preview-text" data-i18n="ex.divertido"></div></div>
+                  <div class="preview-slide" data-style="linkedin"><div class="preview-text" data-i18n="ex.linkedin"></div></div>
+                  <div class="preview-slide" data-style="storytelling"><div class="preview-text" data-i18n="ex.storytelling"></div></div>
+                  <div class="preview-slide" data-style="hooks"><div class="preview-text" data-i18n="ex.hooks"></div></div>
+                  <div class="preview-slide" data-style="custom"><div class="preview-text" data-i18n="ex.custom"></div></div>
+                </div>
+                <div class="preview-footer" id="previewFooter">
+                  <div class="pf-dot"></div>
+                  <span id="previewFooterTxt">Ejemplo · El tuyo será único</span>
+                  <button class="pf-copy" id="pfRegenBtn" style="display:none" onclick="regenAdapt()" data-i18n="adapt.regen">Regenerar</button>
+                  <button class="pf-copy" id="pfRegenHookBtn" style="display:none" onclick="regenHookOnly()" data-i18n="adapt.regen_hook">Nuevo hook</button>
+                  <button class="pf-copy" id="pfCopyBtn" style="display:none" onclick="copyPreviewResult()">Copiar</button>
+                  <button class="pf-copy" id="pfSaveBtn" style="display:none" onclick="saveScript()">💾 Guardar</button>
+                  <button class="pf-copy" id="pfTpBtn" style="display:none" onclick="tpOpenFromAdapt()">Teleprompter</button>
+                </div>
+              </div>
+              <button class="adapt-run-btn adapt-run-desktop" id="btnRunAdaptDesktop" onclick="runAdapt()" style="display:none">Transform</button>
+            </div>
+          </div>
+        </div><!-- /#scriptsTabCreate -->
       </div>
 
       <!-- Transcriptions panel -->
@@ -8903,67 +9070,8 @@
         </div>
       </div>
 
-      <!-- Projects panel -->
-      <div id="profPanelProjects" style="display:none">
-
-        <!-- v0.14.32: header limpio. v0.14.33.a: tagline. -->
-        <div class="prof-section-head">
-          <div>
-            <div class="prof-section-title" data-i18n-es="Proyectos" data-i18n-en="Projects">Proyectos</div>
-            <div class="prof-section-tagline" data-i18n-es="Organiza guiones, transcripciones e ideas." data-i18n-en="Organize scripts, transcriptions and ideas.">Organiza guiones, transcripciones e ideas.</div>
-          </div>
-        </div>
-
-        <!-- Toolbar -->
-        <div class="proj-toolbar">
-          <button type="button" class="proj-new-btn" onclick="openProjectEditor(null)">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2 V12 M2 7 H12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-            <span data-i18n-es="Nuevo proyecto" data-i18n-en="New project">Nuevo proyecto</span>
-          </button>
-        </div>
-
-        <!-- Grid + empty state -->
-        <div class="proj-grid-v3" id="profProjGrid">
-          <!-- v0.14.37: skeleton loaders. -->
-          <article class="proj-skel-card">
-            <div class="skel skel-line" style="width:65%"></div>
-            <div class="skel skel-line" style="width:40%;margin-top:8px"></div>
-            <div class="skel-stats-row">
-              <div class="skel skel-line" style="width:50px"></div>
-              <div class="skel skel-line" style="width:50px"></div>
-              <div class="skel skel-line" style="width:50px"></div>
-            </div>
-          </article>
-          <article class="proj-skel-card">
-            <div class="skel skel-line" style="width:55%"></div>
-            <div class="skel skel-line" style="width:38%;margin-top:8px"></div>
-            <div class="skel-stats-row">
-              <div class="skel skel-line" style="width:50px"></div>
-              <div class="skel skel-line" style="width:50px"></div>
-              <div class="skel skel-line" style="width:50px"></div>
-            </div>
-          </article>
-          <article class="proj-skel-card">
-            <div class="skel skel-line" style="width:70%"></div>
-            <div class="skel skel-line" style="width:42%;margin-top:8px"></div>
-            <div class="skel-stats-row">
-              <div class="skel skel-line" style="width:50px"></div>
-              <div class="skel skel-line" style="width:50px"></div>
-              <div class="skel skel-line" style="width:50px"></div>
-            </div>
-          </article>
-          <article class="proj-skel-card">
-            <div class="skel skel-line" style="width:60%"></div>
-            <div class="skel skel-line" style="width:36%;margin-top:8px"></div>
-            <div class="skel-stats-row">
-              <div class="skel skel-line" style="width:50px"></div>
-              <div class="skel skel-line" style="width:50px"></div>
-              <div class="skel skel-line" style="width:50px"></div>
-            </div>
-          </article>
-        </div>
-        <div id="profProjEmpty" style="display:none"></div>
-      </div>
+      <!-- v0.14.39: #profPanelProjects eliminado. Proyectos ahora vive como chip filter
+           dentro de #profPanelScripts > #scriptsTabList (ver #scriptsProjFilter). -->
 
       <!-- Assistants panel -->
       <div id="profPanelAssistants" style="display:none">
@@ -9160,39 +9268,9 @@
         </div><!-- /#ideasPanelSaved -->
       </div>
 
-      <!-- Team panel -->
-      <div id="profPanelTeam" style="display:none">
-        <div class="prof-section-head">
-          <div><div class="prof-section-title" data-i18n="team.title">Team members</div></div>
-          <div style="display:flex;gap:8px">
-            <button class="btn-3d btn-3d-primary" style="background:var(--brand);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openInviteModal()" data-i18n="team.invite">Invite member</button>
-          </div>
-        </div>
-        <div id="profTeamList"></div>
-      </div>
+      <!-- v0.14.39: #profPanelTeam y #profPanelPrivacy eliminados. Su contenido vive
+           ahora dentro de #profPanelSettings > #settingsTabTeam y #settingsTabPrivacy. -->
 
-      <!-- Privacy & Data panel (v0.14.12: i18n) -->
-      <div id="profPanelPrivacy" style="display:none">
-        <div class="prof-section-head">
-          <div><div class="prof-section-title" data-i18n-es="Privacidad y datos" data-i18n-en="Privacy &amp; Data">Privacidad y datos</div></div>
-        </div>
-
-        <div class="prof-card" style="margin-bottom:12px">
-          <div style="margin-bottom:12px">
-            <div style="font-family:var(--font-display);font-size:1rem;margin-bottom:4px" data-i18n-es="Exporta tus datos" data-i18n-en="Export your data">Exporta tus datos</div>
-            <div style="font-size:.82rem;color:var(--text2);font-weight:300" data-i18n-es="Descarga todos tus datos en JSON — transcripciones, guiones, proyectos, perfil." data-i18n-en="Download all your data as a JSON file — transcriptions, scripts, projects, profile.">Descarga todos tus datos en JSON — transcripciones, guiones, proyectos, perfil.</div>
-          </div>
-          <button class="btn-sm btn-3d btn-3d-primary" style="background:var(--brand);color:#fff;border:none;padding:8px 16px" onclick="exportMyData()" data-i18n-es="Descargar mis datos" data-i18n-en="Download my data">Descargar mis datos</button>
-        </div>
-
-        <div class="prof-card" style="border-color:rgba(239,68,68,.2)">
-          <div style="margin-bottom:12px">
-            <div style="font-family:var(--font-display);font-size:1rem;margin-bottom:4px;color:#f87171" data-i18n-es="Eliminar cuenta" data-i18n-en="Delete account">Eliminar cuenta</div>
-            <div style="font-size:.82rem;color:var(--text2);font-weight:300" data-i18n-es="Elimina permanentemente tu cuenta, proyectos, guiones y transcripciones. Se cancelará tu suscripción activa. No se puede deshacer." data-i18n-en="Permanently delete your account, all projects, scripts, and transcriptions. Your active subscription will be cancelled. This cannot be undone.">Elimina permanentemente tu cuenta, proyectos, guiones y transcripciones. Se cancelará tu suscripción activa. No se puede deshacer.</div>
-          </div>
-          <button class="btn-sm btn-3d btn-3d-danger" style="background:transparent;border:1px solid rgba(239,68,68,.3);color:#f87171;padding:8px 16px" onclick="openDeleteAccountModal()" data-i18n-es="Eliminar mi cuenta" data-i18n-en="Delete my account">Eliminar mi cuenta</button>
-        </div>
-      </div>
 
       <!-- Settings panel -->
       <div id="profPanelSettings" style="display:none">
@@ -9204,6 +9282,16 @@
             <div class="prof-section-tagline" data-i18n-es="Tu cuenta y preferencias." data-i18n-en="Your account and preferences.">Tu cuenta y preferencias.</div>
           </div>
         </div>
+
+        <!-- v0.14.39: tabs internos General / Equipo / Privacidad y datos -->
+        <div class="settings-tabs">
+          <button class="settings-tab on" data-tab="general" onclick="settingsSwitchTab('general')" data-i18n="settings.tab_general">General</button>
+          <button class="settings-tab" data-tab="team" id="settingsTabBtnTeam" style="display:none" onclick="settingsSwitchTab('team')" data-i18n="settings.tab_team">Equipo</button>
+          <button class="settings-tab" data-tab="privacy" onclick="settingsSwitchTab('privacy')" data-i18n="settings.tab_privacy">Privacidad y datos</button>
+        </div>
+
+        <!-- Tab: General (Idioma + Suscripción + Tema) -->
+        <div class="settings-tab-panel" id="settingsTabGeneral">
 
         <div class="settings-card">
           <div class="settings-card-head">
@@ -9285,165 +9373,39 @@
             <button type="button" class="theme-seg-opt" data-val="dark" onclick="setThemeBinary('dark', event)" data-i18n-aria-es="Oscuro" data-i18n-aria-en="Dark" aria-label="Dark">🌙</button>
           </div>
         </div>
-      </div>
+        </div><!-- /#settingsTabGeneral -->
 
-
-      <!-- v0.14.19: Hazlo tuyo como panel SPA nativo -->
-      <div id="profPanelAdapt" style="display:none">
-        <div class="adapt-inner fade-in" id="adaptCard">
-        
-            <!-- v0.14.9a: panel-back-btn-adapt eliminado. -->
-        
-            <!-- ROW 1: header (v0.14.32 limpio, sin split <em>, sin grad-txt) -->
-            <div class="adapt-header">
-              <h2 data-i18n="adapt.h2">Hazlo tuyo</h2>
-              <p style="margin-top:10px" data-i18n="adapt.p">Adapta tus guiones al estilo que quieras.</p>
+        <!-- v0.14.39: tab Equipo (movido desde #profPanelTeam) -->
+        <div class="settings-tab-panel" id="settingsTabTeam" style="display:none">
+          <div class="prof-section-head">
+            <div><div class="prof-section-title" data-i18n="team.title">Team members</div></div>
+            <div style="display:flex;gap:8px">
+              <button class="btn-3d btn-3d-primary" style="background:var(--brand);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openInviteModal()" data-i18n="team.invite">Invite member</button>
             </div>
-        
-            <!-- ROW 2: input + style grid -->
-            <div class="adapt-left">
-              <div style="font-size:.78rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px"
-                   data-i18n-es="Tu guión" data-i18n-en="Your script">Tu guión</div>
-              <textarea id="adaptInput" class="script-ta"
-                placeholder="Pega aquí el guión o la transcripción que quieres transformar…"
-                data-i18n-placeholder-es="Pega aquí el guión o la transcripción que quieres transformar…"
-                data-i18n-placeholder-en="Paste your script or transcription here to transform it…"></textarea>
-        
-              <input type="text" class="style-search" id="styleSearch" placeholder="Search styles..." style="display:none" oninput="renderStyleGrid()" />
-              <div class="style-grid">
-                <button class="style-pill" data-s="viral"
-                  onclick="selectStyle(this)">
-                  <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#1a1a2e"/><rect x="20" y="8" width="32" height="4" fill="#1a1a2e"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#1a1a2e"/><rect x="16" y="20" width="12" height="6" fill="#1a1a2e"/><rect x="44" y="20" width="12" height="6" fill="#1a1a2e"/><rect x="17" y="21" width="10" height="4" fill="#60a5fa"/><rect x="45" y="21" width="10" height="4" fill="#60a5fa"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="10" y="40" width="8" height="20" fill="#f97316"/><rect x="54" y="40" width="8" height="20" fill="#f97316"/><rect x="18" y="40" width="36" height="4" fill="#f97316"/><rect x="14" y="44" width="44" height="16" fill="#f97316"/><rect x="18" y="60" width="14" height="20" fill="#f97316"/><rect x="40" y="60" width="14" height="20" fill="#f97316"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
-                  <span class="sp-name">Viral</span>
-                  <span class="sp-hint" data-i18n="sh.viral">Hook + tensión + CTA brutal</span>
-                </button>
-                <button class="style-pill" data-s="divertido"
-                  onclick="selectStyle(this)">
-                  <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#f4a400"/><rect x="20" y="8" width="32" height="4" fill="#f4a400"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#92400e"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="22" y="28" width="4" height="4" fill="#fcd9a0"/><rect x="46" y="28" width="4" height="4" fill="#fcd9a0"/><rect x="24" y="32" width="24" height="6" fill="#f97316"/><rect x="26" y="36" width="20" height="2" fill="#fff"/><rect x="10" y="40" width="6" height="4" fill="#fcd9a0"/><rect x="56" y="40" width="6" height="4" fill="#fcd9a0"/><rect x="6" y="44" width="6" height="4" fill="#fcd9a0"/><rect x="60" y="44" width="6" height="4" fill="#fcd9a0"/><rect x="18" y="40" width="36" height="4" fill="#f4a400"/><rect x="14" y="44" width="44" height="16" fill="#f4a400"/><rect x="18" y="60" width="14" height="20" fill="#f4a400"/><rect x="40" y="60" width="14" height="20" fill="#f4a400"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
-                  <span class="sp-name" data-i18n="sn.divertido">Divertido</span>
-                  <span class="sp-hint" data-i18n="sh.divertido">Tono relajado, humor ligero</span>
-                </button>
-                <button class="style-pill" data-s="linkedin"
-                  onclick="selectStyle(this)">
-                  <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#1a1a2e"/><rect x="20" y="8" width="32" height="4" fill="#1a1a2e"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#1a1a2e"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="16" y="40" width="40" height="4" fill="#1e3a5f"/><rect x="10" y="40" width="8" height="24" fill="#fcd9a0"/><rect x="54" y="40" width="8" height="24" fill="#fcd9a0"/><rect x="18" y="44" width="36" height="16" fill="#1e3a5f"/><rect x="30" y="38" width="12" height="6" fill="#fff"/><rect x="32" y="36" width="8" height="2" fill="#e2e8f0"/><rect x="18" y="60" width="14" height="20" fill="#334155"/><rect x="40" y="60" width="14" height="20" fill="#334155"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
-                  <span class="sp-name">LinkedIn</span>
-                  <span class="sp-hint" data-i18n="sh.linkedin">Profesional, reflexivo, red</span>
-                </button>
-                <button class="style-pill" data-s="storytelling"
-                  onclick="selectStyle(this)">
-                  <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#7c3aed"/><rect x="20" y="8" width="32" height="4" fill="#7c3aed"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#4c1d95"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="10" y="40" width="8" height="20" fill="#7c3aed"/><rect x="54" y="40" width="8" height="20" fill="#7c3aed"/><rect x="18" y="40" width="36" height="4" fill="#7c3aed"/><rect x="14" y="44" width="44" height="16" fill="#7c3aed"/><rect x="54" y="32" width="14" height="18" fill="#fef3c7"/><rect x="54" y="32" width="2" height="18" fill="#d97706"/><rect x="54" y="32" width="14" height="2" fill="#d97706"/><rect x="66" y="32" width="2" height="18" fill="#d97706"/><rect x="54" y="48" width="14" height="2" fill="#d97706"/><rect x="58" y="36" width="8" height="2" fill="#94a3b8"/><rect x="58" y="40" width="10" height="2" fill="#94a3b8"/><rect x="58" y="44" width="6" height="2" fill="#94a3b8"/><rect x="18" y="60" width="14" height="20" fill="#7c3aed"/><rect x="40" y="60" width="14" height="20" fill="#7c3aed"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
-                  <span class="sp-name" data-i18n="sn.storytelling">Historia</span>
-                  <span class="sp-hint" data-i18n="sh.storytelling">Narrativa emocional, escenas</span>
-                </button>
-                <button class="style-pill" data-s="hooks"
-                  onclick="selectStyle(this)">
-                  <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#0369a1"/><rect x="20" y="8" width="32" height="4" fill="#0369a1"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#0c4a6e"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="10" y="40" width="8" height="20" fill="#0369a1"/><rect x="54" y="40" width="8" height="20" fill="#0369a1"/><rect x="18" y="40" width="36" height="4" fill="#0369a1"/><rect x="14" y="44" width="44" height="16" fill="#0369a1"/><rect x="56" y="20" width="2" height="44" fill="#92400e"/><rect x="58" y="18" width="12" height="2" fill="#92400e"/><rect x="68" y="18" width="2" height="14" fill="#64748b"/><rect x="64" y="30" width="6" height="2" fill="#64748b"/><rect x="66" y="32" width="2" height="4" fill="#22c55e"/><rect x="56" y="60" width="12" height="8" fill="#60a5fa"/><rect x="54" y="62" width="16" height="4" fill="#60a5fa"/><rect x="18" y="60" width="14" height="20" fill="#0369a1"/><rect x="40" y="60" width="14" height="20" fill="#0369a1"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
-                  <span class="sp-name">5 Hooks</span>
-                  <span class="sp-hint" data-i18n="sh.hooks">5 aperturas que atrapan</span>
-                </button>
-                <button class="style-pill" data-s="custom"
-                  onclick="selectStyle(this)">
-                  <span class="sp-emoji"><svg width="28" height="34" viewBox="0 0 72 88" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="24" y="4" width="24" height="4" fill="#0d9488"/><rect x="20" y="8" width="32" height="4" fill="#0d9488"/><rect x="16" y="12" width="40" height="28" fill="#fcd9a0"/><rect x="16" y="12" width="40" height="8" fill="#134e4a"/><rect x="26" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="42" y="24" width="4" height="4" fill="#1a1a2e"/><rect x="32" y="20" width="4" height="4" fill="#f97316"/><rect x="28" y="34" width="16" height="4" fill="#f97316"/><rect x="10" y="40" width="8" height="20" fill="#0d9488"/><rect x="54" y="40" width="8" height="20" fill="#0d9488"/><rect x="18" y="40" width="36" height="4" fill="#0d9488"/><rect x="14" y="44" width="44" height="16" fill="#0d9488"/><rect x="4" y="34" width="12" height="6" fill="#94a3b8"/><rect x="2" y="36" width="4" height="4" fill="#94a3b8"/><rect x="6" y="30" width="8" height="6" fill="#cbd5e1"/><rect x="8" y="28" width="4" height="2" fill="#f97316"/><rect x="18" y="60" width="14" height="20" fill="#0d9488"/><rect x="40" y="60" width="14" height="20" fill="#0d9488"/><rect x="14" y="76" width="18" height="4" fill="#1a1a2e"/><rect x="40" y="76" width="18" height="4" fill="#1a1a2e"/></svg></span>
-                  <span class="sp-name">Custom</span>
-                  <span class="sp-hint" data-i18n="sh.custom">Tú decides las instrucciones</span>
-                </button>
-              </div>
-              <div class="style-dots" id="styleDots"></div>
-        
-              <div class="custom-row" id="customRow">
-                <input type="text" id="customPrompt" class="ph-no-capture" data-clarity-mask="true" placeholder="Ej: Escríbelo como una carta de ventas…" />
-                <button class="btn-grad" onclick="runAdapt()">→</button>
-              </div>
-        
-              <!-- Mobile result (shown inline after transform on mobile) -->
-              <div id="mobileAdaptResult" class="mobile-adapt-result ph-no-capture" data-clarity-mask="true" style="display:none">
-                <div class="mobile-adapt-result-head">
-                  <span class="mobile-adapt-result-label">Result</span>
-                  <button class="rs-card-copy" onclick="copyMobileResult()">
-                    <span class="rs-tip">Copy</span>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                  </button>
-                </div>
-                <div id="mobileAdaptResultTxt" class="mobile-adapt-result-body"></div>
-              </div>
-        
-              <!-- result kept in DOM for adaptFromView compatibility, rendered in right panel -->
-              <div id="adaptSpinner" style="display:none"></div>
-              <div id="adaptRes" style="display:none">
-                <div id="adaptResTxt"></div>
-                <div id="adaptActs"></div>
-              </div>
-        
-              <div id="styleDescLine" style="display:none;font-size:.82rem;color:var(--text3);margin-top:8px;line-height:1.5;font-weight:300"></div>
-              <button class="adapt-run-btn" id="btnRunAdapt" onclick="runAdapt()" style="display:none">
-                Transform
-              </button>
-            </div>
-        
-            <!-- ROW 1 right: preview label -->
-            <div class="preview-label-wrap">
-              <div class="preview-label" data-i18n="preview.label">This is how your script would look →</div>
-            </div>
-        
-            <!-- ROW 2 right: live preview -->
-            <div class="adapt-right">
-              <div class="preview-card" id="previewCard" data-active="viral">
-                <div class="preview-top-bar"></div>
-        
-                <!-- Loading spinner overlay inside card -->
-                <div class="preview-card-spinner" id="previewSpinner">
-                  <div class="sq-loader">
-                    <div class="sq-el sq-el1"></div>
-                    <div class="sq-el sq-el2"></div>
-                  </div>
-                  <p id="previewSpinnerMsg">Transformando…</p>
-                </div>
-        
-                <div class="preview-header">
-                  <span style="font-size:.8rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px" id="previewCardLabel">Ejemplo</span>
-                  <span class="pc-badge" id="previewBadge" data-s="viral">🔥 Viral</span>
-                </div>
-                <div class="preview-content" id="previewContent">
-                  <!-- Actual AI result (shown after adaptation) -->
-                  <div class="preview-result-text" id="previewResultText"></div>
-        
-                  <div class="preview-slide on" data-style="viral">
-                    <div class="preview-text" data-i18n="ex.viral"></div>
-                  </div>
-                  <div class="preview-slide" data-style="divertido">
-                    <div class="preview-text" data-i18n="ex.divertido"></div>
-                  </div>
-                  <div class="preview-slide" data-style="linkedin">
-                    <div class="preview-text" data-i18n="ex.linkedin"></div>
-                  </div>
-                  <div class="preview-slide" data-style="storytelling">
-                    <div class="preview-text" data-i18n="ex.storytelling"></div>
-                  </div>
-                  <div class="preview-slide" data-style="hooks">
-                    <div class="preview-text" data-i18n="ex.hooks"></div>
-                  </div>
-                  <div class="preview-slide" data-style="custom">
-                    <div class="preview-text" data-i18n="ex.custom"></div>
-                  </div>
-        
-                </div>
-                <div class="preview-footer" id="previewFooter">
-                  <div class="pf-dot"></div>
-                  <span id="previewFooterTxt">Ejemplo · El tuyo será único</span>
-                  <button class="pf-copy" id="pfRegenBtn" style="display:none" onclick="regenAdapt()" data-i18n="adapt.regen">Regenerar</button>
-                  <button class="pf-copy" id="pfRegenHookBtn" style="display:none" onclick="regenHookOnly()" data-i18n="adapt.regen_hook">Nuevo hook</button>
-                  <button class="pf-copy" id="pfCopyBtn" style="display:none" onclick="copyPreviewResult()">Copiar</button>
-                  <button class="pf-copy" id="pfSaveBtn" style="display:none" onclick="saveScript()">💾 Guardar</button>
-                  <button class="pf-copy" id="pfTpBtn" style="display:none" onclick="tpOpenFromAdapt()">Teleprompter</button>
-                </div>
-              </div>
-              <button class="adapt-run-btn adapt-run-desktop" id="btnRunAdaptDesktop" onclick="runAdapt()" style="display:none">
-                Transform
-              </button>
-            </div>
-        
           </div>
+          <div id="profTeamList"></div>
+        </div>
+
+        <!-- v0.14.39: tab Privacidad y datos (movido desde #profPanelPrivacy) -->
+        <div class="settings-tab-panel" id="settingsTabPrivacy" style="display:none">
+          <div class="prof-card" style="margin-bottom:12px">
+            <div style="margin-bottom:12px">
+              <div style="font-family:var(--font-display);font-size:1rem;margin-bottom:4px" data-i18n-es="Exporta tus datos" data-i18n-en="Export your data">Exporta tus datos</div>
+              <div style="font-size:.82rem;color:var(--text2);font-weight:300" data-i18n-es="Descarga todos tus datos en JSON — transcripciones, guiones, proyectos, perfil." data-i18n-en="Download all your data as a JSON file — transcriptions, scripts, projects, profile.">Descarga todos tus datos en JSON — transcripciones, guiones, proyectos, perfil.</div>
+            </div>
+            <button class="btn-sm btn-3d btn-3d-primary" style="background:var(--brand);color:#fff;border:none;padding:8px 16px" onclick="exportMyData()" data-i18n-es="Descargar mis datos" data-i18n-en="Download my data">Descargar mis datos</button>
+          </div>
+
+          <div class="prof-card" style="border-color:rgba(239,68,68,.2)">
+            <div style="margin-bottom:12px">
+              <div style="font-family:var(--font-display);font-size:1rem;margin-bottom:4px;color:#f87171" data-i18n-es="Eliminar cuenta" data-i18n-en="Delete account">Eliminar cuenta</div>
+              <div style="font-size:.82rem;color:var(--text2);font-weight:300" data-i18n-es="Elimina permanentemente tu cuenta, proyectos, guiones y transcripciones. Se cancelará tu suscripción activa. No se puede deshacer." data-i18n-en="Permanently delete your account, all projects, scripts, and transcriptions. Your active subscription will be cancelled. This cannot be undone.">Elimina permanentemente tu cuenta, proyectos, guiones y transcripciones. Se cancelará tu suscripción activa. No se puede deshacer.</div>
+            </div>
+            <button class="btn-sm btn-3d btn-3d-danger" style="background:transparent;border:1px solid rgba(239,68,68,.3);color:#f87171;padding:8px 16px" onclick="openDeleteAccountModal()" data-i18n-es="Eliminar mi cuenta" data-i18n-en="Delete my account">Eliminar mi cuenta</button>
+          </div>
+        </div>
       </div>
+
 
     </div><!-- /.prof-main -->
   </div><!-- /.prof-layout -->
@@ -9477,18 +9439,12 @@
       <button class="prof-more-close" onclick="closeProfMoreSheet()" aria-label="Cerrar">✕</button>
     </div>
     <div class="prof-more-body">
+      <!-- v0.14.39: sheet plana (Métricas, Asistentes, Teleprompter, Configuración).
+           Proyectos/Equipo/Privacidad eliminados (pasaron a tabs internos). -->
       <div class="prof-more-section">
-        <div class="prof-more-section-hdr" data-i18n-es="MI TRABAJO" data-i18n-en="MY WORK">MI TRABAJO</div>
-        <button onclick="closeProfMoreSheet();profTab('scripts')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="10" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.saved_scripts">Guiones</span></button>
-        <button id="pmoreNavProjects" onclick="closeProfMoreSheet();profTab('projects')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="3" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="1" width="6" height="3" fill="currentColor"/></svg><span data-i18n="prof.projects">Proyectos</span></button>
         <button id="pmoreNavMetrics" onclick="closeProfMoreSheet();profTab('metrics')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="10" width="3" height="5" fill="currentColor" opacity=".4"/><rect x="5" y="7" width="3" height="8" fill="currentColor" opacity=".6"/><rect x="9" y="4" width="3" height="11" fill="currentColor" opacity=".8"/><rect x="13" y="1" width="3" height="14" fill="currentColor"/></svg><span data-i18n="prof.metrics">Métricas</span></button>
-      </div>
-      <div class="prof-more-section">
-        <div class="prof-more-section-hdr" data-i18n-es="CONFIGURACIÓN" data-i18n-en="SETTINGS">CONFIGURACIÓN</div>
         <button id="pmoreNavAssistants" style="display:none" onclick="closeProfMoreSheet();profTab('assistants')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="5" y="1" width="6" height="6" rx="3" fill="currentColor"/><rect x="3" y="9" width="10" height="6" rx="2" fill="currentColor" opacity=".6"/><rect x="6" y="3" width="1.5" height="1.5" fill="#0a0b0f"/><rect x="9" y="3" width="1.5" height="1.5" fill="#0a0b0f"/></svg><span data-i18n="prof.assistants">Asistentes</span></button>
-        <button id="pmoreNavTeam" style="display:none" onclick="closeProfMoreSheet();profTab('team')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><circle cx="5" cy="4" r="2.5" fill="currentColor"/><circle cx="11" cy="4" r="2.5" fill="currentColor" opacity=".6"/><rect x="1" y="8" width="8" height="5" rx="2" fill="currentColor"/><rect x="7" y="8" width="8" height="5" rx="2" fill="currentColor" opacity=".5"/></svg><span data-i18n="prof.team">Equipo</span></button>
         <button id="pmoreNavTeleprompter" style="display:none" onclick="closeProfMoreSheet();openTeleprompterPicker()"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="1" width="14" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="4" width="8" height="1.5" fill="currentColor" opacity=".5"/><rect x="4" y="7" width="6" height="1.5" fill="currentColor" opacity=".3"/><rect x="5" y="13" width="6" height="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.teleprompter">Teleprompter</span></button>
-        <button onclick="closeProfMoreSheet();profTab('privacy')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="3" y="6" width="10" height="9" rx="1" fill="currentColor" opacity=".6"/><rect x="5" y="1" width="6" height="7" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="7" y="9" width="2" height="3" fill="#0a0b0f"/></svg><span data-i18n="prof.privacy">Privacidad y datos</span></button>
         <button onclick="closeProfMoreSheet();profTab('settings')"><svg width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges"><circle cx="8" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1 V3 M8 13 V15 M1 8 H3 M13 8 H15 M3 3 L4.5 4.5 M11.5 11.5 L13 13 M3 13 L4.5 11.5 M11.5 4.5 L13 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span data-i18n="prof.settings">Configuración</span></button>
       </div>
     </div>
@@ -9908,6 +9864,14 @@ const LANGS = {
     "team.remove_confirm_body": "Perderá acceso al equipo.",
     "sub.cancel_confirm_title": "Cancelar suscripción",
     "sub.cancel_confirm_body": "Mantendrás acceso hasta fin del período actual. Después perderás las features premium.",
+    // v0.14.39: tabs nuevas Scripts/Settings + chips proyectos.
+    "scripts.tab_list": "Tus guiones",
+    "scripts.tab_create": "Crear guion",
+    "scripts.projects_filter_all": "Todos",
+    "scripts.projects_filter_new": "+ Nuevo proyecto",
+    "settings.tab_general": "General",
+    "settings.tab_team": "Equipo",
+    "settings.tab_privacy": "Privacidad y datos",
     "ideas.regenerate": "Regenerar",
     "ideas.to_script": "Crear guión",
     "ideas.fab_tooltip": "Apunta una idea",
@@ -10326,6 +10290,14 @@ const LANGS = {
     "team.remove_confirm_body": "They will lose access to the team.",
     "sub.cancel_confirm_title": "Cancel subscription",
     "sub.cancel_confirm_body": "You'll keep access until the end of the current period. After that, premium features will be lost.",
+    // v0.14.39: new keys for Scripts/Settings tabs + project chips.
+    "scripts.tab_list": "Your scripts",
+    "scripts.tab_create": "Create script",
+    "scripts.projects_filter_all": "All",
+    "scripts.projects_filter_new": "+ New project",
+    "settings.tab_general": "General",
+    "settings.tab_team": "Team",
+    "settings.tab_privacy": "Privacy & data",
     "ideas.regenerate": "Regenerate",
     "ideas.to_script": "Create script",
     "ideas.fab_tooltip": "Capture an idea",
@@ -13104,7 +13076,9 @@ async function loadOverviewMiniGrid() {
 function ovOpenTeam() {
   try { window.track && window.track.workspaceTabClicked({ tab: "team" }); } catch(e){}
   if (st.plan === "agency") {
-    profTab("team");
+    // v0.14.39: equipo ahora vive como tab dentro de Settings.
+    profTab("settings");
+    try { settingsSwitchTab("team"); } catch(e){}
     return;
   }
   // Plan no-agency: cierra el drawer y manda a pricing del landing
@@ -13114,6 +13088,16 @@ function ovOpenTeam() {
 
 function profTab(tab, pushHistory) {
   if (pushHistory === undefined) pushHistory = true;
+
+  // v0.14.39: aliasing de slugs obsoletos (paneles eliminados → host + tab interno).
+  // v0.14.42 deuda: limpiar PROFILE_SECTIONS backend tras transition period.
+  let _pendingScriptsTab = null;
+  let _pendingSettingsTab = null;
+  if (tab === "adapt")    { tab = "scripts";  _pendingScriptsTab  = "create"; }
+  if (tab === "projects") { tab = "scripts";  _pendingScriptsTab  = "list"; }
+  if (tab === "team")     { tab = "settings"; _pendingSettingsTab = "team"; }
+  if (tab === "privacy")  { tab = "settings"; _pendingSettingsTab = "privacy"; }
+
   try {
     if (tab && tab !== "overview" && st.user) {
       const feat = tab === "transc" ? "transcriptions" : tab;
@@ -13128,14 +13112,10 @@ function profTab(tab, pushHistory) {
     overview: "profPanelOverview",
     scripts: "profPanelScripts",
     transc: "profPanelTransc",
-    projects: "profPanelProjects",
     assistants: "profPanelAssistants",
     metrics: "profPanelMetrics",
     ideas: "profPanelIdeas",
-    team: "profPanelTeam",
-    privacy: "profPanelPrivacy",
     settings: "profPanelSettings",
-    adapt: "profPanelAdapt",
   };
   // Hide all panels
   Object.values(panels).forEach(id => {
@@ -13179,21 +13159,34 @@ function profTab(tab, pushHistory) {
   }
 
   // Load data for specific tabs
-  if (tab === "scripts") { readScrProjectFilterFromUrl(); renderProfScripts(); }
-  if (tab === "settings") { highlightActiveLang(); applyTheme(themePref); loadSubscriptionInfo(); }
+  if (tab === "scripts") {
+    readScrProjectFilterFromUrl();
+    renderProfScripts();
+    // v0.14.39: render chips de proyectos al entrar al panel.
+    if (typeof renderProjChips === "function") renderProjChips();
+    if (typeof loadProjects === "function") loadProjects().then(() => renderProjChips());
+    // v0.14.39: activar tab interno (list/create) si viene del aliasing o URL.
+    const _scrTab = _pendingScriptsTab || _readScriptsTabFromUrl();
+    if (typeof scriptsSwitchTab === "function") scriptsSwitchTab(_scrTab || "list", { skipHistory: true });
+  }
+  if (tab === "settings") {
+    highlightActiveLang(); applyTheme(themePref); loadSubscriptionInfo();
+    // v0.14.39: activar tab interno (general/team/privacy) si viene del aliasing o URL.
+    const _setTab = _pendingSettingsTab || _readSettingsTabFromUrl();
+    if (typeof settingsSwitchTab === "function") settingsSwitchTab(_setTab || "general", { skipHistory: true });
+  }
   if (tab === "transc") renderProfTransc();
-  if (tab === "projects") renderProfProjects();
   if (tab === "assistants") renderProfAssistants();
   if (tab === "metrics") loadMetricsSummary();
   if (tab === "ideas") loadIdeas();
-  if (tab === "team") loadTeamMembers();
 
   // Update bottom bar active state
   document.querySelectorAll(".prof-bottom-tab").forEach(btn => btn.classList.remove("on"));
   const bottomBtn = document.querySelector(`.prof-bottom-tab[onclick="profTabMobile('${tab}')"]`);
   if (bottomBtn) bottomBtn.classList.add("on");
   // v0.14.31.d: tabs que viven en el sheet "Más" → iluminar el botón "Más" como feedback.
-  const MORE_TABS = ["scripts","projects","assistants","metrics","team","privacy","settings"];
+  // v0.14.39: limpiado (proyectos, team, privacy removidos; viven en tabs internos).
+  const MORE_TABS = ["assistants","metrics","settings"];
   if (MORE_TABS.includes(tab)) {
     const moreBtn = document.querySelector('.prof-bottom-tab[onclick="openProfMoreSheet()"]');
     if (moreBtn) moreBtn.classList.add("on");
@@ -13212,6 +13205,105 @@ function profTab(tab, pushHistory) {
 }
 
 function profTabMobile(tab) { profTab(tab, true); }
+
+// v0.14.39: tabs internos Scripts (list/create) + Settings (general/team/privacy).
+function _readScriptsTabFromUrl() {
+  try {
+    const params = new URLSearchParams(location.search);
+    const t = params.get("tab");
+    return (t === "create" || t === "list") ? t : null;
+  } catch(e) { return null; }
+}
+function _readSettingsTabFromUrl() {
+  try {
+    const params = new URLSearchParams(location.search);
+    const t = params.get("tab");
+    return (t === "team" || t === "privacy" || t === "general") ? t : null;
+  } catch(e) { return null; }
+}
+
+function scriptsSwitchTab(tab, opts) {
+  opts = opts || {};
+  const valid = (tab === "list" || tab === "create") ? tab : "list";
+  // Toggle panels
+  const list = document.getElementById("scriptsTabList");
+  const create = document.getElementById("scriptsTabCreate");
+  if (list)   list.style.display   = (valid === "list")   ? "" : "none";
+  if (create) create.style.display = (valid === "create") ? "" : "none";
+  // Toggle tab buttons
+  document.querySelectorAll(".scripts-tab").forEach(btn => {
+    btn.classList.toggle("on", btn.dataset.tab === valid);
+  });
+  // Sync URL ?tab=create (omit cuando es default list)
+  if (!opts.skipHistory) {
+    try {
+      const u = new URL(location.href);
+      if (valid === "create") u.searchParams.set("tab", "create");
+      else u.searchParams.delete("tab");
+      history.replaceState({ profTab: "scripts", scriptsTab: valid }, "", u.pathname + (u.search ? u.search : ""));
+    } catch(e){}
+  }
+}
+
+function settingsSwitchTab(tab, opts) {
+  opts = opts || {};
+  const valid = (tab === "team" || tab === "privacy" || tab === "general") ? tab : "general";
+  const gen = document.getElementById("settingsTabGeneral");
+  const team = document.getElementById("settingsTabTeam");
+  const priv = document.getElementById("settingsTabPrivacy");
+  if (gen)  gen.style.display  = (valid === "general") ? "" : "none";
+  if (team) team.style.display = (valid === "team")    ? "" : "none";
+  if (priv) priv.style.display = (valid === "privacy") ? "" : "none";
+  document.querySelectorAll(".settings-tab").forEach(btn => {
+    btn.classList.toggle("on", btn.dataset.tab === valid);
+  });
+  // Trigger data load if needed
+  if (valid === "team" && typeof loadTeamMembers === "function") loadTeamMembers();
+  // Sync URL
+  if (!opts.skipHistory) {
+    try {
+      const u = new URL(location.href);
+      if (valid === "general") u.searchParams.delete("tab");
+      else u.searchParams.set("tab", valid);
+      history.replaceState({ profTab: "settings", settingsTab: valid }, "", u.pathname + (u.search ? u.search : ""));
+    } catch(e){}
+  }
+}
+
+// v0.14.39: chips de proyectos como filtro dentro de Scripts > Tus guiones.
+function renderProjChips() {
+  const host = document.getElementById("scriptsProjFilter");
+  if (!host) return;
+  const cache = (typeof projectsCache !== "undefined" && projectsCache) ? projectsCache : [];
+  const activeId = (typeof _scrFilterProjectId !== "undefined") ? _scrFilterProjectId : null;
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const allLbl = (typeof t === "function") ? t("scripts.projects_filter_all") : (lang === "es" ? "Todos" : "All");
+  const newLbl = (typeof t === "function") ? t("scripts.projects_filter_new") : (lang === "es" ? "+ Nuevo proyecto" : "+ New project");
+  let html = `<button type="button" class="proj-chip${!activeId ? " on" : ""}" onclick="setScrProjectFilter(null)">${allLbl}</button>`;
+  cache.forEach(p => {
+    const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    const on = activeId === p.id ? " on" : "";
+    html += `<button type="button" class="proj-chip${on}" onclick="setScrProjectFilter('${esc(p.id)}')">${esc(p.name)}</button>`;
+  });
+  html += `<button type="button" class="proj-chip proj-chip-new" onclick="openProjectEditor(null)">${newLbl}</button>`;
+  host.innerHTML = html;
+}
+function setScrProjectFilter(projectId) {
+  // v0.14.39: helper para click en chip. Reusa filterScriptsByProject() existente.
+  if (typeof _scrFilterProjectId !== "undefined") {
+    _scrFilterProjectId = projectId || null;
+  }
+  // Re-render lista y chips
+  if (typeof renderProfScripts === "function") renderProfScripts();
+  renderProjChips();
+  // Sync URL
+  try {
+    const u = new URL(location.href);
+    if (projectId) u.searchParams.set("project", projectId);
+    else u.searchParams.delete("project");
+    history.replaceState({}, "", u.pathname + (u.search ? u.search : ""));
+  } catch(e){}
+}
 
 
 function transcToDashboard() {
@@ -14327,7 +14419,13 @@ function projCount(p, key) {
 // v0.14.32: renderProjCounter eliminado (projCounterNum vivía solo en el hero decorativo).
 
 function renderProfProjects() {
+  // v0.14.39: panel Projects eliminado (vive como chip filter en Scripts). Guard no-op.
+  // Si el grid no existe, refresh los chips y salir.
   const grid = document.getElementById("profProjGrid");
+  if (!grid) {
+    if (typeof renderProjChips === "function") renderProjChips();
+    return;
+  }
   const empty = document.getElementById("profProjEmpty");
 
   if (!projectsCache.length) {
