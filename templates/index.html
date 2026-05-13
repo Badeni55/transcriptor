@@ -11762,26 +11762,23 @@ function renderProfileHub() {
   _setIf("profStatScripts", scriptsCache.length);
   _setIf("profStatUsos", Math.floor(st.credits / 18));
 
-  // Show nav items — all features available to all plans
+  // Show nav items — all features available to all plans.
+  // v0.14.39.a: profNavProjects/Team/Privacy fueron eliminados del DOM en v0.14.39
+  // (consolidados como tabs dentro de Scripts/Settings). Toda referencia debe usar
+  // _setIfNav para no romper la función al toparse con un id huérfano.
   const hasPaidPlan = ["pro","creator","agency"].includes(plan);
   const isAgency = plan === "agency";
-  document.getElementById("profNavProjects").style.display = "";
-  document.getElementById("profNavAssistants").style.display = hasPaidPlan ? "" : "none";
-  document.getElementById("profNavMetrics").style.display = "";
-  document.getElementById("profNavIdeas").style.display = "";
-  document.getElementById("profNavTeam").style.display = isAgency ? "" : "none";
-  document.getElementById("profNavPrivacy").style.display = "";
-  // v0.14.31.d: gating de los items del sheet "Más" (mobile). Mismos gates
-  // que la sidebar desktop. Projects/Metrics/Scripts/Privacy/Settings: siempre.
-  const _setIfMore = (id, show) => {
+  const _setIfNav = (id, show) => {
     const el = document.getElementById(id);
     if (el) el.style.display = show ? "" : "none";
   };
-  _setIfMore("pmoreNavProjects", true);
-  _setIfMore("pmoreNavMetrics", true);
-  _setIfMore("pmoreNavAssistants", hasPaidPlan);
-  _setIfMore("pmoreNavTeam", isAgency);
-  _setIfMore("pmoreNavTeleprompter", hasPaidPlan);
+  _setIfNav("profNavIdeas", true);
+  _setIfNav("profNavMetrics", true);
+  _setIfNav("profNavAssistants", hasPaidPlan);
+  // v0.14.31.d: gating de los items del sheet "Más" (mobile).
+  _setIfNav("pmoreNavMetrics", true);
+  _setIfNav("pmoreNavAssistants", hasPaidPlan);
+  _setIfNav("pmoreNavTeleprompter", hasPaidPlan);
   document.querySelectorAll(".prof-quick-paid").forEach(el => el.style.display = "");
 
   // Manage sub button in sidebar
