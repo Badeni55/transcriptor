@@ -4160,6 +4160,15 @@
       margin-top: 6px;
       font-weight: 400;
     }
+    /* v0.14.41: mascota Hooks junto al título de panel (Scripts, Ideas, ...). */
+    .prof-section-head-left {
+      display: flex; align-items: center; gap: 14px;
+      min-width: 0;
+    }
+    .prof-section-mascot {
+      width: 32px; height: 32px;
+      flex-shrink: 0;
+    }
 
     /* Enhanced empty states */
     .prof-empty {
@@ -5468,11 +5477,20 @@
 
     /* Empty state */
     .ideas-empty-editorial {
-      text-align: left;
+      /* v0.14.41: centrado para que mascota+texto formen unidad visual. */
+      text-align: center;
       padding: 48px 28px;
       border: 1px dashed rgba(255, 107, 61, 0.18);
       border-radius: 18px;
       background: rgba(255, 107, 61, 0.03);
+    }
+    /* v0.14.41: mascota Hooks 80×80 en empty state Ideas. */
+    .ideas-empty-mascot {
+      width: 80px; height: 80px;
+      image-rendering: pixelated;
+      margin: 0 auto 16px;
+      display: block;
+      filter: drop-shadow(0 0 18px rgba(255, 107, 61, 0.22));
     }
     .ideas-empty-editorial h3 {
       font-family: var(--font-editorial);
@@ -5488,6 +5506,7 @@
       font-size: 14px; line-height: 1.55;
       color: var(--ink-muted);
       max-width: 48ch;
+      margin: 0 auto;
     }
 
     /* Sidebar: Ideas-active accent override ─────────────── */
@@ -6804,7 +6823,8 @@
       background: rgba(239, 106, 41, 0.025);
     }
     .scr-empty img {
-      width: 120px; height: 120px;
+      /* v0.14.41: mascota reducida 120 → 80 para coherencia con Ideas empty. */
+      width: 80px; height: 80px;
       image-rendering: pixelated;
       margin: 0 auto 18px;
       display: block;
@@ -6825,6 +6845,23 @@
       max-width: 52ch;
       margin: 0 auto;
     }
+    /* v0.14.41: CTA grande dentro del empty state (solo si no hay filtro activo). */
+    .scr-empty-cta {
+      display: inline-block;
+      background: var(--brand-cta);
+      color: #fff;
+      border: 0;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: .95rem;
+      font-weight: 700;
+      font-family: var(--font-body);
+      cursor: pointer;
+      margin-top: 18px;
+      transition: background .15s, transform .12s;
+    }
+    .scr-empty-cta:hover { background: #a93808; }
+    .scr-empty-cta:active { transform: scale(.98); }
 
     /* Sidebar accent */
     .prof-nav-item.on.on-scripts {
@@ -9045,11 +9082,14 @@
       <!-- Scripts panel -->
       <div id="profPanelScripts" style="display:none">
 
-        <!-- v0.14.32: header limpio. v0.14.33.a: tagline. -->
+        <!-- v0.14.41: mascota Hooks 32px junto al header. -->
         <div class="prof-section-head">
-          <div>
-            <div class="prof-section-title" data-i18n-es="Guiones" data-i18n-en="Scripts">Guiones</div>
-            <div class="prof-section-tagline" data-i18n-es="Tus guiones guardados." data-i18n-en="Your saved scripts.">Tus guiones guardados.</div>
+          <div class="prof-section-head-left">
+            <img class="prof-section-mascot" src="{{ url_for('static', filename='img/hooks/hooks-scripts.svg') }}" alt="" aria-hidden="true">
+            <div>
+              <div class="prof-section-title" data-i18n-es="Guiones" data-i18n-en="Scripts">Guiones</div>
+              <div class="prof-section-tagline" data-i18n-es="Tus guiones guardados." data-i18n-en="Your saved scripts.">Tus guiones guardados.</div>
+            </div>
           </div>
         </div>
 
@@ -9415,11 +9455,14 @@
       <!-- Ideas panel -->
       <div id="profPanelIdeas" style="display:none">
 
-        <!-- v0.14.32: header limpio. v0.14.33.a: tagline. -->
+        <!-- v0.14.41: mascota Hooks 32px junto al header. -->
         <div class="prof-section-head">
-          <div>
-            <div class="prof-section-title" data-i18n-es="Ideas" data-i18n-en="Ideas">Ideas</div>
-            <div class="prof-section-tagline" data-i18n-es="Captura ideas sueltas y conviértelas en guiones." data-i18n-en="Capture loose ideas and turn them into scripts.">Captura ideas sueltas y conviértelas en guiones.</div>
+          <div class="prof-section-head-left">
+            <img class="prof-section-mascot" src="{{ url_for('static', filename='img/hooks/hooks-ideas.svg') }}" alt="" aria-hidden="true">
+            <div>
+              <div class="prof-section-title" data-i18n-es="Ideas" data-i18n-en="Ideas">Ideas</div>
+              <div class="prof-section-tagline" data-i18n-es="Captura ideas sueltas y conviértelas en guiones." data-i18n-en="Capture loose ideas and turn them into scripts.">Captura ideas sueltas y conviértelas en guiones.</div>
+            </div>
           </div>
         </div>
 
@@ -14247,17 +14290,22 @@ function renderProfScripts() {
   const lang = (document.documentElement.lang || "es").toLowerCase();
 
   if (!items.length) {
-    const title = _scrFilterProjectId
-      ? (lang === "en" ? "No scripts in this project yet." : "Todavía no hay guiones en este proyecto.")
-      : (lang === "en" ? "You haven't saved any scripts yet." : "Todavía no has guardado ningún guión.");
-    const sub = _scrFilterProjectId
-      ? (lang === "en" ? "Save a script to this project from the Hazlo tuyo flow." : "Guarda un guión en este proyecto desde Hazlo tuyo.")
-      : (lang === "en" ? "When you transform a transcription with Hazlo tuyo or save a script, it will appear here." : "Cuando transformes una transcripción con Hazlo tuyo o guardes un guión, aparecerá aquí.");
+    // v0.14.41: microcopy más conversacional + CTA "Crear guion" cuando no hay filtro.
+    const filtered = !!_scrFilterProjectId;
+    const title = filtered
+      ? (lang === "en" ? "No scripts in this project yet" : "Sin guiones en este proyecto")
+      : (lang === "en" ? "Your archive is empty" : "Tu archivo está vacío");
+    const sub = filtered
+      ? (lang === "en" ? "Assign existing scripts from each script's “…” menu." : "Asigna guiones existentes desde el menú “…” de cada guion.")
+      : (lang === "en" ? "Create your first script and it'll show up here." : "Crea tu primer guion y aparecerá aquí.");
+    const ctaLbl = lang === "en" ? "Create script →" : "Crear guion →";
+    const cta = filtered ? "" : `<button class="scr-empty-cta" onclick="scriptsSwitchTab('create')">${ctaLbl}</button>`;
     el.innerHTML = `
       <div class="scr-empty">
         <img src="/static/img/hooks/hooks-scripts.svg" alt="" aria-hidden="true" />
         <h3>${title}</h3>
         <p>${sub}</p>
+        ${cta}
       </div>`;
     return;
   }
@@ -15426,8 +15474,10 @@ function renderIdeas() {
     const emptyBody = lang === "en"
       ? "Write your first idea above. Hooks will turn it into a grab-and-go script draft."
       : "Escribe tu primera idea arriba. Hooks la convierte en un borrador listo para grabar.";
+    // v0.14.41: mascota Hooks 80×80 añadida (la input-card de arriba es el CTA implícito).
     el.innerHTML = `
       <div class="ideas-empty-editorial">
+        <img class="ideas-empty-mascot" src="/static/img/hooks/hooks-ideas.svg" alt="" aria-hidden="true" />
         <h3>${emptyTitle}</h3>
         <p>${emptyBody}</p>
       </div>`;
