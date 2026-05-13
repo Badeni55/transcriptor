@@ -3536,6 +3536,133 @@
       .dash-idea-cta { width: 100%; text-align: center; }
     }
 
+    /* ── v0.14.44 — Onboarding gamificado en Dashboard ─────────
+       Card debajo del hero F1. Visible solo si scripts.total === 0. */
+    .ob-card {
+      background: linear-gradient(180deg, var(--surf) 0%, var(--surf2) 100%);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--brand);
+      border-radius: 16px;
+      padding: var(--space-xl);
+      margin-top: var(--space-lg);
+      display: flex; flex-direction: column;
+      gap: var(--space-lg);
+    }
+    .ob-header { display: flex; flex-direction: column; gap: var(--space-sm); }
+    .ob-title-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .ob-title {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      color: var(--text);
+      line-height: 1.2;
+      letter-spacing: -.015em;
+    }
+    .ob-progress-count {
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--brand);
+      background: rgba(249,115,22,.1);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+    .ob-sub {
+      font-size: .92rem;
+      color: var(--text2);
+      line-height: 1.4;
+    }
+    .ob-progress-bar {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: var(--space-sm);
+    }
+    .ob-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--brand) 0%, #fbbf24 100%);
+      border-radius: 3px;
+      transition: width .6s ease-out;
+    }
+    .ob-steps { display: flex; flex-direction: column; gap: var(--space-md); }
+    .ob-step {
+      display: flex; align-items: center;
+      gap: var(--space-md);
+      padding: var(--space-md);
+      background: var(--surf);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      transition: opacity .15s, border-color .15s;
+    }
+    .ob-step-icon {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--text3);
+      flex-shrink: 0;
+      position: relative;
+    }
+    .ob-step--active .ob-step-icon {
+      border-color: var(--brand);
+      background: rgba(249,115,22,.08);
+    }
+    .ob-step--done .ob-step-icon {
+      border-color: #22c55e;
+      background: #22c55e;
+    }
+    .ob-step--done .ob-step-icon::after {
+      content: "";
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -55%) rotate(45deg);
+      width: 7px; height: 12px;
+      border-right: 2.5px solid #fff;
+      border-bottom: 2.5px solid #fff;
+    }
+    .ob-step-body { flex: 1; min-width: 0; }
+    .ob-step-title {
+      font-size: .95rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .ob-step-sub {
+      font-size: .82rem;
+      color: var(--text2);
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+    .ob-step--future { opacity: .55; }
+    .ob-step--future .ob-step-title { color: var(--text3); }
+    .ob-step--active { border-left: 3px solid var(--brand); }
+    .ob-step--done .ob-step-title {
+      color: var(--text2);
+      text-decoration: line-through;
+      text-decoration-color: rgba(255,255,255,.2);
+    }
+    .ob-step-btn {
+      background: var(--brand-cta);
+      color: #fff;
+      border: 0;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+      font-family: var(--font-body);
+      transition: background .15s, transform .12s;
+    }
+    .ob-step-btn:hover { background: #a93808; }
+    .ob-step-btn:active { transform: scale(.98); }
+    .ob-step--future .ob-step-btn,
+    .ob-step--done .ob-step-btn { display: none; }
+    @media (max-width: 640px) {
+      .ob-card { padding: var(--space-lg); }
+      .ob-step { flex-direction: column; align-items: flex-start; gap: var(--space-sm); }
+      .ob-step-btn { width: 100%; }
+    }
+
     /* ── v0.14.15 — Empty state Resumen ──────────────────────── */
     #ovEmptyState { display: flex; flex-direction: column; gap: 16px; }
     .ov-empty-card {
@@ -9135,6 +9262,49 @@
 
         </div>
 
+        <!-- v0.14.44: onboarding gamificado. Visible si scripts.total === 0. -->
+        <div class="ob-card" id="onboardingCard" style="display:none">
+          <div class="ob-header">
+            <div class="ob-title-row">
+              <div class="ob-title" data-i18n="ob.title">Empieza con Reelscript</div>
+              <div class="ob-progress-count"><span id="obProgressCount">0</span>/3</div>
+            </div>
+            <div class="ob-sub" data-i18n="ob.sub">3 pasos para crear tu primer guion viral</div>
+            <div class="ob-progress-bar">
+              <div class="ob-progress-fill" id="obProgressFill" style="width:0%"></div>
+            </div>
+          </div>
+
+          <div class="ob-steps">
+            <div class="ob-step ob-step--active" id="obStep1">
+              <div class="ob-step-icon"></div>
+              <div class="ob-step-body">
+                <div class="ob-step-title" data-i18n="ob.step1_title">Transcribe tu primer reel</div>
+                <div class="ob-step-sub" data-i18n="ob.step1_sub">Pega un link de Instagram, TikTok o YouTube arriba.</div>
+              </div>
+              <button class="ob-step-btn" onclick="ovScrollToHero()" data-i18n="ob.action">Hacer →</button>
+            </div>
+
+            <div class="ob-step ob-step--future" id="obStep2">
+              <div class="ob-step-icon"></div>
+              <div class="ob-step-body">
+                <div class="ob-step-title" data-i18n="ob.step2_title">Adáptalo a tu estilo</div>
+                <div class="ob-step-sub" data-i18n="ob.step2_sub">Convierte la transcripción en guion (Viral, LinkedIn, Custom…).</div>
+              </div>
+              <button class="ob-step-btn" onclick="profTab('scripts');setTimeout(()=>scriptsSwitchTab('create'),0)" data-i18n="ob.action">Hacer →</button>
+            </div>
+
+            <div class="ob-step ob-step--future" id="obStep3">
+              <div class="ob-step-icon"></div>
+              <div class="ob-step-body">
+                <div class="ob-step-title" data-i18n="ob.step3_title">Guarda tu primer guion</div>
+                <div class="ob-step-sub" data-i18n="ob.step3_sub">Tu archivo personal para reutilizar y reescribir.</div>
+              </div>
+              <button class="ob-step-btn" onclick="profTab('scripts')" data-i18n="ob.action">Hacer →</button>
+            </div>
+          </div>
+        </div>
+
         <!-- v0.14.40: fila 2 columnas (Últimas transcripciones | Métricas) -->
         <div class="dash-row-2col">
           <div class="dash-module" id="dashModUltTransc">
@@ -10307,6 +10477,17 @@ const LANGS = {
     "settings.tab_team": "Equipo",
     "settings.tab_privacy": "Privacidad y datos",
     "privacy.danger_zone": "Zona de peligro",
+    // v0.14.44: onboarding gamificado en Dashboard.
+    "ob.title": "Empieza con Reelscript",
+    "ob.sub": "3 pasos para crear tu primer guion viral",
+    "ob.step1_title": "Transcribe tu primer reel",
+    "ob.step1_sub": "Pega un link de Instagram, TikTok o YouTube arriba.",
+    "ob.step2_title": "Adáptalo a tu estilo",
+    "ob.step2_sub": "Convierte la transcripción en guion (Viral, LinkedIn, Custom…).",
+    "ob.step3_title": "Guarda tu primer guion",
+    "ob.step3_sub": "Tu archivo personal para reutilizar y reescribir.",
+    "ob.action": "Hacer →",
+    "ob.celebration": "¡Tu primer guion guardado! 🎉",
     "ideas.regenerate": "Regenerar",
     "ideas.to_script": "Crear guión",
     "ideas.fab_tooltip": "Apunta una idea",
@@ -10745,6 +10926,17 @@ const LANGS = {
     "settings.tab_team": "Team",
     "settings.tab_privacy": "Privacy & data",
     "privacy.danger_zone": "Danger zone",
+    // v0.14.44: onboarding gamified in Dashboard.
+    "ob.title": "Get started with Reelscript",
+    "ob.sub": "3 steps to create your first viral script",
+    "ob.step1_title": "Transcribe your first reel",
+    "ob.step1_sub": "Paste an Instagram, TikTok or YouTube link above.",
+    "ob.step2_title": "Adapt it to your style",
+    "ob.step2_sub": "Turn the transcription into a script (Viral, LinkedIn, Custom…).",
+    "ob.step3_title": "Save your first script",
+    "ob.step3_sub": "Your personal archive to reuse and rewrite.",
+    "ob.action": "Do it →",
+    "ob.celebration": "Your first script saved! 🎉",
     "ideas.regenerate": "Regenerate",
     "ideas.to_script": "Create script",
     "ideas.fab_tooltip": "Capture an idea",
@@ -13355,6 +13547,79 @@ async function loadOverviewMiniGrid() {
   //    via sidebar/tabs. Solo conservamos Transcribir y Métricas.
   renderDashUltTransc((d.transcribe && d.transcribe.total) || 0);
   renderDashMetrics(d.metrics || {}, (d.transcribe && d.transcribe.total) || 0);
+
+  // ── 3. v0.14.44: onboarding gamificado (visible solo si scripts.total === 0).
+  if (typeof updateOnboardingState === "function") updateOnboardingState(d);
+}
+
+// v0.14.44: onboarding card en Dashboard. 3 pasos: transcribir → adaptar → guardar.
+// Pasos 1 y 3 desde backend; paso 2 vía localStorage (deuda backend: d.adapt.total
+// === d.scripts.total, no hay tabla adapts separada).
+function updateOnboardingState(d) {
+  const card = document.getElementById("onboardingCard");
+  if (!card) return;
+  const transcribeDone = (d.transcribe && d.transcribe.total || 0) >= 1;
+  const scriptsDone    = (d.scripts && d.scripts.total || 0) >= 1;
+  const step2Visited   = localStorage.getItem("rs_ob_step2_visited") === "1";
+  const adaptDone      = step2Visited || scriptsDone;
+
+  // Detectar transición 0 → 1 para disparar celebración.
+  const prevScripts = window._lastObScriptsTotal;
+  const currScripts = (d.scripts && d.scripts.total) || 0;
+  if (prevScripts === 0 && currScripts === 1) {
+    const msg = (typeof t === "function" && t("ob.celebration")) || "¡Tu primer guion guardado! 🎉";
+    if (window.toast && typeof window.toast.success === "function") {
+      window.toast.success(msg, { duration: 5000 });
+    } else if (typeof showToast === "function") {
+      showToast(msg);
+    }
+  }
+  window._lastObScriptsTotal = currScripts;
+
+  // Si scripts hecho, ocultar la card (auto-desaparece para siempre, mientras tenga >=1).
+  if (scriptsDone) {
+    card.style.display = "none";
+    return;
+  }
+
+  card.style.display = "";
+
+  // Resolver estados de cada paso.
+  let s1, s2, s3;
+  if (transcribeDone) {
+    s1 = "done";
+    if (adaptDone) { s2 = "done"; s3 = "active"; }
+    else           { s2 = "active"; s3 = "future"; }
+  } else {
+    s1 = "active"; s2 = "future"; s3 = "future";
+  }
+  setStepState("obStep1", s1);
+  setStepState("obStep2", s2);
+  setStepState("obStep3", s3);
+
+  // Progress bar + count.
+  const completed = [transcribeDone, adaptDone, scriptsDone].filter(Boolean).length;
+  const cnt = document.getElementById("obProgressCount");
+  const fill = document.getElementById("obProgressFill");
+  if (cnt) cnt.textContent = String(completed);
+  if (fill) fill.style.width = (completed / 3 * 100) + "%";
+}
+
+function setStepState(stepId, state) {
+  const el = document.getElementById(stepId);
+  if (!el) return;
+  el.classList.remove("ob-step--future", "ob-step--active", "ob-step--done");
+  el.classList.add("ob-step--" + state);
+}
+
+function ovScrollToHero() {
+  const hero = document.querySelector(".ov-card-f1");
+  if (!hero) return;
+  hero.scrollIntoView({ behavior: "smooth", block: "start" });
+  setTimeout(() => {
+    const input = document.getElementById("ovHeroUrlInput");
+    if (input) input.focus();
+  }, 400);
 }
 
 // v0.14.40: renderiza las 3 mini-rows de Últimas transcripciones en el Dashboard.
@@ -13643,6 +13908,10 @@ function _readSettingsTabFromUrl() {
 function scriptsSwitchTab(tab, opts) {
   opts = opts || {};
   const valid = (tab === "list" || tab === "create") ? tab : "list";
+  // v0.14.44: marcar paso 2 del onboarding como visitado al entrar a "Crear guion".
+  if (valid === "create") {
+    try { localStorage.setItem("rs_ob_step2_visited", "1"); } catch(e){}
+  }
   // Toggle panels
   const list = document.getElementById("scriptsTabList");
   const create = document.getElementById("scriptsTabCreate");
