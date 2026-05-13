@@ -4169,6 +4169,28 @@
       width: 32px; height: 32px;
       flex-shrink: 0;
     }
+    /* v0.14.43: título + count pill (Asistentes). */
+    .prof-section-title-row {
+      display: flex; align-items: center; gap: 10px;
+      flex-wrap: wrap;
+    }
+    .prof-section-count {
+      font-size: .72rem;
+      font-weight: 600;
+      color: var(--text3);
+      background: var(--surf2);
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-variant-numeric: tabular-nums;
+    }
+    /* v0.14.43: empty state genérico (mascota + título + sub + cta). Comparte .empty-cta. */
+    .prof-empty-mascot {
+      width: 80px; height: 80px;
+      image-rendering: pixelated;
+      margin: 0 auto 16px;
+      display: block;
+      filter: drop-shadow(0 0 18px rgba(239, 106, 41, 0.22));
+    }
 
     /* Enhanced empty states */
     .prof-empty {
@@ -4176,8 +4198,9 @@
       font-size: .88rem;
     }
     .prof-empty-icon { margin-bottom: 14px; opacity: .4; }
-    .prof-empty-title { font-family: var(--font-display); font-size: 1.1rem; color: var(--text2); margin-bottom: 6px; }
-    .prof-empty-sub { font-size: .82rem; color: var(--text3); line-height: 1.5; margin-bottom: 16px; }
+    /* v0.14.43: empty title/sub alineados con patrón v0.14.42 (Métricas empty). */
+    .prof-empty-title { font-family: var(--font-display); font-size: 1.5rem; color: var(--text); margin-bottom: 8px; line-height: 1.2; letter-spacing: -.015em; }
+    .prof-empty-sub { font-size: .92rem; color: var(--text2); line-height: 1.5; margin-bottom: 16px; max-width: 420px; margin-left: auto; margin-right: auto; }
     .prof-empty-cta {
       display: inline-flex; align-items: center; gap: 6px;
       padding: 8px 20px; background: var(--brand-cta); color: #fff;
@@ -6906,7 +6929,7 @@
       margin: 0 auto;
     }
     /* v0.14.41: CTA grande dentro del empty state (solo si no hay filtro activo). */
-    .scr-empty-cta {
+    .empty-cta {
       display: inline-block;
       background: var(--brand-cta);
       color: #fff;
@@ -6920,8 +6943,32 @@
       margin-top: 18px;
       transition: background .15s, transform .12s;
     }
-    .scr-empty-cta:hover { background: #a93808; }
-    .scr-empty-cta:active { transform: scale(.98); }
+    .empty-cta:hover { background: #a93808; }
+    .empty-cta:active { transform: scale(.98); }
+
+    /* v0.14.43: zona de peligro en Privacidad y datos. */
+    .danger-zone-header {
+      font-size: .82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #ef4444;
+      margin-bottom: var(--space-sm);
+      margin-top: var(--space-2xl);
+    }
+    .prof-card.is-danger {
+      border-color: rgba(239,68,68,.3);
+    }
+    .prof-card.is-danger:hover {
+      border-color: rgba(239,68,68,.45);
+      box-shadow: 0 5px 0 rgba(239,68,68,.06);
+    }
+    .prof-card .danger-title {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      margin-bottom: 4px;
+      color: #f87171;
+    }
 
     /* Sidebar accent */
     .prof-nav-item.on.on-scripts {
@@ -9421,12 +9468,19 @@
 
       <!-- Assistants panel -->
       <div id="profPanelAssistants" style="display:none">
+        <!-- v0.14.43: header normalizado con mascota Hooks + tagline + count pill. -->
         <div class="prof-section-head">
-          <div>
-            <div class="prof-section-title" data-i18n="asst.title">Your assistants</div>
-            <div class="prof-section-sub" id="profAsstCount"></div>
+          <div class="prof-section-head-left">
+            <img class="prof-section-mascot" src="{{ url_for('static', filename='img/hooks/hooks-asistentes.svg') }}" alt="" aria-hidden="true">
+            <div>
+              <div class="prof-section-title-row">
+                <div class="prof-section-title" data-i18n="asst.title">Asistentes</div>
+                <span class="prof-section-count" id="profAsstCount"></span>
+              </div>
+              <div class="prof-section-tagline" data-i18n-es="Crea estilos propios para tus guiones." data-i18n-en="Create your own styles for your scripts.">Crea estilos propios para tus guiones.</div>
+            </div>
           </div>
-          <button id="profNewAsstBtn" class="btn-3d btn-3d-primary" style="background:var(--brand);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer" onclick="openAssistantModal()" data-i18n="asst.new">+ New assistant</button>
+          <button id="profNewAsstBtn" class="empty-cta" style="margin:0;padding:10px 20px;font-size:.88rem" onclick="openAssistantModal()" data-i18n="asst.new">+ Nuevo asistente</button>
         </div>
         <div class="asst-cards-grid" id="profListAssistants">
           <!-- v0.14.37: skeleton loaders. -->
@@ -9774,9 +9828,11 @@
             <button class="btn-sm btn-3d btn-3d-primary" style="background:var(--brand);color:#fff;border:none;padding:8px 16px" onclick="exportMyData()" data-i18n-es="Descargar mis datos" data-i18n-en="Download my data">Descargar mis datos</button>
           </div>
 
-          <div class="prof-card" style="border-color:rgba(239,68,68,.2)">
+          <!-- v0.14.43: zona de peligro destacada antes del card "Eliminar cuenta". -->
+          <div class="danger-zone-header" data-i18n="privacy.danger_zone">Zona de peligro</div>
+          <div class="prof-card is-danger">
             <div style="margin-bottom:12px">
-              <div style="font-family:var(--font-display);font-size:1rem;margin-bottom:4px;color:#f87171" data-i18n-es="Eliminar cuenta" data-i18n-en="Delete account">Eliminar cuenta</div>
+              <div class="danger-title" data-i18n-es="Eliminar cuenta" data-i18n-en="Delete account">Eliminar cuenta</div>
               <div style="font-size:.82rem;color:var(--text2);font-weight:300" data-i18n-es="Elimina permanentemente tu cuenta, proyectos, guiones y transcripciones. Se cancelará tu suscripción activa. No se puede deshacer." data-i18n-en="Permanently delete your account, all projects, scripts, and transcriptions. Your active subscription will be cancelled. This cannot be undone.">Elimina permanentemente tu cuenta, proyectos, guiones y transcripciones. Se cancelará tu suscripción activa. No se puede deshacer.</div>
             </div>
             <button class="btn-sm btn-3d btn-3d-danger" style="background:transparent;border:1px solid rgba(239,68,68,.3);color:#f87171;padding:8px 16px" onclick="openDeleteAccountModal()" data-i18n-es="Eliminar mi cuenta" data-i18n-en="Delete my account">Eliminar mi cuenta</button>
@@ -10250,6 +10306,7 @@ const LANGS = {
     "settings.tab_general": "General",
     "settings.tab_team": "Equipo",
     "settings.tab_privacy": "Privacidad y datos",
+    "privacy.danger_zone": "Zona de peligro",
     "ideas.regenerate": "Regenerar",
     "ideas.to_script": "Crear guión",
     "ideas.fab_tooltip": "Apunta una idea",
@@ -10356,7 +10413,7 @@ const LANGS = {
     "proj.created": "Proyecto creado",
     "proj.deleted": "Proyecto eliminado",
     // Assistants
-    "asst.title": "Tus asistentes",
+    "asst.title": "Asistentes",
     "asst.new": "+ Nuevo asistente",
     "asst.new_title": "Nuevo asistente",
     "asst.modal_desc": "Crea tu propio asistente de estilo para generar guiones. Asígnalo a proyectos de manera predeterminada.",
@@ -10381,6 +10438,13 @@ const LANGS = {
     "asst.delete_confirm": "¿Eliminar este asistente?",
     "asst.upgrade": "Mejora a Basic para crear tu primer asistente.",
     "asst.empty": "Sin asistentes todavía. Crea el primero.",
+    "asst.empty_title": "Crea tu primer estilo",
+    "asst.empty_sub": "Define tono, formato y estructura. Los asistentes hacen tus guiones más tuyos.",
+    "asst.empty_cta": "+ Crear asistente",
+    "asst.empty_free_title": "Asistentes en planes Pro",
+    "asst.empty_free_sub": "Crea estilos personalizados desde el plan Pro o superior.",
+    "asst.empty_free_cta": "Ver planes →",
+    "asst.card_default_sub": "Asistente personalizado",
     "asst.limit_reached": "Mejora tu plan para crear más asistentes",
     "asst.name_required": "Nombre e instrucciones requeridos",
     // Team
@@ -10680,6 +10744,7 @@ const LANGS = {
     "settings.tab_general": "General",
     "settings.tab_team": "Team",
     "settings.tab_privacy": "Privacy & data",
+    "privacy.danger_zone": "Danger zone",
     "ideas.regenerate": "Regenerate",
     "ideas.to_script": "Create script",
     "ideas.fab_tooltip": "Capture an idea",
@@ -10786,7 +10851,7 @@ const LANGS = {
     "proj.created": "Project created",
     "proj.deleted": "Project deleted",
     // Assistants
-    "asst.title": "Your assistants",
+    "asst.title": "Assistants",
     "asst.new": "+ New assistant",
     "asst.new_title": "New assistant",
     "asst.modal_desc": "Create your own style assistant for generating scripts. Assign it to projects as default.",
@@ -10811,6 +10876,13 @@ const LANGS = {
     "asst.delete_confirm": "Delete this assistant?",
     "asst.upgrade": "Upgrade to Basic to create your first assistant.",
     "asst.empty": "No assistants yet. Create your first one.",
+    "asst.empty_title": "Create your first style",
+    "asst.empty_sub": "Define tone, format and structure. Assistants make your scripts more yours.",
+    "asst.empty_cta": "+ Create assistant",
+    "asst.empty_free_title": "Assistants in Pro plans",
+    "asst.empty_free_sub": "Create custom styles starting from Pro plan.",
+    "asst.empty_free_cta": "View plans →",
+    "asst.card_default_sub": "Custom assistant",
     "asst.limit_reached": "Upgrade your plan to create more assistants",
     "asst.name_required": "Name and instructions required",
     // Team
@@ -11369,16 +11441,33 @@ function renderProfAssistants() {
   const limits = { free: 0, pro: 1, creator: 10, agency: 999 };
   const limit = limits[plan] || 0;
 
+  // v0.14.43: count compactado para encajar en pill ("3/10" o "3/∞").
   const countEl = document.getElementById("profAsstCount");
-  if (countEl) countEl.textContent = `${userAssistants.length} / ${plan === "agency" ? "∞" : limit} assistants`;
+  if (countEl) countEl.textContent = `${userAssistants.length}/${plan === "agency" ? "∞" : limit}`;
 
+  // v0.14.43: empty state free — mascota + microcopy + CTA "Ver planes →".
   if (plan === "free") {
-    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">${EMPTY_ICON}</div>${t("asst.upgrade")}</div>`;
+    const lang = (document.documentElement.lang || "es");
+    const pricingUrl = "/" + lang + "/#pricingSection";
+    el.innerHTML = `
+      <div class="prof-empty">
+        <img class="prof-empty-mascot" src="/static/img/hooks/hooks-asistentes.svg" alt="" aria-hidden="true">
+        <div class="prof-empty-title" data-i18n="asst.empty_free_title">${t("asst.empty_free_title")}</div>
+        <div class="prof-empty-sub" data-i18n="asst.empty_free_sub">${t("asst.empty_free_sub")}</div>
+        <a class="empty-cta" href="${pricingUrl}" data-i18n="asst.empty_free_cta">${t("asst.empty_free_cta")}</a>
+      </div>`;
     return;
   }
 
+  // v0.14.43: empty state paid+0 — mascota + microcopy + CTA "+ Crear asistente".
   if (!userAssistants.length) {
-    el.innerHTML = `<div class="prof-empty"><div class="prof-empty-icon">${EMPTY_ICON}</div>${t("asst.empty")}</div>`;
+    el.innerHTML = `
+      <div class="prof-empty">
+        <img class="prof-empty-mascot" src="/static/img/hooks/hooks-asistentes.svg" alt="" aria-hidden="true">
+        <div class="prof-empty-title" data-i18n="asst.empty_title">${t("asst.empty_title")}</div>
+        <div class="prof-empty-sub" data-i18n="asst.empty_sub">${t("asst.empty_sub")}</div>
+        <button class="empty-cta" onclick="openAssistantModal()" data-i18n="asst.empty_cta">${t("asst.empty_cta")}</button>
+      </div>`;
     return;
   }
 
@@ -11390,7 +11479,7 @@ function renderProfAssistants() {
         <img src="${dicebearUrl(seed)}" />
         <div>
           <div class="asst-card-v2-name">${esc(a.name)}</div>
-          <div class="asst-card-v2-sub">Custom assistant</div>
+          <div class="asst-card-v2-sub">${t("asst.card_default_sub")}</div>
         </div>
       </div>
       <div class="asst-card-v2-preview">"${esc((a.instructions || '').slice(0, 120))}"</div>
@@ -14405,7 +14494,7 @@ function renderProfScripts() {
       ? (lang === "en" ? "Assign existing scripts from each script's “…” menu." : "Asigna guiones existentes desde el menú “…” de cada guion.")
       : (lang === "en" ? "Create your first script and it'll show up here." : "Crea tu primer guion y aparecerá aquí.");
     const ctaLbl = lang === "en" ? "Create script →" : "Crear guion →";
-    const cta = filtered ? "" : `<button class="scr-empty-cta" onclick="scriptsSwitchTab('create')">${ctaLbl}</button>`;
+    const cta = filtered ? "" : `<button class="empty-cta" onclick="scriptsSwitchTab('create')">${ctaLbl}</button>`;
     el.innerHTML = `
       <div class="scr-empty">
         <img src="/static/img/hooks/hooks-scripts.svg" alt="" aria-hidden="true" />
