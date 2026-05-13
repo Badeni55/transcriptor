@@ -3235,6 +3235,35 @@
       color: var(--text); font-size: .84rem; outline: none;
     }
     .ov-hero-input:focus { border-color: rgba(239,106,41,.6); }
+    /* v0.14.40.b: hero F1 (acción principal) — sobrecarga tamaños para destacar.
+       Override sobre .ov-card, .ov-hero-input, .ov-empty-lang, .ov-empty-btn. */
+    .ov-card-f1 { padding: var(--space-xl); }
+    .ov-card-f1 .ov-card-label { font-size: 1.6rem; }
+    .ov-card-f1 .ov-hero-input-row { gap: 12px; margin: var(--space-md) 0 var(--space-sm); }
+    .ov-card-f1 .ov-hero-input {
+      padding: 16px 18px 16px 40px;
+      font-size: 1.05rem;
+      border-radius: 12px;
+    }
+    .ov-card-f1 .ov-hero-input-icon { left: 14px; font-size: 1rem; }
+    .ov-card-f1 .ov-empty-lang {
+      padding: 14px 16px;
+      font-size: .95rem;
+      border-radius: 10px;
+    }
+    .ov-card-f1 .ov-empty-btn {
+      padding: 16px 28px;
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: 12px;
+    }
+    @media (max-width: 640px) {
+      .ov-card-f1 { padding: var(--space-lg); }
+      .ov-card-f1 .ov-card-label { font-size: 1.3rem; }
+      .ov-card-f1 .ov-hero-input { padding: 13px 14px 13px 36px; font-size: .95rem; }
+      .ov-card-f1 .ov-empty-lang { padding: 11px 13px; font-size: .85rem; }
+      .ov-card-f1 .ov-empty-btn { padding: 13px 22px; font-size: .9rem; }
+    }
     .ov-hero-btns { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
     .ov-hero-action-btn {
       padding: 6px 14px; border-radius: 8px; font-size: .8rem; font-weight: 600;
