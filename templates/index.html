@@ -3244,7 +3244,11 @@
       padding: 16px 18px 16px 40px;
       font-size: 1.05rem;
       border-radius: 12px;
+      /* v0.14.40.c: borde marcado permanente (no solo en focus) para señalizar input principal. */
+      border: 2px solid var(--brand);
+      background: var(--surf);
     }
+    .ov-card-f1 .ov-hero-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(249,115,22,.18); }
     .ov-card-f1 .ov-hero-input-icon { left: 14px; font-size: 1rem; }
     .ov-card-f1 .ov-empty-lang {
       padding: 14px 16px;
@@ -3357,7 +3361,9 @@
        Métricas, Apunta una idea). Hero F1 (transcribir) sigue usando .ov-card. */
     .dash-row-2col {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      /* v0.14.40.c: minmax(0, 1fr) garantiza 50/50 real (contenido largo no
+         empuja la columna porque min-width default es auto). */
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: var(--space-lg);
       margin-top: var(--space-xl);
     }
@@ -3423,6 +3429,7 @@
       font-size: .88rem;
       color: var(--text);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      min-width: 0;
       margin-bottom: 2px;
     }
     .dash-mini-row-meta {
@@ -8978,7 +8985,8 @@
               </div>
             </div>
             <div id="ovHeroStatus" class="ov-hero-status" style="display:none"></div>
-            <div class="ov-card-body" id="ovBodyTransc"><div class="ov-skel"></div></div>
+            <!-- v0.14.40.c: bloque "Última transcripción" eliminado; el módulo
+                 "Últimas transcripciones" inferior lo cubre sin duplicar. -->
           </div>
 
         </div>
@@ -13090,55 +13098,18 @@ async function loadOverviewMiniGrid() {
   }
 
   const es = (document.documentElement.lang || "es") === "es";
-  const setBody = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
-  const countLine = (txt) => `<div class="ov-card-count">${txt}</div>`;
 
-  // v0.14.33.a: helper para llenar el sub de cada card con el stat real (en lugar de frase poética).
-  const setSubFromBody = (bodyId, txt) => {
-    const body = document.getElementById(bodyId);
-    if (!body) return;
-    const card = body.closest(".ov-card");
-    const sub = card && card.querySelector(".ov-card-sub");
-    if (sub) sub.textContent = txt;
-  };
-
-  // ── 1. Transcribir (F1 hero) ───────────────────────────────────────────
+  // ── 1. v0.14.40.c: header hero F1 — solo sub con el contador "N transcripciones".
+  //    Bloque "Última transcripción" eliminado del hero (vivía en #ovBodyTransc);
+  //    queda cubierto por el módulo "Últimas transcripciones" inferior.
   const t = d.transcribe || {};
   const tTot = t.total || 0;
-  setSubFromBody("ovBodyTransc",
-    tTot === 0 ? (es ? "Sin transcripciones aún" : "No transcriptions yet")
-    : (es ? `${tTot} ${tTot === 1 ? "transcripción" : "transcripciones"}` : `${tTot} ${tTot === 1 ? "transcription" : "transcriptions"}`));
-  let bodyT;
-  if (t.last) {
-    const thumb = t.last.thumbnail_b64
-      ? `<img class="ov-thumb-img" src="${ovEsc(t.last.thumbnail_b64)}" alt="">`
-      : `<div class="ov-thumb-img"></div>`;
-    const viewsTxt = t.last.views
-      ? `${Number(t.last.views).toLocaleString(es ? "es-ES" : "en-US")} ${es ? "vistas" : "views"} · `
-      : "";
-    const lastId = t.last.id;
-    bodyT = `
-      <div class="ov-mini-prefix">${es ? "ÚLTIMA TRANSCRIPCIÓN" : "LAST TRANSCRIPTION"}</div>
-      <div class="ov-thumb-row">
-        ${thumb}
-        <div class="ov-thumb-text">
-          <div class="ov-thumb-title">${ovEsc(t.last.title || (es ? "Sin título" : "Untitled"))}</div>
-          <div class="ov-thumb-time">${viewsTxt}${ovEsc(ovRelTime(t.last.created_at))} · ${ovEsc(t.last.platform || "")}</div>
-        </div>
-      </div>
-      <div class="ov-hero-btns">
-        <button class="ov-hero-action-btn" onclick="ovHeroTransform(${lastId});event.stopPropagation()">${es ? "Transformar" : "Transform"}</button>
-        <button class="ov-hero-action-btn ov-hero-action-btn--sec" onclick="ovHeroViewFull(${lastId});event.stopPropagation()">${es ? "Ver completa" : "View full"}</button>
-      </div>`;
-  } else {
-    bodyT = `<div class="ov-empty">${es ? "Transcribe tu primer reel" : "Transcribe your first reel"}</div>`;
+  const heroSub = document.querySelector(".ov-card-f1 .ov-card-sub");
+  if (heroSub) {
+    heroSub.textContent = tTot === 0
+      ? (es ? "Sin transcripciones aún" : "No transcriptions yet")
+      : (es ? `${tTot} ${tTot === 1 ? "transcripción" : "transcripciones"}` : `${tTot} ${tTot === 1 ? "transcription" : "transcriptions"}`);
   }
-  // v0.14.20 PARTE 2: link clickable a /profile/transcriptions; oculto si total === 0
-  const tTotal = t.total || 0;
-  const tLinkLine = tTotal > 0
-    ? `<button type="button" class="ov-count-link" onclick="profTab('transc')">${(es ? "Ver tus " + tTotal + " transcripciones →" : "View your " + tTotal + " transcriptions →")}</button>`
-    : "";
-  setBody("ovBodyTransc", bodyT + tLinkLine);
 
   // ── 2. v0.14.40: módulos nuevos Dashboard (Últimas transc + Métricas).
   //    Las cards F2/F3 (Hazlo tuyo, Ideas, Proyectos, Asistentes, Guiones,
@@ -13189,7 +13160,11 @@ function renderDashUltTransc(transcribeTotal) {
     const thumb = it.thumbnail_b64
       ? `<img class="dash-mini-row-thumb" src="${ovEsc(it.thumbnail_b64)}" alt="">`
       : `<div class="dash-mini-row-thumb"></div>`;
-    const title = ovEsc(it.title || it.url || (es ? "Sin título" : "Untitled"));
+    // v0.14.40.c fix: el backend no almacena title/llm_title/caption en
+    // transcriptions; generamos un título legible desde el texto transcrito.
+    const platLabel = (it.platform || "").toUpperCase() || (es ? "Sin título" : "Untitled");
+    const rawTitle = transAutoTitle(it.text || "") || platLabel;
+    const title = ovEsc(rawTitle.length > 60 ? rawTitle.slice(0, 57) + "…" : rawTitle);
     const viewsTxt = it.views
       ? `${Number(it.views).toLocaleString(es ? "es-ES" : "en-US")} ${es ? "vistas" : "views"} · `
       : "";
@@ -13268,7 +13243,10 @@ function renderTransHero() {
   const thumb = it.thumbnail_b64
     ? `<img class="trans-hero-last-thumb" src="${ovEsc(it.thumbnail_b64)}" alt="">`
     : `<div class="trans-hero-last-thumb"></div>`;
-  const title = ovEsc(it.title || it.url || (es ? "Sin título" : "Untitled"));
+  // v0.14.40.c fix: backend no almacena title; generamos desde texto.
+  const platLabel = (it.platform || "").toUpperCase() || (es ? "Sin título" : "Untitled");
+  const rawTitle = transAutoTitle(it.text || "") || platLabel;
+  const title = ovEsc(rawTitle);
   const viewsTxt = it.views
     ? `${Number(it.views).toLocaleString(es ? "es-ES" : "en-US")} ${es ? "vistas" : "views"} · `
     : "";
