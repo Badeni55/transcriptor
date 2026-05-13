@@ -3338,14 +3338,25 @@
     .dash-module {
       background: var(--surf);
       border: 1px solid var(--border);
+      border-left: 3px solid var(--border);
       border-radius: 16px;
       padding: var(--space-lg);
       display: flex; flex-direction: column;
       gap: var(--space-md);
       min-height: 200px;
     }
+    /* v0.14.40.a: border-left acentuado por módulo para calidez visual. */
+    #dashModUltTransc { border-left-color: var(--brand); }
+    #dashModMetrics   { border-left-color: #22c55e; }
     .dash-module-head {
       display: flex; justify-content: space-between; align-items: center;
+    }
+    .dash-module-head-left {
+      display: flex; align-items: center; gap: 10px;
+      min-width: 0;
+    }
+    .dash-module-mascot {
+      width: 24px; height: 24px; flex-shrink: 0;
     }
     .dash-module-title {
       font-family: var(--font-display);
@@ -3442,6 +3453,7 @@
       gap: var(--space-md);
       background: var(--surf);
       border: 1px solid var(--border);
+      border-left: 3px solid #f59e0b;
       border-radius: 16px;
       padding: var(--space-lg);
       margin-top: var(--space-lg);
@@ -8946,7 +8958,10 @@
         <div class="dash-row-2col">
           <div class="dash-module" id="dashModUltTransc">
             <div class="dash-module-head">
-              <div class="dash-module-title" data-i18n-es="Últimas transcripciones" data-i18n-en="Latest transcriptions">Últimas transcripciones</div>
+              <div class="dash-module-head-left">
+                <img class="dash-module-mascot" src="{{ url_for('static', filename='img/hooks/hooks-transcribir.svg') }}" alt="" aria-hidden="true">
+                <div class="dash-module-title" data-i18n-es="Últimas transcripciones" data-i18n-en="Latest transcriptions">Últimas transcripciones</div>
+              </div>
               <a class="dash-module-link" id="dashUltTranscLink" onclick="profTab('transc')" style="display:none" data-i18n-es="Ver todas →" data-i18n-en="View all →">Ver todas →</a>
             </div>
             <div class="dash-module-body" id="dashUltTranscBody">
@@ -8958,7 +8973,10 @@
 
           <div class="dash-module" id="dashModMetrics">
             <div class="dash-module-head">
-              <div class="dash-module-title" data-i18n-es="Métricas" data-i18n-en="Metrics">Métricas</div>
+              <div class="dash-module-head-left">
+                <img class="dash-module-mascot" src="{{ url_for('static', filename='img/hooks/hooks-metricas.svg') }}" alt="" aria-hidden="true">
+                <div class="dash-module-title" data-i18n-es="Métricas" data-i18n-en="Metrics">Métricas</div>
+              </div>
               <a class="dash-module-link" id="dashMetricsLink" onclick="profTab('metrics')" style="display:none" data-i18n-es="Ver todas →" data-i18n-en="View all →">Ver todas →</a>
             </div>
             <div class="dash-module-body" id="dashMetricsBody">
@@ -8979,8 +8997,8 @@
             </svg>
           </div>
           <div class="dash-idea-text">
-            <div class="dash-idea-title" data-i18n-es="Apunta una idea" data-i18n-en="Capture an idea">Apunta una idea</div>
-            <div class="dash-idea-sub" data-i18n-es="Captura cualquier chispa antes de que se escape." data-i18n-en="Catch any spark before it slips away.">Captura cualquier chispa antes de que se escape.</div>
+            <div class="dash-idea-title" data-i18n-es="¿Una idea suelta?" data-i18n-en="Got a fresh idea?">¿Una idea suelta?</div>
+            <div class="dash-idea-sub" data-i18n-es="Apúntala antes de que se te escape." data-i18n-en="Capture it before it slips away.">Apúntala antes de que se te escape.</div>
           </div>
           <div class="dash-idea-cta" data-i18n-es="Apuntar →" data-i18n-en="Capture →">Apuntar →</div>
         </div>
@@ -13097,29 +13115,48 @@ async function loadOverviewMiniGrid() {
   //    Las cards F2/F3 (Hazlo tuyo, Ideas, Proyectos, Asistentes, Guiones,
   //    Equipo) se eliminaron del HTML. El usuario llega a esas secciones
   //    via sidebar/tabs. Solo conservamos Transcribir y Métricas.
-  renderDashUltTransc();
+  renderDashUltTransc((d.transcribe && d.transcribe.total) || 0);
   renderDashMetrics(d.metrics || {}, (d.transcribe && d.transcribe.total) || 0);
 }
 
 // v0.14.40: renderiza las 3 mini-rows de Últimas transcripciones en el Dashboard.
-// Idempotente: se llama desde loadOverviewMiniGrid() y desde loadHistory()
-// para resolver la race (histCache puede estar vacío al primer call).
-function renderDashUltTransc() {
+// Idempotente: se llama desde loadOverviewMiniGrid() (con transcribeTotal del
+// backend) y desde loadHistory() (sin param). Resuelve race: si histCache vacío
+// pero backend reporta total>0, mantiene skeleton y dispara loadHistory() en vez
+// de mostrar empty state falso.
+function renderDashUltTransc(transcribeTotal) {
   const body = document.getElementById("dashUltTranscBody");
   const link = document.getElementById("dashUltTranscLink");
   if (!body) return;
   const es = (document.documentElement.lang || "es") === "es";
-  if (!Array.isArray(window.histCache) || window.histCache.length === 0) {
+  // Resolver "total esperado": param explícito > _userStats > histCache.
+  if (typeof transcribeTotal !== "number") {
+    transcribeTotal = (window._userStats && window._userStats.transcriptions) || (Array.isArray(histCache) ? histCache.length : 0);
+  }
+  const cacheLen = Array.isArray(histCache) ? histCache.length : 0;
+  // v0.14.40.a fix bug: cache vacío PERO existen transcripciones → skeleton + cargar.
+  if (cacheLen === 0 && transcribeTotal > 0) {
+    body.innerHTML = `
+      <div class="dash-mini-row dash-mini-skel"><div class="skel skel-thumb" style="width:44px;height:44px"></div><div class="dash-mini-row-body"><div class="skel skel-line" style="width:70%"></div><div class="skel skel-line" style="width:40%;margin-top:6px"></div></div></div>
+      <div class="dash-mini-row dash-mini-skel"><div class="skel skel-thumb" style="width:44px;height:44px"></div><div class="dash-mini-row-body"><div class="skel skel-line" style="width:65%"></div><div class="skel skel-line" style="width:35%;margin-top:6px"></div></div></div>
+      <div class="dash-mini-row dash-mini-skel"><div class="skel skel-thumb" style="width:44px;height:44px"></div><div class="dash-mini-row-body"><div class="skel skel-line" style="width:75%"></div><div class="skel skel-line" style="width:42%;margin-top:6px"></div></div></div>`;
+    if (link) link.style.display = "none";
+    if (typeof loadHistory === "function") {
+      try { loadHistory(); } catch(e){}  // re-llamará renderDashUltTransc al terminar
+    }
+    return;
+  }
+  if (cacheLen === 0) {
     body.innerHTML = `
       <div class="dash-module-empty">
-        <div class="dash-module-empty-msg">${es ? "Aún sin transcripciones" : "No transcriptions yet"}</div>
-        <div class="dash-module-empty-hint">${es ? "Pega tu primer reel arriba ↑" : "Paste your first reel above ↑"}</div>
+        <div class="dash-module-empty-msg">${es ? "Tu archivo está vacío" : "Your archive is empty"}</div>
+        <div class="dash-module-empty-hint">${es ? "Empieza pegando un reel arriba ↑" : "Start by pasting a reel above ↑"}</div>
       </div>`;
     if (link) link.style.display = "none";
     return;
   }
   if (link) link.style.display = "";
-  const rows = window.histCache.slice(0, 3).map(it => {
+  const rows = histCache.slice(0, 3).map(it => {
     const thumb = it.thumbnail_b64
       ? `<img class="dash-mini-row-thumb" src="${ovEsc(it.thumbnail_b64)}" alt="">`
       : `<div class="dash-mini-row-thumb"></div>`;
@@ -13148,13 +13185,17 @@ function renderDashMetrics(m, transcribedCount) {
   const es = (document.documentElement.lang || "es") === "es";
   const hasData = m && m.has_profile && (m.avg_views_recent || 0) > 0 && Array.isArray(m.sparkline) && m.sparkline.length >= 2;
   if (!hasData) {
-    const msg = (transcribedCount < 3)
-      ? (es ? "Necesitas al menos 3 reels transcribidos para ver métricas" : "You need at least 3 transcribed reels to see metrics")
-      : (es ? "Conecta Instagram para ver tus métricas" : "Connect Instagram to see your metrics");
+    const title = (transcribedCount < 3)
+      ? (es ? "Mide qué funciona de verdad" : "Measure what actually works")
+      : (es ? "Mide qué funciona de verdad" : "Measure what actually works");
+    const sub = (transcribedCount < 3)
+      ? (es ? "Transcribe al menos 3 reels para desbloquear analíticas" : "Transcribe at least 3 reels to unlock analytics")
+      : (es ? "Conecta Instagram y desbloquea analíticas" : "Connect Instagram and unlock analytics");
     const cta = (transcribedCount < 3) ? "" : `<button class="dash-module-empty-cta" onclick="profTab('metrics')">${es ? "Conectar →" : "Connect →"}</button>`;
     body.innerHTML = `
       <div class="dash-module-empty">
-        <div class="dash-module-empty-msg">${msg}</div>
+        <div class="dash-module-empty-msg">${title}</div>
+        <div class="dash-module-empty-hint">${sub}</div>
         ${cta}
       </div>`;
     if (link) link.style.display = "none";
@@ -13166,7 +13207,7 @@ function renderDashMetrics(m, transcribedCount) {
     : "";
   body.innerHTML = `
     <div class="dash-metrics-value">${avg}</div>
-    <div class="dash-metrics-label">${es ? "vistas/reel · media reciente" : "views/reel · recent average"}</div>
+    <div class="dash-metrics-label">${es ? "vistas de media por reel" : "average views per reel"}</div>
     <div class="dash-metrics-sparkline" id="dashSparkBox" style="--ov-acc:93,202,165"></div>
     ${top}`;
   if (link) link.style.display = "";
@@ -13183,7 +13224,7 @@ function renderTransHero() {
   const right = document.getElementById("transHeroRight");
   if (!right) return;
   const es = (document.documentElement.lang || "es") === "es";
-  if (!Array.isArray(window.histCache) || window.histCache.length === 0) {
+  if (!Array.isArray(histCache) || histCache.length === 0) {
     right.innerHTML = `
       <div class="trans-hero-empty">
         <svg class="trans-hero-empty-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -13194,7 +13235,7 @@ function renderTransHero() {
       </div>`;
     return;
   }
-  const it = window.histCache[0];
+  const it = histCache[0];
   const thumb = it.thumbnail_b64
     ? `<img class="trans-hero-last-thumb" src="${ovEsc(it.thumbnail_b64)}" alt="">`
     : `<div class="trans-hero-last-thumb"></div>`;
@@ -13891,7 +13932,7 @@ async function doTranscribeFromHero() {
 function ovHeroTransform(transcriptionId) {
   try { window.posthog && window.posthog.capture("hero_transform_clicked", { transcription_id: transcriptionId }); } catch (e) {}
   if (transcriptionId) {
-    const item = (window.histCache || []).find(r => r.id === transcriptionId);
+    const item = (histCache || []).find(r => r.id === transcriptionId);
     const txt = item ? (item.text || "") : "";
     const adaptInput = document.getElementById("adaptInput");
     if (adaptInput && txt) adaptInput.value = txt;
