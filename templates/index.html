@@ -11748,6 +11748,16 @@ function initPrices() {
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
+  // v0.14.44.a fix 3: limpieza one-time del flag rs_ob_step2_visited. En v0.14.44
+  // se marcaba por aliasing programático del bottom-bar mobile "Hazlo tuyo" sin
+  // intención del usuario, causando inconsistencia en el onboarding step state.
+  try {
+    if (!localStorage.getItem("rs_ob_migrated_v14441")) {
+      localStorage.removeItem("rs_ob_step2_visited");
+      localStorage.setItem("rs_ob_migrated_v14441", "1");
+    }
+  } catch(e){}
+
   // Intercept password recovery token and redirect to reset page
   const hash = window.location.hash.substring(1);
   if (hash && hash.includes("access_token") && hash.includes("type=recovery")) {
@@ -13558,7 +13568,13 @@ async function loadOverviewMiniGrid() {
 function updateOnboardingState(d) {
   const card = document.getElementById("onboardingCard");
   if (!card) return;
-  const transcribeDone = (d.transcribe && d.transcribe.total || 0) >= 1;
+  // v0.14.44.a fix 1: el endpoint /api/me/overview cachea 60s. Tras transcribir,
+  // el backend puede seguir devolviendo total=0 por un rato. Usamos Math.max
+  // con _userStats.transcriptions (incrementado optimísticamente en cliente
+  // por doTranscribeFromHero/Overview) para evitar desincronización visual.
+  const _localT   = (window._userStats && window._userStats.transcriptions) || 0;
+  const _backendT = (d.transcribe && d.transcribe.total) || 0;
+  const transcribeDone = Math.max(_localT, _backendT) >= 1;
   const scriptsDone    = (d.scripts && d.scripts.total || 0) >= 1;
   const step2Visited   = localStorage.getItem("rs_ob_step2_visited") === "1";
   const adaptDone      = step2Visited || scriptsDone;
@@ -13908,8 +13924,11 @@ function _readSettingsTabFromUrl() {
 function scriptsSwitchTab(tab, opts) {
   opts = opts || {};
   const valid = (tab === "list" || tab === "create") ? tab : "list";
-  // v0.14.44: marcar paso 2 del onboarding como visitado al entrar a "Crear guion".
-  if (valid === "create") {
+  // v0.14.44.a fix 2: solo marcar paso 2 del onboarding cuando la invocación
+  // es interactiva (click humano). skipHistory:true denota llamadas programáticas
+  // (aliasing desde profTab('adapt'), deeplink ?tab=create, init render) que
+  // antes marcaban el flag sin intención del usuario.
+  if (valid === "create" && !opts.skipHistory) {
     try { localStorage.setItem("rs_ob_step2_visited", "1"); } catch(e){}
   }
   // Toggle panels
