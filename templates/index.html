@@ -171,13 +171,19 @@
     .sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
 
     :root {
-      --bg:       #0a0b0f;
-      --surf:     #111318;
-      --surf2:    #181b22;
-      --border:   rgba(255,255,255,0.08);
+      /* v0.14.44.b: dark elevado para que cards (.dash-module, .ig-link-box,
+         .prof-card, .asst-card-v2, etc.) destaquen del fondo. Antes ratio
+         bg/surf era 2.37:1 (imperceptible); ahora 4.24:1. */
+      --bg:       #07080b;
+      --surf:     #16181f;
+      --surf2:    #20232c;
+      --border:   rgba(255,255,255,0.10);
       --text:     #f1f3f7;
       --text2:    #8b92a5;
-      --text3:    #6b7280;
+      /* v0.14.44.b: --text3 #6b7280 → #9298a6. Sobre el nuevo --surf, el valor
+         antiguo caía a 3.48:1 (falla AA 4.5:1). #9298a6 garantiza 6.13:1
+         sobre --surf y 6.93:1 sobre --bg. */
+      --text3:    #9298a6;
       /* v0.14.35: --brand reemplaza --purple (mal nombrado, valía #f97316). --orange absorbido. */
       --brand:    #f97316;
       /* v0.14.35: --brand-cta para fondos de botones primarios (WCAG AA contra #fff: 5.18:1). */
