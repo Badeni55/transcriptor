@@ -164,6 +164,7 @@ CREATE TABLE IF NOT EXISTS public.creator_reels_global (
   video_url text,
   video_duration_sec numeric(6,2),
   fetched_at timestamptz NOT NULL DEFAULT now(),
+  is_archived boolean NOT NULL DEFAULT false,
   UNIQUE(creator_id, ig_reel_id)
 );
 
