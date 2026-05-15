@@ -72,6 +72,19 @@ COST_CENTS       = 18   # $0.18 por uso de pago (~7 usos por $1.29)
 
 UNLIMITED_EMAILS = {"davidmiragito@gmail.com"}  # sin límite ni coste
 
+# v0.15.2: emails con acceso a endpoints admin (separado de UNLIMITED_EMAILS,
+# que es "cuenta cortesía sin límites"). Comma-separated en env. Si la env no
+# está set → set vacío → _is_admin devuelve False para todos (fallback seguro).
+ADMIN_EMAILS = {
+    e.strip().lower()
+    for e in (os.environ.get("ADMIN_EMAILS", "") or "").split(",")
+    if e.strip()
+}
+
+
+def _is_admin(user: dict | None) -> bool:
+    return bool(user and user.get("email", "").lower() in ADMIN_EMAILS)
+
 # ── Matriz de planes (fuente de verdad) ──────────────────────────────────────
 PLANS = {
     "free": {
@@ -4810,9 +4823,11 @@ def get_tracked_creators():
             # Supabase-py no soporta GROUP BY directo; hacemos N queries con count.
             # Para N pequeño (<=20) es aceptable. Optimización futura: rpc.
             for cid in creator_ids:
+                # v0.15.2: filtrar is_archived=false (retention futura).
                 rc = (db.table("creator_reels_global")
                         .select("id", count="exact")
                         .eq("creator_id", cid)
+                        .eq("is_archived", False)
                         .execute())
                 reels_count_map[cid] = rc.count or 0
         except Exception as e:
@@ -4855,6 +4870,173 @@ def delete_tracked_creator(tracking_id: str):
     if not res.data:
         return jsonify({"error": "tc.error.tracking_not_found"}), 404
     return "", 204
+
+
+# ── Scrape worker (sync, v0.15.2) ────────────────────────────────────────────
+# _scrape_creator() vive en app.py por ahora (llamada sync desde admin endpoint).
+# v0.15.3 lo envolverá en @celery_app.task + beat schedule.
+
+_SCRAPE_TIMEOUT_SEC = 90
+
+
+def _scrape_creator(creator_id: str) -> dict:
+    """Scrape reciente de reels de un creator. UPSERT en creator_reels_global.
+
+    Returns dict con:
+      - status: "ok" | "failed" | "private" | "not_found" | "in_progress" | "creator_not_found"
+      - reels_count: int (solo si status=ok)
+      - error: str (solo si status=failed)
+      - creator_id: str (echo)
+    """
+    # 1. Cargar creator.
+    try:
+        cr = (db.table("creators_global")
+                .select("id, ig_username, scrape_status")
+                .eq("id", creator_id)
+                .single()
+                .execute())
+        creator = cr.data
+    except Exception:
+        creator = None
+    if not creator:
+        return {"status": "creator_not_found", "creator_id": creator_id}
+
+    ig_username = creator["ig_username"]
+
+    # 2. Anti-race: UPDATE scrape_status='scraping' WHERE != 'scraping'.
+    lock = (db.table("creators_global")
+              .update({"scrape_status": "scraping", "last_error": None})
+              .eq("id", creator_id)
+              .neq("scrape_status", "scraping")
+              .execute())
+    if not lock.data:
+        return {"status": "in_progress", "creator_id": creator_id}
+
+    # 3. Llamada Apify (timeout 90s, propio, no reusa _scrape_ig_reels para no
+    #    afectar al flow de Métricas que usa 180s).
+    actor_url = (
+        f"https://api.apify.com/v2/acts/xMc5Ga1oCONPmWJIa"
+        f"/run-sync-get-dataset-items?token={APIFY_TOKEN}&memory=512"
+    )
+    payload = {
+        "username": [ig_username],
+        "resultsLimit": 10,
+        "includeSharesCount": True,
+    }
+
+    final_status = "ok"
+    last_error = None
+    items: list = []
+    try:
+        resp = requests.post(actor_url, json=payload, timeout=_SCRAPE_TIMEOUT_SEC)
+        # 404 user-not-found típico del actor; 400 puede ser private.
+        if resp.status_code == 404:
+            final_status = "not_found"
+        elif resp.status_code >= 400:
+            body_lc = (resp.text or "").lower()
+            if "private" in body_lc:
+                final_status = "private"
+            else:
+                final_status = "failed"
+                last_error = f"http_{resp.status_code}: {(resp.text or '')[:300]}"
+        else:
+            items = resp.json() or []
+            # Algunos actores devuelven 200 + array vacío para not_found/private.
+            # Buscamos pistas en el primer item si existe.
+            if items and isinstance(items[0], dict):
+                first = items[0]
+                if first.get("error"):
+                    err_lc = str(first.get("error")).lower()
+                    if "private" in err_lc:
+                        final_status = "private"
+                        items = []
+                    elif "not found" in err_lc or "not_found" in err_lc:
+                        final_status = "not_found"
+                        items = []
+                    else:
+                        final_status = "failed"
+                        last_error = str(first.get("error"))[:300]
+                        items = []
+                elif first.get("ownerIsPrivate") is True:
+                    final_status = "private"
+                    items = []
+    except requests.Timeout:
+        final_status = "failed"
+        last_error = "timeout"
+    except Exception as e:
+        logger.exception("scrape_creator apify call failed for %s: %s", ig_username, e)
+        final_status = "failed"
+        last_error = str(e)[:300]
+
+    # 4. UPSERT reels si tenemos items y status ok.
+    reels_count = 0
+    if final_status == "ok" and items:
+        rows = []
+        for item in items:
+            sc = item.get("shortCode") or item.get("id")
+            if not sc:
+                continue
+            rows.append({
+                "creator_id": creator_id,
+                "ig_reel_id": sc,
+                "caption": (item.get("caption") or "")[:2000],
+                "views": item.get("videoPlayCount") or item.get("videoViewCount") or 0,
+                "likes": item.get("likesCount") or 0,
+                "comments": item.get("commentsCount") or 0,
+                "posted_at": item.get("timestamp"),
+                "thumb_url": item.get("displayUrl"),
+                "video_url": item.get("videoUrl"),
+                "video_duration_sec": item.get("videoDuration"),
+                "fetched_at": datetime.now(timezone.utc).isoformat(),
+            })
+        if rows:
+            try:
+                db.table("creator_reels_global").upsert(
+                    rows, on_conflict="creator_id,ig_reel_id"
+                ).execute()
+                reels_count = len(rows)
+            except Exception as e:
+                logger.exception("upsert reels failed for %s: %s", ig_username, e)
+                final_status = "failed"
+                last_error = f"upsert: {str(e)[:200]}"
+
+    # 5. UPDATE final del creator.
+    update_payload = {
+        "scrape_status": final_status,
+        "last_scraped_at": datetime.now(timezone.utc).isoformat(),
+        "last_error": last_error,
+    }
+    try:
+        db.table("creators_global").update(update_payload).eq("id", creator_id).execute()
+    except Exception as e:
+        logger.exception("final update creators_global failed: %s", e)
+
+    out = {"status": final_status, "creator_id": creator_id, "ig_username": ig_username}
+    if final_status == "ok":
+        out["reels_count"] = reels_count
+    if last_error:
+        out["error"] = last_error
+    return out
+
+
+@app.route("/admin/scrape/<creator_id>", methods=["POST"])
+@require_auth
+@limiter.limit("3 per minute")
+def admin_scrape_creator(creator_id: str):
+    """Admin-only: trigger sync scrape de un creator. Tarda 30-90s.
+
+    Usa @limiter.limit("3 per minute") + check _is_admin(user). Si la env
+    ADMIN_EMAILS no está set, todos los users reciben 403 (fallback seguro).
+    """
+    user = current_user()
+    if not _is_admin(user):
+        return jsonify({"error": "forbidden"}), 403
+    result = _scrape_creator(creator_id)
+    # 200 para todos los outcomes "esperados" (incluido failed con detalle);
+    # 404 solo si el creator_id no existe en BD.
+    if result.get("status") == "creator_not_found":
+        return jsonify(result), 404
+    return jsonify(result), 200
 
 
 if __name__ == "__main__":
