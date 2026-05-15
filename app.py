@@ -4598,6 +4598,265 @@ def resend_webhook():
     return jsonify({"ok": True}), 200
 
 
+# ── Tracked Competitors (v0.15.0) ────────────────────────────────────────────
+# Feature para seguir competidores en IG. BD compartida (creators_global,
+# creator_reels_global) deduplicada entre users. user_tracked_creators es
+# privado por user; project_id solo lo usa Agency.
+
+TRACKED_CREATORS_LIMITS = {
+    "free":    {"enabled": False, "base_slots_global": 0,  "per_project_slots": None, "requires_project": False},
+    "pro":     {"enabled": True,  "base_slots_global": 1,  "per_project_slots": None, "requires_project": False},
+    "creator": {"enabled": True,  "base_slots_global": 5,  "per_project_slots": None, "requires_project": False},
+    "agency":  {"enabled": True,  "base_slots_global": 20, "per_project_slots": 5,    "requires_project": True},
+}
+
+
+def get_tracked_creators_limit(plan: str) -> dict:
+    return TRACKED_CREATORS_LIMITS.get(plan, TRACKED_CREATORS_LIMITS["free"])
+
+
+def get_user_extra_slots(user_id: str) -> int:
+    """Suma extra_slots de user_creator_credits no consumidos y no expirados.
+
+    El partial index del schema usa `WHERE consumed = false` (IMMUTABLE).
+    El filtro temporal (expires_at) se aplica en runtime aquí.
+    """
+    try:
+        now_iso = datetime.now(timezone.utc).isoformat()
+        rows = (db.table("user_creator_credits")
+                  .select("extra_slots, expires_at")
+                  .eq("user_id", user_id)
+                  .eq("consumed", False)
+                  .execute())
+        total = 0
+        for r in (rows.data or []):
+            exp = r.get("expires_at")
+            if exp is None or exp > now_iso:
+                total += int(r.get("extra_slots") or 0)
+        return total
+    except Exception as e:
+        logger.warning("get_user_extra_slots failed for %s: %s", user_id, e)
+        return 0
+
+
+def count_active_tracked(user_id: str, project_id: str | None = None,
+                          scope: str = "global") -> int:
+    """Cuenta tracked competitors activos (archived_at IS NULL) del user.
+
+    scope:
+      - "global": cuenta TODOS los tracking activos del user (sin importar project_id).
+      - "project": cuenta solo dentro del project_id pasado (debe ser != None).
+      - "no_project": cuenta solo donde project_id IS NULL (Pro/Creator).
+    """
+    try:
+        q = (db.table("user_tracked_creators")
+               .select("id", count="exact")
+               .eq("user_id", user_id)
+               .is_("archived_at", "null"))
+        if scope == "project":
+            if not project_id:
+                return 0
+            q = q.eq("project_id", project_id)
+        elif scope == "no_project":
+            q = q.is_("project_id", "null")
+        # scope == "global": no filter extra
+        r = q.execute()
+        return r.count or 0
+    except Exception as e:
+        logger.warning("count_active_tracked failed for %s: %s", user_id, e)
+        return 0
+
+
+@app.route("/api/tracked-creators", methods=["POST"])
+@require_auth
+@limiter.limit("10 per minute")
+def post_tracked_creator():
+    user = current_user()
+    profile = get_profile(user["id"])
+    plan = profile.get("plan", "free")
+    body = request.get_json() or {}
+
+    # 1. Validar input
+    ig_username = (body.get("ig_username") or "").strip().lstrip("@").lower()
+    if not re.match(r"^[a-zA-Z0-9._]{1,30}$", ig_username):
+        return jsonify({"error": "tc.error.invalid_username"}), 400
+
+    project_id = body.get("project_id") or None
+
+    # 2. Plan habilitado
+    limits = get_tracked_creators_limit(plan)
+    if not limits["enabled"]:
+        return jsonify({"error": "tc.error.upgrade_required"}), 403
+
+    # 3. project_id según plan
+    if plan == "agency":
+        if not project_id:
+            return jsonify({"error": "tc.error.project_required"}), 400
+        # Ownership: SOLO el owner del proyecto (no agency members).
+        proj = (db.table("projects")
+                  .select("id, user_id")
+                  .eq("id", project_id)
+                  .eq("user_id", user["id"])
+                  .execute())
+        if not proj.data:
+            return jsonify({"error": "tc.error.project_not_found"}), 404
+    else:
+        # Pro y Creator ignoran project_id si llega.
+        project_id = None
+
+    # 4. Validar límites
+    extra_slots = get_user_extra_slots(user["id"])
+    cap_global = limits["base_slots_global"] + extra_slots
+
+    if count_active_tracked(user["id"], scope="global") >= cap_global:
+        return jsonify({"error": "tc.error.plan_limit_reached", "limit": cap_global}), 403
+
+    if plan == "agency":
+        active_in_project = count_active_tracked(user["id"], project_id=project_id, scope="project")
+        if active_in_project >= limits["per_project_slots"]:
+            return jsonify({"error": "tc.error.project_limit_reached", "limit": limits["per_project_slots"]}), 403
+
+    # 5. UPSERT creator en creators_global (idempotente vía ON CONFLICT).
+    # Supabase-py no expone ON CONFLICT directo en upsert para retornar fila siempre,
+    # pero usar upsert con ignore_duplicates=False respeta unique constraint.
+    try:
+        ins = (db.table("creators_global")
+                 .upsert({"ig_username": ig_username}, on_conflict="ig_username")
+                 .execute())
+        creator_row = (ins.data or [None])[0]
+        if not creator_row:
+            # Si el upsert no devolvió fila (algunos drivers), re-leemos.
+            sel = db.table("creators_global").select("*").eq("ig_username", ig_username).single().execute()
+            creator_row = sel.data
+    except Exception as e:
+        logger.exception("upsert creators_global failed for %s: %s", ig_username, e)
+        return jsonify({"error": "tc.error.internal"}), 500
+
+    creator_id = creator_row["id"]
+
+    # 6. Idempotencia: ¿ya existe tracking activo?
+    existing_q = (db.table("user_tracked_creators")
+                    .select("id")
+                    .eq("user_id", user["id"])
+                    .eq("creator_id", creator_id)
+                    .is_("archived_at", "null"))
+    if project_id is None:
+        existing_q = existing_q.is_("project_id", "null")
+    else:
+        existing_q = existing_q.eq("project_id", project_id)
+    existing = existing_q.execute()
+    if existing.data:
+        return jsonify({"error": "tc.error.already_tracking"}), 409
+
+    # 7. INSERT tracking
+    payload = {
+        "user_id": user["id"],
+        "creator_id": creator_id,
+        "project_id": project_id,
+    }
+    try:
+        tr = db.table("user_tracked_creators").insert(payload).execute()
+        tracking_row = tr.data[0]
+    except Exception as e:
+        logger.exception("insert user_tracked_creators failed: %s", e)
+        return jsonify({"error": "tc.error.internal"}), 500
+
+    # 8. NO disparar scrape — el worker (v0.15.1) recogerá scrape_status='pending'
+    #    o reescaneará según next_scrape_due_at.
+    return jsonify({
+        "tracking": {
+            "id": tracking_row["id"],
+            "project_id": tracking_row.get("project_id"),
+            "added_at": tracking_row.get("added_at"),
+            "creator": {
+                "id": creator_row["id"],
+                "ig_username": creator_row["ig_username"],
+                "scrape_status": creator_row.get("scrape_status"),
+                "last_scraped_at": creator_row.get("last_scraped_at"),
+                "followers_count_cached": creator_row.get("followers_count_cached"),
+            },
+        }
+    }), 201
+
+
+@app.route("/api/tracked-creators", methods=["GET"])
+@require_auth
+def get_tracked_creators():
+    user = current_user()
+    profile = get_profile(user["id"])
+    plan = profile.get("plan", "free")
+    project_id = request.args.get("project_id")
+
+    limits = get_tracked_creators_limit(plan)
+    extra_slots = get_user_extra_slots(user["id"])
+
+    q = (db.table("user_tracked_creators")
+           .select("id, project_id, added_at, weekly_digest_enabled, "
+                   "creator:creators_global(id, ig_username, profile_data, "
+                   "followers_count_cached, last_scraped_at, scrape_status)")
+           .eq("user_id", user["id"])
+           .is_("archived_at", "null")
+           .order("added_at", desc=True))
+    if project_id:
+        q = q.eq("project_id", project_id)
+    rows = q.execute()
+    tracked = rows.data or []
+
+    # Conteo reels por creador (1 query agrupada)
+    creator_ids = [t["creator"]["id"] for t in tracked if t.get("creator")]
+    reels_count_map: dict[str, int] = {}
+    if creator_ids:
+        try:
+            # Supabase-py no soporta GROUP BY directo; hacemos N queries con count.
+            # Para N pequeño (<=20) es aceptable. Optimización futura: rpc.
+            for cid in creator_ids:
+                rc = (db.table("creator_reels_global")
+                        .select("id", count="exact")
+                        .eq("creator_id", cid)
+                        .execute())
+                reels_count_map[cid] = rc.count or 0
+        except Exception as e:
+            logger.warning("reels count failed: %s", e)
+
+    for t in tracked:
+        cid = t.get("creator", {}).get("id")
+        t["reels_count"] = reels_count_map.get(cid, 0)
+
+    return jsonify({
+        "tracked": tracked,
+        "limits": {
+            "plan": plan,
+            "enabled": limits["enabled"],
+            "base_slots_global": limits["base_slots_global"],
+            "extra_slots": extra_slots,
+            "total_cap_global": limits["base_slots_global"] + extra_slots,
+            "per_project_slots": limits["per_project_slots"],
+            "requires_project": limits["requires_project"],
+        },
+        "usage": {
+            "active_global": count_active_tracked(user["id"], scope="global"),
+        }
+    })
+
+
+@app.route("/api/tracked-creators/<tracking_id>", methods=["DELETE"])
+@require_auth
+def delete_tracked_creator(tracking_id: str):
+    user = current_user()
+    # Soft delete con ownership inline (RLS también lo enforcearía, pero el
+    # backend usa service_role que bypassa; validamos explícitamente).
+    now_iso = datetime.now(timezone.utc).isoformat()
+    res = (db.table("user_tracked_creators")
+             .update({"archived_at": now_iso})
+             .eq("id", tracking_id)
+             .eq("user_id", user["id"])
+             .is_("archived_at", "null")
+             .execute())
+    if not res.data:
+        return jsonify({"error": "tc.error.tracking_not_found"}), 404
+    return "", 204
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5555))
     app.run(debug=True, host="0.0.0.0", port=port)
