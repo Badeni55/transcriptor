@@ -130,3 +130,59 @@ ALTER TABLE public.email_log       ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users see own scripts" ON public.saved_scripts
   FOR ALL USING (auth.uid() = user_id);
+
+
+-- ═══════════════════════════════════════════════════════════════
+-- v0.15.0 — Tracked Competitors
+-- Aplicado vía supabase/migrations/20260515091500_tracked_competitors.sql
+-- (Las RLS policies y el trigger lowercase viven en el archivo de migración.)
+-- ═══════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS public.creators_global (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  ig_username text UNIQUE NOT NULL,
+  profile_data jsonb NOT NULL DEFAULT '{}'::jsonb,
+  followers_count_cached integer,
+  last_scraped_at timestamptz,
+  next_scrape_due_at timestamptz,
+  scrape_status text NOT NULL DEFAULT 'pending'
+    CHECK (scrape_status IN ('pending','scraping','ok','failed','not_found','private')),
+  last_error text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.creator_reels_global (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  creator_id uuid NOT NULL REFERENCES public.creators_global(id) ON DELETE CASCADE,
+  ig_reel_id text NOT NULL,
+  caption text,
+  views bigint DEFAULT 0,
+  likes bigint DEFAULT 0,
+  comments bigint DEFAULT 0,
+  posted_at timestamptz,
+  thumb_url text,
+  video_url text,
+  video_duration_sec numeric(6,2),
+  fetched_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(creator_id, ig_reel_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.user_tracked_creators (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  creator_id uuid NOT NULL REFERENCES public.creators_global(id) ON DELETE CASCADE,
+  project_id uuid REFERENCES public.projects(id) ON DELETE CASCADE,
+  added_at timestamptz NOT NULL DEFAULT now(),
+  archived_at timestamptz,
+  weekly_digest_enabled boolean NOT NULL DEFAULT true
+);
+
+CREATE TABLE IF NOT EXISTS public.user_creator_credits (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  extra_slots integer NOT NULL DEFAULT 0,
+  purchased_at timestamptz NOT NULL DEFAULT now(),
+  expires_at timestamptz,
+  stripe_payment_intent_id text,
+  consumed boolean NOT NULL DEFAULT false
+);
