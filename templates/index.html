@@ -3301,7 +3301,9 @@
       gap: var(--space-md);
       /* v0.14.34: padding 22px literal — no encaja en escala xs/sm/md/lg. Deuda futura. */
       min-height: 160px; padding: 22px;
-      background: linear-gradient(180deg, #1f1a22 0%, #171218 100%);
+      /* v0.14.44.d: migrado a var(--ideas-card-top/bot) — antes hardcoded.
+         Drift previo en .b y .c desincronizó este selector de las vars. */
+      background: linear-gradient(180deg, var(--ideas-card-top) 0%, var(--ideas-card-bot) 100%);
       border: 1px solid rgba(255,255,255,.06);
       border-radius: 16px;
       color: var(--text); text-align: left; cursor: pointer;
@@ -5142,8 +5144,11 @@
       --ink-cream: #c4b896;
       --ink-ghost: #6a6258;
       --ink-body: #d4c9a9;
-      --ideas-card-top: #1f1a22;
-      --ideas-card-bot: #171218;
+      /* v0.14.44.d: subidos para superar --surf #1c1f29 (L=0.01388). Promedio
+         del gradient L=0.01601 (+15% sobre --surf). Hue púrpura ~286-290°
+         conservado. Restaura jerarquía: cards 'ricas' > cards planas. */
+      --ideas-card-top: #2d2532;
+      --ideas-card-bot: #1e1923;
       --font-editorial: 'Fraunces', 'Instrument Serif', serif;
       --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
     }
