@@ -366,9 +366,10 @@ def scrape_creator_task(creator_id: str) -> dict:
         return {"status": "in_progress", "creator_id": creator_id, "ig_username": ig_username}
 
     # 3. Llamada Apify sync (timeout 240s; server-side limit Apify ~300s).
+    # v0.15.2.b: memory 512→1024 (default oficial del actor apify/instagram-reel-scraper).
     actor_url = (
         f"https://api.apify.com/v2/acts/xMc5Ga1oCONPmWJIa"
-        f"/run-sync-get-dataset-items?token={APIFY_TOKEN}&memory=512"
+        f"/run-sync-get-dataset-items?token={APIFY_TOKEN}&memory=1024"
     )
     payload = {
         "username": [ig_username],
@@ -380,7 +381,12 @@ def scrape_creator_task(creator_id: str) -> dict:
     last_error = None
     items: list = []
     try:
+        # v0.15.2.b: logging Apify request/response (cierra laguna observabilidad).
+        logger.info("[scrape] Apify request — url: %s, payload: %s",
+                    actor_url.split("?")[0], payload)
         resp = requests.post(actor_url, json=payload, timeout=SCRAPE_TIMEOUT_SEC)
+        logger.info("[scrape] Apify response — status: %d, body: %s",
+                    resp.status_code, (resp.text or "")[:500])
         if resp.status_code == 404:
             final_status = "not_found"
         elif resp.status_code >= 400:
@@ -394,17 +400,24 @@ def scrape_creator_task(creator_id: str) -> dict:
             items = resp.json() or []
             if items and isinstance(items[0], dict):
                 first = items[0]
+                # v0.15.2.b: concatenar error + errorDescription. Caso real:
+                # pedrocavadas devuelve error="no_items" pero errorDescription
+                # incluye "private" — antes caía a 'failed', ahora a 'private'.
+                err = first.get("error") or ""
+                err_desc = first.get("errorDescription") or ""
+                combined_lc = (str(err) + " " + str(err_desc)).lower()
                 if first.get("error"):
-                    err_lc = str(first.get("error")).lower()
-                    if "private" in err_lc:
+                    if "private" in combined_lc:
                         final_status = "private"
                         items = []
-                    elif "not found" in err_lc or "not_found" in err_lc:
+                    elif "not found" in combined_lc or "not_found" in combined_lc:
                         final_status = "not_found"
                         items = []
                     else:
                         final_status = "failed"
-                        last_error = str(first.get("error"))[:300]
+                        last_error = (
+                            (str(err) + " — " + str(err_desc))[:300] if err_desc else str(err)[:300]
+                        )
                         items = []
                 elif first.get("ownerIsPrivate") is True:
                     final_status = "private"
