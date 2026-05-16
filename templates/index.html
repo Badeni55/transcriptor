@@ -20213,8 +20213,11 @@ function renderCompetitorFeed(reels) {
   const VIEWS = lang === "en" ? "views" : "vistas";
   host.innerHTML = reels.map(r => {
     const owner = r.creator && r.creator.ig_username ? "@" + esc(r.creator.ig_username) : "";
-    const thumb = r.thumb_url
-      ? `<img class="comp-reel-thumb" src="${esc(r.thumb_url)}" alt="" loading="lazy">`
+    // v0.15.3.a: prioriza thumb_b64 (data URL persistente) → thumb_url (CDN IG,
+    // expira y bloquea hotlink) → placeholder.
+    const thumbSrc = r.thumb_b64 || r.thumb_url || null;
+    const thumb = thumbSrc
+      ? `<img class="comp-reel-thumb" src="${esc(thumbSrc)}" alt="" loading="lazy">`
       : `<div class="comp-reel-thumb-empty">🎬</div>`;
     const caption = esc((r.caption || "").trim() || (lang === "en" ? "(no caption)" : "(sin caption)"));
     const views = Number(r.views || 0).toLocaleString(lang === "en" ? "en-US" : "es-ES");

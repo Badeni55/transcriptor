@@ -439,6 +439,11 @@ def scrape_creator_task(creator_id: str) -> dict:
             sc = item.get("shortCode") or item.get("id")
             if not sc:
                 continue
+            # v0.15.3.a: descarga thumb + b64 (URL IG expira/bloquea hotlink).
+            # Reusa helper _download_thumbnail_b64 ya disponible en tasks.py:17
+            # (mismo helper que transcribe_task). En serie (~1-3s × 10 reels);
+            # paralelizar si se detecta lentitud (deuda anotada).
+            display_url = item.get("displayUrl")
             rows.append({
                 "creator_id": creator_id,
                 "ig_reel_id": sc,
@@ -447,7 +452,8 @@ def scrape_creator_task(creator_id: str) -> dict:
                 "likes": item.get("likesCount") or 0,
                 "comments": item.get("commentsCount") or 0,
                 "posted_at": item.get("timestamp"),
-                "thumb_url": item.get("displayUrl"),
+                "thumb_url": display_url,
+                "thumb_b64": _download_thumbnail_b64(display_url),
                 "video_url": item.get("videoUrl"),
                 "video_duration_sec": item.get("videoDuration"),
                 "fetched_at": datetime.now(timezone.utc).isoformat(),

@@ -161,6 +161,7 @@ CREATE TABLE IF NOT EXISTS public.creator_reels_global (
   comments bigint DEFAULT 0,
   posted_at timestamptz,
   thumb_url text,
+  thumb_b64 text,
   video_url text,
   video_duration_sec numeric(6,2),
   fetched_at timestamptz NOT NULL DEFAULT now(),
