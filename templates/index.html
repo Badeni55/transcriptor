@@ -5697,6 +5697,169 @@
     }
     .ideas-scripted-pointer:hover { gap: 12px; color: #76dbb6; }
 
+    /* ── v0.15.3: tab Competidores ──────────────────────────── */
+    .comp-toolbar {
+      display: flex; align-items: center; gap: var(--space-md);
+      flex-wrap: wrap; margin-bottom: var(--space-md);
+    }
+    .comp-chips {
+      display: flex; gap: 6px; flex-wrap: wrap; flex: 1; min-width: 0;
+    }
+    .comp-chip {
+      position: relative;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surf);
+      color: var(--text2);
+      font-size: .82rem;
+      font-family: var(--font-body);
+      cursor: pointer;
+      transition: border-color .15s, color .15s, background .15s;
+    }
+    .comp-chip:hover { border-color: rgba(249,115,22,.4); color: var(--text); }
+    .comp-chip.on {
+      border-color: var(--brand);
+      color: var(--brand);
+      background: rgba(249,115,22,.08);
+    }
+    .comp-chip-username { font-weight: 500; }
+    .comp-chip-badge {
+      font-size: .62rem; font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .comp-chip-badge.is-scraping { background: rgba(249,115,22,.18); color: var(--brand); }
+    .comp-chip-badge.is-private,
+    .comp-chip-badge.is-not_found { background: rgba(239,68,68,.15); color: #f87171; }
+    .comp-chip-badge.is-failed { background: var(--surf2); color: var(--text3); }
+    .comp-chip-remove {
+      width: 14px; height: 14px;
+      border: 0; background: transparent;
+      color: var(--text3); cursor: pointer;
+      font-size: 1rem; line-height: 1;
+      padding: 0; margin-left: 2px;
+      opacity: 0; transition: opacity .15s, color .15s;
+    }
+    .comp-chip:hover .comp-chip-remove { opacity: 1; }
+    .comp-chip-remove:hover { color: #f87171; }
+    .comp-chip.is-all .comp-chip-remove { display: none; }
+    .comp-sort-bar {
+      display: flex; gap: 4px;
+      margin-bottom: var(--space-md);
+      flex-wrap: wrap;
+    }
+    .comp-sort-btn {
+      padding: 5px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surf);
+      color: var(--text2);
+      font-size: .75rem;
+      cursor: pointer;
+      font-family: var(--font-body);
+      transition: all .15s;
+    }
+    .comp-sort-btn:hover { color: var(--text); }
+    .comp-sort-btn.on {
+      background: var(--brand); color: #fff;
+      border-color: var(--brand);
+    }
+    .comp-feed {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: var(--space-md);
+    }
+    .comp-reel-card {
+      background: var(--surf);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: transform .15s ease-out, box-shadow .15s, border-color .15s;
+      cursor: default;
+    }
+    .comp-reel-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(249,115,22,.3);
+      box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    }
+    .comp-reel-thumb {
+      width: 100%; aspect-ratio: 4/5; object-fit: cover; display: block;
+      background: var(--surf2);
+    }
+    .comp-reel-thumb-empty {
+      width: 100%; aspect-ratio: 4/5;
+      background: linear-gradient(135deg, rgba(249,115,22,.12), rgba(249,115,22,.04));
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text3); font-size: 2rem;
+    }
+    .comp-reel-body { padding: var(--space-md); }
+    .comp-reel-owner {
+      font-size: .72rem; color: var(--text3);
+      margin-bottom: 6px; font-weight: 600;
+      text-transform: lowercase; letter-spacing: .02em;
+    }
+    .comp-reel-caption {
+      font-size: .85rem; color: var(--text);
+      line-height: 1.4;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 3.6em;
+      margin-bottom: 10px;
+    }
+    .comp-reel-meta {
+      display: flex; gap: 12px;
+      font-size: .72rem; color: var(--text3);
+      font-variant-numeric: tabular-nums;
+    }
+    .comp-reel-meta span { display: inline-flex; align-items: center; gap: 3px; }
+    .comp-reel-meta-date { margin-left: auto; }
+    .comp-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 56px 24px;
+      border: 1px dashed rgba(249,115,22,.18);
+      border-radius: 18px;
+      background: rgba(249,115,22,.025);
+    }
+    .comp-empty img {
+      width: 80px; height: 80px;
+      image-rendering: pixelated;
+      margin: 0 auto 16px;
+      display: block;
+      filter: drop-shadow(0 0 18px rgba(249,106,41,.22));
+    }
+    .comp-empty-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem; color: var(--text);
+      margin-bottom: 8px; line-height: 1.2;
+      letter-spacing: -.015em;
+    }
+    .comp-empty-sub {
+      font-size: .92rem; color: var(--text2);
+      line-height: 1.5; max-width: 420px;
+      margin: 0 auto 16px;
+    }
+    /* Skeleton para feed mientras carga. */
+    .comp-skel-card {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+    }
+    .comp-skel-thumb {
+      width: 100%; aspect-ratio: 4/5;
+      background: rgba(255,255,255,.04);
+      animation: skelPulse 1.4s ease-in-out infinite;
+    }
+    [data-theme="light"] .comp-skel-thumb { background: rgba(0,0,0,.04); }
+    @media (max-width: 640px) {
+      .comp-feed { grid-template-columns: repeat(2, 1fr); gap: var(--space-sm); }
+      .comp-reel-body { padding: var(--space-sm); }
+      .comp-reel-caption { font-size: .78rem; min-height: 2.5em; -webkit-line-clamp: 2; }
+    }
+
     /* Empty state */
     .ideas-empty-editorial {
       /* v0.14.41: centrado para que mascota+texto formen unidad visual. */
@@ -9791,10 +9954,11 @@
           </div>
         </div>
 
-        <!-- v0.14.26: Tab navigator Sugeridas / Guardadas -->
+        <!-- v0.14.26: Tab navigator. v0.15.3: añadido 3er tab Competidores. -->
         <div class="ideas-tabs">
           <button class="ideas-tab" id="ideasTabSuggested" onclick="ideasTab('suggested')" data-i18n-es="Sugeridas" data-i18n-en="Suggested">Sugeridas</button>
           <button class="ideas-tab on" id="ideasTabSaved" onclick="ideasTab('saved')" data-i18n-es="Guardadas" data-i18n-en="Saved">Guardadas</button>
+          <button class="ideas-tab" id="ideasTabCompetitors" onclick="ideasTab('competitors')" data-i18n="ideas.tab_competitors">Competidores</button>
         </div>
 
         <!-- v0.14.26: Panel sugeridas (Phase 1) -->
@@ -9880,7 +10044,24 @@
         </div>
 
         </div><!-- /#ideasPanelSaved -->
-      </div>
+
+        <!-- v0.15.3: panel Competidores. Chips de cada creator activo + sort + feed unificado. -->
+        <div id="ideasPanelCompetitors" style="display:none">
+          <div class="comp-toolbar">
+            <div class="comp-chips" id="compChips"></div>
+            <button class="comp-add-btn empty-cta" onclick="openAddCompetitorModal()" style="margin:0;padding:10px 16px;font-size:.85rem" data-i18n="comp.add">+ Añadir</button>
+          </div>
+          <div class="comp-sort-bar" id="compSortBar">
+            <button class="comp-sort-btn on" data-sort="recent" onclick="compSetSort('recent')" data-i18n="comp.sort_recent">Recientes</button>
+            <button class="comp-sort-btn" data-sort="views" onclick="compSetSort('views')" data-i18n="comp.sort_views">Más vistos</button>
+            <button class="comp-sort-btn" data-sort="likes" onclick="compSetSort('likes')" data-i18n="comp.sort_likes">Más likes</button>
+          </div>
+          <div id="compFeed" class="comp-feed">
+            <!-- JS rellena: skeleton inicial, luego feed real o empty state. -->
+          </div>
+        </div>
+
+        </div><!-- /#profPanelIdeas wrapper close fixed -->
 
       <!-- v0.14.39: #profPanelTeam y #profPanelPrivacy eliminados. Su contenido vive
            ahora dentro de #profPanelSettings > #settingsTabTeam y #settingsTabPrivacy. -->
@@ -10364,6 +10545,26 @@
 <!-- v0.14.38: nuevo toast container (stack queue, 4 tipos). -->
 <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="false"></div>
 
+<!-- v0.15.3: modal añadir competidor (reusa estilo .overlay + .modal del confirmModal). -->
+<div class="overlay" id="addCompetitorOverlay" onclick="if(event.target===this)closeAddCompetitorModal()">
+  <div class="modal" style="max-width:440px">
+    <button class="modal-x" onclick="closeAddCompetitorModal()" aria-label="Close">×</button>
+    <h2 data-i18n="comp.add_modal_title">Añadir competidor</h2>
+    <p style="font-size:.88rem;color:var(--text2);margin:8px 0 16px;line-height:1.5"
+       data-i18n="comp.add_modal_sub">Sigue a un creador para ver sus reels más recientes.</p>
+    <input id="addCompInput" type="text" placeholder="@username"
+           autocomplete="off" autocapitalize="off" spellcheck="false"
+           onkeydown="if(event.key==='Enter'){event.preventDefault();submitAddCompetitor()}"
+           style="width:100%;padding:12px 14px;background:var(--surf2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:1rem;font-family:var(--font-body);outline:none;margin-bottom:12px" />
+    <select id="addCompProject" style="display:none;width:100%;padding:10px 12px;background:var(--surf2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:.9rem;margin-bottom:12px"></select>
+    <div id="addCompErr" style="font-size:.82rem;color:#f87171;min-height:1.2em;margin-bottom:8px"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn-sm" onclick="closeAddCompetitorModal()" data-i18n="common.cancel">Cancelar</button>
+      <button class="btn-sm empty-cta" id="addCompSubmitBtn" onclick="submitAddCompetitor()" style="margin:0;padding:8px 18px;font-size:.82rem" data-i18n="comp.add_modal_btn">Añadir</button>
+    </div>
+  </div>
+</div>
+
 <!-- v0.14.38: modal confirm reutilizable. -->
 <div class="overlay" id="confirmModalOverlay" onclick="backdropCloseConfirmModal(event)">
   <div class="modal" style="max-width:440px">
@@ -10509,6 +10710,15 @@ const LANGS = {
     "tc.error.project_limit_reached": "Has alcanzado el límite de competidores en este proyecto.",
     "tc.error.already_tracking": "Ya estás siguiendo a este competidor.",
     "tc.error.tracking_not_found": "Competidor no encontrado.",
+    // v0.15.3: tab Competidores en Ideas.
+    "ideas.tab_competitors": "Competidores",
+    "comp.add": "+ Añadir",
+    "comp.sort_recent": "Recientes",
+    "comp.sort_views": "Más vistos",
+    "comp.sort_likes": "Más likes",
+    "comp.add_modal_title": "Añadir competidor",
+    "comp.add_modal_sub": "Sigue a un creador para ver sus reels más recientes.",
+    "comp.add_modal_btn": "Añadir",
     "ideas.regenerate": "Regenerar",
     "ideas.to_script": "Crear guión",
     "ideas.fab_tooltip": "Apunta una idea",
@@ -10967,6 +11177,15 @@ const LANGS = {
     "tc.error.project_limit_reached": "You've reached the competitor limit for this project.",
     "tc.error.already_tracking": "You're already tracking this competitor.",
     "tc.error.tracking_not_found": "Competitor not found.",
+    // v0.15.3: Competitors tab in Ideas.
+    "ideas.tab_competitors": "Competitors",
+    "comp.add": "+ Add",
+    "comp.sort_recent": "Recent",
+    "comp.sort_views": "Most viewed",
+    "comp.sort_likes": "Most liked",
+    "comp.add_modal_title": "Add competitor",
+    "comp.add_modal_sub": "Follow a creator to see their recent reels.",
+    "comp.add_modal_btn": "Add",
     "ideas.regenerate": "Regenerate",
     "ideas.to_script": "Create script",
     "ideas.fab_tooltip": "Capture an idea",
@@ -15713,19 +15932,31 @@ function ideasTab(name, persist) {
   }
   const tabSug = document.getElementById("ideasTabSuggested");
   const tabSav = document.getElementById("ideasTabSaved");
+  const tabCmp = document.getElementById("ideasTabCompetitors");  // v0.15.3
   const panSug = document.getElementById("ideasPanelSuggested");
   const panSav = document.getElementById("ideasPanelSaved");
+  const panCmp = document.getElementById("ideasPanelCompetitors");  // v0.15.3
   if (!tabSug || !tabSav || !panSug || !panSav) return;
+  // Clear all .on
+  tabSug.classList.remove("on");
+  tabSav.classList.remove("on");
+  if (tabCmp) tabCmp.classList.remove("on");
+  // Hide all panels
+  panSug.style.display = "none";
+  panSav.style.display = "none";
+  if (panCmp) panCmp.style.display = "none";
   if (name === "suggested") {
-    tabSug.classList.add("on"); tabSav.classList.remove("on");
-    panSug.style.display = ""; panSav.style.display = "none";
-    // Refresca estado interno (empty vs results)
+    tabSug.classList.add("on");
+    panSug.style.display = "";
     _renderSuggestionsState();
-    // v0.14.26a: oculta textarea user_context si el user ya tiene reels/transcripciones
     _refreshSuggestContextVisibility();
+  } else if (name === "competitors") {
+    if (tabCmp) tabCmp.classList.add("on");
+    if (panCmp) panCmp.style.display = "";
+    loadCompetitors();  // v0.15.3
   } else {
-    tabSav.classList.add("on"); tabSug.classList.remove("on");
-    panSav.style.display = ""; panSug.style.display = "none";
+    tabSav.classList.add("on");
+    panSav.style.display = "";
   }
   try {
     window.posthog && window.posthog.capture("ideas_tab_switched", { tab: name });
@@ -19850,6 +20081,362 @@ window.addEventListener("DOMContentLoaded", () => {
     setTimeout(startTour, 800);
   }
 });
+
+// ── v0.15.3: Tab Competidores ───────────────────────────────────────────────
+// Estado local: filtro por creator_id (null = "Todos") + sort.
+window._compFilterCreatorId = null;
+window._compSort = "recent";
+window._compTrackedCache = null;  // cache de tracked-creators del último load
+
+async function loadCompetitors() {
+  // 1. GET tracked-creators
+  try {
+    const r = await fetch("/api/tracked-creators", { credentials: "same-origin" });
+    if (!r.ok) {
+      _compRenderEmpty("error");
+      return;
+    }
+    const d = await r.json();
+    window._compTrackedCache = d;
+    renderCompetitorChips(d);
+    const plan = (st && st.plan) || "free";
+    if (!d.limits || !d.limits.enabled) {
+      _compRenderFreeUpsell();
+      return;
+    }
+    if (!d.tracked || d.tracked.length === 0) {
+      _compRenderEmpty("no_competitors");
+      return;
+    }
+    // Si todos los competidores están scraping/pending, empty especial.
+    const allPending = d.tracked.every(t => {
+      const s = (t.creator || {}).scrape_status;
+      return s === "pending" || s === "scraping";
+    });
+    if (allPending) {
+      _compRenderEmpty("analyzing");
+      return;
+    }
+    loadCompetitorsFeed();
+  } catch (e) {
+    _compRenderEmpty("error");
+  }
+}
+
+function renderCompetitorChips(d) {
+  const host = document.getElementById("compChips");
+  if (!host) return;
+  const tracked = (d && d.tracked) || [];
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const ALL = lang === "en" ? "All" : "Todos";
+  let html = `<button type="button" class="comp-chip is-all${window._compFilterCreatorId == null ? " on" : ""}" onclick="compSetFilter(null)">
+    <span class="comp-chip-username">${esc(ALL)}</span>
+    <span class="comp-chip-badge" style="background:var(--surf2);color:var(--text3)">${tracked.length}</span>
+  </button>`;
+  tracked.forEach(t => {
+    const c = t.creator || {};
+    const status = c.scrape_status || "pending";
+    const isOn = window._compFilterCreatorId === c.id;
+    const badge = _compStatusBadge(status, lang);
+    html += `<button type="button" class="comp-chip${isOn ? " on" : ""}" onclick="compSetFilter('${esc(c.id)}')">
+      <span class="comp-chip-username">@${esc(c.ig_username || "")}</span>
+      ${badge}
+      <button type="button" class="comp-chip-remove" onclick="event.stopPropagation();removeCompetitor('${esc(t.id)}','${esc(c.ig_username || "")}')" aria-label="Remove">×</button>
+    </button>`;
+  });
+  host.innerHTML = html;
+}
+
+function _compStatusBadge(status, lang) {
+  const labels = {
+    pending:   lang === "en" ? "Analyzing…" : "Analizando…",
+    scraping:  lang === "en" ? "Analyzing…" : "Analizando…",
+    private:   lang === "en" ? "Private"    : "Privada",
+    not_found: lang === "en" ? "Not found"  : "No existe",
+    failed:    lang === "en" ? "Unavailable": "No disponible",
+  };
+  const lbl = labels[status];
+  if (!lbl) return "";
+  return `<span class="comp-chip-badge is-${esc(status)}" title="${status === "failed" ? (lang === "en" ? "Account too large or not accessible" : "Cuenta muy grande o no accesible") : ""}">${esc(lbl)}</span>`;
+}
+
+function compSetFilter(creatorId) {
+  window._compFilterCreatorId = creatorId;
+  renderCompetitorChips(window._compTrackedCache);
+  loadCompetitorsFeed();
+}
+
+function compSetSort(sort) {
+  window._compSort = sort;
+  document.querySelectorAll(".comp-sort-btn").forEach(b => b.classList.toggle("on", b.dataset.sort === sort));
+  loadCompetitorsFeed();
+}
+
+async function loadCompetitorsFeed() {
+  const host = document.getElementById("compFeed");
+  if (!host) return;
+  // Skeleton mientras carga.
+  host.innerHTML = `
+    <article class="comp-skel-card"><div class="comp-skel-thumb"></div></article>
+    <article class="comp-skel-card"><div class="comp-skel-thumb"></div></article>
+    <article class="comp-skel-card"><div class="comp-skel-thumb"></div></article>
+    <article class="comp-skel-card"><div class="comp-skel-thumb"></div></article>`;
+  const params = new URLSearchParams({ sort: window._compSort, limit: "20" });
+  if (window._compFilterCreatorId) params.set("creator_id", window._compFilterCreatorId);
+  try {
+    const r = await fetch("/api/tracked-creators/reels?" + params.toString(), { credentials: "same-origin" });
+    if (!r.ok) { _compRenderEmpty("error"); return; }
+    const d = await r.json();
+    renderCompetitorFeed(d.reels || []);
+  } catch (e) {
+    _compRenderEmpty("error");
+  }
+}
+
+function renderCompetitorFeed(reels) {
+  const host = document.getElementById("compFeed");
+  if (!host) return;
+  if (!reels.length) {
+    // Distinguir si filtro está en un competidor scraping/private.
+    const fid = window._compFilterCreatorId;
+    if (fid && window._compTrackedCache) {
+      const t = (window._compTrackedCache.tracked || []).find(x => (x.creator || {}).id === fid);
+      const s = t && t.creator && t.creator.scrape_status;
+      if (s === "pending" || s === "scraping") return _compRenderEmpty("analyzing_one");
+      if (s === "private") return _compRenderEmpty("private_one");
+      if (s === "not_found") return _compRenderEmpty("not_found_one");
+      if (s === "failed") return _compRenderEmpty("failed_one");
+    }
+    return _compRenderEmpty("no_reels");
+  }
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const VIEWS = lang === "en" ? "views" : "vistas";
+  host.innerHTML = reels.map(r => {
+    const owner = r.creator && r.creator.ig_username ? "@" + esc(r.creator.ig_username) : "";
+    const thumb = r.thumb_url
+      ? `<img class="comp-reel-thumb" src="${esc(r.thumb_url)}" alt="" loading="lazy">`
+      : `<div class="comp-reel-thumb-empty">🎬</div>`;
+    const caption = esc((r.caption || "").trim() || (lang === "en" ? "(no caption)" : "(sin caption)"));
+    const views = Number(r.views || 0).toLocaleString(lang === "en" ? "en-US" : "es-ES");
+    const likes = Number(r.likes || 0).toLocaleString(lang === "en" ? "en-US" : "es-ES");
+    const dateTxt = r.posted_at ? ovRelTime(r.posted_at) : "";
+    return `<article class="comp-reel-card">
+      ${thumb}
+      <div class="comp-reel-body">
+        <div class="comp-reel-owner">${owner}</div>
+        <div class="comp-reel-caption">${caption}</div>
+        <div class="comp-reel-meta">
+          <span>${views} ${VIEWS}</span>
+          <span>${likes} ♥</span>
+          <span class="comp-reel-meta-date">${esc(dateTxt)}</span>
+        </div>
+      </div>
+    </article>`;
+  }).join("");
+}
+
+function _compRenderEmpty(kind) {
+  const host = document.getElementById("compFeed");
+  if (!host) return;
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const M = lang === "en" ? {
+    free_t:   "Follow your competitors with Creator",
+    free_s:   "Get inspired by what's working in your niche.",
+    free_cta: "View plans →",
+    no_comp_t: "You're not following anyone yet",
+    no_comp_s: "Add a competitor to start tracking their recent reels.",
+    no_comp_cta: "+ Add competitor",
+    analyzing_t: "Analyzing your competitors",
+    analyzing_s: "We're fetching their recent reels. Check back in a few minutes.",
+    no_reels_t: "No reels to show",
+    no_reels_s: "Try another competitor or change the sort.",
+    error_t: "Couldn't load competitors",
+    error_s: "Refresh the page or try again later.",
+    analyzing_one_t: "Analyzing this competitor",
+    analyzing_one_s: "Check back in 1-2 minutes.",
+    private_one_t: "Private account",
+    private_one_s: "This account is private or blocked by Instagram.",
+    not_found_one_t: "Account not found",
+    not_found_one_s: "We couldn't find this username on Instagram.",
+    failed_one_t: "Couldn't fetch this competitor",
+    failed_one_s: "Account too large or not accessible right now.",
+  } : {
+    free_t:   "Sigue a tus competidores con Creator",
+    free_s:   "Inspírate con lo que funciona en tu nicho.",
+    free_cta: "Ver planes →",
+    no_comp_t: "Aún no sigues a nadie",
+    no_comp_s: "Añade un competidor para empezar a ver sus reels recientes.",
+    no_comp_cta: "+ Añadir competidor",
+    analyzing_t: "Analizando tus competidores",
+    analyzing_s: "Estamos cargando sus reels. Vuelve en unos minutos.",
+    no_reels_t: "Sin reels para mostrar",
+    no_reels_s: "Prueba con otro competidor o cambia el orden.",
+    error_t: "No pudimos cargar tus competidores",
+    error_s: "Recarga la página o vuelve a intentar.",
+    analyzing_one_t: "Analizando este competidor",
+    analyzing_one_s: "Vuelve en 1-2 minutos.",
+    private_one_t: "Cuenta privada",
+    private_one_s: "Esta cuenta es privada o está bloqueada por Instagram.",
+    not_found_one_t: "Cuenta no encontrada",
+    not_found_one_s: "No pudimos encontrar este usuario en Instagram.",
+    failed_one_t: "No pudimos cargar este competidor",
+    failed_one_s: "Cuenta muy grande o no accesible ahora.",
+  };
+  const mascot = "/static/img/hooks/hooks-ideas.svg";
+  let html;
+  if (kind === "no_competitors") {
+    html = `<div class="comp-empty"><img src="${mascot}" alt="" aria-hidden="true">
+      <div class="comp-empty-title">${M.no_comp_t}</div>
+      <div class="comp-empty-sub">${M.no_comp_s}</div>
+      <button class="empty-cta" onclick="openAddCompetitorModal()">${M.no_comp_cta}</button></div>`;
+  } else if (kind === "analyzing") {
+    html = `<div class="comp-empty"><img src="${mascot}" alt="" aria-hidden="true">
+      <div class="comp-empty-title">${M.analyzing_t}</div>
+      <div class="comp-empty-sub">${M.analyzing_s}</div></div>`;
+  } else if (kind === "no_reels") {
+    html = `<div class="comp-empty"><img src="${mascot}" alt="" aria-hidden="true">
+      <div class="comp-empty-title">${M.no_reels_t}</div>
+      <div class="comp-empty-sub">${M.no_reels_s}</div></div>`;
+  } else if (kind === "analyzing_one") {
+    html = `<div class="comp-empty"><img src="${mascot}" alt="" aria-hidden="true">
+      <div class="comp-empty-title">${M.analyzing_one_t}</div>
+      <div class="comp-empty-sub">${M.analyzing_one_s}</div></div>`;
+  } else if (kind === "private_one") {
+    html = `<div class="comp-empty"><img src="${mascot}" alt="" aria-hidden="true">
+      <div class="comp-empty-title">${M.private_one_t}</div>
+      <div class="comp-empty-sub">${M.private_one_s}</div></div>`;
+  } else if (kind === "not_found_one") {
+    html = `<div class="comp-empty"><img src="${mascot}" alt="" aria-hidden="true">
+      <div class="comp-empty-title">${M.not_found_one_t}</div>
+      <div class="comp-empty-sub">${M.not_found_one_s}</div></div>`;
+  } else if (kind === "failed_one") {
+    html = `<div class="comp-empty"><img src="${mascot}" alt="" aria-hidden="true">
+      <div class="comp-empty-title">${M.failed_one_t}</div>
+      <div class="comp-empty-sub">${M.failed_one_s}</div></div>`;
+  } else {  // "error"
+    html = `<div class="comp-empty"><img src="${mascot}" alt="" aria-hidden="true">
+      <div class="comp-empty-title">${M.error_t}</div>
+      <div class="comp-empty-sub">${M.error_s}</div></div>`;
+  }
+  host.innerHTML = html;
+}
+
+function _compRenderFreeUpsell() {
+  const host = document.getElementById("compFeed");
+  if (!host) return;
+  // También ocultamos toolbar/sort en free (no aplica).
+  const tb = document.querySelector("#ideasPanelCompetitors .comp-toolbar");
+  const sb = document.getElementById("compSortBar");
+  if (tb) tb.style.display = "none";
+  if (sb) sb.style.display = "none";
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const M = lang === "en" ? {
+    t: "Follow your competitors with Creator",
+    s: "Get inspired by what's working in your niche. Track up to 5 creators with the Creator plan.",
+    cta: "View plans →",
+  } : {
+    t: "Sigue a tus competidores con Creator",
+    s: "Inspírate con lo que funciona en tu nicho. Sigue hasta 5 creadores con el plan Creator.",
+    cta: "Ver planes →",
+  };
+  const pricingUrl = "/" + lang + "/#pricingSection";
+  host.innerHTML = `<div class="comp-empty"><img src="/static/img/hooks/hooks-ideas.svg" alt="" aria-hidden="true">
+    <div class="comp-empty-title">${M.t}</div>
+    <div class="comp-empty-sub">${M.s}</div>
+    <a class="empty-cta" href="${pricingUrl}">${M.cta}</a></div>`;
+}
+
+function openAddCompetitorModal() {
+  const overlay = document.getElementById("addCompetitorOverlay");
+  if (!overlay) return;
+  document.getElementById("addCompInput").value = "";
+  document.getElementById("addCompErr").textContent = "";
+  // Si Agency: cargar select de proyectos.
+  const plan = (st && st.plan) || "free";
+  const sel = document.getElementById("addCompProject");
+  if (plan === "agency") {
+    sel.style.display = "";
+    fetch("/projects", { credentials: "same-origin" })
+      .then(r => r.json())
+      .then(arr => {
+        sel.innerHTML = (arr || []).map(p => `<option value="${esc(p.id)}">${esc(p.name || "Sin nombre")}</option>`).join("");
+      })
+      .catch(() => { sel.innerHTML = ""; });
+  } else {
+    sel.style.display = "none";
+  }
+  overlay.classList.add("on");
+  setTimeout(() => document.getElementById("addCompInput").focus(), 50);
+}
+
+function closeAddCompetitorModal() {
+  const overlay = document.getElementById("addCompetitorOverlay");
+  if (overlay) overlay.classList.remove("on");
+}
+
+async function submitAddCompetitor() {
+  const inp = document.getElementById("addCompInput");
+  const err = document.getElementById("addCompErr");
+  const btn = document.getElementById("addCompSubmitBtn");
+  const sel = document.getElementById("addCompProject");
+  const username = (inp.value || "").trim().replace(/^@/, "").toLowerCase();
+  if (!username) { err.textContent = t("tc.error.invalid_username") || "Username inválido"; return; }
+  err.textContent = "";
+  btn.disabled = true;
+  const body = { ig_username: username };
+  if (sel && sel.style.display !== "none" && sel.value) body.project_id = sel.value;
+  try {
+    const r = await fetch("/api/tracked-creators", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify(body),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      err.textContent = t(d.error) || d.error || "Error";
+      btn.disabled = false;
+      return;
+    }
+    closeAddCompetitorModal();
+    const lang = (document.documentElement.lang || "es").toLowerCase();
+    const msg = lang === "en"
+      ? "Competitor added. Fetching their reels…"
+      : "Competidor añadido. Analizando sus reels…";
+    if (window.toast && window.toast.success) window.toast.success(msg, { duration: 5000 });
+    else if (typeof showToast === "function") showToast(msg);
+    // Recargar tab (chips + feed).
+    loadCompetitors();
+  } catch (e) {
+    err.textContent = "Error";
+    btn.disabled = false;
+  }
+}
+
+async function removeCompetitor(trackingId, username) {
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const title = lang === "en" ? "Remove competitor" : "Quitar competidor";
+  const body  = lang === "en"
+    ? `Stop tracking @${username}? You can add them again later.`
+    : `¿Dejar de seguir a @${username}? Puedes volver a añadirlo más tarde.`;
+  if (!(await window.confirmModal({ title, body, danger: false }))) return;
+  try {
+    const r = await fetch("/api/tracked-creators/" + encodeURIComponent(trackingId), {
+      method: "DELETE",
+      credentials: "same-origin",
+    });
+    if (r.ok || r.status === 204) {
+      // Si el filtro activo era este creator, reset a "Todos".
+      if (window._compTrackedCache) {
+        const t = (window._compTrackedCache.tracked || []).find(x => x.id === trackingId);
+        if (t && (t.creator || {}).id === window._compFilterCreatorId) {
+          window._compFilterCreatorId = null;
+        }
+      }
+      loadCompetitors();
+    }
+  } catch(e) {}
+}
 
 </script>
 

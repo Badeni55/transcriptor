@@ -4774,8 +4774,42 @@ def post_tracked_creator():
         logger.exception("insert user_tracked_creators failed: %s", e)
         return jsonify({"error": "tc.error.internal"}), 500
 
-    # 8. NO disparar scrape — el worker (v0.15.1) recogerá scrape_status='pending'
-    #    o reescaneará según next_scrape_due_at.
+    # 8. v0.15.3: auto-encolar scrape si data nueva o stale (>24h).
+    #    Reusa cache si data fresca (<24h, diseñado en Fase 0 para ahorrar Apify).
+    #    No re-encolar si status definitivo (private/not_found).
+    _last_scraped = creator_row.get("last_scraped_at")
+    _status = creator_row.get("scrape_status")
+    _should_scrape = False
+    _reason = None
+    if _status in ("private", "not_found"):
+        _reason = f"skip:status={_status}"
+    elif _last_scraped is None:
+        _should_scrape = True
+        _reason = "new_creator"
+    else:
+        try:
+            last_dt = datetime.fromisoformat(str(_last_scraped).replace("Z", "+00:00"))
+            age_hours = (datetime.now(timezone.utc) - last_dt).total_seconds() / 3600.0
+            if age_hours > 24:
+                _should_scrape = True
+                _reason = f"stale:{age_hours:.1f}h"
+            else:
+                _reason = f"cache:{age_hours:.1f}h"
+        except Exception:
+            _should_scrape = True
+            _reason = "parse_error_treat_as_stale"
+    if _should_scrape:
+        try:
+            from tasks import scrape_creator_task  # noqa: E402
+            scrape_creator_task.delay(creator_id)
+            logger.info("[scrape] auto-enqueued %s (creator=%s, reason=%s)",
+                        ig_username, creator_id, _reason)
+        except Exception as e:
+            logger.warning("[scrape] auto-enqueue failed for %s: %s", ig_username, e)
+    else:
+        logger.info("[scrape] reuse cache for %s (creator=%s, reason=%s)",
+                    ig_username, creator_id, _reason)
+
     return jsonify({
         "tracking": {
             "id": tracking_row["id"],
@@ -4870,6 +4904,70 @@ def delete_tracked_creator(tracking_id: str):
     if not res.data:
         return jsonify({"error": "tc.error.tracking_not_found"}), 404
     return "", 204
+
+
+@app.route("/api/tracked-creators/reels", methods=["GET"])
+@require_auth
+def get_tracked_creators_reels():
+    """Feed unificado de reels de los competidores activos del user.
+
+    Query params:
+      - creator_id (uuid, opcional): filtra a un único competidor del user.
+                                     404 si no le pertenece.
+      - sort: recent (posted_at desc) | views | likes. Default 'recent'.
+      - limit: 1-50, default 20.
+      - offset: paginación. Default 0.
+
+    Return: {reels: [...], total, has_more}.
+    """
+    user = current_user()
+    # 1. Set de creator_ids activos del user (deduplicado).
+    tracked = (db.table("user_tracked_creators")
+                 .select("creator_id")
+                 .eq("user_id", user["id"])
+                 .is_("archived_at", "null")
+                 .execute())
+    creator_ids = list({t["creator_id"] for t in (tracked.data or [])})
+    if not creator_ids:
+        return jsonify({"reels": [], "total": 0, "has_more": False})
+
+    # 2. Validar creator_id si pasa.
+    filter_creator_id = request.args.get("creator_id")
+    if filter_creator_id:
+        if filter_creator_id not in creator_ids:
+            return jsonify({"error": "tc.error.tracking_not_found"}), 404
+        creator_ids = [filter_creator_id]
+
+    # 3. Sort.
+    sort = request.args.get("sort", "recent")
+    sort_col = {"recent": "posted_at", "views": "views", "likes": "likes"}.get(sort, "posted_at")
+
+    # 4. Limit + offset.
+    try:
+        limit = max(1, min(50, int(request.args.get("limit", "20"))))
+    except (TypeError, ValueError):
+        limit = 20
+    try:
+        offset = max(0, int(request.args.get("offset", "0")))
+    except (TypeError, ValueError):
+        offset = 0
+
+    # 5. Query reels con JOIN para incluir ig_username.
+    q = (db.table("creator_reels_global")
+           .select("id, ig_reel_id, creator_id, caption, views, likes, comments, "
+                   "posted_at, thumb_url, video_duration_sec, "
+                   "creator:creators_global(ig_username)",
+                   count="exact")
+           .in_("creator_id", creator_ids)
+           .eq("is_archived", False)
+           .order(sort_col, desc=True)
+           .range(offset, offset + limit - 1))
+    rows = q.execute()
+    reels = rows.data or []
+    total = rows.count or 0
+    has_more = (offset + len(reels)) < total
+
+    return jsonify({"reels": reels, "total": total, "has_more": has_more})
 
 
 # ── Scrape admin endpoint (v0.15.2.a: async vía Celery) ──────────────────────
