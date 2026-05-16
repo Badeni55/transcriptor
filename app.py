@@ -4955,7 +4955,7 @@ def get_tracked_creators_reels():
     # 5. Query reels con JOIN para incluir ig_username.
     q = (db.table("creator_reels_global")
            .select("id, ig_reel_id, creator_id, caption, views, likes, comments, "
-                   "posted_at, thumb_url, video_duration_sec, "
+                   "posted_at, thumb_url, thumb_b64, video_duration_sec, "
                    "creator:creators_global(ig_username)",
                    count="exact")
            .in_("creator_id", creator_ids)
