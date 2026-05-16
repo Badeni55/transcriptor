@@ -2,7 +2,7 @@ import os
 import time
 import logging
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 import requests
 import yt_dlp
 from celery import Celery
@@ -309,3 +309,169 @@ def refresh_metrics_bulk(self, user_id, tid_list):
         time.sleep(0.5)
 
     return {"ok": True, "updated": updated, "total": len(rows)}
+
+
+# ── v0.15.2.a: scrape tracked competitors (async) ────────────────────────────
+# Movido desde app.py para no bloquear workers HTTP de Flask. Patrón cliente
+# Supabase local + env vars vía os.environ (mismo que transcribe_task).
+# Lógica de negocio idéntica a la versión sync previa: anti-race lock +
+# Apify run-sync-get-dataset-items + UPSERT reels + UPDATE final.
+# DEUDA PRIORITARIA v0.15.4: si el worker muere mid-task, scrape_status queda
+# 'scraping' permanente y el anti-race bloquea re-scrape para siempre. Fix:
+# guard "stale" = si last_scraped_at < now() - 10min con status='scraping',
+# considerar abandonado y permitir re-encolar.
+SCRAPE_TIMEOUT_SEC = 240
+
+
+@celery_app.task(name="tasks.scrape_creator")
+def scrape_creator_task(creator_id: str) -> dict:
+    """Scrape async de reels de un creator. Encolada desde POST /admin/scrape.
+
+    Returns dict con:
+      - status: "ok" | "failed" | "private" | "not_found" | "in_progress" | "creator_not_found"
+      - reels_count: int (solo si status=ok)
+      - error: str (solo si status=failed)
+      - creator_id, ig_username (echo).
+    """
+    SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+    SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
+    APIFY_TOKEN = os.environ.get("APIFY_TOKEN", "")
+    db = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+    # 1. Cargar creator.
+    try:
+        cr = (db.table("creators_global")
+                .select("id, ig_username, scrape_status")
+                .eq("id", creator_id)
+                .single()
+                .execute())
+        creator = cr.data
+    except Exception:
+        creator = None
+    if not creator:
+        logger.warning("scrape_creator: creator_not_found id=%s", creator_id)
+        return {"status": "creator_not_found", "creator_id": creator_id}
+
+    ig_username = creator["ig_username"]
+    logger.info("scrape_creator started for %s (creator_id=%s)", ig_username, creator_id)
+
+    # 2. Anti-race: UPDATE scrape_status='scraping' WHERE != 'scraping'.
+    lock = (db.table("creators_global")
+              .update({"scrape_status": "scraping", "last_error": None})
+              .eq("id", creator_id)
+              .neq("scrape_status", "scraping")
+              .execute())
+    if not lock.data:
+        logger.info("scrape_creator skip (in_progress) for %s", ig_username)
+        return {"status": "in_progress", "creator_id": creator_id, "ig_username": ig_username}
+
+    # 3. Llamada Apify sync (timeout 240s; server-side limit Apify ~300s).
+    actor_url = (
+        f"https://api.apify.com/v2/acts/xMc5Ga1oCONPmWJIa"
+        f"/run-sync-get-dataset-items?token={APIFY_TOKEN}&memory=512"
+    )
+    payload = {
+        "username": [ig_username],
+        "resultsLimit": 10,
+        "includeSharesCount": True,
+    }
+
+    final_status = "ok"
+    last_error = None
+    items: list = []
+    try:
+        resp = requests.post(actor_url, json=payload, timeout=SCRAPE_TIMEOUT_SEC)
+        if resp.status_code == 404:
+            final_status = "not_found"
+        elif resp.status_code >= 400:
+            body_lc = (resp.text or "").lower()
+            if "private" in body_lc:
+                final_status = "private"
+            else:
+                final_status = "failed"
+                last_error = f"http_{resp.status_code}: {(resp.text or '')[:300]}"
+        else:
+            items = resp.json() or []
+            if items and isinstance(items[0], dict):
+                first = items[0]
+                if first.get("error"):
+                    err_lc = str(first.get("error")).lower()
+                    if "private" in err_lc:
+                        final_status = "private"
+                        items = []
+                    elif "not found" in err_lc or "not_found" in err_lc:
+                        final_status = "not_found"
+                        items = []
+                    else:
+                        final_status = "failed"
+                        last_error = str(first.get("error"))[:300]
+                        items = []
+                elif first.get("ownerIsPrivate") is True:
+                    final_status = "private"
+                    items = []
+    except requests.Timeout:
+        logger.warning("scrape_creator timeout for %s after %ds", ig_username, SCRAPE_TIMEOUT_SEC)
+        final_status = "failed"
+        last_error = "timeout"
+    except Exception as e:
+        logger.exception("scrape_creator apify call failed for %s: %s", ig_username, e)
+        final_status = "failed"
+        last_error = str(e)[:300]
+
+    # 4. UPSERT reels si tenemos items y status ok.
+    reels_count = 0
+    if final_status == "ok" and items:
+        rows = []
+        for item in items:
+            sc = item.get("shortCode") or item.get("id")
+            if not sc:
+                continue
+            rows.append({
+                "creator_id": creator_id,
+                "ig_reel_id": sc,
+                "caption": (item.get("caption") or "")[:2000],
+                "views": item.get("videoPlayCount") or item.get("videoViewCount") or 0,
+                "likes": item.get("likesCount") or 0,
+                "comments": item.get("commentsCount") or 0,
+                "posted_at": item.get("timestamp"),
+                "thumb_url": item.get("displayUrl"),
+                "video_url": item.get("videoUrl"),
+                "video_duration_sec": item.get("videoDuration"),
+                "fetched_at": datetime.now(timezone.utc).isoformat(),
+            })
+        if rows:
+            try:
+                db.table("creator_reels_global").upsert(
+                    rows, on_conflict="creator_id,ig_reel_id"
+                ).execute()
+                reels_count = len(rows)
+            except Exception as e:
+                logger.exception("scrape_creator upsert failed for %s: %s", ig_username, e)
+                final_status = "failed"
+                last_error = f"upsert: {str(e)[:200]}"
+
+    # 5. UPDATE final del creator.
+    update_payload = {
+        "scrape_status": final_status,
+        "last_scraped_at": datetime.now(timezone.utc).isoformat(),
+        "last_error": last_error,
+    }
+    try:
+        db.table("creators_global").update(update_payload).eq("id", creator_id).execute()
+    except Exception as e:
+        logger.exception("scrape_creator final update failed for %s: %s", ig_username, e)
+
+    # Log final con detalle según status.
+    if final_status == "ok":
+        logger.info("scrape_creator done for %s: status=ok reels=%d", ig_username, reels_count)
+    elif final_status in ("private", "not_found"):
+        logger.warning("scrape_creator %s: %s", ig_username, final_status)
+    else:
+        logger.warning("scrape_creator %s: %s (%s)", ig_username, final_status, last_error or "no detail")
+
+    out = {"status": final_status, "creator_id": creator_id, "ig_username": ig_username}
+    if final_status == "ok":
+        out["reels_count"] = reels_count
+    if last_error:
+        out["error"] = last_error
+    return out
