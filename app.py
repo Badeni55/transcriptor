@@ -5029,9 +5029,11 @@ def generate_idea_from_competitor_reel(reel_id: str):
         "\n\nGenera 1 idea original para este usuario según el formato JSON del system prompt."
     )
     try:
+        # max_tokens=4000 paridad con /api/ideas/suggest — Gemini trunca JSON
+        # con menos (ver v0.14.26b: mismo bug histórico).
         result = _call_llm_json(
             SUGGEST_FROM_COMPETITOR_SYSTEM, user_prompt,
-            max_tokens=1200, temperature=0.8,
+            max_tokens=4000, temperature=0.8,
         )
     except _json_mod.JSONDecodeError:
         logger.error("gen_idea_from_competitor: LLM JSON parse failed user=%s reel=%s", uid, reel_id)
