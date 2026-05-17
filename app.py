@@ -2524,7 +2524,12 @@ def create_idea():
 @require_auth
 def list_ideas():
     user = current_user()
-    q = db.table("ideas").select("*").eq("user_id", user["id"])
+    # v0.15.4: excluir draft_suggested (viven SOLO en tab Sugeridas vía
+    # /api/ideas/draft-suggested, no se mezclan con Guardadas).
+    q = (db.table("ideas")
+           .select("*")
+           .eq("user_id", user["id"])
+           .neq("status", "draft_suggested"))
     project_id = request.args.get("project_id")
     category = request.args.get("category")
     assistant_id = request.args.get("assistant_id")
@@ -4904,6 +4909,263 @@ def delete_tracked_creator(tracking_id: str):
     if not res.data:
         return jsonify({"error": "tc.error.tracking_not_found"}), 404
     return "", 204
+
+
+# v0.15.4: motor "1 idea desde 1 reel de competidor". Prompt distinto al de
+# /api/ideas/suggest (que genera 5-8 desde top reels propios del user).
+SUGGEST_FROM_COMPETITOR_SYSTEM = (
+    "Eres un experto en contenido de Instagram Reels y TikTok. Recibirás "
+    "UN reel de un competidor del usuario y, opcionalmente, el estilo "
+    "personal del usuario (instrucciones de su asistente por defecto).\n\n"
+    "Tu tarea: generar UNA idea de reel ORIGINAL para que ESTE usuario "
+    "grabe, INSPIRADA en el patrón del competidor pero NUNCA una copia.\n\n"
+    "Reglas críticas (no negociables):\n"
+    "1. NO copies el caption del competidor. NO copies su hook literal.\n"
+    "2. NO uses la misma temática puntual si es muy específica del "
+    "competidor (su producto, su anécdota personal, su marca). Extrae el "
+    "PATRÓN ABSTRACTO: ¿qué tipo de hook usa? ¿qué estructura? ¿qué "
+    "emoción busca? ¿qué ángulo escoge?\n"
+    "3. Aplica ese patrón a un tema que encaje con el estilo del usuario "
+    "(si tienes su user_style) o a un tema general del nicho (si no).\n"
+    "4. La idea debe ser ACCIONABLE: el usuario debe poder grabarla sin "
+    "necesitar más contexto.\n"
+    "5. Si el caption del competidor es muy escaso o las métricas son "
+    "bajas, haz lo que puedas pero sé HONESTO en reasoning explicando la "
+    "limitación.\n\n"
+    "Devuelve para la idea:\n"
+    "- title: título corto y atractivo del reel propuesto (max 200 chars).\n"
+    "- hook: primera frase del reel que engancha en 3 segundos (max 500).\n"
+    "- style: uno de [educativo, storytelling, listas, hooks, controversia, tutorial, comparativa].\n"
+    "- reasoning: 2-3 frases explicando QUÉ PATRÓN extrajiste del "
+    "competidor y CÓMO lo aplicas en esta idea (max 400 chars). Es lo "
+    "que el usuario lee para auditar que tu idea NO es un calco.\n\n"
+    "Devuelve SOLO JSON válido en este formato exacto:\n"
+    '{"title":"...","hook":"...","style":"...","reasoning":"..."}'
+)
+
+
+@app.route("/api/competitors/reels/<reel_id>/generate-idea", methods=["POST"])
+@require_auth
+@limiter.limit("5 per minute;20 per day")
+def generate_idea_from_competitor_reel(reel_id: str):
+    """Genera UNA idea desde un reel de competidor del user, vía LLM.
+    La idea cae en tabla ideas con status='draft_suggested' (tab Sugeridas
+    pendiente de accept/discard).
+    """
+    user = current_user()
+    uid = user["id"]
+    profile = get_profile(uid)
+    plan = profile.get("plan", "free")
+
+    # 1. Plan habilitado (free → 402; debería estar bloqueado en UI pero hard-guard).
+    tc_limits = get_tracked_creators_limit(plan)
+    if not tc_limits["enabled"]:
+        return jsonify({"error": "upgrade_required",
+                        "message": "Esta función requiere plan Pro o superior."}), 402
+
+    # 2. Coste: 1 unit monthly_usage (paid) o 1 crédito = COST_CENTS (free).
+    GEN_COST = COST_CENTS  # 18 cents
+    GEN_USAGE_UNITS = 1
+    is_paid_unlimited = plan in ("pro", "creator", "agency")
+    if not is_paid_unlimited and (profile.get("credits_cents") or 0) < GEN_COST:
+        return jsonify({"error": "no_credits",
+                        "message": "Necesitas créditos para generar ideas. Sube de plan."}), 402
+
+    # 3. Cargar reel + creator + validar ownership vía user_tracked_creators activo.
+    try:
+        reel_r = (db.table("creator_reels_global")
+                    .select("id, ig_reel_id, creator_id, caption, views, likes, "
+                            "comments, posted_at, "
+                            "creator:creators_global(id, ig_username)")
+                    .eq("id", reel_id)
+                    .eq("is_archived", False)
+                    .single()
+                    .execute())
+        reel = reel_r.data
+    except Exception:
+        reel = None
+    if not reel or not reel.get("creator"):
+        return jsonify({"error": "reel_not_found"}), 404
+
+    creator = reel["creator"]
+    creator_id = creator["id"]
+    ig_username = creator.get("ig_username") or ""
+
+    # Validar que el creator está en tracked activo del user.
+    own_r = (db.table("user_tracked_creators")
+               .select("id")
+               .eq("user_id", uid)
+               .eq("creator_id", creator_id)
+               .is_("archived_at", "null")
+               .limit(1)
+               .execute())
+    if not own_r.data:
+        return jsonify({"error": "reel_not_found"}), 404
+
+    # 4. Cargar estilo del user vía resolve_assistant_prompt (cubre built-ins
+    #    como "viral"/"linkedin"/"hooks" + custom uuids). Si retorna "" → None.
+    default_asst_id = profile.get("default_idea_assistant")
+    try:
+        resolved = resolve_assistant_prompt(default_asst_id, uid) if default_asst_id else ""
+    except Exception:
+        resolved = ""
+    user_style = (resolved[:2000] if resolved else None)
+
+    # 5. Llamar LLM. Si falla → 502 sin descontar.
+    import json as _json_mod
+    user_payload = {
+        "competitor_reel": {
+            "ig_username": ig_username,
+            "caption": (reel.get("caption") or "")[:1500],
+            "views": int(reel.get("views") or 0),
+            "likes": int(reel.get("likes") or 0),
+            "comments": int(reel.get("comments") or 0),
+            "posted_at": reel.get("posted_at"),
+        },
+        "user_style": user_style,
+    }
+    user_prompt = (
+        "Datos:\n" + _json_mod.dumps(user_payload, ensure_ascii=False) +
+        "\n\nGenera 1 idea original para este usuario según el formato JSON del system prompt."
+    )
+    try:
+        result = _call_llm_json(
+            SUGGEST_FROM_COMPETITOR_SYSTEM, user_prompt,
+            max_tokens=1200, temperature=0.8,
+        )
+    except _json_mod.JSONDecodeError:
+        logger.error("gen_idea_from_competitor: LLM JSON parse failed user=%s reel=%s", uid, reel_id)
+        return jsonify({"error": "llm_parse",
+                        "message": "Algo falló generando la idea. Vuelve a intentarlo."}), 502
+    except Exception as e:
+        logger.error("gen_idea_from_competitor: LLM call failed user=%s reel=%s err=%s",
+                     uid, reel_id, e, exc_info=True)
+        return jsonify({"error": "llm_error",
+                        "message": "Algo falló generando la idea. Vuelve a intentarlo."}), 502
+
+    if not isinstance(result, dict):
+        return jsonify({"error": "llm_empty",
+                        "message": "No se pudo generar la idea."}), 502
+
+    title = (result.get("title") or "").strip()[:200]
+    hook = (result.get("hook") or "").strip()[:500]
+    style = (result.get("style") or "").strip()[:50]
+    reasoning = (result.get("reasoning") or "").strip()[:400]
+    if not title:
+        return jsonify({"error": "llm_empty",
+                        "message": "No se pudo generar la idea."}), 502
+
+    raw_text = title if not hook else f"{title} — {hook}"
+
+    # 6. INSERT idea en BD con status='draft_suggested' (tab Sugeridas, pendiente).
+    try:
+        ins = db.table("ideas").insert({
+            "user_id": uid,
+            "raw_text": raw_text,
+            "title": title,
+            "hook": hook or None,
+            "style": style or None,
+            "status": "draft_suggested",
+            "source": "competitor_reel",
+            "inspired_by_id": reel["id"],
+            "inspired_by_type": "reel",
+            "inspired_by_username": ig_username,
+            "generation_reasoning": reasoning or None,
+        }).execute()
+        idea_row = ins.data[0] if ins.data else None
+    except Exception as e:
+        logger.error("gen_idea_from_competitor: insert failed user=%s err=%s", uid, e, exc_info=True)
+        return jsonify({"error": "internal",
+                        "message": "No se pudo guardar la idea."}), 500
+
+    # 7. Descontar SOLO tras parse + insert OK (igual patrón que /api/ideas/suggest).
+    try:
+        if is_paid_unlimited:
+            db.table("profiles").update({
+                "monthly_usage": (profile.get("monthly_usage") or 0) + GEN_USAGE_UNITS
+            }).eq("id", uid).execute()
+        else:
+            db.table("profiles").update({
+                "credits_cents": (profile.get("credits_cents") or 0) - GEN_COST
+            }).eq("id", uid).execute()
+    except Exception as e:
+        logger.error("gen_idea_from_competitor: credit deduction failed user=%s err=%s", uid, e)
+        # No bloqueamos — la idea ya está guardada.
+
+    # 8. PostHog tracking.
+    try:
+        from emails import track as _ph_track
+        _ph_track("idea_generated_from_competitor", uid, {
+            "creator_username": ig_username,
+            "reel_id": reel["id"],
+            "style": style or "unknown",
+        })
+    except Exception:
+        pass
+
+    return jsonify({
+        "idea": {
+            "id": idea_row["id"] if idea_row else None,
+            "title": title,
+            "hook": hook,
+            "style": style,
+            "reasoning": reasoning,
+            "inspired_by_username": ig_username,
+            "inspired_by_id": reel["id"],
+            "inspired_by_type": "reel",
+            "source": "competitor_reel",
+            "status": "draft_suggested",
+        }
+    }), 201
+
+
+@app.route("/api/ideas/draft-suggested", methods=["GET"])
+@require_auth
+def list_draft_suggested_ideas():
+    """Lista las ideas generadas desde reels de competidor que el user aún
+    no ha accept/discard. Alimenta el tab Sugeridas tras refresh."""
+    user = current_user()
+    rows = (db.table("ideas")
+              .select("id, title, hook, style, raw_text, generation_reasoning, "
+                      "inspired_by_id, inspired_by_type, inspired_by_username, "
+                      "source, status, created_at")
+              .eq("user_id", user["id"])
+              .eq("status", "draft_suggested")
+              .eq("source", "competitor_reel")
+              .order("created_at", desc=True)
+              .limit(50)
+              .execute())
+    return jsonify({"ideas": rows.data or []})
+
+
+@app.route("/api/ideas/<idea_id>/accept-suggested", methods=["POST"])
+@require_auth
+def accept_suggested_idea(idea_id: str):
+    """Promueve una idea draft_suggested → developed (la pasa de Sugeridas a Guardadas)."""
+    user = current_user()
+    res = (db.table("ideas")
+             .update({"status": "developed"})
+             .eq("id", idea_id)
+             .eq("user_id", user["id"])
+             .eq("status", "draft_suggested")
+             .execute())
+    if not res.data:
+        return jsonify({"error": "not_found"}), 404
+    return jsonify({"ok": True})
+
+
+@app.route("/api/ideas/<idea_id>/discard-suggested", methods=["DELETE"])
+@require_auth
+def discard_suggested_idea(idea_id: str):
+    """Borra una idea draft_suggested del user (descartar)."""
+    user = current_user()
+    res = (db.table("ideas")
+             .delete()
+             .eq("id", idea_id)
+             .eq("user_id", user["id"])
+             .eq("status", "draft_suggested")
+             .execute())
+    return ("", 204)
 
 
 @app.route("/api/tracked-creators/reels", methods=["GET"])
