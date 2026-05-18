@@ -4920,13 +4920,22 @@ SUGGEST_FROM_COMPETITOR_SYSTEM = (
     "Tu tarea: generar UNA idea de reel ORIGINAL para que ESTE usuario "
     "grabe, INSPIRADA en el patrón del competidor pero NUNCA una copia.\n\n"
     "Reglas críticas (no negociables):\n"
-    "1. NO copies el caption del competidor. NO copies su hook literal.\n"
-    "2. NO uses la misma temática puntual si es muy específica del "
-    "competidor (su producto, su anécdota personal, su marca). Extrae el "
-    "PATRÓN ABSTRACTO: ¿qué tipo de hook usa? ¿qué estructura? ¿qué "
-    "emoción busca? ¿qué ángulo escoge?\n"
-    "3. Aplica ese patrón a un tema que encaje con el estilo del usuario "
-    "(si tienes su user_style) o a un tema general del nicho (si no).\n"
+    "1. NO copies el caption del competidor. NO copies su hook literal. "
+    "NO copies su anécdota personal, su historia, su experiencia propia "
+    "ni su llamada a la acción literal (su 'comenta X para recibir Y').\n"
+    "2. ABSTRAE LIBREMENTE estos elementos del competidor: el PATRÓN, "
+    "la ESTRUCTURA, el HOOK (tipo, no literal), el ÁNGULO, la EMOCIÓN "
+    "que busca. Aplícalos a un tema que encaje con el estilo del usuario "
+    "(si tienes su user_style) o a un tema general del nicho.\n"
+    "3. RESPETA los hechos del mundo que el reel menciona: nombres de "
+    "herramientas, modelos, productos, versiones, empresas y fechas. Si "
+    "el reel habla de 'GPT-5.5', tu idea habla de 'GPT-5.5' — NO lo "
+    "sustituyas por una versión que conozcas de tu entrenamiento. Tu "
+    "conocimiento puede estar desactualizado; el reel es la fuente de "
+    "verdad sobre qué existe ahora. Cambiar 'GPT-5.5' por 'GPT-4' "
+    "porque te resulta más familiar es un ERROR GRAVE que invalida la "
+    "idea. Si el reel menciona una empresa, una herramienta o una "
+    "versión que no reconoces, ASÚMELA REAL y úsala tal cual.\n"
     "4. La idea debe ser ACCIONABLE: el usuario debe poder grabarla sin "
     "necesitar más contexto.\n"
     "5. Si el caption del competidor es muy escaso o las métricas son "
@@ -5024,7 +5033,14 @@ def generate_idea_from_competitor_reel(reel_id: str):
         },
         "user_style": user_style,
     }
+    # v0.15.4.c: ancla temporal — sin ella el modelo asume su training cutoff
+    # como "presente" y trata versiones/herramientas recientes como futurismo
+    # inverosímil, sustituyéndolas por nombres familiares (GPT-5.5 → GPT-4).
+    today_str = datetime.now(timezone.utc).strftime("%-d de %B de %Y")
     user_prompt = (
+        f"Fecha actual: {today_str}. Estamos en esa fecha — cualquier modelo, "
+        f"herramienta, empresa o versión que el reel mencione es REAL y "
+        f"ACTUAL aunque no la conozcas de tu entrenamiento.\n\n"
         "Datos:\n" + _json_mod.dumps(user_payload, ensure_ascii=False) +
         "\n\nGenera 1 idea original para este usuario según el formato JSON del system prompt."
     )
