@@ -20366,10 +20366,15 @@ async function _compPollScriptTask(taskId, btn, origLabel, lang) {
   else if (typeof showToast === "function") showToast(msg);
 }
 
-function _compFinishGenScript(btn, scriptId, fromUsername, lang) {
+async function _compFinishGenScript(btn, scriptId, fromUsername, lang) {
   btn.disabled = false;
   btn.textContent = t("comp.gen_script_done") || "✓ Guion creado";
   btn.classList.add("is-done");
+  // Refrescar scriptsCache: el INSERT ocurrió server-side, sin esto el panel
+  // Guiones renderiza la cache vieja sin el guion nuevo (visible solo tras recargar).
+  if (typeof loadScripts === "function") {
+    try { await loadScripts(); } catch (e) {}
+  }
   const msg = lang === "en"
     ? ("Script created from @" + (fromUsername || ""))
     : ("Guion creado desde @" + (fromUsername || ""));
