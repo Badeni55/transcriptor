@@ -2,7 +2,7 @@ import os
 import time
 import logging
 import tempfile
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import requests
 import yt_dlp
 from celery import Celery
@@ -494,3 +494,306 @@ def scrape_creator_task(creator_id: str) -> dict:
     if last_error:
         out["error"] = last_error
     return out
+
+
+
+
+# ── v0.15.5: generar guion desde reel de competidor (async) ──────────────────
+# Patrón: la task se encarga del flujo completo cuando el endpoint detecta
+# cache miss (transcript falta/failed/stale). Pasos:
+#   1. Anti-race lock con stale guard 15min (transcript_started_at).
+#   2. Descargar audio del reel vía pipeline existente (download_audio).
+#   3. Whisper transcribir → UPDATE creator_reels_global.transcript.
+#   4. Lazy import adapt_with_ai (rompe circular tasks↔app).
+#   5. Generar guion + INSERT scripts con from_competitor_*.
+#   6. Cobrar 1 unit monthly_usage / 18¢ free (sin refund — la task ya
+#      garantiza no cobrar si LLM/insert falla, igual que el endpoint sync).
+# DEUDA v0.15.6: sweeper periódico para liberar locks 'transcribing' viejos
+# sin esperar a que un user trigger la task de nuevo.
+
+_TRANSCRIBE_STALE_MIN = 15
+_TRANSCRIBE_POLL_MAX_SEC = 90
+_BUILTIN_SCRIPT_STYLES_LOCAL = {"viral", "divertido", "storytelling", "hooks"}
+
+
+@celery_app.task(bind=True, name="tasks.generate_script_competitor")
+def generate_script_competitor_task(self, reel_id, user_id, assistant_id):
+    SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+    SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
+    GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+    GROQ_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
+    SCRIPT_COST = 18
+    db = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+    def _fail(error, message):
+        logger.warning("gen_script_task reel=%s user=%s fail: %s", reel_id, user_id, error)
+        return {"ok": False, "error": error, "message": message}
+
+    # 1. Cargar reel.
+    try:
+        rr = (db.table("creator_reels_global")
+                .select("id, ig_reel_id, caption, transcript, transcript_status, "
+                        "transcript_started_at, "
+                        "creator:creators_global(ig_username)")
+                .eq("id", reel_id)
+                .single()
+                .execute())
+        reel = rr.data
+    except Exception:
+        reel = None
+    if not reel:
+        return _fail("reel_not_found", "Reel no encontrado.")
+    ig_username = (reel.get("creator") or {}).get("ig_username") or ""
+
+    # 2. Cargar profile del user.
+    try:
+        pr = (db.table("profiles")
+                .select("plan, monthly_usage, credits_cents, default_idea_assistant")
+                .eq("id", user_id)
+                .single()
+                .execute())
+        profile = pr.data or {}
+    except Exception:
+        profile = {}
+    plan = profile.get("plan", "free")
+    is_paid_unlimited = plan in ("pro", "creator", "agency")
+
+    self.update_state(state="PROGRESS", meta={"step": "preparing"})
+
+    # 3. Anti-race + stale guard.
+    transcript_text = (reel.get("transcript") or "").strip()
+    transcript_status = reel.get("transcript_status")
+
+    if transcript_status == "ok" and transcript_text:
+        pass  # Otra task ya transcribió mientras encolábamos. Salto a guion.
+    else:
+        is_stale = False
+        if transcript_status == "transcribing":
+            started_at = reel.get("transcript_started_at")
+            if started_at:
+                try:
+                    started_dt = datetime.fromisoformat(str(started_at).replace("Z", "+00:00"))
+                    age_min = (datetime.now(timezone.utc) - started_dt).total_seconds() / 60.0
+                    is_stale = age_min > _TRANSCRIBE_STALE_MIN
+                except Exception:
+                    is_stale = True
+            else:
+                is_stale = True
+
+        if transcript_status != "transcribing" or is_stale:
+            # Adquirir lock (UPDATE simple — race trivial aceptable).
+            now_iso = datetime.now(timezone.utc).isoformat()
+            try:
+                db.table("creator_reels_global").update({
+                    "transcript_status": "transcribing",
+                    "transcript_started_at": now_iso,
+                    "transcript_error": None,
+                }).eq("id", reel_id).execute()
+            except Exception as e:
+                logger.exception("gen_script_task lock UPDATE failed reel=%s: %s", reel_id, e)
+                return _fail("db_error", "Error preparando la transcripción.")
+            transcript_text = ""
+        else:
+            # Otra task fresca está transcribiendo → poll BD hasta 'ok' o 'failed'.
+            self.update_state(state="PROGRESS", meta={"step": "waiting_other"})
+            polled = False
+            for _ in range(_TRANSCRIBE_POLL_MAX_SEC // 5):
+                time.sleep(5)
+                try:
+                    re_r = (db.table("creator_reels_global")
+                              .select("transcript, transcript_status")
+                              .eq("id", reel_id)
+                              .single()
+                              .execute())
+                    if re_r.data and re_r.data.get("transcript_status") == "ok":
+                        transcript_text = (re_r.data.get("transcript") or "").strip()
+                        polled = True
+                        break
+                    if re_r.data and re_r.data.get("transcript_status") == "failed":
+                        return _fail("transcribe_failed", "No se pudo procesar este reel.")
+                except Exception:
+                    pass
+            if not polled:
+                return _fail("transcribe_timeout", "La transcripción tardó demasiado. Inténtalo de nuevo.")
+
+        # Si tenemos el lock, transcribir.
+        if not transcript_text:
+            self.update_state(state="PROGRESS", meta={"step": "transcribing"})
+            url = "https://www.instagram.com/reel/{}/".format(reel["ig_reel_id"])
+            try:
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    audio_path, _thumb, _apify_item = download_audio(url, tmpdir, "instagram")
+                    headers = {"Authorization": "Bearer " + GROQ_API_KEY}
+                    with open(audio_path, "rb") as f:
+                        files = {"file": ("audio.mp3", f, "audio/mpeg")}
+                        data = {"model": "whisper-large-v3", "response_format": "json"}
+                        resp = requests.post(GROQ_URL, headers=headers, files=files, data=data, timeout=120)
+                        resp.raise_for_status()
+                        transcript_text = (resp.json().get("text") or "").strip()
+            except Exception as e:
+                err_msg = str(e)[:300]
+                logger.exception("gen_script_task transcribe failed reel=%s url=%s: %s", reel_id, url, e)
+                try:
+                    db.table("creator_reels_global").update({
+                        "transcript_status": "failed",
+                        "transcript_error": err_msg,
+                    }).eq("id", reel_id).execute()
+                except Exception:
+                    pass
+                return _fail("transcribe_error", "No se pudo procesar este reel.")
+
+            # Guardar transcript en cache.
+            try:
+                db.table("creator_reels_global").update({
+                    "transcript": transcript_text,
+                    "transcript_status": "ok",
+                    "transcript_error": None,
+                }).eq("id", reel_id).execute()
+            except Exception as e:
+                logger.exception("gen_script_task save transcript failed reel=%s: %s", reel_id, e)
+
+    # 4. Generar guion vía adapt_with_ai (lazy import).
+    self.update_state(state="PROGRESS", meta={"step": "generating_script"})
+    today_str = datetime.now(timezone.utc).strftime("%-d de %B de %Y")
+    caption = (reel.get("caption") or "").strip()
+
+    if not transcript_text:
+        transcript_block = "Sin transcripción disponible; usa solo el caption."
+    else:
+        transcript_block = transcript_text
+
+    user_content = (
+        "[Reel de un competidor del usuario · @" + ig_username + "]\n\n"
+        "Caption del reel:\n" + (caption or "(sin caption)") + "\n\n"
+        "Transcripción del audio del reel (lo que el creador realmente dice):\n"
+        + transcript_block + "\n\n"
+        "Fecha actual: " + today_str + ". Cualquier modelo, herramienta, versión, "
+        "empresa o producto que aparezca en el caption o la transcripción es "
+        "REAL y ACTUAL aunque no lo conozcas de tu entrenamiento — úsalo tal "
+        "cual, NO lo sustituyas por una versión que te resulte más familiar. "
+        "Confiar en el reel sobre qué existe ahora es regla NO negociable.\n\n"
+        "Tarea: este es un reel de un competidor del usuario. Genera un guion "
+        "completo de 30-45 segundos hablados para que el usuario grabe SOBRE "
+        "EL MISMO TEMA que este reel. Reescribe el hook con tus palabras (NO "
+        "copies palabra por palabra el del competidor), reescribe el "
+        "desarrollo y los ejemplos con un enfoque propio. La diferencia con "
+        "el competidor está en la EJECUCIÓN, no en el tema. Respeta "
+        "exactamente los nombres, versiones y herramientas que aparecen en "
+        "el reel.\n\n"
+        "Total: 100-140 palabras, mínimo 8 frases en body. Incluye al menos "
+        "1 ejemplo concreto o anécdota dentro del desarrollo."
+    )
+
+    # Resolver style + custom_prompt.
+    style_arg = "viral"
+    custom_prompt = ""
+    style_label = "viral"
+    if assistant_id in _BUILTIN_SCRIPT_STYLES_LOCAL:
+        style_arg = assistant_id
+        style_label = assistant_id
+    elif assistant_id:
+        try:
+            ar = (db.table("assistants")
+                    .select("name, instructions")
+                    .eq("id", assistant_id)
+                    .eq("user_id", user_id)
+                    .execute())
+            if ar.data and ar.data[0].get("instructions"):
+                style_arg = "custom"
+                custom_prompt = ar.data[0]["instructions"]
+                style_label = ar.data[0].get("name") or "custom"
+        except Exception:
+            pass
+
+    try:
+        from app import adapt_with_ai  # lazy import (rompe circular tasks↔app).
+        result = adapt_with_ai(user_content, style_arg, custom_prompt)
+    except Exception as e:
+        logger.exception("gen_script_task LLM failed reel=%s: %s", reel_id, e)
+        return _fail("llm_error", "No se pudo generar el guion. Inténtalo de nuevo.")
+
+    llm_title = ""
+    if isinstance(result, dict) and result.get("title"):
+        llm_title = str(result["title"]).strip()[:80]
+    if isinstance(result, dict) and "hook" in result:
+        flat = (result["hook"] + "\n" +
+                "\n".join(result.get("body", [])) + "\n" +
+                result.get("closing", ""))
+        result = flat.strip()
+    elif isinstance(result, dict) and isinstance(result.get("hooks"), list):
+        result = "\n".join(h.get("text", "") for h in result["hooks"]
+                           if isinstance(h, dict) and h.get("text")).strip()
+    elif not isinstance(result, str):
+        result = str(result)
+
+    today_short = datetime.now(timezone.utc).strftime("%d %b %Y").lower()
+    script_title = llm_title or ("Guion desde @" + ig_username + " · " + today_short)
+
+    # 5. Guard anti doble-cobro pre-INSERT: cierra la ventana async-async
+    # (otra task del mismo user+reel ya insertó hace <60s mientras esta
+    # generaba). Aborta SIN cobrar SIN insertar → 1 script, 1 cobro.
+    try:
+        _dup_cutoff = (datetime.now(timezone.utc) - timedelta(seconds=60)).isoformat()
+        dup_r = (db.table("scripts")
+                   .select("id, from_competitor_username")
+                   .eq("user_id", user_id)
+                   .eq("from_competitor_reel_id", reel["id"])
+                   .gte("created_at", _dup_cutoff)
+                   .order("created_at", desc=True)
+                   .limit(1)
+                   .execute())
+        if dup_r.data:
+            existing = dup_r.data[0]
+            logger.info("gen_script_task duplicate skip reel=%s user=%s existing=%s",
+                        reel_id, user_id, existing.get("id"))
+            return {
+                "ok": True,
+                "duplicate": True,
+                "script_id": existing.get("id"),
+                "title": None,
+                "from_competitor_username": existing.get("from_competitor_username"),
+            }
+    except Exception as e:
+        logger.warning("gen_script_task pre-insert dup check failed reel=%s: %s", reel_id, e)
+
+    # 6. INSERT scripts + cobrar.
+    script_id = None
+    try:
+        ins = db.table("scripts").insert({
+            "user_id": user_id,
+            "transcription_id": None,
+            "idea_id": None,
+            "title": script_title,
+            "script": result,
+            "project_id": None,
+            "from_competitor_reel_id": reel["id"],
+            "from_competitor_username": ig_username,
+        }).execute()
+        if ins.data:
+            script_id = ins.data[0].get("id")
+    except Exception as e:
+        logger.exception("gen_script_task scripts insert failed reel=%s: %s", reel_id, e)
+        return _fail("insert_error", "Error guardando el guion.")
+
+    # Cobrar SOLO tras insert OK.
+    try:
+        if is_paid_unlimited:
+            db.table("profiles").update({
+                "monthly_usage": (profile.get("monthly_usage") or 0) + 1
+            }).eq("id", user_id).execute()
+        else:
+            db.table("profiles").update({
+                "credits_cents": (profile.get("credits_cents") or 0) - SCRIPT_COST
+            }).eq("id", user_id).execute()
+    except Exception as e:
+        logger.error("gen_script_task charge failed reel=%s user=%s: %s", reel_id, user_id, e)
+
+    logger.info("gen_script_task ok reel=%s user=%s script=%s style=%s",
+                reel_id, user_id, script_id, style_label)
+
+    return {
+        "ok": True,
+        "script_id": script_id,
+        "title": script_title,
+        "from_competitor_username": ig_username,
+    }

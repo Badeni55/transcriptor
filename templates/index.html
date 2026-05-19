@@ -5817,8 +5817,8 @@
     }
     .comp-reel-meta span { display: inline-flex; align-items: center; gap: 3px; }
     .comp-reel-meta-date { margin-left: auto; }
-    /* v0.15.4: botón generar idea desde reel competidor. */
-    .comp-reel-genidea-btn {
+    /* v0.15.5: botón generar guion desde reel competidor. */
+    .comp-reel-genscript-btn {
       width: 100%;
       margin-top: 10px;
       padding: 8px 12px;
@@ -5832,41 +5832,16 @@
       cursor: pointer;
       transition: background .15s, border-color .15s;
     }
-    .comp-reel-genidea-btn:hover:not(:disabled) {
+    .comp-reel-genscript-btn:hover:not(:disabled) {
       background: rgba(249,115,22,.16);
       border-color: var(--brand);
     }
-    .comp-reel-genidea-btn:disabled { opacity: .7; cursor: default; }
-    .comp-reel-genidea-btn.is-done {
+    .comp-reel-genscript-btn:disabled { opacity: .7; cursor: default; }
+    .comp-reel-genscript-btn.is-done {
       background: rgba(34,197,94,.1);
       color: #22c55e;
       border-color: rgba(34,197,94,.3);
     }
-    /* v0.15.4: badge "Inspirada en @x" + reasoning visible en card sugerida. */
-    .idea-suggest-inspired {
-      display: inline-block;
-      font-size: .7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .04em;
-      padding: 3px 8px;
-      border-radius: 5px;
-      background: rgba(249,115,22,.12);
-      color: var(--brand);
-      margin-bottom: 8px;
-    }
-    .idea-suggest-reasoning {
-      font-size: .78rem;
-      color: var(--text2);
-      line-height: 1.45;
-      padding: 8px 10px;
-      background: rgba(255,255,255,.03);
-      border-left: 2px solid rgba(249,115,22,.3);
-      border-radius: 4px;
-      margin: 8px 0;
-      font-style: italic;
-    }
-    [data-theme="light"] .idea-suggest-reasoning { background: rgba(0,0,0,.03); }
     .comp-empty {
       grid-column: 1 / -1;
       text-align: center;
@@ -10769,14 +10744,13 @@ const LANGS = {
     "comp.add_modal_title": "Añadir competidor",
     "comp.add_modal_sub": "Sigue a un creador para ver sus reels más recientes.",
     "comp.add_modal_btn": "Añadir",
-    // v0.15.4: motor idea-desde-reel-competidor.
-    "comp.gen_idea": "✨ Generar idea",
-    "comp.gen_idea_loading": "Generando…",
-    "comp.gen_idea_done": "✓ Idea generada",
-    "comp.gen_idea_error_llm": "Algo falló generando la idea. Vuelve a intentarlo.",
-    "comp.gen_idea_error_credits": "Necesitas créditos. Sube de plan.",
-    "comp.regen_confirm_title": "Ya generaste una idea",
-    "comp.regen_confirm_body": "Ya generaste una idea de este reel. ¿Generar otra?",
+    // v0.15.5: motor guion-desde-reel-competidor.
+    "comp.gen_script": "📝 Generar guion",
+    "comp.gen_script_loading": "Generando…",
+    "comp.gen_script_analyzing": "Analizando reel… ~1 min",
+    "comp.gen_script_done": "✓ Guion creado",
+    "comp.gen_script_error": "Algo falló generando el guion. Vuelve a intentarlo.",
+    "comp.gen_script_duplicate": "Ya generaste un guion de este reel hace un momento.",
     "ideas.regenerate": "Regenerar",
     "ideas.to_script": "Crear guión",
     "ideas.fab_tooltip": "Apunta una idea",
@@ -11244,14 +11218,13 @@ const LANGS = {
     "comp.add_modal_title": "Add competitor",
     "comp.add_modal_sub": "Follow a creator to see their recent reels.",
     "comp.add_modal_btn": "Add",
-    // v0.15.4: idea-from-competitor engine.
-    "comp.gen_idea": "✨ Generate idea",
-    "comp.gen_idea_loading": "Generating…",
-    "comp.gen_idea_done": "✓ Idea generated",
-    "comp.gen_idea_error_llm": "Something failed generating the idea. Try again.",
-    "comp.gen_idea_error_credits": "You need credits. Upgrade your plan.",
-    "comp.regen_confirm_title": "Already generated",
-    "comp.regen_confirm_body": "You already generated an idea from this reel. Generate another?",
+    // v0.15.5: script-from-competitor engine.
+    "comp.gen_script": "📝 Generate script",
+    "comp.gen_script_loading": "Generating…",
+    "comp.gen_script_analyzing": "Analyzing reel… ~1 min",
+    "comp.gen_script_done": "✓ Script created",
+    "comp.gen_script_error": "Something failed generating the script. Try again.",
+    "comp.gen_script_duplicate": "You just generated a script from this reel.",
     "ideas.regenerate": "Regenerate",
     "ideas.to_script": "Create script",
     "ideas.fab_tooltip": "Capture an idea",
@@ -16045,9 +16018,9 @@ async function _refreshSuggestContextVisibility() {
   }
 }
 
-async function _renderSuggestionsState() {
-  // v0.15.4: cargar también las draft_suggested de BD (ideas-desde-competidor).
-  await loadSavedDraftSuggestions();
+function _renderSuggestionsState() {
+  // v0.15.5: 'generar idea desde reel' eliminada; draft_suggested deja de
+  // mergearse aquí (las ideas-zombi quedan inertes, no se muestran).
   const empty = document.getElementById("ideasSuggestEmpty");
   const results = document.getElementById("ideasSuggestResults");
   if (!empty || !results) return;
@@ -16160,23 +16133,12 @@ function renderSuggestionCards() {
     const thumb = _suggestThumbHtml(meta);
     const sourceLine = _suggestSourceLine(meta);
     const styleLbl = (idea.style || "").toUpperCase();
-    // v0.15.4: badge "Inspirada en @x" + reasoning visible para ideas-desde-competidor.
-    const inspBy = idea.inspired_by_username || null;
-    const lang = (document.documentElement.lang || "es").toLowerCase();
-    const inspiredBadge = inspBy
-      ? `<span class="idea-suggest-inspired" title="${esc(lang === "en" ? "Inspired by" : "Inspirada en")} @${esc(inspBy)}">${esc(lang === "en" ? "Inspired by" : "Inspirada en")} @${esc(inspBy)}</span>`
-      : "";
-    const reasoningHtml = idea.reasoning
-      ? `<div class="idea-suggest-reasoning">${esc(idea.reasoning)}</div>`
-      : "";
     return `
       <div class="idea-suggest-card" data-idx="${idx}">
         <div class="idea-suggest-thumb">${thumb}</div>
         <div class="idea-suggest-body">
-          ${inspiredBadge}
           <div class="idea-suggest-title">${esc(idea.title || "")}</div>
           ${idea.hook ? `<div class="idea-suggest-hook">"${esc(idea.hook)}"</div>` : ""}
-          ${reasoningHtml}
           <div class="idea-suggest-meta">
             ${styleLbl ? `<span class="idea-suggest-meta-style">${esc(styleLbl)}</span>` : ""}
             ${sourceLine ? `<span class="idea-suggest-source">${esc(sourceLine)}</span>` : ""}
@@ -16199,23 +16161,9 @@ async function saveSuggestion(idx) {
   if (saveBtn) saveBtn.disabled = true;
 
   try {
-    // v0.15.4: si idea tiene __dbId (viene de competitor_reel), promovemos
-    // status draft_suggested → developed via endpoint dedicado.
-    if (idea.__dbId) {
-      const r = await fetch("/api/ideas/" + encodeURIComponent(idea.__dbId) + "/accept-suggested", {
-        method: "POST", credentials: "same-origin",
-      });
-      if (!r.ok) {
-        if (saveBtn) saveBtn.disabled = false;
-        showToast(t("ideas.generate_failed") || "Error");
-        return;
-      }
-      showToast(t("ideas.saved_toast"));
-      _removeSuggestionCard(idx);
-      if (typeof loadIdeas === "function") loadIdeas();
-      return;
-    }
-    // Flujo legacy (Sugeridas en memoria desde /api/ideas/suggest).
+    // v0.15.5: flujo único legacy (Sugeridas en memoria desde /api/ideas/suggest).
+    // El branch __dbId de v0.15.4 (ideas-desde-competidor) se eliminó al sustituir
+    // 'generar idea desde reel' por 'generar guion desde reel'.
     const meta = idea.inspired_by || {};
     const r = await fetch("/api/ideas/save", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -16242,22 +16190,12 @@ async function saveSuggestion(idx) {
   }
 }
 
-async function discardSuggestion(idx) {
+function discardSuggestion(idx) {
   try {
     window.posthog && window.posthog.capture("idea_discarded_from_suggestion", {
       position_in_list: idx,
     });
   } catch (e) {}
-  // v0.15.4: si idea persistida en BD (__dbId), borrar también del BD.
-  const items = window._suggestionsCache || [];
-  const idea = items[idx];
-  if (idea && idea.__dbId) {
-    try {
-      await fetch("/api/ideas/" + encodeURIComponent(idea.__dbId) + "/discard-suggested", {
-        method: "DELETE", credentials: "same-origin",
-      });
-    } catch(e) {}
-  }
   _removeSuggestionCard(idx);
 }
 
@@ -20339,112 +20277,111 @@ function renderCompetitorFeed(reels) {
           <span>${likes} ♥</span>
           <span class="comp-reel-meta-date">${esc(dateTxt)}</span>
         </div>
-        <button class="comp-reel-genidea-btn" onclick="generateIdeaFromReel('${rid}')" data-i18n="comp.gen_idea">✨ Generar idea</button>
+        <button class="comp-reel-genscript-btn" onclick="generateScriptFromReel('${rid}')" data-i18n="comp.gen_script">📝 Generar guion</button>
       </div>
     </article>`;
   }).join("");
 }
 
-// v0.15.4: generar idea desde reel de competidor. Idea va a Sugeridas como
-// status='draft_suggested'. Aviso suave si el user ya generó una de este reel.
-window._compGeneratedReelIds = new Set();
-async function generateIdeaFromReel(reelId) {
+// v0.15.5: generar guion desde reel de competidor. Híbrido sync/async:
+//   - 200 sync (cache hit) → redirect inmediato a Guiones.
+//   - 202 async (cache miss) → polling /task/script/<id> cada 3s × 30 = 90s.
+async function generateScriptFromReel(reelId) {
   const card = document.querySelector(`.comp-reel-card[data-reel-id="${reelId}"]`);
-  const btn = card ? card.querySelector(".comp-reel-genidea-btn") : null;
+  const btn = card ? card.querySelector(".comp-reel-genscript-btn") : null;
   if (!btn) return;
-  // Aviso suave si ya generó (no bloquea).
-  if (window._compGeneratedReelIds.has(reelId)) {
-    const ok = await window.confirmModal({
-      title: t("comp.regen_confirm_title") || "Ya generaste una idea",
-      body: t("comp.regen_confirm_body") || "Ya generaste una idea de este reel. ¿Generar otra?",
-      danger: false,
-    });
-    if (!ok) return;
-  }
+  if (btn.disabled) return;  // anti doble-click
   const orig = btn.textContent;
   btn.disabled = true;
-  btn.textContent = t("comp.gen_idea_loading") || "Generando…";
+  btn.textContent = t("comp.gen_script_loading") || "Generando…";
+  const lang = (document.documentElement.lang || "es").toLowerCase();
   try {
-    const r = await fetch("/api/competitors/reels/" + encodeURIComponent(reelId) + "/generate-idea", {
+    const r = await fetch("/api/competitors/reels/" + encodeURIComponent(reelId) + "/generate-script", {
       method: "POST",
       credentials: "same-origin",
     });
     const d = await r.json().catch(() => ({}));
-    if (!r.ok) {
+    if (r.status === 200 && d.mode === "sync" && d.script_id) {
+      _compFinishGenScript(btn, d.script_id, d.from_competitor_username, lang);
+      return;
+    }
+    if (r.status === 202 && d.task_id) {
+      btn.textContent = t("comp.gen_script_analyzing") || "Analizando reel… ~1 min";
+      _compPollScriptTask(d.task_id, btn, orig, lang);
+      return;
+    }
+    // 409 duplicate: guion reciente ya existe → redirigir al existente sin cobrar.
+    if (r.status === 409 && d.error === "duplicate" && d.script_id) {
+      const dupMsg = t("comp.gen_script_duplicate")
+        || (lang === "en" ? "You just generated a script from this reel." : "Ya generaste un guion de este reel hace un momento.");
+      if (window.toast && window.toast.info) window.toast.info(dupMsg, { duration: 5000 });
+      else if (window.toast && window.toast.success) window.toast.success(dupMsg, { duration: 5000 });
+      _compFinishGenScript(btn, d.script_id, d.from_competitor_username, lang);
+      return;
+    }
+    // Error (4xx/5xx).
+    btn.disabled = false;
+    btn.textContent = orig;
+    const msg = d.message || d.error || (t("comp.gen_script_error") || "Error generando guion");
+    if (window.toast && window.toast.error) window.toast.error(msg);
+    else if (typeof showToast === "function") showToast(msg);
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = orig;
+    if (window.toast && window.toast.error) window.toast.error(t("comp.gen_script_error") || "Error");
+  }
+}
+
+async function _compPollScriptTask(taskId, btn, origLabel, lang) {
+  const MAX_ITERS = 30;
+  const STEP_MS = 3000;
+  for (let i = 0; i < MAX_ITERS; i++) {
+    await new Promise(r => setTimeout(r, STEP_MS));
+    let d;
+    try {
+      const r = await fetch("/task/script/" + encodeURIComponent(taskId), { credentials: "same-origin" });
+      d = await r.json();
+    } catch (e) { continue; }
+    if (d.state === "success") {
+      _compFinishGenScript(btn, d.script_id, d.from_competitor_username, lang);
+      return;
+    }
+    if (d.state === "failed") {
       btn.disabled = false;
-      btn.textContent = orig;
-      const msg = d.message || d.error || (t("comp.gen_idea_error_llm") || "Error generando idea");
+      btn.textContent = origLabel;
+      const msg = d.message || (t("comp.gen_script_error") || "Error generando guion");
       if (window.toast && window.toast.error) window.toast.error(msg);
       else if (typeof showToast === "function") showToast(msg);
       return;
     }
-    // OK: marcar visualmente la card como "ya generada", añadir idea a sugerencias en memoria.
-    window._compGeneratedReelIds.add(reelId);
-    btn.textContent = t("comp.gen_idea_done") || "✓ Idea generada";
-    btn.classList.add("is-done");
-    btn.disabled = false;
-    // Insertar al inicio de _suggestionsCache para que aparezca arriba al cambiar tab.
-    window._suggestionsCache = window._suggestionsCache || [];
-    window._suggestionsCache.unshift({
-      __dbId: d.idea.id,  // marca interna para acept/discard via BD
-      title: d.idea.title,
-      hook: d.idea.hook,
-      style: d.idea.style,
-      reasoning: d.idea.reasoning,
-      inspired_by_username: d.idea.inspired_by_username,
-      inspired_by_id: d.idea.inspired_by_id,
-      inspired_by_type: d.idea.inspired_by_type,
-      source: "competitor_reel",
-      status: "draft_suggested",
-    });
-    // Toast con "Ver →" para cambiar a tab Sugeridas.
-    const lang = (document.documentElement.lang || "es").toLowerCase();
-    const msg = lang === "en" ? "Idea generated in Suggested." : "Idea generada en Sugeridas.";
-    const actionLbl = lang === "en" ? "View →" : "Ver →";
-    if (window.toast && window.toast.success) {
-      window.toast.success(msg, {
-        duration: 6000,
-        action: { label: actionLbl, onClick: () => ideasTab("suggested") },
-      });
-    } else if (typeof showToast === "function") {
-      showToast(msg);
-    }
-  } catch (e) {
-    btn.disabled = false;
-    btn.textContent = orig;
-    if (window.toast && window.toast.error) window.toast.error(t("comp.gen_idea_error_llm") || "Error");
+    // state === "pending" → seguir polling.
   }
+  // Timeout sin resolución → aviso, el script puede aparecer luego en Guiones.
+  btn.disabled = false;
+  btn.textContent = origLabel;
+  const msg = lang === "en"
+    ? "Still processing. Check Scripts in a few minutes."
+    : "Sigue procesando. Revisa Guiones en unos minutos.";
+  if (window.toast && window.toast.success) window.toast.success(msg, { duration: 7000 });
+  else if (typeof showToast === "function") showToast(msg);
 }
 
-// v0.15.4: cargar ideas draft_suggested desde BD (las generadas desde competidor
-// que sobreviven el refresh). Llamado al entrar al tab Sugeridas y al boot.
-async function loadSavedDraftSuggestions() {
-  try {
-    const r = await fetch("/api/ideas/draft-suggested", { credentials: "same-origin" });
-    if (!r.ok) return;
-    const d = await r.json();
-    const dbIdeas = d.ideas || [];
-    if (!dbIdeas.length) return;
-    // Mergear con _suggestionsCache evitando duplicados (por __dbId).
-    window._suggestionsCache = window._suggestionsCache || [];
-    const existing = new Set(window._suggestionsCache.map(x => x.__dbId).filter(Boolean));
-    dbIdeas.forEach(idea => {
-      if (existing.has(idea.id)) return;
-      const reasoning = idea.generation_reasoning || "";
-      window._suggestionsCache.unshift({
-        __dbId: idea.id,
-        title: idea.title || "",
-        hook: idea.hook || "",
-        style: idea.style || "",
-        reasoning: reasoning,
-        inspired_by_username: idea.inspired_by_username,
-        inspired_by_id: idea.inspired_by_id,
-        inspired_by_type: idea.inspired_by_type,
-        source: idea.source,
-        status: idea.status,
-      });
+function _compFinishGenScript(btn, scriptId, fromUsername, lang) {
+  btn.disabled = false;
+  btn.textContent = t("comp.gen_script_done") || "✓ Guion creado";
+  btn.classList.add("is-done");
+  const msg = lang === "en"
+    ? ("Script created from @" + (fromUsername || ""))
+    : ("Guion creado desde @" + (fromUsername || ""));
+  const actionLbl = lang === "en" ? "View →" : "Ver →";
+  if (window.toast && window.toast.success) {
+    window.toast.success(msg, {
+      duration: 6000,
+      action: { label: actionLbl, onClick: () => { profTab("scripts"); } },
     });
-  } catch(e) {}
+  } else if (typeof showToast === "function") {
+    showToast(msg);
+  }
 }
 
 function _compRenderEmpty(kind) {

@@ -2524,8 +2524,9 @@ def create_idea():
 @require_auth
 def list_ideas():
     user = current_user()
-    # v0.15.4: excluir draft_suggested (viven SOLO en tab Sugeridas vía
-    # /api/ideas/draft-suggested, no se mezclan con Guardadas).
+    # v0.15.4: excluir draft_suggested (feature 'generar idea' eliminada en
+    # v0.15.5, pero ideas-zombi con ese status pueden seguir en BD; las
+    # ocultamos de Guardadas).
     q = (db.table("ideas")
            .select("*")
            .eq("user_id", user["id"])
@@ -4911,103 +4912,73 @@ def delete_tracked_creator(tracking_id: str):
     return "", 204
 
 
-# v0.15.4: motor "1 idea desde 1 reel de competidor". Prompt distinto al de
-# /api/ideas/suggest (que genera 5-8 desde top reels propios del user).
-SUGGEST_FROM_COMPETITOR_SYSTEM = (
-    "Eres un experto en contenido de Instagram Reels y TikTok. Recibirás "
-    "UN reel de un competidor del usuario y, opcionalmente, el estilo "
-    "personal del usuario (instrucciones de su asistente por defecto).\n\n"
-    "TU TAREA: generar UNA idea de reel para que ESTE usuario grabe sobre "
-    "EL MISMO TEMA que el reel del competidor, con un ENFOQUE y EJECUCIÓN "
-    "propios. Es una VARIACIÓN sobre el mismo contenido — NO una idea "
-    "nueva ni una reinvención. Piensa: 'el mismo tema, contado distinto'.\n\n"
-    "Reglas (no negociables):\n\n"
-    "1. CONSERVA del reel del competidor:\n"
-    "   - El TEMA concreto y el sub-tema específico (si el reel va de "
-    "abdominales, tu idea va de abdominales; si va de un modelo de IA "
-    "concreto, tu idea va de ese mismo modelo).\n"
-    "   - El ÁNGULO general que el competidor escoge.\n"
-    "   - El TIPO de gancho que funciona (curiosidad, miedo, antes/después, "
-    "datos sorprendentes, etc.).\n\n"
-    "2. CAMBIA del reel del competidor:\n"
-    "   - El HOOK LITERAL: reescríbelo con tus palabras, no copies palabra "
-    "por palabra la frase inicial del competidor.\n"
-    "   - El DESARROLLO y la ESTRUCTURA concreta: otra forma de exponer el "
-    "mismo tema (lista vs storytelling, demo vs explicación, antes/después "
-    "vs paso a paso, etc.).\n"
-    "   - Los EJEMPLOS, el punto de vista, el formato o el enfoque "
-    "específico. El usuario debe poder grabar algo que se note claramente "
-    "DISTINTO al ver los dos reels, pero que trate LO MISMO.\n\n"
-    "3. NO copies LITERAL el caption ni el hook del competidor palabra por "
-    "palabra (evita plagio textual). NO copies su anécdota personal "
-    "específica, su historia, su llamada a la acción literal ('comenta X '"
-    "'para recibir Y'). La diferencia con el competidor está en la "
-    "EJECUCIÓN, no en el tema.\n\n"
-    "4. RESPETA los hechos del mundo que el reel menciona: nombres de "
-    "herramientas, modelos, productos, versiones, empresas y fechas. Si "
-    "el reel habla de 'GPT-5.5', tu idea habla de 'GPT-5.5' — NO lo "
-    "sustituyas por una versión que conozcas de tu entrenamiento. Tu "
-    "conocimiento puede estar desactualizado; el reel es la fuente de "
-    "verdad sobre qué existe ahora. Cambiar 'GPT-5.5' por 'GPT-4' porque "
-    "te resulta más familiar es un ERROR GRAVE que invalida la idea. Si "
-    "el reel menciona una empresa, una herramienta o una versión que no "
-    "reconoces, ASÚMELA REAL y úsala tal cual.\n\n"
-    "5. El user_style (instrucciones del asistente del usuario, si "
-    "existe) ajusta el TONO y el estilo de REDACCIÓN. NUNCA cambia el "
-    "tema. Si user_style dice 'tono casual' y el reel va de abdominales, "
-    "tu idea es de abdominales en tono casual — no cambia a otra cosa.\n\n"
-    "6. La idea debe ser ACCIONABLE: el usuario debe poder grabarla sin "
-    "necesitar más contexto.\n\n"
-    "7. Si el caption del competidor es muy escaso o las métricas son "
-    "bajas, haz lo que puedas pero sé HONESTO en reasoning explicando "
-    "la limitación.\n\n"
-    "Devuelve para la idea:\n"
-    "- title: título corto y atractivo del reel propuesto (max 200 chars).\n"
-    "- hook: primera frase del reel que engancha en 3 segundos. Reescrito "
-    "con tus palabras, NO copia literal del competidor (max 500).\n"
-    "- style: uno de [educativo, storytelling, listas, hooks, controversia, tutorial, comparativa].\n"
-    "- reasoning: 2-3 frases que explican QUÉ TEMA/ÁNGULO conservaste "
-    "del reel y QUÉ cambiaste en la ejecución (hook, desarrollo, "
-    "enfoque). Es lo que el usuario lee para auditar que la idea trata "
-    "EL MISMO tema con un giro propio — no es un calco textual y no se "
-    "va de tema (max 400 chars).\n\n"
-    "Devuelve SOLO JSON válido en este formato exacto:\n"
-    '{"title":"...","hook":"...","style":"...","reasoning":"..."}'
-)
 
-
-@app.route("/api/competitors/reels/<reel_id>/generate-idea", methods=["POST"])
+@app.route("/api/competitors/reels/<reel_id>/generate-script", methods=["POST"])
 @require_auth
 @limiter.limit("5 per minute;20 per day")
-def generate_idea_from_competitor_reel(reel_id: str):
-    """Genera UNA idea desde un reel de competidor del user, vía LLM.
-    La idea cae en tabla ideas con status='draft_suggested' (tab Sugeridas
-    pendiente de accept/discard).
+def generate_script_from_competitor_reel(reel_id: str):
+    """Genera un guion ejecutable a partir de un reel de un competidor del
+    usuario. Híbrido sync/async:
+      - Cache hit (transcript ya ok)  → flow síncrono, devuelve 200 con
+        script_id + script. Redirect inmediato a Guiones en frontend.
+      - Cache miss (transcript falta/failed/stale)  → encola Celery task
+        y devuelve 202 con task_id. Frontend hace polling a /task/script/<id>.
+
+    Coste: 1 unit monthly_usage (paid) o 18¢ (free), refund-on-fail.
+    Stale guard: 'transcribing' con transcript_started_at > 15min se trata
+    como abandonado y se permite re-encolar.
+    Reusa: gating plan, ownership, refund-on-fail, resolve_assistant_prompt,
+    fecha actual inyectada. Sustituye al feature 'generar idea' (v0.15.4).
     """
     user = current_user()
     uid = user["id"]
     profile = get_profile(uid)
     plan = profile.get("plan", "free")
 
-    # 1. Plan habilitado (free → 402; debería estar bloqueado en UI pero hard-guard).
+    # 0. Guard anti doble-cobro: si ya hay un script de este (user, reel) en
+    # los últimos 60s, redirigir al existente sin cobrar ni encolar. Cubre
+    # double-click, recarga y 2-pestañas. Pasados 60s, regeneración legítima OK.
+    try:
+        _dup_cutoff = (datetime.now(timezone.utc) - timedelta(seconds=60)).isoformat()
+        dup_r = (db.table("scripts")
+                   .select("id, from_competitor_username")
+                   .eq("user_id", uid)
+                   .eq("from_competitor_reel_id", reel_id)
+                   .gte("created_at", _dup_cutoff)
+                   .order("created_at", desc=True)
+                   .limit(1)
+                   .execute())
+        if dup_r.data:
+            existing = dup_r.data[0]
+            return jsonify({
+                "error": "duplicate",
+                "message": "Ya generaste un guion de este reel hace un momento.",
+                "script_id": existing.get("id"),
+                "from_competitor_username": existing.get("from_competitor_username"),
+            }), 409
+    except Exception as e:
+        logger.warning("generate_script: dup check failed user=%s reel=%s err=%s",
+                       uid, reel_id, e)
+
+    # 1. Plan habilitado.
     tc_limits = get_tracked_creators_limit(plan)
     if not tc_limits["enabled"]:
         return jsonify({"error": "upgrade_required",
                         "message": "Esta función requiere plan Pro o superior."}), 402
 
-    # 2. Coste: 1 unit monthly_usage (paid) o 1 crédito = COST_CENTS (free).
-    GEN_COST = COST_CENTS  # 18 cents
-    GEN_USAGE_UNITS = 1
+    # 2. Coste: chequear capacidad (sin cobrar todavía).
+    SCRIPT_COST = COST_CENTS  # 18 cents
+    SCRIPT_USAGE_UNITS = 1
     is_paid_unlimited = plan in ("pro", "creator", "agency")
-    if not is_paid_unlimited and (profile.get("credits_cents") or 0) < GEN_COST:
+    if not is_paid_unlimited and (profile.get("credits_cents") or 0) < SCRIPT_COST:
         return jsonify({"error": "no_credits",
-                        "message": "Necesitas créditos para generar ideas. Sube de plan."}), 402
+                        "message": "Necesitas créditos para generar guion. Sube de plan."}), 402
 
-    # 3. Cargar reel + creator + validar ownership vía user_tracked_creators activo.
+    # 3. Cargar reel + ownership.
     try:
         reel_r = (db.table("creator_reels_global")
-                    .select("id, ig_reel_id, creator_id, caption, views, likes, "
-                            "comments, posted_at, "
+                    .select("id, ig_reel_id, creator_id, caption, transcript, "
+                            "transcript_status, transcript_started_at, "
                             "creator:creators_global(id, ig_username)")
                     .eq("id", reel_id)
                     .eq("is_archived", False)
@@ -5023,7 +4994,6 @@ def generate_idea_from_competitor_reel(reel_id: str):
     creator_id = creator["id"]
     ig_username = creator.get("ig_username") or ""
 
-    # Validar que el creator está en tracked activo del user.
     own_r = (db.table("user_tracked_creators")
                .select("id")
                .eq("user_id", uid)
@@ -5034,179 +5004,261 @@ def generate_idea_from_competitor_reel(reel_id: str):
     if not own_r.data:
         return jsonify({"error": "reel_not_found"}), 404
 
-    # 4. Cargar estilo del user vía resolve_assistant_prompt (cubre built-ins
-    #    como "viral"/"linkedin"/"hooks" + custom uuids). Si retorna "" → None.
-    default_asst_id = profile.get("default_idea_assistant")
-    try:
-        resolved = resolve_assistant_prompt(default_asst_id, uid) if default_asst_id else ""
-    except Exception:
-        resolved = ""
-    user_style = (resolved[:2000] if resolved else None)
+    # 4. Resolver asistente (body > profile.default).
+    body = request.get_json(silent=True) or {}
+    assistant_id = (body.get("assistant_id") or "").strip() or None
+    if not assistant_id:
+        assistant_id = profile.get("default_idea_assistant") or None
 
-    # 5. Llamar LLM. Si falla → 502 sin descontar.
-    import json as _json_mod
-    user_payload = {
-        "competitor_reel": {
-            "ig_username": ig_username,
-            "caption": (reel.get("caption") or "")[:1500],
-            "views": int(reel.get("views") or 0),
-            "likes": int(reel.get("likes") or 0),
-            "comments": int(reel.get("comments") or 0),
-            "posted_at": reel.get("posted_at"),
-        },
-        "user_style": user_style,
-    }
-    # v0.15.4.c: ancla temporal — sin ella el modelo asume su training cutoff
-    # como "presente" y trata versiones/herramientas recientes como futurismo
-    # inverosímil, sustituyéndolas por nombres familiares (GPT-5.5 → GPT-4).
-    today_str = datetime.now(timezone.utc).strftime("%-d de %B de %Y")
-    user_prompt = (
-        f"Fecha actual: {today_str}. Estamos en esa fecha — cualquier modelo, "
-        f"herramienta, empresa o versión que el reel mencione es REAL y "
-        f"ACTUAL aunque no la conozcas de tu entrenamiento.\n\n"
-        "Datos:\n" + _json_mod.dumps(user_payload, ensure_ascii=False) +
-        "\n\nGenera 1 idea original para este usuario según el formato JSON del system prompt."
-    )
-    try:
-        # max_tokens=4000 paridad con /api/ideas/suggest — Gemini trunca JSON
-        # con menos (ver v0.14.26b: mismo bug histórico).
-        result = _call_llm_json(
-            SUGGEST_FROM_COMPETITOR_SYSTEM, user_prompt,
-            max_tokens=4000, temperature=0.8,
+    # 5. Decisión sync vs async:
+    #    'ok' → flow sync (transcript ya cacheado).
+    #    Cualquier otro estado → flow async (encolar Celery).
+    transcript_ok = reel.get("transcript_status") == "ok" and (reel.get("transcript") or "").strip()
+
+    if transcript_ok:
+        # ── Flow síncrono ──────────────────────────────────────────────
+        # Generar guion ahora con caption + transcript cacheado.
+        from datetime import datetime as _dt
+        today_str = _dt.now(timezone.utc).strftime("%-d de %B de %Y")
+        caption = (reel.get("caption") or "").strip()
+        transcript_text = (reel.get("transcript") or "").strip()
+        user_content = _build_competitor_script_user_content(
+            ig_username=ig_username,
+            caption=caption,
+            transcript=transcript_text,
+            today_str=today_str,
         )
-    except _json_mod.JSONDecodeError:
-        logger.error("gen_idea_from_competitor: LLM JSON parse failed user=%s reel=%s", uid, reel_id)
-        return jsonify({"error": "llm_parse",
-                        "message": "Algo falló generando la idea. Vuelve a intentarlo."}), 502
-    except Exception as e:
-        logger.error("gen_idea_from_competitor: LLM call failed user=%s reel=%s err=%s",
-                     uid, reel_id, e, exc_info=True)
-        return jsonify({"error": "llm_error",
-                        "message": "Algo falló generando la idea. Vuelve a intentarlo."}), 502
 
-    if not isinstance(result, dict):
-        return jsonify({"error": "llm_empty",
-                        "message": "No se pudo generar la idea."}), 502
+        # Resolver style/custom_prompt (mismo patrón que transcription_to_script).
+        style_arg = "viral"
+        custom_prompt = ""
+        style_label = "viral"
+        if assistant_id in _BUILTIN_SCRIPT_STYLES:
+            style_arg = assistant_id
+            style_label = assistant_id
+        elif assistant_id:
+            try:
+                asst_r = (db.table("assistants")
+                            .select("name, instructions")
+                            .eq("id", assistant_id)
+                            .eq("user_id", uid)
+                            .execute())
+                if asst_r.data and asst_r.data[0].get("instructions"):
+                    style_arg = "custom"
+                    custom_prompt = asst_r.data[0]["instructions"]
+                    style_label = asst_r.data[0].get("name") or "custom"
+            except Exception:
+                pass
 
-    title = (result.get("title") or "").strip()[:200]
-    hook = (result.get("hook") or "").strip()[:500]
-    style = (result.get("style") or "").strip()[:50]
-    reasoning = (result.get("reasoning") or "").strip()[:400]
-    if not title:
-        return jsonify({"error": "llm_empty",
-                        "message": "No se pudo generar la idea."}), 502
+        # Cobrar ANTES del LLM. Si LLM/insert falla → refund.
+        try:
+            if is_paid_unlimited:
+                db.table("profiles").update({
+                    "monthly_usage": (profile.get("monthly_usage") or 0) + SCRIPT_USAGE_UNITS
+                }).eq("id", uid).execute()
+            else:
+                db.table("profiles").update({
+                    "credits_cents": (profile.get("credits_cents") or 0) - SCRIPT_COST
+                }).eq("id", uid).execute()
+        except Exception as e:
+            logger.error("generate_script: pre-charge failed user=%s err=%s", uid, e, exc_info=True)
+            return jsonify({"error": "internal", "message": "Inténtalo de nuevo."}), 500
 
-    raw_text = title if not hook else f"{title} — {hook}"
+        def _refund():
+            try:
+                if is_paid_unlimited:
+                    db.table("profiles").update({
+                        "monthly_usage": max(0, (profile.get("monthly_usage") or 0))
+                    }).eq("id", uid).execute()
+                else:
+                    db.table("profiles").update({
+                        "credits_cents": (profile.get("credits_cents") or 0)
+                    }).eq("id", uid).execute()
+            except Exception as e:
+                logger.error("generate_script: refund failed user=%s err=%s", uid, e)
 
-    # 6. INSERT idea en BD con status='draft_suggested' (tab Sugeridas, pendiente).
-    try:
-        ins = db.table("ideas").insert({
-            "user_id": uid,
-            "raw_text": raw_text,
-            "title": title,
-            "hook": hook or None,
-            "style": style or None,
-            "status": "draft_suggested",
-            "source": "competitor_reel",
-            "inspired_by_id": reel["id"],
-            "inspired_by_type": "reel",
-            "inspired_by_username": ig_username,
-            "generation_reasoning": reasoning or None,
-        }).execute()
-        idea_row = ins.data[0] if ins.data else None
-    except Exception as e:
-        logger.error("gen_idea_from_competitor: insert failed user=%s err=%s", uid, e, exc_info=True)
-        return jsonify({"error": "internal",
-                        "message": "No se pudo guardar la idea."}), 500
+        # LLM call.
+        try:
+            result = adapt_with_ai(user_content, style_arg, custom_prompt)
+        except Exception as e:
+            logger.error("generate_script: LLM failed user=%s err=%s", uid, e, exc_info=True)
+            _refund()
+            return jsonify({"error": "llm_error",
+                            "message": "No se pudo generar el guion. Inténtalo de nuevo."}), 502
 
-    # 7. Descontar SOLO tras parse + insert OK (igual patrón que /api/ideas/suggest).
-    try:
-        if is_paid_unlimited:
-            db.table("profiles").update({
-                "monthly_usage": (profile.get("monthly_usage") or 0) + GEN_USAGE_UNITS
-            }).eq("id", uid).execute()
-        else:
-            db.table("profiles").update({
-                "credits_cents": (profile.get("credits_cents") or 0) - GEN_COST
-            }).eq("id", uid).execute()
-    except Exception as e:
-        logger.error("gen_idea_from_competitor: credit deduction failed user=%s err=%s", uid, e)
-        # No bloqueamos — la idea ya está guardada.
+        # Flatten + título (mismo patrón que transcription_to_script).
+        llm_title = ""
+        if isinstance(result, dict) and result.get("title"):
+            llm_title = str(result["title"]).strip()[:80]
+        if isinstance(result, dict) and "hook" in result:
+            flat = (result["hook"] + "\n" +
+                    "\n".join(result.get("body", [])) + "\n" +
+                    result.get("closing", ""))
+            result = flat.strip()
+        elif isinstance(result, dict) and isinstance(result.get("hooks"), list):
+            result = "\n".join(h.get("text", "") for h in result["hooks"]
+                               if isinstance(h, dict) and h.get("text")).strip()
+        elif not isinstance(result, str):
+            result = str(result)
 
-    # 8. PostHog tracking.
-    try:
-        from emails import track as _ph_track
-        _ph_track("idea_generated_from_competitor", uid, {
-            "creator_username": ig_username,
-            "reel_id": reel["id"],
-            "style": style or "unknown",
-        })
-    except Exception:
-        pass
+        today_short = _dt.now(timezone.utc).strftime("%d %b %Y").lower()
+        script_title = llm_title or f"Guion desde @{ig_username} · {today_short}"
+        script_id = None
 
+        # Re-check antes del INSERT: cierra ventana 2-pestañas que pasaron
+        # el guard 0 simultáneamente (ambas ya cobraron en pre-charge; aquí
+        # refundamos a la perdedora y devolvemos el script ya existente).
+        try:
+            _cutoff2 = (_dt.now(timezone.utc) - timedelta(seconds=60)).isoformat()
+            dup2 = (db.table("scripts")
+                      .select("id, from_competitor_username")
+                      .eq("user_id", uid)
+                      .eq("from_competitor_reel_id", reel["id"])
+                      .gte("created_at", _cutoff2)
+                      .order("created_at", desc=True)
+                      .limit(1)
+                      .execute())
+            if dup2.data:
+                _refund()
+                existing = dup2.data[0]
+                return jsonify({
+                    "error": "duplicate",
+                    "message": "Ya generaste un guion de este reel hace un momento.",
+                    "script_id": existing.get("id"),
+                    "from_competitor_username": existing.get("from_competitor_username"),
+                }), 409
+        except Exception as e:
+            logger.warning("generate_script: pre-insert dup check failed user=%s err=%s", uid, e)
+
+        try:
+            ins = db.table("scripts").insert({
+                "user_id": uid,
+                "transcription_id": None,
+                "idea_id": None,
+                "title": script_title,
+                "script": result,
+                "project_id": None,
+                "from_competitor_reel_id": reel["id"],
+                "from_competitor_username": ig_username,
+            }).execute()
+            if ins.data:
+                script_id = ins.data[0].get("id")
+        except Exception as e:
+            logger.error("generate_script: scripts insert failed user=%s err=%s", uid, e, exc_info=True)
+            # No refundamos: el LLM funcionó, el user tiene el script en la response.
+
+        try:
+            from emails import track as _ph_track
+            _ph_track("script_generated_from_competitor", uid, {
+                "creator_username": ig_username,
+                "reel_id": reel["id"],
+                "mode": "sync_cached",
+            })
+        except Exception:
+            pass
+
+        return jsonify({
+            "mode": "sync",
+            "script_id": script_id,
+            "script": result,
+            "title": script_title,
+            "from_competitor_username": ig_username,
+        }), 200
+
+    # ── Flow asíncrono ─────────────────────────────────────────────────
+    # Stale guard: si lleva >15min en 'transcribing', tratar como abandonado.
+    STALE_MIN = 15
+    if reel.get("transcript_status") == "transcribing":
+        started_at = reel.get("transcript_started_at")
+        if started_at:
+            try:
+                from datetime import datetime as _dt
+                started_dt = _dt.fromisoformat(str(started_at).replace("Z", "+00:00"))
+                age_min = (_dt.now(timezone.utc) - started_dt).total_seconds() / 60.0
+                if age_min < STALE_MIN:
+                    # Hay otro proceso transcribiendo recientemente → encolar
+                    # la task igualmente: la task hará polling interno hasta
+                    # que aparezca o reintentará si stale.
+                    pass
+            except Exception:
+                pass
+
+    # Encolar task (no cobramos aquí — la task cobra al final si todo OK).
+    from tasks import generate_script_competitor_task  # noqa: E402
+    async_result = generate_script_competitor_task.delay(reel["id"], uid, assistant_id)
     return jsonify({
-        "idea": {
-            "id": idea_row["id"] if idea_row else None,
-            "title": title,
-            "hook": hook,
-            "style": style,
-            "reasoning": reasoning,
-            "inspired_by_username": ig_username,
-            "inspired_by_id": reel["id"],
-            "inspired_by_type": "reel",
-            "source": "competitor_reel",
-            "status": "draft_suggested",
-        }
-    }), 201
+        "mode": "async",
+        "task_id": async_result.id,
+        "status": "queued",
+        "message": "Analizando reel y generando guion…",
+    }), 202
 
 
-@app.route("/api/ideas/draft-suggested", methods=["GET"])
+def _build_competitor_script_user_content(ig_username: str, caption: str,
+                                          transcript: str, today_str: str) -> str:
+    """v0.15.5: user_content para adapt_with_ai en el contexto generar-guion
+    desde reel de competidor. Consolida lecciones v0.15.4.a-e: respeto a
+    versiones/hechos del reel, fecha inyectada, mismo tema/distinta ejecución."""
+    if not transcript or not transcript.strip():
+        transcript_block = "Sin transcripción disponible; usa solo el caption."
+    else:
+        transcript_block = transcript.strip()
+    return (
+        f"[Reel de un competidor del usuario · @{ig_username}]\n\n"
+        f"Caption del reel:\n{caption or '(sin caption)'}\n\n"
+        f"Transcripción del audio del reel (lo que el creador realmente dice):\n"
+        f"{transcript_block}\n\n"
+        f"Fecha actual: {today_str}. Cualquier modelo, herramienta, versión, "
+        f"empresa o producto que aparezca en el caption o la transcripción es "
+        f"REAL y ACTUAL aunque no lo conozcas de tu entrenamiento — úsalo tal "
+        f"cual, NO lo sustituyas por una versión que te resulte más familiar. "
+        f"Confiar en el reel sobre qué existe ahora es regla NO negociable.\n\n"
+        f"Tarea: este es un reel de un competidor del usuario. Genera un guion "
+        f"completo de 30-45 segundos hablados para que el usuario grabe SOBRE "
+        f"EL MISMO TEMA que este reel. Reescribe el hook con tus palabras (NO "
+        f"copies palabra por palabra el del competidor), reescribe el "
+        f"desarrollo y los ejemplos con un enfoque propio. La diferencia con "
+        f"el competidor está en la EJECUCIÓN, no en el tema. Respeta "
+        f"exactamente los nombres, versiones y herramientas que aparecen en "
+        f"el reel.\n\n"
+        f"Total: 100-140 palabras, mínimo 8 frases en body. Incluye al menos "
+        f"1 ejemplo concreto o anécdota dentro del desarrollo."
+    )
+
+
+@app.route("/task/script/<task_id>", methods=["GET"])
 @require_auth
-def list_draft_suggested_ideas():
-    """Lista las ideas generadas desde reels de competidor que el user aún
-    no ha accept/discard. Alimenta el tab Sugeridas tras refresh."""
-    user = current_user()
-    rows = (db.table("ideas")
-              .select("id, title, hook, style, raw_text, generation_reasoning, "
-                      "inspired_by_id, inspired_by_type, inspired_by_username, "
-                      "source, status, created_at")
-              .eq("user_id", user["id"])
-              .eq("status", "draft_suggested")
-              .eq("source", "competitor_reel")
-              .order("created_at", desc=True)
-              .limit(50)
-              .execute())
-    return jsonify({"ideas": rows.data or []})
+@limiter.limit("60 per minute")
+def task_script_status(task_id: str):
+    """Polling dedicado para generate_script_competitor_task. Shape propio
+    (no reusa /task/<id> que está acoplado a transcribe_task)."""
+    from tasks import generate_script_competitor_task  # noqa: E402
+    task = generate_script_competitor_task.AsyncResult(task_id)
+    state = task.state  # PENDING | STARTED | SUCCESS | FAILURE | PROGRESS
 
-
-@app.route("/api/ideas/<idea_id>/accept-suggested", methods=["POST"])
-@require_auth
-def accept_suggested_idea(idea_id: str):
-    """Promueve una idea draft_suggested → developed (la pasa de Sugeridas a Guardadas)."""
-    user = current_user()
-    res = (db.table("ideas")
-             .update({"status": "developed"})
-             .eq("id", idea_id)
-             .eq("user_id", user["id"])
-             .eq("status", "draft_suggested")
-             .execute())
-    if not res.data:
-        return jsonify({"error": "not_found"}), 404
-    return jsonify({"ok": True})
-
-
-@app.route("/api/ideas/<idea_id>/discard-suggested", methods=["DELETE"])
-@require_auth
-def discard_suggested_idea(idea_id: str):
-    """Borra una idea draft_suggested del user (descartar)."""
-    user = current_user()
-    res = (db.table("ideas")
-             .delete()
-             .eq("id", idea_id)
-             .eq("user_id", user["id"])
-             .eq("status", "draft_suggested")
-             .execute())
-    return ("", 204)
+    if state in ("PENDING", "STARTED", "PROGRESS"):
+        return jsonify({"state": "pending", "step": (task.info or {}).get("step") if isinstance(task.info, dict) else None})
+    if state == "SUCCESS":
+        result = task.result or {}
+        if not isinstance(result, dict):
+            return jsonify({"state": "failed", "error": "bad_result"})
+        if result.get("ok"):
+            return jsonify({
+                "state": "success",
+                "script_id": result.get("script_id"),
+                "title": result.get("title"),
+                "from_competitor_username": result.get("from_competitor_username"),
+            })
+        # ok=False → task terminó con error controlado.
+        return jsonify({
+            "state": "failed",
+            "error": result.get("error") or "unknown",
+            "message": result.get("message") or "No se pudo generar el guion.",
+        })
+    if state == "FAILURE":
+        return jsonify({"state": "failed", "error": "task_failure",
+                        "message": "Error procesando el reel. Inténtalo de nuevo."})
+    return jsonify({"state": "pending"})
 
 
 @app.route("/api/tracked-creators/reels", methods=["GET"])
