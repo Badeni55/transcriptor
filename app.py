@@ -5261,6 +5261,76 @@ def task_script_status(task_id: str):
     return jsonify({"state": "pending"})
 
 
+# ── v0.15.6: favoritos de reels de competidores ─────────────────────────────
+# Tabla user_favorite_reels (hard-delete). Toggle UI optimista en frontend;
+# el método HTTP se deriva del estado deseado tras el click (POST=quiere fav,
+# DELETE=quiere no-fav) — requests desordenados convergen porque ambos son
+# idempotentes (ON CONFLICT DO NOTHING / DELETE WHERE no-op si no existe).
+
+def _user_owns_reel(uid: str, reel_id: str) -> bool:
+    """Comprueba que el reel pertenece a un competidor activo del user.
+    Reusa el mismo patrón de ownership que generate-script."""
+    try:
+        rr = (db.table("creator_reels_global")
+                .select("creator_id")
+                .eq("id", reel_id)
+                .single()
+                .execute())
+    except Exception:
+        return False
+    if not rr.data:
+        return False
+    own_r = (db.table("user_tracked_creators")
+               .select("id")
+               .eq("user_id", uid)
+               .eq("creator_id", rr.data["creator_id"])
+               .is_("archived_at", "null")
+               .limit(1)
+               .execute())
+    return bool(own_r.data)
+
+
+@app.route("/api/competitors/reels/<reel_id>/favorite", methods=["POST"])
+@require_auth
+@limiter.limit("30 per minute")
+def add_favorite_reel(reel_id: str):
+    """Marca reel como favorito. Idempotente: ON CONFLICT DO NOTHING."""
+    user = current_user()
+    uid = user["id"]
+    if not _user_owns_reel(uid, reel_id):
+        return jsonify({"error": "reel_not_found"}), 404
+    try:
+        db.table("user_favorite_reels").upsert(
+            {"user_id": uid, "reel_id": reel_id},
+            on_conflict="user_id,reel_id",
+        ).execute()
+    except Exception as e:
+        logger.error("add_favorite_reel failed user=%s reel=%s err=%s", uid, reel_id, e)
+        return jsonify({"error": "internal"}), 500
+    return jsonify({"ok": True, "is_favorite": True})
+
+
+@app.route("/api/competitors/reels/<reel_id>/favorite", methods=["DELETE"])
+@require_auth
+@limiter.limit("30 per minute")
+def remove_favorite_reel(reel_id: str):
+    """Desmarca favorito. Idempotente: DELETE WHERE no-op si no existe."""
+    user = current_user()
+    uid = user["id"]
+    # No requerimos ownership para DELETE — un user siempre puede quitar SU
+    # favorito aunque haya des-trackeado al creador entretanto.
+    try:
+        (db.table("user_favorite_reels")
+           .delete()
+           .eq("user_id", uid)
+           .eq("reel_id", reel_id)
+           .execute())
+    except Exception as e:
+        logger.error("remove_favorite_reel failed user=%s reel=%s err=%s", uid, reel_id, e)
+        return jsonify({"error": "internal"}), 500
+    return jsonify({"ok": True, "is_favorite": False})
+
+
 @app.route("/api/tracked-creators/reels", methods=["GET"])
 @require_auth
 def get_tracked_creators_reels():
@@ -5269,35 +5339,52 @@ def get_tracked_creators_reels():
     Query params:
       - creator_id (uuid, opcional): filtra a un único competidor del user.
                                      404 si no le pertenece.
+      - favorites=true (v0.15.6): filtra a reels marcados como favoritos por
+                                  el user. No restringe por creator_ids
+                                  (favoritos de competidores des-trackeados
+                                  siguen visibles — marcar es marcar).
       - sort: recent (posted_at desc) | views | likes. Default 'recent'.
       - limit: 1-50, default 20.
       - offset: paginación. Default 0.
 
-    Return: {reels: [...], total, has_more}.
+    Return: {reels: [...], total, has_more}. Cada reel incluye is_favorite (v0.15.6).
     """
     user = current_user()
-    # 1. Set de creator_ids activos del user (deduplicado).
+    uid = user["id"]
+
+    # 1. v0.15.6: set de reel_ids favoritos del user (para flag + filtro).
+    fav_r = (db.table("user_favorite_reels")
+               .select("reel_id")
+               .eq("user_id", uid)
+               .execute())
+    fav_ids = {f["reel_id"] for f in (fav_r.data or [])}
+
+    favorites_only = (request.args.get("favorites") or "").lower() == "true"
+    if favorites_only and not fav_ids:
+        return jsonify({"reels": [], "total": 0, "has_more": False})
+
+    # 2. Set de creator_ids activos del user (deduplicado).
     tracked = (db.table("user_tracked_creators")
                  .select("creator_id")
-                 .eq("user_id", user["id"])
+                 .eq("user_id", uid)
                  .is_("archived_at", "null")
                  .execute())
     creator_ids = list({t["creator_id"] for t in (tracked.data or [])})
-    if not creator_ids:
+    if not creator_ids and not favorites_only:
         return jsonify({"reels": [], "total": 0, "has_more": False})
 
-    # 2. Validar creator_id si pasa.
+    # 3. Validar creator_id si pasa.
     filter_creator_id = request.args.get("creator_id")
     if filter_creator_id:
         if filter_creator_id not in creator_ids:
             return jsonify({"error": "tc.error.tracking_not_found"}), 404
         creator_ids = [filter_creator_id]
 
-    # 3. Sort.
+    # 4. Sort.
     sort = request.args.get("sort", "recent")
     sort_col = {"recent": "posted_at", "views": "views", "likes": "likes"}.get(sort, "posted_at")
 
-    # 4. Limit + offset.
+    # 5. Limit + offset.
     try:
         limit = max(1, min(50, int(request.args.get("limit", "20"))))
     except (TypeError, ValueError):
@@ -5307,18 +5394,25 @@ def get_tracked_creators_reels():
     except (TypeError, ValueError):
         offset = 0
 
-    # 5. Query reels con JOIN para incluir ig_username.
+    # 6. Query reels.
     q = (db.table("creator_reels_global")
            .select("id, ig_reel_id, creator_id, caption, views, likes, comments, "
                    "posted_at, thumb_url, thumb_b64, video_duration_sec, "
                    "creator:creators_global(ig_username)",
                    count="exact")
-           .in_("creator_id", creator_ids)
            .eq("is_archived", False)
            .order(sort_col, desc=True)
            .range(offset, offset + limit - 1))
+    if favorites_only:
+        # v0.15.6: filtro por favoritos NO restringe por creator_ids — un user
+        # puede haber des-trackeado un creator y conservar reels favoritos suyos.
+        q = q.in_("id", list(fav_ids))
+    else:
+        q = q.in_("creator_id", creator_ids)
     rows = q.execute()
     reels = rows.data or []
+    for r in reels:
+        r["is_favorite"] = r["id"] in fav_ids
     total = rows.count or 0
     has_more = (offset + len(reels)) < total
 

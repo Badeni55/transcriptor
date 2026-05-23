@@ -5774,6 +5774,7 @@
       gap: var(--space-md);
     }
     .comp-reel-card {
+      position: relative;  /* v0.15.6: ancla el botón favorito flotante. */
       background: var(--surf);
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -5837,6 +5838,31 @@
       border-color: var(--brand);
     }
     .comp-reel-genscript-btn:disabled { opacity: .7; cursor: default; }
+    /* v0.15.6: botón favorito flotante sobre el thumb. */
+    .comp-reel-fav-btn {
+      position: absolute;
+      top: 8px; right: 8px;
+      width: 32px; height: 32px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,.45);
+      color: rgba(255,255,255,.85);
+      border: none;
+      border-radius: 50%;
+      font-size: 1rem;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      transition: background .15s, color .15s, transform .15s;
+      z-index: 2;
+    }
+    .comp-reel-fav-btn:hover { background: rgba(0,0,0,.65); transform: scale(1.08); }
+    .comp-reel-fav-btn.is-fav { color: #f9b023; background: rgba(0,0,0,.55); }
+    .comp-reel-fav-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+    [data-theme="light"] .comp-reel-fav-btn { background: rgba(255,255,255,.85); color: rgba(0,0,0,.6); }
+    [data-theme="light"] .comp-reel-fav-btn:hover { background: rgba(255,255,255,.95); }
+    [data-theme="light"] .comp-reel-fav-btn.is-fav { color: #d97706; }
+    /* v0.15.6: chip "★ Favoritos" en toolbar (excluyente con chips de creator). */
+    .comp-chip.is-favs.on { background: rgba(249,115,22,.18); border-color: var(--brand); color: var(--brand); }
     .comp-reel-genscript-btn.is-done {
       background: rgba(34,197,94,.1);
       color: #22c55e;
@@ -10751,6 +10777,12 @@ const LANGS = {
     "comp.gen_script_done": "✓ Guion creado",
     "comp.gen_script_error": "Algo falló generando el guion. Vuelve a intentarlo.",
     "comp.gen_script_duplicate": "Ya generaste un guion de este reel hace un momento.",
+    // v0.15.6: favoritos de reels de competencia.
+    "comp.fav_chip": "★ Favoritos",
+    "comp.fav_tooltip_on": "Quitar de favoritos",
+    "comp.fav_tooltip_off": "Marcar como favorito",
+    "comp.fav_error": "No se pudo actualizar el favorito. Vuelve a intentarlo.",
+    "comp.empty_favorites": "Aún no marcaste favoritos. Toca ★ en cualquier reel para empezar.",
     "ideas.regenerate": "Regenerar",
     "ideas.to_script": "Crear guión",
     "ideas.fab_tooltip": "Apunta una idea",
@@ -11225,6 +11257,12 @@ const LANGS = {
     "comp.gen_script_done": "✓ Script created",
     "comp.gen_script_error": "Something failed generating the script. Try again.",
     "comp.gen_script_duplicate": "You just generated a script from this reel.",
+    // v0.15.6: competitor reel favorites.
+    "comp.fav_chip": "★ Favorites",
+    "comp.fav_tooltip_on": "Remove from favorites",
+    "comp.fav_tooltip_off": "Mark as favorite",
+    "comp.fav_error": "Couldn't update favorite. Try again.",
+    "comp.empty_favorites": "No favorites yet. Tap ★ on any reel to get started.",
     "ideas.regenerate": "Regenerate",
     "ideas.to_script": "Create script",
     "ideas.fab_tooltip": "Capture an idea",
@@ -20130,6 +20168,9 @@ window.addEventListener("DOMContentLoaded", () => {
 window._compFilterCreatorId = null;
 window._compSort = "recent";
 window._compTrackedCache = null;  // cache de tracked-creators del último load
+// v0.15.6: estado de favoritos (excluyente con _compFilterCreatorId).
+window._compShowFavorites = false;
+window._compFavSet = new Set();  // reel_ids del user (repoblado tras cada feed load)
 
 async function loadCompetitors() {
   // 1. GET tracked-creators
@@ -20172,14 +20213,20 @@ function renderCompetitorChips(d) {
   const tracked = (d && d.tracked) || [];
   const lang = (document.documentElement.lang || "es").toLowerCase();
   const ALL = lang === "en" ? "All" : "Todos";
-  let html = `<button type="button" class="comp-chip is-all${window._compFilterCreatorId == null ? " on" : ""}" onclick="compSetFilter(null)">
+  const FAVS = t("comp.fav_chip") || (lang === "en" ? "★ Favorites" : "★ Favoritos");
+  const allOn = window._compFilterCreatorId == null && !window._compShowFavorites;
+  let html = `<button type="button" class="comp-chip is-all${allOn ? " on" : ""}" onclick="compSetFilter(null)">
     <span class="comp-chip-username">${esc(ALL)}</span>
     <span class="comp-chip-badge" style="background:var(--surf2);color:var(--text3)">${tracked.length}</span>
+  </button>`;
+  // v0.15.6: chip "★ Favoritos" — excluyente con filtro por creador.
+  html += `<button type="button" class="comp-chip is-favs${window._compShowFavorites ? " on" : ""}" onclick="compToggleFavorites()">
+    <span class="comp-chip-username">${esc(FAVS)}</span>
   </button>`;
   tracked.forEach(t => {
     const c = t.creator || {};
     const status = c.scrape_status || "pending";
-    const isOn = window._compFilterCreatorId === c.id;
+    const isOn = window._compFilterCreatorId === c.id && !window._compShowFavorites;
     const badge = _compStatusBadge(status, lang);
     html += `<button type="button" class="comp-chip${isOn ? " on" : ""}" onclick="compSetFilter('${esc(c.id)}')">
       <span class="comp-chip-username">@${esc(c.ig_username || "")}</span>
@@ -20205,6 +20252,15 @@ function _compStatusBadge(status, lang) {
 
 function compSetFilter(creatorId) {
   window._compFilterCreatorId = creatorId;
+  window._compShowFavorites = false;  // v0.15.6: excluyente con favoritos.
+  renderCompetitorChips(window._compTrackedCache);
+  loadCompetitorsFeed();
+}
+
+// v0.15.6: chip "★ Favoritos" — excluyente con filtro por creador.
+function compToggleFavorites() {
+  window._compShowFavorites = !window._compShowFavorites;
+  if (window._compShowFavorites) window._compFilterCreatorId = null;
   renderCompetitorChips(window._compTrackedCache);
   loadCompetitorsFeed();
 }
@@ -20226,11 +20282,15 @@ async function loadCompetitorsFeed() {
     <article class="comp-skel-card"><div class="comp-skel-thumb"></div></article>`;
   const params = new URLSearchParams({ sort: window._compSort, limit: "20" });
   if (window._compFilterCreatorId) params.set("creator_id", window._compFilterCreatorId);
+  if (window._compShowFavorites) params.set("favorites", "true");
   try {
     const r = await fetch("/api/tracked-creators/reels?" + params.toString(), { credentials: "same-origin" });
     if (!r.ok) { _compRenderEmpty("error"); return; }
     const d = await r.json();
-    renderCompetitorFeed(d.reels || []);
+    // v0.15.6: repoblar set local de favoritos desde el response (autoritativo).
+    const reels = d.reels || [];
+    window._compFavSet = new Set(reels.filter(r => r.is_favorite).map(r => r.id));
+    renderCompetitorFeed(reels);
   } catch (e) {
     _compRenderEmpty("error");
   }
@@ -20240,6 +20300,8 @@ function renderCompetitorFeed(reels) {
   const host = document.getElementById("compFeed");
   if (!host) return;
   if (!reels.length) {
+    // v0.15.6: vista de favoritos vacía → empty state propio.
+    if (window._compShowFavorites) return _compRenderEmpty("no_favorites");
     // Distinguir si filtro está en un competidor scraping/private.
     const fid = window._compFilterCreatorId;
     if (fid && window._compTrackedCache) {
@@ -20254,6 +20316,8 @@ function renderCompetitorFeed(reels) {
   }
   const lang = (document.documentElement.lang || "es").toLowerCase();
   const VIEWS = lang === "en" ? "views" : "vistas";
+  const FAV_ON = t("comp.fav_tooltip_on") || (lang === "en" ? "Remove from favorites" : "Quitar de favoritos");
+  const FAV_OFF = t("comp.fav_tooltip_off") || (lang === "en" ? "Mark as favorite" : "Marcar como favorito");
   host.innerHTML = reels.map(r => {
     const owner = r.creator && r.creator.ig_username ? "@" + esc(r.creator.ig_username) : "";
     // v0.15.3.a: prioriza thumb_b64 (data URL persistente) → thumb_url (CDN IG,
@@ -20267,8 +20331,12 @@ function renderCompetitorFeed(reels) {
     const likes = Number(r.likes || 0).toLocaleString(lang === "en" ? "en-US" : "es-ES");
     const dateTxt = r.posted_at ? ovRelTime(r.posted_at) : "";
     const rid = esc(r.id);
+    const isFav = !!r.is_favorite;
+    const favCls = "comp-reel-fav-btn" + (isFav ? " is-fav" : "");
+    const favTitle = esc(isFav ? FAV_ON : FAV_OFF);
     return `<article class="comp-reel-card" data-reel-id="${rid}">
       ${thumb}
+      <button type="button" class="${favCls}" onclick="toggleReelFavorite('${rid}')" title="${favTitle}" aria-label="${favTitle}">★</button>
       <div class="comp-reel-body">
         <div class="comp-reel-owner">${owner}</div>
         <div class="comp-reel-caption">${caption}</div>
@@ -20281,6 +20349,47 @@ function renderCompetitorFeed(reels) {
       </div>
     </article>`;
   }).join("");
+}
+
+// v0.15.6: toggle favorito con optimismo + revert.
+// Operación absoluta: el método HTTP se deriva del estado DESEADO tras el
+// click, no de invertir el estado previo a ciegas. POST y DELETE son
+// idempotentes (ON CONFLICT DO NOTHING / DELETE no-op si no existe), así
+// que requests desordenados convergen al último click.
+async function toggleReelFavorite(reelId) {
+  const card = document.querySelector(`.comp-reel-card[data-reel-id="${reelId}"]`);
+  const btn = card ? card.querySelector(".comp-reel-fav-btn") : null;
+  if (!btn) return;
+  const wasOn = btn.classList.contains("is-fav");
+  const desired = !wasOn;  // estado tras el click (lo que el user quiere ahora)
+  const method = desired ? "POST" : "DELETE";
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  // Optimista: aplica UI inmediatamente.
+  btn.classList.toggle("is-fav", desired);
+  btn.title = (desired ? t("comp.fav_tooltip_on") : t("comp.fav_tooltip_off"))
+    || (lang === "en" ? (desired ? "Remove from favorites" : "Mark as favorite") : (desired ? "Quitar de favoritos" : "Marcar como favorito"));
+  if (desired) window._compFavSet.add(reelId); else window._compFavSet.delete(reelId);
+  try {
+    const r = await fetch("/api/competitors/reels/" + encodeURIComponent(reelId) + "/favorite", {
+      method,
+      credentials: "same-origin",
+    });
+    if (!r.ok) throw new Error("net");
+    // v0.15.6: si estamos en la vista Favoritos y el reel quedó desfavorito, retirarlo.
+    if (window._compShowFavorites && !desired) {
+      if (card) card.remove();
+      // Si la vista quedó vacía, mostrar empty state.
+      const host = document.getElementById("compFeed");
+      if (host && !host.querySelector(".comp-reel-card")) _compRenderEmpty("no_favorites");
+    }
+  } catch (e) {
+    // Revert (mismo estado previo).
+    btn.classList.toggle("is-fav", wasOn);
+    if (wasOn) window._compFavSet.add(reelId); else window._compFavSet.delete(reelId);
+    const msg = t("comp.fav_error") || (lang === "en" ? "Couldn't update favorite." : "No se pudo actualizar el favorito.");
+    if (window.toast && window.toast.error) window.toast.error(msg);
+    else if (typeof showToast === "function") showToast(msg);
+  }
 }
 
 // v0.15.5: generar guion desde reel de competidor. Híbrido sync/async:
@@ -20414,6 +20523,8 @@ function _compRenderEmpty(kind) {
     not_found_one_s: "We couldn't find this username on Instagram.",
     failed_one_t: "Couldn't fetch this competitor",
     failed_one_s: "Account too large or not accessible right now.",
+    no_favorites_t: "No favorites yet",
+    no_favorites_s: "Tap ★ on any reel to start collecting your favorites.",
   } : {
     free_t:   "Sigue a tus competidores con Creator",
     free_s:   "Inspírate con lo que funciona en tu nicho.",
@@ -20435,6 +20546,8 @@ function _compRenderEmpty(kind) {
     not_found_one_s: "No pudimos encontrar este usuario en Instagram.",
     failed_one_t: "No pudimos cargar este competidor",
     failed_one_s: "Cuenta muy grande o no accesible ahora.",
+    no_favorites_t: "Aún no marcaste favoritos",
+    no_favorites_s: "Toca ★ en cualquier reel para empezar tu colección.",
   };
   const mascot = "/static/img/hooks/hooks-ideas.svg";
   let html;
@@ -20467,6 +20580,10 @@ function _compRenderEmpty(kind) {
     html = `<div class="comp-empty"><img src="${mascot}" alt="" aria-hidden="true">
       <div class="comp-empty-title">${M.failed_one_t}</div>
       <div class="comp-empty-sub">${M.failed_one_s}</div></div>`;
+  } else if (kind === "no_favorites") {  // v0.15.6
+    html = `<div class="comp-empty"><img src="${mascot}" alt="" aria-hidden="true">
+      <div class="comp-empty-title">${M.no_favorites_t}</div>
+      <div class="comp-empty-sub">${M.no_favorites_s}</div></div>`;
   } else {  // "error"
     html = `<div class="comp-empty"><img src="${mascot}" alt="" aria-hidden="true">
       <div class="comp-empty-title">${M.error_t}</div>

@@ -179,6 +179,15 @@ CREATE TABLE IF NOT EXISTS public.user_tracked_creators (
   weekly_digest_enabled boolean NOT NULL DEFAULT true
 );
 
+-- v0.15.6: favoritos de reels de competencia (hard-delete, UNIQUE user+reel).
+CREATE TABLE IF NOT EXISTS public.user_favorite_reels (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  reel_id uuid NOT NULL REFERENCES public.creator_reels_global(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (user_id, reel_id)
+);
+
 CREATE TABLE IF NOT EXISTS public.user_creator_credits (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
