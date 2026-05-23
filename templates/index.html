@@ -5818,15 +5818,22 @@
     }
     .comp-reel-meta span { display: inline-flex; align-items: center; gap: 3px; }
     .comp-reel-meta-date { margin-left: auto; }
-    /* v0.15.5: botón generar guion desde reel competidor. */
-    .comp-reel-genscript-btn {
-      width: 100%;
+    /* v0.15.5: botón generar guion desde reel competidor.
+       v0.15.7: split button (label + caret) con <select> nativo oculto. */
+    .comp-reel-genscript-split {
+      position: relative;
+      display: flex;
       margin-top: 10px;
+      width: 100%;
+    }
+    .comp-reel-genscript-btn {
+      flex: 1;
       padding: 8px 12px;
       background: rgba(249,115,22,.08);
       color: var(--brand);
       border: 1px solid rgba(249,115,22,.25);
-      border-radius: 8px;
+      border-radius: 8px 0 0 8px;
+      border-right: none;
       font-size: .78rem;
       font-weight: 600;
       font-family: var(--font-body);
@@ -5838,6 +5845,37 @@
       border-color: var(--brand);
     }
     .comp-reel-genscript-btn:disabled { opacity: .7; cursor: default; }
+    .comp-reel-genscript-caret {
+      width: 32px;
+      padding: 0;
+      background: rgba(249,115,22,.08);
+      color: var(--brand);
+      border: 1px solid rgba(249,115,22,.25);
+      border-radius: 0 8px 8px 0;
+      font-size: .7rem;
+      font-weight: 700;
+      font-family: var(--font-body);
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .comp-reel-genscript-caret:hover:not(:disabled) {
+      background: rgba(249,115,22,.16);
+      border-color: var(--brand);
+    }
+    .comp-reel-genscript-caret:disabled { opacity: .7; cursor: default; }
+    /* v0.15.7: select nativo invisible — el caret invoca showPicker(). */
+    .comp-reel-asst-picker {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      opacity: 0;
+      pointer-events: none;
+      border: 0;
+    }
+    @media (max-width: 480px) {
+      .comp-reel-genscript-caret { width: 36px; }
+    }
     /* v0.15.6: botón favorito flotante sobre el thumb. */
     .comp-reel-fav-btn {
       position: absolute;
@@ -10783,6 +10821,8 @@ const LANGS = {
     "comp.fav_tooltip_off": "Marcar como favorito",
     "comp.fav_error": "No se pudo actualizar el favorito. Vuelve a intentarlo.",
     "comp.empty_favorites": "Aún no marcaste favoritos. Toca ★ en cualquier reel para empezar.",
+    // v0.15.7: selector de asistente al generar guion.
+    "comp.gen_script_pick_asst": "Elegir asistente",
     "ideas.regenerate": "Regenerar",
     "ideas.to_script": "Crear guión",
     "ideas.fab_tooltip": "Apunta una idea",
@@ -11263,6 +11303,8 @@ const LANGS = {
     "comp.fav_tooltip_off": "Mark as favorite",
     "comp.fav_error": "Couldn't update favorite. Try again.",
     "comp.empty_favorites": "No favorites yet. Tap ★ on any reel to get started.",
+    // v0.15.7: assistant picker on generate script.
+    "comp.gen_script_pick_asst": "Pick assistant",
     "ideas.regenerate": "Regenerate",
     "ideas.to_script": "Create script",
     "ideas.fab_tooltip": "Capture an idea",
@@ -14981,6 +15023,7 @@ function renderTranscCardHTML(it, opts) {
           <option value="viral"${builtinSelT("viral")}>🔥 Viral</option>
           <option value="divertido"${builtinSelT("divertido")}>😂 Divertido</option>
           <option value="storytelling"${builtinSelT("storytelling")}>📖 Historia</option>
+          <option value="hooks"${builtinSelT("hooks")}>🎣 Hooks</option>
           ${customAsstOptsT}
         </select>
         <button class="trans-act primary" onclick="transcriptionToScript(${id})">${LBL_GUION}</button>
@@ -16396,6 +16439,7 @@ function renderIdeas() {
           <option value="viral"${builtinSel("viral")}>🔥 Viral</option>
           <option value="divertido"${builtinSel("divertido")}>😂 Divertido</option>
           <option value="storytelling"${builtinSel("storytelling")}>📖 Historia</option>
+          <option value="hooks"${builtinSel("hooks")}>🎣 Hooks</option>
           ${customAsstOpts}
         </select>
         <button class="ideas-act ghost" onclick="ideaToScript('${id}')">${ACT_SCRIPT}</button>
@@ -20318,6 +20362,21 @@ function renderCompetitorFeed(reels) {
   const VIEWS = lang === "en" ? "views" : "vistas";
   const FAV_ON = t("comp.fav_tooltip_on") || (lang === "en" ? "Remove from favorites" : "Quitar de favoritos");
   const FAV_OFF = t("comp.fav_tooltip_off") || (lang === "en" ? "Mark as favorite" : "Marcar como favorito");
+  // v0.15.7: opciones del split-button picker. Built-ins primero + customs del user.
+  const PICK_LBL = t("comp.gen_script_pick_asst") || (lang === "en" ? "Pick assistant" : "Elegir asistente");
+  const BUILTIN_LBL = lang === "en"
+    ? { viral: "🔥 Viral", divertido: "😂 Fun", storytelling: "📖 Storytelling", hooks: "🎣 Hooks" }
+    : { viral: "🔥 Viral", divertido: "😂 Divertido", storytelling: "📖 Historia", hooks: "🎣 Hooks" };
+  const customAsstOptsHTML = ((typeof userAssistants !== "undefined") ? userAssistants : [])
+    .map(a => `<option value="${esc(a.id)}">${esc(a.name)}</option>`)
+    .join("");
+  const asstOptionsHTML = `
+    <option value="" disabled selected hidden>—</option>
+    <option value="viral">${BUILTIN_LBL.viral}</option>
+    <option value="divertido">${BUILTIN_LBL.divertido}</option>
+    <option value="storytelling">${BUILTIN_LBL.storytelling}</option>
+    <option value="hooks">${BUILTIN_LBL.hooks}</option>
+    ${customAsstOptsHTML}`;
   host.innerHTML = reels.map(r => {
     const owner = r.creator && r.creator.ig_username ? "@" + esc(r.creator.ig_username) : "";
     // v0.15.3.a: prioriza thumb_b64 (data URL persistente) → thumb_url (CDN IG,
@@ -20345,10 +20404,36 @@ function renderCompetitorFeed(reels) {
           <span>${likes} ♥</span>
           <span class="comp-reel-meta-date">${esc(dateTxt)}</span>
         </div>
-        <button class="comp-reel-genscript-btn" onclick="generateScriptFromReel('${rid}')" data-i18n="comp.gen_script">📝 Generar guion</button>
+        <div class="comp-reel-genscript-split">
+          <button type="button" class="comp-reel-genscript-btn" onclick="generateScriptFromReel('${rid}')" data-i18n="comp.gen_script">📝 Generar guion</button>
+          <button type="button" class="comp-reel-genscript-caret" onclick="openAsstPicker('${rid}')" aria-label="${esc(PICK_LBL)}" title="${esc(PICK_LBL)}">▾</button>
+          <select class="comp-reel-asst-picker" id="reel-asst-${rid}" tabindex="-1" aria-hidden="true" onchange="_onReelAsstPick('${rid}', this)">
+            ${asstOptionsHTML}
+          </select>
+        </div>
       </div>
     </article>`;
   }).join("");
+}
+
+// v0.15.7: abre el <select> nativo invocando showPicker() (Chromium 99+,
+// Firefox 98+, Safari 16.4+). Fallback click() para navegadores antiguos.
+function openAsstPicker(reelId) {
+  const sel = document.getElementById("reel-asst-" + reelId);
+  if (!sel) return;
+  try {
+    if (typeof sel.showPicker === "function") sel.showPicker();
+    else sel.click();
+  } catch (e) { try { sel.click(); } catch (_) {} }
+}
+
+// v0.15.7: al elegir asistente del dropdown, genera con ese asistente.
+// Reset value tras disparar para que la siguiente apertura empiece en hidden.
+function _onReelAsstPick(reelId, sel) {
+  const val = sel.value;
+  sel.value = "";  // hidden option queda seleccionada al reabrir
+  if (!val) return;
+  generateScriptFromReel(reelId, val);
 }
 
 // v0.15.6: toggle favorito con optimismo + revert.
@@ -20395,19 +20480,26 @@ async function toggleReelFavorite(reelId) {
 // v0.15.5: generar guion desde reel de competidor. Híbrido sync/async:
 //   - 200 sync (cache hit) → redirect inmediato a Guiones.
 //   - 202 async (cache miss) → polling /task/script/<id> cada 3s × 30 = 90s.
-async function generateScriptFromReel(reelId) {
+// v0.15.7: assistantId opcional desde el split-button picker. Si no se pasa,
+// el backend usa profile.default_idea_assistant. "Solo una vez" — no cambia default.
+async function generateScriptFromReel(reelId, assistantId) {
   const card = document.querySelector(`.comp-reel-card[data-reel-id="${reelId}"]`);
   const btn = card ? card.querySelector(".comp-reel-genscript-btn") : null;
+  const caret = card ? card.querySelector(".comp-reel-genscript-caret") : null;
   if (!btn) return;
   if (btn.disabled) return;  // anti doble-click
   const orig = btn.textContent;
   btn.disabled = true;
+  if (caret) caret.disabled = true;
   btn.textContent = t("comp.gen_script_loading") || "Generando…";
   const lang = (document.documentElement.lang || "es").toLowerCase();
   try {
+    const body = assistantId ? JSON.stringify({ assistant_id: assistantId }) : null;
     const r = await fetch("/api/competitors/reels/" + encodeURIComponent(reelId) + "/generate-script", {
       method: "POST",
       credentials: "same-origin",
+      headers: body ? { "Content-Type": "application/json" } : {},
+      body,
     });
     const d = await r.json().catch(() => ({}));
     if (r.status === 200 && d.mode === "sync" && d.script_id) {
@@ -20430,12 +20522,14 @@ async function generateScriptFromReel(reelId) {
     }
     // Error (4xx/5xx).
     btn.disabled = false;
+    if (caret) caret.disabled = false;
     btn.textContent = orig;
     const msg = d.message || d.error || (t("comp.gen_script_error") || "Error generando guion");
     if (window.toast && window.toast.error) window.toast.error(msg);
     else if (typeof showToast === "function") showToast(msg);
   } catch (e) {
     btn.disabled = false;
+    if (caret) caret.disabled = false;
     btn.textContent = orig;
     if (window.toast && window.toast.error) window.toast.error(t("comp.gen_script_error") || "Error");
   }
@@ -20457,6 +20551,9 @@ async function _compPollScriptTask(taskId, btn, origLabel, lang) {
     }
     if (d.state === "failed") {
       btn.disabled = false;
+      const _ec = btn.closest ? btn.closest(".comp-reel-card") : null;
+      const _eCaret = _ec ? _ec.querySelector(".comp-reel-genscript-caret") : null;
+      if (_eCaret) _eCaret.disabled = false;
       btn.textContent = origLabel;
       const msg = d.message || (t("comp.gen_script_error") || "Error generando guion");
       if (window.toast && window.toast.error) window.toast.error(msg);
@@ -20467,6 +20564,9 @@ async function _compPollScriptTask(taskId, btn, origLabel, lang) {
   }
   // Timeout sin resolución → aviso, el script puede aparecer luego en Guiones.
   btn.disabled = false;
+  const _card = btn.closest ? btn.closest(".comp-reel-card") : null;
+  const _caret = _card ? _card.querySelector(".comp-reel-genscript-caret") : null;
+  if (_caret) _caret.disabled = false;
   btn.textContent = origLabel;
   const msg = lang === "en"
     ? "Still processing. Check Scripts in a few minutes."
@@ -20477,6 +20577,11 @@ async function _compPollScriptTask(taskId, btn, origLabel, lang) {
 
 async function _compFinishGenScript(btn, scriptId, fromUsername, lang) {
   btn.disabled = false;
+  // v0.15.7: rehabilita el caret de la misma card para permitir regenerar
+  // con otro asistente (backend guard 60s rebota duplicados con 409).
+  const card = btn.closest ? btn.closest(".comp-reel-card") : null;
+  const caret = card ? card.querySelector(".comp-reel-genscript-caret") : null;
+  if (caret) caret.disabled = false;
   btn.textContent = t("comp.gen_script_done") || "✓ Guion creado";
   btn.classList.add("is-done");
   // Refrescar scriptsCache: el INSERT ocurrió server-side, sin esto el panel
