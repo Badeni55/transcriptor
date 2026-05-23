@@ -179,6 +179,16 @@ CREATE TABLE IF NOT EXISTS public.user_tracked_creators (
   weekly_digest_enabled boolean NOT NULL DEFAULT true
 );
 
+-- v0.15.8: locks de generación de guion competidor (PK compuesta, sweeper
+-- de huérfanos vía Celery beat). Cierra 0.1% residual del guard 60s v0.15.5.
+CREATE TABLE IF NOT EXISTS public.script_generation_locks (
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  reel_id uuid NOT NULL REFERENCES public.creator_reels_global(id) ON DELETE CASCADE,
+  task_id text,
+  started_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, reel_id)
+);
+
 -- v0.15.6: favoritos de reels de competencia (hard-delete, UNIQUE user+reel).
 CREATE TABLE IF NOT EXISTS public.user_favorite_reels (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

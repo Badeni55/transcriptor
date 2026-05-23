@@ -5094,6 +5094,71 @@ def generate_script_from_competitor_reel(reel_id: str):
         except Exception:
             pass  # No bloquear si lookup falla — el path sync/task lo reintenta
 
+    # v0.15.8: ADQUIRIR LOCK (user_id, reel_id) — cierra el 0.1% residual del
+    # guard 60s ante 2 POSTs simultáneos del mismo reel. PK compuesta garantiza
+    # atomicidad. Si conflict: si lock huérfano (>10min, sweeper caído) → DELETE
+    # + reintenta. Si fresco → 409 in_progress con task_id (frontend reusa polling).
+    _LOCK_STALE_MIN = 10
+    _lock_acquired = False
+    try:
+        ins_lock = (db.table("script_generation_locks")
+                      .insert({"user_id": uid, "reel_id": reel_id})
+                      .execute())
+        _lock_acquired = bool(ins_lock.data)
+    except Exception as e_lock:
+        # Insert falló → muy probable PK conflict. Inspeccionamos.
+        try:
+            cur = (db.table("script_generation_locks")
+                     .select("started_at, task_id")
+                     .eq("user_id", uid)
+                     .eq("reel_id", reel_id)
+                     .single()
+                     .execute())
+            existing = cur.data
+        except Exception:
+            existing = None
+        if not existing:
+            logger.error("generate_script: lock INSERT failed sin row existente user=%s reel=%s err=%s",
+                         uid, reel_id, e_lock)
+            return jsonify({"error": "internal", "message": "Inténtalo de nuevo."}), 500
+        # ¿Huérfano?
+        try:
+            started_dt = datetime.fromisoformat(str(existing["started_at"]).replace("Z", "+00:00"))
+            age_min = (datetime.now(timezone.utc) - started_dt).total_seconds() / 60.0
+        except Exception:
+            age_min = 0
+        if age_min > _LOCK_STALE_MIN:
+            # Lock huérfano (worker murió antes del finally) → liberar y reintentar.
+            logger.info("generate_script: lock huérfano liberado user=%s reel=%s age_min=%.1f",
+                        uid, reel_id, age_min)
+            try:
+                (db.table("script_generation_locks").delete()
+                   .eq("user_id", uid).eq("reel_id", reel_id).execute())
+                (db.table("script_generation_locks")
+                   .insert({"user_id": uid, "reel_id": reel_id}).execute())
+                _lock_acquired = True
+            except Exception as e_retry:
+                logger.error("generate_script: lock retry failed user=%s reel=%s err=%s",
+                             uid, reel_id, e_retry)
+                return jsonify({"error": "internal", "message": "Inténtalo de nuevo."}), 500
+        else:
+            # Lock fresco → otra generación en curso.
+            return jsonify({
+                "error": "in_progress",
+                "message": "Ya estás generando un guion de este reel. Espera unos segundos.",
+                "task_id": existing.get("task_id"),
+                "lock_started_at": existing.get("started_at"),
+            }), 409
+
+    def _release_lock():
+        """Libera el lock del par (user, reel). Best-effort, idempotente."""
+        try:
+            (db.table("script_generation_locks").delete()
+               .eq("user_id", uid).eq("reel_id", reel_id).execute())
+        except Exception as e:
+            logger.warning("generate_script: lock DELETE failed user=%s reel=%s err=%s",
+                           uid, reel_id, e)
+
     # 5. Decisión sync vs async:
     #    'ok' → flow sync (transcript ya cacheado).
     #    Cualquier otro estado → flow async (encolar Celery).
@@ -5150,6 +5215,7 @@ def generate_script_from_competitor_reel(reel_id: str):
                 }).eq("id", uid).execute()
         except Exception as e:
             logger.error("generate_script: pre-charge failed user=%s err=%s", uid, e, exc_info=True)
+            _release_lock()
             return jsonify({"error": "internal", "message": "Inténtalo de nuevo."}), 500
 
         def _refund():
@@ -5174,6 +5240,7 @@ def generate_script_from_competitor_reel(reel_id: str):
             # v0.15.7.b: mensaje contextual si style=custom y empty content
             # (guard v0.15.7.a). Apunta al asistente concreto en vez del
             # mensaje genérico, accionable hacia /assistants.
+            _release_lock()
             if style_arg == "custom" and "empty content" in str(e).lower():
                 return jsonify({
                     "error": "assistant_empty_response",
@@ -5218,6 +5285,7 @@ def generate_script_from_competitor_reel(reel_id: str):
                       .execute())
             if dup2.data:
                 _refund()
+                _release_lock()
                 existing = dup2.data[0]
                 return jsonify({
                     "error": "duplicate",
@@ -5255,6 +5323,7 @@ def generate_script_from_competitor_reel(reel_id: str):
         except Exception:
             pass
 
+        _release_lock()
         return jsonify({
             "mode": "sync",
             "script_id": script_id,
@@ -5284,6 +5353,14 @@ def generate_script_from_competitor_reel(reel_id: str):
     # Encolar task (no cobramos aquí — la task cobra al final si todo OK).
     from tasks import generate_script_competitor_task  # noqa: E402
     async_result = generate_script_competitor_task.delay(reel["id"], uid, assistant_id)
+    # v0.15.8: anotar task_id en el lock (la task lo libera al final vía try/finally).
+    try:
+        (db.table("script_generation_locks")
+           .update({"task_id": async_result.id})
+           .eq("user_id", uid).eq("reel_id", reel["id"]).execute())
+    except Exception as e:
+        logger.warning("generate_script: lock UPDATE task_id failed user=%s reel=%s err=%s",
+                       uid, reel["id"], e)
     return jsonify({
         "mode": "async",
         "task_id": async_result.id,
