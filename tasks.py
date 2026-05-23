@@ -705,11 +705,31 @@ def generate_script_competitor_task(self, reel_id, user_id, assistant_id):
         except Exception:
             pass
 
+    # v0.15.7.b: cortar pre-LLM si custom prompt corto (sin cobrar). El
+    # endpoint pre-valida también; este check es defense in depth — si la
+    # task se encola con assistant_id válido y luego el user edita el
+    # asistente a algo más corto, este guard cubre la race.
+    _CUSTOM_MIN = 30
+    if style_arg == "custom" and len((custom_prompt or "").strip()) < _CUSTOM_MIN:
+        msg = (
+            "Las instrucciones de tu asistente '" + style_label +
+            "' son muy cortas (mínimo " + str(_CUSTOM_MIN) +
+            " caracteres). Edítalas en Asistentes."
+        )
+        return _fail("assistant_too_short", msg)
+
     try:
         from app import adapt_with_ai  # lazy import (rompe circular tasks↔app).
         result = adapt_with_ai(user_content, style_arg, custom_prompt)
     except Exception as e:
         logger.exception("gen_script_task LLM failed reel=%s: %s", reel_id, e)
+        # v0.15.7.b: mensaje contextual si custom + empty content.
+        if style_arg == "custom" and "empty content" in str(e).lower():
+            return _fail(
+                "assistant_empty_response",
+                "El asistente '" + style_label + "' devolvió respuesta vacía. "
+                "Edita sus instrucciones o usa otro estilo.",
+            )
         return _fail("llm_error", "No se pudo generar el guion. Inténtalo de nuevo.")
 
     llm_title = ""

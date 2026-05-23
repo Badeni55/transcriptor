@@ -2674,6 +2674,33 @@ def regenerate_idea(idea_id):
 # 30-45s). El estilo sigue disponible vía /adapt directo para retrocompat.
 _BUILTIN_SCRIPT_STYLES = {"viral", "divertido", "storytelling", "hooks"}
 
+# v0.15.7.b: umbral mínimo de chars en custom_prompt antes de invocar al LLM.
+# Custom prompts demasiado cortos ("instruccion base", 16 chars) provocan que
+# Gemini devuelva content=null tras 4s — refund OK, pero UX confusa. Cortar
+# antes del LLM con mensaje accionable hacia /assistants.
+_CUSTOM_PROMPT_MIN_CHARS = 30
+
+
+def _custom_too_short(style_arg, custom_prompt):
+    """True si style='custom' y instructions <_CUSTOM_PROMPT_MIN_CHARS chars."""
+    if style_arg != "custom":
+        return False
+    return len((custom_prompt or "").strip()) < _CUSTOM_PROMPT_MIN_CHARS
+
+
+def _assistant_too_short_response(assistant_name):
+    """JSON 400 estándar para asistente custom con instructions inútiles."""
+    return jsonify({
+        "error": "assistant_too_short",
+        "message": (
+            f"Las instrucciones de tu asistente '{assistant_name}' son muy cortas "
+            f"para generar guion (mínimo {_CUSTOM_PROMPT_MIN_CHARS} caracteres). "
+            f"Edítalas en Asistentes o usa otro estilo."
+        ),
+        "assistant_name": assistant_name,
+        "min_chars": _CUSTOM_PROMPT_MIN_CHARS,
+    }), 400
+
 
 @app.route("/ideas/<idea_id>/to-script", methods=["POST"])
 @require_auth
@@ -2736,6 +2763,10 @@ def idea_to_script(idea_id):
             )
             # fall through to default "viral"
 
+    # v0.15.7.b: cortar pre-LLM si custom prompt demasiado corto (sin cobrar).
+    if _custom_too_short(style_arg, custom_prompt):
+        return _assistant_too_short_response(style_label)
+
     # v0.14.29: cobrar ANTES del LLM. Si LLM falla, refundar abajo.
     try:
         if is_paid_unlimited:
@@ -2785,6 +2816,14 @@ def idea_to_script(idea_id):
     except Exception as e:
         logger.error(f"Idea to script failed: {e}", exc_info=True)
         _refund()
+        # v0.15.7.b: mensaje contextual si custom + empty content.
+        if style_arg == "custom" and "empty content" in str(e).lower():
+            return jsonify({
+                "error": "assistant_empty_response",
+                "message": f"El asistente '{style_label}' devolvió respuesta vacía. "
+                           f"Edita sus instrucciones o usa otro estilo.",
+                "assistant_name": style_label,
+            }), 502
         return jsonify({"error": "Failed to generate script. Try again."}), 502
 
     # v0.14.30.b: capturar title del LLM antes del flatten (que reasigna result a string).
@@ -2909,6 +2948,10 @@ def transcription_to_script(t_id):
             )
             # fall through to default "viral"
 
+    # v0.15.7.b: cortar pre-LLM si custom prompt demasiado corto (sin cobrar).
+    if _custom_too_short(style_arg, custom_prompt):
+        return _assistant_too_short_response(style_label)
+
     # Cobrar ANTES del LLM. Si LLM falla, refundar abajo.
     try:
         if is_paid_unlimited:
@@ -2957,6 +3000,14 @@ def transcription_to_script(t_id):
     except Exception as e:
         logger.error(f"transcription_to_script LLM failed: {e}", exc_info=True)
         _refund()
+        # v0.15.7.b: mensaje contextual si custom + empty content.
+        if style_arg == "custom" and "empty content" in str(e).lower():
+            return jsonify({
+                "error": "assistant_empty_response",
+                "message": f"El asistente '{style_label}' devolvió respuesta vacía. "
+                           f"Edita sus instrucciones o usa otro estilo.",
+                "assistant_name": style_label,
+            }), 502
         return jsonify({"error": "Failed to generate script. Try again."}), 502
 
     # v0.14.30.b: capturar title del LLM antes del flatten.
@@ -5023,6 +5074,26 @@ def generate_script_from_competitor_reel(reel_id: str):
     if not assistant_id:
         assistant_id = profile.get("default_idea_assistant") or None
 
+    # v0.15.7.b: pre-validar custom assistant ANTES de decidir sync/async.
+    # Si es un custom del user con instructions <30 chars → 400 inmediato
+    # (sin encolar Celery ni gastar el path sync que terminaría en LLM
+    # devolviendo content=null tras 4s). El path sync y la task Celery
+    # repiten el check tras resolver, defense in depth.
+    if assistant_id and assistant_id not in _BUILTIN_SCRIPT_STYLES:
+        try:
+            asst_pre = (db.table("assistants")
+                          .select("name, instructions")
+                          .eq("id", assistant_id)
+                          .eq("user_id", uid)
+                          .execute())
+            if asst_pre.data and asst_pre.data[0].get("instructions"):
+                _pre_prompt = asst_pre.data[0]["instructions"]
+                _pre_name = asst_pre.data[0].get("name") or "custom"
+                if _custom_too_short("custom", _pre_prompt):
+                    return _assistant_too_short_response(_pre_name)
+        except Exception:
+            pass  # No bloquear si lookup falla — el path sync/task lo reintenta
+
     # 5. Decisión sync vs async:
     #    'ok' → flow sync (transcript ya cacheado).
     #    Cualquier otro estado → flow async (encolar Celery).
@@ -5063,6 +5134,10 @@ def generate_script_from_competitor_reel(reel_id: str):
             except Exception:
                 pass
 
+        # v0.15.7.b: cortar pre-LLM si custom prompt demasiado corto (sin cobrar).
+        if _custom_too_short(style_arg, custom_prompt):
+            return _assistant_too_short_response(style_label)
+
         # Cobrar ANTES del LLM. Si LLM/insert falla → refund.
         try:
             if is_paid_unlimited:
@@ -5096,6 +5171,16 @@ def generate_script_from_competitor_reel(reel_id: str):
         except Exception as e:
             logger.error("generate_script: LLM failed user=%s err=%s", uid, e, exc_info=True)
             _refund()
+            # v0.15.7.b: mensaje contextual si style=custom y empty content
+            # (guard v0.15.7.a). Apunta al asistente concreto en vez del
+            # mensaje genérico, accionable hacia /assistants.
+            if style_arg == "custom" and "empty content" in str(e).lower():
+                return jsonify({
+                    "error": "assistant_empty_response",
+                    "message": f"El asistente '{style_label}' devolvió respuesta vacía. "
+                               f"Edita sus instrucciones o usa otro estilo.",
+                    "assistant_name": style_label,
+                }), 502
             return jsonify({"error": "llm_error",
                             "message": "No se pudo generar el guion. Inténtalo de nuevo."}), 502
 
