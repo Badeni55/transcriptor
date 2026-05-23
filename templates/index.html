@@ -10827,6 +10827,8 @@ const LANGS = {
     "comp.gen_script_asst_too_short": "Las instrucciones de tu asistente son muy cortas. Edítalas en Asistentes.",
     "comp.gen_script_asst_empty_response": "El asistente devolvió respuesta vacía. Edita sus instrucciones o usa otro estilo.",
     "comp.gen_script_edit_asst": "Editar asistentes →",
+    // v0.15.8: lock 'in_progress' — generación ya en curso del mismo reel.
+    "comp.gen_script_in_progress": "Ya estás generando un guion de este reel. Espera unos segundos.",
     "ideas.regenerate": "Regenerar",
     "ideas.to_script": "Crear guión",
     "ideas.fab_tooltip": "Apunta una idea",
@@ -11313,6 +11315,8 @@ const LANGS = {
     "comp.gen_script_asst_too_short": "Your assistant's instructions are too short. Edit them in Assistants.",
     "comp.gen_script_asst_empty_response": "The assistant returned an empty response. Edit its instructions or use another style.",
     "comp.gen_script_edit_asst": "Edit assistants →",
+    // v0.15.8: lock 'in_progress' — generation already running for same reel.
+    "comp.gen_script_in_progress": "You're already generating a script from this reel. Wait a few seconds.",
     "ideas.regenerate": "Regenerate",
     "ideas.to_script": "Create script",
     "ideas.fab_tooltip": "Capture an idea",
@@ -20530,6 +20534,24 @@ async function generateScriptFromReel(reelId, assistantId) {
       if (window.toast && window.toast.info) window.toast.info(dupMsg, { duration: 5000 });
       else if (window.toast && window.toast.success) window.toast.success(dupMsg, { duration: 5000 });
       _compFinishGenScript(btn, d.script_id, d.from_competitor_username, lang);
+      return;
+    }
+    // v0.15.8: 409 in_progress — otra generación del mismo reel en curso.
+    // Si la task ya está encolada → reusar polling (user p.ej. en otra pestaña).
+    // Si no hay task_id (lock recién adquirido sin encolar) → toast informativo.
+    if (r.status === 409 && d.error === "in_progress") {
+      if (d.task_id) {
+        btn.textContent = t("comp.gen_script_analyzing") || "Analizando reel… ~1 min";
+        _compPollScriptTask(d.task_id, btn, orig, lang);
+        return;
+      }
+      btn.disabled = false;
+      if (caret) caret.disabled = false;
+      btn.textContent = orig;
+      const msg = t("comp.gen_script_in_progress")
+        || (lang === "en" ? "You're already generating a script from this reel." : "Ya estás generando un guion de este reel.");
+      if (window.toast && window.toast.info) window.toast.info(msg, { duration: 5000 });
+      else if (typeof showToast === "function") showToast(msg);
       return;
     }
     // v0.15.7.b: errores relacionados con asistente custom → toast accionable.
