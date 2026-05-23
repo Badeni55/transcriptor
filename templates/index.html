@@ -10823,6 +10823,10 @@ const LANGS = {
     "comp.empty_favorites": "Aún no marcaste favoritos. Toca ★ en cualquier reel para empezar.",
     // v0.15.7: selector de asistente al generar guion.
     "comp.gen_script_pick_asst": "Elegir asistente",
+    // v0.15.7.b: fallback genérico si backend no envía mensaje custom.
+    "comp.gen_script_asst_too_short": "Las instrucciones de tu asistente son muy cortas. Edítalas en Asistentes.",
+    "comp.gen_script_asst_empty_response": "El asistente devolvió respuesta vacía. Edita sus instrucciones o usa otro estilo.",
+    "comp.gen_script_edit_asst": "Editar asistentes →",
     "ideas.regenerate": "Regenerar",
     "ideas.to_script": "Crear guión",
     "ideas.fab_tooltip": "Apunta una idea",
@@ -11305,6 +11309,10 @@ const LANGS = {
     "comp.empty_favorites": "No favorites yet. Tap ★ on any reel to get started.",
     // v0.15.7: assistant picker on generate script.
     "comp.gen_script_pick_asst": "Pick assistant",
+    // v0.15.7.b: fallback generic if backend doesn't send custom message.
+    "comp.gen_script_asst_too_short": "Your assistant's instructions are too short. Edit them in Assistants.",
+    "comp.gen_script_asst_empty_response": "The assistant returned an empty response. Edit its instructions or use another style.",
+    "comp.gen_script_edit_asst": "Edit assistants →",
     "ideas.regenerate": "Regenerate",
     "ideas.to_script": "Create script",
     "ideas.fab_tooltip": "Capture an idea",
@@ -20524,6 +20532,14 @@ async function generateScriptFromReel(reelId, assistantId) {
       _compFinishGenScript(btn, d.script_id, d.from_competitor_username, lang);
       return;
     }
+    // v0.15.7.b: errores relacionados con asistente custom → toast accionable.
+    if (d.error === "assistant_too_short" || d.error === "assistant_empty_response") {
+      btn.disabled = false;
+      if (caret) caret.disabled = false;
+      btn.textContent = orig;
+      _compToastAsstError(d, lang);
+      return;
+    }
     // Error (4xx/5xx).
     btn.disabled = false;
     if (caret) caret.disabled = false;
@@ -20536,6 +20552,25 @@ async function generateScriptFromReel(reelId, assistantId) {
     if (caret) caret.disabled = false;
     btn.textContent = orig;
     if (window.toast && window.toast.error) window.toast.error(t("comp.gen_script_error") || "Error");
+  }
+}
+
+// v0.15.7.b: toast contextual para errores de asistente custom con action
+// "Editar asistentes" que abre el panel /assistants. Reusable desde sync y task.
+function _compToastAsstError(d, lang) {
+  // Backend ya envía mensaje con nombre del asistente; fallback genérico i18n.
+  const fallbackKey = d.error === "assistant_too_short"
+    ? "comp.gen_script_asst_too_short"
+    : "comp.gen_script_asst_empty_response";
+  const msg = d.message || t(fallbackKey) || (t("comp.gen_script_error") || "Error");
+  const goLbl = t("comp.gen_script_edit_asst") || (lang === "en" ? "Edit assistants →" : "Editar asistentes →");
+  if (window.toast && window.toast.error) {
+    window.toast.error(msg, {
+      duration: 8000,
+      action: { label: goLbl, onClick: () => { try { profTab("assistants"); } catch (e) {} } },
+    });
+  } else if (typeof showToast === "function") {
+    showToast(msg);
   }
 }
 
@@ -20559,6 +20594,11 @@ async function _compPollScriptTask(taskId, btn, origLabel, lang) {
       const _eCaret = _ec ? _ec.querySelector(".comp-reel-genscript-caret") : null;
       if (_eCaret) _eCaret.disabled = false;
       btn.textContent = origLabel;
+      // v0.15.7.b: si error es de asistente custom → toast accionable.
+      if (d.error === "assistant_too_short" || d.error === "assistant_empty_response") {
+        _compToastAsstError(d, lang);
+        return;
+      }
       const msg = d.message || (t("comp.gen_script_error") || "Error generando guion");
       if (window.toast && window.toast.error) window.toast.error(msg);
       else if (typeof showToast === "function") showToast(msg);
