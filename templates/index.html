@@ -20363,10 +20363,15 @@ function renderCompetitorFeed(reels) {
   const FAV_ON = t("comp.fav_tooltip_on") || (lang === "en" ? "Remove from favorites" : "Quitar de favoritos");
   const FAV_OFF = t("comp.fav_tooltip_off") || (lang === "en" ? "Mark as favorite" : "Marcar como favorito");
   // v0.15.7: opciones del split-button picker. Built-ins primero + customs del user.
+  // v0.15.7.a: 'hooks' RETIRADO de este dropdown — su system prompt ("5 hooks
+  // exactos") choca con el user_content del path competidor ("guion 30-45s, 8
+  // frases en body") provocando content=null en OpenRouter/Gemini. Sigue
+  // disponible en cards Ideas/Transcripciones donde el user_content sí pide
+  // ganchos.
   const PICK_LBL = t("comp.gen_script_pick_asst") || (lang === "en" ? "Pick assistant" : "Elegir asistente");
   const BUILTIN_LBL = lang === "en"
-    ? { viral: "🔥 Viral", divertido: "😂 Fun", storytelling: "📖 Storytelling", hooks: "🎣 Hooks" }
-    : { viral: "🔥 Viral", divertido: "😂 Divertido", storytelling: "📖 Historia", hooks: "🎣 Hooks" };
+    ? { viral: "🔥 Viral", divertido: "😂 Fun", storytelling: "📖 Storytelling" }
+    : { viral: "🔥 Viral", divertido: "😂 Divertido", storytelling: "📖 Historia" };
   const customAsstOptsHTML = ((typeof userAssistants !== "undefined") ? userAssistants : [])
     .map(a => `<option value="${esc(a.id)}">${esc(a.name)}</option>`)
     .join("");
@@ -20375,7 +20380,6 @@ function renderCompetitorFeed(reels) {
     <option value="viral">${BUILTIN_LBL.viral}</option>
     <option value="divertido">${BUILTIN_LBL.divertido}</option>
     <option value="storytelling">${BUILTIN_LBL.storytelling}</option>
-    <option value="hooks">${BUILTIN_LBL.hooks}</option>
     ${customAsstOptsHTML}`;
   host.innerHTML = reels.map(r => {
     const owner = r.creator && r.creator.ig_username ? "@" + esc(r.creator.ig_username) : "";

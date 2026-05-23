@@ -1466,7 +1466,20 @@ def _call_llm(system: str, user_content: str, temperature: float = 0.8, max_toke
     }
     resp = requests.post(url, headers=headers, json=payload, timeout=60)
     resp.raise_for_status()
-    return resp.json()["choices"][0]["message"]["content"].strip()
+    # v0.15.7.a: OpenRouter/Gemini puede devolver content=null cuando el modelo
+    # emite refusal o cuando system+user no producen salida válida (ej. style
+    # 'hooks' + user_content pidiendo guion 30-45s — bug observado en prod).
+    # Sin este guard, .strip() reventaba con AttributeError tras 3m52s de
+    # retries internos del provider y la UX quedaba 'congelada'.
+    try:
+        content = resp.json()["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError) as e:
+        app.logger.warning("LLM response missing expected structure for model=%s: %s", model, e)
+        raise ValueError("LLM returned malformed response")
+    if content is None:
+        app.logger.warning("LLM returned empty content for model=%s", model)
+        raise ValueError("LLM returned empty content")
+    return content.strip()
 
 
 def adapt_with_ai(text: str, style: str, custom_prompt: str = "") -> dict:
