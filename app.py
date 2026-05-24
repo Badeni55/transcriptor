@@ -5557,12 +5557,20 @@ def save_reel_as_idea(reel_id: str):
     project_id = (body.get("project_id") or "").strip() or None
 
     # 1. Idempotency check.
+    # v0.15.9.a: whitelist explícita source+status para no capturar zombies
+    # de v0.15.4 (status='draft_suggested', invisibles en list_ideas) que
+    # apuntan al mismo reel y devolvían already_exists=true con un id
+    # invisible en el panel Ideas (falso éxito). Falla cerrada: estados
+    # nuevos futuros NO se confunden con duplicado (peor caso = idea
+    # duplicada borrable).
     try:
         existing = (db.table("ideas")
                       .select("id, title")
                       .eq("user_id", uid)
                       .eq("inspired_by_id", reel_id)
                       .eq("inspired_by_type", "reel")
+                      .eq("source", "competitor_reel")
+                      .in_("status", ["draft", "developed"])
                       .limit(1)
                       .execute())
         if existing.data:
