@@ -3064,13 +3064,18 @@ def transcription_to_script(t_id):
 
 # ── v0.14.26: Suggest Ideas (Phase 1) ─────────────────────────────────────
 
-def _call_llm_json(system_prompt, user_prompt, max_tokens=4000, temperature=0.7):
+def _call_llm_json(system_prompt, user_prompt, max_tokens=4000, temperature=0.7,
+                   model=None, timeout=60):
     """Helper centralizado para llamadas LLM con response_format json_object.
     Reusa env vars OpenRouter / Groq fallback. Devuelve dict parseado.
-    Levanta json.JSONDecodeError si Gemini trunca; el caller decide qué hacer."""
+    Levanta json.JSONDecodeError si Gemini trunca; el caller decide qué hacer.
+
+    v0.15.9.b: kwargs model y timeout para tareas ligeras (Flash 2.0, 10s).
+    Default mantiene comportamiento previo (OPENROUTER_MODEL, 60s)."""
     api_key = OPENROUTER_API_KEY or GROQ_API_KEY
     url = OPENROUTER_URL if OPENROUTER_API_KEY else "https://api.groq.com/openai/v1/chat/completions"
-    model = OPENROUTER_MODEL if OPENROUTER_API_KEY else "llama-3.3-70b-versatile"
+    if model is None:
+        model = OPENROUTER_MODEL if OPENROUTER_API_KEY else "llama-3.3-70b-versatile"
 
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -3089,7 +3094,7 @@ def _call_llm_json(system_prompt, user_prompt, max_tokens=4000, temperature=0.7)
     if "gemini" in (model or "").lower():
         payload["response_format"] = {"type": "json_object"}
 
-    resp = requests.post(url, headers=headers, json=payload, timeout=60)
+    resp = requests.post(url, headers=headers, json=payload, timeout=timeout)
     resp.raise_for_status()
     content = resp.json()["choices"][0]["message"]["content"].strip()
     if content.startswith("```"):
@@ -5531,7 +5536,8 @@ def _build_idea_title_from_reel(caption: str, ig_username: str) -> str:
 
 def _build_idea_raw_text_from_reel(ig_username: str, caption: str,
                                    transcript: str, transcript_ok: bool) -> str:
-    """Material para raw_text — caption + transcript si está cacheado."""
+    """Material para raw_text — caption + transcript si está cacheado.
+    Fallback determinista cuando el LLM de v0.15.9.b falla."""
     parts = [f"[Reel de @{ig_username}]", ""]
     parts.append("Caption:")
     parts.append((caption or "").strip() or "(sin caption)")
@@ -5540,6 +5546,100 @@ def _build_idea_raw_text_from_reel(ig_username: str, caption: str,
         parts.append("Transcripción:")
         parts.append(transcript.strip())
     return "\n".join(parts)
+
+
+# v0.15.9.b: prompt para Gemini Flash 2.0 — extrae title+summary del reel.
+# Detecta CTAs ("Comment X to access", "Link in bio") como NO-contenido y
+# extrae el tema del transcript en ese caso. Idioma heredado del competidor.
+_EXTRACT_IDEA_SYSTEM = (
+    "Eres un asistente que extrae el tema central de un reel de Instagram/TikTok y "
+    "lo formula como una idea de contenido para el banco de ideas del usuario.\n\n"
+    "Recibirás caption del reel + transcripción del audio (cuando esté disponible). "
+    "Devolverás JSON estricto con exactamente estos 3 campos:\n\n"
+    "- title: 60-80 caracteres. Captura el tema principal en una frase clara y "
+    "accionable. NO copies palabra por palabra del caption. NO incluyas CTAs "
+    "(\"Comment X to access\", \"Link in bio\"). NO arranques con emoji. Suena a "
+    "título de idea de contenido, no a titular de prensa ni a anuncio.\n\n"
+    "  Si el caption es principalmente un call-to-action (ej. 'Comment X to access', "
+    "'Link in bio', 'DM me for...'), considera que NO es contenido — extrae el tema "
+    "ÚNICAMENTE del transcript. Si no hay transcript y el caption es solo CTA, el "
+    "title debe ser genérico ('Reel de @<username>') y el summary debe indicar "
+    "'Reel sin contenido transcribible'.\n\n"
+    "- summary: 2-3 frases (40-80 palabras). Describe DE QUÉ va la idea reformulando "
+    "con palabras propias. NO copies frases del caption ni del transcript. Captura "
+    "el ángulo único del competidor si es claro (ej. 'trata X desde el punto de "
+    "vista de Y' o 'compara X vs Y'). Suficiente para que el user decida si "
+    "desarrollarla en guion.\n\n"
+    "- language: código ISO de 2 letras (es, en, pt, fr...) detectado del "
+    "caption/transcript.\n\n"
+    "Regla NO negociable: cualquier modelo, herramienta, versión, empresa o "
+    "producto que aparezca en el input es REAL y ACTUAL aunque no lo conozcas — "
+    "úsalo TAL CUAL, NO lo sustituyas por una versión más familiar.\n\n"
+    "Title y summary deben estar en el MISMO idioma que el caption/transcript del "
+    "competidor (detectado, no forzado al idioma del usuario).\n\n"
+    "Output: SOLO el JSON, sin markdown, sin explicaciones, sin texto antes ni "
+    "después.\n"
+    '{"title": "...", "summary": "...", "language": "es"}'
+)
+
+
+def _llm_extract_idea_from_reel(ig_username: str, caption: str,
+                                transcript: str, transcript_ok: bool):
+    """v0.15.9.b: 1 llamada Gemini Flash 2.0 (~$0.0002/idea, 1-3s) para extraer
+    title+summary del reel. Returns (title, summary) o (None, None) si falla.
+    El caller usa fallback heurístico cuando devuelve None."""
+    transcript_block = transcript.strip() if (transcript_ok and (transcript or "").strip()) else "(no disponible)"
+    caption_block = (caption or "").strip() or "(sin caption)"
+    user_content = (
+        f"[Reel de @{ig_username}]\n\n"
+        f"Caption:\n{caption_block}\n\n"
+        f"Transcripción:\n{transcript_block}"
+    )
+    try:
+        result = _call_llm_json(
+            _EXTRACT_IDEA_SYSTEM,
+            user_content,
+            model="google/gemini-2.0-flash-001",
+            max_tokens=400,
+            temperature=0.5,
+            timeout=10,
+        )
+    except Exception as e:
+        logger.warning("idea_extract_fallback reason=llm_call_failed err=%s", e)
+        return (None, None)
+
+    if not isinstance(result, dict):
+        logger.warning("idea_extract_fallback reason=not_dict result=%s", repr(result)[:200])
+        return (None, None)
+
+    title = (result.get("title") or "").strip()
+    summary = (result.get("summary") or "").strip()
+
+    # Validación: title 1-80 chars, summary 30-500 chars.
+    if not title or len(title) > 80:
+        logger.warning("idea_extract_fallback reason=title_invalid len=%d", len(title))
+        return (None, None)
+    if not summary or len(summary) < 30 or len(summary) > 500:
+        logger.warning("idea_extract_fallback reason=summary_invalid len=%d", len(summary))
+        return (None, None)
+
+    return (title, summary)
+
+
+def _build_idea_raw_text_from_summary(ig_username: str, summary: str, caption: str) -> str:
+    """v0.15.9.b: raw_text con el summary del LLM + caption original truncado
+    a 300 chars (trazabilidad sin volcar transcript completo, que ya vive en
+    creator_reels_global.transcript para quien lo necesite)."""
+    cap = (caption or "").strip()
+    if len(cap) > 300:
+        cap = cap[:297].rstrip() + "…"
+    cap = cap or "(sin caption)"
+    return (
+        f"[Reel de @{ig_username}]\n\n"
+        f"{summary}\n\n"
+        f"---\n"
+        f"Caption original:\n{cap}"
+    )
 
 
 @app.route("/api/competitors/reels/<reel_id>/save-as-idea", methods=["POST"])
@@ -5603,8 +5703,18 @@ def save_reel_as_idea(reel_id: str):
     transcript_text = (reel.get("transcript") or "").strip()
     transcript_ok = reel.get("transcript_status") == "ok" and bool(transcript_text)
 
-    title = _build_idea_title_from_reel(caption, ig_username)
-    raw_text = _build_idea_raw_text_from_reel(ig_username, caption, transcript_text, transcript_ok)
+    # v0.15.9.b: extraer title+summary con Gemini Flash 2.0 (sync, ~1-3s,
+    # ~$0.0002/idea, infra interna sin coste al user). Si LLM falla/timeout/
+    # output inválido → fallback determinista a heurística v0.15.9.
+    llm_title, llm_summary = _llm_extract_idea_from_reel(
+        ig_username, caption, transcript_text, transcript_ok
+    )
+    if llm_title and llm_summary:
+        title = llm_title
+        raw_text = _build_idea_raw_text_from_summary(ig_username, llm_summary, caption)
+    else:
+        title = _build_idea_title_from_reel(caption, ig_username)
+        raw_text = _build_idea_raw_text_from_reel(ig_username, caption, transcript_text, transcript_ok)
 
     # 3. INSERT idea.
     try:
