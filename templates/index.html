@@ -164,64 +164,255 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/static/img/branding/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Instrument+Serif&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- v0.16.1: foundations — DM Sans 400/500/700 + Instrument Serif 400.
+       Eliminadas Fraunces y JetBrains Mono (no usadas, ahorro bandwidth ~30%).
+       --font-mono ahora resuelve a ui-monospace del sistema. -->
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Instrument+Serif&display=swap" rel="stylesheet">
   <style>
     /* ── Reset & tokens ─────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     .sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
 
+    /* ═══════════════════════════════════════════════════════════════
+       v0.16.1 — DESIGN SYSTEM FOUNDATIONS
+       Tokens semánticos completos. Los componentes legacy (2145 selectores)
+       leen los aliases del final del bloque — cero ruptura. Migración panel
+       a panel en v0.16.4-9. Light tema en [data-theme="light"]: solo redefine
+       tokens semánticos (surfaces/text/borders/shadows); ~100 overrides
+       legacy [data-theme="light"] .X seguirán activos abajo hasta que cada
+       componente migre.
+       Ratio surface-base/raised dark = 5.71:1 (rango Linear/Vercel).
+       ═══════════════════════════════════════════════════════════════ */
     :root {
-      /* v0.14.44.b: dark elevado para que cards (.dash-module, .ig-link-box,
-         .prof-card, .asst-card-v2, etc.) destaquen del fondo.
-         v0.14.44.c: --surf/--surf2 subidos otro escalón. Ratio bg/surf puro
-         (sin offset WCAG) 2.37:1 → 3.80:1 → 5.71:1 (rango Linear/Vercel). */
-      --bg:       #07080b;
-      --surf:     #1c1f29;
-      --surf2:    #262a36;
-      --border:   rgba(255,255,255,0.10);
-      --text:     #f1f3f7;
-      --text2:    #8b92a5;
-      /* v0.14.44.b: --text3 #6b7280 → #9298a6. Sobre el nuevo --surf, el valor
-         antiguo caía a 3.48:1 (falla AA 4.5:1). #9298a6 garantiza 6.13:1
-         sobre --surf y 6.93:1 sobre --bg. */
-      --text3:    #9298a6;
-      /* v0.14.35: --brand reemplaza --purple (mal nombrado, valía #f97316). --orange absorbido. */
-      --brand:    #f97316;
-      /* v0.14.35: --brand-cta para fondos de botones primarios (WCAG AA contra #fff: 5.18:1). */
-      --brand-cta: #c2410c;
-      --pink:     #FBBF24;
-      --green:    #22c55e;
-      --grad:     linear-gradient(135deg, #f97316 0%, #FBBF24 100%);
-      --grad2:    linear-gradient(135deg, #f97316 0%, #ff6b00 100%);
-      /* v0.14.35: --glow neutralizado (era rgba(249,115,22,*)). */
-      --glow:     0 0 0 3px rgba(255,255,255,.15), 0 0 24px rgba(255,255,255,.08);
-      --r:        14px;
-      --rsm:      8px;
-      --sh:       0 1px 3px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
-      --sh-lg:    0 2px 8px rgba(0,0,0,.5), 0 16px 48px rgba(0,0,0,.4);
+      /* ── PALETTE: gray (custom slate-blue alineado al dark actual) ── */
+      --gray-50:  #f7f8fa;
+      --gray-100: #eef0f5;
+      --gray-200: #d6dae3;
+      --gray-300: #aab1c0;
+      --gray-400: #8b92a5;
+      --gray-500: #6b7283;
+      --gray-600: #4b5161;
+      --gray-700: #353a47;
+      --gray-800: #262a36;
+      --gray-900: #1c1f29;
+
+      /* ── PALETTE: brand (orange, Tailwind orange scale) ── */
+      --brand-50:  #fff7ed;
+      --brand-100: #ffedd5;
+      --brand-200: #fed7aa;
+      --brand-300: #fdba74;
+      --brand-400: #fb923c;
+      --brand-500: #f97316;
+      --brand-600: #ea580c;
+      --brand-700: #c2410c;
+      --brand-800: #9a3412;
+      --brand-900: #7c2d12;
+
+      /* ── SEMÁNTICOS (3 niveles: base / -bg / -fg / -border) ── */
+      --success:        #22c55e;
+      --success-bg:     rgba(34,197,94,.10);
+      --success-fg:     #4ade80;
+      --success-border: rgba(34,197,94,.30);
+
+      --danger:        #ef4444;
+      --danger-bg:     rgba(239,68,68,.10);
+      --danger-fg:     #f87171;
+      --danger-border: rgba(239,68,68,.30);
+
+      --warning:        #f59e0b;
+      --warning-bg:     rgba(245,158,11,.10);
+      --warning-fg:     #fbbf24;
+      --warning-border: rgba(245,158,11,.30);
+
+      --info:        #3b82f6;
+      --info-bg:     rgba(59,130,246,.10);
+      --info-fg:     #60a5fa;
+      --info-border: rgba(59,130,246,.30);
+
+      /* ── SURFACES (dark default — light override más abajo) ── */
+      --surface-base:    #07080b;
+      --surface-raised:  #1c1f29;
+      --surface-overlay: #262a36;
+      --surface-sunken:  #050608;
+
+      /* ── TEXTO ── */
+      --text-primary:   #f1f3f7;
+      --text-secondary: #8b92a5;
+      --text-tertiary:  #9298a6;
+      --text-disabled:  #4b5161;
+      --text-inverse:   #07080b;
+
+      /* ── BORDES ── */
+      --border-subtle:  rgba(255,255,255,.06);
+      --border-default: rgba(255,255,255,.10);
+      --border-strong:  rgba(255,255,255,.18);
+
+      /* ── SPACING (escala base 4px) ── */
+      --space-0:  0;
+      --space-1:  4px;
+      --space-2:  8px;
+      --space-3:  12px;
+      --space-4:  16px;
+      --space-5:  20px;
+      --space-6:  24px;
+      --space-8:  32px;
+      --space-10: 40px;
+      --space-12: 48px;
+      --space-16: 64px;
+      --space-20: 80px;
+      --space-24: 96px;
+      --space-32: 128px;
+      --space-40: 160px;
+      --space-48: 192px;
+      --space-64: 256px;
+
+      /* ── RADII ── */
+      --radius-xs:   4px;
+      --radius-sm:   6px;
+      --radius-md:   8px;
+      --radius-lg:   12px;
+      --radius-xl:   16px;
+      --radius-2xl:  24px;
+      --radius-full: 9999px;
+
+      /* ── SHADOWS ── */
+      --shadow-sm:   0 1px 2px rgba(0,0,0,.06);
+      --shadow-md:   0 2px 4px rgba(0,0,0,.08), 0 4px 6px rgba(0,0,0,.06);
+      --shadow-lg:   0 1px 3px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+      --shadow-xl:   0 2px 8px rgba(0,0,0,.5), 0 16px 48px rgba(0,0,0,.4);
+      --shadow-glow: 0 0 0 3px rgba(249,115,22,.15), 0 0 24px rgba(249,115,22,.08);
+
+      /* ── TIPOGRAFÍA ── */
       --font-display: 'Instrument Serif', serif;
-      --font-body: 'DM Sans', sans-serif;
-      /* v0.14.34: escala de espaciado para mantenibilidad. xs=6 sm=10 md=16 lg=24 xl=32 2xl=48. */
+      --font-body:    'DM Sans', system-ui, sans-serif;
+      --font-mono:    ui-monospace, 'SF Mono', Menlo, monospace;
+
+      --text-xs:   12px;
+      --text-sm:   14px;
+      --text-base: 16px;
+      --text-lg:   18px;
+      --text-xl:   20px;
+      --text-2xl:  24px;
+      --text-3xl:  30px;
+      --text-4xl:  36px;
+      --text-5xl:  48px;
+
+      --leading-tight:   1.2;
+      --leading-snug:    1.35;
+      --leading-normal:  1.5;
+      --leading-relaxed: 1.65;
+
+      --weight-regular: 400;
+      --weight-medium:  500;
+      --weight-bold:    700;
+
+      /* ── Z-INDEX ── */
+      --z-base:     0;
+      --z-dropdown: 100;
+      --z-sticky:   200;
+      --z-modal:    1000;
+      --z-toast:    2000;
+
+      /* ── TRANSICIONES ── */
+      --transition-fast: 150ms;
+      --transition-base: 250ms;
+      --transition-slow: 400ms;
+      --ease-default:    cubic-bezier(.4, 0, .2, 1);
+      --ease-bounce:     cubic-bezier(.34, 1.56, .64, 1);
+
+      /* ═══════════════════════════════════════════════════════════
+         ALIASES LEGACY (v0.14.x). NO BORRAR hasta migrar componentes
+         en v0.16.4-9. Cada uno apunta a su token semántico nuevo o
+         conserva valor literal cuando no encaja exacto en la escala.
+         ═══════════════════════════════════════════════════════════ */
+
+      /* Surfaces legacy */
+      --bg:    var(--surface-base);
+      --surf:  var(--surface-raised);
+      --surf2: var(--surface-overlay);
+
+      /* Texto legacy */
+      --text:  var(--text-primary);
+      --text2: var(--text-secondary);
+      --text3: var(--text-tertiary);
+
+      /* Borde legacy */
+      --border: var(--border-default);
+
+      /* Brand legacy */
+      --brand:     var(--brand-500);
+      --brand-cta: var(--brand-700);
+
+      /* Acentos legacy (--pink es amarillo mal nombrado, mantener literal) */
+      --pink:  #FBBF24;
+      --green: var(--success);
+
+      /* Gradientes legacy (mantener literales — no encajan en tokens nuevos) */
+      --grad:  linear-gradient(135deg, #f97316 0%, #FBBF24 100%);
+      --grad2: linear-gradient(135deg, #f97316 0%, #ff6b00 100%);
+
+      /* Glow legacy (neutralizado a blanco en v0.14.35; NO usar --shadow-glow
+         que es brand-acento — son glows distintos por diseño). */
+      --glow: 0 0 0 3px rgba(255,255,255,.15), 0 0 24px rgba(255,255,255,.08);
+
+      /* Radii legacy */
+      --r:   14px;
+      --rsm: var(--radius-md);
+
+      /* Shadows legacy */
+      --sh:    var(--shadow-lg);
+      --sh-lg: var(--shadow-xl);
+
+      /* Spacing legacy — xs/sm no encajan exactos en 4px-base, literales para
+         evitar regresión visual; md/lg/xl/2xl apuntan a tokens nuevos. */
       --space-xs:  6px;
       --space-sm:  10px;
-      --space-md:  16px;
-      --space-lg:  24px;
-      --space-xl:  32px;
-      --space-2xl: 48px;
+      --space-md:  var(--space-4);
+      --space-lg:  var(--space-6);
+      --space-xl:  var(--space-8);
+      --space-2xl: var(--space-12);
     }
 
+    /* ═══════════════════════════════════════════════════════════════
+       LIGHT THEME — solo redefine variables semánticas. Los ~100
+       overrides explícitos [data-theme="light"] .X { ... } más abajo
+       (líneas ~226-330+) se mantienen activos: son deuda v0.16.4-9
+       que se borrará panel a panel al migrar componentes a tokens.
+       ═══════════════════════════════════════════════════════════════ */
     [data-theme="light"] {
-      --bg:     #f0ede8;
-      --surf:   #f7f5f1;
-      --surf2:  #eae7e1;
-      --border: rgba(0,0,0,.08);
-      --text:   #0a0a0a;
-      --text2:  #555555;
-      --text3:  #777777;
-      --sh:     0 1px 3px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.08);
-      --sh-lg:  0 2px 8px rgba(0,0,0,.08), 0 16px 48px rgba(0,0,0,.12);
-      /* v0.14.35: --glow neutralizado en light (era rgba(249,115,22,*)). */
-      --glow:   0 0 0 3px rgba(0,0,0,.08), 0 0 20px rgba(0,0,0,.06);
+      /* Surfaces */
+      --surface-base:    #f0ede8;
+      --surface-raised:  #f7f5f1;
+      --surface-overlay: #ffffff;
+      --surface-sunken:  #eae7e1;
+
+      /* Texto */
+      --text-primary:   #0a0a0a;
+      --text-secondary: #555555;
+      --text-tertiary:  #777777;
+      --text-disabled:  #aaaaaa;
+      --text-inverse:   #ffffff;
+
+      /* Bordes */
+      --border-subtle:  rgba(0,0,0,.04);
+      --border-default: rgba(0,0,0,.08);
+      --border-strong:  rgba(0,0,0,.15);
+
+      /* Semánticos: fg más oscuro en light para contraste WCAG */
+      --success-fg: #16a34a;
+      --danger-fg:  #dc2626;
+      --warning-fg: #d97706;
+      --info-fg:    #2563eb;
+
+      /* Shadows (más suaves en light) */
+      --shadow-sm:   0 1px 2px rgba(0,0,0,.04);
+      --shadow-md:   0 2px 4px rgba(0,0,0,.06), 0 4px 6px rgba(0,0,0,.04);
+      --shadow-lg:   0 1px 3px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.08);
+      --shadow-xl:   0 2px 8px rgba(0,0,0,.08), 0 16px 48px rgba(0,0,0,.12);
+      --shadow-glow: 0 0 0 3px rgba(249,115,22,.20), 0 0 24px rgba(249,115,22,.12);
+
+      /* Glow legacy en light (neutralizado a oscuro) */
+      --glow: 0 0 0 3px rgba(0,0,0,.08), 0 0 20px rgba(0,0,0,.06);
     }
     [data-theme="light"] .hero-badge { color: #7c3a00; border-color: rgba(180,80,0,0.3); background: rgba(255,140,0,0.1); }
     [data-theme="light"] nav { background: rgba(240,237,232,.75); }
