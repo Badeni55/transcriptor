@@ -5876,6 +5876,26 @@
     @media (max-width: 480px) {
       .comp-reel-genscript-caret { width: 36px; }
     }
+    /* v0.15.9: botón secundario "guardar como idea" — link discreto bajo el split. */
+    .comp-reel-saveidea-btn {
+      width: 100%;
+      margin-top: 6px;
+      padding: 6px 0;
+      background: transparent;
+      color: var(--text2);
+      border: none;
+      font-size: .72rem;
+      font-family: var(--font-body);
+      cursor: pointer;
+      text-align: center;
+      transition: color .15s;
+    }
+    .comp-reel-saveidea-btn:hover:not(:disabled) {
+      color: var(--brand);
+      text-decoration: underline;
+    }
+    .comp-reel-saveidea-btn:disabled { opacity: .6; cursor: default; }
+    .comp-reel-saveidea-btn.is-done { color: #22c55e; }
     /* v0.15.6: botón favorito flotante sobre el thumb. */
     .comp-reel-fav-btn {
       position: absolute;
@@ -10829,6 +10849,14 @@ const LANGS = {
     "comp.gen_script_edit_asst": "Editar asistentes →",
     // v0.15.8: lock 'in_progress' — generación ya en curso del mismo reel.
     "comp.gen_script_in_progress": "Ya estás generando un guion de este reel. Espera unos segundos.",
+    // v0.15.9: guardar reel como idea (sin coste, sin LLM).
+    "comp.save_as_idea": "💡 Guardar como idea",
+    "comp.save_as_idea_loading": "Guardando…",
+    "comp.save_as_idea_done": "✓ Guardada como idea",
+    "comp.save_as_idea_exists_btn": "✓ Ya guardada",
+    "comp.save_as_idea_exists": "Ya guardaste este reel como idea.",
+    "comp.save_as_idea_error": "No se pudo guardar la idea. Vuelve a intentarlo.",
+    "comp.save_as_idea_view": "Ver en Ideas →",
     "ideas.regenerate": "Regenerar",
     "ideas.to_script": "Crear guión",
     "ideas.fab_tooltip": "Apunta una idea",
@@ -11317,6 +11345,14 @@ const LANGS = {
     "comp.gen_script_edit_asst": "Edit assistants →",
     // v0.15.8: lock 'in_progress' — generation already running for same reel.
     "comp.gen_script_in_progress": "You're already generating a script from this reel. Wait a few seconds.",
+    // v0.15.9: save reel as idea (no cost, no LLM).
+    "comp.save_as_idea": "💡 Save as idea",
+    "comp.save_as_idea_loading": "Saving…",
+    "comp.save_as_idea_done": "✓ Saved as idea",
+    "comp.save_as_idea_exists_btn": "✓ Already saved",
+    "comp.save_as_idea_exists": "You already saved this reel as an idea.",
+    "comp.save_as_idea_error": "Couldn't save the idea. Try again.",
+    "comp.save_as_idea_view": "View in Ideas →",
     "ideas.regenerate": "Regenerate",
     "ideas.to_script": "Create script",
     "ideas.fab_tooltip": "Capture an idea",
@@ -20427,6 +20463,7 @@ function renderCompetitorFeed(reels) {
             ${asstOptionsHTML}
           </select>
         </div>
+        <button type="button" class="comp-reel-saveidea-btn" onclick="saveReelAsIdea('${rid}')" data-i18n="comp.save_as_idea">💡 Guardar como idea</button>
       </div>
     </article>`;
   }).join("");
@@ -20450,6 +20487,61 @@ function _onReelAsstPick(reelId, sel) {
   sel.value = "";  // hidden option queda seleccionada al reabrir
   if (!val) return;
   generateScriptFromReel(reelId, val);
+}
+
+// v0.15.9: guarda el reel como idea (status='draft', sin LLM, sin coste).
+// Idempotente: si ya existe idea de este (user, reel), backend devuelve
+// already_exists:true y mostramos feedback distinto. Tras éxito, refresca
+// ideasCache para que el panel Ideas esté fresco al pulsar "Ver en Ideas →".
+async function saveReelAsIdea(reelId) {
+  const card = document.querySelector(`.comp-reel-card[data-reel-id="${reelId}"]`);
+  const btn = card ? card.querySelector(".comp-reel-saveidea-btn") : null;
+  if (!btn) return;
+  if (btn.disabled) return;
+  const orig = btn.textContent;
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  btn.disabled = true;
+  btn.textContent = t("comp.save_as_idea_loading") || (lang === "en" ? "Saving…" : "Guardando…");
+  try {
+    const r = await fetch("/api/competitors/reels/" + encodeURIComponent(reelId) + "/save-as-idea", {
+      method: "POST",
+      credentials: "same-origin",
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.ok) {
+      btn.disabled = false;
+      btn.textContent = orig;
+      const msg = d.message || (t("comp.save_as_idea_error") || (lang === "en" ? "Couldn't save idea." : "No se pudo guardar la idea."));
+      if (window.toast && window.toast.error) window.toast.error(msg);
+      else if (typeof showToast === "function") showToast(msg);
+      return;
+    }
+    // Éxito (nuevo o already_exists).
+    btn.classList.add("is-done");
+    btn.textContent = (d.already_exists
+      ? (t("comp.save_as_idea_exists_btn") || (lang === "en" ? "✓ Already saved" : "✓ Ya guardada"))
+      : (t("comp.save_as_idea_done") || (lang === "en" ? "✓ Saved as idea" : "✓ Guardada como idea")));
+    // Refrescar ideasCache para que panel Ideas esté listo al navegar.
+    if (typeof loadIdeas === "function") {
+      try { await loadIdeas(); } catch (e) {}
+    }
+    const toastMsg = d.already_exists
+      ? (t("comp.save_as_idea_exists") || (lang === "en" ? "You already saved this reel as an idea." : "Ya guardaste este reel como idea."))
+      : (t("comp.save_as_idea_done") || (lang === "en" ? "Saved as idea" : "Guardada como idea"));
+    const viewLbl = t("comp.save_as_idea_view") || (lang === "en" ? "View in Ideas →" : "Ver en Ideas →");
+    if (window.toast && window.toast.success) {
+      window.toast.success(toastMsg, {
+        duration: 6000,
+        action: { label: viewLbl, onClick: () => { try { profTab("ideas"); } catch (e) {} } },
+      });
+    } else if (typeof showToast === "function") {
+      showToast(toastMsg);
+    }
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = orig;
+    if (window.toast && window.toast.error) window.toast.error(t("comp.save_as_idea_error") || (lang === "en" ? "Couldn't save idea." : "No se pudo guardar la idea."));
+  }
 }
 
 // v0.15.6: toggle favorito con optimismo + revert.

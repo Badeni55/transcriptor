@@ -5506,6 +5506,135 @@ def remove_favorite_reel(reel_id: str):
     return jsonify({"ok": True, "is_favorite": False})
 
 
+# ── v0.15.9: guardar reel de competidor como idea (sin coste, sin LLM) ──────
+# El user añade el reel a su panel Ideas con status='draft'. Reusa columnas
+# inspired_by_* existentes (v0.15.4 nunca borradas). Idempotente: si ya hay
+# idea de este (user, reel) → 200 already_exists:true sin crear duplicado.
+# Luego el user puede "Desarrollar con Hooks" desde el panel Ideas (flujo
+# existente, ahí sí cobra cuando llama al LLM).
+
+def _build_idea_title_from_reel(caption: str, ig_username: str) -> str:
+    """80 chars max. Prefiere primera frase limpia del caption; fallback a fecha."""
+    c = (caption or "").strip()
+    if c:
+        # Primera línea/frase (corta en \n o '.') para evitar caption multilinea.
+        first = c.split("\n", 1)[0].strip()
+        if "." in first[:120]:
+            first = first.split(".", 1)[0].strip()
+        if len(first) > 80:
+            first = first[:77].rstrip() + "…"
+        if first:
+            return first
+    today_short = datetime.now(timezone.utc).strftime("%d %b %Y").lower()
+    return f"Reel de @{ig_username} · {today_short}"
+
+
+def _build_idea_raw_text_from_reel(ig_username: str, caption: str,
+                                   transcript: str, transcript_ok: bool) -> str:
+    """Material para raw_text — caption + transcript si está cacheado."""
+    parts = [f"[Reel de @{ig_username}]", ""]
+    parts.append("Caption:")
+    parts.append((caption or "").strip() or "(sin caption)")
+    if transcript_ok and (transcript or "").strip():
+        parts.append("")
+        parts.append("Transcripción:")
+        parts.append(transcript.strip())
+    return "\n".join(parts)
+
+
+@app.route("/api/competitors/reels/<reel_id>/save-as-idea", methods=["POST"])
+@require_auth
+@limiter.limit("20 per minute")
+def save_reel_as_idea(reel_id: str):
+    """Guarda un reel de competidor como idea (status='draft', sin LLM, sin coste).
+    Idempotente: si ya existe idea de este (user, reel) → 200 already_exists:true."""
+    user = current_user()
+    uid = user["id"]
+    if not _user_owns_reel(uid, reel_id):
+        return jsonify({"error": "reel_not_found"}), 404
+
+    body = request.get_json(silent=True) or {}
+    project_id = (body.get("project_id") or "").strip() or None
+
+    # 1. Idempotency check.
+    try:
+        existing = (db.table("ideas")
+                      .select("id, title")
+                      .eq("user_id", uid)
+                      .eq("inspired_by_id", reel_id)
+                      .eq("inspired_by_type", "reel")
+                      .limit(1)
+                      .execute())
+        if existing.data:
+            return jsonify({
+                "ok": True,
+                "idea_id": existing.data[0]["id"],
+                "title": existing.data[0].get("title"),
+                "already_exists": True,
+            }), 200
+    except Exception as e:
+        logger.warning("save_reel_as_idea: dup check failed user=%s reel=%s err=%s",
+                       uid, reel_id, e)
+
+    # 2. Cargar reel + ownership ya validado arriba.
+    try:
+        rr = (db.table("creator_reels_global")
+                .select("id, caption, transcript, transcript_status, "
+                        "creator:creators_global(ig_username)")
+                .eq("id", reel_id)
+                .single()
+                .execute())
+        reel = rr.data
+    except Exception:
+        reel = None
+    if not reel:
+        return jsonify({"error": "reel_not_found"}), 404
+
+    ig_username = (reel.get("creator") or {}).get("ig_username") or ""
+    caption = (reel.get("caption") or "").strip()
+    transcript_text = (reel.get("transcript") or "").strip()
+    transcript_ok = reel.get("transcript_status") == "ok" and bool(transcript_text)
+
+    title = _build_idea_title_from_reel(caption, ig_username)
+    raw_text = _build_idea_raw_text_from_reel(ig_username, caption, transcript_text, transcript_ok)
+
+    # 3. INSERT idea.
+    try:
+        ins = db.table("ideas").insert({
+            "user_id": uid,
+            "project_id": project_id,
+            "raw_text": raw_text,
+            "title": title,
+            "status": "draft",
+            "source": "competitor_reel",
+            "inspired_by_id": reel_id,
+            "inspired_by_type": "reel",
+            "inspired_by_username": ig_username,
+        }).execute()
+    except Exception as e:
+        logger.error("save_reel_as_idea: insert failed user=%s reel=%s err=%s",
+                     uid, reel_id, e, exc_info=True)
+        return jsonify({"error": "internal", "message": "No se pudo guardar la idea."}), 500
+
+    idea_id = ins.data[0]["id"] if ins.data else None
+    try:
+        from emails import track as _ph_track
+        _ph_track("idea_saved_from_competitor", uid, {
+            "creator_username": ig_username,
+            "reel_id": reel_id,
+            "has_transcript": transcript_ok,
+        })
+    except Exception:
+        pass
+
+    return jsonify({
+        "ok": True,
+        "idea_id": idea_id,
+        "title": title,
+        "already_exists": False,
+    }), 200
+
+
 @app.route("/api/tracked-creators/reels", methods=["GET"])
 @require_auth
 def get_tracked_creators_reels():
