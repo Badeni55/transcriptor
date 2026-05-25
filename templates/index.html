@@ -6848,7 +6848,7 @@
     .trans-list { display: flex; flex-direction: column; gap: var(--space-6); }
     .trans-card {
       position: relative;
-      background: linear-gradient(180deg, var(--ideas-card-top) 0%, var(--ideas-card-bot) 100%);
+      background: var(--surface-raised);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-lg);
       padding: 20px 24px;
@@ -14725,7 +14725,7 @@ function profTab(tab, pushHistory) {
   // v0.14.9a: panel-back-btn eliminado del DOM. Toggle innecesario.
 
   // Update nav active state
-  document.querySelectorAll(".prof-nav-item").forEach(btn => {
+  document.querySelectorAll(".chrome-nav-item").forEach(btn => {
     btn.classList.remove("on");
     btn.classList.remove("on-ideas");
     btn.classList.remove("on-transcriptions");
@@ -14733,7 +14733,7 @@ function profTab(tab, pushHistory) {
     btn.classList.remove("on-scripts");
     btn.classList.remove("on-settings");
   });
-  const navBtn = document.querySelector(`.prof-nav-item[onclick="profTab('${tab}')"]`);
+  const navBtn = document.querySelector(`.chrome-nav-item[onclick="profTab('${tab}')"]`);
   if (navBtn) {
     navBtn.classList.add("on");
     if (tab === "ideas") navBtn.classList.add("on-ideas");
