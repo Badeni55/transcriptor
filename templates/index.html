@@ -701,6 +701,157 @@
     .metric-delta.down { color: var(--danger-fg); }
     .metric-delta.flat { color: var(--text-tertiary); }
 
+    /* ═══════════════════════════════════════════════════════════════
+       v0.16.5 — CHROME (sidebar/header)
+       Sidebar Stripe-like con Hooks marca arriba + iconos Tabler.
+       Convive con .prof-sidebar legacy (wrapper se mantiene para que
+       breakpoints mobile sigan funcionando). El CSS viejo de
+       .prof-sidebar-identity/-nav/-footer queda como deuda v0.16.10.
+       ═══════════════════════════════════════════════════════════════ */
+
+    /* ── BRAND (Hooks + texto Reelscript arriba del sidebar) ──── */
+    .chrome-brand {
+      display: flex; align-items: center; gap: var(--space-2);
+      padding: var(--space-6) var(--space-3) var(--space-5);
+    }
+    .chrome-brand-mark { width: 28px; height: 28px; flex-shrink: 0; }
+    .chrome-brand-text {
+      font-family: var(--font-body);
+      font-size: var(--text-lg);
+      font-weight: var(--weight-bold);
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+    }
+
+    /* ── DIVIDER del sidebar (más sutil que .divider general) ── */
+    .chrome-divider {
+      border: 0;
+      border-top: 1px solid var(--border-subtle);
+      margin: var(--space-3) var(--space-3);
+    }
+
+    /* ── NAV ITEMS ────────────────────────────────────────────── */
+    .chrome-nav {
+      display: flex; flex-direction: column;
+      gap: 2px;
+      padding: 0 var(--space-2);
+    }
+    .chrome-nav-item {
+      display: flex; align-items: center; gap: var(--space-3);
+      padding: var(--space-2) var(--space-3);
+      border: 0;
+      background: transparent;
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      font-weight: var(--weight-medium);
+      text-align: left;
+      cursor: pointer;
+      transition: background var(--transition-fast) var(--ease-default),
+                  color var(--transition-fast) var(--ease-default);
+      width: 100%;
+    }
+    .chrome-nav-item:hover {
+      background: var(--surface-overlay);
+      color: var(--text-primary);
+    }
+    .chrome-nav-item.on {
+      background: var(--gray-800);
+      color: var(--text-primary);
+    }
+    .chrome-nav-item .chrome-icon { color: var(--text-tertiary); flex-shrink: 0; }
+    .chrome-nav-item:hover .chrome-icon { color: var(--text-secondary); }
+    .chrome-nav-item.on .chrome-icon { color: var(--brand-500); }
+
+    .chrome-icon {
+      width: 18px; height: 18px;
+      stroke-width: 1.5;
+      transition: color var(--transition-fast) var(--ease-default);
+    }
+
+    /* ── BLOQUE INFERIOR (usage + user + theme) ───────────────── */
+    .chrome-bottom {
+      margin-top: auto;
+      padding: var(--space-3);
+      display: flex; flex-direction: column; gap: var(--space-4);
+    }
+
+    .chrome-usage {
+      display: flex; flex-direction: column; gap: var(--space-2);
+    }
+    .chrome-usage-head {
+      display: flex; justify-content: space-between; align-items: baseline;
+    }
+    .chrome-usage-bar {
+      height: 4px;
+      background: var(--surface-overlay);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+    }
+    .chrome-usage-fill {
+      height: 100%;
+      background: var(--brand-500);
+      border-radius: var(--radius-full);
+      width: 0%;
+      transition: width var(--transition-slow) var(--ease-default);
+    }
+
+    .chrome-user {
+      display: flex; align-items: center; gap: var(--space-3);
+      padding: var(--space-2);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: background var(--transition-fast) var(--ease-default);
+    }
+    .chrome-user:hover { background: var(--surface-overlay); }
+    .chrome-user-av {
+      width: 32px; height: 32px;
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      flex-shrink: 0;
+      background: var(--surface-overlay);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .chrome-user-av img { width: 100%; height: 100%; object-fit: cover; }
+    .chrome-user-info {
+      flex: 1; min-width: 0;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .chrome-user-email {
+      font-size: var(--text-sm);
+      color: var(--text-primary);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .chrome-user-plan { line-height: 1; }
+
+    .chrome-theme {
+      display: inline-flex; gap: 2px;
+      padding: 3px;
+      background: var(--surface-overlay);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-full);
+      align-self: stretch;
+      justify-content: center;
+    }
+    .chrome-theme button {
+      padding: 4px var(--space-3);
+      background: transparent;
+      color: var(--text-tertiary);
+      border: none;
+      border-radius: var(--radius-full);
+      font-family: var(--font-body);
+      font-size: var(--text-xs);
+      cursor: pointer;
+      transition: all var(--transition-fast) var(--ease-default);
+    }
+    .chrome-theme button:hover:not(.on) { color: var(--text-primary); }
+    .chrome-theme button.on {
+      background: var(--surface-raised);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
     [data-theme="light"] .hero-badge { color: #7c3a00; border-color: rgba(180,80,0,0.3); background: rgba(255,140,0,0.1); }
     [data-theme="light"] nav { background: rgba(240,237,232,.75); }
     [data-theme="light"] ::-webkit-scrollbar-track { background: var(--bg); }
@@ -9797,52 +9948,98 @@
 
     <!-- Sidebar -->
     <div class="prof-sidebar">
-      <div class="prof-sidebar-identity" style="position:relative">
-        <div class="prof-av" id="profAv" onclick="event.stopPropagation();openAvatarMenu()" title="Profile menu" style="width:64px;height:64px;border-radius:14px;margin:0 auto 12px;display:block;cursor:pointer">
-          <div class="prof-av-edit" data-i18n="prof.edit">Edit</div>
-        </div>
-        <!-- Avatar picker grid -->
-        <div class="avatar-picker" id="avatarPicker">
-          <div class="avatar-picker-title" data-i18n="prof.choose_avatar">Choose your avatar</div>
-          <div class="avatar-picker-grid" id="avatarPickerGrid"></div>
-        </div>
-        <div>
-          <div class="prof-email ph-no-capture" id="profEmail" data-clarity-mask="true" style="font-family:var(--font-display);font-size:.9rem">—</div>
-          <div style="margin-top:6px"><span class="plan-badge free" id="profPlanBadge">Free</span></div>
-          <!-- Usage bar -->
-          <div id="profUsageWrap" style="display:none;margin-top:10px">
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-              <span style="font-size:.68rem;color:var(--text3)" data-i18n="prof.monthly_usage">Monthly usage</span>
-              <span style="font-size:.68rem;color:var(--text2)" id="profUsageLabel">0/0</span>
-            </div>
-            <div style="height:3px;background:var(--surf2);border-radius:2px;overflow:hidden">
-              <div id="profUsageFill" style="height:100%;border-radius:2px;background:linear-gradient(90deg,var(--brand),#fb923c);width:0%;transition:width .4s"></div>
-            </div>
+      <!-- v0.16.5: chrome rediseñado — Hooks marca arriba, avatar+toggle abajo.
+           IDs (profSidebarNav, profEmail, profAv, profPlanBadge, profUsageWrap,
+           profUsageFill, profUsageLabel) preservados para que el JS existente
+           siga funcionando sin tocar. -->
+
+      <!-- BRAND -->
+      <div class="chrome-brand">
+        <img class="chrome-brand-mark" src="/static/img/hooks/hooks-ideas.svg" alt="" aria-hidden="true">
+        <span class="chrome-brand-text">Reelscript</span>
+      </div>
+
+      <!-- Avatar picker grid (oculto por defecto; lo activa el viejo flow al click) -->
+      <div class="avatar-picker" id="avatarPicker" style="position:absolute">
+        <div class="avatar-picker-title" data-i18n="prof.choose_avatar">Choose your avatar</div>
+        <div class="avatar-picker-grid" id="avatarPickerGrid"></div>
+      </div>
+
+      <!-- NAV (Tabler Icons inline, stroke 1.5, currentColor) -->
+      <nav class="chrome-nav" id="profSidebarNav">
+        <button class="chrome-nav-item on" onclick="profTab('overview')">
+          <svg class="chrome-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M0 0h24v24H0z" stroke="none"/><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
+          <span data-i18n="prof.overview">Dashboard</span>
+        </button>
+
+        <hr class="chrome-divider">
+
+        <button class="chrome-nav-item" onclick="profTab('transc')">
+          <svg class="chrome-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M0 0h24v24H0z" stroke="none"/><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2"/><path d="M8 21h8"/><path d="M12 18v3"/></svg>
+          <span data-i18n="prof.transcriptions">Transcribir</span>
+        </button>
+        <button class="chrome-nav-item" onclick="profTab('scripts')">
+          <svg class="chrome-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M0 0h24v24H0z" stroke="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/><path d="M9 9h1"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>
+          <span data-i18n="prof.saved_scripts">Guiones</span>
+        </button>
+        <button class="chrome-nav-item" id="profNavIdeas" style="display:none" onclick="profTab('ideas')">
+          <svg class="chrome-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M0 0h24v24H0z" stroke="none"/><path d="M3 12h1m8 -9v1m8 8h1m-15.4 -6.4l.7 .7m12.1 -.7l-.7 .7"/><path d="M9 16a5 5 0 1 1 6 0a3.5 3.5 0 0 0 -1 3a2 2 0 0 1 -4 0a3.5 3.5 0 0 0 -1 -3"/><path d="M9.7 17h4.6"/></svg>
+          <span data-i18n="prof.ideas">Ideas</span>
+        </button>
+        <button class="chrome-nav-item" id="profNavMetrics" style="display:none" onclick="profTab('metrics')">
+          <svg class="chrome-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M0 0h24v24H0z" stroke="none"/><path d="M4 19h16"/><path d="M4 15l4 -6l4 2l4 -5l4 4"/></svg>
+          <span data-i18n="prof.metrics">Métricas</span>
+        </button>
+
+        <hr class="chrome-divider">
+
+        <button class="chrome-nav-item" id="profNavAssistants" style="display:none" onclick="profTab('assistants')">
+          <svg class="chrome-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M0 0h24v24H0z" stroke="none"/><path d="M6 5h12a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3z"/><path d="M9 16h.01"/><path d="M15 16h.01"/><path d="M9.5 11h.01"/><path d="M14.5 11h.01"/><path d="M9 8l-1 -2"/><path d="M15 8l1 -2"/></svg>
+          <span data-i18n="prof.assistants">Asistentes</span>
+        </button>
+        <button class="chrome-nav-item" id="profNavSettings" onclick="profTab('settings')">
+          <svg class="chrome-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M0 0h24v24H0z" stroke="none"/><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span data-i18n="prof.settings">Configuración</span>
+        </button>
+      </nav>
+
+      <!-- BLOQUE INFERIOR: usage + user + theme -->
+      <div class="chrome-bottom">
+
+        <!-- Manage subscription (oculto por defecto, JS lo muestra) -->
+        <button id="profManageSubSidebar" class="btn btn-sm btn-ghost" style="display:none" onclick="manageSub()" data-i18n="prof.manage_sub">Manage subscription</button>
+
+        <!-- Uso mensual -->
+        <div class="chrome-usage" id="profUsageWrap" style="display:none">
+          <div class="chrome-usage-head">
+            <span class="eyebrow" data-i18n="prof.monthly_usage">Monthly usage</span>
+            <span class="body-xs" id="profUsageLabel">0/0</span>
+          </div>
+          <div class="chrome-usage-bar">
+            <div class="chrome-usage-fill" id="profUsageFill"></div>
           </div>
         </div>
-      </div>
 
-      <div class="prof-sidebar-nav" id="profSidebarNav">
-        <!-- v0.14.39: sidebar plana (6 items + Dashboard). Hazlo tuyo, Proyectos,
-             Equipo, Privacidad eliminados (pasaron a tabs internos en Scripts/Settings). -->
-        <button class="prof-nav-item on" onclick="profTab('overview')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="1" width="6" height="6" fill="currentColor"/><rect x="9" y="1" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.overview">Dashboard</span></button>
+        <!-- Usuario: avatar + email + plan badge (abre menú al click).
+             El JS updateAllAvatars() inyecta un <img position:absolute inset:0>
+             dentro de #profAv, por eso lo dejamos en .chrome-user-av (cuadrado
+             32px con overflow:hidden) y NO en el wrapper. -->
+        <div class="chrome-user" id="profAvWrap" onclick="event.stopPropagation();openAvatarMenu()" title="Profile menu">
+          <div class="chrome-user-av" id="profAv" style="position:relative">
+            <!-- Inyectado por JS al login. -->
+          </div>
+          <div class="chrome-user-info">
+            <span class="chrome-user-email ph-no-capture" id="profEmail" data-clarity-mask="true">—</span>
+            <span class="chrome-user-plan"><span class="badge badge-neutral" id="profPlanBadge">Free</span></span>
+          </div>
+        </div>
 
-        <div class="prof-nav-sep" aria-hidden="true"></div>
-
-        <button class="prof-nav-item" onclick="profTab('transc')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.transcriptions">Transcribir</span></button>
-        <button class="prof-nav-item" onclick="profTab('scripts')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="2" y="1" width="12" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="4" width="6" height="1.5" fill="currentColor"/><rect x="5" y="7" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="10" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.saved_scripts">Guiones</span></button>
-        <button class="prof-nav-item" id="profNavIdeas" style="display:none" onclick="profTab('ideas')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="3" y="1" width="10" height="2" fill="currentColor"/><rect x="2" y="3" width="12" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="6" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="9" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.ideas">Ideas</span></button>
-        <button class="prof-nav-item" id="profNavMetrics" style="display:none" onclick="profTab('metrics')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="1" y="10" width="3" height="5" fill="currentColor" opacity=".4"/><rect x="5" y="7" width="3" height="8" fill="currentColor" opacity=".6"/><rect x="9" y="4" width="3" height="11" fill="currentColor" opacity=".8"/><rect x="13" y="1" width="3" height="14" fill="currentColor"/></svg><span data-i18n="prof.metrics">Métricas</span></button>
-
-        <div class="prof-nav-sep" aria-hidden="true"></div>
-
-        <button class="prof-nav-item" id="profNavAssistants" style="display:none" onclick="profTab('assistants')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><rect x="5" y="1" width="6" height="6" rx="3" fill="currentColor"/><rect x="3" y="9" width="10" height="6" rx="2" fill="currentColor" opacity=".6"/><rect x="6" y="3" width="1.5" height="1.5" fill="#0a0b0f"/><rect x="9" y="3" width="1.5" height="1.5" fill="#0a0b0f"/></svg><span data-i18n="prof.assistants">Asistentes</span></button>
-        <button class="prof-nav-item" id="profNavSettings" onclick="profTab('settings')"><svg width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" style="vertical-align:-2px;margin-right:6px"><circle cx="8" cy="8" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1 V3 M8 13 V15 M1 8 H3 M13 8 H15 M3 3 L4.5 4.5 M11.5 11.5 L13 13 M3 13 L4.5 11.5 M11.5 4.5 L13 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span data-i18n="prof.settings">Configuración</span></button>
-      </div>
-
-      <div class="prof-sidebar-footer">
-        <button id="profManageSubSidebar" class="btn-3d btn-3d-secondary" style="display:none;padding:8px;border-radius:8px;background:transparent;color:var(--text3);font-size:.75rem;border:1px solid var(--border);cursor:pointer" onclick="manageSub()" data-i18n="prof.manage_sub">Manage subscription</button>
-        <!-- v0.14.9a: "Volver a la app" eliminado. Tap en avatar → menú unificado. -->
+        <!-- Theme toggle (3 estados, persiste en localStorage rs-theme) -->
+        <div class="chrome-theme" role="group" aria-label="Theme">
+          <button type="button" data-val="light" onclick="setThemeBinary('light', event)" data-i18n-aria-es="Claro" data-i18n-aria-en="Light" aria-label="Light">☀</button>
+          <button type="button" data-val="system" onclick="setThemeBinary('system', event)" data-i18n-aria-es="Sistema" data-i18n-aria-en="System" aria-label="System">⌘</button>
+          <button type="button" data-val="dark" onclick="setThemeBinary('dark', event)" data-i18n-aria-es="Oscuro" data-i18n-aria-en="Dark" aria-label="Dark">●</button>
+        </div>
       </div>
     </div>
 
@@ -12226,8 +12423,9 @@ function applyTheme(pref) {
     themeBtn.textContent = themeIcons[pref] || themeIcons[t];
     themeBtn.title = pref === "system" ? "Theme: System" : (t === "dark" ? "Theme: Dark" : "Theme: Light");
   }
-  // Sync segmented controls (light/dark/system buttons)
-  document.querySelectorAll(".theme-seg-opt").forEach(el => {
+  // Sync segmented controls (light/dark/system buttons).
+  // v0.16.5: incluye también .chrome-theme button del sidebar nuevo.
+  document.querySelectorAll(".theme-seg-opt, .chrome-theme button").forEach(el => {
     if (el.dataset.val === "es" || el.dataset.val === "en") return; // skip lang seg
     el.classList.toggle("on", el.dataset.val === pref);
   });
