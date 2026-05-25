@@ -579,6 +579,7 @@
       /* v0.16.3: glow más sutil — alpha .10 (era .15). */
       box-shadow: 0 0 0 3px rgba(249,115,22,.10);
     }
+    .field-select-inline { width: auto; }
     .field-textarea { min-height: 80px; resize: vertical; }
     .field.has-error .field-input,
     .field.has-error .field-textarea,
@@ -6709,148 +6710,12 @@
 
     /* v0.14.32: Transcribir hero decorativo eliminado. */
 
-    /* v0.14.40 — Hero 2-col (reemplaza .trans-input-card). */
-    .trans-hero-2col {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--space-xl);
-      background: var(--surf);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: var(--space-xl);
-      margin-bottom: var(--space-xl);
-    }
-    @media (max-width: 820px) {
-      .trans-hero-2col { grid-template-columns: 1fr; gap: var(--space-lg); padding: var(--space-lg); }
-    }
-    .trans-hero-left, .trans-hero-right {
-      display: flex; flex-direction: column;
-      gap: var(--space-md);
-      min-width: 0;
-    }
-    .trans-hero-eyebrow {
-      font-size: .72rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: var(--text3);
-    }
-    .trans-hero-input {
-      padding: 14px 16px;
-      background: var(--surf2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      font-size: 1rem;
-      font-family: var(--font-body);
-      color: var(--text);
-      outline: none;
-      transition: border-color .15s, box-shadow .15s;
-      width: 100%;
-    }
-    .trans-hero-input::placeholder { color: var(--text3); font-family: ui-monospace, SFMono-Regular, monospace; font-size: .85rem; }
-    .trans-hero-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(249,115,22,.16); }
-    .trans-hero-lang {
-      padding: 10px 14px;
-      background: var(--surf2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-size: .9rem;
-      color: var(--text);
-      font-family: var(--font-body);
-      outline: none;
-    }
-    .trans-hero-btn {
-      background: var(--brand-cta);
-      color: #fff;
-      border: 0;
-      padding: 14px 24px;
-      border-radius: 12px;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: var(--font-body);
-      transition: background .15s, opacity .15s, transform .12s;
-    }
-    .trans-hero-btn:hover:not(:disabled) { background: #a93808; transform: translateY(-1px); }
-    .trans-hero-btn:active:not(:disabled) { transform: scale(.98); transition: transform .08s ease-out; }
-    .trans-hero-btn:disabled { opacity: .65; cursor: default; }
-    .trans-hero-platforms {
-      font-size: .72rem;
-      color: var(--text3);
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-      margin-top: var(--space-sm);
-    }
     .trans-plat-pill {
       background: var(--surf2);
       padding: 2px 8px;
       border-radius: 6px;
       font-weight: 600;
       color: var(--text2);
-    }
-    /* Right side: última transc o empty con flecha */
-    .trans-hero-last-card {
-      display: flex; gap: 12px;
-      background: var(--surf2);
-      border-radius: 12px;
-      padding: var(--space-md);
-    }
-    .trans-hero-last-thumb {
-      width: 80px; height: 80px;
-      border-radius: 8px;
-      object-fit: cover;
-      background: var(--surf);
-      flex-shrink: 0;
-    }
-    .trans-hero-last-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-    .trans-hero-last-eyebrow {
-      font-size: .68rem; font-weight: 700; letter-spacing: .08em;
-      color: var(--text3); text-transform: uppercase; margin-bottom: 4px;
-    }
-    .trans-hero-last-title {
-      font-size: .92rem;
-      color: var(--text);
-      margin-bottom: 4px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      line-height: 1.3;
-    }
-    .trans-hero-last-meta {
-      font-size: .72rem;
-      color: var(--text3);
-      margin-bottom: var(--space-sm);
-    }
-    .trans-hero-last-actions {
-      display: flex; gap: 8px; margin-top: auto;
-    }
-    .trans-hero-last-actions button {
-      background: transparent;
-      border: 1px solid var(--border);
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: .78rem;
-      color: var(--text2);
-      cursor: pointer;
-      font-family: var(--font-body);
-      transition: border-color .15s, color .15s;
-    }
-    .trans-hero-last-actions button:hover { border-color: var(--brand); color: var(--text); }
-    .trans-hero-empty {
-      display: flex; align-items: center; gap: var(--space-md);
-      padding: var(--space-md);
-      color: var(--text2);
-      font-size: .92rem;
-      height: 100%;
-      min-height: 120px;
-    }
-    .trans-hero-empty-arrow {
-      width: 36px; height: 36px;
-      color: var(--text3);
-      flex-shrink: 0;
-    }
-    @media (max-width: 820px) {
-      .trans-hero-empty-arrow { transform: rotate(90deg); }
     }
     .trans-input-status {
       display: flex; align-items: center; gap: 10px;
@@ -6868,41 +6733,6 @@
       flex-shrink: 0;
     }
     @keyframes ptSpin { to { transform: rotate(360deg); } }
-
-    /* List header + bulk refresh + filters */
-    .trans-list-header {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 12px; flex-wrap: wrap;
-      margin: var(--space-md) 0 18px;
-    }
-    .trans-list-title {
-      font-family: var(--font-display); font-size: 1.1rem; color: var(--text);
-    }
-    .trans-list-count { color: var(--text3); font-size: .9em; font-family: ui-monospace, monospace; margin-left: 6px; }
-    .trans-bulk-refresh {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 7px 14px; border-radius: 10px;
-      background: rgba(239,106,41,.1); border: 1px solid rgba(239,106,41,.3);
-      /* v0.14.35: hint text a neutro. */
-      color: var(--text2); cursor: pointer;
-      font-family: var(--font-body); font-size: .8rem; font-weight: 600;
-      transition: background .15s, border-color .15s, color .15s;
-    }
-    .trans-bulk-refresh:hover:not(:disabled) { background: rgba(239,106,41,.16); border-color: rgba(239,106,41,.5); }
-    .trans-bulk-refresh:disabled { opacity: .65; cursor: default; }
-    .trans-bulk-refresh.is-busy svg { animation: ptSpin 1s linear infinite; }
-    [data-theme="light"] .trans-bulk-refresh { color: #c2410c; }
-
-    .trans-filters { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
-    .trans-filter {
-      padding: 6px 12px; border-radius: 999px;
-      background: transparent; border: 1px solid var(--border); color: var(--text2);
-      font-family: var(--font-body); font-size: .76rem; font-weight: 500;
-      cursor: pointer; transition: color .15s, background .15s, border-color .15s;
-    }
-    .trans-filter:hover { color: var(--text); border-color: var(--text3); }
-    .trans-filter.on { background: rgba(239,106,41,.12); border-color: rgba(239,106,41,.4); color: #fdba74; }
-    [data-theme="light"] .trans-filter.on { color: #c2410c; }
 
     /* Card metrics chips */
     .trans-metrics {
@@ -7015,12 +6845,12 @@
     .trans-cta:hover .trans-cta-go { color: #ff8a57; gap: 10px; }
 
     /* Cards */
-    .trans-list { display: flex; flex-direction: column; gap: var(--space-md); }
+    .trans-list { display: flex; flex-direction: column; gap: var(--space-6); }
     .trans-card {
       position: relative;
       background: linear-gradient(180deg, var(--ideas-card-top) 0%, var(--ideas-card-bot) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 16px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
       padding: 20px 24px;
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.04),
@@ -7028,9 +6858,8 @@
       transition: transform .22s, box-shadow .22s, border-color .22s;
     }
     .trans-card:hover {
-      /* v0.14.36: hover unificado neutro (eliminado glow naranja 40px). */
       transform: translateY(-2px);
-      border-color: rgba(239, 106, 41, 0.2);
+      border-color: var(--border-strong);
       box-shadow: 0 8px 24px rgba(0,0,0,.12);
     }
     [data-theme="light"] .trans-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.08); }
@@ -10504,61 +10333,57 @@
       <!-- Transcriptions panel -->
       <div id="profPanelTransc" style="display:none">
 
-        <!-- v0.14.32: header limpio. v0.14.33.a: tagline. -->
-        <div class="prof-section-head">
-          <div>
-            <div class="prof-section-title" data-i18n-es="Transcripciones" data-i18n-en="Transcriptions">Transcripciones</div>
-            <div class="prof-section-tagline" data-i18n-es="Todos tus reels convertidos en texto." data-i18n-en="All your reels turned into text.">Todos tus reels convertidos en texto.</div>
+        <div class="panel-header">
+          <div class="panel-header-content">
+            <p class="eyebrow" style="margin-bottom:var(--space-2)">TRANSCRIBIR</p>
+            <h1 class="heading-1" data-i18n-es="Transcripciones" data-i18n-en="Transcriptions">Transcripciones</h1>
+            <p class="body-sm" data-i18n-es="Todos tus reels convertidos en texto." data-i18n-en="All your reels turned into text.">Todos tus reels convertidos en texto.</p>
           </div>
         </div>
 
-        <!-- v0.14.40: hero 2-col (input izq / última transcripción der). Reemplaza v0.14.7 trans-input-card. -->
-        <div class="trans-hero-2col">
-          <div class="trans-hero-left">
-            <div class="trans-hero-eyebrow" data-i18n-es="PEGA UNA URL" data-i18n-en="PASTE A URL">PEGA UNA URL</div>
-            <input id="panelUrlInput" type="url" class="trans-hero-input ph-no-capture" data-clarity-mask="true"
+        <div class="card" style="margin-bottom:var(--space-6)">
+          <div class="stack-md">
+            <input id="panelUrlInput" type="url" class="field-input ph-no-capture" data-clarity-mask="true"
                    placeholder="https://www.instagram.com/reel/… · https://www.tiktok.com/…"
                    autocomplete="off" spellcheck="false"
                    onkeydown="if(event.key==='Enter'){event.preventDefault();doTranscribeFromPanel();}" />
-            <select id="panelLang" class="trans-hero-lang">
-              <option value="" data-i18n-es="✨ Detectar idioma automáticamente" data-i18n-en="✨ Auto-detect language">✨ Detectar idioma automáticamente</option>
-              <option value="es" data-i18n-es="Español" data-i18n-en="Spanish">Español</option>
-              <option value="en" data-i18n-es="Inglés" data-i18n-en="English">English</option>
-              <option value="fr" data-i18n-es="Francés" data-i18n-en="French">French</option>
-              <option value="pt" data-i18n-es="Portugués" data-i18n-en="Portuguese">Portuguese</option>
-              <option value="de" data-i18n-es="Alemán" data-i18n-en="German">German</option>
-              <option value="it" data-i18n-es="Italiano" data-i18n-en="Italian">Italian</option>
-            </select>
-            <button id="panelTranscribeBtn" class="trans-hero-btn" onclick="doTranscribeFromPanel()" data-i18n-es="✦ Transcribir" data-i18n-en="✦ Transcribe">✦ Transcribir</button>
+            <div class="cluster" style="justify-content:space-between;gap:var(--space-4)">
+              <select id="panelLang" class="field-select field-select-inline">
+                <option value="" data-i18n-es="✨ Detectar idioma automáticamente" data-i18n-en="✨ Auto-detect language">✨ Detectar idioma automáticamente</option>
+                <option value="es" data-i18n-es="Español" data-i18n-en="Spanish">Español</option>
+                <option value="en" data-i18n-es="Inglés" data-i18n-en="English">English</option>
+                <option value="fr" data-i18n-es="Francés" data-i18n-en="French">French</option>
+                <option value="pt" data-i18n-es="Portugués" data-i18n-en="Portuguese">Portuguese</option>
+                <option value="de" data-i18n-es="Alemán" data-i18n-en="German">German</option>
+                <option value="it" data-i18n-es="Italiano" data-i18n-en="Italian">Italian</option>
+              </select>
+              <button id="panelTranscribeBtn" class="btn btn-lg btn-primary" onclick="doTranscribeFromPanel()" data-i18n-es="✦ Transcribir" data-i18n-en="✦ Transcribe">✦ Transcribir</button>
+            </div>
             <div id="panelTranscribeStatus" class="trans-input-status" style="display:none"></div>
-            <div class="trans-hero-platforms">
-              <span data-i18n-es="Funciona con:" data-i18n-en="Works with:">Funciona con:</span>
+            <div class="cluster" style="gap:8px">
+              <span class="body-xs" data-i18n-es="Funciona con:" data-i18n-en="Works with:">Funciona con:</span>
               <span class="trans-plat-pill">IG</span>
               <span class="trans-plat-pill">TikTok</span>
             </div>
           </div>
-          <div class="trans-hero-right" id="transHeroRight">
-            <!-- v0.14.40: JS rellena con .trans-hero-last-card o .trans-hero-empty. -->
-          </div>
         </div>
 
-        <!-- Header: count + bulk refresh + filtros -->
-        <div class="trans-list-header">
-          <div class="trans-list-title">
-            <span data-i18n-es="Tus transcripciones" data-i18n-en="Your transcriptions">Tus transcripciones</span>
-            <span class="trans-list-count" id="transListCount">(<span id="transCountNum">0</span>)</span>
+        <div class="cluster" style="justify-content:space-between;margin-bottom:12px">
+          <div class="cluster" style="gap:8px">
+            <h2 class="heading-2" data-i18n-es="Tus transcripciones" data-i18n-en="Your transcriptions">Tus transcripciones</h2>
+            <span class="badge badge-neutral" id="transListCount"><span id="transCountNum">0</span></span>
           </div>
-          <button id="transBulkRefresh" class="trans-bulk-refresh" onclick="refreshAllTransMetrics()" style="display:none">
+          <button id="transBulkRefresh" class="btn btn-sm btn-ghost" onclick="refreshAllTransMetrics()" style="display:none">
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M14 4 V8 H10 M2 12 V8 H6 M14 8 A6 6 0 0 0 4 5 M2 8 A6 6 0 0 0 12 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             <span id="transBulkRefreshLbl" data-i18n-es="Actualizar métricas" data-i18n-en="Refresh metrics">Actualizar métricas</span>
           </button>
         </div>
-        <div class="trans-filters" id="transFilters" style="display:none">
-          <button class="trans-filter on" data-sort="recent" onclick="setTransFilter('recent')" data-i18n-es="Recientes" data-i18n-en="Recent">Recientes</button>
-          <button class="trans-filter" data-sort="views" onclick="setTransFilter('views')" data-i18n-es="Más vistas" data-i18n-en="Most viewed">Más vistas</button>
-          <button class="trans-filter" data-sort="likes" onclick="setTransFilter('likes')" data-i18n-es="Más likes" data-i18n-en="Most liked">Más likes</button>
+        <div class="cluster" id="transFilters" style="display:none;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+          <button class="chip is-active trans-filter" data-sort="recent" onclick="setTransFilter('recent')" data-i18n-es="Recientes" data-i18n-en="Recent">Recientes</button>
+          <button class="chip trans-filter" data-sort="views" onclick="setTransFilter('views')" data-i18n-es="Más vistas" data-i18n-en="Most viewed">Más vistas</button>
+          <button class="chip trans-filter" data-sort="likes" onclick="setTransFilter('likes')" data-i18n-es="Más likes" data-i18n-en="Most liked">Más likes</button>
         </div>
 
         <!-- Transcriptions list -->
@@ -14835,50 +14660,6 @@ function renderDashMetrics(m, transcribedCount) {
   });
 }
 
-// v0.14.40: renderiza el lado derecho del hero 2-col de #profPanelTransc.
-// Última transcripción o empty con flecha. Idempotente.
-function renderTransHero() {
-  const right = document.getElementById("transHeroRight");
-  if (!right) return;
-  const es = (document.documentElement.lang || "es") === "es";
-  if (!Array.isArray(histCache) || histCache.length === 0) {
-    right.innerHTML = `
-      <div class="trans-hero-empty">
-        <svg class="trans-hero-empty-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <line x1="19" y1="12" x2="5" y2="12"/>
-          <polyline points="12 19 5 12 12 5"/>
-        </svg>
-        <span>${es ? "Pega tu primer reel y empieza" : "Paste your first reel and start"}</span>
-      </div>`;
-    return;
-  }
-  const it = histCache[0];
-  const thumb = it.thumbnail_b64
-    ? `<img class="trans-hero-last-thumb" src="${ovEsc(it.thumbnail_b64)}" alt="">`
-    : `<div class="trans-hero-last-thumb"></div>`;
-  // v0.14.40.c fix: backend no almacena title; generamos desde texto.
-  const platLabel = (it.platform || "").toUpperCase() || (es ? "Sin título" : "Untitled");
-  const rawTitle = transAutoTitle(it.text || "") || platLabel;
-  const title = ovEsc(rawTitle);
-  const viewsTxt = it.views
-    ? `${Number(it.views).toLocaleString(es ? "es-ES" : "en-US")} ${es ? "vistas" : "views"} · `
-    : "";
-  const meta = `${viewsTxt}${ovEsc(ovRelTime(it.created_at))} · ${ovEsc(it.platform || "")}`;
-  right.innerHTML = `
-    <div class="trans-hero-last-card">
-      ${thumb}
-      <div class="trans-hero-last-body">
-        <div class="trans-hero-last-eyebrow">${es ? "ÚLTIMA TRANSCRIPCIÓN" : "LAST TRANSCRIPTION"}</div>
-        <div class="trans-hero-last-title">${title}</div>
-        <div class="trans-hero-last-meta">${meta}</div>
-        <div class="trans-hero-last-actions">
-          <button onclick="ovHeroTransform(${it.id})">${es ? "Transformar" : "Transform"}</button>
-          <button onclick="ovHeroViewFull(${it.id})">${es ? "Ver completa" : "View full"}</button>
-        </div>
-      </div>
-    </div>`;
-}
-
 function profTab(tab, pushHistory) {
   if (pushHistory === undefined) pushHistory = true;
 
@@ -14968,7 +14749,7 @@ function profTab(tab, pushHistory) {
     const _setTab = _pendingSettingsTab || _readSettingsTabFromUrl();
     if (typeof settingsSwitchTab === "function") settingsSwitchTab(_setTab || "general", { skipHistory: true });
   }
-  if (tab === "transc") { renderProfTransc(); if (typeof renderTransHero === "function") renderTransHero(); }
+  if (tab === "transc") { renderProfTransc(); }
   if (tab === "assistants") renderProfAssistants();
   if (tab === "metrics") loadMetricsSummary();
   if (tab === "ideas") loadIdeas();
@@ -15298,7 +15079,7 @@ let _transFilterCurrent = "recent";
 function setTransFilter(sort) {
   _transFilterCurrent = sort;
   document.querySelectorAll(".trans-filter").forEach(b => {
-    b.classList.toggle("on", b.dataset.sort === sort);
+    b.classList.toggle("is-active", b.dataset.sort === sort);
   });
   renderProfTransc();
 }
@@ -15553,19 +15334,6 @@ async function doTranscribeFromHero() {
       try { window.posthog && window.posthog.capture("transcribe_from_hero_failed", { error_type: info.error || "unknown" }); } catch (e) {}
     },
   });
-}
-
-// v0.14.18/v0.14.19: botones de acción en el body de la F1 card
-function ovHeroTransform(transcriptionId) {
-  try { window.posthog && window.posthog.capture("hero_transform_clicked", { transcription_id: transcriptionId }); } catch (e) {}
-  if (transcriptionId) {
-    const item = (histCache || []).find(r => r.id === transcriptionId);
-    const txt = item ? (item.text || "") : "";
-    const adaptInput = document.getElementById("adaptInput");
-    if (adaptInput && txt) adaptInput.value = txt;
-  }
-  profTab("adapt");
-  setTimeout(() => { const ta = document.getElementById("adaptInput"); if (ta) ta.focus(); }, 50);
 }
 
 function ovHeroViewFull(transcriptionId) {
@@ -19708,9 +19476,7 @@ async function loadHistory() {
   document.getElementById("histCount").textContent = histCache.length;
   document.getElementById("statTotal").textContent = histCache.length;
   if (typeof renderTransCounter === "function") renderTransCounter();
-  // v0.14.40: re-render Dashboard mini-rows + hero Transcribir tras llegar histCache.
   if (typeof renderDashUltTransc === "function") renderDashUltTransc();
-  if (typeof renderTransHero === "function") renderTransHero();
   const list = document.getElementById("histList");
   if (!histCache.length) { list.innerHTML = `<li class="empty-state" data-i18n="drawer.empty">${t("drawer.empty")}</li>`; return; }
   list.innerHTML = histCache.map(it => `
