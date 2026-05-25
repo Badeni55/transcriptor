@@ -184,9 +184,11 @@
        Ratio surface-base/raised dark = 5.71:1 (rango Linear/Vercel).
        ═══════════════════════════════════════════════════════════════ */
     :root {
-      /* ── PALETTE: gray (custom slate-blue alineado al dark actual) ── */
+      /* ── PALETTE: gray (12 tonos, Stripe-like jerarquía fina) ── */
+      --gray-25:  #fbfbfd;
       --gray-50:  #f7f8fa;
       --gray-100: #eef0f5;
+      --gray-150: #e3e6ed;
       --gray-200: #d6dae3;
       --gray-300: #aab1c0;
       --gray-400: #8b92a5;
@@ -194,6 +196,7 @@
       --gray-600: #4b5161;
       --gray-700: #353a47;
       --gray-800: #262a36;
+      --gray-850: #21242e;
       --gray-900: #1c1f29;
 
       /* ── PALETTE: brand (orange, Tailwind orange scale) ── */
@@ -229,11 +232,11 @@
       --info-fg:     #60a5fa;
       --info-border: rgba(59,130,246,.30);
 
-      /* ── SURFACES (dark default — light override más abajo) ── */
-      --surface-base:    #07080b;
-      --surface-raised:  #1c1f29;
-      --surface-overlay: #262a36;
-      --surface-sunken:  #050608;
+      /* ── SURFACES (dark default — v0.16.3 recalibradas: warm dark sin tinte azul) ── */
+      --surface-base:    #0a0a0c;
+      --surface-raised:  #1a1a1f;
+      --surface-overlay: #24242a;
+      --surface-sunken:  #050507;
 
       /* ── TEXTO ── */
       --text-primary:   #f1f3f7;
@@ -275,11 +278,11 @@
       --radius-2xl:  24px;
       --radius-full: 9999px;
 
-      /* ── SHADOWS ── */
-      --shadow-sm:   0 1px 2px rgba(0,0,0,.06);
-      --shadow-md:   0 2px 4px rgba(0,0,0,.08), 0 4px 6px rgba(0,0,0,.06);
-      --shadow-lg:   0 1px 3px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
-      --shadow-xl:   0 2px 8px rgba(0,0,0,.5), 0 16px 48px rgba(0,0,0,.4);
+      /* ── SHADOWS (v0.16.3: Stripe-fingerprint, apenas perceptibles) ── */
+      --shadow-sm:   0 1px 2px rgba(0,0,0,.04);
+      --shadow-md:   0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+      --shadow-lg:   0 4px 16px rgba(0,0,0,.08), 0 16px 48px rgba(0,0,0,.06);
+      --shadow-xl:   0 8px 24px rgba(0,0,0,.10), 0 24px 64px rgba(0,0,0,.08);
       --shadow-glow: 0 0 0 3px rgba(249,115,22,.15), 0 0 24px rgba(249,115,22,.08);
 
       /* ── TIPOGRAFÍA ── */
@@ -287,15 +290,16 @@
       --font-body:    'DM Sans', system-ui, sans-serif;
       --font-mono:    ui-monospace, 'SF Mono', Menlo, monospace;
 
+      /* v0.16.3: escala con más contraste H1↔body (Stripe-fingerprint). */
       --text-xs:   12px;
-      --text-sm:   14px;
-      --text-base: 16px;
-      --text-lg:   18px;
+      --text-sm:   13px;
+      --text-base: 15px;
+      --text-lg:   17px;
       --text-xl:   20px;
-      --text-2xl:  24px;
-      --text-3xl:  30px;
-      --text-4xl:  36px;
-      --text-5xl:  48px;
+      --text-2xl:  26px;
+      --text-3xl:  32px;
+      --text-4xl:  42px;
+      --text-5xl:  56px;
 
       --leading-tight:   1.2;
       --leading-snug:    1.35;
@@ -436,8 +440,13 @@
       white-space: nowrap;
       user-select: none;
     }
-    .btn:disabled { opacity: .5; cursor: not-allowed; pointer-events: none; }
-    .btn:focus-visible { outline: 2px solid var(--brand-500); outline-offset: 2px; }
+    .btn:disabled { cursor: not-allowed; pointer-events: none; }
+    /* v0.16.3: focus ring estilo Stripe — outline gris discreto + halo brand sutil. */
+    .btn:focus-visible {
+      outline: 2px solid var(--border-strong);
+      outline-offset: 2px;
+      box-shadow: 0 0 0 5px rgba(249,115,22,.20);
+    }
 
     .btn-sm { height: 32px; padding: 0 var(--space-3); font-size: var(--text-sm); }
     .btn-md { height: 40px; padding: 0 var(--space-4); font-size: var(--text-sm); }
@@ -446,6 +455,10 @@
     .btn-primary { background: var(--brand-600); color: #fff; border-color: var(--brand-600); }
     .btn-primary:hover { background: var(--brand-700); border-color: var(--brand-700); }
     .btn-primary:active { background: var(--brand-800); }
+    /* v0.16.3: disabled gris sólido (no opacity sobre naranja → evita tinte rosa). */
+    .btn-primary:disabled {
+      background: var(--gray-700); color: var(--gray-500); border-color: var(--gray-700);
+    }
 
     .btn-secondary {
       background: var(--surface-raised);
@@ -453,12 +466,22 @@
       border-color: var(--border-default);
     }
     .btn-secondary:hover { background: var(--surface-overlay); border-color: var(--border-strong); }
+    .btn-secondary:disabled {
+      background: var(--surface-raised); color: var(--text-disabled); border-color: var(--border-subtle);
+    }
 
     .btn-ghost { background: transparent; color: var(--text-secondary); border-color: transparent; }
-    .btn-ghost:hover { background: var(--surface-raised); color: var(--text-primary); }
+    /* v0.16.3: hover con presencia visual (no 'texto disfrazado'). */
+    .btn-ghost:hover {
+      background: var(--gray-800); color: var(--text-primary); border-color: var(--gray-700);
+    }
+    .btn-ghost:disabled { color: var(--text-disabled); }
 
     .btn-danger { background: var(--danger); color: #fff; border-color: var(--danger); }
     .btn-danger:hover { background: var(--danger-fg); }
+    .btn-danger:disabled {
+      background: var(--gray-700); color: var(--gray-500); border-color: var(--gray-700);
+    }
 
     .btn-block { width: 100%; }
 
@@ -468,6 +491,8 @@
       border: 1px solid var(--border-default);
       border-radius: var(--radius-lg);
       padding: var(--space-5);
+      /* v0.16.3: sombra base sutil (Stripe cards siempre tienen mínima). */
+      box-shadow: var(--shadow-sm);
       transition: border-color var(--transition-fast) var(--ease-default);
     }
     .card-interactive { cursor: pointer; }
@@ -499,10 +524,13 @@
       transition: all var(--transition-fast) var(--ease-default);
     }
     .chip:hover { color: var(--text-primary); border-color: var(--border-strong); }
+    /* v0.16.3: 'subtle selected' Stripe — no fondo naranja, sino selected
+       sutil con indicador brand al borde izquierdo. */
     .chip.is-active {
-      background: var(--brand-600);
-      color: #fff;
-      border-color: var(--brand-600);
+      background: var(--gray-800);
+      color: var(--text-primary);
+      border-color: var(--gray-700);
+      box-shadow: inset 2px 0 0 var(--brand-500);
     }
 
     /* ── BADGE (informativo estático: status, contador) ────────── */
@@ -518,7 +546,8 @@
     .badge-danger  { background: var(--danger-bg);  color: var(--danger-fg); }
     .badge-warning { background: var(--warning-bg); color: var(--warning-fg); }
     .badge-info    { background: var(--info-bg);    color: var(--info-fg); }
-    .badge-brand   { background: rgba(249,115,22,.10); color: var(--brand-400); }
+    /* v0.16.3: badge brand sutil — crema sobre dark, palish sobre light. */
+    .badge-brand   { background: var(--brand-100); color: var(--brand-700); }
 
     /* ── FIELD (input/textarea/select unificados) ──────────────── */
     .field { display: flex; flex-direction: column; gap: var(--space-2); }
@@ -547,7 +576,8 @@
     .field-select:focus {
       outline: none;
       border-color: var(--brand-500);
-      box-shadow: 0 0 0 3px rgba(249,115,22,.15);
+      /* v0.16.3: glow más sutil — alpha .10 (era .15). */
+      box-shadow: 0 0 0 3px rgba(249,115,22,.10);
     }
     .field-textarea { min-height: 80px; resize: vertical; }
     .field.has-error .field-input,
