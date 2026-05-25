@@ -10333,21 +10333,27 @@
       <!-- Transcriptions panel -->
       <div id="profPanelTransc" style="display:none">
 
-        <div class="panel-header">
+        <!-- v0.16.6: panel migrado a design system Stripe-like (utilidades v0.16.4 + primitivos v0.16.2-3). -->
+        <header class="panel-header">
           <div class="panel-header-content">
-            <p class="eyebrow" style="margin-bottom:var(--space-2)">TRANSCRIBIR</p>
+            <p class="eyebrow" data-i18n-es="TRANSCRIBIR" data-i18n-en="TRANSCRIBE">TRANSCRIBIR</p>
             <h1 class="heading-1" data-i18n-es="Transcripciones" data-i18n-en="Transcriptions">Transcripciones</h1>
-            <p class="body-sm" data-i18n-es="Todos tus reels convertidos en texto." data-i18n-en="All your reels turned into text.">Todos tus reels convertidos en texto.</p>
+            <p class="body-sm" style="margin:var(--space-3) 0 0 0" data-i18n-es="Todos tus reels convertidos en texto." data-i18n-en="All your reels turned into text.">Todos tus reels convertidos en texto.</p>
           </div>
-        </div>
+        </header>
 
-        <div class="card" style="margin-bottom:var(--space-6)">
+        <!-- Input card (ancho completo — 'última transcripción' redundante eliminada en v0.16.6). -->
+        <section class="card" style="padding:var(--space-8); margin-bottom:var(--space-12)">
           <div class="stack-md">
-            <input id="panelUrlInput" type="url" class="field-input ph-no-capture" data-clarity-mask="true"
-                   placeholder="https://www.instagram.com/reel/… · https://www.tiktok.com/…"
-                   autocomplete="off" spellcheck="false"
-                   onkeydown="if(event.key==='Enter'){event.preventDefault();doTranscribeFromPanel();}" />
-            <div class="cluster" style="justify-content:space-between;gap:var(--space-4)">
+            <div class="field">
+              <label class="eyebrow" for="panelUrlInput" data-i18n-es="URL DEL REEL" data-i18n-en="REEL URL">URL DEL REEL</label>
+              <input id="panelUrlInput" type="url" class="field-input ph-no-capture" data-clarity-mask="true"
+                     placeholder="https://www.instagram.com/reel/… · https://www.tiktok.com/…"
+                     autocomplete="off" spellcheck="false"
+                     onkeydown="if(event.key==='Enter'){event.preventDefault();doTranscribeFromPanel();}" />
+            </div>
+
+            <div class="cluster">
               <select id="panelLang" class="field-select field-select-inline">
                 <option value="" data-i18n-es="✨ Detectar idioma automáticamente" data-i18n-en="✨ Auto-detect language">✨ Detectar idioma automáticamente</option>
                 <option value="es" data-i18n-es="Español" data-i18n-en="Spanish">Español</option>
@@ -10359,28 +10365,33 @@
               </select>
               <button id="panelTranscribeBtn" class="btn btn-lg btn-primary" onclick="doTranscribeFromPanel()" data-i18n-es="✦ Transcribir" data-i18n-en="✦ Transcribe">✦ Transcribir</button>
             </div>
+
             <div id="panelTranscribeStatus" class="trans-input-status" style="display:none"></div>
-            <div class="cluster" style="gap:8px">
+
+            <div class="cluster cluster-sm" style="margin-top:var(--space-4)">
               <span class="body-xs" data-i18n-es="Funciona con:" data-i18n-en="Works with:">Funciona con:</span>
-              <span class="trans-plat-pill">IG</span>
-              <span class="trans-plat-pill">TikTok</span>
+              <span class="badge badge-neutral">IG</span>
+              <span class="badge badge-neutral">TikTok</span>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div class="cluster" style="justify-content:space-between;margin-bottom:12px">
-          <div class="cluster" style="gap:8px">
-            <h2 class="heading-2" data-i18n-es="Tus transcripciones" data-i18n-en="Your transcriptions">Tus transcripciones</h2>
+        <!-- Header de la lista: título + count + bulk refresh -->
+        <div class="cluster" style="justify-content:space-between; margin-bottom:var(--space-4)">
+          <div class="cluster cluster-sm">
+            <h2 class="heading-2" style="margin:0" data-i18n-es="Tus transcripciones" data-i18n-en="Your transcriptions">Tus transcripciones</h2>
             <span class="badge badge-neutral" id="transListCount"><span id="transCountNum">0</span></span>
           </div>
           <button id="transBulkRefresh" class="btn btn-sm btn-ghost" onclick="refreshAllTransMetrics()" style="display:none">
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M14 4 V8 H10 M2 12 V8 H6 M14 8 A6 6 0 0 0 4 5 M2 8 A6 6 0 0 0 12 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             <span id="transBulkRefreshLbl" data-i18n-es="Actualizar métricas" data-i18n-en="Refresh metrics">Actualizar métricas</span>
           </button>
         </div>
-        <div class="cluster" id="transFilters" style="display:none;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+
+        <!-- Filtros (.chip restraint Stripe — .trans-filter mantenida como segunda clase por compat con JS setTransFilter). -->
+        <div class="cluster" id="transFilters" style="display:none; margin-bottom:var(--space-5)">
           <button class="chip is-active trans-filter" data-sort="recent" onclick="setTransFilter('recent')" data-i18n-es="Recientes" data-i18n-en="Recent">Recientes</button>
           <button class="chip trans-filter" data-sort="views" onclick="setTransFilter('views')" data-i18n-es="Más vistas" data-i18n-en="Most viewed">Más vistas</button>
           <button class="chip trans-filter" data-sort="likes" onclick="setTransFilter('likes')" data-i18n-es="Más likes" data-i18n-en="Most liked">Más likes</button>
