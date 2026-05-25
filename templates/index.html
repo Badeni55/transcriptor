@@ -5763,12 +5763,6 @@
       --ideas-dev: #5dcaa5;
       --ideas-dev-soft: rgba(93, 202, 165, 0.12);
       --ideas-dev-border: rgba(93, 202, 165, 0.25);
-      --ideas-asst: #b5a0ec;
-      --ideas-asst-soft: rgba(125, 91, 184, 0.15);
-      --ideas-asst-border: rgba(125, 91, 184, 0.3);
-      --ideas-proj: #c89968;
-      --ideas-proj-soft: rgba(200, 153, 104, 0.1);
-      --ideas-proj-border: rgba(200, 153, 104, 0.3);
       --ink-editorial: #f1ead9;
       --ink-muted: #8a7e72;
       --ink-cream: #c4b896;
@@ -5792,7 +5786,7 @@
     /* Input card ──────────────────────────────────────────── */
     .ideas-input-card {
       position: relative;
-      background: linear-gradient(180deg, var(--ideas-card-top) 0%, var(--ideas-card-bot) 100%);
+      background: var(--surface-raised);
       border: 1px solid rgba(255, 107, 61, 0.18);
       border-radius: 18px;
       padding: 22px 24px 20px;
@@ -5801,7 +5795,7 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.04),
         inset 0 -1px 0 rgba(0, 0, 0, 0.3),
         0 8px 32px rgba(0, 0, 0, 0.4),
-        0 0 60px rgba(255, 107, 61, 0.06);
+        0 0 60px color-mix(in srgb, var(--brand-500) 6%, transparent);
     }
     .ideas-input-label {
       display: block;
@@ -5831,48 +5825,6 @@
       color: rgba(138, 126, 114, 0.75);
       font-style: italic;
     }
-    .ideas-chips {
-      display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap;
-      align-items: center;
-    }
-    .ideas-chip-wrap { position: relative; display: inline-flex; }
-    .ideas-chip-wrap select {
-      position: absolute; inset: 0;
-      width: 100%; height: 100%;
-      opacity: 0; cursor: pointer;
-      z-index: 2;
-    }
-    .ideas-chip {
-      display: inline-flex; align-items: center; gap: 7px;
-      padding: 6px 12px;
-      border-radius: 999px;
-      font-family: var(--font-body);
-      font-size: 12px; font-weight: 500;
-      cursor: pointer;
-      transition: background .18s, border-color .18s, transform .18s;
-      position: relative;
-      pointer-events: none;
-    }
-    .ideas-chip-asst {
-      background: var(--ideas-asst-soft);
-      border: 1px solid var(--ideas-asst-border);
-      color: var(--ideas-asst);
-    }
-    .ideas-chip-proj {
-      background: var(--ideas-proj-soft);
-      border: 1px solid var(--ideas-proj-border);
-      color: var(--ideas-proj);
-    }
-    .ideas-chip-wrap:hover .ideas-chip {
-      background: rgba(125, 91, 184, 0.22);
-      transform: translateY(-1px);
-    }
-    .ideas-chip-wrap:hover .ideas-chip-proj {
-      background: rgba(200, 153, 104, 0.18);
-    }
-    .ideas-chip svg { flex-shrink: 0; opacity: .85; }
-    .ideas-chip-caret { margin-left: 2px; opacity: .6; }
-
     .ideas-input-col-right {
       display: flex; align-items: flex-end;
     }
@@ -5888,16 +5840,15 @@
       background: var(--brand-cta);
       cursor: pointer;
       transition: transform .16s, box-shadow .16s, background .16s;
-      box-shadow: 0 4px 16px rgba(239, 106, 41, 0.18);
+      box-shadow: 0 4px 16px color-mix(in srgb, var(--brand-500) 18%, transparent);
       letter-spacing: -0.005em;
     }
     .ideas-btn-develop:hover {
       transform: translateY(-1px);
-      /* v0.14.35.b: hover oscurece (no brilla). Shadow tintada atenuada. */
-      background: #a93808;
-      box-shadow: 0 6px 18px rgba(239, 106, 41, 0.18);
+      background: var(--brand-800);
+      box-shadow: 0 6px 18px color-mix(in srgb, var(--brand-500) 18%, transparent);
     }
-    .ideas-btn-develop:active { transform: scale(.98); opacity: .95; background: #a93808; transition: transform .08s ease-out, opacity .08s ease-out; }
+    .ideas-btn-develop:active { transform: scale(.98); opacity: .95; background: var(--brand-800); transition: transform .08s ease-out, opacity .08s ease-out; }
     .ideas-btn-develop:disabled { opacity: .65; cursor: wait; transform: none; }
     .ideas-btn-develop svg { flex-shrink: 0; }
     .ideas-input-col-right { display: flex; align-items: flex-end; gap: 10px; }
@@ -5969,8 +5920,8 @@
       transition: color .15s, border-color .15s;
     }
     .ideas-tab:hover { color: var(--text2); }
-    .ideas-tab.on { color: var(--text); border-bottom-color: #ef6a29; }
-    [data-theme="light"] .ideas-tab.on { border-bottom-color: #c2410c; }
+    .ideas-tab.on { color: var(--text); border-bottom-color: var(--brand-500); }
+    [data-theme="light"] .ideas-tab.on { border-bottom-color: var(--brand-700); }
 
     /* v0.14.39: tabs nuevas reusables (Scripts + Settings) — replican patrón .ideas-tabs. */
     .scripts-tabs, .settings-tabs {
@@ -6139,7 +6090,7 @@
     .ideas-list { display: flex; flex-direction: column; gap: 16px; }
     .ideas-card {
       position: relative;
-      background: linear-gradient(180deg, var(--ideas-card-top) 0%, var(--ideas-card-bot) 100%);
+      background: var(--surface-raised);
       border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 16px;
       padding: 22px 24px;
@@ -6680,8 +6631,6 @@
       --ink-cream: #5a4f42;
       --ink-ghost: #8a7e72;
       --ink-body: #2a2319;
-      --ideas-card-top: #fbf7ef;
-      --ideas-card-bot: #f3ede0;
     }
     [data-theme="light"] .ideas-input-card,
     [data-theme="light"] .ideas-card {
@@ -10560,16 +10509,14 @@
       <!-- Ideas panel -->
       <div id="profPanelIdeas" style="display:none">
 
-        <!-- v0.14.41: mascota Hooks 32px junto al header. -->
-        <div class="prof-section-head">
-          <div class="prof-section-head-left">
-            <img class="prof-section-mascot" src="{{ url_for('static', filename='img/hooks/hooks-ideas.svg') }}" alt="" aria-hidden="true">
-            <div>
-              <div class="prof-section-title" data-i18n-es="Ideas" data-i18n-en="Ideas">Ideas</div>
-              <div class="prof-section-tagline" data-i18n-es="Captura ideas sueltas y conviértelas en guiones." data-i18n-en="Capture loose ideas and turn them into scripts.">Captura ideas sueltas y conviértelas en guiones.</div>
-            </div>
+        <!-- v0.16.8.a: header migrado a .panel-header (design system v0.16.4). Mascot vive en empty state de Guardadas. -->
+        <header class="panel-header">
+          <div class="panel-header-content">
+            <p class="eyebrow" data-i18n-es="IDEAS" data-i18n-en="IDEAS">IDEAS</p>
+            <h1 class="heading-1" data-i18n-es="Ideas" data-i18n-en="Ideas">Ideas</h1>
+            <p class="body-sm" style="margin:var(--space-3) 0 0 0" data-i18n-es="Captura ideas sueltas y conviértelas en guiones." data-i18n-en="Capture loose ideas and turn them into scripts.">Captura ideas sueltas y conviértelas en guiones.</p>
           </div>
-        </div>
+        </header>
 
         <!-- v0.14.26: Tab navigator. v0.15.3: añadido 3er tab Competidores. -->
         <div class="ideas-tabs">
