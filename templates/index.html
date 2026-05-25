@@ -5988,7 +5988,7 @@
     .scripts-tab:hover, .settings-tab:hover { color: var(--text2); }
     .scripts-tab.on, .settings-tab.on { color: var(--text); border-bottom-color: var(--brand); }
     [data-theme="light"] .scripts-tab.on,
-    [data-theme="light"] .settings-tab.on { border-bottom-color: #c2410c; }
+    [data-theme="light"] .settings-tab.on { border-bottom-color: var(--brand-700); }
 
     /* v0.14.39: filtro de proyectos como chips dentro de Scripts. */
     .scripts-proj-filter {
@@ -7540,11 +7540,10 @@
     .scr-list { display: flex; flex-direction: column; gap: var(--space-md); }
     .scr-card {
       position: relative;
-      background: linear-gradient(180deg, var(--ideas-card-top) 0%, var(--ideas-card-bot) 100%);
+      background: var(--surface-raised);
       border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 16px;
-      /* v0.14.34: padding 22/24/20 literal — no encaja en escala. Deuda futura. */
-      padding: 22px 24px 20px;
+      padding: var(--space-5) var(--space-6);
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.04),
         0 4px 16px rgba(0, 0, 0, 0.3);
@@ -7603,11 +7602,11 @@
 
     .scr-card-title {
       font-family: var(--font-editorial);
-      font-size: 20px; font-weight: 500;
+      font-size: var(--text-xl); font-weight: 500;
       line-height: 1.22;
       letter-spacing: -0.01em;
       color: var(--ink-editorial);
-      margin: 0 0 12px;
+      margin: 0 0 var(--space-3);
     }
 
     .scr-preview-wrap {
@@ -7640,7 +7639,7 @@
       cursor: pointer;
       transition: gap .2s, color .15s;
     }
-    .scr-expand:hover { gap: 10px; color: #ff8a57; }
+    .scr-expand:hover { gap: 10px; color: var(--brand-500); }
     .scr-expand svg { transition: transform .3s ease; }
     .scr-card.expanded .scr-expand svg { transform: rotate(-90deg); }
     .scr-card.expanded .scr-expand-label-collapsed { display: none; }
@@ -7667,7 +7666,7 @@
       background: rgba(0, 0, 0, 0.2);
       border-radius: 10px;
       padding: 16px 20px;
-      border-left: 2px solid rgba(239, 106, 41, 0.3);
+      border-left: 2px solid color-mix(in srgb, var(--scr-accent) 30%, transparent);
       font-family: var(--font-editorial);
       font-size: 15px;
       font-weight: 400;
@@ -7681,8 +7680,8 @@
     /* Inline edit form (desktop) */
     .scr-inline-edit {
       display: flex; flex-direction: column; gap: 10px;
-      background: rgba(239, 106, 41, 0.04);
-      border: 1px solid rgba(239, 106, 41, 0.2);
+      background: color-mix(in srgb, var(--scr-accent) 4%, transparent);
+      border: 1px solid var(--scr-accent-border);
       border-radius: 12px;
       padding: 16px 18px;
     }
@@ -7709,7 +7708,7 @@
       transition: border-color .15s;
     }
     .scr-inline-input:focus, .scr-inline-select:focus, .scr-inline-textarea:focus {
-      border-color: rgba(239, 106, 41, 0.5);
+      border-color: color-mix(in srgb, var(--scr-accent) 50%, transparent);
     }
     [data-theme="light"] .scr-inline-input,
     [data-theme="light"] .scr-inline-select,
@@ -7727,7 +7726,7 @@
     .scr-inline-err {
       font-family: var(--font-body);
       font-size: 12.5px;
-      color: #f09595;
+      color: var(--danger-fg);
       padding: 4px 0;
     }
     .scr-inline-acts {
@@ -7738,7 +7737,7 @@
     .scr-acts {
       display: flex; flex-wrap: wrap; gap: 8px;
       margin-top: 14px;
-      padding-top: 12px;
+      padding-top: var(--space-3);
       border-top: 1px solid rgba(255, 255, 255, 0.05);
     }
     [data-theme="light"] .scr-acts { border-top-color: rgba(0, 0, 0, 0.08); }
@@ -7747,7 +7746,7 @@
       padding: 7px 14px;
       border-radius: 8px;
       font-family: var(--font-body);
-      font-size: 13px; font-weight: 500;
+      font-size: var(--text-sm); font-weight: 500;
       cursor: pointer;
       border: 1px solid rgba(255, 255, 255, 0.08);
       background: transparent;
@@ -7761,20 +7760,20 @@
       border-color: var(--scr-accent-border);
     }
     .scr-act.primary:hover {
-      background: rgba(239, 106, 41, 0.2);
-      border-color: rgba(239, 106, 41, 0.4);
-      color: #ff8a57;
+      background: color-mix(in srgb, var(--scr-accent) 20%, transparent);
+      border-color: color-mix(in srgb, var(--scr-accent) 40%, transparent);
+      color: var(--brand-500);
     }
     .scr-act.danger { color: var(--ink-ghost); }
-    .scr-act.danger:hover { color: #f09595; border-color: rgba(240, 149, 149, 0.3); }
+    .scr-act.danger:hover { color: var(--danger-fg); border-color: color-mix(in srgb, var(--danger-fg) 30%, transparent); }
 
     /* Empty state */
     .scr-empty {
       text-align: center;
       padding: 56px 28px;
-      border: 1px dashed rgba(239, 106, 41, 0.18);
+      border: 1px dashed color-mix(in srgb, var(--scr-accent) 18%, transparent);
       border-radius: 18px;
-      background: rgba(239, 106, 41, 0.025);
+      background: color-mix(in srgb, var(--scr-accent) 3%, transparent);
     }
     .scr-empty img {
       /* v0.14.41: mascota reducida 120 → 80 para coherencia con Ideas empty. */
@@ -7814,7 +7813,7 @@
       margin-top: 18px;
       transition: background .15s, transform .12s;
     }
-    .empty-cta:hover { background: #a93808; }
+    .empty-cta:hover { background: var(--brand-800); }
     .empty-cta:active { transform: scale(.98); }
 
     /* v0.14.43: zona de peligro en Privacidad y datos. */
@@ -7872,8 +7871,6 @@
       --ink-cream: #5a4f42;
       --ink-ghost: #8a7e72;
       --ink-body: #2a2319;
-      --ideas-card-top: #fbf7ef;
-      --ideas-card-bot: #f3ede0;
     }
     [data-theme="light"] .scr-card {
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 4px 16px rgba(180, 150, 100, 0.12);
@@ -10149,16 +10146,14 @@
       <!-- Scripts panel -->
       <div id="profPanelScripts" style="display:none">
 
-        <!-- v0.14.41: mascota Hooks 32px junto al header. -->
-        <div class="prof-section-head">
-          <div class="prof-section-head-left">
-            <img class="prof-section-mascot" src="{{ url_for('static', filename='img/hooks/hooks-scripts.svg') }}" alt="" aria-hidden="true">
-            <div>
-              <div class="prof-section-title" data-i18n-es="Guiones" data-i18n-en="Scripts">Guiones</div>
-              <div class="prof-section-tagline" data-i18n-es="Tus guiones guardados." data-i18n-en="Your saved scripts.">Tus guiones guardados.</div>
-            </div>
+        <!-- v0.16.7: header migrado a .panel-header (design system v0.16.4). Mascot queda en empty state. -->
+        <header class="panel-header">
+          <div class="panel-header-content">
+            <p class="eyebrow" data-i18n-es="GUIONES" data-i18n-en="SCRIPTS">GUIONES</p>
+            <h1 class="heading-1" data-i18n-es="Guiones" data-i18n-en="Scripts">Guiones</h1>
+            <p class="body-sm" style="margin:var(--space-3) 0 0 0" data-i18n-es="Tus guiones guardados." data-i18n-en="Your saved scripts.">Tus guiones guardados.</p>
           </div>
-        </div>
+        </header>
 
         <!-- v0.14.39: tabs internos Tus guiones / Crear guion -->
         <div class="scripts-tabs">
