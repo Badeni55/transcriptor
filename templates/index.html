@@ -455,9 +455,8 @@
     .btn-primary { background: var(--brand-600); color: #fff; border-color: var(--brand-600); }
     .btn-primary:hover { background: var(--brand-700); border-color: var(--brand-700); }
     .btn-primary:active { background: var(--brand-800); }
-    /* v0.16.3: disabled gris sólido (no opacity sobre naranja → evita tinte rosa). */
     .btn-primary:disabled {
-      background: var(--gray-700); color: var(--gray-500); border-color: var(--gray-700);
+      background: var(--surface-raised); color: var(--text-disabled); border-color: var(--border-subtle);
     }
 
     .btn-secondary {
@@ -471,16 +470,16 @@
     }
 
     .btn-ghost { background: transparent; color: var(--text-secondary); border-color: transparent; }
-    /* v0.16.3: hover con presencia visual (no 'texto disfrazado'). */
     .btn-ghost:hover {
-      background: var(--gray-800); color: var(--text-primary); border-color: var(--gray-700);
+      background: var(--surface-overlay); color: var(--text-primary); border-color: var(--border-default);
     }
+    [data-theme="light"] .btn-ghost:hover { background: rgba(0,0,0,.06); border-color: var(--border-strong); }
     .btn-ghost:disabled { color: var(--text-disabled); }
 
     .btn-danger { background: var(--danger); color: #fff; border-color: var(--danger); }
     .btn-danger:hover { background: var(--danger-fg); }
     .btn-danger:disabled {
-      background: var(--gray-700); color: var(--gray-500); border-color: var(--gray-700);
+      background: var(--surface-raised); color: var(--text-disabled); border-color: var(--border-subtle);
     }
 
     .btn-block { width: 100%; }
@@ -524,14 +523,13 @@
       transition: all var(--transition-fast) var(--ease-default);
     }
     .chip:hover { color: var(--text-primary); border-color: var(--border-strong); }
-    /* v0.16.3: 'subtle selected' Stripe — no fondo naranja, sino selected
-       sutil con indicador brand al borde izquierdo. */
     .chip.is-active {
-      background: var(--gray-800);
+      background: var(--surface-overlay);
       color: var(--text-primary);
-      border-color: var(--gray-700);
+      border-color: var(--border-strong);
       box-shadow: inset 2px 0 0 var(--brand-500);
     }
+    [data-theme="light"] .chip.is-active { background: rgba(0,0,0,.06); border-color: var(--border-default); }
 
     /* ── BADGE (informativo estático: status, contador) ────────── */
     .badge {
