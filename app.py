@@ -1870,9 +1870,11 @@ def update_script(script_id):
     user = current_user()
     body = request.get_json()
     updates = {}
-    for key in ("title", "transcription", "script", "performance_notes", "views_count", "engagement_rate", "project_id", "likes", "comments", "saves", "metrics_image_url", "published_at"):
+    for key in ("title", "transcription", "script", "performance_notes", "views_count", "engagement_rate", "project_id", "likes", "comments", "saves", "metrics_image_url", "published_at", "recording_status"):
         if key in body:
             updates[key] = body[key]
+    if "recording_status" in updates and updates["recording_status"] not in ("pending", "recorded", "discarded"):
+        return jsonify({"error": "Invalid recording_status"}), 400
     if not updates:
         return jsonify({"error": "Nothing to update"}), 400
     db.table("scripts").update(updates).eq("id", script_id).eq("user_id", user["id"]).execute()
