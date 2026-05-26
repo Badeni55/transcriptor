@@ -868,7 +868,7 @@
     [data-theme="light"] .script-stripe-card { background: var(--surf); }
     [data-theme="light"] .prof-header { background: var(--surf); backdrop-filter: none; }
     [data-theme="light"] .ig-card { border: 1px solid rgba(0,0,0,.1); box-shadow: 0 1px 4px rgba(0,0,0,.06); }
-    [data-theme="light"] .ig-card:hover { border-color: rgba(249,115,22,.35); box-shadow: 0 2px 8px rgba(249,115,22,.1); }
+    [data-theme="light"] .ig-card:hover { border-color: color-mix(in srgb, var(--brand-500) 35%, transparent); box-shadow: 0 2px 8px color-mix(in srgb, var(--brand-500) 10%, transparent); }
     [data-theme="light"] .ig-stat-card { background: #fff; border-color: rgba(0,0,0,.08); }
     [data-theme="light"] .ig-perf-badge { box-shadow: 0 1px 4px rgba(0,0,0,.15); }
     [data-theme="light"] .ig-chart-tab { background: #fff; }
@@ -4819,20 +4819,18 @@
     /* Assistant cards in profile */
     .asst-cards-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: var(--space-md);
+      gap: var(--space-4);
     }
     .asst-card-v2 {
-      background: var(--surf);
-      border: 1px solid var(--border);
-      /* v0.14.34: padding 20px literal — no encaja en escala. Deuda futura. */
-      border-radius: 14px; padding: 20px; position: relative;
+      background: var(--surface-raised);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-xl); padding: 20px; position: relative;
       transition: all .18s;
-      box-shadow: 0 4px 0 rgba(255,255,255,.04);
+      box-shadow: 0 4px 0 var(--border-subtle);
       transform: translateY(0);
     }
     .asst-card-v2:hover {
-      /* v0.14.36: hover unificado neutro (eliminada 3D-shadow compuesta). */
-      border-color: rgba(249,115,22,.2);
+      border-color: color-mix(in srgb, var(--brand-500) 20%, transparent);
       transform: translateY(-2px);
       box-shadow: 0 8px 24px rgba(0,0,0,.12);
     }
@@ -4840,7 +4838,7 @@
     [data-theme="light"] .asst-card-v2:hover { box-shadow: 0 8px 24px rgba(0,0,0,.08); }
     .asst-card-v2.is-default {
       border-color: var(--brand);
-      box-shadow: 0 0 20px rgba(249,115,22,.1);
+      box-shadow: 0 0 20px color-mix(in srgb, var(--brand-500) 10%, transparent);
     }
     .asst-card-v2-default-badge {
       position: absolute; top: -9px; left: 16px;
@@ -4856,7 +4854,7 @@
       border: 1px solid var(--border);
     }
     .asst-card-v2-name { font-family: var(--font-display); font-size: .92rem; }
-    .asst-card-v2-sub { font-size: .68rem; color: var(--text3); }
+    .asst-card-v2-sub { font-size: .68rem; color: var(--text-tertiary); }
     .asst-card-v2-preview {
       font-size: .78rem; color: var(--text2); font-style: italic;
       line-height: 1.5; margin-bottom: 14px;
@@ -5256,20 +5254,20 @@
     .ig-link-box {
       max-width: 480px;
       margin: var(--space-2xl) auto;
-      background: var(--surf);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: var(--space-2xl) var(--space-xl);
+      background: var(--surface-raised);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-xl);
+      padding: var(--space-12) var(--space-8);
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: var(--space-md);
+      gap: var(--space-4);
     }
     .ig-link-mascot {
       width: 80px; height: 80px;
       image-rendering: pixelated;
-      filter: drop-shadow(0 0 18px rgba(34, 197, 94, 0.2));
+      filter: drop-shadow(0 0 18px color-mix(in srgb, var(--success) 20%, transparent));
     }
     .ig-link-title {
       font-family: var(--font-display);
@@ -5294,7 +5292,7 @@
       outline: none; box-sizing: border-box;
       transition: border-color .15s, box-shadow .15s;
     }
-    .ig-link-box input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(249,115,22,.16); }
+    .ig-link-box input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-500) 16%, transparent); }
     .ig-link-cta {
       background: var(--brand-cta);
       color: #fff;
@@ -5307,7 +5305,7 @@
       cursor: pointer;
       transition: background .15s, transform .12s;
     }
-    .ig-link-cta:hover:not(:disabled) { background: #a93808; transform: translateY(-1px); }
+    .ig-link-cta:hover:not(:disabled) { background: var(--brand-800); transform: translateY(-1px); }
     .ig-link-cta:active:not(:disabled) { transform: scale(.98); }
     .ig-link-cta:disabled { opacity: .65; cursor: default; }
     .ig-link-disclaimer {
@@ -5334,7 +5332,7 @@
       transition: grid-template-columns .2s;
     }
     .ig-stat-card {
-      background: var(--surf); border: 1px solid var(--border); border-radius: 12px;
+      background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 12px;
       padding: 14px; text-align: center; position: relative; overflow: hidden;
     }
     .ig-stat-card::before {
@@ -5350,7 +5348,7 @@
     }
     .ig-best-reel {
       font-size: .78rem; color: var(--text2); margin-bottom: 18px; padding: 10px 14px;
-      background: var(--surf); border: 1px solid var(--border); border-radius: 10px;
+      background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 10px;
       display: flex; align-items: center; gap: 8px;
     }
     .ig-best-reel a { color: var(--brand); text-decoration: none; }
@@ -5368,10 +5366,10 @@
       display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;
     }
     .ig-card {
-      background: var(--surf); border: 1px solid var(--border); border-radius: 12px;
+      background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 12px;
       overflow: hidden; transition: border-color .2s;
     }
-    .ig-card:hover { border-color: rgba(249,115,22,.3); }
+    .ig-card:hover { border-color: color-mix(in srgb, var(--brand-500) 30%, transparent); }
     .ig-card-thumb {
       width: 100%; aspect-ratio: 4/5; object-fit: cover; display: block;
       background: var(--surf2); max-height: 200px;
@@ -5379,7 +5377,7 @@
     }
     .ig-thumb-placeholder {
       width: 100%; aspect-ratio: 4/5; max-height: 200px;
-      background: linear-gradient(135deg, rgba(249,115,22,.15), rgba(249,115,22,.05));
+      background: linear-gradient(135deg, color-mix(in srgb, var(--brand-500) 15%, transparent), color-mix(in srgb, var(--brand-500) 5%, transparent));
       display: flex; align-items: center; justify-content: center;
       font-size: 2rem; color: var(--text3); opacity: .5;
       border-radius: 12px 12px 0 0;
@@ -5429,7 +5427,7 @@
       opacity: 0; transition: opacity .2s, transform .15s; z-index: 2;
     }
     .ig-card:hover .ig-delete-btn { opacity: 1; }
-    .ig-delete-btn:hover { background: rgba(239,68,68,.8); transform: scale(1.1); }
+    .ig-delete-btn:hover { background: color-mix(in srgb, var(--danger) 80%, transparent); transform: scale(1.1); }
     .ig-tag-picker {
       position: absolute; top: 100%; left: 0; z-index: 10;
       background: var(--surf); border: 1px solid var(--border); border-radius: 12px;
@@ -5532,7 +5530,7 @@
     }
     .ig-save-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(168,85,247,.4), 0 3px 6px rgba(0,0,0,.12); }
     .ig-save-btn:active { transform: translateY(1px); box-shadow: 0 2px 6px rgba(168,85,247,.2); }
-    .ig-save-btn.saved { background: linear-gradient(135deg, #22c55e, #16a34a); box-shadow: 0 4px 12px rgba(34,197,94,.3); }
+    .ig-save-btn.saved { background: linear-gradient(135deg, var(--success), #16a34a); box-shadow: 0 4px 12px rgba(34,197,94,.3); }
     .ig-save-btn:disabled { opacity: .6; cursor: default; transform: none; }
     .ig-manual-section {
       border-top: 1px dashed var(--border); margin-top: 14px; padding-top: 12px;
@@ -5594,7 +5592,7 @@
     .ig-ret-preset:active { transform: translateY(0); }
     .ig-ret-preset.on { background: var(--brand); color: #fff; border-color: var(--brand); box-shadow: 0 2px 6px rgba(168,85,247,.25); }
     .ig-manual-check {
-      color: #22c55e; font-size: .7rem; opacity: 0; transition: opacity .3s;
+      color: var(--success); font-size: .7rem; opacity: 0; transition: opacity .3s;
     }
     .ig-manual-check.show { opacity: 1; }
     .ig-manual-note {
@@ -10328,20 +10326,19 @@
 
       <!-- Assistants panel -->
       <div id="profPanelAssistants" style="display:none">
-        <!-- v0.14.43: header normalizado con mascota Hooks + tagline + count pill. -->
-        <div class="prof-section-head">
-          <div class="prof-section-head-left">
-            <img class="prof-section-mascot" src="{{ url_for('static', filename='img/hooks/hooks-asistentes.svg') }}" alt="" aria-hidden="true">
-            <div>
-              <div class="prof-section-title-row">
-                <div class="prof-section-title" data-i18n="asst.title">Asistentes</div>
-                <span class="prof-section-count" id="profAsstCount"></span>
-              </div>
-              <div class="prof-section-tagline" data-i18n-es="Crea estilos propios para tus guiones." data-i18n-en="Create your own styles for your scripts.">Crea estilos propios para tus guiones.</div>
+        <header class="panel-header">
+          <div class="panel-header-content">
+            <p class="eyebrow" data-i18n-es="ASISTENTES" data-i18n-en="ASSISTANTS">ASISTENTES</p>
+            <div class="cluster cluster-sm">
+              <h1 class="heading-1" data-i18n-es="Asistentes" data-i18n-en="Assistants">Asistentes</h1>
+              <span class="badge badge-neutral" id="profAsstCount">0</span>
             </div>
+            <p class="body-sm" data-i18n-es="Crea estilos propios para tus guiones." data-i18n-en="Create your own styles for your scripts.">Crea estilos propios para tus guiones.</p>
           </div>
-          <button id="profNewAsstBtn" class="empty-cta" style="margin:0;padding:10px 20px;font-size:.88rem" onclick="openAssistantModal()" data-i18n="asst.new">+ Nuevo asistente</button>
-        </div>
+          <div class="panel-header-actions">
+            <button class="btn btn-md btn-primary" id="profNewAsstBtn" onclick="openAssistantModal()" data-i18n-es="+ Nuevo asistente" data-i18n-en="+ New assistant">+ Nuevo asistente</button>
+          </div>
+        </header>
         <div class="asst-cards-grid" id="profListAssistants">
           <!-- v0.14.37: skeleton loaders. -->
           <article class="asst-skel-card">
@@ -10383,16 +10380,13 @@
       <!-- Metrics panel -->
       <div id="profPanelMetrics" style="display:none">
 
-        <!-- v0.14.42: header normalizado con mascota Hooks 32px. -->
-        <div class="prof-section-head">
-          <div class="prof-section-head-left">
-            <img class="prof-section-mascot" src="{{ url_for('static', filename='img/hooks/hooks-metricas.svg') }}" alt="" aria-hidden="true">
-            <div>
-              <div class="prof-section-title" data-i18n-es="Métricas" data-i18n-en="Metrics">Métricas</div>
-              <div class="prof-section-tagline" data-i18n-es="Tus reels analizados al detalle." data-i18n-en="Your reels analyzed in detail.">Tus reels analizados al detalle.</div>
-            </div>
+        <header class="panel-header">
+          <div class="panel-header-content">
+            <p class="eyebrow" data-i18n-es="MÉTRICAS" data-i18n-en="METRICS">MÉTRICAS</p>
+            <h1 class="heading-1" data-i18n-es="Métricas" data-i18n-en="Metrics">Métricas</h1>
+            <p class="body-sm" data-i18n-es="Tus reels analizados al detalle." data-i18n-en="Your reels analyzed in detail.">Tus reels analizados al detalle.</p>
           </div>
-        </div>
+        </header>
 
         <div id="igLinkedView" style="display:none">
           <div class="ig-linked-header">
