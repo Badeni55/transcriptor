@@ -4615,9 +4615,9 @@
     .scr-skel-card .skel-meta-row { display: flex; gap: 12px; margin-top: 10px; }
 
     .ideas-skel-card {
-      padding: 20px;
+      padding: var(--space-5);
       background: var(--surf); border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: var(--radius-xl);
       margin-bottom: var(--space-md);
     }
 
@@ -5757,9 +5757,6 @@
     /* ── Ideas panel redesign (v0.14.0) ─────────────────────────── */
     :root {
       --ideas-accent: #ff6b3d;
-      --ideas-accent-strong: #ef6a29;
-      --ideas-accent-soft: rgba(255, 107, 61, 0.12);
-      --ideas-accent-border: rgba(255, 107, 61, 0.25);
       --ideas-dev: #5dcaa5;
       --ideas-dev-soft: rgba(93, 202, 165, 0.12);
       --ideas-dev-border: rgba(93, 202, 165, 0.25);
@@ -6091,26 +6088,26 @@
     .ideas-card {
       position: relative;
       background: var(--surface-raised);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-subtle);
       border-radius: 16px;
-      padding: 22px 24px;
+      padding: var(--space-5) var(--space-6);
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.04),
         0 4px 16px rgba(0, 0, 0, 0.3);
       transition: transform .22s, box-shadow .22s, border-color .22s;
     }
     .ideas-card:hover {
-      /* v0.14.36: hover unificado neutro. */
       transform: translateY(-2px);
       box-shadow: 0 8px 24px rgba(0,0,0,.12);
+      border-color: var(--border-strong);
     }
     [data-theme="light"] .ideas-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.08); }
-    .ideas-card.is-draft { border-left: 3px solid var(--ideas-accent); }
+    .ideas-card.is-draft { border-left: 3px solid var(--brand-500); }
     .ideas-card.is-draft:hover {
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.06),
         0 10px 28px rgba(0, 0, 0, 0.42),
-        0 0 40px rgba(255, 107, 61, 0.08);
+        0 0 40px color-mix(in srgb, var(--brand-500) 8%, transparent);
     }
     .ideas-card.is-developed { border: 1px solid rgba(93, 202, 165, 0.18); }
     .ideas-card.is-scripted { opacity: 0.72; }
@@ -6131,7 +6128,7 @@
       border-radius: 5px;
       flex-shrink: 0;
     }
-    .ideas-badge.b-draft { color: var(--ideas-accent); background: rgba(255, 107, 61, 0.1); }
+    .ideas-badge.b-draft { color: var(--brand-500); background: color-mix(in srgb, var(--brand-500) 10%, transparent); }
     .ideas-badge.b-developed { color: var(--ideas-dev); background: rgba(93, 202, 165, 0.1); }
     .ideas-badge.b-scripted { color: var(--ink-muted); background: rgba(138, 126, 114, 0.1); }
     .ideas-badge svg { flex-shrink: 0; }
@@ -6159,7 +6156,7 @@
 
     .ideas-card-title {
       font-family: var(--font-editorial);
-      font-size: 20px; font-weight: 500;
+      font-size: var(--text-xl); font-weight: 500;
       line-height: 1.22;
       letter-spacing: -0.01em;
       color: var(--ink-editorial);
@@ -6178,7 +6175,7 @@
       font-family: var(--font-body);
       font-size: 14px; line-height: 1.55;
       color: var(--ink-muted);
-      margin-bottom: 14px;
+      margin-bottom: var(--space-4);
     }
     .ideas-card.is-scripted .ideas-card-raw {
       font-size: 13px;
@@ -6211,7 +6208,7 @@
     }
     .ideas-develop-text.italic {
       font-style: italic;
-      color: #e2d6ae;
+      color: var(--ink-cream);
     }
     .ideas-card-acts {
       display: flex; flex-wrap: wrap; gap: 8px;
@@ -6238,16 +6235,16 @@
       transition: border-color .15s;
     }
     .ideas-guionizar-asst:hover { border-color: rgba(255,255,255,.18); }
-    .ideas-guionizar-asst:focus { border-color: rgba(239,106,41,.6); }
+    .ideas-guionizar-asst:focus { border-color: color-mix(in srgb, var(--brand-500) 60%, transparent); }
     .ideas-act:hover { transform: translateY(-1px); }
     .ideas-act.primary-orange {
-      background: var(--ideas-accent-soft);
-      color: var(--ideas-accent);
-      border-color: var(--ideas-accent-border);
+      background: color-mix(in srgb, var(--brand-500) 12%, transparent);
+      color: var(--brand-500);
+      border-color: color-mix(in srgb, var(--brand-500) 25%, transparent);
     }
     .ideas-act.primary-orange:hover {
-      background: rgba(255, 107, 61, 0.18);
-      border-color: rgba(255, 107, 61, 0.4);
+      background: color-mix(in srgb, var(--brand-500) 18%, transparent);
+      border-color: color-mix(in srgb, var(--brand-500) 40%, transparent);
     }
     .ideas-act.primary-green {
       background: var(--ideas-dev-soft);
@@ -6263,7 +6260,7 @@
       border-color: rgba(255, 255, 255, 0.18);
       color: var(--ink-editorial);
     }
-    .ideas-act.danger:hover { color: #f0997b; border-color: rgba(240, 153, 123, 0.3); }
+    .ideas-act.danger:hover { color: var(--danger-fg); border-color: var(--danger-border); }
     .ideas-act svg { flex-shrink: 0; }
 
     .ideas-scripted-pointer {
@@ -6278,7 +6275,7 @@
       cursor: pointer;
       transition: gap .2s, color .15s;
     }
-    .ideas-scripted-pointer:hover { gap: 12px; color: #76dbb6; }
+    .ideas-scripted-pointer:hover { gap: 12px; color: var(--ideas-dev); }
 
     /* ── v0.15.3: tab Competidores ──────────────────────────── */
     .comp-toolbar {
@@ -6554,12 +6551,11 @@
 
     /* Empty state */
     .ideas-empty-editorial {
-      /* v0.14.41: centrado para que mascota+texto formen unidad visual. */
       text-align: center;
-      padding: 48px 28px;
-      border: 1px dashed rgba(255, 107, 61, 0.18);
+      padding: var(--space-12) 28px;
+      border: 1px dashed color-mix(in srgb, var(--brand-500) 18%, transparent);
       border-radius: 18px;
-      background: rgba(255, 107, 61, 0.03);
+      background: color-mix(in srgb, var(--brand-500) 3%, transparent);
     }
     /* v0.14.41: mascota Hooks 80×80 en empty state Ideas. */
     .ideas-empty-mascot {
@@ -6567,7 +6563,7 @@
       image-rendering: pixelated;
       margin: 0 auto 16px;
       display: block;
-      filter: drop-shadow(0 0 18px rgba(255, 107, 61, 0.22));
+      filter: drop-shadow(0 0 18px color-mix(in srgb, var(--brand-500) 22%, transparent));
     }
     .ideas-empty-editorial h3 {
       font-family: var(--font-editorial);
