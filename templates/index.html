@@ -3884,7 +3884,7 @@
       border: 2px solid var(--brand);
       background: var(--surf);
     }
-    .ov-card-f1 .ov-hero-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(249,115,22,.18); }
+    .ov-card-f1 .ov-hero-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-500) 18%, transparent); }
     .ov-card-f1 .ov-hero-input-icon { left: 14px; font-size: 1rem; }
     .ov-card-f1 .ov-empty-lang {
       padding: 14px 16px;
@@ -3904,51 +3904,27 @@
       .ov-card-f1 .ov-empty-lang { padding: 11px 13px; font-size: .85rem; }
       .ov-card-f1 .ov-empty-btn { padding: 13px 22px; font-size: .9rem; }
     }
-    .ov-hero-btns { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-    .ov-hero-action-btn {
-      padding: 6px 14px; border-radius: 8px; font-size: .8rem; font-weight: 600;
-      background: rgba(var(--ov-acc),.18); border: 1px solid rgba(var(--ov-acc),.3);
-      color: rgb(var(--ov-acc)); cursor: pointer; transition: background .15s;
-    }
-    .ov-hero-action-btn:hover { background: rgba(var(--ov-acc),.28); }
-    .ov-hero-action-btn--sec { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.12); color: var(--text2); }
-    .ov-hero-action-btn--sec:hover { background: rgba(255,255,255,.1); }
-    .ov-hero-status { font-size: .78rem; color: var(--text3); margin-top: 4px; }
-    /* Hazlo tuyo: lista de estilos */
-    .ov-adapt-styles { font-size: .72rem; color: var(--text3); margin-top: 6px; }
-    /* Métricas: top reel */
-    .ov-top-reel { margin-top: 8px; }
+    .ov-hero-status { font-size: var(--text-xs); color: var(--text3); margin-top: 4px; }
     [data-theme="light"] .ov-hero-input {
       background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.12); color: var(--text);
     }
-    /* v0.14.33.a: cards Dashboard simplificadas — sin border-left 3px de color,
-       sin waves decorativos ::before, sin triple sombra, mascotas 24x24 (eran 44x44),
-       hover atenuado. */
     .ov-card {
       position: relative;
       display: flex; flex-direction: column;
-      gap: var(--space-md);
-      /* v0.14.34: padding 22px literal — no encaja en escala xs/sm/md/lg. Deuda futura. */
-      min-height: 160px; padding: 22px;
-      /* v0.14.44.d: migrado a var(--ideas-card-top/bot) — antes hardcoded.
-         Drift previo en .b y .c desincronizó este selector de las vars. */
-      background: linear-gradient(180deg, var(--ideas-card-top) 0%, var(--ideas-card-bot) 100%);
-      border: 1px solid rgba(255,255,255,.06);
-      border-radius: 16px;
+      gap: var(--space-4);
+      min-height: 160px; padding: var(--space-6);
+      background: var(--surface-raised);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
       color: var(--text); text-align: left; cursor: pointer;
       font-family: inherit;
       box-shadow: 0 2px 8px rgba(0,0,0,.08);
-      transition: transform .2s ease-out, box-shadow .2s;
-    }
-    [data-theme="light"] .ov-card {
-      background: linear-gradient(180deg, #faf6ec 0%, #f2ede0 100%);
-      border: 1px solid var(--border);
-      box-shadow: 0 2px 8px rgba(0,0,0,.04);
+      transition: transform .2s ease-out, box-shadow .2s, border-color .2s;
     }
     .ov-card:hover {
-      /* v0.14.36: hover unificado neutro (eliminado box-shadow tintado color-mix --ov-acc). */
       transform: translateY(-2px);
       box-shadow: 0 8px 24px rgba(0,0,0,.12);
+      border-color: var(--border-strong);
     }
     [data-theme="light"] .ov-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.08); }
     .ov-card:active { transform: translateY(0); }
@@ -3961,7 +3937,7 @@
     .ov-card:hover .ov-card-hooks { transform: translateY(-1px); }
     .ov-card-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-xs); }
     .ov-card-label {
-      font-family: var(--font-display); font-size: 1.4rem;
+      font-family: var(--font-display); font-size: var(--text-2xl);
       color: var(--text); line-height: 1.15; letter-spacing: -.015em;
     }
     .ov-card-sub {
@@ -3974,12 +3950,11 @@
     .ov-empty { font-size: .78rem; color: var(--text3); line-height: 1.45; }
     .ov-card-count {
       margin-top: 10px; padding-top: 8px;
-      border-top: 1px solid rgba(255,255,255,.05);
+      border-top: 1px solid var(--border-subtle);
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: .68rem; color: var(--text3); letter-spacing: .02em;
+      font-size: var(--text-xs); color: var(--text3); letter-spacing: .02em;
       font-variant-numeric: tabular-nums;
     }
-    [data-theme="light"] .ov-card-count { border-top-color: rgba(0,0,0,.05); }
     /* v0.14.20 — clickable count link en F1 (transcripciones) */
     .ov-count-link {
       display: inline-block; margin-top: 10px; padding-top: 8px;
@@ -4012,15 +3987,14 @@
       background: var(--surf);
       border: 1px solid var(--border);
       border-left: 3px solid var(--border);
-      border-radius: 16px;
+      border-radius: var(--radius-xl);
       padding: var(--space-lg);
       display: flex; flex-direction: column;
       gap: var(--space-md);
       min-height: 200px;
     }
-    /* v0.14.40.a: border-left acentuado por módulo para calidez visual. */
     #dashModUltTransc { border-left-color: var(--brand); }
-    #dashModMetrics   { border-left-color: #22c55e; }
+    #dashModMetrics   { border-left-color: var(--success); }
     .dash-module-head {
       display: flex; justify-content: space-between; align-items: center;
     }
@@ -4033,7 +4007,7 @@
     }
     .dash-module-title {
       font-family: var(--font-display);
-      font-size: 1.1rem;
+      font-size: var(--text-lg);
       color: var(--text);
     }
     .dash-module-link {
@@ -4057,28 +4031,30 @@
     .dash-mini-row.dash-mini-skel:hover { opacity: 1; }
     .dash-mini-row-thumb {
       width: 44px; height: 44px;
-      border-radius: 6px;
+      border-radius: var(--radius-sm);
       object-fit: cover;
       flex-shrink: 0;
       background: var(--surf2);
     }
     .dash-mini-row-body { flex: 1; min-width: 0; }
     .dash-mini-row-title {
-      font-size: .88rem;
+      font-size: var(--text-sm);
       color: var(--text);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       min-width: 0;
       margin-bottom: 2px;
     }
     .dash-mini-row-meta {
-      font-size: .72rem;
+      font-size: var(--text-xs);
       color: var(--text3);
     }
     .dash-metrics-value {
       font-family: var(--font-display);
-      font-size: 2rem;
-      color: var(--text);
+      font-size: var(--text-3xl);
+      font-weight: var(--weight-bold);
+      color: var(--text-primary);
       line-height: 1.1;
+      letter-spacing: -0.02em;
     }
     .dash-metrics-label {
       font-size: .78rem;
@@ -4121,14 +4097,14 @@
       cursor: pointer;
       margin-top: 4px;
     }
-    .dash-module-empty-cta:hover { background: #a93808; }
+    .dash-module-empty-cta:hover { background: var(--brand-800); }
     .dash-idea-card {
       display: flex; align-items: center;
       gap: var(--space-md);
       background: var(--surf);
       border: 1px solid var(--border);
-      border-left: 3px solid #f59e0b;
-      border-radius: 16px;
+      border-left: 3px solid var(--warning);
+      border-radius: var(--radius-lg);
       padding: var(--space-lg);
       margin-top: var(--space-lg);
       cursor: pointer;
@@ -4143,7 +4119,7 @@
     .dash-idea-icon {
       width: 56px; height: 56px;
       border-radius: 50%;
-      background: rgba(249,115,22,.12);
+      background: color-mix(in srgb, var(--brand-500) 12%, transparent);
       color: var(--brand);
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
@@ -4151,8 +4127,8 @@
     .dash-idea-text { flex: 1; min-width: 0; }
     .dash-idea-title {
       font-family: var(--font-display);
-      font-size: 1.2rem;
-      color: var(--text);
+      font-size: var(--text-sm);
+      color: var(--text-primary);
       margin-bottom: 4px;
     }
     .dash-idea-sub {
@@ -4515,7 +4491,7 @@
     .ov-mock-metrics-meta { display: flex; flex-direction: column; gap: 2px; }
     .ov-mock-metrics-lbl { font-size: .58rem; color: var(--text3); letter-spacing: .04em; text-transform: uppercase; }
     .ov-mock-metrics-up {
-      font-size: .68rem; font-weight: 700; color: #4ade80;
+      font-size: .68rem; font-weight: 700; color: var(--success-fg);
       font-variant-numeric: tabular-nums;
     }
     .ov-mock-spark { width: 100%; height: 36px; display: block; }
@@ -9821,14 +9797,13 @@
       <!-- Overview panel (default) -->
       <div id="profPanelOverview">
 
-        <!-- v0.14.32: header limpio. Hero decorativo (eyebrow + greeting + Hooks + waves) eliminado. -->
-        <!-- v0.14.33.a: tagline neutra bajo el H1. -->
-        <div class="prof-section-head">
-          <div>
-            <div class="prof-section-title" data-i18n-es="Dashboard" data-i18n-en="Dashboard">Dashboard</div>
-            <div class="prof-section-tagline" data-i18n-es="Vista general de tu actividad." data-i18n-en="Overview of your activity.">Vista general de tu actividad.</div>
+        <header class="panel-header">
+          <div class="panel-header-content">
+            <p class="eyebrow" data-i18n-es="RESUMEN" data-i18n-en="OVERVIEW">RESUMEN</p>
+            <h1 class="heading-1" data-i18n-es="Dashboard" data-i18n-en="Dashboard">Dashboard</h1>
+            <p class="body-sm" data-i18n-es="Vista general de tu actividad." data-i18n-en="Overview of your activity.">Vista general de tu actividad.</p>
           </div>
-        </div>
+        </header>
 
         <!-- v0.14.15: Estado 0 — empty state pirámide (oculto por defecto, JS toggle) -->
         <div id="ovEmptyState" style="display:none">
