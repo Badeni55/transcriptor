@@ -758,9 +758,10 @@
       color: var(--text-primary);
     }
     .chrome-nav-item.on {
-      background: var(--gray-800);
+      background: var(--surface-overlay);
       color: var(--text-primary);
     }
+    [data-theme="light"] .chrome-nav-item.on { background: rgba(0,0,0,.06); }
     .chrome-nav-item .chrome-icon { color: var(--text-tertiary); flex-shrink: 0; }
     .chrome-nav-item:hover .chrome-icon { color: var(--text-secondary); }
     .chrome-nav-item.on .chrome-icon { color: var(--brand-500); }
