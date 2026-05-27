@@ -1171,13 +1171,13 @@
     }
     .av-menu-overlay.on { display: block; opacity: 1; }
     .av-menu {
-      position: fixed; right: 16px; top: 64px;
+      position: fixed;
       width: 320px; max-width: calc(100vw - 32px);
       background: var(--surf); border: 1px solid var(--border);
       border-radius: 14px; padding: 10px;
       box-shadow: 0 16px 48px rgba(0,0,0,.4), 0 4px 12px rgba(0,0,0,.25);
       z-index: 1100;
-      opacity: 0; transform: translateY(-6px) scale(.98);
+      opacity: 0; transform: translateY(8px) scale(.98);
       transition: opacity .18s ease, transform .18s ease;
       pointer-events: none;
       max-height: calc(100vh - 80px); overflow-y: auto;
@@ -19724,7 +19724,26 @@ function openAvatarMenu() {
     b.classList.toggle("on", b.dataset.val === currentLangSel);
   });
 
-  if (overlay) overlay.classList.add("on");
+  if (window.innerWidth <= 768) {
+    // Mobile: limpiar inline styles de sesión desktop previa (p.ej. si el user
+    // redimensionó DevTools de desktop → mobile sin recargar).
+    menu.style.left = ""; menu.style.bottom = "";
+    menu.style.top  = ""; menu.style.right  = "";
+    if (overlay) overlay.classList.add("on");
+  } else {
+    // Desktop: popover anclado al trigger del sidebar.
+    const trigger = document.getElementById("profAvWrap");
+    if (trigger) {
+      const rect  = trigger.getBoundingClientRect();
+      const menuW = 320;
+      let left = rect.right + 8;
+      if (left + menuW > window.innerWidth - 8) left = window.innerWidth - menuW - 8;
+      menu.style.left   = left + "px";
+      menu.style.bottom = (window.innerHeight - rect.bottom) + "px";
+      menu.style.top    = "auto";
+      menu.style.right  = "auto";
+    }
+  }
   menu.classList.add("on");
   menu.setAttribute("aria-hidden", "false");
   // v0.14.22: tracking de lock para evitar leaks (especialmente al cerrar
