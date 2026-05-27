@@ -7497,6 +7497,19 @@
     #scrProjectMenu .proj-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     #scrProjectMenu .proj-menu-empty { padding: var(--space-2) var(--space-3); font-size: var(--text-sm); color: var(--text-tertiary); }
 
+    /* Assistant snapshot badge (informativo, no interactivo) */
+    .scr-assistant-badge {
+      display: inline-flex; align-items: center; gap: var(--space-1);
+      padding: var(--space-1) var(--space-2);
+      background: var(--surface-overlay);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      font-family: var(--font-body); font-size: var(--text-xs); font-weight: 500;
+      white-space: nowrap; user-select: none;
+    }
+    .scr-assistant-badge svg { width: 14px; height: 14px; stroke-width: 1.5; flex-shrink: 0; }
+
     /* Empty state */
     .scr-empty {
       text-align: center;
@@ -15319,6 +15332,29 @@ const SVG_CHECK  = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="1
 const SVG_X_CIRC = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="9"/><path d="M10 10l4 4m0 -4l-4 4"/></svg>`;
 const SVG_CARET  = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="6 9 12 15 18 9"/></svg>`;
 
+const SVG_ICON_FLAME      = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 10.941c2.333 -3.308 .167 -7.823 -1 -8.941c0 3.395 -2.235 5.299 -3.667 6.706c-1.43 1.408 -2.333 3.294 -2.333 5.588c0 3.704 3.134 6.706 7 6.706c3.866 0 7 -3.002 7 -6.706c0 -1.712 -1.232 -4.403 -2.333 -5.588c-2.084 3.353 -3.257 3.353 -4.667 2.235"/></svg>`;
+const SVG_ICON_MOOD_SMILE = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M9 10l.01 0"/><path d="M15 10l.01 0"/><path d="M9.5 15a3.5 3.5 0 0 0 5 0"/></svg>`;
+const SVG_ICON_FISH       = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16.69 7.44a6.973 6.973 0 0 0 -1.69 4.56c0 1.747 .64 3.345 1.699 4.571"/><path d="M2 9.504c7.715 8.647 14.75 10.265 20 2.498c-5.25 -7.761 -12.285 -6.142 -20 2.504"/><path d="M18 11v.01"/><path d="M11.5 10.5c-.667 1 -.667 2 0 3"/></svg>`;
+const SVG_ICON_BOOK_2     = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19 4v16h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12"/><path d="M19 16h-12a2 2 0 0 0 -2 2"/><path d="M9 8h6"/></svg>`;
+const SVG_ICON_BRIEFCASE  = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 9a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2l0 -9"/><path d="M8 7v-2a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v2"/><path d="M12 12l0 .01"/><path d="M3 13a20 20 0 0 0 18 0"/></svg>`;
+const SVG_ICON_SPARKLES   = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2m0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2m-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6"/></svg>`;
+
+function _resolveAssistantIcon(name) {
+  if (!name) return '';
+  const n = name.toLowerCase().trim();
+  if (n === 'viral')                           return SVG_ICON_FLAME;
+  if (n === 'divertido')                       return SVG_ICON_MOOD_SMILE;
+  if (n === 'hooks')                           return SVG_ICON_FISH;
+  if (n === 'storytelling' || n === 'story')   return SVG_ICON_BOOK_2;
+  if (n === 'linkedin')                        return SVG_ICON_BRIEFCASE;
+  return SVG_ICON_SPARKLES;
+}
+
+function _buildAssistantBadge(name) {
+  if (!name) return '';
+  return `<span class="scr-assistant-badge">${_resolveAssistantIcon(name)}<span>${esc(name)}</span></span>`;
+}
+
 function _buildStatusBadge(status) {
   status = status || "pending";
   const lang = (document.documentElement.lang || "es").toLowerCase();
@@ -15390,12 +15426,14 @@ function renderProfScripts() {
     const badge = proj
       ? `<button type="button" class="scr-proj-badge" style="--pc:${color || "#8a7e72"}" data-scr-action="projectMenu" title="${esc(proj.name)}">${esc(proj.name)}</button>`
       : `<button type="button" class="scr-proj-badge no-proj" data-scr-action="projectMenu">${LBL_NOPROJ}</button>`;
-    const statusBadge = _buildStatusBadge(it.recording_status);
+    const statusBadge    = _buildStatusBadge(it.recording_status);
+    const assistantBadge = _buildAssistantBadge(it.assistant_name);
 
     return `
     <article class="${cardCls}" id="s-${id}" data-id="${id}"${styleVar}>
       <div class="scr-card-meta">
         ${statusBadge}
+        ${assistantBadge}
         ${badge}
         <span class="scr-card-date">${fmtDate(it.created_at)}</span>
         <span class="scr-card-sep">·</span>
@@ -19341,10 +19379,19 @@ async function saveScript() {
   if (!st.user) { openAuth("register"); return; }
   const content = _lastStructuredResult ? getStructuredPlainText(_lastStructuredResult) : document.getElementById("previewResultText").textContent;
   if (!content) return;
+  const _STYLE_LABELS = { viral: "Viral", divertido: "Divertido", hooks: "Hooks", storytelling: "Storytelling", story: "Storytelling", linkedin: "LinkedIn" };
+  const assistantName = (function() {
+    if (selectedAssistantId) {
+      const custom = (typeof userAssistants !== "undefined" ? userAssistants : []).find(a => a.id === selectedAssistantId);
+      if (custom && custom.name) return custom.name;
+    }
+    if (activeStyle) return _STYLE_LABELS[activeStyle] || activeStyle;
+    return null;
+  })();
   const res = await fetch("/save-script", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ content, style: activeStyle || "" }),
+    body: JSON.stringify({ content, style: activeStyle || "", assistant_name: assistantName }),
   });
   const btn = document.getElementById("pfSaveBtn");
   if (res.ok) {

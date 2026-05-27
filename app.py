@@ -1401,6 +1401,40 @@ CUSTOM_BASE = (
     "Ahora aplica estas instrucciones adicionales:\n"
 )
 
+_ASSISTANT_BUILT_IN_LABELS = {
+    "viral": "Viral",
+    "divertido": "Divertido",
+    "hooks": "Hooks",
+    "storytelling": "Storytelling",
+    "story": "Storytelling",
+    "linkedin": "LinkedIn",
+}
+
+
+def _resolve_assistant_name(payload, user_id, supa):
+    """Snapshot legible del asistente para scripts.assistant_name.
+    Devuelve label capitalizado ("Viral", "Hooks", nombre custom) o None.
+    """
+    if not payload:
+        return None
+    assistant_id = (payload.get("assistant_id") or "").strip() or None
+    style = (payload.get("style") or "").strip() or None
+
+    if style and style in _ASSISTANT_BUILT_IN_LABELS:
+        return _ASSISTANT_BUILT_IN_LABELS[style]
+    if assistant_id and assistant_id in _ASSISTANT_BUILT_IN_LABELS:
+        return _ASSISTANT_BUILT_IN_LABELS[assistant_id]
+    if assistant_id:
+        try:
+            r = supa.table("assistants").select("name").eq(
+                "id", assistant_id
+            ).eq("user_id", user_id).limit(1).execute()
+            if r.data and r.data[0].get("name"):
+                return r.data[0]["name"]
+        except Exception:
+            pass
+    return None
+
 
 def _parse_ai_json(raw: str, style: str) -> dict:
     """Parse JSON from LLM response with robust fallback."""
@@ -1504,6 +1538,9 @@ def save_script():
     body = request.get_json() or {}
     style = (body.get("style") or "").strip()
     content = body.get("content") or ""
+    assistant_name = (body.get("assistant_name") or "").strip() or None
+    if not assistant_name:
+        assistant_name = _resolve_assistant_name({"style": style}, user["id"], db)
     today_es = datetime.now(timezone.utc).strftime("%d %b %Y").lower()
     base = "Guión adaptado"
     title = f"{base} · {style} · {today_es}" if style else f"{base} · {today_es}"
@@ -1511,6 +1548,7 @@ def save_script():
         "user_id": user["id"],
         "title": title,
         "script": content,
+        "assistant_name": assistant_name,
     }).execute()
     return jsonify({"ok": True})
 
@@ -2858,11 +2896,14 @@ def idea_to_script(idea_id):
     script_id = None
     try:
         script_row = db.table("scripts").insert({
-            "user_id":    uid,
-            "idea_id":    idea_id,
-            "title":      script_title,
-            "script":     result,
-            "project_id": idea.get("project_id"),
+            "user_id":      uid,
+            "idea_id":      idea_id,
+            "title":        script_title,
+            "script":       result,
+            "project_id":   idea.get("project_id"),
+            "assistant_name": _resolve_assistant_name(
+                {"assistant_id": assistant_id, "style": style_label}, uid, db
+            ),
         }).execute()
         if script_row.data:
             script_id = script_row.data[0].get("id")
@@ -3047,6 +3088,9 @@ def transcription_to_script(t_id):
             "title":            script_title,
             "script":           result,
             "project_id":       t.get("project_id"),
+            "assistant_name":   _resolve_assistant_name(
+                {"assistant_id": assistant_id, "style": style_label}, uid, db
+            ),
         }).execute()
         if script_row.data:
             script_id = script_row.data[0].get("id")
@@ -5305,14 +5349,17 @@ def generate_script_from_competitor_reel(reel_id: str):
 
         try:
             ins = db.table("scripts").insert({
-                "user_id": uid,
-                "transcription_id": None,
-                "idea_id": None,
-                "title": script_title,
-                "script": result,
-                "project_id": None,
+                "user_id":                uid,
+                "transcription_id":       None,
+                "idea_id":                None,
+                "title":                  script_title,
+                "script":                 result,
+                "project_id":             None,
                 "from_competitor_reel_id": reel["id"],
                 "from_competitor_username": ig_username,
+                "assistant_name":         _resolve_assistant_name(
+                    {"assistant_id": assistant_id, "style": style_label}, uid, db
+                ),
             }).execute()
             if ins.data:
                 script_id = ins.data[0].get("id")
