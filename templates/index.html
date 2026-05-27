@@ -10110,10 +10110,6 @@
             </div>
           </article>
         </div>
-          <!-- Recording status context menu (position:fixed, shared) -->
-          <div id="scrStatusMenu" role="menu"></div>
-          <!-- Project assignment context menu (position:fixed, shared) -->
-          <div id="scrProjectMenu" role="menu"></div>
       </div>
 
       <!-- v0.14.39: #profPanelProjects eliminado. Proyectos ahora vive como chip filter
@@ -10513,6 +10509,10 @@
        Reemplazado por bottom-bar 5 items + bottom sheet "Más" (#profMoreSheet). -->
 
 </div>
+
+<!-- v0.16.11.b: #scrStatusMenu y #scrProjectMenu movidos FUERA de #profilePage para que position:fixed se ancle al viewport (mismo patrón que .prof-bottom-bar v0.14.22). -->
+<div id="scrStatusMenu" role="menu"></div>
+<div id="scrProjectMenu" role="menu"></div>
 
 <!-- v0.14.22: bottom-bar movida FUERA de #profilePage para que position:fixed se ancle al viewport.
      Visible solo en mobile (<=640px) Y solo en workspace (body.workspace). -->
@@ -15481,7 +15481,6 @@ function _openScrStatusMenu(trigger, id) {
   menu.style.display = "flex";
   _scrStatusMenuScriptId = id;
   _scrStatusMenuOpen = true;
-  console.log("[scrStatusMenu] open", { id, top: menu.style.top, left: menu.style.left, display: menu.style.display });
   if (menu._handler) menu.removeEventListener("click", menu._handler);
   menu._handler = (e) => {
     const btn = e.target.closest("button[data-status]");
