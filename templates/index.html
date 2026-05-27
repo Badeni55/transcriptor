@@ -7473,6 +7473,30 @@
     #scrStatusMenu .chk { opacity: 0; margin-left: auto; }
     #scrStatusMenu button.is-active .chk { opacity: 1; }
 
+    #scrProjectMenu {
+      position: fixed; z-index: 510;
+      background: var(--surface-raised);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-xl);
+      padding: var(--space-1);
+      min-width: 240px;
+      display: none; flex-direction: column; gap: 2px;
+    }
+    #scrProjectMenu button {
+      background: transparent; color: var(--text-primary); border: 0;
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body); font-size: var(--text-sm);
+      display: flex; align-items: center; gap: var(--space-2);
+      width: 100%; text-align: left; cursor: pointer;
+    }
+    #scrProjectMenu button:hover { background: var(--surface-overlay); }
+    #scrProjectMenu .chk { opacity: 0; margin-left: auto; }
+    #scrProjectMenu button.is-active .chk { opacity: 1; }
+    #scrProjectMenu .proj-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    #scrProjectMenu .proj-menu-empty { padding: var(--space-2) var(--space-3); font-size: var(--text-sm); color: var(--text-tertiary); }
+
     /* Empty state */
     .scr-empty {
       text-align: center;
@@ -10088,6 +10112,8 @@
         </div>
           <!-- Recording status context menu (position:fixed, shared) -->
           <div id="scrStatusMenu" role="menu"></div>
+          <!-- Project assignment context menu (position:fixed, shared) -->
+          <div id="scrProjectMenu" role="menu"></div>
       </div>
 
       <!-- v0.14.39: #profPanelProjects eliminado. Proyectos ahora vive como chip filter
@@ -15303,6 +15329,14 @@ function _buildStatusBadge(status) {
   return `<button class="scr-status-badge is-${status}" data-scr-action="statusMenu" data-status="${status}" type="button">${icons[status]}<span>${labels[status]}</span>${SVG_CARET}</button>`;
 }
 
+function _buildProjBadge(proj) {
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const NO_PROJ = lang === "en" ? "NO PROJECT" : "SIN PROYECTO";
+  if (!proj) return `<button type="button" class="scr-proj-badge no-proj" data-scr-action="projectMenu">${NO_PROJ}</button>`;
+  const color = proj.color && /^#[0-9a-f]{6}$/i.test(proj.color) ? proj.color : "#8a7e72";
+  return `<button type="button" class="scr-proj-badge" style="--pc:${color}" data-scr-action="projectMenu" title="${esc(proj.name)}">${esc(proj.name)}</button>`;
+}
+
 function renderProfScripts() {
   const el = document.getElementById("profListScripts");
   if (!el) return;
@@ -15340,7 +15374,6 @@ function renderProfScripts() {
   const LBL_FULL   = lang === "en" ? "VIEW FULL TEXT" : "VER TEXTO COMPLETO";
   const LBL_COLL   = lang === "en" ? "COLLAPSE" : "COLAPSAR";
   const LBL_EDIT   = lang === "en" ? "Edit" : "Editar";
-  const LBL_PROJ   = lang === "en" ? "To project" : "Al proyecto";
   const LBL_TP     = lang === "en" ? "Teleprompter" : "Teleprompter";
   const LBL_COPY   = lang === "en" ? "Copy" : "Copiar";
   const LBL_DEL    = lang === "en" ? "Delete" : "Eliminar";
@@ -15355,8 +15388,8 @@ function renderProfScripts() {
     const cardCls = `scr-card${proj ? " has-proj" : ""}`;
     const styleVar = color ? ` style="--pc:${color}"` : "";
     const badge = proj
-      ? `<button type="button" class="scr-proj-badge" style="--pc:${color || "#8a7e72"}" data-scr-action="openProjects" title="${esc(proj.name)}">${esc(proj.name)}</button>`
-      : `<button type="button" class="scr-proj-badge no-proj" data-scr-action="openProjects">${LBL_NOPROJ}</button>`;
+      ? `<button type="button" class="scr-proj-badge" style="--pc:${color || "#8a7e72"}" data-scr-action="projectMenu" title="${esc(proj.name)}">${esc(proj.name)}</button>`
+      : `<button type="button" class="scr-proj-badge no-proj" data-scr-action="projectMenu">${LBL_NOPROJ}</button>`;
     const statusBadge = _buildStatusBadge(it.recording_status);
 
     return `
@@ -15388,7 +15421,6 @@ function renderProfScripts() {
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M12 2 L14 4 L5 13 L2 14 L3 11 Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
           ${LBL_EDIT}
         </button>
-        <button class="scr-act" data-scr-action="toProject">${LBL_PROJ}</button>
         <button class="scr-act" data-scr-action="teleprompter">${LBL_TP}</button>
         <button class="scr-act" data-scr-action="copy">${LBL_COPY}</button>
         <button class="scr-act danger" data-scr-action="delete">${LBL_DEL}</button>
@@ -15412,22 +15444,22 @@ function _bindScrListDelegation() {
     const card = trigger.closest(".scr-card[data-id]");
     const id = card ? card.dataset.id : null;
 
-    if (action === "openProjects") { try { profTab("projects"); } catch {} return; }
     if (!id) return;
 
     if (action === "toggle") { toggleScrExpand(id); return; }
     if (action === "edit")   { openScriptInlineEdit(id); return; }
-    if (action === "toProject") { openScriptInlineEdit(id, { focus: "project" }); return; }
     if (action === "inlineSave")   { _scrInlineSave(id); return; }
     if (action === "inlineCancel") { _scrInlineCancel(id); return; }
     if (action === "teleprompter") { tpOpenFromScript(id); return; }
     if (action === "copy") { cpScript(id, trigger); return; }
     if (action === "delete") { delScript(id, trigger); return; }
-    if (action === "statusMenu") { _openScrStatusMenu(trigger, id); return; }
+    if (action === "statusMenu")  { _openScrStatusMenu(trigger, id); return; }
+    if (action === "projectMenu") { _openScrProjectMenu(trigger, id); return; }
   });
 }
 
 let _scrStatusMenuScriptId = null;
+let _scrStatusMenuOpen = false;
 
 function _openScrStatusMenu(trigger, id) {
   const menu = document.getElementById("scrStatusMenu");
@@ -15448,12 +15480,15 @@ function _openScrStatusMenu(trigger, id) {
   menu.style.left = rect.left + "px";
   menu.style.display = "flex";
   _scrStatusMenuScriptId = id;
+  _scrStatusMenuOpen = true;
+  console.log("[scrStatusMenu] open", { id, top: menu.style.top, left: menu.style.left, display: menu.style.display });
   if (menu._handler) menu.removeEventListener("click", menu._handler);
   menu._handler = (e) => {
     const btn = e.target.closest("button[data-status]");
     if (!btn) return;
+    const scriptId = _scrStatusMenuScriptId;
     _closeScrStatusMenu();
-    _setScrStatus(_scrStatusMenuScriptId, btn.dataset.status);
+    _setScrStatus(scriptId, btn.dataset.status);
   };
   menu.addEventListener("click", menu._handler);
 }
@@ -15464,6 +15499,7 @@ function _closeScrStatusMenu() {
   menu.style.display = "none";
   if (menu._handler) { menu.removeEventListener("click", menu._handler); menu._handler = null; }
   _scrStatusMenuScriptId = null;
+  _scrStatusMenuOpen = false;
 }
 
 function _setScrStatus(id, status) {
@@ -15485,11 +15521,120 @@ function _setScrStatus(id, status) {
 }
 
 document.addEventListener("click", (e) => {
-  const menu = document.getElementById("scrStatusMenu");
-  if (!menu || menu.style.display === "none") return;
-  if (!menu.contains(e.target) && !e.target.closest(".scr-status-badge")) _closeScrStatusMenu();
+  if (_scrStatusMenuOpen) {
+    const menu = document.getElementById("scrStatusMenu");
+    if (menu && !menu.contains(e.target) && !e.target.closest(".scr-status-badge")) _closeScrStatusMenu();
+  }
+  if (_scrProjectMenuOpen) {
+    const menu = document.getElementById("scrProjectMenu");
+    if (menu && !menu.contains(e.target) && !e.target.closest(".scr-proj-badge")) _closeScrProjectMenu();
+  }
 }, true);
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") _closeScrStatusMenu(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { _closeScrStatusMenu(); _closeScrProjectMenu(); } });
+
+let _scrProjectMenuScriptId = null;
+let _scrProjectMenuOpen = false;
+
+function _openScrProjectMenu(trigger, id) {
+  const menu = document.getElementById("scrProjectMenu");
+  if (!menu) return;
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const current = scriptsCache.find(s => s.id === id);
+  const currentProjId = current ? current.project_id : null;
+  const projects = (typeof projectsCache !== "undefined") ? (projectsCache || []) : [];
+
+  if (!projects.length) {
+    const msgEmpty = lang === "en" ? "No projects yet" : "Sin proyectos aún";
+    const msgLink  = lang === "en" ? "Go to Projects →" : "Ir a Proyectos →";
+    menu.innerHTML = `<p class="proj-menu-empty">${msgEmpty}</p>
+      <button type="button" data-goto-projects="1">${msgLink}</button>`;
+  } else {
+    const SVG_CHK = `<svg class="chk" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+    const noProj  = lang === "en" ? "No project" : "Sin proyecto";
+    const items = [
+      `<button type="button" data-proj-id="" class="${!currentProjId ? "is-active" : ""}">
+        <span class="proj-dot" style="background:var(--text-tertiary)"></span>
+        <span>${noProj}</span>${SVG_CHK}
+      </button>`,
+      ...projects.map(p => {
+        const color = p.color && /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : "#8a7e72";
+        return `<button type="button" data-proj-id="${p.id}" class="${p.id === currentProjId ? "is-active" : ""}">
+          <span class="proj-dot" style="background:${color}"></span>
+          <span>${esc(p.name)}</span>${SVG_CHK}
+        </button>`;
+      })
+    ];
+    menu.innerHTML = items.join("");
+  }
+
+  const rect = trigger.getBoundingClientRect();
+  menu.style.top  = (rect.bottom + 6) + "px";
+  menu.style.left = rect.left + "px";
+  menu.style.display = "flex";
+  _scrProjectMenuScriptId = id;
+  _scrProjectMenuOpen = true;
+
+  if (menu._handler) menu.removeEventListener("click", menu._handler);
+  menu._handler = (e) => {
+    const btn = e.target.closest("button[data-proj-id], button[data-goto-projects]");
+    if (!btn) return;
+    if (btn.dataset.gotoProjects) {
+      _closeScrProjectMenu();
+      try { profTab("projects"); } catch {}
+      return;
+    }
+    const scriptId = _scrProjectMenuScriptId;
+    const projId = btn.dataset.projId || null;
+    _closeScrProjectMenu();
+    _setScrProject(scriptId, projId);
+  };
+  menu.addEventListener("click", menu._handler);
+}
+
+function _closeScrProjectMenu() {
+  const menu = document.getElementById("scrProjectMenu");
+  if (!menu) return;
+  menu.style.display = "none";
+  if (menu._handler) { menu.removeEventListener("click", menu._handler); menu._handler = null; }
+  _scrProjectMenuScriptId = null;
+  _scrProjectMenuOpen = false;
+}
+
+function _setScrProject(id, projectId) {
+  const idx = scriptsCache.findIndex(s => s.id === id);
+  if (idx === -1) return;
+  const prevProjId = scriptsCache[idx].project_id;
+  if (prevProjId === projectId) return;
+  scriptsCache[idx].project_id = projectId;
+  const card = document.querySelector(`#s-${id}`);
+  const proj = projectId ? _scrProjectFromId(projectId) : null;
+  const color = proj && proj.color && /^#[0-9a-f]{6}$/i.test(proj.color) ? proj.color : null;
+  if (card) {
+    card.classList.toggle("has-proj", !!proj);
+    if (color) card.style.setProperty("--pc", color);
+    else card.style.removeProperty("--pc");
+    const badge = card.querySelector(".scr-proj-badge");
+    if (badge) badge.outerHTML = _buildProjBadge(proj);
+  }
+  fetch(`/scripts/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ project_id: projectId })
+  }).then(r => { if (!r.ok) throw new Error(); })
+  .catch(() => {
+    scriptsCache[idx].project_id = prevProjId;
+    const prevProj = prevProjId ? _scrProjectFromId(prevProjId) : null;
+    const prevColor = prevProj && prevProj.color && /^#[0-9a-f]{6}$/i.test(prevProj.color) ? prevProj.color : null;
+    if (card) {
+      card.classList.toggle("has-proj", !!prevProj);
+      if (prevColor) card.style.setProperty("--pc", prevColor);
+      else card.style.removeProperty("--pc");
+      const b = card.querySelector(".scr-proj-badge");
+      if (b) b.outerHTML = _buildProjBadge(prevProj);
+    }
+    if (typeof showToast === "function") showToast(document.documentElement.lang === "en" ? "Error saving" : "Error al guardar");
+  });
+}
 
 // ── Script edit modal ─────────────────────────────────────────────────────
 let _scrEditorId = null;
