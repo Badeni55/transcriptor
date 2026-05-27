@@ -796,15 +796,20 @@ def generate_script_competitor_task(self, reel_id, user_id, assistant_id):
         # 6. INSERT scripts + cobrar.
         script_id = None
         try:
+            _TASK_LABELS = {
+                "viral": "Viral", "divertido": "Divertido", "hooks": "Hooks",
+                "storytelling": "Storytelling", "story": "Storytelling", "linkedin": "LinkedIn",
+            }
             ins = db.table("scripts").insert({
-                "user_id": user_id,
-                "transcription_id": None,
-                "idea_id": None,
-                "title": script_title,
-                "script": result,
-                "project_id": None,
+                "user_id":                user_id,
+                "transcription_id":       None,
+                "idea_id":                None,
+                "title":                  script_title,
+                "script":                 result,
+                "project_id":             None,
                 "from_competitor_reel_id": reel["id"],
                 "from_competitor_username": ig_username,
+                "assistant_name":         _TASK_LABELS.get(style_label, style_label) if style_label else None,
             }).execute()
             if ins.data:
                 script_id = ins.data[0].get("id")
