@@ -221,6 +221,31 @@
   </div>
 </div>
 
+<!-- Transcripciones -->
+<div class="section">
+  <div class="section-title">Transcripciones</div>
+  <div class="metrics-grid" id="transMetrics">
+    <div class="state-msg">Cargando…</div>
+  </div>
+  <div style="margin-top:12px" id="transSplit">
+    <div class="state-msg">Cargando…</div>
+  </div>
+  <div style="margin-top:12px" id="transTopWrap">
+    <div class="state-msg">Cargando…</div>
+  </div>
+</div>
+
+<!-- Competencia -->
+<div class="section">
+  <div class="section-title">Competencia</div>
+  <div class="metrics-grid" id="compMetrics">
+    <div class="state-msg">Cargando…</div>
+  </div>
+  <div style="margin-top:12px" id="compRankingWrap">
+    <div class="state-msg">Cargando…</div>
+  </div>
+</div>
+
 <script>
   const PLAN_ORDER = ["agency", "creator", "pro", "free"];
   const PLAN_COLOR = { agency: "#f97316", creator: "#a855f7", pro: "#3b82f6", free: "#9b9b98" };
@@ -238,6 +263,8 @@
       renderMain(d);
       renderPlans(d.m3_plan_breakdown);
       renderTopUsers(d.m5_top_users);
+      renderTranscriptions(d);
+      renderCompetencia(d);
       document.getElementById("lastUpdated").textContent =
         "Actualizado " + new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
     } catch (e) {
@@ -309,6 +336,108 @@
           </tr>
         </thead>
         <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  function renderTranscriptions(d) {
+    // T1: 3 cards
+    document.getElementById("transMetrics").innerHTML = [
+      { label: "Total histórico",  value: d.t1_total,  accent: false },
+      { label: "Esta semana",      value: d.t1_week,   accent: true  },
+      { label: "Este mes",         value: d.t1_month,  accent: false },
+      { label: "Media por usuario",value: d.t2_avg_per_user != null ? d.t2_avg_per_user.toFixed(2) : "—", accent: false },
+    ].map(c =>
+      `<div class="metric-card">
+        <div class="metric-label">${esc(c.label)}</div>
+        <div class="metric-value${c.accent ? " accent" : ""}">${c.value ?? "—"}</div>
+      </div>`
+    ).join("");
+
+    // T3: split por plataforma (barras reutilizando .plan-row)
+    const sp = d.t3_split;
+    if (sp) {
+      document.getElementById("transSplit").innerHTML =
+        `<div class="plan-list">
+          <div class="plan-row">
+            <span class="plan-name">Instagram</span>
+            <div class="plan-bar-wrap">
+              <div class="plan-bar" style="width:${sp.instagram_pct}%;background:#f97316"></div>
+            </div>
+            <span class="plan-count">${sp.instagram} <span style="color:var(--text-tertiary);font-weight:400">(${sp.instagram_pct}%)</span></span>
+          </div>
+          <div class="plan-row">
+            <span class="plan-name">TikTok</span>
+            <div class="plan-bar-wrap">
+              <div class="plan-bar" style="width:${sp.tiktok_pct}%;background:#3b82f6"></div>
+            </div>
+            <span class="plan-count">${sp.tiktok} <span style="color:var(--text-tertiary);font-weight:400">(${sp.tiktok_pct}%)</span></span>
+          </div>
+        </div>`;
+    }
+
+    // T2: top transcriptores
+    const top = d.t2_top;
+    if (!top || !top.length) {
+      document.getElementById("transTopWrap").innerHTML = '<div class="state-msg">Sin datos</div>';
+      return;
+    }
+    document.getElementById("transTopWrap").innerHTML =
+      `<table class="top-table">
+        <thead><tr><th>#</th><th>Usuario</th><th style="text-align:right">Transcripciones</th></tr></thead>
+        <tbody>${top.map((u, i) =>
+          `<tr>
+            <td class="rank">${i + 1}</td>
+            <td>${esc(u.email)}</td>
+            <td class="count">${u.transcriptions}</td>
+          </tr>`
+        ).join("")}</tbody>
+      </table>`;
+  }
+
+  function renderCompetencia(d) {
+    // C1: card adopción
+    document.getElementById("compMetrics").innerHTML =
+      `<div class="metric-card">
+        <div class="metric-label">Usuarios usando Competidores</div>
+        <div class="metric-value">${d.c1_adopters ?? "—"}</div>
+      </div>`;
+
+    // C2/C3: ranking
+    const ranking = d.c2c3_ranking;
+    if (!ranking || !ranking.length) {
+      document.getElementById("compRankingWrap").innerHTML =
+        '<div class="state-msg">Ningún usuario ha añadido competidores todavía</div>';
+      return;
+    }
+    if (d.c1_adopters < 3) {
+      document.getElementById("compRankingWrap").innerHTML =
+        `<div class="state-msg" style="text-align:left;padding:0 0 12px">
+          Feature con adopción mínima (${d.c1_adopters} usuario${d.c1_adopters !== 1 ? "s" : ""}).
+        </div>` +
+        `<table class="top-table">
+          <thead><tr><th>#</th><th>Creador (IG)</th><th style="text-align:right">Usuarios</th><th style="text-align:right">Seguidores</th></tr></thead>
+          <tbody>${ranking.map((r, i) =>
+            `<tr>
+              <td class="rank">${i + 1}</td>
+              <td>@${esc(r.ig_username)}</td>
+              <td class="count">${r.user_count}</td>
+              <td class="count" style="color:var(--text-secondary)">${r.followers_count != null ? r.followers_count.toLocaleString("es-ES") : "—"}</td>
+            </tr>`
+          ).join("")}</tbody>
+        </table>`;
+      return;
+    }
+    document.getElementById("compRankingWrap").innerHTML =
+      `<table class="top-table">
+        <thead><tr><th>#</th><th>Creador (IG)</th><th style="text-align:right">Usuarios</th><th style="text-align:right">Seguidores</th></tr></thead>
+        <tbody>${ranking.map((r, i) =>
+          `<tr>
+            <td class="rank">${i + 1}</td>
+            <td>@${esc(r.ig_username)}</td>
+            <td class="count">${r.user_count}</td>
+            <td class="count" style="color:var(--text-secondary)">${r.followers_count != null ? r.followers_count.toLocaleString("es-ES") : "—"}</td>
+          </tr>`
+        ).join("")}</tbody>
       </table>`;
   }
 

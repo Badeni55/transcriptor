@@ -6011,6 +6011,89 @@ def admin_metrics():
     )
     stripe_active = len(subs_r.data or [])
 
+    # ── Transcripciones ───────────────────────────────────────────────────────
+    # week_cut = cutoff (ya calculado arriba: now - 7 días)
+    week_cut  = cutoff.isoformat()
+    month_cut = (
+        datetime.now(timezone.utc)
+        .replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        .isoformat()
+    )
+
+    # T1: total / esta semana / este mes
+    t1_total = (
+        db.table("transcriptions").select("id", count="exact").limit(1).execute().count or 0
+    )
+    t1_week = (
+        db.table("transcriptions").select("id", count="exact")
+          .gte("created_at", week_cut).limit(1).execute().count or 0
+    )
+    t1_month = (
+        db.table("transcriptions").select("id", count="exact")
+          .gte("created_at", month_cut).limit(1).execute().count or 0
+    )
+
+    # T2: media por usuario + top transcriptores
+    tr_uid_r = db.table("transcriptions").select("user_id").execute()
+    uid_tr_counts: dict[str, int] = {}
+    for row in (tr_uid_r.data or []):
+        uid = row.get("user_id")
+        if uid:
+            uid_tr_counts[uid] = uid_tr_counts.get(uid, 0) + 1
+    t2_users_with = len(uid_tr_counts)
+    t2_avg = round(sum(uid_tr_counts.values()) / t2_users_with, 2) if t2_users_with else 0
+    top_tr_uids = sorted(uid_tr_counts, key=lambda k: uid_tr_counts[k], reverse=True)[:10]
+    t2_top = [
+        {"email": uid_to_email.get(uid, uid[:8] + "…"), "transcriptions": uid_tr_counts[uid]}
+        for uid in top_tr_uids
+    ]
+
+    # T3: split por plataforma
+    t3_ig = (
+        db.table("transcriptions").select("id", count="exact")
+          .eq("platform", "instagram").limit(1).execute().count or 0
+    )
+    t3_tt = (
+        db.table("transcriptions").select("id", count="exact")
+          .eq("platform", "tiktok").limit(1).execute().count or 0
+    )
+    t3_total = t3_ig + t3_tt or 1  # evitar división por cero
+    t3_split = {
+        "instagram":     t3_ig,
+        "tiktok":        t3_tt,
+        "instagram_pct": round(t3_ig / t3_total * 100, 1),
+        "tiktok_pct":    round(t3_tt / t3_total * 100, 1),
+    }
+
+    # ── Competencia ──────────────────────────────────────────────────────────
+    # C1: usuarios distintos que usan la feature Competidores
+    ut_r = db.table("user_tracked_creators").select("user_id").execute()
+    c1_adopters = len({row["user_id"] for row in (ut_r.data or []) if row.get("user_id")})
+
+    # C2/C3: ranking de competidores (join Python-side)
+    utc_r = db.table("user_tracked_creators").select("user_id, creator_id").execute()
+    cg_r  = db.table("creators_global").select("id, ig_username, followers_count_cached").execute()
+    cg_map = {row["id"]: row for row in (cg_r.data or [])}
+    creator_users: dict[str, set] = {}
+    for row in (utc_r.data or []):
+        cid = row.get("creator_id")
+        uid = row.get("user_id")
+        if cid and uid:
+            creator_users.setdefault(cid, set()).add(uid)
+    c2c3 = sorted(
+        [
+            {
+                "ig_username":          cg_map[cid]["ig_username"],
+                "user_count":           len(users),
+                "followers_count":      cg_map[cid].get("followers_count_cached"),
+            }
+            for cid, users in creator_users.items()
+            if cid in cg_map
+        ],
+        key=lambda x: x["user_count"],
+        reverse=True,
+    )
+
     return jsonify({
         "m1_total_users":    total_users,
         "m2_new_users_7d":   new_users_7d,
@@ -6019,6 +6102,17 @@ def admin_metrics():
         "m5_top_users":      top_users,
         "m6_total_ideas":    total_ideas,
         "m7_stripe_active":  stripe_active,
+        # Transcripciones
+        "t1_total":          t1_total,
+        "t1_week":           t1_week,
+        "t1_month":          t1_month,
+        "t2_avg_per_user":   t2_avg,
+        "t2_users_with":     t2_users_with,
+        "t2_top":            t2_top,
+        "t3_split":          t3_split,
+        # Competencia
+        "c1_adopters":       c1_adopters,
+        "c2c3_ranking":      c2c3,
     })
 
 
