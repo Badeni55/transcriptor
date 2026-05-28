@@ -85,6 +85,19 @@ ADMIN_EMAILS = {
 def _is_admin(user: dict | None) -> bool:
     return bool(user and user.get("email", "").lower() in ADMIN_EMAILS)
 
+
+def admin_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        user = current_user()
+        if not user:
+            return jsonify({"error": "No autenticado"}), 401
+        if not _is_admin(user):
+            return jsonify({"error": "forbidden"}), 403
+        return f(*args, **kwargs)
+    return wrapper
+
+
 # ── Matriz de planes (fuente de verdad) ──────────────────────────────────────
 PLANS = {
     "free": {
@@ -5926,6 +5939,87 @@ def admin_scrape_creator(creator_id: str):
         "creator_id": creator_id,
         "ig_username": cr.data[0]["ig_username"],
     }), 202
+
+
+@app.route("/admin")
+def admin_page():
+    user = current_user()
+    if not user:
+        return redirect("/")
+    if not _is_admin(user):
+        abort(403)
+    return render_template("admin.html")
+
+
+@app.route("/admin/metrics")
+@admin_required
+def admin_metrics():
+    # M1 + M2: usuarios totales y nuevos (últimos 7 días) desde auth.users
+    auth_users = db.auth.admin.list_users(page=1, per_page=1000)
+    total_users = len(auth_users)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+    new_users_7d = 0
+    uid_to_email: dict[str, str] = {}
+    for u in auth_users:
+        uid_to_email[u.id] = u.email or ""
+        created = getattr(u, "created_at", None)
+        if created:
+            try:
+                if isinstance(created, str):
+                    created = datetime.fromisoformat(created.replace("Z", "+00:00"))
+                if created.tzinfo is None:
+                    created = created.replace(tzinfo=timezone.utc)
+                if created >= cutoff:
+                    new_users_7d += 1
+            except Exception:
+                pass
+
+    # M3: desglose de planes (desde profiles)
+    profiles_r = db.table("profiles").select("plan").execute()
+    plan_counts: dict[str, int] = {}
+    for p in (profiles_r.data or []):
+        plan = p.get("plan") or "free"
+        plan_counts[plan] = plan_counts.get(plan, 0) + 1
+
+    # M4: total de guiones
+    scripts_count_r = db.table("scripts").select("id", count="exact").limit(1).execute()
+    total_scripts = scripts_count_r.count or 0
+
+    # M5: top 10 usuarios por número de guiones
+    scripts_uid_r = db.table("scripts").select("user_id").execute()
+    uid_script_counts: dict[str, int] = {}
+    for s in (scripts_uid_r.data or []):
+        uid = s.get("user_id")
+        if uid:
+            uid_script_counts[uid] = uid_script_counts.get(uid, 0) + 1
+    top_uids = sorted(uid_script_counts, key=lambda k: uid_script_counts[k], reverse=True)[:10]
+    top_users = [
+        {"email": uid_to_email.get(uid, uid[:8] + "…"), "scripts": uid_script_counts[uid]}
+        for uid in top_uids
+    ]
+
+    # M6: total de ideas
+    ideas_count_r = db.table("ideas").select("id", count="exact").limit(1).execute()
+    total_ideas = ideas_count_r.count or 0
+
+    # M7: suscripciones Stripe activas (stripe_subscription_id no nulo)
+    subs_r = (
+        db.table("profiles")
+          .select("stripe_subscription_id")
+          .not_.is_("stripe_subscription_id", "null")
+          .execute()
+    )
+    stripe_active = len(subs_r.data or [])
+
+    return jsonify({
+        "m1_total_users":    total_users,
+        "m2_new_users_7d":   new_users_7d,
+        "m3_plan_breakdown": plan_counts,
+        "m4_total_scripts":  total_scripts,
+        "m5_top_users":      top_users,
+        "m6_total_ideas":    total_ideas,
+        "m7_stripe_active":  stripe_active,
+    })
 
 
 if __name__ == "__main__":
