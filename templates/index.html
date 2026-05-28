@@ -7497,6 +7497,46 @@
     #scrProjectMenu .proj-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     #scrProjectMenu .proj-menu-empty { padding: var(--space-2) var(--space-3); font-size: var(--text-sm); color: var(--text-tertiary); }
 
+    /* v0.16.16: Ideas project dropdown — CSS idéntico a #scrProjectMenu */
+    #ideaProjectMenu {
+      position: fixed; z-index: 510;
+      background: var(--surface-raised);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-xl);
+      padding: var(--space-1);
+      min-width: 240px;
+      display: none; flex-direction: column; gap: 2px;
+    }
+    #ideaProjectMenu button {
+      background: transparent; color: var(--text-primary); border: 0;
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body); font-size: var(--text-sm);
+      display: flex; align-items: center; gap: var(--space-2);
+      width: 100%; text-align: left; cursor: pointer;
+    }
+    #ideaProjectMenu button:hover { background: var(--surface-overlay); }
+    #ideaProjectMenu .chk { opacity: 0; margin-left: auto; }
+    #ideaProjectMenu button.is-active .chk { opacity: 1; }
+    #ideaProjectMenu .proj-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    #ideaProjectMenu .proj-menu-empty { padding: var(--space-2) var(--space-3); font-size: var(--text-sm); color: var(--text-tertiary); }
+
+    .ideas-card.has-proj { border-left: 3px solid var(--pc, #8a7e72); }
+    .idea-proj-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 500;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      padding: 3px 9px; border-radius: 5px;
+      cursor: pointer; transition: background .15s;
+      color: var(--pc, var(--ink-muted));
+      background: color-mix(in srgb, var(--pc, #8a7e72) 12%, transparent);
+      border: none;
+    }
+    .idea-proj-badge:hover { background: color-mix(in srgb, var(--pc, #8a7e72) 20%, transparent); }
+    .idea-proj-badge.no-proj { color: var(--ink-ghost); background: rgba(255,255,255,.04); }
+
     /* Assistant snapshot badge (informativo, no interactivo) */
     .scr-assistant-badge {
       display: inline-flex; align-items: center; gap: var(--space-1);
@@ -10326,6 +10366,7 @@
         </div>
 
         <!-- Ideas list -->
+        <div class="scripts-proj-filter" id="ideasProjFilter"></div>
         <div id="ideasList" class="ideas-list">
           <!-- v0.14.37: skeleton loaders. -->
           <article class="ideas-skel-card">
@@ -10526,6 +10567,8 @@
 <!-- v0.16.11.b: #scrStatusMenu y #scrProjectMenu movidos FUERA de #profilePage para que position:fixed se ancle al viewport (mismo patrón que .prof-bottom-bar v0.14.22). -->
 <div id="scrStatusMenu" role="menu"></div>
 <div id="scrProjectMenu" role="menu"></div>
+<!-- v0.16.16: #ideaProjectMenu fuera de #profilePage — mismo patrón que #scrProjectMenu (v0.16.11.b). -->
+<div id="ideaProjectMenu" role="menu" style="display:none"></div>
 
 <!-- v0.14.22: bottom-bar movida FUERA de #profilePage para que position:fixed se ancle al viewport.
      Visible solo en mobile (<=640px) Y solo en workspace (body.workspace). -->
@@ -14590,6 +14633,33 @@ function setScrProjectFilter(projectId) {
   } catch(e){}
 }
 
+// v0.16.16: filtro de proyecto para Ideas (clon de renderProjChips/setScrProjectFilter).
+// Deuda de duplicación consciente — no generalizado para no arriesgar Guiones.
+let _ideaFilterProjectId = null;
+
+function renderIdeaProjChips() {
+  const host = document.getElementById("ideasProjFilter");
+  if (!host) return;
+  const cache = (typeof projectsCache !== "undefined" && projectsCache) ? projectsCache : [];
+  const activeId = _ideaFilterProjectId;
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const allLbl = lang === "en" ? "All" : "Todos";
+  const newLbl = lang === "en" ? "+ New project" : "+ Nuevo proyecto";
+  let html = `<button type="button" class="proj-chip${!activeId ? " on" : ""}" onclick="setIdeaProjectFilter(null)">${allLbl}</button>`;
+  cache.forEach(p => {
+    const on = activeId === p.id ? " on" : "";
+    html += `<button type="button" class="proj-chip${on}" onclick="setIdeaProjectFilter('${esc(p.id)}')">${esc(p.name)}</button>`;
+  });
+  html += `<button type="button" class="proj-chip proj-chip-new" onclick="openProjectEditor(null)">${newLbl}</button>`;
+  host.innerHTML = html;
+}
+
+function setIdeaProjectFilter(projectId) {
+  _ideaFilterProjectId = projectId || null;
+  renderIdeaProjChips();
+  if (typeof renderIdeas === "function") renderIdeas();
+}
+
 
 function transcToDashboard() {
   try { closeProfile(); } catch {}
@@ -15373,6 +15443,15 @@ function _buildProjBadge(proj) {
   return `<button type="button" class="scr-proj-badge" style="--pc:${color}" data-scr-action="projectMenu" title="${esc(proj.name)}">${esc(proj.name)}</button>`;
 }
 
+// v0.16.16: badge de proyecto para Ideas — clon de _buildProjBadge con prefijo idea.
+function _buildIdeaProjBadge(proj, id) {
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const NO_PROJ = lang === "en" ? "PROJECT" : "PROYECTO";
+  if (!proj) return `<button type="button" class="idea-proj-badge no-proj" data-idea-action="projectMenu">${NO_PROJ}</button>`;
+  const color = proj.color && /^#[0-9a-f]{6}$/i.test(proj.color) ? proj.color : "#8a7e72";
+  return `<button type="button" class="idea-proj-badge" style="--pc:${color}" data-idea-action="projectMenu" title="${esc(proj.name)}">${esc(proj.name)}</button>`;
+}
+
 function renderProfScripts() {
   const el = document.getElementById("profListScripts");
   if (!el) return;
@@ -15496,6 +15575,22 @@ function _bindScrListDelegation() {
   });
 }
 
+// v0.16.16: delegated listener para Ideas — clon de _bindScrListDelegation.
+function _bindIdeaListDelegation() {
+  const host = document.getElementById("ideasList");
+  if (!host || host._ideaBound) return;
+  host._ideaBound = true;
+  host.addEventListener("click", (e) => {
+    const trigger = e.target.closest("[data-idea-action]");
+    if (!trigger || !host.contains(trigger)) return;
+    const action = trigger.dataset.ideaAction;
+    const card = trigger.closest(".ideas-card[data-id]");
+    const id = card ? card.dataset.id : null;
+    if (!id) return;
+    if (action === "projectMenu") { _openIdeaProjectMenu(trigger, id); return; }
+  });
+}
+
 let _scrStatusMenuScriptId = null;
 let _scrStatusMenuOpen = false;
 
@@ -15566,8 +15661,14 @@ document.addEventListener("click", (e) => {
     const menu = document.getElementById("scrProjectMenu");
     if (menu && !menu.contains(e.target) && !e.target.closest(".scr-proj-badge")) _closeScrProjectMenu();
   }
+  if (typeof _ideaProjectMenuOpen !== "undefined" && _ideaProjectMenuOpen) {
+    const menu = document.getElementById("ideaProjectMenu");
+    if (menu && !menu.contains(e.target) && !e.target.closest(".idea-proj-badge")) _closeIdeaProjectMenu();
+  }
 }, true);
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") { _closeScrStatusMenu(); _closeScrProjectMenu(); } });
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") { _closeScrStatusMenu(); _closeScrProjectMenu(); if (typeof _closeIdeaProjectMenu === "function") _closeIdeaProjectMenu(); }
+});
 
 let _scrProjectMenuScriptId = null;
 let _scrProjectMenuOpen = false;
@@ -15668,6 +15769,108 @@ function _setScrProject(id, projectId) {
       else card.style.removeProperty("--pc");
       const b = card.querySelector(".scr-proj-badge");
       if (b) b.outerHTML = _buildProjBadge(prevProj);
+    }
+    if (typeof showToast === "function") showToast(document.documentElement.lang === "en" ? "Error saving" : "Error al guardar");
+  });
+}
+
+// ── Ideas project dropdown (v0.16.16) — clon de _openScrProjectMenu/_setScrProject ──
+// Deuda de duplicación consciente. Si se cambia comportamiento, tocar ambos.
+let _ideaProjectMenuIdeaId = null;
+let _ideaProjectMenuOpen = false;
+
+function _closeIdeaProjectMenu() {
+  const menu = document.getElementById("ideaProjectMenu");
+  if (menu) {
+    menu.style.display = "none";
+    if (menu._handler) { menu.removeEventListener("click", menu._handler); menu._handler = null; }
+  }
+  _ideaProjectMenuIdeaId = null;
+  _ideaProjectMenuOpen = false;
+}
+
+function _openIdeaProjectMenu(trigger, id) {
+  const menu = document.getElementById("ideaProjectMenu");
+  if (!menu) return;
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const current = (ideasCache || []).find(i => i.id === id);
+  const currentProjId = current ? current.project_id : null;
+  const projects = (typeof projectsCache !== "undefined") ? (projectsCache || []) : [];
+  const SVG_CHK = `<svg class="chk" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+  if (!projects.length) {
+    const msgEmpty = lang === "en" ? "No projects yet" : "Sin proyectos aún";
+    const msgLink  = lang === "en" ? "Go to Projects →" : "Ir a Proyectos →";
+    menu.innerHTML = `<p class="proj-menu-empty">${msgEmpty}</p><button type="button" data-goto-projects="1">${msgLink}</button>`;
+  } else {
+    const noProj = lang === "en" ? "No project" : "Sin proyecto";
+    const items = [
+      `<button type="button" data-proj-id="" class="${!currentProjId ? "is-active" : ""}">
+        <span class="proj-dot" style="background:var(--text-tertiary)"></span>
+        <span>${noProj}</span>${SVG_CHK}
+      </button>`,
+      ...projects.map(p => {
+        const color = p.color && /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : "#8a7e72";
+        return `<button type="button" data-proj-id="${p.id}" class="${p.id === currentProjId ? "is-active" : ""}">
+          <span class="proj-dot" style="background:${color}"></span>
+          <span>${esc(p.name)}</span>${SVG_CHK}
+        </button>`;
+      })
+    ];
+    menu.innerHTML = items.join("");
+  }
+
+  const rect = trigger.getBoundingClientRect();
+  menu.style.top  = (rect.bottom + 6) + "px";
+  menu.style.left = rect.left + "px";
+  menu.style.display = "flex";
+  _ideaProjectMenuIdeaId = id;
+  _ideaProjectMenuOpen = true;
+
+  if (menu._handler) menu.removeEventListener("click", menu._handler);
+  menu._handler = (e) => {
+    const btn = e.target.closest("button[data-proj-id], button[data-goto-projects]");
+    if (!btn) return;
+    if (btn.dataset.gotoProjects) { _closeIdeaProjectMenu(); try { profTab("projects"); } catch {} return; }
+    const ideaId = _ideaProjectMenuIdeaId;
+    const projId = btn.dataset.projId || null;
+    _closeIdeaProjectMenu();
+    _setIdeaProject(ideaId, projId);
+  };
+  menu.addEventListener("click", menu._handler);
+}
+
+function _setIdeaProject(id, projectId) {
+  const idx = (ideasCache || []).findIndex(i => i.id === id);
+  if (idx === -1) return;
+  const prevProjId = ideasCache[idx].project_id;
+  if (prevProjId === projectId) return;
+  ideasCache[idx].project_id = projectId;
+  const card = document.getElementById(`idea-${id}`);
+  const proj = projectId ? _scrProjectFromId(projectId) : null;
+  const color = proj && proj.color && /^#[0-9a-f]{6}$/i.test(proj.color) ? proj.color : null;
+  if (card) {
+    card.classList.toggle("has-proj", !!proj);
+    if (color) card.style.setProperty("--pc", color);
+    else card.style.removeProperty("--pc");
+    const badge = card.querySelector(".idea-proj-badge");
+    if (badge) badge.outerHTML = _buildIdeaProjBadge(proj, id);
+  }
+  fetch(`/ideas/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ project_id: projectId })
+  }).then(r => { if (!r.ok) throw new Error(); })
+  .catch(() => {
+    ideasCache[idx].project_id = prevProjId;
+    const prevProj = prevProjId ? _scrProjectFromId(prevProjId) : null;
+    const prevColor = prevProj && prevProj.color && /^#[0-9a-f]{6}$/i.test(prevProj.color) ? prevProj.color : null;
+    if (card) {
+      card.classList.toggle("has-proj", !!prevProj);
+      if (prevColor) card.style.setProperty("--pc", prevColor);
+      else card.style.removeProperty("--pc");
+      const b = card.querySelector(".idea-proj-badge");
+      if (b) b.outerHTML = _buildIdeaProjBadge(prevProj, id);
     }
     if (typeof showToast === "function") showToast(document.documentElement.lang === "en" ? "Error saving" : "Error al guardar");
   });
@@ -15927,6 +16130,7 @@ function renderProfProjects() {
   const grid = document.getElementById("profProjGrid");
   if (!grid) {
     if (typeof renderProjChips === "function") renderProjChips();
+    if (typeof renderIdeaProjChips === "function") renderIdeaProjChips();
     return;
   }
   const empty = document.getElementById("profProjEmpty");
@@ -16455,6 +16659,7 @@ async function loadIdeas() {
     try { await loadAssistants(); } catch (e) {}
   }
   renderIdeas();
+  if (typeof renderIdeaProjChips === "function") renderIdeaProjChips();
   // v0.14.26: aplicar tab persistido al entrar
   if (typeof applyIdeasTab === "function") applyIdeasTab();
 }
@@ -16799,7 +17004,17 @@ function renderIdeas() {
     return `<button type="button" class="ideas-rec${recorded ? " is-recorded" : ""}" onclick="event.stopPropagation();toggleIdeaRecorded('${idea.id}')" title="${recorded ? REC_ON : REC_OFF}">${icon}${recorded ? REC_ON : REC_OFF}</button>`;
   };
 
-  el.innerHTML = ideasCache.map(idea => {
+  // v0.16.16: filtro client-side por proyecto (solo afecta sub-tab Guardadas).
+  const _ideaFilter = (typeof _ideaFilterProjectId !== "undefined") ? _ideaFilterProjectId : null;
+  const ideasToRender = _ideaFilter ? ideasCache.filter(i => i.project_id === _ideaFilter) : ideasCache;
+  if (!ideasToRender.length && _ideaFilter) {
+    const noInProj = lang === "en" ? "No ideas in this project yet." : "Sin ideas en este proyecto todavía.";
+    el.innerHTML = `<div class="ideas-empty-editorial"><p style="color:var(--text-secondary);font-size:14px;padding:24px 0;text-align:center">${noInProj}</p></div>`;
+    _bindIdeaListDelegation();
+    return;
+  }
+
+  el.innerHTML = ideasToRender.map(idea => {
     const status = idea.status || "draft";
     const cat = (idea.category || "").toLowerCase();
     const catLabel = CATS[cat] || (idea.category ? String(idea.category).toUpperCase() : "");
@@ -16809,16 +17024,22 @@ function renderIdeas() {
     const raw = esc(idea.raw_text || "");
     const id = idea.id;
     const recChip = recChipFor(idea);
+    const _ideaProj = idea.project_id ? _scrProjectFromId(idea.project_id) : null;
+    const _ideaProjColor = _ideaProj && _ideaProj.color && /^#[0-9a-f]{6}$/i.test(_ideaProj.color) ? _ideaProj.color : null;
+    const _projBadge = _buildIdeaProjBadge(_ideaProj, id);
+    const _projStyle = _ideaProjColor ? ` style="--pc:${_ideaProjColor}"` : "";
+    const _projCls = _ideaProj ? " has-proj" : "";
 
     // v0.14.29: card scripted — pointer a Scripts + Teleprompter + Eliminar.
     if (status === "scripted") {
       return `
-      <article class="ideas-card is-scripted" data-id="${id}">
+      <article class="ideas-card is-scripted${_projCls}" id="idea-${id}" data-id="${id}"${_projStyle}>
         <div class="ideas-card-head">
           <span class="ideas-badge b-scripted">
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 5.3 L4 7.2 L8 2.8" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
             ${BADGE_SCRIPTED}
           </span>
+          ${_projBadge}
           ${catLabel ? `<span class="ideas-cat ${catClass}">${catLabel}</span>` : ""}
           ${recChip}
           <span class="ideas-card-title">${title}</span>
@@ -16848,9 +17069,10 @@ function renderIdeas() {
     const builtinSel = (val) => presetAsst === val ? " selected" : "";
     const cardCls = status === "developed" ? "is-developed" : "is-draft";
     return `
-    <article class="ideas-card ${cardCls}" data-id="${id}">
+    <article class="ideas-card ${cardCls}${_projCls}" id="idea-${id}" data-id="${id}"${_projStyle}>
       <div class="ideas-card-head">
         <span class="ideas-badge b-draft">${BADGE_DRAFT}</span>
+        ${_projBadge}
         ${catLabel ? `<span class="ideas-cat ${catClass}">${catLabel}</span>` : ""}
         ${recChip}
         <span class="ideas-card-title">${title}</span>
@@ -16870,6 +17092,7 @@ function renderIdeas() {
       </div>
     </article>`;
   }).join("");
+  _bindIdeaListDelegation();
 }
 
 async function ideaOpenScripted(ideaId) {
