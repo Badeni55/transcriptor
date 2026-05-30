@@ -112,8 +112,10 @@
       try {
         var k = "rs-theme";
         var p = localStorage.getItem(k);
-        // v0.14.12: 3-state theme — "light" | "dark" | "system" (default)
-        if (p !== "light" && p !== "dark" && p !== "system") p = "system";
+        // v0.14.12: 3-state theme — "light" | "dark" | "system".
+        // v0.16.x restyle: por defecto DARK premium (antes "system"). Respeta
+        // la elección explícita del usuario si ya guardó una.
+        if (p !== "light" && p !== "dark" && p !== "system") p = "dark";
         var resolved = p;
         if (p === "system") {
           resolved = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
@@ -337,23 +339,24 @@
       --info-fg:     #60a5fa;
       --info-border: rgba(59,130,246,.30);
 
-      /* ── SURFACES (dark default — v0.16.3 recalibradas: warm dark sin tinte azul) ── */
-      --surface-base:    #0a0a0c;
-      --surface-raised:  #1a1a1f;
-      --surface-overlay: #24242a;
-      --surface-sunken:  #050507;
+      /* ── SURFACES (dark premium — v0.16.x restyle: near-black neutro tipo
+         Linear/Vercel, jerarquía de elevación más marcada) ── */
+      --surface-base:    #08090b;
+      --surface-raised:  #121317;
+      --surface-overlay: #1b1d22;
+      --surface-sunken:  #050506;
 
-      /* ── TEXTO ── */
-      --text-primary:   #f1f3f7;
-      --text-secondary: #8b92a5;
-      --text-tertiary:  #9298a6;
-      --text-disabled:  #4b5161;
+      /* ── TEXTO (v0.16.x: blanco crisp + secundario más legible) ── */
+      --text-primary:   #f6f7f9;
+      --text-secondary: #9aa0ad;
+      --text-tertiary:  #6f7682;
+      --text-disabled:  #474d59;
       --text-inverse:   #07080b;
 
-      /* ── BORDES ── */
-      --border-subtle:  rgba(255,255,255,.06);
-      --border-default: rgba(255,255,255,.10);
-      --border-strong:  rgba(255,255,255,.18);
+      /* ── BORDES (v0.16.x: hairlines más finos, look premium) ── */
+      --border-subtle:  rgba(255,255,255,.05);
+      --border-default: rgba(255,255,255,.09);
+      --border-strong:  rgba(255,255,255,.16);
 
       /* ── SPACING (escala base 4px) ── */
       --space-0:  0;
@@ -383,12 +386,12 @@
       --radius-2xl:  24px;
       --radius-full: 9999px;
 
-      /* ── SHADOWS (v0.16.3: Stripe-fingerprint, apenas perceptibles) ── */
-      --shadow-sm:   0 1px 2px rgba(0,0,0,.04);
-      --shadow-md:   0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
-      --shadow-lg:   0 4px 16px rgba(0,0,0,.08), 0 16px 48px rgba(0,0,0,.06);
-      --shadow-xl:   0 8px 24px rgba(0,0,0,.10), 0 24px 64px rgba(0,0,0,.08);
-      --shadow-glow: 0 0 0 3px rgba(249,115,22,.15), 0 0 24px rgba(249,115,22,.08);
+      /* ── SHADOWS (v0.16.x premium: más profundidad sobre near-black) ── */
+      --shadow-sm:   0 1px 2px rgba(0,0,0,.30);
+      --shadow-md:   0 2px 6px rgba(0,0,0,.35), 0 6px 16px rgba(0,0,0,.25);
+      --shadow-lg:   0 8px 24px rgba(0,0,0,.45), 0 16px 48px rgba(0,0,0,.30);
+      --shadow-xl:   0 12px 32px rgba(0,0,0,.55), 0 28px 72px rgba(0,0,0,.40);
+      --shadow-glow: 0 0 0 1px color-mix(in srgb, var(--brand-500) 50%, transparent), 0 0 32px rgba(249,115,22,.20);
 
       /* ── TIPOGRAFÍA ── */
       --font-display: 'Instrument Serif', serif;
@@ -6334,6 +6337,58 @@
     }
     .comp-fillweek-btn:hover { background: var(--brand); color: #fff; border-color: var(--brand); }
     .comp-fillweek-btn:disabled { opacity: .6; cursor: default; }
+
+    /* ════════════════════════════════════════════════════════════════
+       v0.16.x RESTYLE PREMIUM — dark SaaS moderno (Linear/Vercel).
+       Bloque aditivo: realza el Radar sin reescribir las reglas base.
+       ════════════════════════════════════════════════════════════════ */
+    /* Profundidad del workspace: glow de marca arriba sobre near-black. */
+    #profilePage {
+      background:
+        radial-gradient(1100px 520px at 50% -8%, color-mix(in srgb, var(--brand-500) 11%, transparent), transparent 62%),
+        var(--surface-base);
+    }
+    /* Barra FOMO — borde con glow sutil + hairline interior. */
+    .radar-stats {
+      border-color: color-mix(in srgb, var(--brand-500) 22%, transparent);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    /* Tarjetas del feed — superficie elevada + hover con glow de marca. */
+    .comp-reel-card {
+      background: linear-gradient(180deg, color-mix(in srgb, #fff 3%, var(--surface-raised)), var(--surface-raised));
+      border-color: var(--border-subtle);
+      box-shadow: var(--shadow-md);
+    }
+    .comp-reel-card:hover {
+      transform: translateY(-3px);
+      border-color: color-mix(in srgb, var(--brand-500) 45%, transparent);
+      box-shadow: var(--shadow-lg), 0 0 0 1px color-mix(in srgb, var(--brand-500) 22%, transparent),
+                  0 14px 44px color-mix(in srgb, var(--brand-500) 13%, transparent);
+    }
+    /* "Hazlo mío" = acción estrella → relleno degradado, que destaque. */
+    .comp-reel-genscript-btn {
+      background: var(--grad2); color: #fff; border-color: transparent;
+      box-shadow: 0 2px 14px color-mix(in srgb, var(--brand-500) 32%, transparent);
+    }
+    .comp-reel-genscript-btn:hover:not(:disabled) {
+      background: var(--grad2); border-color: transparent; filter: brightness(1.08);
+    }
+    .comp-reel-genscript-caret {
+      background: color-mix(in srgb, var(--brand-700) 92%, #000); color: #fff; border-color: transparent;
+    }
+    /* Badge explosión mega — glow rojo neón. */
+    .comp-reel-explosion.is-mega { box-shadow: 0 0 18px rgba(255,45,85,.55), 0 1px 4px rgba(0,0,0,.45); }
+    /* Sort pill activa — glow de marca. */
+    .comp-sort-btn.on { box-shadow: 0 0 16px color-mix(in srgb, var(--brand-500) 35%, transparent); }
+    /* "Llena mi semana" — degradado de marca a juego con "Hazlo mío". */
+    .comp-fillweek-btn {
+      background: var(--grad2); color: #fff; border-color: transparent;
+      box-shadow: 0 2px 12px color-mix(in srgb, var(--brand-500) 28%, transparent);
+    }
+    .comp-fillweek-btn:hover { background: var(--grad2); color: #fff; border-color: transparent; filter: brightness(1.08); }
+    /* Nav lateral — item activo con acento lateral premium. */
+    .chrome-nav-item.on { box-shadow: inset 2px 0 0 var(--brand-500); }
+
     .comp-feed {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
