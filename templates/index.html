@@ -110,22 +110,31 @@
 
       if (path==='/auth/me') return Promise.resolve(J(ME));
       if (path==='/api/brands') return Promise.resolve(J({brands:BRANDS}));
-      // v0.18.x métricas: reels publicados vinculados a guiones + aprendizaje IA.
+      // v0.18.x métricas: dataset rico (reels reales) con números para stats,
+      // gráfico de barras y grid. Vínculo guión↔reel + aprendizaje IA.
       if (path==='/api/metrics/summary'){
         if (qs.brand==='b3') return Promise.resolve(J({connected:false}));
-        var pub=[
-          {cap:'Construí un agente que responde mis emails (en mi voz)',views:'94 K',likes:'7,2 K',dur:'0:39',from_guion:true,from_competitor:'@nick_saraev',perf:'2,4× tu media',thumb:thumb(0,'🤖')},
-          {cap:'El prompt de 9 palabras — mi versión',views:'61 K',likes:'4,8 K',dur:'0:36',from_guion:true,from_competitor:'@aiwithanna',perf:'sobre tu media',thumb:thumb(1,'💬')},
-          {cap:'Automaticé mi facturación en una tarde',views:'38 K',likes:'2,9 K',dur:'0:50',from_guion:true,from_competitor:'@marcbuilds',perf:'',thumb:thumb(2,'🧾')},
-          {cap:'Mi setup de creador 2026',views:'22 K',likes:'1,6 K',dur:'0:44',from_guion:false,from_competitor:'',perf:'',thumb:thumb(3,'🎬')}
+        var vids=[
+          {cap:'No todo es eficiencia; hay un coste humano que nadie calcula',views:637,likes:17,comments:0,dur:'4:59',date:'4/5',thumb:thumb(0,'🎙️'),from_guion:true,from_competitor:'@nick_saraev'},
+          {cap:'¿Crees que emprender será más fácil con la IA?',views:1100,likes:25,comments:0,dur:'0:47',date:'3/5',thumb:thumb(1,'🤔')},
+          {cap:'Si tu trabajo es escribir mails y hacer informes, eres un desperdicio',views:2000,likes:37,comments:0,dur:'0:36',date:'3/5',thumb:thumb(2,'📧'),from_guion:true,from_competitor:'@aiwithanna'},
+          {cap:'Guarda este vídeo para cuando viajes',views:4800,likes:92,comments:6,dur:'0:46',date:'2/5',thumb:thumb(3,'✈️'),top:true,viral:true},
+          {cap:'Deja de tener miedo a que la IA tome conciencia',views:1500,likes:37,comments:0,dur:'0:36',date:'2/5',thumb:thumb(4,'🧠')},
+          {cap:'Comenta CASO y te envío cómo automaticé esa empresa',views:1300,likes:30,comments:4,dur:'1:07',date:'23/4',thumb:thumb(5,'⚙️'),from_guion:true,from_competitor:'@marcbuilds'},
+          {cap:'Escribe EVENTO y vente al Entrenamiento Intensivo en IA',views:1800,likes:33,comments:10,dur:'1:24',date:'20/4',thumb:thumb(6,'🚀')},
+          {cap:'El FOMO puede estar destrozando más negocios que la falta de recursos',views:2000,likes:36,comments:0,dur:'0:17',date:'4/4',thumb:thumb(7,'🔥')},
+          {cap:'Cómo escribir 1 hora al día me cambió la vida',views:1100,likes:22,comments:1,dur:'0:33',date:'1/4',thumb:thumb(8,'✍️')},
+          {cap:'3 frases que cierran cualquier venta',views:760,likes:19,comments:2,dur:'0:41',date:'28/3',thumb:thumb(9,'🤝'),from_guion:true}
         ];
-        return Promise.resolve(J({connected:true, followers:'24,8 K', reels_published:18, from_reelscript:7,
+        return Promise.resolve(J({connected:true, account:'@davidautomatiza', analyses_left:'1/1', reels_count:vids.length,
+          from_reelscript:7,
+          top:{title:'Guarda este vídeo para cuando viajes', views:'4,8k'},
           learned:[
             'Tus hooks de "yo hice X y pasó Y" rinden 2,4× más que los de pregunta.',
             'Tus reels de menos de 40s retienen el doble — el sistema ya los prioriza.',
-            'Automatización concreta > productividad genérica en tu audiencia.'
+            'Automatización concreta gana a productividad genérica en tu audiencia.'
           ],
-          published:pub }));
+          videos:vids }));
       }
       // stats varían por marca para que el cambio de contexto se note.
       if (path==='/api/radar/stats'){
@@ -9465,27 +9474,65 @@
     .rs .ig-connect-h { font-size:28px; margin:0 0 12px; }
     .rs .ig-connect-p { font-size:15px; line-height:1.55; color:var(--text-secondary); margin:0 0 22px; }
     .rs .ig-connect-note { font-size:12px; color:var(--text-tertiary); margin:14px 0 0; }
-    .rs .met-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:18px; }
-    .rs .met-stat { padding:16px; border:1px solid var(--border-default); border-radius:14px; background:var(--surface-raised); text-align:center; }
-    .rs .met-n { font-family:var(--font-display); font-size:30px; line-height:1; margin-bottom:5px; }
-    .rs .met-l { font-size:12px; color:var(--text-tertiary); }
-    .rs .learn { padding:18px 20px; border:1px solid color-mix(in srgb, var(--brand-500) 28%, transparent); border-radius:16px; background:linear-gradient(135deg, color-mix(in srgb, var(--brand-500) 8%, var(--surface-raised)), var(--surface-raised)); margin-bottom:24px; }
+    /* cuenta + acciones */
+    .rs .met-acct { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+    .rs .met-acct-ig { display:inline-flex; align-items:center; gap:7px; font-weight:700; font-size:14px; }
+    .rs .met-acct-info { font-size:12.5px; color:var(--brand-400); font-weight:600; }
+    /* 5 stat cards con borde de color arriba */
+    .rs .met-cards { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:18px; }
+    .rs--mobile .met-cards { grid-template-columns:repeat(2,1fr); }
+    .rs .met-card { position:relative; padding:18px 14px 14px; border:1px solid var(--border-default); border-radius:14px; background:var(--surface-raised); text-align:center; overflow:hidden; }
+    .rs .met-card::before { content:""; position:absolute; top:0; left:0; right:0; height:3px; background:var(--c); }
+    .rs .met-card-n { font-family:var(--font-display); font-size:30px; line-height:1; margin-bottom:3px; }
+    .rs .met-card-sub { font-size:11px; color:var(--text-tertiary); margin-bottom:5px; }
+    .rs .met-card-l { font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-tertiary); font-weight:600; }
+    /* aprendizaje IA */
+    .rs .learn { padding:18px 20px; border:1px solid color-mix(in srgb, var(--brand-500) 28%, transparent); border-radius:16px; background:linear-gradient(135deg, color-mix(in srgb, var(--brand-500) 8%, var(--surface-raised)), var(--surface-raised)); margin-bottom:18px; }
     .rs .learn-head { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:700; margin-bottom:12px; }
     .rs .learn-head svg { color:var(--brand-400); }
     .rs .learn-list { display:flex; flex-direction:column; gap:9px; }
     .rs .learn-item { display:flex; gap:9px; align-items:flex-start; font-size:13.5px; line-height:1.45; color:var(--text-primary); }
     .rs .learn-item svg { color:var(--success-fg); flex-shrink:0; margin-top:2px; width:16px; height:16px; }
     .rs .learn-foot { margin-top:14px; padding-top:12px; border-top:1px solid var(--border-subtle); font-size:12.5px; color:var(--text-secondary); }
-    .rs .pub-list { display:grid; gap:12px; }
-    .rs--desktop .pub-list { grid-template-columns:1fr 1fr; }
-    .rs .pub-card { display:flex; gap:13px; padding:12px; border:1px solid var(--border-default); border-radius:14px; background:var(--surface-raised); }
-    .rs .pub-thumb { width:62px; height:92px; flex-shrink:0; }
-    .rs .pub-body { flex:1; min-width:0; display:flex; flex-direction:column; }
-    .rs .pub-cap { font-size:13.5px; font-weight:600; line-height:1.3; margin-bottom:7px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-    .rs .pub-metrics { display:flex; gap:11px; font-size:12px; color:var(--text-tertiary); align-items:center; flex-wrap:wrap; margin-bottom:6px; }
-    .rs .pub-metrics span { display:inline-flex; align-items:center; gap:4px; }
-    .rs .pub-perf { color:var(--success-fg); font-weight:700; }
-    .rs .pub-link { margin-top:auto; font-size:11.5px; color:var(--brand-400); display:inline-flex; align-items:center; gap:5px; }
+    /* top banner */
+    .rs .met-top { padding:13px 16px; border:1px solid var(--border-default); border-radius:12px; background:var(--surface-raised); font-size:13.5px; margin-bottom:18px; }
+    .rs .met-top b { color:var(--brand-500); }
+    /* gráfico de barras */
+    .rs .met-chart { padding:18px; border:1px solid var(--border-default); border-radius:16px; background:var(--surface-raised); margin-bottom:22px; }
+    .rs .met-chart-head { margin-bottom:14px; }
+    .rs .chips-sm { display:inline-flex; gap:6px; }
+    .rs .chip-sm { padding:5px 13px; border-radius:99px; border:1px solid var(--border-default); background:transparent; color:var(--text-secondary); font-size:12.5px; font-weight:600; cursor:pointer; font-family:var(--font-body); }
+    .rs .chip-sm.on { background:var(--brand-600); color:#fff; border-color:var(--brand-600); }
+    .rs .bars { position:relative; display:flex; flex-direction:column; gap:7px; padding-top:6px; }
+    .rs .bar-row { display:flex; align-items:center; gap:10px; position:relative; z-index:1; }
+    .rs .bar-lbl { width:170px; flex-shrink:0; font-size:11.5px; color:var(--text-tertiary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .rs--mobile .bar-lbl { width:90px; }
+    .rs .bar-track { flex:1; height:22px; background:var(--surface-sunken); border-radius:6px; overflow:hidden; }
+    .rs .bar-fill { height:100%; border-radius:6px; background:linear-gradient(90deg, var(--brand-700), var(--brand-500)); min-width:4px; }
+    .rs .bar-fill.is-top { background:linear-gradient(90deg, #ff7a3c, #ff2d55); }
+    .rs .bar-val { width:50px; flex-shrink:0; font-size:12px; font-weight:600; font-variant-numeric:tabular-nums; }
+    .rs .bar-line { position:absolute; top:0; bottom:0; width:0; border-left:1px dashed; z-index:2; pointer-events:none; }
+    .rs .bar-line.media { border-color:var(--brand-400); left:calc(180px + (100% - 230px) * 0); }
+    .rs .bar-line.mediana { border-color:#fbbf24; }
+    .rs .bar-line span { position:absolute; top:-4px; left:4px; font-size:9px; white-space:nowrap; color:inherit; opacity:.85; }
+    .rs .bar-line.media span { color:var(--brand-400); }
+    .rs .bar-line.mediana span { color:#fbbf24; }
+    /* grid de reels publicados */
+    .rs .vid-grid { display:grid; gap:14px; grid-template-columns:repeat(2,1fr); }
+    .rs--desktop .vid-grid { grid-template-columns:repeat(4,1fr); }
+    .rs--mobile .vid-grid { grid-template-columns:1fr; }
+    .rs .vid-card { border:1px solid var(--border-default); border-radius:14px; background:var(--surface-raised); overflow:hidden; display:flex; flex-direction:column; }
+    .rs .vid-thumb { width:100%; aspect-ratio:1/1; border-radius:0; border:none; }
+    .rs .vid-badges { position:absolute; top:8px; left:8px; display:flex; gap:5px; z-index:2; }
+    .rs .vid-badge { font-size:9.5px; font-weight:800; letter-spacing:.05em; padding:3px 7px; border-radius:6px; }
+    .rs .vid-badge.top { background:var(--brand-600); color:#fff; }
+    .rs .vid-badge.viral { background:#ff2d55; color:#fff; }
+    .rs .vid-body { padding:12px; display:flex; flex-direction:column; flex:1; }
+    .rs .vid-cap { font-size:13px; font-weight:600; line-height:1.32; margin-bottom:8px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .rs .vid-metrics { display:flex; gap:10px; font-size:12px; color:var(--text-tertiary); align-items:center; flex-wrap:wrap; margin-bottom:5px; }
+    .rs .vid-metrics span { display:inline-flex; align-items:center; gap:4px; font-variant-numeric:tabular-nums; }
+    .rs .vid-date { font-size:11px; color:var(--text-tertiary); margin-bottom:6px; }
+    .rs .pub-link { margin-top:auto; font-size:11px; color:var(--brand-400); display:inline-flex; align-items:center; gap:5px; }
     .rs .pub-link svg { width:13px; height:13px; }
 
     /* ══ takeover demo: la isla ocupa todo el workspace y oculta la chrome vieja ══ */
@@ -22777,6 +22824,6 @@ async function removeCompetitor(trackingId, username) {
 
 <!-- v0.17.x RADAR LOOP — motor multi-marca. Módulo en /static/js/radar-loop.js
      (editable sin tocar el monolito). Monta dentro de #radarRoot. -->
-<script src="/static/js/radar-loop.js?v=21"></script>
+<script src="/static/js/radar-loop.js?v=22"></script>
 </body>
 </html>

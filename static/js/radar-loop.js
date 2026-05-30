@@ -32,7 +32,8 @@
     bulb:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M9 18h6M10 21h4M12 3a6 6 0 00-4 10.5c.6.6 1 1.3 1 2.1V16h6v-.4c0-.8.4-1.5 1-2.1A6 6 0 0012 3z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>',
     chart:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M4 19h16M7 16v-5M12 16V8M17 16v-3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
     ig:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3.6" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="7" r="1.1" fill="currentColor"/></svg>',
-    brain:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M9 4a3 3 0 00-3 3 3 3 0 00-1 5.8A2.5 2.5 0 007 17a3 3 0 005 1 3 3 0 005-1 2.5 2.5 0 002-4.2A3 3 0 0015 4a2.5 2.5 0 00-6 0z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+    brain:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M9 4a3 3 0 00-3 3 3 3 0 00-1 5.8A2.5 2.5 0 007 17a3 3 0 005 1 3 3 0 005-1 2.5 2.5 0 002-4.2A3 3 0 0015 4a2.5 2.5 0 00-6 0z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
+    chat:'<svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M21 12a8 8 0 01-11.5 7.2L4 20l.9-5.2A8 8 0 1121 12z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>'
   };
 
   var GEN_STEPS = {
@@ -53,7 +54,7 @@
     brands:[], brandId:null,
     reels:[], favs:{}, filter:"explosion", feedExpanded:false,
     ideas:[], guiones:[], activeGuionId:null, guiFilter:"all", _fillGuionIds:[],
-    igConnected:false, metrics:null,
+    igConnected:false, metrics:null, metricSort:"recent", metricChart:"views",
     tab:"dashboard",                    // dashboard | ideas | guiones
     view:"feed",                        // feed(overlay off) | gen | script | result | prompter | fillweek
     reel:null, genKind:"script", resultKind:"hooks", done:{},
@@ -371,33 +372,80 @@
       '</div>'+
     '</div></div>';
   }
+  function fmtK(n){ n=Number(n||0); if(n>=1000){ var v=n/1000; return (v>=10?Math.round(v):v.toFixed(1).replace(/\.0$/,"")).toString().replace(".",",")+"k"; } return String(n); }
+  function _mean(a){ if(!a.length) return 0; return Math.round(a.reduce(function(s,x){return s+x;},0)/a.length); }
+  function _median(a){ if(!a.length) return 0; var b=a.slice().sort(function(x,y){return x-y;}); var n=b.length; return n%2?b[(n-1)/2]:Math.round((b[n/2-1]+b[n/2])/2); }
+  function metricVideos(){ return (S.metrics&&S.metrics.videos)||[]; }
+  function sortedVideos(){
+    var v=metricVideos().slice(), s=S.metricSort||"recent";
+    if(s==="views") v.sort(function(a,b){return (b.views||0)-(a.views||0);});
+    else if(s==="likes") v.sort(function(a,b){return (b.likes||0)-(a.likes||0);});
+    else if(s==="comments") v.sort(function(a,b){return (b.comments||0)-(a.comments||0);});
+    return v;
+  }
+  function metricStatsHTML(){
+    var v=metricVideos(); var views=v.map(function(x){return x.views||0;}), likes=v.map(function(x){return x.likes||0;}), comments=v.map(function(x){return x.comments||0;});
+    var totalV=views.reduce(function(s,x){return s+x;},0), totalL=likes.reduce(function(s,x){return s+x;},0), totalC=comments.reduce(function(s,x){return s+x;},0);
+    var eng = totalV>0 ? ((totalL+totalC)/totalV*100) : 0;
+    var cards=[
+      [fmtK(_mean(views)), "MEDIA VIEWS", fmtK(totalV)+" total", "var(--brand-500)"],
+      [fmtK(_median(views)), "MEDIANA VIEWS", "", "#fbbf24"],
+      [String(totalL), "TOTAL LIKES", "", "#ff2d55"],
+      [String(totalC), "TOTAL COMENTARIOS", "", "#3b82f6"],
+      [eng.toFixed(1).replace(".",",")+"%", "ENGAGEMENT", "", "#22c55e"]
+    ];
+    return '<div class="met-cards">'+cards.map(function(c){ return '<div class="met-card" style="--c:'+c[3]+'"><div class="met-card-n">'+ESC(c[0])+'</div>'+(c[2]?'<div class="met-card-sub">'+ESC(c[2])+'</div>':'')+'<div class="met-card-l">'+c[1]+'</div></div>'; }).join("")+'</div>';
+  }
+  function metricChartHTML(){
+    var v=metricVideos(), metric=S.metricChart||"views";
+    var vals=v.map(function(x){return x[metric]||0;}); var max=Math.max.apply(null,vals.concat([1]));
+    var md=_mean(vals), mdn=_median(vals);
+    var tabs=[["views","Views"],["likes","Likes"],["comments","Comments"]].map(function(t){ return '<button class="chip-sm'+(metric===t[0]?" on":"")+'" data-act="metric-chart" data-k="'+t[0]+'">'+t[1]+'</button>'; }).join("");
+    var rows=v.slice(0,10).map(function(x){
+      var val=x[metric]||0, pct=Math.max(2,Math.round(val/max*100));
+      var lbl=((x.date||"")+" "+(x.cap||"")).slice(0,22);
+      return '<div class="bar-row"><div class="bar-lbl">'+ESC(lbl)+'</div><div class="bar-track"><div class="bar-fill'+(x.top?" is-top":"")+'" style="width:'+pct+'%"></div></div><div class="bar-val">'+fmtK(val)+'</div></div>';
+    }).join("");
+    var medPct=Math.round(md/max*100), mdnPct=Math.round(mdn/max*100);
+    // Alinear el marcador con el ÁREA de barras (track empieza tras el label 180px y deja 60px de valor a la derecha).
+    function lpos(p){ return 'calc(180px + (100% - 240px) * '+(p/100)+')'; }
+    var lines='<div class="bar-line media" style="left:'+lpos(medPct)+'"><span>Media '+fmtK(md)+'</span></div><div class="bar-line mediana" style="left:'+lpos(mdnPct)+'"><span>Mediana '+fmtK(mdn)+'</span></div>';
+    return '<div class="met-chart"><div class="met-chart-head"><div class="chips-sm">'+tabs+'</div></div><div class="bars">'+lines+rows+'</div></div>';
+  }
+  function metricGridHTML(){
+    var v=sortedVideos();
+    var sortTabs=[["recent","Recientes"],["views","Vistas"],["likes","Likes"],["comments","Comentarios"]].map(function(t){ return '<button class="fchip'+((S.metricSort||"recent")===t[0]?" on":"")+'" data-act="metric-sort" data-k="'+t[0]+'">'+t[1]+'</button>'; }).join("");
+    var cards=v.map(function(x){
+      var thumbInner=x.thumb?'<img src="'+ESC(x.thumb)+'" alt="">':'<div class="play"></div>';
+      var badges=(x.top?'<span class="vid-badge top">TOP</span>':"")+(x.viral?'<span class="vid-badge viral">VIRAL</span>':"");
+      var link=x.from_guion?'<div class="pub-link">'+IC.doc+' creado aquí'+(x.from_competitor?' · '+ESC(x.from_competitor):"")+'</div>':"";
+      return '<div class="vid-card"><div class="vid-thumb thumb">'+thumbInner+'<span class="dur">'+ESC(x.dur||"0:30")+'</span>'+(badges?'<div class="vid-badges">'+badges+'</div>':"")+'</div>'+
+        '<div class="vid-body"><div class="vid-cap">'+ESC(x.cap)+'</div>'+
+        '<div class="vid-metrics"><span>'+IC.eye+' '+fmtK(x.views)+'</span><span>'+IC.heart+' '+fmtK(x.likes)+'</span><span>'+IC.chat+' '+(x.comments||0)+'</span></div>'+
+        '<div class="vid-date">'+ESC(x.date||"")+'</div>'+link+'</div></div>';
+    }).join("");
+    return '<div class="more-head" style="margin-top:8px"><span class="more-title">Tus reels publicados</span><div class="filters">'+sortTabs+'</div></div><div class="vid-grid">'+cards+'</div>';
+  }
   function metricsHTML(){
     if(!S.igConnected) return connectIgHTML();
-    var m=S.metrics||{followers:"—",reels_published:0,learned:[],published:[]};
+    var m=S.metrics||{}; var b=brand();
     var learned=(m.learned||[]).map(function(l){ return '<div class="learn-item">'+IC.check+'<span>'+ESC(l)+'</span></div>'; }).join("");
-    var pub=(m.published||[]).map(function(p){
-      var thumbInner=p.thumb?'<img src="'+ESC(p.thumb)+'" alt="">':'<div class="play"></div>';
-      var link=p.from_guion?'<div class="pub-link">'+IC.doc+' de tu guión'+(p.from_competitor?' · robado de '+ESC(p.from_competitor):'')+'</div>':'';
-      var perf=p.perf||"";
-      return '<div class="pub-card"><div class="pub-thumb thumb">'+thumbInner+'<span class="dur">'+ESC(p.dur||"0:30")+'</span></div>'+
-        '<div class="pub-body"><div class="pub-cap">'+ESC(p.cap)+'</div>'+
-        '<div class="pub-metrics"><span>'+IC.eye+' '+ESC(p.views)+'</span><span>'+IC.heart+' '+ESC(p.likes)+'</span>'+(perf?'<span class="pub-perf">'+ESC(perf)+'</span>':'')+'</div>'+link+'</div></div>';
-    }).join("");
-    var b=brand();
+    var top=m.top?('<div class="met-top">🏆 <b>Top:</b> '+ESC(m.top.title)+' — '+ESC(m.top.views)+' views ↗</div>'):"";
+    var hasVideos=metricVideos().length>0;
     return '<div class="scroll"><div class="pad">'+
-      '<div class="ideas-head"><h1 class="greet" style="font-size:30px;margin:0 0 6px">Tus métricas</h1>'+
-      '<p class="line" style="margin:0 0 18px">@'+ESC(b.handle||"tu_cuenta")+' · lo que publicas alimenta lo que el sistema crea para ti.</p></div>'+
-      '<div class="met-summary">'+
-        '<div class="met-stat"><div class="met-n">'+ESC(m.followers)+'</div><div class="met-l">seguidores</div></div>'+
-        '<div class="met-stat"><div class="met-n">'+ESC(String(m.reels_published))+'</div><div class="met-l">reels publicados</div></div>'+
-        '<div class="met-stat"><div class="met-n" style="color:var(--brand-500)">'+ESC(m.from_reelscript!=null?String(m.from_reelscript):"0")+'</div><div class="met-l">creados aquí</div></div>'+
-      '</div>'+
+      '<div class="ideas-head"><h1 class="greet" style="font-size:30px;margin:0 0 6px">Métricas</h1>'+
+      '<p class="line" style="margin:0 0 16px">Tus reels al detalle — y lo que el sistema aprende de ellos para crear mejor.</p></div>'+
+      '<div class="met-acct"><span class="met-acct-ig">'+IC.ig+' @'+ESC(b.handle||"tu_cuenta")+'</span>'+
+        '<button class="btn btn-sm btn-primary" data-act="metric-refresh">Actualizar reels</button>'+
+        '<span class="met-acct-info">'+ESC(m.analyses_left||"1/1")+' análisis restantes esta semana</span>'+
+        '<span style="flex:1"></span><button class="btn btn-sm btn-ghost" data-act="ig-disconnect">Desvincular</button></div>'+
+      (hasVideos?metricStatsHTML():"")+
       '<div class="learn"><div class="learn-head">'+IC.brain+'<span>Lo que el sistema aprendió de ti</span></div>'+
         '<div class="learn-list">'+(learned||'<div class="learn-item" style="opacity:.6">Publica un par de reels creados aquí y empezaré a ver patrones.</div>')+'</div>'+
-        '<div class="learn-foot">Esto ya está afinando tu voz (al '+(b.voice||40)+'%) y reordenando tus oportunidades del Dashboard.</div>'+
+        '<div class="learn-foot">Esto afina tu voz (al '+(b.voice||40)+'%) y reordena tus oportunidades del Dashboard. El círculo se cierra.</div>'+
       '</div>'+
-      '<div class="more-title" style="margin:8px 0 14px">Tus reels publicados</div>'+
-      (pub?'<div class="pub-list">'+pub+'</div>':'<div class="rs-empty">Aún no hay reels publicados vinculados. Graba un guión y márcalo como publicado.</div>')+
+      top+
+      (hasVideos?(metricChartHTML()+metricGridHTML()):'<div class="rs-empty">Pulsa “Actualizar reels” para traer tus métricas.</div>')+
     '</div></div>';
   }
 
@@ -582,6 +630,10 @@
     if(act==="close-feed"){ clearInterval(S.genStepTimer); clearTimeout(S.fillTimer); S.view="feed"; S._fillPhase=null; return render(); }
     if(act==="tp-back"){ if(S.tab==="guiones"){ S.view="feed"; } else { S.view=(S.reel&&S.reel.script&&Object.keys(S.done).length)?"script":(S.reel&&S.reel.script?"script":"feed"); } return render(); }
     if(act==="ig-connect"){ S.igConnected=true; bumpEco(0,0); render(); return showToast("Instagram conectado. El sistema empezará a aprender de lo que publicas."); }
+    if(act==="ig-disconnect"){ S.igConnected=false; render(); return showToast("Instagram desvinculado."); }
+    if(act==="metric-sort"){ S.metricSort=k; return render(); }
+    if(act==="metric-chart"){ S.metricChart=k; return render(); }
+    if(act==="metric-refresh"){ render(); return showToast("Métricas actualizadas."); }
     if(act==="fw-guiones"){ S.view="feed"; S._fillPhase=null; S.tab="guiones"; S.guiFilter="all"; return render(); }
     if(act==="fw-record"){ var fid=S._fillGuionIds&&S._fillGuionIds[0]; var g0=fid?guionById(fid):null; if(g0){ S.activeGuionId=g0.id; S.reel={creator:{handle:(g0.from||"").replace("@","")},script:{hook:g0.hook,beats:g0.beats,close:g0.close}}; S.view="prompter"; render(); } return; }
     if(act==="gui-filter"){ S.guiFilter=k; return render(); }
