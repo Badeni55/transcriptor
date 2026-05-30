@@ -6164,6 +6164,33 @@
     .comp-chip:hover .comp-chip-remove { opacity: 1; }
     .comp-chip-remove:hover { color: var(--danger-fg); }
     .comp-chip.is-all .comp-chip-remove { display: none; }
+    /* v0.16.x Radar — barra de estado FOMO sobre el feed de competidores. */
+    .radar-stats {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px;
+      padding: 12px 16px;
+      margin-bottom: var(--space-md);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--surf);
+      background: linear-gradient(135deg, color-mix(in srgb, var(--brand) 8%, var(--surf)), var(--surf));
+      font-size: var(--text-sm);
+      color: var(--text2);
+    }
+    .radar-stat { display: inline-flex; align-items: baseline; gap: 5px; }
+    .radar-stat-num { font-weight: 700; font-size: 1.05rem; color: var(--text); font-family: var(--font-display, var(--font-body)); }
+    .radar-stat.is-hot .radar-stat-num { color: var(--brand); }
+    .radar-stat-cta { margin-left: auto; font-weight: 600; color: var(--brand); }
+    /* Badge de explosión sobre el thumbnail del reel. */
+    .comp-reel-explosion {
+      position: absolute; top: 8px; left: 8px; z-index: 2;
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 3px 8px; border-radius: 999px;
+      background: rgba(0,0,0,.72); color: #fff;
+      font-size: .72rem; font-weight: 700; line-height: 1;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    }
+    .comp-reel-explosion.is-mega { background: linear-gradient(135deg, #ff5e3a, #ff2d55); }
     .comp-sort-bar {
       display: flex; gap: 4px;
       margin-bottom: var(--space-md);
@@ -9534,7 +9561,12 @@
 
       <!-- NAV (Tabler Icons inline, stroke 1.5, currentColor) -->
       <nav class="chrome-nav" id="profSidebarNav">
-        <button class="chrome-nav-item on" onclick="profTab('overview')">
+        <!-- v0.16.x Radar: home/pilar. Espía a la competencia → "Hazlo mío". -->
+        <button class="chrome-nav-item on" onclick="profTab('radar')">
+          <svg class="chrome-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M0 0h24v24H0z" stroke="none"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="10"/></svg>
+          <span data-i18n-es="Radar" data-i18n-en="Radar">Radar</span>
+        </button>
+        <button class="chrome-nav-item" onclick="profTab('overview')">
           <svg class="chrome-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M0 0h24v24H0z" stroke="none"/><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
           <span data-i18n="prof.overview">Dashboard</span>
         </button>
@@ -10399,12 +10431,15 @@
 
         <!-- v0.15.3: panel Competidores. Chips de cada creator activo + sort + feed unificado. -->
         <div id="ideasPanelCompetitors" style="display:none">
+          <!-- v0.16.x Radar: barra de estado FOMO. JS la rellena desde /api/radar/stats. -->
+          <div id="radarStats" class="radar-stats" style="display:none"></div>
           <div class="comp-toolbar">
             <div class="comp-chips" id="compChips"></div>
             <button class="comp-add-btn empty-cta" onclick="openAddCompetitorModal()" style="margin:0;padding:10px 16px;font-size:.85rem" data-i18n="comp.add">+ Añadir</button>
           </div>
           <div class="comp-sort-bar" id="compSortBar">
-            <button class="comp-sort-btn on" data-sort="recent" onclick="compSetSort('recent')" data-i18n="comp.sort_recent">Recientes</button>
+            <button class="comp-sort-btn on" data-sort="explosion" onclick="compSetSort('explosion')" data-i18n="comp.sort_explosion">🔥 Explotando</button>
+            <button class="comp-sort-btn" data-sort="recent" onclick="compSetSort('recent')" data-i18n="comp.sort_recent">Recientes</button>
             <button class="comp-sort-btn" data-sort="views" onclick="compSetSort('views')" data-i18n="comp.sort_views">Más vistos</button>
             <button class="comp-sort-btn" data-sort="likes" onclick="compSetSort('likes')" data-i18n="comp.sort_likes">Más likes</button>
           </div>
@@ -10578,7 +10613,7 @@
   <div class="prof-bottom-bar-inner">
     <button class="prof-bottom-tab" onclick="profTabMobile('adapt')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><path d="M8 1 L9 5 L13 6 L9 7 L8 11 L7 7 L3 6 L7 5 Z" fill="currentColor"/><circle cx="13" cy="13" r="1.2" fill="currentColor" opacity=".5"/><circle cx="3" cy="2" r="1" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.adapt">Hazlo tuyo</span></button>
     <button class="prof-bottom-tab" onclick="profTabMobile('ideas')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="3" y="1" width="10" height="2" fill="currentColor"/><rect x="2" y="3" width="12" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="6" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="9" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.ideas">Ideas</span></button>
-    <button class="prof-bottom-tab prof-bottom-tab--featured on" onclick="profTabMobile('overview')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="1" y="1" width="6" height="6" fill="currentColor"/><rect x="9" y="1" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="1" y="9" width="6" height="6" fill="currentColor" opacity=".5"/><rect x="9" y="9" width="6" height="6" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.overview">Dashboard</span></button>
+    <button class="prof-bottom-tab prof-bottom-tab--featured on" onclick="profTabMobile('radar')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="10"/></svg><span data-i18n-es="Radar" data-i18n-en="Radar">Radar</span></button>
     <button class="prof-bottom-tab" onclick="profTabMobile('transc')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.transcriptions">Transcribir</span></button>
     <button class="prof-bottom-tab" onclick="openProfMoreSheet()"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="7" width="3" height="3" fill="currentColor"/><rect x="7" y="7" width="3" height="3" fill="currentColor"/><rect x="12" y="7" width="3" height="3" fill="currentColor"/></svg><span data-i18n-es="Más" data-i18n-en="More">Más</span></button>
   </div>
@@ -11071,14 +11106,20 @@ const LANGS = {
     // v0.15.3: tab Competidores en Ideas.
     "ideas.tab_competitors": "Competidores",
     "comp.add": "+ Añadir",
+    "comp.sort_explosion": "🔥 Explotando",
     "comp.sort_recent": "Recientes",
     "comp.sort_views": "Más vistos",
     "comp.sort_likes": "Más likes",
+    "radar.badge_suffix": "su media",
+    "radar.stat_reels_week": "reels esta semana",
+    "radar.stat_exploded": "explotaron",
+    "radar.stat_stolen_zero": "Aún no has robado ninguno 👀",
+    "radar.stat_stolen": "robados por ti",
     "comp.add_modal_title": "Añadir competidor",
     "comp.add_modal_sub": "Sigue a un creador para ver sus reels más recientes.",
     "comp.add_modal_btn": "Añadir",
     // v0.15.5: motor guion-desde-reel-competidor.
-    "comp.gen_script": "📝 Generar guion",
+    "comp.gen_script": "✨ Hazlo mío",
     "comp.gen_script_loading": "Generando…",
     "comp.gen_script_analyzing": "Analizando reel… ~1 min",
     "comp.gen_script_done": "✓ Guion creado",
@@ -11567,14 +11608,20 @@ const LANGS = {
     // v0.15.3: Competitors tab in Ideas.
     "ideas.tab_competitors": "Competitors",
     "comp.add": "+ Add",
+    "comp.sort_explosion": "🔥 Exploding",
     "comp.sort_recent": "Recent",
     "comp.sort_views": "Most viewed",
     "comp.sort_likes": "Most liked",
+    "radar.badge_suffix": "their avg",
+    "radar.stat_reels_week": "reels this week",
+    "radar.stat_exploded": "exploded",
+    "radar.stat_stolen_zero": "You haven't stolen any yet 👀",
+    "radar.stat_stolen": "stolen by you",
     "comp.add_modal_title": "Add competitor",
     "comp.add_modal_sub": "Follow a creator to see their recent reels.",
     "comp.add_modal_btn": "Add",
     // v0.15.5: script-from-competitor engine.
-    "comp.gen_script": "📝 Generate script",
+    "comp.gen_script": "✨ Make it mine",
     "comp.gen_script_loading": "Generating…",
     "comp.gen_script_analyzing": "Analyzing reel… ~1 min",
     "comp.gen_script_done": "✓ Script created",
@@ -13160,8 +13207,9 @@ function renderProfileHub() {
   if (isAgency) loadTeamMembers();
   renderProfTransc();
 
-  // Default to overview
-  profTab("overview");
+  // v0.16.x Radar: la home pasa a ser el Radar (espía competencia → "Hazlo mío"),
+  // el pilar que incita a consumir créditos. Dashboard sigue a un click en la nav.
+  profTab("radar");
 }
 
 function closeProfile() {
@@ -14109,12 +14157,12 @@ const PROF_SECTION_MAP = {
   overview: "overview", scripts: "scripts", transcriptions: "transc",
   projects: "projects", assistants: "assistants", metrics: "metrics",
   ideas: "ideas", team: "team", privacy: "privacy", settings: "settings",
-  adapt: "adapt"
+  adapt: "adapt", radar: "radar"  // v0.16.x: home Radar (deep-link /profile/radar)
 };
 const PROF_TAB_TO_SLUG = Object.fromEntries(Object.entries(PROF_SECTION_MAP).map(([k, v]) => [v, k]));
 const PROF_TITLES = {
-  es: { overview: "Perfil", scripts: "Scripts", transc: "Transcripciones", projects: "Proyectos", assistants: "Asistentes", metrics: "Métricas", ideas: "Ideas", team: "Equipo", privacy: "Privacidad", settings: "Configuración", adapt: "Hazlo tuyo" },
-  en: { overview: "Profile", scripts: "Scripts", transc: "Transcriptions", projects: "Projects", assistants: "Assistants", metrics: "Metrics", ideas: "Ideas", team: "Team", privacy: "Privacy", settings: "Settings", adapt: "Make it yours" },
+  es: { overview: "Perfil", radar: "Radar", scripts: "Scripts", transc: "Transcripciones", projects: "Proyectos", assistants: "Asistentes", metrics: "Métricas", ideas: "Ideas", team: "Equipo", privacy: "Privacidad", settings: "Configuración", adapt: "Hazlo tuyo" },
+  en: { overview: "Profile", radar: "Radar", scripts: "Scripts", transc: "Transcriptions", projects: "Projects", assistants: "Assistants", metrics: "Metrics", ideas: "Ideas", team: "Team", privacy: "Privacy", settings: "Settings", adapt: "Make it yours" },
 };
 
 // v0.14.32: ovGreetingName / ovRenderGreeting eliminados (Dashboard header sin greeting).
@@ -14410,6 +14458,9 @@ function renderDashMetrics(m, transcribedCount) {
 function profTab(tab, pushHistory) {
   if (pushHistory === undefined) pushHistory = true;
 
+  // v0.16.x Radar: tab original (pre-alias) para highlight de nav, slug y título.
+  const requestedTab = tab;
+
   // v0.14.39: aliasing de slugs obsoletos (paneles eliminados → host + tab interno).
   // v0.14.42 deuda: limpiar PROFILE_SECTIONS backend tras transition period.
   let _pendingScriptsTab = null;
@@ -14418,6 +14469,8 @@ function profTab(tab, pushHistory) {
   if (tab === "projects") { tab = "scripts";  _pendingScriptsTab  = "list"; }
   if (tab === "team")     { tab = "settings"; _pendingSettingsTab = "team"; }
   if (tab === "privacy")  { tab = "settings"; _pendingSettingsTab = "privacy"; }
+  // v0.16.x Radar: la home "Radar" = panel Ideas forzado al sub-tab Competidores.
+  if (tab === "radar")    { tab = "ideas";    window._forceIdeasTab = "competitors"; }
 
   try {
     if (tab && tab !== "overview" && st.user) {
@@ -14469,7 +14522,8 @@ function profTab(tab, pushHistory) {
     btn.classList.remove("on-scripts");
     btn.classList.remove("on-settings");
   });
-  const navBtn = document.querySelector(`.chrome-nav-item[onclick="profTab('${tab}')"]`);
+  const _navSelTab = (requestedTab === "radar") ? "radar" : tab;
+  const navBtn = document.querySelector(`.chrome-nav-item[onclick="profTab('${_navSelTab}')"]`);
   if (navBtn) {
     navBtn.classList.add("on");
     if (tab === "ideas") navBtn.classList.add("on-ideas");
@@ -14503,7 +14557,7 @@ function profTab(tab, pushHistory) {
 
   // Update bottom bar active state
   document.querySelectorAll(".prof-bottom-tab").forEach(btn => btn.classList.remove("on"));
-  const bottomBtn = document.querySelector(`.prof-bottom-tab[onclick="profTabMobile('${tab}')"]`);
+  const bottomBtn = document.querySelector(`.prof-bottom-tab[onclick="profTabMobile('${_navSelTab}')"]`);
   if (bottomBtn) bottomBtn.classList.add("on");
   // v0.14.31.d: tabs que viven en el sheet "Más" → iluminar el botón "Más" como feedback.
   // v0.14.39: limpiado (proyectos, team, privacy removidos; viven en tabs internos).
@@ -14515,14 +14569,15 @@ function profTab(tab, pushHistory) {
 
   // pushState + title
   if (pushHistory) {
-    const slug = PROF_TAB_TO_SLUG[tab] || tab;
+    const slug = (requestedTab === "radar") ? "radar" : (PROF_TAB_TO_SLUG[tab] || tab);
     const url = "/profile" + (slug === "overview" ? "" : "/" + slug);
     if (location.pathname !== url) {
-      history.pushState({ profTab: tab }, "", url);
+      history.pushState({ profTab: requestedTab }, "", url);
     }
   }
   const lang = document.documentElement.lang || "es";
-  document.title = ((PROF_TITLES[lang] || PROF_TITLES.es)[tab] || "Perfil") + " · ReelScript";
+  const _titleTab = (requestedTab === "radar") ? "radar" : tab;
+  document.title = ((PROF_TITLES[lang] || PROF_TITLES.es)[_titleTab] || "Perfil") + " · ReelScript";
 }
 
 function profTabMobile(tab) { profTab(tab, true); }
@@ -16668,6 +16723,14 @@ async function loadIdeas() {
 window._suggestionsCache = window._suggestionsCache || [];
 
 function applyIdeasTab() {
+  // v0.16.x Radar: si venimos de la home "Radar", forzar el sub-tab Competidores
+  // (bypassa el clamp a suggested/saved). Se consume una sola vez.
+  if (window._forceIdeasTab) {
+    const forced = window._forceIdeasTab;
+    window._forceIdeasTab = null;
+    ideasTab(forced, /*persist*/ false);
+    return;
+  }
   let last = "suggested";
   try { last = localStorage.getItem("lastIdeasTab") || "suggested"; } catch (e) {}
   if (last !== "suggested" && last !== "saved") last = "suggested";
@@ -20882,13 +20945,41 @@ window.addEventListener("DOMContentLoaded", () => {
 // ── v0.15.3: Tab Competidores ───────────────────────────────────────────────
 // Estado local: filtro por creator_id (null = "Todos") + sort.
 window._compFilterCreatorId = null;
-window._compSort = "recent";
+window._compSort = "explosion";  // v0.16.x Radar: por defecto ordena por explosión.
 window._compTrackedCache = null;  // cache de tracked-creators del último load
 // v0.15.6: estado de favoritos (excluyente con _compFilterCreatorId).
 window._compShowFavorites = false;
 window._compFavSet = new Set();  // reel_ids del user (repoblado tras cada feed load)
 
+// v0.16.x Radar: barra de estado FOMO sobre el feed. Fire-and-forget; se
+// auto-oculta si el plan no tiene la feature o no hay competidores.
+async function loadRadarStats() {
+  const host = document.getElementById("radarStats");
+  if (!host) return;
+  try {
+    const r = await fetch("/api/radar/stats", { credentials: "same-origin" });
+    if (!r.ok) { host.style.display = "none"; return; }
+    const d = await r.json();
+    if (!d.enabled || !d.competitors) { host.style.display = "none"; return; }
+    const lang = (document.documentElement.lang || "es").toLowerCase();
+    const es = lang === "es";
+    const stolen = Number(d.stolen_total || 0);
+    const stolenTxt = stolen === 0
+      ? `<span class="radar-stat-cta">${esc(t("radar.stat_stolen_zero") || (es ? "Aún no has robado ninguno 👀" : "You haven't stolen any yet 👀"))}</span>`
+      : `<span class="radar-stat"><span class="radar-stat-num">${stolen}</span> ${esc(t("radar.stat_stolen") || (es ? "robados por ti" : "stolen by you"))}</span>`;
+    host.innerHTML = `
+      <span class="radar-stat"><span class="radar-stat-num">${Number(d.competitors||0)}</span> ${esc(es ? "competidores" : "competitors")}</span>
+      <span class="radar-stat"><span class="radar-stat-num">${Number(d.reels_week||0)}</span> ${esc(t("radar.stat_reels_week") || (es ? "reels esta semana" : "reels this week"))}</span>
+      <span class="radar-stat${d.exploded_week ? " is-hot" : ""}"><span class="radar-stat-num">${d.exploded_week ? "🔥 " : ""}${Number(d.exploded_week||0)}</span> ${esc(t("radar.stat_exploded") || (es ? "explotaron" : "exploded"))}</span>
+      ${stolenTxt}`;
+    host.style.display = "";
+  } catch (e) {
+    host.style.display = "none";
+  }
+}
+
 async function loadCompetitors() {
+  loadRadarStats();  // v0.16.x Radar: barra FOMO (async, no bloquea el feed).
   // 1. GET tracked-creators
   try {
     const r = await fetch("/api/tracked-creators", { credentials: "same-origin" });
@@ -21069,8 +21160,14 @@ function renderCompetitorFeed(reels) {
     const isFav = !!r.is_favorite;
     const favCls = "comp-reel-fav-btn" + (isFav ? " is-fav" : "");
     const favTitle = esc(isFav ? FAV_ON : FAV_OFF);
+    // v0.16.x Radar: badge de explosión (views relativos a la media del creador).
+    const exp = Number(r.explosion_score || 0);
+    const expBadge = exp >= 2
+      ? `<span class="comp-reel-explosion${exp >= 5 ? " is-mega" : ""}" title="${esc(exp.toFixed(1) + "x " + (t("radar.badge_suffix") || (lang === "en" ? "their avg" : "su media")))}">🔥 ${exp >= 10 ? Math.round(exp) : exp.toFixed(1)}x</span>`
+      : "";
     return `<article class="comp-reel-card" data-reel-id="${rid}">
       ${thumb}
+      ${expBadge}
       <button type="button" class="${favCls}" onclick="toggleReelFavorite('${rid}')" title="${favTitle}" aria-label="${favTitle}">★</button>
       <div class="comp-reel-body">
         <div class="comp-reel-owner">${owner}</div>
@@ -21081,7 +21178,7 @@ function renderCompetitorFeed(reels) {
           <span class="comp-reel-meta-date">${esc(dateTxt)}</span>
         </div>
         <div class="comp-reel-genscript-split">
-          <button type="button" class="comp-reel-genscript-btn" onclick="generateScriptFromReel('${rid}')" data-i18n="comp.gen_script">📝 Generar guion</button>
+          <button type="button" class="comp-reel-genscript-btn" onclick="generateScriptFromReel('${rid}')" data-i18n="comp.gen_script">✨ Hazlo mío</button>
           <button type="button" class="comp-reel-genscript-caret" onclick="openAsstPicker('${rid}')" aria-label="${esc(PICK_LBL)}" title="${esc(PICK_LBL)}">▾</button>
           <select class="comp-reel-asst-picker" id="reel-asst-${rid}" tabindex="-1" aria-hidden="true" onchange="_onReelAsstPick('${rid}', this)">
             ${asstOptionsHTML}
@@ -21371,6 +21468,8 @@ async function _compFinishGenScript(btn, scriptId, fromUsername, lang) {
   if (typeof loadScripts === "function") {
     try { await loadScripts(); } catch (e) {}
   }
+  // v0.16.x Radar: actualizar contador "robados por ti" en la barra FOMO.
+  if (typeof loadRadarStats === "function") { try { loadRadarStats(); } catch (e) {} }
   const msg = lang === "en"
     ? ("Script created from @" + (fromUsername || ""))
     : ("Guion creado desde @" + (fromUsername || ""));

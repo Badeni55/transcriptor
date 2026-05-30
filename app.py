@@ -5815,6 +5815,51 @@ def save_reel_as_idea(reel_id: str):
     }), 200
 
 
+def _creator_view_baselines(creator_ids):
+    """v0.16.x Radar: mediana de views de los reels recientes de cada creator.
+
+    Devuelve {creator_id: baseline_views} con baseline >= 1 (evita div/0).
+    Sirve para el "índice de explosión" = views_reel / baseline_creador.
+    v1: fetch global acotado por posted_at desc — cubre de sobra el caso
+    típico (1-5 creators). DEUDA: con 20 creators (agency) un creador muy
+    prolífico podría sesgar el cap; suficiente para v1.
+    """
+    if not creator_ids:
+        return {}
+    cap = min(800, 60 * len(creator_ids))
+    try:
+        rows = (db.table("creator_reels_global")
+                  .select("creator_id, views")
+                  .in_("creator_id", creator_ids)
+                  .eq("is_archived", False)
+                  .order("posted_at", desc=True)
+                  .limit(cap)
+                  .execute()).data or []
+    except Exception as e:
+        logger.warning("_creator_view_baselines failed: %s", e)
+        return {}
+    buckets = {}
+    for r in rows:
+        v = int(r.get("views") or 0)
+        if v <= 0:
+            continue
+        buckets.setdefault(r["creator_id"], []).append(v)
+    out = {}
+    for cid, vs in buckets.items():
+        vs.sort()
+        n = len(vs)
+        out[cid] = vs[n // 2] if n % 2 else (vs[n // 2 - 1] + vs[n // 2]) / 2.0
+    return out
+
+
+def _explosion_score(views, baseline):
+    """Índice de explosión de un reel relativo a la media de su creador.
+    None si no hay baseline fiable."""
+    if not baseline or baseline < 1:
+        return None
+    return round(float(views or 0) / float(baseline), 2)
+
+
 @app.route("/api/tracked-creators/reels", methods=["GET"])
 @require_auth
 def get_tracked_creators_reels():
@@ -5864,8 +5909,9 @@ def get_tracked_creators_reels():
             return jsonify({"error": "tc.error.tracking_not_found"}), 404
         creator_ids = [filter_creator_id]
 
-    # 4. Sort.
+    # 4. Sort. v0.16.x Radar: 'explosion' = views relativos a la media del creador.
     sort = request.args.get("sort", "recent")
+    explosion_sort = (sort == "explosion")
     sort_col = {"recent": "posted_at", "views": "views", "likes": "likes"}.get(sort, "posted_at")
 
     # 5. Limit + offset.
@@ -5878,12 +5924,40 @@ def get_tracked_creators_reels():
     except (TypeError, ValueError):
         offset = 0
 
-    # 6. Query reels.
+    SEL = ("id, ig_reel_id, creator_id, caption, views, likes, comments, "
+           "posted_at, thumb_url, thumb_b64, video_duration_sec, "
+           "creator:creators_global(ig_username)")
+
+    # 6. Baselines por creador → índice de explosión en cada reel.
+    baselines = _creator_view_baselines(creator_ids) if creator_ids else {}
+
+    def _annotate(reels):
+        for r in reels:
+            r["is_favorite"] = r["id"] in fav_ids
+            r["explosion_score"] = _explosion_score(
+                r.get("views"), baselines.get(r.get("creator_id")))
+        return reels
+
+    # 7a. Orden por explosión: ventana amplia + sort/paginación en Python
+    #     (el score se calcula post-query, no se puede ordenar en DB).
+    if explosion_sort and not favorites_only:
+        cand = (db.table("creator_reels_global")
+                  .select(SEL)
+                  .eq("is_archived", False)
+                  .in_("creator_id", creator_ids)
+                  .order("posted_at", desc=True)
+                  .limit(200)
+                  .execute()).data or []
+        _annotate(cand)
+        cand.sort(key=lambda r: (r.get("explosion_score") or 0), reverse=True)
+        total = len(cand)
+        page = cand[offset:offset + limit]
+        has_more = (offset + len(page)) < total
+        return jsonify({"reels": page, "total": total, "has_more": has_more})
+
+    # 7b. recent / views / likes (o favoritos): orden + paginación en DB.
     q = (db.table("creator_reels_global")
-           .select("id, ig_reel_id, creator_id, caption, views, likes, comments, "
-                   "posted_at, thumb_url, thumb_b64, video_duration_sec, "
-                   "creator:creators_global(ig_username)",
-                   count="exact")
+           .select(SEL, count="exact")
            .eq("is_archived", False)
            .order(sort_col, desc=True)
            .range(offset, offset + limit - 1))
@@ -5894,13 +5968,71 @@ def get_tracked_creators_reels():
     else:
         q = q.in_("creator_id", creator_ids)
     rows = q.execute()
-    reels = rows.data or []
-    for r in reels:
-        r["is_favorite"] = r["id"] in fav_ids
+    reels = _annotate(rows.data or [])
     total = rows.count or 0
     has_more = (offset + len(reels)) < total
 
     return jsonify({"reels": reels, "total": total, "has_more": has_more})
+
+
+@app.route("/api/radar/stats", methods=["GET"])
+@require_auth
+def radar_stats():
+    """v0.16.x Radar: contadores de la barra de estado (FOMO) de la home.
+
+    Return: {competitors, reels_week, exploded_week, stolen_total, enabled}.
+      - exploded_week: reels de la última semana con explosión >= 2x.
+      - stolen_total: scripts del user generados desde un reel de competidor.
+    """
+    user = current_user()
+    uid = user["id"]
+
+    tracked = (db.table("user_tracked_creators")
+                 .select("creator_id")
+                 .eq("user_id", uid)
+                 .is_("archived_at", "null")
+                 .execute())
+    creator_ids = list({t["creator_id"] for t in (tracked.data or [])})
+    competitors = len(creator_ids)
+
+    reels_week = exploded_week = 0
+    if creator_ids:
+        since = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+        rows = (db.table("creator_reels_global")
+                  .select("creator_id, views, posted_at")
+                  .in_("creator_id", creator_ids)
+                  .eq("is_archived", False)
+                  .gte("posted_at", since)
+                  .limit(500)
+                  .execute()).data or []
+        reels_week = len(rows)
+        baselines = _creator_view_baselines(creator_ids)
+        for r in rows:
+            sc = _explosion_score(r.get("views"), baselines.get(r.get("creator_id")))
+            if sc is not None and sc >= 2.0:
+                exploded_week += 1
+
+    try:
+        stolen = (db.table("scripts")
+                    .select("id", count="exact")
+                    .eq("user_id", uid)
+                    .not_.is_("from_competitor_reel_id", "null")
+                    .limit(1)
+                    .execute())
+        stolen_total = stolen.count or 0
+    except Exception:
+        stolen_total = 0
+
+    plan = (get_profile(uid) or {}).get("plan", "free")
+    enabled = bool(get_tracked_creators_limit(plan).get("enabled"))
+
+    return jsonify({
+        "competitors": competitors,
+        "reels_week": reels_week,
+        "exploded_week": exploded_week,
+        "stolen_total": stolen_total,
+        "enabled": enabled,
+    })
 
 
 # ── Scrape admin endpoint (v0.15.2.a: async vía Celery) ──────────────────────
