@@ -9401,16 +9401,19 @@
     .rs .fchip.ghost:hover { color:var(--brand-400); border-color:var(--brand-500); }
 
     /* ══ takeover demo: la isla ocupa todo el workspace y oculta la chrome vieja ══ */
+    /* CLAVE: el layout es grid 260px 1fr. Al ocultar la sidebar, el main caía en
+       la columna de 260px → colapsamos el grid a una sola columna. */
+    body.rs-takeover .prof-layout { grid-template-columns: 1fr !important; }
     body.rs-takeover .prof-sidebar,
     body.rs-takeover .panel-header,
     body.rs-takeover .ideas-tabs,
     body.rs-takeover .prof-bottom-tab,
     body.rs-takeover #profSidebarNav { display:none !important; }
-    body.rs-takeover .prof-main { padding:0 !important; margin:0 !important; max-width:none !important; overflow:hidden !important; }
+    body.rs-takeover .prof-main { padding:0 !important; margin:0 !important; max-width:none !important; width:100% !important; overflow:hidden !important; }
     body.rs-takeover #profPanelIdeas,
-    body.rs-takeover #ideasPanelCompetitors { height:100%; padding:0 !important; margin:0 !important; }
-    body.rs-takeover #radarRoot { height:100vh; min-height:600px; }
-    body.rs-takeover .rs.app { height:100vh; border:none; border-radius:0; }
+    body.rs-takeover #ideasPanelCompetitors { height:100%; width:100%; padding:0 !important; margin:0 !important; }
+    body.rs-takeover #radarRoot { height:100vh; width:100%; min-height:600px; }
+    body.rs-takeover .rs.app { height:100vh; width:100%; border:none; border-radius:0; }
   </style>
 
   {% if clarity_project_id %}
@@ -22686,6 +22689,6 @@ async function removeCompetitor(trackingId, username) {
 
 <!-- v0.17.x RADAR LOOP — motor multi-marca. Módulo en /static/js/radar-loop.js
      (editable sin tocar el monolito). Monta dentro de #radarRoot. -->
-<script src="/static/js/radar-loop.js?v=18"></script>
+<script src="/static/js/radar-loop.js?v=19"></script>
 </body>
 </html>
