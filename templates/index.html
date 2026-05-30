@@ -9535,6 +9535,39 @@
     .rs .pub-link { margin-top:auto; font-size:11px; color:var(--brand-400); display:inline-flex; align-items:center; gap:5px; }
     .rs .pub-link svg { width:13px; height:13px; }
 
+    /* ══ v0.18.x CEREBRO — base de conocimiento de la marca ══ */
+    .rs .brain-section-t { font-size:12px; text-transform:uppercase; letter-spacing:.1em; font-weight:700; color:var(--text-tertiary); margin:24px 0 12px; }
+    .rs .brain-tag { font-size:10px; background:color-mix(in srgb, var(--brand-500) 16%, transparent); color:var(--brand-300); padding:2px 7px; border-radius:6px; letter-spacing:.04em; margin-left:6px; }
+    .rs .brain-hero { display:flex; gap:18px; align-items:center; padding:22px; border:1px solid color-mix(in srgb, var(--brand-500) 28%, transparent); border-radius:20px; background:linear-gradient(135deg, color-mix(in srgb, var(--brand-500) 11%, var(--surface-raised)), var(--surface-raised)); }
+    .rs--mobile .brain-hero { flex-direction:column; align-items:flex-start; }
+    .rs .brain-orb { width:64px; height:64px; flex-shrink:0; border-radius:18px; display:flex; align-items:center; justify-content:center; color:#fff; background:linear-gradient(135deg, var(--brand-500), #ff2d55); box-shadow:0 8px 26px rgba(255,45,85,.32); }
+    .rs .brain-orb svg { width:32px; height:32px; }
+    .rs .brain-hero-body { flex:1; min-width:0; }
+    .rs .brain-lvl { font-size:12px; text-transform:uppercase; letter-spacing:.08em; font-weight:700; color:var(--brand-400); margin-bottom:4px; }
+    .rs .brain-voiceline { font-family:var(--font-display); font-size:30px; line-height:1; }
+    .rs .brain-voiceline b { color:var(--brand-500); }
+    .rs .brain-next { font-size:13px; color:var(--text-secondary); }
+    .rs .brain-next b { color:var(--text-primary); }
+    .rs .brain-sources { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+    .rs--mobile .brain-sources { grid-template-columns:repeat(2,1fr); }
+    .rs .brain-src { position:relative; padding:16px 14px; border:1px solid var(--border-default); border-radius:14px; background:var(--surface-raised); overflow:hidden; }
+    .rs .brain-src::before { content:""; position:absolute; top:0; left:0; bottom:0; width:3px; background:var(--c); }
+    .rs .brain-src-n { font-family:var(--font-display); font-size:30px; line-height:1; margin-bottom:4px; }
+    .rs .brain-src-t { font-size:13px; font-weight:600; margin-bottom:3px; }
+    .rs .brain-src-d { font-size:11.5px; color:var(--text-tertiary); line-height:1.35; }
+    .rs .brain-voice { border:1px solid var(--border-default); border-radius:16px; background:var(--surface-raised); overflow:hidden; }
+    .rs .voice-row { display:flex; gap:14px; padding:14px 16px; border-bottom:1px solid var(--border-subtle); }
+    .rs .voice-row:last-child { border-bottom:none; }
+    .rs .voice-k { width:90px; flex-shrink:0; font-size:12px; text-transform:uppercase; letter-spacing:.05em; font-weight:700; color:var(--text-tertiary); padding-top:2px; }
+    .rs .voice-val { flex:1; min-width:0; font-size:14px; line-height:1.5; color:var(--text-primary); display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+    .rs .voice-chip { display:inline-block; padding:3px 10px; border-radius:99px; background:color-mix(in srgb, var(--brand-500) 12%, transparent); color:var(--brand-300); font-size:13px; font-family:var(--font-mono); }
+    .rs[data-theme="light"] .voice-chip { color:var(--brand-700); }
+    .rs .brain-comps { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .rs--mobile .brain-comps { grid-template-columns:1fr; }
+    .rs .brain-comp { display:flex; align-items:center; gap:11px; padding:12px 14px; border:1px solid var(--border-default); border-radius:12px; background:var(--surface-raised); }
+    .rs .brain-comp-h { font-size:13.5px; font-weight:600; }
+    .rs .brain-comp-n { margin-left:auto; font-size:12px; color:var(--text-tertiary); }
+
     /* ══ takeover demo: la isla ocupa todo el workspace y oculta la chrome vieja ══ */
     /* CLAVE: el layout es grid 260px 1fr. Al ocultar la sidebar, el main caía en
        la columna de 260px → colapsamos el grid a una sola columna. */
@@ -22824,6 +22857,6 @@ async function removeCompetitor(trackingId, username) {
 
 <!-- v0.17.x RADAR LOOP — motor multi-marca. Módulo en /static/js/radar-loop.js
      (editable sin tocar el monolito). Monta dentro de #radarRoot. -->
-<script src="/static/js/radar-loop.js?v=22"></script>
+<script src="/static/js/radar-loop.js?v=23"></script>
 </body>
 </html>

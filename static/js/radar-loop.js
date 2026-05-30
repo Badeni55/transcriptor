@@ -90,7 +90,7 @@
      ════════════════════════════════════════════════════════════════ */
   function topbarHTML(){
     var b=brand();
-    var navTabs=[["dashboard","Dashboard",IC.grid],["ideas","Ideas",IC.bulb],["guiones","Guiones",IC.doc],["metrics","Métricas",IC.chart]];
+    var navTabs=[["dashboard","Dashboard",IC.grid],["ideas","Ideas",IC.bulb],["guiones","Guiones",IC.doc],["metrics","Métricas",IC.chart],["brain","Cerebro",IC.brain]];
     var nav=S.device==="desktop"?'<div class="rs-nav">'+navTabs.map(function(t){
       return '<button class="navchip'+(S.tab===t[0]?" on":"")+'" data-act="tab" data-k="'+t[0]+'">'+t[1]+'</button>';
     }).join("")+'</div>':'';
@@ -450,6 +450,86 @@
   }
 
   /* ════════════════════════════════════════════════════════════════
+     CEREBRO — la base de conocimiento de la marca: lo que el sistema
+     sabe de ti y cómo crece (voz + métricas + competidores + historial).
+     Es el moat hecho visible (principio II del manifiesto).
+     ════════════════════════════════════════════════════════════════ */
+  function brainVoice(b){
+    // Perfil de voz: en prod vendría del modelo entrenado con tus reels.
+    // En demo, un perfil rico del nicho IA/automatización (David).
+    return (b && b.voice_profile) || {
+      tono:"Directo y sin postureo. Cuentas las cosas como a un colega en un audio de WhatsApp.",
+      frases:['"te lo cuento porque a mí…"','"paso uno… paso dos…"','"guárdate esto"','"y no, no es lo que crees"'],
+      estructura:"Hook directo (sin 'hola') → 3 pasos concretos → CTA de guardar/comentar.",
+      duracion:"30–45s es tu punto dulce: ahí retienes el doble.",
+      evita:"Nada de 'en el panorama actual', 'es fundamental', ni motivacional vacío."
+    };
+  }
+  function brainCompetitors(){
+    var by={}; (S.reels||[]).forEach(function(r){ var h=r.creator&&r.creator.handle; if(!h) return; by[h]=(by[h]||0)+1; });
+    return Object.keys(by).map(function(h){ return {handle:h, n:by[h]}; }).sort(function(a,b){return b.n-a.n;});
+  }
+  function brainHTML(){
+    var b=brand();
+    var v=brainVoice(b);
+    var voicePct=Math.max(6,Math.min(100,b.voice||40));
+    var nextLevel=Math.min(5,(b.level||1)+1);
+    var toNext=Math.max(2,Math.round((20*(b.level||1)+30 - voicePct)/1.5));
+    var comps=brainCompetitors();
+    var nGuiones=S.guiones.filter(function(g){return g.status!=="discarded";}).length;
+    var nPublished=(S.metrics&&S.metrics.videos)?S.metrics.videos.length:0;
+    var learned=(S.metrics&&S.metrics.learned)||[];
+
+    var sources=[
+      [b.reelsAnalyzed||0,"reels tuyos leídos","de aquí modelo tu voz","var(--brand-500)"],
+      [comps.length,"competidores vigilados","de aquí saco qué funciona en tu nicho","#3b82f6"],
+      [nGuiones,"guiones creados","cada uno refina tu estilo","#22c55e"],
+      [nPublished,"publicados con métricas","cierran el círculo de aprendizaje","#ff2d55"]
+    ].map(function(s){ return '<div class="brain-src" style="--c:'+s[3]+'"><div class="brain-src-n">'+s[0]+'</div><div class="brain-src-t">'+s[1]+'</div><div class="brain-src-d">'+s[2]+'</div></div>'; }).join("");
+
+    var frases=v.frases.map(function(f){ return '<span class="voice-chip">'+ESC(f)+'</span>'; }).join("");
+    var learnList=learned.length
+      ? learned.map(function(l){ return '<div class="learn-item">'+IC.check+'<span>'+ESC(l)+'</span></div>'; }).join("")
+      : '<div class="learn-item" style="opacity:.6">Conecta Instagram en Métricas y empezaré a ver qué funciona en tu cuenta.</div>';
+    var compList=comps.length
+      ? comps.map(function(c){ return '<div class="brain-comp"><div class="ava bava">'+ESC(initialsOf(c.handle))+'</div><span class="brain-comp-h">@'+ESC(c.handle)+'</span><span class="brain-comp-n">'+c.n+' reels analizados</span></div>'; }).join("")
+      : '<div class="rs-empty" style="padding:20px">Aún no sigues a nadie. Añade competidores en el Dashboard.</div>';
+
+    return '<div class="scroll"><div class="pad">'+
+      '<div class="ideas-head"><h1 class="greet" style="font-size:30px;margin:0 0 6px">El cerebro de '+ESC(b.name)+'</h1>'+
+      '<p class="line" style="margin:0 0 18px">Todo lo que el sistema sabe de esta marca, y cómo crece. Cuanto más creas y publicas, más tuyo suena todo.</p></div>'+
+      // hero de nivel + voz
+      '<div class="brain-hero">'+
+        '<div class="brain-orb">'+IC.brain+'</div>'+
+        '<div class="brain-hero-body">'+
+          '<div class="brain-lvl">Nivel '+(b.level||1)+' · '+ESC(ecoLevelName(b.level))+'</div>'+
+          '<div class="brain-voiceline">Te conozco al <b>'+voicePct+'%</b></div>'+
+          '<div class="eco-bar" style="margin:10px 0 8px"><div class="eco-fill" style="width:'+voicePct+'%"></div></div>'+
+          '<div class="brain-next">Te faltan ~'+toNext+' piezas para el <b>Nivel '+nextLevel+'</b>, donde tus guiones salen casi sin retoques.</div>'+
+        '</div>'+
+      '</div>'+
+      // fuentes del conocimiento
+      '<div class="brain-section-t">De qué me alimento</div>'+
+      '<div class="brain-sources">'+sources+'</div>'+
+      // lo que sé de tu voz
+      '<div class="brain-section-t">Lo que sé de tu voz</div>'+
+      '<div class="brain-voice">'+
+        '<div class="voice-row"><span class="voice-k">Tono</span><span class="voice-val">'+ESC(v.tono)+'</span></div>'+
+        '<div class="voice-row"><span class="voice-k">Tus frases</span><span class="voice-val">'+frases+'</span></div>'+
+        '<div class="voice-row"><span class="voice-k">Estructura</span><span class="voice-val">'+ESC(v.estructura)+'</span></div>'+
+        '<div class="voice-row"><span class="voice-k">Duración</span><span class="voice-val">'+ESC(v.duracion)+'</span></div>'+
+        '<div class="voice-row"><span class="voice-k">Evito</span><span class="voice-val">'+ESC(v.evita)+'</span></div>'+
+      '</div>'+
+      // lo que funciona (métricas)
+      '<div class="brain-section-t">Lo que funciona en tu cuenta'+(learned.length?' <span class="brain-tag">de tus métricas</span>':'')+'</div>'+
+      '<div class="learn" style="margin-bottom:18px"><div class="learn-list">'+learnList+'</div></div>'+
+      // de quién aprendo
+      '<div class="brain-section-t">De quién aprendo</div>'+
+      '<div class="brain-comps">'+compList+'</div>'+
+    '</div></div>';
+  }
+
+  /* ════════════════════════════════════════════════════════════════
      OVERLAYS (gen / script / formatos / teleprompter / fillweek)
      ════════════════════════════════════════════════════════════════ */
   function generatingHTML(kind){ var steps=GEN_STEPS[kind]||GEN_STEPS.script; return '<div class="gen"><div class="orb"></div><div><div class="gtitle">'+ESC(GEN_TITLE[kind]||"Trabajando")+'</div><div class="gstep" id="rsGenStep">'+ESC(steps[0])+'</div></div></div>'; }
@@ -510,6 +590,7 @@
     else if(S.tab==="ideas") html+=ideasHTML();
     else if(S.tab==="guiones") html+=guionesHTML();
     else if(S.tab==="metrics") html+=metricsHTML();
+    else if(S.tab==="brain") html+=brainHTML();
     if(S.view==="gen") html+=overlayShellHTML(generatingHTML(S.genKind),"Trabajando…","close-feed",true);
     else if(S.view==="script") html+=overlayShellHTML(scriptRevealHTML(),"Tu guión, en tu voz","close-feed",true);
     else if(S.view==="result") html+=overlayShellHTML(formatResultHTML(S.resultKind),"Listo","back-script",false);
