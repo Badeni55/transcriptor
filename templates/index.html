@@ -110,6 +110,23 @@
 
       if (path==='/auth/me') return Promise.resolve(J(ME));
       if (path==='/api/brands') return Promise.resolve(J({brands:BRANDS}));
+      // v0.18.x métricas: reels publicados vinculados a guiones + aprendizaje IA.
+      if (path==='/api/metrics/summary'){
+        if (qs.brand==='b3') return Promise.resolve(J({connected:false}));
+        var pub=[
+          {cap:'Construí un agente que responde mis emails (en mi voz)',views:'94 K',likes:'7,2 K',dur:'0:39',from_guion:true,from_competitor:'@nick_saraev',perf:'2,4× tu media',thumb:thumb(0,'🤖')},
+          {cap:'El prompt de 9 palabras — mi versión',views:'61 K',likes:'4,8 K',dur:'0:36',from_guion:true,from_competitor:'@aiwithanna',perf:'sobre tu media',thumb:thumb(1,'💬')},
+          {cap:'Automaticé mi facturación en una tarde',views:'38 K',likes:'2,9 K',dur:'0:50',from_guion:true,from_competitor:'@marcbuilds',perf:'',thumb:thumb(2,'🧾')},
+          {cap:'Mi setup de creador 2026',views:'22 K',likes:'1,6 K',dur:'0:44',from_guion:false,from_competitor:'',perf:'',thumb:thumb(3,'🎬')}
+        ];
+        return Promise.resolve(J({connected:true, followers:'24,8 K', reels_published:18, from_reelscript:7,
+          learned:[
+            'Tus hooks de "yo hice X y pasó Y" rinden 2,4× más que los de pregunta.',
+            'Tus reels de menos de 40s retienen el doble — el sistema ya los prioriza.',
+            'Automatización concreta > productividad genérica en tu audiencia.'
+          ],
+          published:pub }));
+      }
       // stats varían por marca para que el cambio de contexto se note.
       if (path==='/api/radar/stats'){
         var bs={b1:{competitors:6,reels_week:23,exploded_week:4},b2:{competitors:3,reels_week:9,exploded_week:1},b3:{competitors:2,reels_week:4,exploded_week:1}}[qs.brand]||{competitors:6,reels_week:23,exploded_week:4};
@@ -9431,6 +9448,45 @@
     .rs .gui-pill.done { background:var(--success-bg); color:var(--success-fg); display:inline-flex; align-items:center; gap:4px; }
     .rs .fchip.ghost { border-style:dashed; color:var(--text-tertiary); }
     .rs .fchip.ghost:hover { color:var(--brand-400); border-color:var(--brand-500); }
+    /* guiones: acciones múltiples + tag guardado */
+    .rs .gui-acts { display:flex; gap:6px; flex-shrink:0; }
+    .rs .gui-acts .iconbtn { width:38px; height:38px; border-radius:10px; border:1px solid var(--border-default); background:transparent; color:var(--text-secondary); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .15s var(--ease); }
+    .rs .gui-acts .iconbtn:hover { color:var(--text-primary); border-color:var(--border-strong); }
+    .rs .gui-acts .iconbtn.on { color:var(--success-fg); border-color:var(--success-fg); }
+    .rs .gui-acts .iconbtn.danger:hover { color:var(--danger-fg); border-color:var(--danger-fg); }
+    .rs .gui-card.is-rec { opacity:.75; }
+    .rs .saved-tag { display:inline-flex; align-items:center; gap:4px; color:var(--success-fg); font-weight:600; }
+    .rs .saved-tag svg { width:12px; height:12px; }
+
+    /* ══ v0.18.x MÉTRICAS — IG connect + círculo de aprendizaje ══ */
+    .rs .ig-connect { max-width:560px; margin:40px auto; text-align:center; padding:32px 24px; border:1px solid var(--border-default); border-radius:20px; background:var(--surface-raised); }
+    .rs .ig-connect-ic { width:62px; height:62px; margin:0 auto 18px; border-radius:16px; display:flex; align-items:center; justify-content:center; color:#fff; background:linear-gradient(135deg,#f97316,#ff2d55,#9a3412); }
+    .rs .ig-connect-ic svg { width:30px; height:30px; }
+    .rs .ig-connect-h { font-size:28px; margin:0 0 12px; }
+    .rs .ig-connect-p { font-size:15px; line-height:1.55; color:var(--text-secondary); margin:0 0 22px; }
+    .rs .ig-connect-note { font-size:12px; color:var(--text-tertiary); margin:14px 0 0; }
+    .rs .met-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:18px; }
+    .rs .met-stat { padding:16px; border:1px solid var(--border-default); border-radius:14px; background:var(--surface-raised); text-align:center; }
+    .rs .met-n { font-family:var(--font-display); font-size:30px; line-height:1; margin-bottom:5px; }
+    .rs .met-l { font-size:12px; color:var(--text-tertiary); }
+    .rs .learn { padding:18px 20px; border:1px solid color-mix(in srgb, var(--brand-500) 28%, transparent); border-radius:16px; background:linear-gradient(135deg, color-mix(in srgb, var(--brand-500) 8%, var(--surface-raised)), var(--surface-raised)); margin-bottom:24px; }
+    .rs .learn-head { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:700; margin-bottom:12px; }
+    .rs .learn-head svg { color:var(--brand-400); }
+    .rs .learn-list { display:flex; flex-direction:column; gap:9px; }
+    .rs .learn-item { display:flex; gap:9px; align-items:flex-start; font-size:13.5px; line-height:1.45; color:var(--text-primary); }
+    .rs .learn-item svg { color:var(--success-fg); flex-shrink:0; margin-top:2px; width:16px; height:16px; }
+    .rs .learn-foot { margin-top:14px; padding-top:12px; border-top:1px solid var(--border-subtle); font-size:12.5px; color:var(--text-secondary); }
+    .rs .pub-list { display:grid; gap:12px; }
+    .rs--desktop .pub-list { grid-template-columns:1fr 1fr; }
+    .rs .pub-card { display:flex; gap:13px; padding:12px; border:1px solid var(--border-default); border-radius:14px; background:var(--surface-raised); }
+    .rs .pub-thumb { width:62px; height:92px; flex-shrink:0; }
+    .rs .pub-body { flex:1; min-width:0; display:flex; flex-direction:column; }
+    .rs .pub-cap { font-size:13.5px; font-weight:600; line-height:1.3; margin-bottom:7px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .rs .pub-metrics { display:flex; gap:11px; font-size:12px; color:var(--text-tertiary); align-items:center; flex-wrap:wrap; margin-bottom:6px; }
+    .rs .pub-metrics span { display:inline-flex; align-items:center; gap:4px; }
+    .rs .pub-perf { color:var(--success-fg); font-weight:700; }
+    .rs .pub-link { margin-top:auto; font-size:11.5px; color:var(--brand-400); display:inline-flex; align-items:center; gap:5px; }
+    .rs .pub-link svg { width:13px; height:13px; }
 
     /* ══ takeover demo: la isla ocupa todo el workspace y oculta la chrome vieja ══ */
     /* CLAVE: el layout es grid 260px 1fr. Al ocultar la sidebar, el main caía en
@@ -22721,6 +22777,6 @@ async function removeCompetitor(trackingId, username) {
 
 <!-- v0.17.x RADAR LOOP — motor multi-marca. Módulo en /static/js/radar-loop.js
      (editable sin tocar el monolito). Monta dentro de #radarRoot. -->
-<script src="/static/js/radar-loop.js?v=20"></script>
+<script src="/static/js/radar-loop.js?v=21"></script>
 </body>
 </html>

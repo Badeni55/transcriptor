@@ -40,3 +40,12 @@
 - [ ] opportunityHTML + moreOpportunities + expand
 - [ ] CSS
 - [ ] Verificado
+
+
+## Extensión (esta ejecución): flujo completo + métricas
+- [x] Todo guión generado aterriza en Guiones (robar, llena-semana, ideas). Nada se pierde.
+- [x] Guiones = centro de gestión: filtros (Todos/Por grabar/Grabados), grabar, marcar grabado, descartar.
+- [x] Cierre del loop: teleprompter 'Ya lo grabé' marca el guión como grabado.
+- [x] Llena mi semana ya no fuerza grabar: guarda los 5 en Guiones → 'Ver mis guiones'.
+- [x] **Métricas** (4ª vista): conexión a Instagram + reels publicados vinculados al guión que los originó + panel 'Lo que el sistema aprendió de ti' (jugada de inteligencia §7).
+- [x] Verificado: harness de flujo completo (8 pasos) pasa.
