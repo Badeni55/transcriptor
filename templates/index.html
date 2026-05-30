@@ -2,6 +2,111 @@
 <html lang="{{ lang|default('es') }}">
 <head>
   <meta charset="UTF-8" />
+  {% if demo %}
+  <script>
+  /* v0.16.x DEMO_MODE — arranque local SIN login ni Supabase. Este bloque SOLO
+     se emite cuando el backend corre con DEMO_MODE=1 (guardado por Jinja con el
+     flag demo), por lo que en producción NO existe ni un byte de esto. Instala un
+     shim de fetch con datos falsos y entra directo al Radar con usuario "creator".
+     Debe ir lo primero: el shim tiene que existir antes de cualquier fetch. */
+  window.__DEMO__ = true;
+  (function(){
+    // Entrar directo al Radar: el boot (refreshMe) auto-abre el perfil si la URL
+    // empieza por /profile. Servimos /es/ pero forzamos la ruta del Radar.
+    try { if (!location.pathname.startsWith('/profile')) history.replaceState(null,'','/profile/radar'); } catch(e){}
+
+    var nowMs = Date.now();
+    function ago(h){ return new Date(nowMs - h*3600*1000).toISOString(); }
+    function thumb(i,emoji){
+      var pal=[['#ff6a3d','#ff2d55'],['#5b8cff','#7b3dff'],['#1dd3b0','#0e9f87'],['#ffb648','#ff7a00'],['#ff5e9c','#c12bdb'],['#34c759','#0a7d3a'],['#0fb9ff','#0066ff'],['#a06bff','#5b2bdb'],['#ff4d4d','#b30000'],['#00c2ff','#0047ab']];
+      var c=pal[i%pal.length];
+      var svg='<svg xmlns="http://www.w3.org/2000/svg" width="320" height="400"><defs><linearGradient id="g'+i+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+c[0]+'"/><stop offset="1" stop-color="'+c[1]+'"/></linearGradient></defs><rect width="320" height="400" fill="url(%23g'+i+')"/><text x="160" y="225" font-size="140" text-anchor="middle">'+(emoji||'🎬')+'</text></svg>';
+      return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+    }
+
+    var CREATORS=[
+      {id:'c1',ig_username:'alexhormozi',scrape_status:'ok'},
+      {id:'c2',ig_username:'garyvee',scrape_status:'ok'},
+      {id:'c3',ig_username:'dan.koe',scrape_status:'ok'},
+      {id:'c4',ig_username:'marketing.lab',scrape_status:'scraping'}
+    ];
+    var TRACKED = CREATORS.map(function(c,i){return {id:'t'+(i+1), creator:c, added_at:ago(72)};});
+
+    var REELS=[
+      {u:'alexhormozi',c:0,cap:'El error de pricing que te cuesta el 80% de tus ventas',v:1240000,l:98000,cm:2300,exp:7.8,h:'💸',ag:8},
+      {u:'garyvee',c:1,cap:'Deja de pedir permiso. Nadie te lo va a dar.',v:880000,l:71000,cm:1900,exp:5.2,h:'🔥',ag:14},
+      {u:'dan.koe',c:2,cap:'Cómo escribir 1 hora al día me cambió la vida entera',v:640000,l:55000,cm:1200,exp:4.1,h:'✍️',ag:20},
+      {u:'alexhormozi',c:0,cap:'Lo que nadie te dice de contratar tu primer equipo',v:410000,l:31000,cm:740,exp:2.6,h:'🧠',ag:30},
+      {u:'garyvee',c:1,cap:'La paciencia es el cheat code que todos ignoran',v:520000,l:44000,cm:980,exp:3.0,h:'⏳',ag:36},
+      {u:'dan.koe',c:2,cap:'Tu trabajo no te define. Tu output sí.',v:300000,l:26000,cm:610,exp:1.9,h:'🎯',ag:42},
+      {u:'alexhormozi',c:0,cap:'3 frases que cierran cualquier venta',v:760000,l:64000,cm:1500,exp:4.8,h:'🤝',ag:50},
+      {u:'garyvee',c:1,cap:'Si tienes 20 años escucha esto dos veces',v:1010000,l:88000,cm:2100,exp:6.0,h:'🚀',ag:58},
+      {u:'dan.koe',c:2,cap:'El sistema de 1 persona que factura 6 cifras',v:455000,l:39000,cm:870,exp:2.9,h:'⚙️',ag:66}
+    ].map(function(r,i){return {
+      id:'r'+(i+1), creator:{ig_username:r.u}, creator_id:CREATORS[r.c].id,
+      caption:r.cap, views:r.v, likes:r.l, comments:r.cm,
+      posted_at:ago(r.ag), thumb_b64:thumb(i,r.h), thumb_url:null,
+      video_duration_sec:30, explosion_score:r.exp, is_favorite:(i===1||i===6)
+    };});
+
+    var SCRIPTS=[
+      {id:'s1',title:'El error de pricing (mi versión)',script:'▸ Te están cobrando mal.\n▸ Y ni lo sabes.\n▸ El 80% de tus ventas se va por aquí.',from_competitor_username:'alexhormozi',assistant_name:'Viral',recording_status:'pending',created_at:ago(5)},
+      {id:'s2',title:'Deja de pedir permiso',script:'▸ Nadie te va a dar el permiso.\n▸ Te lo das tú o no llega nunca.',from_competitor_username:'garyvee',assistant_name:'Historia',recording_status:'recorded',created_at:ago(26)}
+    ];
+
+    var USER={ id:'demo-user', email:'demo@reelscript.net', avatar_seed:'demo' };
+    var ME={ user:USER, avatar_seed:'demo', credits_cents:9999, free_used_today:0, free_daily_limit:5, plan:'creator', monthly_usage:7, monthly_limit:200, has_stripe_sub:true };
+
+    function J(body,status){ return new Response(JSON.stringify(body),{status:status||200,headers:{'Content-Type':'application/json'}}); }
+    function sortReels(list, sort){
+      var a=list.slice();
+      if(sort==='views') a.sort(function(x,y){return y.views-x.views;});
+      else if(sort==='likes') a.sort(function(x,y){return y.likes-x.likes;});
+      else if(sort==='recent') a.sort(function(x,y){return new Date(y.posted_at)-new Date(x.posted_at);});
+      else a.sort(function(x,y){return (y.explosion_score||0)-(x.explosion_score||0);});
+      return a;
+    }
+
+    var _origFetch = window.fetch.bind(window);
+    window.fetch = function(input, init){
+      var url = (typeof input==='string') ? input : (input && input.url) || '';
+      var method = ((init&&init.method) || (input&&input.method) || 'GET').toUpperCase();
+      var path = url, qs = {};
+      try { var u=new URL(url, location.origin); path=u.pathname; qs=Object.fromEntries(u.searchParams); } catch(e){}
+      if (!/^\//.test(path)) return _origFetch(input, init); // externos (posthog, etc.) pasan
+
+      if (path==='/auth/me') return Promise.resolve(J(ME));
+      if (path==='/api/radar/stats') return Promise.resolve(J({competitors:CREATORS.length, reels_week:REELS.length, exploded_week:REELS.filter(function(r){return r.explosion_score>=2;}).length, stolen_total:SCRIPTS.length, enabled:true}));
+      if (path==='/api/tracked-creators' && method==='GET') return Promise.resolve(J({tracked:TRACKED, limits:{enabled:true, base_slots_global:5}, plan:'creator'}));
+      if (path==='/api/tracked-creators/reels'){
+        var list=REELS;
+        if(qs.creator_id) list=list.filter(function(r){return r.creator_id===qs.creator_id;});
+        if(qs.favorites==='true') list=list.filter(function(r){return r.is_favorite;});
+        list=sortReels(list, qs.sort);
+        return Promise.resolve(J({reels:list, total:list.length, has_more:false}));
+      }
+      if (path==='/api/radar/fill-week/candidates') return Promise.resolve(J({reels:sortReels(REELS,'explosion').slice(0,5).map(function(r){return {id:r.id,username:r.creator.ig_username,explosion:r.explosion_score,caption:r.caption,views:r.views};}), affordable:5, cost_cents:18, unlimited:true, balance_cents:9999}));
+      if (/^\/api\/competitors\/reels\/[^/]+\/generate-script$/.test(path)) return Promise.resolve(J({mode:'sync', script_id:'s_demo', from_competitor_username:'demo'},200));
+      if (/^\/api\/competitors\/reels\/[^/]+\/favorite$/.test(path)) return Promise.resolve(J({ok:true}));
+      if (/^\/api\/competitors\/reels\/[^/]+\/save-as-idea$/.test(path)) return Promise.resolve(J({ok:true, already_exists:false}));
+      if (path==='/scripts' && method==='GET') return Promise.resolve(J(SCRIPTS));
+      if (path==='/projects') return Promise.resolve(J([]));
+      if (path==='/assistants') return Promise.resolve(J([{id:'a1',name:'Mi voz',instructions:'tono cercano y directo, sin postureo'},{id:'a2',name:'Modo venta',instructions:'persuasivo sin ser cursi'}]));
+      if (path==='/ideas') return Promise.resolve(J([]));
+      if (path==='/history') return Promise.resolve(J([]));
+      if (path==='/api/me/overview') return Promise.resolve(J({transcribe:{total:12}, metrics:{}, scripts:{total:SCRIPTS.length}}));
+      if (path==='/api/me/stats') return Promise.resolve(J({transcriptions:12, ig_videos:0, scripts:SCRIPTS.length}));
+      if (path==='/api/me/subscription') return Promise.resolve(J({plan:'creator', status:'active'}));
+      if (path==='/profile/data') return Promise.resolve(J({}));
+      if (/^\/metrics\//.test(path)) return Promise.resolve(J({videos:[], linked:false}));
+
+      if (method==='GET') return Promise.resolve(J({}));   // fallback no rompe paneles
+      return Promise.resolve(J({ok:true}));
+    };
+    console.log('%c[DEMO MODE] login bypassed · datos falsos · usuario creator','color:#ff2d55;font-weight:bold');
+  })();
+  </script>
+  {% endif %}
   <script>
     (function(){
       try {

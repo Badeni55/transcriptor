@@ -72,6 +72,11 @@ COST_CENTS       = 18   # $0.18 por uso de pago (~7 usos por $1.29)
 
 UNLIMITED_EMAILS = {"davidmiragito@gmail.com"}  # sin límite ni coste
 
+# v0.16.x DEMO_MODE: arranque local sin login ni Supabase. El frontend instala
+# un shim de fetch con datos falsos y entra directo al Radar con un usuario de
+# prueba. SOLO se activa con env DEMO_MODE=1 → producción NO se ve afectada.
+DEMO_MODE = os.environ.get("DEMO_MODE", "") == "1"
+
 # v0.15.2: emails con acceso a endpoints admin (separado de UNLIMITED_EMAILS,
 # que es "cuenta cortesía sin límites"). Comma-separated en env. Si la env no
 # está set → set vacío → _is_admin devuelve False para todos (fallback seguro).
@@ -176,6 +181,7 @@ def inject_analytics():
     return dict(
         clarity_project_id=CLARITY_PROJECT_ID,
         posthog_api_key=POSTHOG_API_KEY,
+        demo=DEMO_MODE,
     )
 
 
@@ -277,6 +283,10 @@ def require_auth_html(f):
     """Like require_auth but for HTML routes: redirects to home with ?next=."""
     @wraps(f)
     def wrapper(*args, **kwargs):
+        # v0.16.x DEMO_MODE: sirve el shell del workspace sin sesión real para
+        # que refrescar /profile/* no expulse de la demo. Solo con DEMO_MODE=1.
+        if DEMO_MODE:
+            return f(*args, **kwargs)
         if not current_user():
             accept = request.headers.get("Accept-Language", "")
             home = "/en/" if accept.lower().startswith("en") else "/es/"
