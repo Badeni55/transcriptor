@@ -61,7 +61,7 @@ Estos son cambios de **producto** intencionales (commits de las 3 fases del Rada
 ## ▶️ Cómo volver a levantar el MODO DEMO en local (para seguir el restyle)
 
 ```bash
-cd .../investep-soporte/transcriptor
+cd /Users/bernatcasanas/Desktop/Claudito/raw/becama-saas/reelscript
 DEMO_MODE=1 GROQ_API_KEY=d SUPABASE_URL=https://d.supabase.co SUPABASE_SERVICE_KEY=d \
   STRIPE_SECRET_KEY=sk STRIPE_WEBHOOK_SECRET=w FLASK_SECRET_KEY=s APP_URL=http://localhost:5555 \
   ./venv/bin/python -m gunicorn -b 127.0.0.1:5555 -w 1 -k gevent app:app
