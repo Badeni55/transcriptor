@@ -9330,6 +9330,38 @@
     .rs .rs-skel { background:var(--surface-raised); border:1px solid var(--border-default); border-radius:18px; height:160px; animation: rsPulse 1.3s ease-in-out infinite; }
     @keyframes rsPulse { 0%,100%{opacity:.5;} 50%{opacity:.8;} }
 
+    /* ══ v0.18.x "el despertar" — titular + oportunidad del día ══ */
+    .rs .awaken { margin-bottom:22px; }
+    .rs .awaken-h { font-family:var(--font-display); font-size:34px; line-height:1.05; margin:0 0 10px; }
+    .rs--desktop .awaken-h { font-size:46px; }
+    .rs .awaken-line { font-size:18px; line-height:1.4; margin:0 0 6px; font-weight:500; max-width:60ch; }
+    .rs--desktop .awaken-line { font-size:21px; }
+    .rs .awaken-line .hot { color:var(--brand-500); font-weight:700; }
+    .rs .awaken-sub { font-size:14px; color:var(--text-secondary); line-height:1.5; margin:0; max-width:56ch; }
+    .rs .oppty-label { font-size:11px; text-transform:uppercase; letter-spacing:.14em; font-weight:700; color:var(--text-tertiary); margin:0 0 10px; }
+    .rs .oppty { display:flex; gap:20px; padding:18px; border-radius:20px; border:1px solid var(--border-default); background:linear-gradient(135deg, color-mix(in srgb, var(--brand-500) 9%, var(--surface-raised)), var(--surface-raised)); box-shadow:var(--shadow-lg); margin-bottom:22px; position:relative; overflow:hidden; }
+    .rs .oppty::before { content:""; position:absolute; top:-40%; right:-10%; width:340px; height:340px; border-radius:50%; background:radial-gradient(circle, rgba(255,45,85,.10), transparent 70%); pointer-events:none; }
+    .rs .oppty-thumb { width:120px; height:178px; flex-shrink:0; }
+    .rs--mobile .oppty { flex-direction:column; }
+    .rs--mobile .oppty-thumb { width:100%; height:200px; }
+    .rs .oppty-body { flex:1; min-width:0; display:flex; flex-direction:column; position:relative; z-index:1; }
+    .rs .oppty-tag { display:flex; align-items:center; gap:10px; margin-bottom:9px; flex-wrap:wrap; }
+    .rs .oppty-when { font-size:12.5px; color:var(--text-tertiary); }
+    .rs .oppty-cap { font-family:var(--font-display); font-size:25px; line-height:1.12; letter-spacing:.005em; margin:0 0 8px; }
+    .rs--desktop .oppty-cap { font-size:29px; }
+    .rs .oppty-sum { font-size:14px; color:var(--text-secondary); line-height:1.45; margin:0 0 8px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .rs .oppty-why { font-size:13px; color:var(--text-tertiary); line-height:1.45; margin:0 0 16px; }
+    .rs .oppty-actions { margin-top:auto; display:flex; align-items:center; gap:10px; }
+    .rs .oppty-actions .btn-primary { flex:0 1 auto; padding:0 28px; }
+    .rs .dash-jugadas { display:grid; gap:12px; margin-bottom:16px; }
+    .rs--desktop .dash-jugadas { grid-template-columns:1fr 1fr; align-items:stretch; }
+    .rs--desktop .dash-jugadas .idea-launch, .rs--desktop .dash-jugadas .whale { margin:0; }
+    .rs .more-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:6px 0 14px; flex-wrap:wrap; }
+    .rs .more-title { font-size:17px; font-weight:700; }
+    .rs .more-head .filters { margin:0; }
+    .rs .see-all { display:inline-flex; align-items:center; gap:6px; margin-top:16px; padding:10px 16px; border-radius:12px; border:1px solid var(--border-default); background:transparent; color:var(--text-secondary); font-size:13.5px; font-weight:600; cursor:pointer; font-family:var(--font-body); transition:all .15s var(--ease); }
+    .rs .see-all:hover { color:var(--text-primary); border-color:var(--border-strong); }
+
     /* ══ v0.17.x: nav interna + selector de marca ══ */
     .rs .rs-nav { display:flex; gap:4px; margin-left:6px; }
     .rs .topbar .brand-switch { display:inline-flex; align-items:center; gap:8px; height:34px; padding:0 12px; border-radius:99px; border:1px solid var(--border-default); background:var(--surface-overlay); color:var(--text-primary); font-weight:700; font-size:13px; cursor:pointer; font-family:var(--font-body); }
@@ -22689,6 +22721,6 @@ async function removeCompetitor(trackingId, username) {
 
 <!-- v0.17.x RADAR LOOP — motor multi-marca. Módulo en /static/js/radar-loop.js
      (editable sin tocar el monolito). Monta dentro de #radarRoot. -->
-<script src="/static/js/radar-loop.js?v=19"></script>
+<script src="/static/js/radar-loop.js?v=20"></script>
 </body>
 </html>

@@ -48,7 +48,7 @@
     device:"desktop", _wired:false,
     user:{ name:"", handle:"", credits:0, streak:0 },
     brands:[], brandId:null,
-    reels:[], favs:{}, filter:"explosion",
+    reels:[], favs:{}, filter:"explosion", feedExpanded:false,
     ideas:[], guiones:[],
     tab:"dashboard",                    // dashboard | ideas | guiones
     view:"feed",                        // feed(overlay off) | gen | script | result | prompter | fillweek
@@ -168,20 +168,67 @@
       '<button class="iconbtn'+(isFav?" on":"")+'" data-act="fav" data-id="'+ESC(r.id)+'" title="Guardar">'+(isFav?IC.star:IC.starO)+'</button></div></div></div>';
   }
 
+  /* card destacada — "tu oportunidad de hoy" (principio I: una respuesta) */
+  function opportunityHTML(r){
+    var mega=(r.explosion||0)>=5;
+    var thumbInner=r.thumb?'<img src="'+ESC(r.thumb)+'" alt="">':'<div class="play"></div>';
+    var why = mega
+      ? "Está reventando: "+ (r.explosionTxt!=null?r.explosionTxt:"")+"× lo normal de @"+r.creator.handle+". Si hay uno que robar hoy, es este."
+      : "Por encima de la media de @"+r.creator.handle+". Buen punto de partida para hoy.";
+    return '<div class="oppty">'+
+      '<div class="oppty-thumb thumb">'+thumbInner+'<span class="dur">'+ESC(r.dur)+'</span></div>'+
+      '<div class="oppty-body">'+
+        '<div class="oppty-tag">'+(r.explosionTxt!=null?'<span class="badge badge-explode'+(mega?" mega":"")+'">🔥 '+ESC(r.explosionTxt)+'x su media</span>':'')+'<span class="oppty-when">@'+ESC(r.creator.handle)+' · '+ESC(r.when)+'</span></div>'+
+        '<h2 class="oppty-cap">'+ESC(r.cap)+'</h2>'+
+        (r.sum?'<p class="oppty-sum">'+ESC(r.sum)+'</p>':'')+
+        '<p class="oppty-why">'+ESC(why)+'</p>'+
+        '<div class="oppty-actions"><button class="btn btn-lg btn-primary" data-act="steal" data-id="'+ESC(r.id)+'">✨ Hazlo mío</button>'+
+          '<button class="iconbtn'+(S.favs[r.id]?" on":"")+'" data-act="fav" data-id="'+ESC(r.id)+'" title="Guardar">'+(S.favs[r.id]?IC.star:IC.starO)+'</button></div>'+
+      '</div>'+
+    '</div>';
+  }
+
   function dashboardHTML(){
-    var reels=feedReels();
-    var fc=reels.length===0?'<div class="rs-empty">'+(S.filter==="fav"?"Sin favoritos aún. Toca la estrella en un reel.":"Sin reels todavía. Añade competidores o pega un reel.")+'</div>':reels.map(reelCardHTML).join("");
-    var fillCount=Math.min(5,S.reels.length)||5;
     var st=S.stats||{competitors:0,reels_week:0,exploded_week:0,stolen_today:0};
-    var nudge=st.stolen_today===0?'<span class="nudge">Aún no has creado nada hoy.</span>':'<span class="nudge">Llevas '+st.stolen_today+' hoy — sigue.</span>';
+    var sorted=feedReels();
+    // Titular del despertar (momento 1).
+    var awakenLine = st.exploded_week>0
+      ? 'Mientras no mirabas, <span class="hot">'+st.exploded_week+' reel'+(st.exploded_week>1?"es":"")+' explotaron</span> en tu nicho.'
+      : 'Tus <span class="hot">'+st.competitors+' rivales</span> publicaron '+st.reels_week+' reels esta semana.';
+    var awakenSub = st.stolen_today===0
+      ? 'Aún no has creado nada hoy. Empieza por el de abajo y en un minuto lo tienes en tu voz.'
+      : 'Llevas '+st.stolen_today+' hoy. Sigue mientras estés en racha.';
+
+    if(sorted.length===0){
+      return '<div class="scroll"><div class="pad">'+
+        '<div class="awaken"><h1 class="awaken-h">'+ESC(greetWord())+(S.user.name?", "+ESC(S.user.name):"")+'</h1></div>'+
+        ecosystemHTML()+ideaInputHTML()+
+        '<div class="rs-empty">'+(S.filter==="fav"?"Sin favoritos aún. Toca la estrella en un reel.":"Sin reels todavía. Añade un competidor o pega un reel para empezar.")+'</div>'+
+        filtersHTML()+'</div></div>';
+    }
+
+    var hero=sorted[0];
+    var rest=sorted.slice(1);
+    var fillCount=Math.min(5,S.reels.length)||5;
+
+    // "Más oportunidades": curaduría (3) o feed completo si expandido.
+    var shown = S.feedExpanded ? rest : rest.slice(0,3);
+    var moreCards = shown.map(reelCardHTML).join("");
+    var moreToggle = (!S.feedExpanded && rest.length>3)
+      ? '<button class="see-all" data-act="expand-feed">Ver las '+rest.length+' oportunidades →</button>'
+      : '';
+
     return '<div class="scroll"><div class="pad">'+
-      '<div class="momentum"><h1 class="greet">'+ESC(greetWord())+(S.user.name?", "+ESC(S.user.name):"")+'</h1>'+
-        '<p class="line">Esta semana tus <span class="hot">'+st.competitors+' rivales</span> publicaron '+st.reels_week+' reels. <span class="hot">'+st.exploded_week+' explotaron</span>. '+nudge+'</p></div>'+
+      '<div class="awaken">'+
+        '<h1 class="awaken-h">'+ESC(greetWord())+(S.user.name?", "+ESC(S.user.name):"")+'</h1>'+
+        '<p class="awaken-line">'+awakenLine+'</p>'+
+        '<p class="awaken-sub">'+ESC(awakenSub)+'</p>'+
+      '</div>'+
+      '<div class="oppty-label">Tu oportunidad de hoy</div>'+
+      opportunityHTML(hero)+
+      '<div class="dash-jugadas">'+ideaInputHTML()+(S.reels.length?whaleHTML(fillCount):"")+'</div>'+
       ecosystemHTML()+
-      ideaInputHTML()+
-      (S.reels.length?whaleHTML(fillCount):"")+
-      filtersHTML()+
-      '<div class="feed">'+fc+'</div>'+
+      (rest.length?('<div class="more-head"><span class="more-title">Más oportunidades</span>'+filtersHTML()+'</div><div class="feed">'+moreCards+'</div>'+moreToggle):"")+
     '</div></div>';
   }
 
@@ -410,6 +457,7 @@
     if(act==="steal") return steal(id);
     if(act==="fav") return toggleFav(id);
     if(act==="filter"){ S.filter=k; return render(); }
+    if(act==="expand-feed"){ S.feedExpanded=true; return render(); }
     if(act==="add-reel") return addReelManual();
     if(act==="fillweek") return startFillWeek();
     if(act==="seed-go") return seedIdea("rsIdeaSeed", true);
