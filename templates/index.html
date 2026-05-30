@@ -80,8 +80,15 @@
       {id:'s2',title:'El prompt de 9 palabras',from_competitor_username:'aiwithanna',assistant_name:'Historia',recording_status:'recorded',created_at:ago(26)}
     ];
 
+    // v0.17.x — MARCAS demo (agencia). Cada una con su ecosistema/nivel propio.
+    var BRANDS=[
+      {id:'b1',name:'David Automatiza',handle:'davidautomatiza',color:'#f97316',level:3,voice:64,reelsAnalyzed:28,scripts:12},
+      {id:'b2',name:'Clínica Núñez',handle:'clinicanunez',color:'#3b82f6',level:2,voice:41,reelsAnalyzed:11,scripts:4},
+      {id:'b3',name:'Lia · Coach',handle:'lia.coach',color:'#22c55e',level:1,voice:22,reelsAnalyzed:3,scripts:1}
+    ];
+
     var USER={ id:'demo-user', email:'david@reelscript.net', name:'David', handle:'davidautomatiza', avatar_seed:'demo' };
-    var ME={ user:USER, name:'David', handle:'davidautomatiza', credits:47, streak:4, avatar_seed:'demo', credits_cents:9999, free_used_today:0, free_daily_limit:5, plan:'creator', monthly_usage:7, monthly_limit:200, has_stripe_sub:true };
+    var ME={ user:USER, name:'David', handle:'davidautomatiza', credits:120, streak:4, avatar_seed:'demo', credits_cents:9999, free_used_today:0, free_daily_limit:5, plan:'agency', monthly_usage:7, monthly_limit:200, has_stripe_sub:true };
 
     function J(body,status){ return new Response(JSON.stringify(body),{status:status||200,headers:{'Content-Type':'application/json'}}); }
     function sortReels(list, sort){
@@ -102,10 +109,18 @@
       if (!/^\//.test(path)) return _origFetch(input, init); // externos (posthog, etc.) pasan
 
       if (path==='/auth/me') return Promise.resolve(J(ME));
-      if (path==='/api/radar/stats') return Promise.resolve(J({competitors:6, reels_week:23, exploded_week:4, stolen_today:0, stolen_total:SCRIPTS.length, enabled:true}));
-      if (path==='/api/tracked-creators' && method==='GET') return Promise.resolve(J({tracked:TRACKED, limits:{enabled:true, base_slots_global:5}, plan:'creator'}));
+      if (path==='/api/brands') return Promise.resolve(J({brands:BRANDS}));
+      // stats varían por marca para que el cambio de contexto se note.
+      if (path==='/api/radar/stats'){
+        var bs={b1:{competitors:6,reels_week:23,exploded_week:4},b2:{competitors:3,reels_week:9,exploded_week:1},b3:{competitors:2,reels_week:4,exploded_week:1}}[qs.brand]||{competitors:6,reels_week:23,exploded_week:4};
+        return Promise.resolve(J({competitors:bs.competitors,reels_week:bs.reels_week,exploded_week:bs.exploded_week,stolen_today:0,stolen_total:SCRIPTS.length,enabled:true}));
+      }
+      if (path==='/api/tracked-creators' && method==='GET') return Promise.resolve(J({tracked:TRACKED, limits:{enabled:true, base_slots_global:5}, plan:'agency'}));
       if (path==='/api/tracked-creators/reels'){
+        // marca b1 → set completo; b2/b3 → subconjuntos (menos contexto).
         var list=REELS;
+        if(qs.brand==='b2') list=REELS.slice(2,5);
+        else if(qs.brand==='b3') list=REELS.slice(4,6);
         if(qs.creator_id) list=list.filter(function(r){return r.creator_id===qs.creator_id;});
         if(qs.favorites==='true') list=list.filter(function(r){return r.is_favorite;});
         list=sortReels(list, qs.sort);
@@ -9314,6 +9329,83 @@
     .rs .rs-empty { grid-column:1/-1; padding:48px 24px; text-align:center; color:var(--text-tertiary); }
     .rs .rs-skel { background:var(--surface-raised); border:1px solid var(--border-default); border-radius:18px; height:160px; animation: rsPulse 1.3s ease-in-out infinite; }
     @keyframes rsPulse { 0%,100%{opacity:.5;} 50%{opacity:.8;} }
+
+    /* ══ v0.17.x: nav interna + selector de marca ══ */
+    .rs .rs-nav { display:flex; gap:4px; margin-left:6px; }
+    .rs .topbar .brand-switch { display:inline-flex; align-items:center; gap:8px; height:34px; padding:0 12px; border-radius:99px; border:1px solid var(--border-default); background:var(--surface-overlay); color:var(--text-primary); font-weight:700; font-size:13px; cursor:pointer; font-family:var(--font-body); }
+    .rs .topbar .brand-switch:hover { border-color:var(--border-strong); }
+    .rs .brand-dot { width:9px; height:9px; border-radius:99px; flex-shrink:0; }
+    .rs .brand-chev { display:flex; color:var(--text-tertiary); }
+    .rs .brand-name { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .rs .brand-menu { position:absolute; top:54px; left:16px; z-index:40; min-width:230px; background:var(--surface-overlay); border:1px solid var(--border-default); border-radius:14px; box-shadow:var(--shadow-lg); padding:6px; }
+    .rs .brand-opt { display:flex; align-items:center; gap:9px; width:100%; padding:10px 12px; border:none; background:transparent; color:var(--text-primary); font-size:13.5px; font-weight:600; cursor:pointer; border-radius:9px; font-family:var(--font-body); text-align:left; }
+    .rs .brand-opt:hover { background:var(--surface-raised); }
+    .rs .brand-opt .brand-lvl { margin-left:auto; font-size:11px; font-weight:700; color:var(--text-tertiary); }
+    .rs .brand-opt.add { color:var(--brand-500); border-top:1px solid var(--border-subtle); margin-top:4px; }
+
+    /* ══ ecosistema (coste hundido / contexto creciente) ══ */
+    .rs .eco { border:1px solid var(--border-default); border-radius:16px; padding:16px 18px; margin-bottom:16px; background:linear-gradient(135deg, color-mix(in srgb, var(--brand-500) 7%, var(--surface-raised)), var(--surface-raised)); }
+    .rs .eco-top { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+    .rs .eco-lvl { display:flex; align-items:baseline; gap:8px; }
+    .rs .eco-lvl-n { font-family:var(--font-display); font-size:22px; color:var(--brand-500); }
+    .rs .eco-lvl-name { font-size:13px; font-weight:600; color:var(--text-secondary); }
+    .rs .eco-stats { display:flex; gap:16px; font-size:12.5px; color:var(--text-tertiary); }
+    .rs .eco-stats b { color:var(--text-primary); }
+    .rs .eco-bar { height:7px; border-radius:99px; background:var(--surface-sunken); overflow:hidden; }
+    .rs .eco-fill { height:100%; border-radius:99px; background:linear-gradient(90deg, var(--brand-600), #ff7a3c); transition:width .6s var(--ease-out); }
+    .rs .eco-foot { font-size:12.5px; color:var(--text-secondary); margin-top:9px; }
+    .rs .eco-foot b { color:var(--brand-400); }
+
+    /* ══ idea launcher ══ */
+    .rs .idea-launch { display:flex; align-items:center; gap:10px; padding:8px 8px 8px 14px; border:1px solid var(--border-default); border-radius:14px; background:var(--surface-raised); margin-bottom:18px; }
+    .rs .idea-launch:focus-within { border-color:color-mix(in srgb, var(--brand-500) 50%, transparent); }
+    .rs .idea-launch-ic { color:var(--brand-500); display:flex; flex-shrink:0; }
+    .rs .idea-launch-input { flex:1; min-width:0; background:transparent; border:none; outline:none; color:var(--text-primary); font-size:14.5px; font-family:var(--font-body); }
+    .rs .idea-launch-input::placeholder { color:var(--text-tertiary); }
+    .rs--mobile .idea-launch { flex-wrap:wrap; }
+
+    /* ══ fábrica de ideas ══ */
+    .rs .ideas-pad { padding:30px 40px 20px; }
+    .rs--mobile .ideas-pad { padding:20px 18px 12px; }
+    .rs--desktop .ideas-pad, .rs--desktop .ideas-list, .rs--desktop .gui-list { max-width:840px; margin-left:auto; margin-right:auto; }
+    .rs .explosion-btn { display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%; padding:14px 18px; margin-bottom:6px; border:1px solid rgba(255,45,85,.4); border-radius:14px; background:linear-gradient(120deg, rgba(249,115,22,.16), rgba(255,45,85,.10)); color:var(--text-primary); font-size:16px; font-weight:800; cursor:pointer; font-family:var(--font-body); transition:transform .12s var(--ease), box-shadow .18s var(--ease); }
+    .rs .explosion-btn:hover { transform:translateY(-1px); box-shadow:0 8px 28px rgba(255,45,85,.28); }
+    .rs .explosion-btn span { font-size:12px; font-weight:600; color:var(--text-secondary); }
+    .rs .ideas-list { padding:0 40px 40px; display:flex; flex-direction:column; gap:14px; margin-top:18px; }
+    .rs--mobile .ideas-list { padding:0 18px 30px; }
+    .rs .idea-block { border:1px solid var(--border-default); border-radius:16px; background:var(--surface-raised); overflow:hidden; }
+    .rs .idea-block-head { display:flex; align-items:center; gap:12px; padding:15px 16px; }
+    .rs .idea-ic { width:34px; height:34px; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:color-mix(in srgb, var(--brand-500) 14%, transparent); color:var(--brand-400); }
+    .rs .idea-text { flex:1; min-width:0; font-size:15px; font-weight:600; line-height:1.3; }
+    .rs .idea-scripts { padding:0 16px 14px; display:flex; flex-direction:column; gap:10px; }
+    .rs .sc-block { border:1px solid var(--border-subtle); border-radius:12px; padding:13px 14px; background:var(--surface-base); }
+    .rs .sc-hook-line { font-size:14.5px; font-weight:600; line-height:1.35; margin-bottom:10px; }
+    .rs .sc-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .rs .sc-saved { display:inline-flex; align-items:center; gap:5px; font-size:12.5px; font-weight:700; color:var(--success-fg); }
+    .rs .sc-hooks { margin-top:12px; display:flex; flex-direction:column; gap:7px; border-top:1px solid var(--border-subtle); padding-top:11px; }
+    .rs .sc-hook { display:flex; align-items:center; gap:10px; font-size:13.5px; line-height:1.35; }
+    .rs .sc-hook .hn { font-family:var(--font-mono); font-size:11px; color:var(--brand-500); flex-shrink:0; }
+    .rs .sc-hook span:nth-child(2) { flex:1; min-width:0; }
+    .rs .sc-hook-save { flex-shrink:0; font-size:11px; font-weight:700; color:var(--text-tertiary); background:transparent; border:1px solid var(--border-default); border-radius:7px; padding:4px 9px; cursor:pointer; }
+    .rs .sc-hook-save:hover { color:var(--text-primary); border-color:var(--border-strong); }
+
+    /* ══ guiones validados ══ */
+    .rs .gui-list { padding:0 0 40px; display:flex; flex-direction:column; gap:10px; }
+    .rs .gui-card { display:flex; align-items:center; gap:12px; padding:15px 16px; border:1px solid var(--border-default); border-radius:14px; background:var(--surface-raised); }
+    .rs .gui-main { flex:1; min-width:0; }
+    .rs .gui-title { font-size:14.5px; font-weight:600; line-height:1.3; margin-bottom:3px; }
+    .rs .gui-meta { font-size:12px; color:var(--text-tertiary); }
+    .rs .gui-pill { font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:99px; background:var(--surface-overlay); color:var(--text-secondary); flex-shrink:0; }
+    .rs .gui-pill.done { background:var(--success-bg); color:var(--success-fg); display:inline-flex; align-items:center; gap:4px; }
+    .rs .fchip.ghost { border-style:dashed; color:var(--text-tertiary); }
+    .rs .fchip.ghost:hover { color:var(--brand-400); border-color:var(--brand-500); }
+
+    /* ══ takeover demo: la isla ocupa todo el workspace y oculta la chrome vieja ══ */
+    body.rs-takeover .chrome-nav, body.rs-takeover .prof-header, body.rs-takeover .ideas-tabs,
+    body.rs-takeover .prof-bottom-tab, body.rs-takeover #profSidebarNav { display:none !important; }
+    body.rs-takeover #profPanelIdeas, body.rs-takeover #ideasPanelCompetitors { height:100%; padding:0 !important; margin:0 !important; }
+    body.rs-takeover #radarRoot { height:calc(100vh - 0px); min-height:600px; }
+    body.rs-takeover .prof-main, body.rs-takeover .prof-content, body.rs-takeover .prof-body { padding:0 !important; max-width:none !important; }
   </style>
 
   {% if clarity_project_id %}
@@ -22574,482 +22666,8 @@ async function removeCompetitor(trackingId, username) {
 </div>
 <!-- v0.14.11a: tutorial bubble + YouTube modal removed -->
 
-<!-- ═══════════════════════════════════════════════════════════════════════
-     v0.16.x RADAR LOOP — módulo vanilla JS. Traducción fiel del prototipo
-     React (app.jsx / screens.jsx / flow.jsx) a JS sin framework, montado
-     dentro de #radarRoot. Máquina de estados: feed → gen → script → result
-     → prompter → fillweek. Se conecta a endpoints reales; en DEMO usa el shim.
-     ═══════════════════════════════════════════════════════════════════════ -->
-<script>
-(function(){
-  "use strict";
-  var ESC = (window.esc || function(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); });
-
-  /* ── iconos inline (de screens.jsx) ─────────────────────────── */
-  var IC = {
-    spark:'<svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2z" fill="currentColor"/></svg>',
-    eye:'<svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.8"/></svg>',
-    heart:'<svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M12 20s-7-4.6-7-9.6A3.9 3.9 0 0112 7a3.9 3.9 0 017 3.4C19 15.4 12 20 12 20z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
-    star:'<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.9 6.7 19.4l1.2-6L3.4 9.3l6-.7L12 3z" fill="currentColor"/></svg>',
-    starO:'<svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.9 6.7 19.4l1.2-6L3.4 9.3l6-.7L12 3z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>',
-    mic:'<svg viewBox="0 0 24 24" fill="none" width="17" height="17"><rect x="9" y="3" width="6" height="11" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M5 11a7 7 0 0014 0M12 18v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-    layers:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M12 3l9 5-9 5-9-5 9-5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M3 13l9 5 9-5" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>',
-    hook:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M18 4v8a6 6 0 11-12 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="18" cy="3.5" r="2" stroke="currentColor" stroke-width="1.7"/></svg>',
-    repeat:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M3 11V9a4 4 0 014-4h11M21 7l-3-2 3-2M21 13v2a4 4 0 01-4 4H6M3 17l3 2-3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    arr:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    back:'<svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    x:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
-    check:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M5 12l5 5 9-10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-  };
-
-  var GEN_STEPS = {
-    script:["Leyendo el reel de tu rival…","Extrayendo la estructura que funcionó…","Reescribiéndolo en TU voz…","Puliendo el hook…"],
-    hooks:["Analizando el ángulo…","Probando 5 entradas distintas…","Ordenando por gancho…"],
-    carousel:["Troceando la idea en slides…","Escribiendo cada tarjeta…","Diseñando la portada…"],
-    linkedin:["Cambiando el registro a LinkedIn…","Alargando con tu experiencia…","Rematando con pregunta…"],
-    x:["Partiendo en tuits…","Cuidando cada salto de línea…","Cerrando el hilo…"],
-    serie:["Buscando 3 ángulos que encadenan…","Escribiendo la continuidad…","Dejándolos listos para grabar…"]
-  };
-  var GEN_TITLE = { script:"Haciéndolo tuyo", hooks:"Buscando tu hook", carousel:"Montando el carrusel", linkedin:"Pasando a LinkedIn", x:"Tejiendo el hilo", serie:"Creando tu serie" };
-  var COST = { script:1, hooks:1, carousel:1, linkedin:1, x:1, serie:3, record:0 };
-
-  /* ── estado del módulo ──────────────────────────────────────── */
-  var S = {
-    mounted:false, device:"desktop",
-    user:{ name:"", handle:"", credits:0, streak:0 },
-    stats:{ competitors:0, reels_week:0, exploded_week:0, stolen_today:0 },
-    reels:[], favs:{}, filter:"explosion",
-    view:"feed", reel:null, genKind:"script", resultKind:"hooks", done:{},
-    genTimer:null, genStepTimer:null, fillTimer:null, toastTimer:null, sparkPrev:0
-  };
-
-  function root(){ return document.getElementById("radarRoot"); }
-  function isDemo(){ return !!window.__DEMO__; }
-
-  /* ── helpers de formato ─────────────────────────────────────── */
-  function initialsOf(handle){ var h=(handle||"").replace(/[^a-zA-Z0-9]/g,""); return (h.slice(0,2)||"··").toUpperCase(); }
-  function fmtNum(n){ n=Number(n||0); if(n>=1e6) return (n/1e6).toFixed(n>=1e7?0:1).replace(".",",")+" M"; if(n>=1e3) return Math.round(n/1e3)+" K"; return String(n); }
-  function relTime(iso){ if(window.ovRelTime) return window.ovRelTime(iso); if(!iso) return ""; var d=(Date.now()-new Date(iso).getTime())/3600000; if(d<1) return "hace "+Math.max(1,Math.round(d*60))+" min"; if(d<24) return "hace "+Math.round(d)+" h"; return "hace "+Math.round(d/24)+" días"; }
-  function durFmt(sec){ sec=Number(sec||0); if(!sec) return "0:30"; var m=Math.floor(sec/60), s=sec%60; return m+":"+String(s).padStart(2,"0"); }
-
-  /* normaliza un reel del backend a la forma del diseño */
-  function normReel(r){
-    var handle = (r.creator && r.creator.ig_username) || r.username || "creador";
-    var exp = r.explosion_score!=null ? r.explosion_score : (r.explosion!=null ? r.explosion : null);
-    return {
-      id: r.id,
-      creator: { handle: handle, initials: r.initials || initialsOf(handle) },
-      when: r.when || relTime(r.posted_at),
-      explosion: exp,
-      explosionTxt: exp!=null ? (exp>=10?Math.round(exp):(Math.round(exp*10)/10)) : null,
-      views: typeof r.views==="string" ? r.views : fmtNum(r.views),
-      likes: typeof r.likes==="string" ? r.likes : fmtNum(r.likes),
-      dur: r.dur || durFmt(r.video_duration_sec),
-      cap: r.cap || r.caption || "",
-      sum: r.sum || "",
-      thumb: r.thumb_b64 || r.thumb_url || r.thumb || null,
-      fav: !!(r.is_favorite || r.fav),
-      script: r.script || null,
-      hooks: r.hooks || null
-    };
-  }
-
-  /* ── render: feed base ──────────────────────────────────────── */
-  function greetWord(){ var h=new Date().getHours(); return h<6?"Buenas noches":h<13?"Buenos días":h<21?"Buenas tardes":"Buenas noches"; }
-
-  function feedReels(){
-    var a = S.reels.slice();
-    if(S.filter==="fav") a = a.filter(function(r){ return S.favs[r.id]; });
-    else if(S.filter==="recent"){ /* backend ya da orden; mantener */ }
-    else a.sort(function(x,y){ return (y.explosion||0)-(x.explosion||0); });
-    return a;
-  }
-
-  function reelCardHTML(r){
-    var mega = (r.explosion||0) >= 5;
-    var isFav = !!S.favs[r.id];
-    var thumbInner = r.thumb
-      ? '<img src="'+ESC(r.thumb)+'" alt="">'
-      : '<div class="play"></div>';
-    var badge = r.explosionTxt!=null
-      ? '<span class="badge badge-explode'+(mega?" mega":"")+'">🔥 '+ESC(r.explosionTxt)+'x su media</span>'
-      : '';
-    return ''+
-    '<div class="reel">'+
-      '<div class="thumb">'+thumbInner+
-        '<span class="dur">'+ESC(r.dur)+'</span>'+
-        '<span class="thumb-tag">reel ·'+ESC(r.creator.handle.slice(0,6))+'</span>'+
-      '</div>'+
-      '<div class="body">'+
-        '<div class="crow">'+
-          '<div class="ava">'+ESC(r.creator.initials)+'</div>'+
-          '<span class="who">@'+ESC(r.creator.handle)+'</span>'+
-          '<span class="when">· '+ESC(r.when)+'</span>'+
-        '</div>'+
-        '<p class="cap">'+ESC(r.cap)+'</p>'+
-        (r.sum?'<p class="sum">'+ESC(r.sum)+'</p>':'')+
-        '<div class="metrics">'+
-          '<span>'+IC.eye+' '+ESC(r.views)+'</span>'+
-          '<span>'+IC.heart+' '+ESC(r.likes)+'</span>'+
-          badge+
-        '</div>'+
-        '<div class="actions">'+
-          '<button class="btn btn-md btn-primary" data-act="steal" data-id="'+ESC(r.id)+'">✨ Hazlo mío</button>'+
-          '<button class="iconbtn'+(isFav?" on":"")+'" data-act="fav" data-id="'+ESC(r.id)+'" title="Guardar">'+(isFav?IC.star:IC.starO)+'</button>'+
-        '</div>'+
-      '</div>'+
-    '</div>';
-  }
-
-  function momentumHTML(){
-    var st=S.stats, u=S.user;
-    var nudge = st.stolen_today===0
-      ? '<span class="nudge">Aún no has robado ninguno hoy.</span>'
-      : '<span class="nudge">Llevas '+st.stolen_today+' robado'+(st.stolen_today>1?"s":"")+' hoy — sigue así.</span>';
-    return ''+
-    '<div class="momentum">'+
-      '<h1 class="greet">'+ESC(greetWord())+(u.name?", "+ESC(u.name):"")+'</h1>'+
-      '<p class="line">Esta semana tus <span class="hot">'+st.competitors+' rivales</span> publicaron '+st.reels_week+' reels. '+
-      '<span class="hot">'+st.exploded_week+' explotaron</span>. '+nudge+'</p>'+
-    '</div>';
-  }
-
-  function whaleHTML(count){
-    return ''+
-    '<div class="whale">'+
-      '<div class="wicon">⚡</div>'+
-      '<div class="wtext"><h4>Llena mi semana</h4><p>Convierte los '+count+' reels más explosivos en '+count+' guiones con tu voz, listos para grabar. De golpe.</p></div>'+
-      '<button class="btn btn-md btn-primary" data-act="fillweek">Hazlo</button>'+
-    '</div>';
-  }
-
-  function filtersHTML(){
-    var base=[["explosion","🔥 Explotando"],["recent","Recientes"],["fav","★ Favoritos"]];
-    return '<div class="filters">'+base.map(function(f){
-      return '<button class="fchip'+(S.filter===f[0]?" on":"")+'" data-act="filter" data-k="'+f[0]+'">'+f[1]+'</button>';
-    }).join("")+'</div>';
-  }
-
-  function topbarHTML(){
-    var nav = S.device==="desktop"
-      ? '<div style="display:flex;gap:4px;margin-left:14px"><span class="navchip on">Radar</span><span class="navchip">Mi voz</span><span class="navchip">Guiones</span></div>'
-      : '';
-    var streak = (S.user.streak>0)
-      ? '<span class="navchip" style="color:var(--brand-500);cursor:default" title="Días seguidos robando ideas">🔥 '+S.user.streak+' días</span>'
-      : '';
-    return ''+
-    '<div class="topbar">'+
-      '<span class="brand">Reel<b>script</b></span>'+nav+
-      '<span class="grow"></span>'+streak+
-      '<div class="spark" id="rsSpark" title="Movimientos disponibles esta semana">'+IC.spark+'<span><b id="rsSparkN">'+S.user.credits+'</b></span></div>'+
-    '</div>';
-  }
-
-  function feedBodyHTML(){
-    var reels = feedReels();
-    var fc = reels.length===0
-      ? '<div class="rs-empty">'+(S.filter==="fav"?"Sin favoritos aún. Toca la estrella en un reel que te interese.":"Sin reels todavía. Añade competidores para empezar a espiar.")+'</div>'
-      : reels.map(reelCardHTML).join("");
-    var fillCount = Math.min(5, S.reels.length) || 5;
-    return ''+
-    '<div class="scroll"><div class="pad">'+
-      momentumHTML()+
-      (S.reels.length?whaleHTML(fillCount):"")+
-      filtersHTML()+
-      '<div class="feed">'+fc+'</div>'+
-    '</div></div>';
-  }
-
-  /* ── render: overlays ───────────────────────────────────────── */
-  function generatingHTML(kind){
-    var steps=GEN_STEPS[kind]||GEN_STEPS.script;
-    return '<div class="gen"><div class="orb"></div><div><div class="gtitle">'+ESC(GEN_TITLE[kind]||"Trabajando")+'</div><div class="gstep" id="rsGenStep">'+ESC(steps[0])+'</div></div></div>';
-  }
-
-  function conveyorHTML(){
-    var items=[
-      ["record",IC.mic,"Grábalo ahora","Teleprompter listo · gratis",true],
-      ["hooks",IC.hook,"5 hooks alternativos","El hook es el 80% del reel",false],
-      ["carousel",IC.layers,"Conviértelo en carrusel","La misma idea, en post",false],
-      ["linkedin",'<span style="font-weight:800;font-size:13px">in</span>',"Versión LinkedIn","Llega a otro público",false],
-      ["x",'<span style="font-weight:800;font-size:15px">𝕏</span>',"Hilo para X","Exprime el mismo ángulo",false],
-      ["serie",IC.repeat,"Genérame una serie de 3","Contenido para toda la semana",false]
-    ];
-    var rows = items.map(function(it){
-      var k=it[0], isDone=!!S.done[k];
-      var label = isDone ? (k==="record"?"Grabado ✓":"Hecho ✓") : it[2];
-      return '<button class="chain'+(it[4]?" feature":"")+(isDone?" done":"")+'" '+(isDone?"":'data-act="chain" data-k="'+k+'"')+'>'+
-        '<div class="cic">'+(isDone?IC.check:it[1])+'</div>'+
-        '<div class="ctext"><div class="ct">'+ESC(label)+'</div><div class="cd">'+ESC(it[3])+'</div></div>'+
-        (isDone?"":'<span class="arr">'+IC.arr+'</span>')+
-      '</button>';
-    }).join("");
-    return '<div class="belt"><div class="belt-h"><h4>¿Y ahora?</h4></div>'+
-      '<p class="belt-sub">Ya tienes el guión. Multiplícalo en un toque — cada formato es una pieza más sin volver a pensar.</p>'+
-      '<div class="belt-grid">'+rows+'</div></div>';
-  }
-
-  function scriptRevealHTML(){
-    var r=S.reel, s=r.script||{hook:"",beats:[],close:""};
-    var beats=(s.beats||[]).map(function(b,i){ return '<div class="beat"><span class="n">'+String(i+1).padStart(2,"0")+'</span><span>'+ESC(b)+'</span></div>'; }).join("");
-    return '<div class="script-wrap fade-in">'+
-      '<div class="script-src"><span>Robado de <b style="color:var(--text-secondary)">@'+ESC(r.creator.handle)+'</b></span>'+
-        '<span style="opacity:.4">·</span><span class="voice-tag">'+IC.spark+' En la voz de @'+ESC(S.user.handle||"ti")+'</span></div>'+
-      '<h2 class="script-hook">'+ESC(s.hook)+'</h2>'+
-      '<div class="script-body">'+beats+'</div>'+
-      (s.close?'<div class="script-close">'+ESC(s.close)+'</div>':'')+
-      conveyorHTML()+
-    '</div>';
-  }
-
-  function formatResultHTML(kind){
-    var r=S.reel, s=r.script||{hook:"",beats:[],close:""};
-    var meta={
-      hooks:["5 hooks, listos para elegir","Tu mismo guión empieza de 5 formas. Cambia el primero y cambia todo."],
-      carousel:["Tu carrusel, slide a slide","Desliza para ver las tarjetas. La idea del reel, ahora también en feed."],
-      linkedin:["Tu post de LinkedIn","Mismo ángulo, registro profesional. Otro público, cero esfuerzo extra."],
-      x:["Tu hilo de X","El guión partido en tuits que encadenan. Copia y publica."],
-      serie:["Tu serie de 3 está lista","Tres días de contenido que se sostienen entre sí. La semana resuelta."]
-    }[kind]||["Listo",""];
-    var inner="";
-    if(kind==="hooks"){
-      var hooks = r.hooks && r.hooks.length ? r.hooks : [s.hook].concat(s.beats||[]).slice(0,5);
-      inner='<div class="stagger">'+hooks.map(function(h,i){ return '<div class="hook-item"><span class="hn">'+String(i+1).padStart(2,"0")+'</span><span class="htext">'+ESC(h)+'</span><span class="copy" data-act="copy" data-txt="'+ESC(h)+'">Copiar</span></div>'; }).join("")+'</div>';
-    } else if(kind==="carousel"){
-      var slides='<div class="slide cover"><div class="sidx">PORTADA</div><div class="stext">'+ESC(s.hook)+'</div></div>';
-      slides+=(s.beats||[]).map(function(b,i){ return '<div class="slide"><div class="sidx">'+String(i+1).padStart(2,"0")+'/'+(s.beats.length)+'</div><div class="stext">'+ESC(b)+'</div></div>'; }).join("");
-      slides+='<div class="slide"><div class="sidx">CIERRE</div><div class="stext">'+ESC(s.close)+'</div></div>';
-      inner='<div class="slides">'+slides+'</div>';
-    } else if(kind==="linkedin"){
-      inner='<div class="fade-in" style="font-size:15.5px;line-height:1.6;color:var(--text-primary)">'+
-        '<p style="margin:0 0 14px;font-weight:600">'+ESC(s.hook)+'</p>'+
-        (s.beats||[]).map(function(b){ return '<p style="margin:0 0 12px">'+ESC(b)+'</p>'; }).join("")+
-        '<p style="margin:0 0 12px">'+ESC(s.close)+'</p>'+
-        '<p style="margin:0;color:var(--text-tertiary)">#automatización #IA #productividad</p></div>';
-    } else if(kind==="x"){
-      var tw=[s.hook].concat(s.beats||[],[s.close]);
-      inner='<div class="stagger">'+tw.map(function(t,i){ return '<div class="hook-item" style="align-items:flex-start"><span class="hn">'+(i+1)+'/'+tw.length+'</span><span class="htext" style="font-weight:400">'+ESC(t)+'</span></div>'; }).join("")+'</div>';
-    } else if(kind==="serie"){
-      var days=[[r.cap,"El guión que acabas de robar — tu pieza ancla."],["El error que casi todos cometen con esto","Giro: enseña el fallo típico antes de la solución."],["Cómo lo llevé al siguiente nivel","Cierre de serie: tu resultado real + llamada a seguirte."]];
-      inner='<div class="stagger">'+days.map(function(d,i){ return '<div class="serie-item"><div class="sday"><div class="dnum">'+(i+1)+'</div><div class="dlbl">DÍA '+(i+1)+'</div></div><div class="sinfo"><div class="stitle">'+ESC(d[0])+'</div><div class="sdesc">'+ESC(d[1])+'</div></div></div>'; }).join("")+'</div>';
-    }
-    var foot='<div class="cluster" style="margin-top:24px;gap:10px"><button class="btn btn-md btn-secondary" data-act="back-script">← Volver al guión</button>'+
-      ((kind==="hooks"||kind==="carousel")?'<button class="btn btn-md btn-primary" data-act="record">'+IC.mic+' Grábalo</button>':'')+'</div>';
-    return '<div class="script-wrap fade-in"><h2 class="result-head serif">'+ESC(meta[0])+'</h2><p class="result-sub">'+ESC(meta[1])+'</p>'+inner+foot+'</div>';
-  }
-
-  function overlayShellHTML(inner, title, backAct, closeIcon){
-    return '<div class="overlay"><div class="obar"><button class="back" data-act="'+backAct+'">'+(closeIcon?IC.x:IC.back)+'</button><span class="otitle">'+ESC(title)+'</span></div><div class="oscroll">'+inner+'</div></div>';
-  }
-
-  function teleprompterHTML(){
-    var r=S.reel, s=r.script||{hook:"",beats:[],close:""};
-    var body='<p class="hook">'+ESC(s.hook)+'</p>'+(s.beats||[]).map(function(b){ return '<p>'+ESC(b)+'</p>'; }).join("")+'<p>'+ESC(s.close)+'</p>';
-    return '<div class="overlay prompter">'+
-      '<div class="obar"><button class="back" data-act="tp-back">'+IC.back+'</button><span class="otitle">Teleprompter</span><span style="flex:1"></span><span style="font-size:12px;color:rgba(255,255,255,.5)">@'+ESC(r.creator.handle)+' · robado</span></div>'+
-      '<div class="tp-scroll"><div class="tp-text">'+body+'</div></div>'+
-      '<div class="tp-foot"><button class="btn btn-lg" style="background:rgba(255,255,255,.12);color:#fff;border:none;flex:0 0 auto" data-act="tp-back">Aún no</button><button class="btn btn-lg btn-primary" data-act="recorded">'+IC.check+' Ya lo grabé</button></div>'+
-    '</div>';
-  }
-
-  function fillWeekHTML(reels, phase){
-    var allDone = phase===-1;
-    var head = allDone ? "Tu semana está lista" : "Llenando tu semana…";
-    var sub = allDone
-      ? reels.length+" guiones con tu voz, listos para grabar. No vuelves a quedarte en blanco esta semana."
-      : "Robando los "+reels.length+" reels más explosivos y reescribiéndolos en tu voz, uno a uno.";
-    var rows = reels.map(function(r,i){
-      var state = allDone||i<phase ? "done" : (i===phase?"run":"wait");
-      var stat = state==="wait" ? "En cola" : state==="run" ? '<span class="mini-spin"></span> Reescribiendo' : IC.check+' Listo';
-      return '<div class="batch-row'+(state==="done"?" is-done":"")+'"><div class="ava bava">'+ESC(r.creator.initials)+'</div>'+
-        '<div class="binfo"><div class="bt">'+ESC(r.cap)+'</div><div class="bw">@'+ESC(r.creator.handle)+' · 🔥 '+ESC(r.explosionTxt!=null?r.explosionTxt:"")+'x</div></div>'+
-        '<div class="bstat '+state+'">'+stat+'</div></div>';
-    }).join("");
-    var foot = allDone
-      ? '<div class="cluster" style="margin-top:22px;gap:10px"><button class="btn btn-md btn-secondary" data-act="fw-radar">Ver en el Radar</button><button class="btn btn-md btn-primary" data-act="fw-record">'+IC.mic+' Grabar el primero</button></div>'
-      : '';
-    return '<div class="batch fade-in"><h2 class="result-head serif" style="font-size:28px">'+ESC(head)+'</h2><p class="result-sub">'+ESC(sub)+'</p>'+rows+foot+'</div>';
-  }
-
-  /* ── render maestro ─────────────────────────────────────────── */
-  function render(){
-    var el=root(); if(!el) return;
-    el.className = "rs app "+(S.device==="mobile"?"rs--mobile":"rs--desktop");
-    el.setAttribute("data-theme", (document.documentElement.getAttribute("data-theme")==="light"?"light":"dark"));
-    var html = topbarHTML() + feedBodyHTML();
-    if(S.view==="gen") html += overlayShellHTML(generatingHTML(S.genKind), "Trabajando…", "close-feed", true);
-    else if(S.view==="script") html += overlayShellHTML(scriptRevealHTML(), "Tu guión, en tu voz", "close-feed", true);
-    else if(S.view==="result") html += overlayShellHTML(formatResultHTML(S.resultKind), "Listo", "back-script", false);
-    else if(S.view==="prompter") html += teleprompterHTML();
-    else if(S.view==="fillweek") html += '<div class="overlay"><div class="obar"><button class="back" data-act="close-feed">'+IC.x+'</button><span class="otitle">Llena mi semana</span></div><div class="oscroll" id="rsFillHost">'+fillWeekHTML(fillReels(), S._fillPhase==null?0:S._fillPhase)+'</div></div>';
-    html += '<div class="rs-toast" id="rsToast"><span class="tdot"></span><span id="rsToastMsg"></span></div>';
-    el.innerHTML = html;
-    if(S.view==="gen") startGenSteps();
-  }
-
-  function fillReels(){ return S.reels.slice().sort(function(a,b){ return (b.explosion||0)-(a.explosion||0); }).slice(0,5); }
-
-  /* ── animaciones ────────────────────────────────────────────── */
-  function startGenSteps(){
-    clearInterval(S.genStepTimer);
-    var steps=GEN_STEPS[S.genKind]||GEN_STEPS.script, i=0;
-    S.genStepTimer=setInterval(function(){
-      i=(i+1)%steps.length;
-      var n=document.getElementById("rsGenStep");
-      if(n){ n.style.opacity=0; setTimeout(function(){ n.textContent=steps[i]; n.style.opacity=1; },150); }
-    },700);
-  }
-  function flashSpark(delta){
-    var sp=document.getElementById("rsSpark"), nEl=document.getElementById("rsSparkN");
-    if(nEl) nEl.textContent=S.user.credits;
-    if(sp && delta<0){
-      sp.classList.add("flash");
-      var fly=document.createElement("span"); fly.className="spark-fly"; fly.textContent=delta;
-      sp.appendChild(fly);
-      setTimeout(function(){ sp.classList.remove("flash"); if(fly.parentNode) fly.parentNode.removeChild(fly); },1000);
-    }
-  }
-  function showToast(msg){
-    var t=document.getElementById("rsToast"), m=document.getElementById("rsToastMsg");
-    if(!t||!m) return;
-    m.textContent=msg; t.classList.add("show");
-    clearTimeout(S.toastTimer);
-    S.toastTimer=setTimeout(function(){ t.classList.remove("show"); },2800);
-  }
-
-  /* ── acciones / máquina de estados ──────────────────────────── */
-  function spend(n){ S.user.credits=Math.max(0,S.user.credits-n); }
-
-  function steal(id){
-    var r = S.reels.filter(function(x){ return x.id===id; })[0]; if(!r) return;
-    S.reel=r; S.genKind="script"; S.done={}; S.view="gen"; render();
-    // generar guión (real o demo)
-    ensureScript(r, function(){
-      spend(COST.script); S.stats.stolen_today += 0; // robar = generar; "robado hoy" se cuenta al grabar (como el diseño)
-      S.view="script"; render(); flashSpark(-COST.script);
-    });
-  }
-
-  function ensureScript(r, cb){
-    if(r.script && r.script.hook){ setTimeout(cb, 1700); return; }
-    if(isDemo()){ setTimeout(cb, 1700); return; }
-    // PROD: POST generate-script, luego cargar el script generado
-    var t0=Date.now();
-    fetch("/api/competitors/reels/"+encodeURIComponent(r.id)+"/generate-script",{method:"POST",credentials:"same-origin"})
-      .then(function(res){ return res.json().catch(function(){return{};}); })
-      .then(function(d){
-        // intentar parsear el guión devuelto; si no, dejar texto plano
-        var sc = d.script || d.result || null;
-        r.script = parseScript(sc, r);
-        var wait=Math.max(0, 1500-(Date.now()-t0));
-        setTimeout(cb, wait);
-      })
-      .catch(function(){ r.script=r.script||{hook:r.cap,beats:[],close:""}; setTimeout(cb,800); });
-  }
-  function parseScript(sc, r){
-    if(sc && typeof sc==="object" && sc.hook) return sc;
-    if(typeof sc==="string"){
-      var lines=sc.split(/\n+/).map(function(s){return s.replace(/^▸\s*/,"").trim();}).filter(Boolean);
-      return { hook: lines[0]||r.cap, beats: lines.slice(1,-1), close: lines.length>1?lines[lines.length-1]:"" };
-    }
-    return { hook:r.cap, beats:[], close:"" };
-  }
-
-  function chain(kind){
-    if(kind==="record"){ S.view="prompter"; render(); return; }
-    S.genKind=kind; S.resultKind=kind; S.view="gen"; render();
-    setTimeout(function(){
-      spend(COST[kind]||1); S.done[kind]=true; S.view="result"; render(); flashSpark(-(COST[kind]||1));
-    }, 1500);
-  }
-  function recorded(){
-    S.done.record=true; S.stats.stolen_today+=1; S.view="feed"; render();
-    showToast("Guión grabado. Te esperan más reels que explotaron hoy →");
-  }
-  function startFillWeek(){
-    var reels=fillReels(); spend(reels.length); S.view="fillweek"; S._fillPhase=0; render(); flashSpark(-reels.length);
-    runFillPhase();
-  }
-  function runFillPhase(){
-    var reels=fillReels();
-    clearTimeout(S.fillTimer);
-    S.fillTimer=setTimeout(function(){
-      if(S._fillPhase>=reels.length){ S._fillPhase=-1; updateFillHost(); return; }
-      S._fillPhase++; updateFillHost(); runFillPhase();
-    }, 720);
-    updateFillHost();
-  }
-  function updateFillHost(){
-    var host=document.getElementById("rsFillHost");
-    if(host) host.innerHTML=fillWeekHTML(fillReels(), S._fillPhase==null?0:S._fillPhase);
-  }
-  function toggleFav(id){
-    S.favs[id]=!S.favs[id];
-    // persistir (real); en demo el shim lo absorbe
-    var method=S.favs[id]?"POST":"DELETE";
-    fetch("/api/competitors/reels/"+encodeURIComponent(id)+"/favorite",{method:method,credentials:"same-origin"}).catch(function(){});
-    render();
-  }
-
-  /* ── delegación de eventos ──────────────────────────────────── */
-  function onClick(e){
-    var el=root(); if(!el || !el.contains(e.target)) return;
-    var btn=e.target.closest("[data-act]"); if(!btn) return;
-    var act=btn.getAttribute("data-act");
-    if(act==="steal") return steal(btn.getAttribute("data-id"));
-    if(act==="fav") return toggleFav(btn.getAttribute("data-id"));
-    if(act==="filter"){ S.filter=btn.getAttribute("data-k"); return render(); }
-    if(act==="fillweek") return startFillWeek();
-    if(act==="chain") return chain(btn.getAttribute("data-k"));
-    if(act==="record"){ S.view="prompter"; return render(); }
-    if(act==="recorded") return recorded();
-    if(act==="back-script"){ S.view="script"; return render(); }
-    if(act==="close-feed"){ clearTimeout(S.genTimer); clearInterval(S.genStepTimer); clearTimeout(S.fillTimer); S.view="feed"; S._fillPhase=null; return render(); }
-    if(act==="tp-back"){ S.view = Object.keys(S.done).length?"script":"feed"; return render(); }
-    if(act==="fw-radar"){ S.view="feed"; S._fillPhase=null; render(); return showToast("Guiones añadidos a tus borradores."); }
-    if(act==="fw-record"){ var r=fillReels()[0]; if(r){ S.reel=r; S.view="prompter"; render(); } return; }
-    if(act==="copy"){ var txt=btn.getAttribute("data-txt"); if(navigator.clipboard) navigator.clipboard.writeText(txt); btn.textContent="✓"; setTimeout(function(){ btn.textContent="Copiar"; },1200); return; }
-  }
-
-  /* ── carga de datos + montaje ───────────────────────────────── */
-  function setDevice(){ S.device = window.matchMedia("(max-width:720px)").matches ? "mobile" : "desktop"; }
-
-  function loadAndRender(){
-    setDevice();
-    var el=root(); if(!el) return;
-    el.className="rs app "+(S.device==="mobile"?"rs--mobile":"rs--desktop");
-    el.setAttribute("data-theme",(document.documentElement.getAttribute("data-theme")==="light"?"light":"dark"));
-    el.innerHTML = topbarHTML()+'<div class="scroll"><div class="pad"><div class="feed"><div class="rs-skel"></div><div class="rs-skel"></div></div></div></div>';
-
-    // me / stats / reels en paralelo
-    Promise.all([
-      fetch("/auth/me",{credentials:"same-origin"}).then(function(r){return r.json();}).catch(function(){return{};}),
-      fetch("/api/radar/stats",{credentials:"same-origin"}).then(function(r){return r.json();}).catch(function(){return{};}),
-      fetch("/api/tracked-creators/reels?sort=explosion&limit=24",{credentials:"same-origin"}).then(function(r){return r.json();}).catch(function(){return{reels:[]};})
-    ]).then(function(res){
-      var me=res[0]||{}, stats=res[1]||{}, feed=res[2]||{};
-      if(me.user){ S.user.name=(me.user.name)||(me.user.email||"").split("@")[0]||""; S.user.handle=me.user.handle||(me.user.email||"").split("@")[0]||""; }
-      if(me.credits!=null) S.user.credits=me.credits; else if(me.credits_cents!=null) S.user.credits=Math.round(me.credits_cents/18);
-      if(me.streak!=null) S.user.streak=me.streak;
-      S.stats.competitors = stats.competitors||0;
-      S.stats.reels_week = stats.reels_week||0;
-      S.stats.exploded_week = stats.exploded_week||0;
-      S.stats.stolen_today = stats.stolen_today!=null?stats.stolen_today:(stats.stolen_total||0);
-      S.reels = (feed.reels||[]).map(normReel);
-      S.favs={}; S.reels.forEach(function(r){ if(r.fav) S.favs[r.id]=true; });
-      render();
-    });
-  }
-
-  /* API pública: la llama loadCompetitors() del flujo de la app */
-  window.RadarLoop = {
-    mount: function(){
-      if(!root()) return;
-      if(!S._wired){ document.addEventListener("click", onClick); window.addEventListener("resize", function(){ var d=S.device; setDevice(); if(d!==S.device) render(); }); S._wired=true; }
-      loadAndRender();
-    }
-  };
-})();
-</script>
+<!-- v0.17.x RADAR LOOP — motor multi-marca. Módulo en /static/js/radar-loop.js
+     (editable sin tocar el monolito). Monta dentro de #radarRoot. -->
+<script src="/static/js/radar-loop.js"></script>
 </body>
 </html>
