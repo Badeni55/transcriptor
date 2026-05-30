@@ -9401,11 +9401,16 @@
     .rs .fchip.ghost:hover { color:var(--brand-400); border-color:var(--brand-500); }
 
     /* ══ takeover demo: la isla ocupa todo el workspace y oculta la chrome vieja ══ */
-    body.rs-takeover .chrome-nav, body.rs-takeover .prof-header, body.rs-takeover .ideas-tabs,
-    body.rs-takeover .prof-bottom-tab, body.rs-takeover #profSidebarNav { display:none !important; }
-    body.rs-takeover #profPanelIdeas, body.rs-takeover #ideasPanelCompetitors { height:100%; padding:0 !important; margin:0 !important; }
-    body.rs-takeover #radarRoot { height:calc(100vh - 0px); min-height:600px; }
-    body.rs-takeover .prof-main, body.rs-takeover .prof-content, body.rs-takeover .prof-body { padding:0 !important; max-width:none !important; }
+    body.rs-takeover .prof-sidebar,
+    body.rs-takeover .panel-header,
+    body.rs-takeover .ideas-tabs,
+    body.rs-takeover .prof-bottom-tab,
+    body.rs-takeover #profSidebarNav { display:none !important; }
+    body.rs-takeover .prof-main { padding:0 !important; margin:0 !important; max-width:none !important; overflow:hidden !important; }
+    body.rs-takeover #profPanelIdeas,
+    body.rs-takeover #ideasPanelCompetitors { height:100%; padding:0 !important; margin:0 !important; }
+    body.rs-takeover #radarRoot { height:100vh; min-height:600px; }
+    body.rs-takeover .rs.app { height:100vh; border:none; border-radius:0; }
   </style>
 
   {% if clarity_project_id %}
@@ -15106,7 +15111,17 @@ function profTab(tab, pushHistory) {
   if (tab === "transc") { renderProfTransc(); }
   if (tab === "assistants") renderProfAssistants();
   if (tab === "metrics") loadMetricsSummary();
-  if (tab === "ideas") loadIdeas();
+  if (tab === "ideas") {
+    // v0.17.x: si venimos del Radar, activar competidores + montar la isla de
+    // forma directa (sin depender de la cadena async de loadIdeas/applyIdeasTab).
+    if (requestedTab === "radar") {
+      window._forceIdeasTab = "competitors";
+      if (typeof ideasTab === "function") ideasTab("competitors", false);
+      else if (typeof loadCompetitors === "function") loadCompetitors();
+    } else {
+      loadIdeas();
+    }
+  }
 
   // Update bottom bar active state
   document.querySelectorAll(".prof-bottom-tab").forEach(btn => btn.classList.remove("on"));
@@ -17276,10 +17291,13 @@ async function loadIdeas() {
 window._suggestionsCache = window._suggestionsCache || [];
 
 function applyIdeasTab() {
-  // v0.16.x Radar: si venimos de la home "Radar", forzar el sub-tab Competidores
-  // (bypassa el clamp a suggested/saved). Se consume una sola vez.
-  if (window._forceIdeasTab) {
-    const forced = window._forceIdeasTab;
+  // v0.17.x: en la ruta /profile/radar el panel Ideas SIEMPRE es el Radar
+  // (sub-tab competidores → isla RadarLoop). Forzar de forma robusta evita la
+  // race de la doble llamada (openProfile + refreshMe) que reseteaba a suggested.
+  var onRadar = false;
+  try { onRadar = /\/profile\/radar\/?$/.test(location.pathname); } catch (e) {}
+  if (window._forceIdeasTab || onRadar) {
+    const forced = window._forceIdeasTab || "competitors";
     window._forceIdeasTab = null;
     ideasTab(forced, /*persist*/ false);
     return;
@@ -22668,6 +22686,6 @@ async function removeCompetitor(trackingId, username) {
 
 <!-- v0.17.x RADAR LOOP — motor multi-marca. Módulo en /static/js/radar-loop.js
      (editable sin tocar el monolito). Monta dentro de #radarRoot. -->
-<script src="/static/js/radar-loop.js"></script>
+<script src="/static/js/radar-loop.js?v=18"></script>
 </body>
 </html>
