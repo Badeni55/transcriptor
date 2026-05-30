@@ -6212,6 +6212,23 @@
       background: var(--brand); color: #fff;
       border-color: var(--brand);
     }
+    /* v0.16.x Radar: CTA "Llena mi semana" — empujado a la derecha de la barra. */
+    .comp-fillweek-btn {
+      margin-left: auto;
+      padding: 6px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid color-mix(in srgb, var(--brand) 45%, transparent);
+      background: color-mix(in srgb, var(--brand) 12%, var(--surf));
+      color: var(--brand);
+      font-weight: 700;
+      font-size: var(--text-xs);
+      cursor: pointer;
+      font-family: var(--font-body);
+      white-space: nowrap;
+      transition: all .15s;
+    }
+    .comp-fillweek-btn:hover { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .comp-fillweek-btn:disabled { opacity: .6; cursor: default; }
     .comp-feed {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -10442,6 +10459,8 @@
             <button class="comp-sort-btn" data-sort="recent" onclick="compSetSort('recent')" data-i18n="comp.sort_recent">Recientes</button>
             <button class="comp-sort-btn" data-sort="views" onclick="compSetSort('views')" data-i18n="comp.sort_views">Más vistos</button>
             <button class="comp-sort-btn" data-sort="likes" onclick="compSetSort('likes')" data-i18n="comp.sort_likes">Más likes</button>
+            <!-- v0.16.x Radar: acción ballena — 1 click → N guiones, N créditos. -->
+            <button id="fillWeekBtn" class="comp-fillweek-btn" onclick="fillMyWeek()" data-i18n-es="⚡ Llena mi semana" data-i18n-en="⚡ Fill my week">⚡ Llena mi semana</button>
           </div>
           <div id="compFeed" class="comp-feed">
             <!-- JS rellena: skeleton inicial, luego feed real o empty state. -->
@@ -20976,6 +20995,80 @@ async function loadRadarStats() {
   } catch (e) {
     host.style.display = "none";
   }
+}
+
+// v0.16.x Radar "Llena mi semana": 1 click → genera guiones desde los N reels
+// más explosivos que el user aún no ha robado. Reusa el endpoint single-reel
+// (lock/cobro/dedup/refund) llamándolo en secuencia. Cobra N créditos.
+async function fillMyWeek() {
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const es = lang === "es";
+  const btn = document.getElementById("fillWeekBtn");
+  if (btn && btn.disabled) return;
+  const orig = btn ? btn.textContent : "";
+  let data;
+  try {
+    const r = await fetch("/api/radar/fill-week/candidates?count=5", { credentials: "same-origin" });
+    data = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      if (data && data.error === "upgrade_required") {
+        if (typeof openUpgradeModal === "function") openUpgradeModal("fill_week");
+        return;
+      }
+      throw new Error("net");
+    }
+  } catch (e) {
+    const m = es ? "No se pudo preparar tu semana." : "Couldn't prepare your week.";
+    if (window.toast && window.toast.error) window.toast.error(m);
+    else if (typeof showToast === "function") showToast(m);
+    return;
+  }
+  const reels = data.reels || [];
+  if (!reels.length) {
+    const m = es ? "No hay reels nuevos explotando ahora mismo. Vuelve más tarde 👀"
+                 : "No new exploding reels right now. Check back later 👀";
+    if (window.toast && window.toast.info) window.toast.info(m, { duration: 5000 });
+    else if (typeof showToast === "function") showToast(m);
+    return;
+  }
+  const n = data.unlimited ? reels.length : Math.min(reels.length, Number(data.affordable || 0));
+  if (n <= 0) {
+    if (typeof openUpgradeModal === "function") openUpgradeModal("fill_week");
+    const m = es ? "Te quedaste sin créditos para llenar tu semana." : "You're out of credits to fill your week.";
+    if (window.toast && window.toast.info) window.toast.info(m, { duration: 6000 });
+    else if (typeof showToast === "function") showToast(m);
+    return;
+  }
+  const costTxt = data.unlimited
+    ? (es ? `${n} guiones` : `${n} scripts`)
+    : (es ? `${n} guiones · ${n} crédito${n > 1 ? "s" : ""}` : `${n} scripts · ${n} credit${n > 1 ? "s" : ""}`);
+  const ok = window.confirm(es
+    ? `Vas a generar ${costTxt} desde los reels más explosivos de tu competencia. ¿Seguimos?`
+    : `You're about to generate ${costTxt} from your competitors' most exploding reels. Continue?`);
+  if (!ok) return;
+  const targets = reels.slice(0, n);
+  if (btn) btn.disabled = true;
+  let done = 0;
+  for (const reel of targets) {
+    if (btn) btn.textContent = (es ? `Generando ${done + 1}/${n}…` : `Generating ${done + 1}/${n}…`);
+    try {
+      await fetch("/api/competitors/reels/" + encodeURIComponent(reel.id) + "/generate-script", {
+        method: "POST", credentials: "same-origin",
+      });
+    } catch (e) { /* seguir con el resto */ }
+    done++;
+  }
+  if (btn) { btn.disabled = false; btn.textContent = orig || (es ? "⚡ Llena mi semana" : "⚡ Fill my week"); }
+  const fin = es ? `Listo. ${n} guion${n > 1 ? "es" : ""} en marcha.` : `Done. ${n} script${n > 1 ? "s" : ""} on the way.`;
+  const viewLbl = es ? "Ver guiones →" : "View scripts →";
+  if (window.toast && window.toast.success) {
+    window.toast.success(fin, { duration: 7000, action: { label: viewLbl, onClick: () => { try { profTab("scripts"); } catch (e) {} } } });
+  } else if (typeof showToast === "function") {
+    showToast(fin);
+  }
+  if (typeof loadScripts === "function") { try { await loadScripts(); } catch (e) {} }
+  if (typeof loadRadarStats === "function") { try { loadRadarStats(); } catch (e) {} }
+  if (typeof loadCompetitorsFeed === "function") { try { loadCompetitorsFeed(); } catch (e) {} }
 }
 
 async function loadCompetitors() {

@@ -6035,6 +6035,90 @@ def radar_stats():
     })
 
 
+@app.route("/api/radar/fill-week/candidates", methods=["GET"])
+@require_auth
+def radar_fill_week_candidates():
+    """v0.16.x Radar "Llena mi semana": selecciona los top reels explosivos
+    (>= 2x) que el user aún NO ha convertido en guion, para generarlos en
+    batch. NO cobra ni genera — solo selecciona. El frontend itera sobre el
+    endpoint single-reel existente (que maneja lock/cobro/dedup/refund).
+
+    Query: count (1-7, default 5).
+    Return: {reels: [{id, username, explosion, caption, views}], affordable,
+             cost_cents, unlimited, balance_cents}.
+    """
+    user = current_user()
+    uid = user["id"]
+    profile = get_profile(uid)
+    plan = profile.get("plan", "free")
+
+    if not get_tracked_creators_limit(plan)["enabled"]:
+        return jsonify({"error": "upgrade_required",
+                        "message": "Esta función requiere plan Pro o superior."}), 402
+
+    try:
+        count = max(1, min(7, int(request.args.get("count", "5"))))
+    except (TypeError, ValueError):
+        count = 5
+
+    tracked = (db.table("user_tracked_creators")
+                 .select("creator_id")
+                 .eq("user_id", uid)
+                 .is_("archived_at", "null")
+                 .execute())
+    creator_ids = list({t["creator_id"] for t in (tracked.data or [])})
+    if not creator_ids:
+        return jsonify({"reels": [], "affordable": 0, "cost_cents": COST_CENTS,
+                        "unlimited": plan in ("pro", "creator", "agency"),
+                        "balance_cents": profile.get("credits_cents") or 0})
+
+    # Reels ya convertidos en guion por este user → excluir.
+    already = (db.table("scripts")
+                 .select("from_competitor_reel_id")
+                 .eq("user_id", uid)
+                 .not_.is_("from_competitor_reel_id", "null")
+                 .execute())
+    done_ids = {r["from_competitor_reel_id"] for r in (already.data or [])}
+
+    baselines = _creator_view_baselines(creator_ids)
+    rows = (db.table("creator_reels_global")
+              .select("id, caption, views, posted_at, creator_id, "
+                      "creator:creators_global(ig_username)")
+              .in_("creator_id", creator_ids)
+              .eq("is_archived", False)
+              .order("posted_at", desc=True)
+              .limit(200)
+              .execute()).data or []
+
+    scored = []
+    for r in rows:
+        if r["id"] in done_ids:
+            continue
+        sc = _explosion_score(r.get("views"), baselines.get(r.get("creator_id")))
+        if sc is not None and sc >= 2.0:
+            scored.append({
+                "id": r["id"],
+                "username": (r.get("creator") or {}).get("ig_username") or "",
+                "explosion": sc,
+                "caption": (r.get("caption") or "")[:160],
+                "views": r.get("views") or 0,
+            })
+    scored.sort(key=lambda x: x["explosion"], reverse=True)
+    picked = scored[:count]
+
+    unlimited = plan in ("pro", "creator", "agency")
+    balance = profile.get("credits_cents") or 0
+    affordable = len(picked) if unlimited else min(len(picked), balance // COST_CENTS)
+
+    return jsonify({
+        "reels": picked,
+        "affordable": affordable,
+        "cost_cents": COST_CENTS,
+        "unlimited": unlimited,
+        "balance_cents": balance,
+    })
+
+
 # ── Scrape admin endpoint (v0.15.2.a: async vía Celery) ──────────────────────
 # La función _scrape_creator() vivía aquí en v0.15.2 (sync). En v0.15.2.a
 # migrada a tasks.py como scrape_creator_task (@celery_app.task) para no

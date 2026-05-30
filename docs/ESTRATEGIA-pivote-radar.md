@@ -191,6 +191,7 @@ Esto da por fin **propósito a transcribir tus propios reels**: ya no es una uti
 
 - [x] Visión aprobada (2026-05-30)
 - [x] Documento de estrategia (este archivo)
-- [ ] Fase 1 — Radar como home
-- [ ] Fase 2 — Email diario
-- [ ] Fase 3 — Formatos + Llena mi semana
+- [x] **Fase 1 — Radar como home** (commit 47dc172): índice de explosión + `/api/radar/stats` + Radar como home/nav/landing + sort explosión + badge + barra FOMO + CTA "Hazlo mío". Verificado: app.py compila, JS inline pasa node --check.
+- [x] **Fase 2 — Email diario "Lo que petó en tu nicho"** (commit ed2f4d7): `emails.send_radar_digest` + tarea Beat `tasks.send_radar_digests` (crontab diario 08:00 UTC, top-3 reels >=2x últimas 48h, solo planes con feature). Idempotente por día. Verificado: tasks.py + emails.py compilan.
+- [x] **Fase 3 — "Llena mi semana"** (acción ballena): endpoint `GET /api/radar/fill-week/candidates` (selecciona top-N reels explosivos no robados aún + afordabilidad) + botón Radar `fillMyWeek()` que reusa el endpoint single-reel N veces (lock/cobro/dedup/refund probados). Verificado: app.py compila, JS pasa node --check.
+  - **PENDIENTE de Fase 3 — formatos múltiples (carrusel/LinkedIn/X/serie):** NO implementado a propósito. Añadir system prompts de formato al *path competidor* es riesgo conocido de `content=null` en OpenRouter/Gemini (ver nota v0.15.7.a en código: 'hooks' se retiró del dropdown de reels por choque con el `user_content` "guion 30-45s, 8 frases"). Requiere diseño de prompts compatibles + testing en runtime (no verificable en esta sesión sin levantar app+LLM). Próximo paso cuando se retome: prototipar carrusel/x_thread que encajen en el schema hook/body[]/closing existente y probar con reel real.
