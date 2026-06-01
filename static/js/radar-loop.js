@@ -33,7 +33,8 @@
     chart:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M4 19h16M7 16v-5M12 16V8M17 16v-3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
     ig:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3.6" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="7" r="1.1" fill="currentColor"/></svg>',
     brain:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M9 4a3 3 0 00-3 3 3 3 0 00-1 5.8A2.5 2.5 0 007 17a3 3 0 005 1 3 3 0 005-1 2.5 2.5 0 002-4.2A3 3 0 0015 4a2.5 2.5 0 00-6 0z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
-    chat:'<svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M21 12a8 8 0 01-11.5 7.2L4 20l.9-5.2A8 8 0 1121 12z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>'
+    chat:'<svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M21 12a8 8 0 01-11.5 7.2L4 20l.9-5.2A8 8 0 1121 12z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
+    users:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 20a5.5 5.5 0 0111 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16 6.2a3 3 0 010 5.6M20.5 19.5a5 5 0 00-3.2-4.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
   };
 
   var GEN_STEPS = {
@@ -52,6 +53,8 @@
     device:"desktop", _wired:false,
     user:{ name:"", handle:"", credits:0, streak:0 },
     brands:[], brandId:null,
+    plan:"creador",                     // creador | agencia (de /auth/me; en demo, toggle)
+    scope:"brand",                      // brand (radar de 1 marca) | portfolio (todas — solo agencia)
     reels:[], favs:{}, filter:"explosion", feedExpanded:false,
     ideas:[], guiones:[], activeGuionId:null, guiFilter:"all", _fillGuionIds:[],
     igConnected:false, metrics:null, metricSort:"recent", metricChart:"views",
@@ -63,6 +66,22 @@
   };
   function root(){ return document.getElementById("radarRoot"); }
   function brand(){ return S.brands.filter(function(b){return b.id===S.brandId;})[0] || S.brands[0] || {name:"Mi marca",level:1,voice:40,reelsAnalyzed:0,scripts:0,color:"#f97316"}; }
+  function isAgency(){ return S.plan==="agencia"; }
+  // MACRO = portfolio de todas las marcas (solo agencia). MICRO = radar de una marca.
+  function isMacro(){ return isAgency() && S.tab==="portfolio"; }
+
+  /* ── marcas demo (solo demo): un portfolio de agencia con stats por marca.
+     En prod esto vendrá de /api/brands con sus stats agregadas. ── */
+  function demoBrands(){
+    return [
+      {id:"b1", name:"David Automatiza", handle:"davidautomatiza", color:"#4f7cff", level:3, voice:64, reels:23, exploded:4, competitors:4, reelsAnalyzed:42, scripts:12},
+      {id:"b2", name:"Clínica Nórdica",  handle:"clinicanordica",  color:"#12a37c", level:2, voice:41, reels:9,  exploded:1, competitors:3, reelsAnalyzed:18, scripts:4},
+      {id:"b3", name:"Estudio Lumen",    handle:"estudiolumen",    color:"#6d6bf6", level:4, voice:78, reels:6,  exploded:0, competitors:5, reelsAnalyzed:67, scripts:21},
+      {id:"b4", name:"Bufete Vidal",     handle:"bufetevidal",     color:"#e0556b", level:2, voice:52, reels:14, exploded:5, competitors:6, reelsAnalyzed:23, scripts:7}
+    ];
+  }
+  // una marca "pide atención" si tiene mucho explosivo sin capitalizar o voz baja.
+  function brandNeedsAttention(b){ return (b.exploded||0)>=5 || ((b.exploded||0)>=2 && (b.voice||0)<50); }
 
   /* ── formato ─────────────────────────────────────────────────── */
   function initialsOf(h){ h=(h||"").replace(/[^a-zA-Z0-9]/g,""); return (h.slice(0,2)||"··").toUpperCase(); }
@@ -88,30 +107,68 @@
   /* ════════════════════════════════════════════════════════════════
      TOPBAR + selector de marca + navegación
      ════════════════════════════════════════════════════════════════ */
-  function topbarHTML(){
+  // v2 SIGNAL: el topbar se parte en RAIL (izquierda, 64px, iconos) + COMMAND BAR (arriba).
+  function brandSwitchHTML(){
     var b=brand();
-    var navTabs=[["dashboard","Dashboard",IC.grid],["ideas","Ideas",IC.bulb],["guiones","Guiones",IC.doc],["metrics","Métricas",IC.chart],["brain","Cerebro",IC.brain]];
-    var nav=S.device==="desktop"?'<div class="rs-nav">'+navTabs.map(function(t){
-      return '<button class="navchip'+(S.tab===t[0]?" on":"")+'" data-act="tab" data-k="'+t[0]+'">'+t[1]+'</button>';
-    }).join("")+'</div>':'';
-    var streak=(S.user.streak>0)?'<span class="navchip" style="color:var(--brand-500);cursor:default" title="Días seguidos creando">🔥 '+S.user.streak+'</span>':'';
-    // selector de marca
-    var others=S.brands.filter(function(x){return x.id!==S.brandId;});
-    var menu=S.brandMenu?'<div class="brand-menu">'+
-      others.map(function(x){return '<button class="brand-opt" data-act="brand" data-id="'+ESC(x.id)+'"><span class="brand-dot" style="background:'+ESC(x.color)+'"></span>'+ESC(x.name)+'<span class="brand-lvl">Nv '+x.level+'</span></button>';}).join("")+
-      '<button class="brand-opt add" data-act="brand-add">'+IC.plus+' Añadir marca</button>'+
-    '</div>':'';
-    return ''+
-    '<div class="topbar">'+
-      '<button class="brand-switch" data-act="brand-toggle">'+
-        '<span class="brand-dot" style="background:'+ESC(b.color)+'"></span>'+
-        '<span class="brand-name">'+ESC(b.name)+'</span>'+
+    var portfolio = isMacro();
+    var label = portfolio ? "Todas las marcas" : b.name;
+    var dot = portfolio ? '<span class="brand-dot multi"></span>' : '<span class="brand-dot" style="background:'+ESC(b.color)+'"></span>';
+    var menu="";
+    if(S.brandMenu){
+      var items="";
+      if(isAgency()) items+='<button class="brand-opt'+(portfolio?" on":"")+'" data-act="all-brands"><span class="brand-dot multi"></span>Todas las marcas</button>';
+      items+=S.brands.map(function(x){ var on=(!portfolio && x.id===S.brandId); return '<button class="brand-opt'+(on?" on":"")+'" data-act="brand" data-id="'+ESC(x.id)+'"><span class="brand-dot" style="background:'+ESC(x.color)+'"></span>'+ESC(x.name)+'<span class="brand-lvl">Nv '+x.level+'</span></button>';}).join("");
+      if(isAgency()) items+='<button class="brand-opt add" data-act="brand-add">'+IC.plus+' Añadir marca</button>';
+      menu='<div class="brand-menu">'+items+'</div>';
+    }
+    return '<button class="brand-switch" data-act="brand-toggle">'+dot+
+        '<span class="brand-name">'+ESC(label)+'</span>'+
         '<span class="brand-chev">'+IC.chev+'</span>'+
-      '</button>'+menu+
-      nav+
-      '<span class="grow"></span>'+streak+
-      '<div class="spark" id="rsSpark" title="Créditos disponibles">'+IC.spark+'<span><b id="rsSparkN">'+S.user.credits+'</b></span></div>'+
+      '</button>'+menu;
+  }
+  // Creador: una sola marca → sin selector. Etiqueta estática (no clicable).
+  function brandStaticHTML(){
+    var b=brand();
+    return '<span class="brand-static"><span class="brand-dot" style="background:'+ESC(b.color||"#4f7cff")+'"></span><span class="brand-name">'+ESC(b.name)+'</span></span>';
+  }
+  function railHTML(){
+    var navTabs = isAgency()
+      ? [["portfolio",IC.layers,"Portfolio"],["dashboard",IC.grid,"Radar"],["ideas",IC.bulb,"Ideas"],["guiones",IC.doc,"Guiones"],["metrics",IC.chart,"Métricas"],["brain",IC.brain,"Cerebro"],["team",IC.users,"Equipo"]]
+      : [["dashboard",IC.grid,"Radar"],["ideas",IC.bulb,"Ideas"],["guiones",IC.doc,"Guiones"],["metrics",IC.chart,"Métricas"],["brain",IC.brain,"Cerebro"]];
+    var av=initialsOf(S.user.handle||S.user.name||"R");
+    return '<nav class="rail">'+
+      '<img class="rail-logo" src="/static/img/branding/isotipo-128.png" srcset="/static/img/branding/isotipo-128.png 1x, /static/img/branding/isotipo-256.png 2x" alt="Reelscript">'+
+      navTabs.map(function(t){return '<button class="rail-btn'+(S.tab===t[0]?" on":"")+'" data-act="tab" data-k="'+t[0]+'">'+t[1]+'<span class="tip">'+t[2]+'</span></button>';}).join("")+
+      '<span class="rail-spacer"></span>'+
+      '<span class="rail-ava" title="'+ESC(S.user.name||"")+'">'+ESC(av)+'</span>'+
+    '</nav>';
+  }
+  function cmdHTML(){
+    var tabName=({dashboard:"RADAR",ideas:"IDEAS",guiones:"GUIONES",metrics:"MÉTRICAS",brain:"CEREBRO",team:"EQUIPO"})[S.tab]||"";
+    var crumb;
+    if(isMacro()) crumb='<span class="crumb">/ PORTFOLIO</span>';
+    else if(isAgency()) crumb='<button class="crumb crumb-link" data-act="all-brands">Todas las marcas</button><span class="crumb">/ '+tabName+'</span>';
+    else crumb='<span class="crumb">/ '+tabName+'</span>';
+    var streak=(S.user.streak>0)?'<span class="cmd-streak" title="Días seguidos creando">'+IC.spark+' Racha '+S.user.streak+'</span>':'';
+    var demoToggle=isDemo()?'<div class="demo-plan" title="Solo demo: cambia de plan"><span class="dp-k">DEMO</span><button class="dp'+(S.plan==="creador"?" on":"")+'" data-act="demo-plan" data-k="creador">Creador</button><button class="dp'+(S.plan==="agencia"?" on":"")+'" data-act="demo-plan" data-k="agencia">Agencia</button></div>':'';
+    return '<div class="cmd">'+
+      (isAgency()?brandSwitchHTML():brandStaticHTML())+
+      crumb+
+      '<span class="grow"></span>'+
+      '<div class="searchbox">'+IC.eye+'<span>Buscar señal o creador</span><span class="kbd">⌘K</span></div>'+
+      demoToggle+
+      streak+
+      '<div class="spark pill-stat credits" id="rsSpark" title="Créditos disponibles">'+IC.spark+'<span class="num"><b id="rsSparkN">'+S.user.credits+'</b></span> créditos</div>'+
     '</div>';
+  }
+
+  // Cabecera Signal reutilizable (eyebrow mono + h-title Space Grotesk + sub).
+  function pheadHTML(eye, title, sub, right){
+    return '<header class="phead"><div>'+
+      '<div class="eyebrow"><span class="pip"></span>'+ESC(eye)+'</div>'+
+      '<h1 class="h-title">'+ESC(title)+'</h1>'+
+      (sub?'<p class="h-sub">'+ESC(sub)+'</p>':'')+
+    '</div>'+(right?'<div class="phead-right">'+right+'</div>':'')+'</header>';
   }
 
   /* ════════════════════════════════════════════════════════════════
@@ -162,15 +219,16 @@
     return a;
   }
   function reelCardHTML(r){
-    var mega=(r.explosion||0)>=5, isFav=!!S.favs[r.id];
+    var hi=(r.explosion||0)>=3, isFav=!!S.favs[r.id];
     var thumbInner=r.thumb?'<img src="'+ESC(r.thumb)+'" alt="">':'<div class="play"></div>';
-    var badge=r.explosionTxt!=null?'<span class="badge badge-explode'+(mega?" mega":"")+'">🔥 '+ESC(r.explosionTxt)+'x su media</span>':'';
-    return '<div class="reel"><div class="thumb">'+thumbInner+'<span class="dur">'+ESC(r.dur)+'</span><span class="thumb-tag">reel ·'+ESC(r.creator.handle.slice(0,6))+'</span></div>'+
-      '<div class="body"><div class="crow"><div class="ava">'+ESC(r.creator.initials)+'</div><span class="who">@'+ESC(r.creator.handle)+'</span><span class="when">· '+ESC(r.when)+'</span></div>'+
-      '<p class="cap">'+ESC(r.cap)+'</p>'+(r.sum?'<p class="sum">'+ESC(r.sum)+'</p>':'')+
-      '<div class="metrics"><span>'+IC.eye+' '+ESC(r.views)+'</span><span>'+IC.heart+' '+ESC(r.likes)+'</span>'+badge+'</div>'+
-      '<div class="actions"><button class="btn btn-md btn-primary" data-act="steal" data-id="'+ESC(r.id)+'">✨ Hazlo mío</button>'+
-      '<button class="iconbtn'+(isFav?" on":"")+'" data-act="fav" data-id="'+ESC(r.id)+'" title="Guardar">'+(isFav?IC.star:IC.starO)+'</button></div></div></div>';
+    return '<div class="row">'+
+      '<div class="row-score'+(hi?" hi":"")+'"><span class="sv">'+(r.explosionTxt!=null?ESC(r.explosionTxt):"–")+'×</span><span class="sx">media</span></div>'+
+      '<div class="row-thumb"><div class="thumb">'+thumbInner+'<span class="dur">'+ESC(r.dur)+'</span></div></div>'+
+      '<div class="row-mid"><div class="row-crow"><span class="ava">'+ESC(r.creator.initials)+'</span><span class="row-who">@'+ESC(r.creator.handle)+'</span><span class="row-when">'+ESC(r.when)+'</span></div><p class="row-cap">'+ESC(r.cap)+'</p></div>'+
+      '<div class="row-metrics"><span>'+IC.eye+' '+ESC(r.views)+'</span><span>'+IC.heart+' '+ESC(r.likes)+'</span></div>'+
+      '<div class="row-actions"><button class="iconbtn'+(isFav?" on":"")+'" data-act="fav" data-id="'+ESC(r.id)+'" title="Guardar">'+(isFav?IC.star:IC.starO)+'</button>'+
+        '<button class="btn btn-sm btn-primary" data-act="steal" data-id="'+ESC(r.id)+'">'+IC.bolt+' Hazlo mío</button></div>'+
+    '</div>';
   }
 
   /* card destacada — "tu oportunidad de hoy" (principio I: una respuesta) */
@@ -180,60 +238,130 @@
     var why = mega
       ? "Está reventando: "+ (r.explosionTxt!=null?r.explosionTxt:"")+"× lo normal de @"+r.creator.handle+". Si hay uno que robar hoy, es este."
       : "Por encima de la media de @"+r.creator.handle+". Buen punto de partida para hoy.";
-    return '<div class="oppty">'+
-      '<div class="oppty-thumb thumb">'+thumbInner+'<span class="dur">'+ESC(r.dur)+'</span></div>'+
-      '<div class="oppty-body">'+
-        '<div class="oppty-tag">'+(r.explosionTxt!=null?'<span class="badge badge-explode'+(mega?" mega":"")+'">🔥 '+ESC(r.explosionTxt)+'x su media</span>':'')+'<span class="oppty-when">@'+ESC(r.creator.handle)+' · '+ESC(r.when)+'</span></div>'+
-        '<h2 class="oppty-cap">'+ESC(r.cap)+'</h2>'+
-        (r.sum?'<p class="oppty-sum">'+ESC(r.sum)+'</p>':'')+
-        '<p class="oppty-why">'+ESC(why)+'</p>'+
-        '<div class="oppty-actions"><button class="btn btn-lg btn-primary" data-act="steal" data-id="'+ESC(r.id)+'">✨ Hazlo mío</button>'+
+    var expPct=Math.min(100,(r.explosion||0)/6*100);
+    return '<article class="feature">'+
+      '<div class="feature-thumb"><div class="thumb">'+thumbInner+'<span class="thumb-tag">reel · '+ESC(r.creator.handle.slice(0,6))+'</span><span class="dur">'+ESC(r.dur)+'</span></div></div>'+
+      '<div class="feature-main">'+
+        '<div class="feature-eyebrow">Oportunidad #1 <span class="who">· @'+ESC(r.creator.handle)+' · '+ESC(r.when)+'</span></div>'+
+        '<h2 class="feature-cap">'+ESC(r.cap)+'</h2>'+
+        (r.sum?'<p class="feature-sum">'+ESC(r.sum)+'</p>':'')+
+        '<div class="feature-why">'+IC.spark+'<span>'+ESC(why)+'</span></div>'+
+        '<div class="feature-actions"><button class="btn btn-lg btn-primary" data-act="steal" data-id="'+ESC(r.id)+'">'+IC.bolt+' Hazlo mío</button>'+
           '<button class="iconbtn'+(S.favs[r.id]?" on":"")+'" data-act="fav" data-id="'+ESC(r.id)+'" title="Guardar">'+(S.favs[r.id]?IC.star:IC.starO)+'</button></div>'+
       '</div>'+
-    '</div>';
+      '<div class="feature-data">'+
+        '<div class="dmetric big"><div class="dk">Explosión</div><div class="dv">'+(r.explosionTxt!=null?ESC(r.explosionTxt):"–")+'×</div><div class="dbar"><i style="width:'+expPct+'%"></i></div></div>'+
+        '<div class="dmetric"><div class="dk">Views</div><div class="dv">'+ESC(r.views)+'</div></div>'+
+        '<div class="dmetric"><div class="dk">Likes</div><div class="dv">'+ESC(r.likes)+'</div></div>'+
+      '</div>'+
+    '</article>';
   }
 
+  /* ════════════════════════════════════════════════════════════════
+     PORTFOLIO (solo Agencia) — resumen de TODAS las marcas → zoom.
+     ════════════════════════════════════════════════════════════════ */
+  function brandRowHTML(b){
+    var att=brandNeedsAttention(b);
+    var sig = (b.exploded||0)>0
+      ? '<span class="hot">🔥 '+b.exploded+' explosivo'+(b.exploded>1?"s":"")+' hoy</span>'
+      : '<span class="muted">— sin novedad</span>';
+    return '<button class="brow'+(att?" attn":"")+'" data-act="open-brand" data-id="'+ESC(b.id)+'">'+
+      '<span class="brow-dot" style="background:'+ESC(b.color||"#4f7cff")+'"></span>'+
+      '<div class="brow-id"><div class="brow-name">'+ESC(b.name)+'</div><div class="brow-handle">@'+ESC(b.handle||"")+' · Nivel '+(b.level||1)+'</div></div>'+
+      '<div class="brow-sig">'+sig+'</div>'+
+      '<div class="brow-voice"><span class="bv-k">VOZ</span><span class="bv-v">'+(b.voice||40)+'%</span></div>'+
+      (att?'<span class="brow-attn">⚠ Atención</span>':'<span class="brow-attn ok"></span>')+
+      '<span class="brow-open">Abrir '+IC.arr+'</span>'+
+    '</button>';
+  }
+  function portfolioHTML(){
+    var bs=S.brands||[];
+    var totReels=bs.reduce(function(s,b){return s+(b.reels||0);},0);
+    var totExp=bs.reduce(function(s,b){return s+(b.exploded||0);},0);
+    var attn=bs.filter(brandNeedsAttention).length;
+    var stats=[
+      ["Marcas", bs.length, "", ""],
+      ["Reels · 7 días", totReels, "", ""],
+      ["Explosivos", totExp, "en todo el portfolio", "acc"],
+      ["Piden atención", attn, attn>0?"revísalas hoy":"todo al día", attn>0?"warn":""]
+    ];
+    var statbar='<div class="statbar">'+stats.map(function(s){
+      return '<div class="stat"><div class="stat-k">'+ESC(s[0])+'</div><div class="stat-v">'+ESC(s[1])+'</div>'+(s[2]?'<div class="stat-d '+s[3]+'">'+ESC(s[2])+'</div>':'')+'</div>';
+    }).join("")+'</div>';
+    var head='<header class="phead">'+
+      '<div><div class="eyebrow"><span class="pip"></span>Portfolio · '+bs.length+' marcas</div>'+
+      '<h1 class="h-title">Tus marcas</h1>'+
+      '<p class="h-sub">Lo que pasó hoy en cada una. Entra donde haya algo que capitalizar.</p></div>'+
+      '<div class="phead-right">'+(S.user.streak>0?'<span class="streak">'+IC.spark+' Racha '+S.user.streak+' días</span>':'')+'</div>'+
+    '</header>';
+    return '<div class="scroll"><div class="canvas">'+
+      head+statbar+
+      '<div class="feed-head"><span class="feed-title">Marcas <span class="ct">· '+bs.length+'</span></span></div>'+
+      '<div class="brow-list">'+bs.map(brandRowHTML).join("")+'</div>'+
+    '</div></div>';
+  }
+
+  // Tira de pestañas de marca — SOLO en el Radar de Agencia. Salto rápido entre
+  // los dashboards de cada marca + "Todas" para volver al macro (portfolio).
+  function brandTabsHTML(){
+    return '<div class="brand-tabs">'+
+      '<button class="btab btab-all" data-act="all-brands" title="Ver todas las marcas">'+IC.layers+' Todas</button>'+
+      S.brands.map(function(b){
+        var on=b.id===S.brandId;
+        return '<button class="btab'+(on?" on":"")+'" data-act="open-brand" data-id="'+ESC(b.id)+'">'+
+          '<span class="btab-dot" style="background:'+ESC(b.color||"#4f7cff")+'"></span>'+ESC(b.name)+
+          ((b.exploded||0)>0?'<span class="btab-n">'+b.exploded+'</span>':'')+
+        '</button>';
+      }).join("")+
+    '</div>';
+  }
+  function statbarHTML(){
+    var st=S.stats||{competitors:0,reels_week:0,exploded_week:0,stolen_today:0}; var b=brand();
+    var stats=[
+      ["Rivales activos", st.competitors, "", ""],
+      ["Reels · 7 días", st.reels_week, (st.exploded_week>0?st.exploded_week+" explotaron":""), "up"],
+      ["Explosivos", st.exploded_week, "sobre su media", "acc"],
+      ["Tu voz", (b.voice||40)+"%", "nivel "+(b.level||1), ""]
+    ];
+    return '<div class="statbar">'+stats.map(function(s){
+      return '<div class="stat"><div class="stat-k">'+ESC(s[0])+'</div><div class="stat-v">'+ESC(s[1])+'</div>'+(s[2]?'<div class="stat-d '+s[3]+'">'+ESC(s[2])+'</div>':'')+'</div>';
+    }).join("")+'</div>';
+  }
   function dashboardHTML(){
-    var st=S.stats||{competitors:0,reels_week:0,exploded_week:0,stolen_today:0};
+    var st=S.stats||{competitors:0,reels_week:0,exploded_week:0,stolen_today:0}; var b=brand();
     var sorted=feedReels();
-    // Titular del despertar (momento 1).
-    var awakenLine = st.exploded_week>0
-      ? 'Mientras no mirabas, <span class="hot">'+st.exploded_week+' reel'+(st.exploded_week>1?"es":"")+' explotaron</span> en tu nicho.'
-      : 'Tus <span class="hot">'+st.competitors+' rivales</span> publicaron '+st.reels_week+' reels esta semana.';
-    var awakenSub = st.stolen_today===0
-      ? 'Aún no has creado nada hoy. Empieza por el de abajo y en un minuto lo tienes en tu voz.'
-      : 'Llevas '+st.stolen_today+' hoy. Sigue mientras estés en racha.';
+    var line = st.exploded_week>0
+      ? 'Mientras no mirabas, <b>'+st.exploded_week+' reel'+(st.exploded_week>1?"s":"")+' explotaron</b> en tu nicho. Esto es lo que merece tu próximo guion.'
+      : 'Tus <b>'+st.competitors+' rivales</b> publicaron '+st.reels_week+' reels esta semana. Esto es lo que merece tu próximo guion.';
+    var head='<header class="phead">'+
+      '<div><div class="eyebrow"><span class="pip"></span>Radar · @'+ESC(b.handle||S.user.handle||"tu_cuenta")+'</div>'+
+      '<h1 class="h-title">Señales de hoy</h1>'+
+      '<p class="h-sub">'+line+'</p></div>'+
+      '<div class="phead-right">'+(S.user.streak>0?'<span class="streak">'+IC.spark+' Racha '+S.user.streak+' días</span>':'')+'</div>'+
+    '</header>';
 
     if(sorted.length===0){
-      return '<div class="scroll"><div class="pad">'+
-        '<div class="awaken"><h1 class="awaken-h">'+ESC(greetWord())+(S.user.name?", "+ESC(S.user.name):"")+'</h1></div>'+
-        ecosystemHTML()+ideaInputHTML()+
-        '<div class="rs-empty">'+(S.filter==="fav"?"Sin favoritos aún. Toca la estrella en un reel.":"Sin reels todavía. Añade un competidor o pega un reel para empezar.")+'</div>'+
-        filtersHTML()+'</div></div>';
+      return '<div class="scroll"><div class="canvas">'+head+(isAgency()?brandTabsHTML():"")+statbarHTML()+
+        '<div class="plays">'+ideaInputHTML()+'</div>'+
+        '<div class="rs-empty">'+(S.filter==="fav"?"Sin favoritos aún. Toca la estrella en una señal.":"Sin reels todavía. Añade un competidor o pega un reel para empezar.")+'</div>'+
+      '</div></div>';
     }
 
-    var hero=sorted[0];
-    var rest=sorted.slice(1);
+    var hero=sorted[0], rest=sorted.slice(1);
     var fillCount=Math.min(5,S.reels.length)||5;
-
-    // "Más oportunidades": curaduría (3) o feed completo si expandido.
-    var shown = S.feedExpanded ? rest : rest.slice(0,3);
-    var moreCards = shown.map(reelCardHTML).join("");
-    var moreToggle = (!S.feedExpanded && rest.length>3)
-      ? '<button class="see-all" data-act="expand-feed">Ver las '+rest.length+' oportunidades →</button>'
+    var shown = S.feedExpanded ? rest : rest.slice(0,5);
+    var rows = shown.map(reelCardHTML).join("");
+    var moreToggle = (!S.feedExpanded && rest.length>5)
+      ? '<button class="see-all" data-act="expand-feed">'+IC.repeat+' Ver las '+rest.length+' oportunidades</button>'
       : '';
 
-    return '<div class="scroll"><div class="pad">'+
-      '<div class="awaken">'+
-        '<h1 class="awaken-h">'+ESC(greetWord())+(S.user.name?", "+ESC(S.user.name):"")+'</h1>'+
-        '<p class="awaken-line">'+awakenLine+'</p>'+
-        '<p class="awaken-sub">'+ESC(awakenSub)+'</p>'+
-      '</div>'+
-      '<div class="oppty-label">Tu oportunidad de hoy</div>'+
+    return '<div class="scroll"><div class="canvas">'+
+      head+
+      (isAgency()?brandTabsHTML():"")+
+      statbarHTML()+
       opportunityHTML(hero)+
-      '<div class="dash-jugadas">'+ideaInputHTML()+(S.reels.length?whaleHTML(fillCount):"")+'</div>'+
-      ecosystemHTML()+
-      (rest.length?('<div class="more-head"><span class="more-title">Más oportunidades</span>'+filtersHTML()+'</div><div class="feed">'+moreCards+'</div>'+moreToggle):"")+
+      '<div class="plays">'+ideaInputHTML()+(S.reels.length?whaleHTML(fillCount):"")+'</div>'+
+      (rest.length?('<div class="feed-head"><span class="feed-title">Más señales <span class="ct">· '+rest.length+'</span></span>'+filtersHTML()+'</div><div class="feed">'+rows+'</div>'+moreToggle):"")+
     '</div></div>';
   }
 
@@ -284,9 +412,8 @@
   function makeIdea(text, seed){ return { id:gid("id"), text:text, scripts:[], expanded:true, seed:seed }; }
 
   function ideasHTML(){
-    var head='<div class="pad ideas-pad">'+
-      '<div class="ideas-head"><h1 class="greet" style="font-size:30px;margin:0 0 6px">Fábrica de ideas</h1>'+
-      '<p class="line" style="margin:0 0 18px">Apunta una idea suelta y multiplícala. Idea → guiones → hooks. Guarda los que te convenzan.</p></div>'+
+    var head='<div class="canvas ideas-pad">'+
+      pheadHTML("Ideas · @"+(brand().handle||S.user.handle||""), "Fábrica de ideas", "Apunta una idea suelta y multiplícala. Idea → guiones → hooks. Guarda los que te convenzan.")+
       '<div class="idea-launch"><div class="idea-launch-ic">'+IC.bulb+'</div>'+
         '<input class="idea-launch-input" id="rsIdeaSeed2" placeholder="Apunta una idea rápida…" />'+
         '<button class="btn btn-md btn-secondary" data-act="seed-add">Añadir</button>'+
@@ -350,9 +477,8 @@
           ? 'Aún no tienes guiones. Roba un reel en el <b>Dashboard</b> o crea en <b>Ideas</b> — todo lo que generes aterriza aquí.'
           : 'Nada en este filtro.')+'</div>'
       : '<div class="gui-list">'+items.map(guiCardHTML).join("")+'</div>';
-    return '<div class="scroll"><div class="pad">'+
-      '<div class="ideas-head"><h1 class="greet" style="font-size:30px;margin:0 0 6px">Tus guiones</h1>'+
-      '<p class="line" style="margin:0 0 16px">Todo lo que creas vive aquí. Ordena, descarta lo que no, y graba cuando quieras.</p></div>'+
+    return '<div class="scroll"><div class="canvas">'+
+      pheadHTML("Guiones · @"+(brand().handle||S.user.handle||""), "Tus guiones", "Todo lo que creas vive aquí. Ordena, descarta lo que no, y graba cuando quieras.")+
       chips+body+'</div></div>';
   }
 
@@ -389,10 +515,10 @@
     var eng = totalV>0 ? ((totalL+totalC)/totalV*100) : 0;
     var cards=[
       [fmtK(_mean(views)), "MEDIA VIEWS", fmtK(totalV)+" total", "var(--brand-500)"],
-      [fmtK(_median(views)), "MEDIANA VIEWS", "", "#fbbf24"],
-      [String(totalL), "TOTAL LIKES", "", "#ff2d55"],
-      [String(totalC), "TOTAL COMENTARIOS", "", "#3b82f6"],
-      [eng.toFixed(1).replace(".",",")+"%", "ENGAGEMENT", "", "#22c55e"]
+      [fmtK(_median(views)), "MEDIANA VIEWS", "", "#6f93ff"],
+      [String(totalL), "TOTAL LIKES", "", "#12a37c"],
+      [String(totalC), "TOTAL COMENTARIOS", "", "#5e7d97"],
+      [eng.toFixed(1).replace(".",",")+"%", "ENGAGEMENT", "", "#46b277"]
     ];
     return '<div class="met-cards">'+cards.map(function(c){ return '<div class="met-card" style="--c:'+c[3]+'"><div class="met-card-n">'+ESC(c[0])+'</div>'+(c[2]?'<div class="met-card-sub">'+ESC(c[2])+'</div>':'')+'<div class="met-card-l">'+c[1]+'</div></div>'; }).join("")+'</div>';
   }
@@ -432,9 +558,8 @@
     var learned=(m.learned||[]).map(function(l){ return '<div class="learn-item">'+IC.check+'<span>'+ESC(l)+'</span></div>'; }).join("");
     var top=m.top?('<div class="met-top">🏆 <b>Top:</b> '+ESC(m.top.title)+' — '+ESC(m.top.views)+' views ↗</div>'):"";
     var hasVideos=metricVideos().length>0;
-    return '<div class="scroll"><div class="pad">'+
-      '<div class="ideas-head"><h1 class="greet" style="font-size:30px;margin:0 0 6px">Métricas</h1>'+
-      '<p class="line" style="margin:0 0 16px">Tus reels al detalle — y lo que el sistema aprende de ellos para crear mejor.</p></div>'+
+    return '<div class="scroll"><div class="canvas">'+
+      pheadHTML("Métricas · @"+(b.handle||S.user.handle||""), "Métricas", "Tus reels al detalle — y lo que el sistema aprende de ellos para crear mejor.")+
       '<div class="met-acct"><span class="met-acct-ig">'+IC.ig+' @'+ESC(b.handle||"tu_cuenta")+'</span>'+
         '<button class="btn btn-sm btn-primary" data-act="metric-refresh">Actualizar reels</button>'+
         '<span class="met-acct-info">'+ESC(m.analyses_left||"1/1")+' análisis restantes esta semana</span>'+
@@ -454,16 +579,48 @@
      sabe de ti y cómo crece (voz + métricas + competidores + historial).
      Es el moat hecho visible (principio II del manifiesto).
      ════════════════════════════════════════════════════════════════ */
+  function hasRealVoice(){ return !!(S.voice && S.voice.has_profile); }
   function brainVoice(b){
-    // Perfil de voz: en prod vendría del modelo entrenado con tus reels.
-    // En demo, un perfil rico del nicho IA/automatización (David).
-    return (b && b.voice_profile) || {
+    // v0.19: perfil de voz REAL (GET /api/voice) si existe; si no, demo del nicho.
+    var vp=S.voice;
+    if(vp && vp.has_profile){
+      return {
+        tono: vp.tone||"",
+        frases: (vp.phrases||[]).map(function(p){ return '"'+p+'"'; }),
+        estructura: vp.structure||"",
+        duracion: vp.avg_duration ? ("~"+vp.avg_duration+"s objetivo") : "",
+        evita: vp.avoid||""
+      };
+    }
+    if(b && b.voice_profile) return b.voice_profile;
+    if(!isDemo()){
+      // Prod sin perfil aún: no mostrar voz ajena — invitar a enseñarla.
+      return { tono:"Aún no conozco tu voz. Enséñamela arriba ↑", frases:[], estructura:"—", duracion:"—", evita:"—" };
+    }
+    return {
       tono:"Directo y sin postureo. Cuentas las cosas como a un colega en un audio de WhatsApp.",
       frases:['"te lo cuento porque a mí…"','"paso uno… paso dos…"','"guárdate esto"','"y no, no es lo que crees"'],
       estructura:"Hook directo (sin 'hola') → 3 pasos concretos → CTA de guardar/comentar.",
       duracion:"30–45s es tu punto dulce: ahí retienes el doble.",
       evita:"Nada de 'en el panorama actual', 'es fundamental', ni motivacional vacío."
     };
+  }
+  // Tarjeta de CAPTURA del moat: el creador pega 1-2 reels suyos → aprendemos su voz.
+  function voiceCaptureHTML(){
+    return '<div class="brain-section-t">Enséñame tu voz</div>'+
+      '<div class="voice-capture">'+
+        '<p class="vc-lead">Pega lo que dices en <b>1-2 reels TUYOS</b>. Aprendo a sonar como tú — y tu próximo «Hazlo mío» ya saldrá con tu voz, no genérico.</p>'+
+        '<textarea class="vc-ta" id="rsVoiceText" rows="5" placeholder="Pega aquí la transcripción de tus reels (lo que dices)…"></textarea>'+
+        '<button class="btn btn-md btn-primary" data-act="voice-onboard">'+IC.spark+' Aprender mi voz</button>'+
+      '</div>';
+  }
+  function voiceEvidenceHTML(){
+    var ev=(S.voice&&S.voice.evidence)||[];
+    if(!ev.length) return '';
+    return '<div class="brain-section-t">Lo que he aprendido de ti <span class="brain-tag">de '+(S.voice.source_count||0)+' reels tuyos</span></div>'+
+      '<div class="learn" style="margin-bottom:18px"><div class="learn-list">'+
+        ev.map(function(e){ return '<div class="learn-item">'+IC.check+'<span>'+ESC(e)+'</span></div>'; }).join("")+
+      '</div></div>';
   }
   function brainCompetitors(){
     var by={}; (S.reels||[]).forEach(function(r){ var h=r.creator&&r.creator.handle; if(!h) return; by[h]=(by[h]||0)+1; });
@@ -472,7 +629,7 @@
   function brainHTML(){
     var b=brand();
     var v=brainVoice(b);
-    var voicePct=Math.max(6,Math.min(100,b.voice||40));
+    var voicePct = hasRealVoice() ? Math.max(6,Math.min(100,S.voice.confidence||0)) : Math.max(6,Math.min(100,b.voice||40));
     var nextLevel=Math.min(5,(b.level||1)+1);
     var toNext=Math.max(2,Math.round((20*(b.level||1)+30 - voicePct)/1.5));
     var comps=brainCompetitors();
@@ -495,9 +652,8 @@
       ? comps.map(function(c){ return '<div class="brain-comp"><div class="ava bava">'+ESC(initialsOf(c.handle))+'</div><span class="brain-comp-h">@'+ESC(c.handle)+'</span><span class="brain-comp-n">'+c.n+' reels analizados</span></div>'; }).join("")
       : '<div class="rs-empty" style="padding:20px">Aún no sigues a nadie. Añade competidores en el Dashboard.</div>';
 
-    return '<div class="scroll"><div class="pad">'+
-      '<div class="ideas-head"><h1 class="greet" style="font-size:30px;margin:0 0 6px">El cerebro de '+ESC(b.name)+'</h1>'+
-      '<p class="line" style="margin:0 0 18px">Todo lo que el sistema sabe de esta marca, y cómo crece. Cuanto más creas y publicas, más tuyo suena todo.</p></div>'+
+    return '<div class="scroll"><div class="canvas">'+
+      pheadHTML("Cerebro · @"+(b.handle||S.user.handle||""), "El cerebro de "+b.name, "Todo lo que el sistema sabe de esta marca, y cómo crece. Cuanto más creas y publicas, más tuyo suena todo.")+
       // hero de nivel + voz
       '<div class="brain-hero">'+
         '<div class="brain-orb">'+IC.brain+'</div>'+
@@ -508,6 +664,8 @@
           '<div class="brain-next">Te faltan ~'+toNext+' piezas para el <b>Nivel '+nextLevel+'</b>, donde tus guiones salen casi sin retoques.</div>'+
         '</div>'+
       '</div>'+
+      // CAPTURA del moat (si aún no hay voz) o EVIDENCIA real (si ya aprendió)
+      (hasRealVoice() ? voiceEvidenceHTML() : voiceCaptureHTML())+
       // fuentes del conocimiento
       '<div class="brain-section-t">De qué me alimento</div>'+
       '<div class="brain-sources">'+sources+'</div>'+
@@ -526,6 +684,48 @@
       // de quién aprendo
       '<div class="brain-section-t">De quién aprendo</div>'+
       '<div class="brain-comps">'+compList+'</div>'+
+    '</div></div>';
+  }
+
+  /* ════════════════════════════════════════════════════════════════
+     EQUIPO (solo Agencia) — miembros, roles y marcas asignadas.
+     Pool de créditos compartido de cuenta (sin reparto por marca).
+     ════════════════════════════════════════════════════════════════ */
+  function teamMembers(){
+    var bn=S.brands.map(function(b){return b.name;});
+    return [
+      {name:"Bernat C.", role:"Owner",        initials:"BC", color:"#4f7cff", brands:bn},
+      {name:"María L.",  role:"Editor",       initials:"ML", color:"#12a37c", brands:bn.slice(1,3)},
+      {name:"Jordi P.",  role:"Editor",       initials:"JP", color:"#e0556b", brands:bn.slice(3,4)},
+      {name:"Aïda R.",   role:"Solo lectura", initials:"AR", color:"#6d6bf6", brands:bn.slice(0,1)}
+    ];
+  }
+  function teamHTML(){
+    var members=teamMembers();
+    var roleCls={"Owner":"owner","Editor":"editor","Solo lectura":"viewer"};
+    var stats=[
+      ["Miembros", members.length, "", ""],
+      ["Marcas", S.brands.length, "", ""],
+      ["Editores", members.filter(function(m){return m.role==="Editor";}).length, "", ""],
+      ["Créditos", "pool", "compartido de cuenta", "acc"]
+    ];
+    var statbar='<div class="statbar">'+stats.map(function(s){
+      return '<div class="stat"><div class="stat-k">'+ESC(s[0])+'</div><div class="stat-v">'+ESC(s[1])+'</div>'+(s[2]?'<div class="stat-d '+s[3]+'">'+ESC(s[2])+'</div>':'')+'</div>';
+    }).join("")+'</div>';
+    var rows=members.map(function(m){
+      var chips=(m.brands||[]).map(function(bn){return '<span class="mchip">'+ESC(bn)+'</span>';}).join("")||'<span class="mchip muted">sin marcas</span>';
+      return '<div class="mrow">'+
+        '<span class="mava" style="background:'+ESC(m.color)+'">'+ESC(m.initials)+'</span>'+
+        '<div class="mrow-id"><div class="mrow-name">'+ESC(m.name)+'</div><span class="mrole role-'+(roleCls[m.role]||"viewer")+'">'+ESC(m.role)+'</span></div>'+
+        '<div class="mrow-brands">'+chips+'</div>'+
+        '<button class="iconbtn" data-act="team-edit" title="Gestionar miembro">'+IC.chev+'</button>'+
+      '</div>';
+    }).join("");
+    return '<div class="scroll"><div class="canvas">'+
+      pheadHTML("Equipo · Agencia", "Tu equipo", "Quién puede tocar qué marca. Los créditos son un pool compartido de la cuenta.")+
+      statbar+
+      '<div class="feed-head"><span class="feed-title">Miembros <span class="ct">· '+members.length+'</span></span><button class="btn btn-sm btn-primary" data-act="team-invite">'+IC.plus+' Invitar miembro</button></div>'+
+      '<div class="mrow-list">'+rows+'</div>'+
     '</div></div>';
   }
 
@@ -585,12 +785,15 @@
     var el=root(); if(!el) return;
     el.className="rs app "+(S.device==="mobile"?"rs--mobile":"rs--desktop");
     el.setAttribute("data-theme",(document.documentElement.getAttribute("data-theme")==="light"?"light":"dark"));
-    var html=topbarHTML();
-    if(S.tab==="dashboard") html+=dashboardHTML();
+    var html=railHTML()+'<div class="work">'+cmdHTML();
+    if(S.tab==="portfolio") html+=(isAgency()?portfolioHTML():dashboardHTML());
+    else if(S.tab==="dashboard") html+=dashboardHTML();
     else if(S.tab==="ideas") html+=ideasHTML();
     else if(S.tab==="guiones") html+=guionesHTML();
     else if(S.tab==="metrics") html+=metricsHTML();
     else if(S.tab==="brain") html+=brainHTML();
+    else if(S.tab==="team") html+=teamHTML();
+    html+='</div>';  // /.work
     if(S.view==="gen") html+=overlayShellHTML(generatingHTML(S.genKind),"Trabajando…","close-feed",true);
     else if(S.view==="script") html+=overlayShellHTML(scriptRevealHTML(),"Tu guión, en tu voz","close-feed",true);
     else if(S.view==="result") html+=overlayShellHTML(formatResultHTML(S.resultKind),"Listo","back-script",false);
@@ -611,23 +814,71 @@
   /* ════════════════════════════════════════════════════════════════
      ACCIONES
      ════════════════════════════════════════════════════════════════ */
-  function switchTab(t){ S.tab=t; S.brandMenu=false; render(); }
+  function switchTab(t){
+    S.tab=t; S.brandMenu=false; S.view="feed";
+    // Vistas de marca (no macro/equipo) refrescan stats+feed de la marca activa.
+    if(isDemo() && t!=="portfolio" && t!=="team") applyDemoBrand();
+    render();
+  }
   function switchBrand(id){ if(S.brandId===id){ S.brandMenu=false; return render(); } S.brandId=id; S.brandMenu=false; loadBrandData(); }
+  // Zoom de portfolio → radar de una marca. En demo no recarga (reusa el feed),
+  // solo ajusta stats de la marca; en prod recarga sus datos reales.
+  // En demo: ajusta stats + feed a la marca activa (cada marca ve cosas distintas).
+  // En prod esto vendrá de /api/radar/stats?brand= y /api/tracked-creators/reels?brand=.
+  function applyDemoBrand(){
+    var b=brand();
+    S.stats={competitors:b.competitors||4, reels_week:b.reels||0, exploded_week:b.exploded||0, stolen_today:0};
+    if(S._reelPool&&S._reelPool.length){
+      var ids=S.brands.map(function(x){return x.id;}); var idx=ids.indexOf(b.id); if(idx<0) idx=0;
+      var pool=S._reelPool.slice();
+      var rot=pool.slice(idx%pool.length).concat(pool.slice(0,idx%pool.length));
+      var n=Math.max(2,Math.min(pool.length,Math.round((b.reels||pool.length)/3)+1));
+      S.reels=rot.slice(0,n);
+      S.favs={}; S.reels.forEach(function(r){ if(r.fav) S.favs[r.id]=true; });
+    }
+  }
+  function openBrand(id){
+    S.brandId=id; S.brandMenu=false; S.tab="dashboard"; S.view="feed"; S.feedExpanded=false;   // micro
+    if(isDemo()){ applyDemoBrand(); render(); }
+    else { loadBrandData(); }
+  }
+  // Toggle de plan SOLO en demo, para ver las dos experiencias.
+  function setDemoPlan(k){
+    if(S.plan===k){ return; } S.plan=k; S.brandMenu=false; S.view="feed"; S.feedExpanded=false;
+    if(k==="agencia"){ S.brands=demoBrands(); S.brandId=S.brands[0].id; S.tab="portfolio"; }   // macro
+    else { S.brands=[demoBrands()[0]]; S.brandId=S.brands[0].id; S.tab="dashboard"; applyDemoBrand(); }
+    render();
+  }
   function steal(id){
     var r=S.reels.filter(function(x){return x.id===id;})[0]; if(!r) return;
     S.reel=r; S.genKind="script"; S.done={}; S.view="gen"; render();
-    ensureScript(r,function(){
+    ensureScript(r,function(err){
+      if(err){ S.view="feed"; render(); showPaywall(err); return; }
       spend(COST.script); bumpEco(1,1);
       // El guión generado se guarda SIEMPRE en Guiones (draft). No se pierde nada.
       var s=r.script||{}; S.activeGuionId=addGuion({title:s.hook, hook:s.hook, beats:s.beats, close:s.close, from:"@"+r.creator.handle, type:"guión"});
       S.view="script"; render(); flashSpark(-COST.script);
     });
   }
+  // Muro: free agotó sus 5 «Hazlo mío» (o sin créditos). Abre el modal de planes.
+  function showPaywall(err){
+    var msg = (err==="free_limit_reached")
+      ? "Has usado tus 5 «Hazlo mío» gratis. Sube a Creador para seguir creando."
+      : "Necesitas créditos para generar este guion.";
+    showToast(msg);
+    if(typeof window.openUpgradeModal==="function"){ try{ window.openUpgradeModal("hazlo_mio_free_limit"); }catch(e){} }
+  }
   function ensureScript(r,cb){
-    if(r.script&&r.script.hook){ setTimeout(cb,1700); return; }
-    if(isDemo()){ setTimeout(cb,1700); return; }
+    if(r.script&&r.script.hook){ setTimeout(function(){cb();},1700); return; }
+    if(isDemo()){ setTimeout(function(){cb();},1700); return; }
     var t0=Date.now();
-    fetch("/api/competitors/reels/"+encodeURIComponent(r.id)+"/generate-script",{method:"POST",credentials:"same-origin"}).then(function(res){return res.json().catch(function(){return{};});}).then(function(d){ r.script=parseScript(d.script||d.result,r); setTimeout(cb,Math.max(0,1500-(Date.now()-t0))); }).catch(function(){ r.script=r.script||{hook:r.cap,beats:[],close:""}; setTimeout(cb,800); });
+    fetch("/api/competitors/reels/"+encodeURIComponent(r.id)+"/generate-script",{method:"POST",credentials:"same-origin"})
+      .then(function(res){ return res.json().catch(function(){return{};}).then(function(d){ return {ok:res.ok, d:d}; }); })
+      .then(function(rr){
+        if(!rr.ok){ var ec=(rr.d&&rr.d.error)||"error"; setTimeout(function(){ cb(ec); },300); return; }
+        r.script=parseScript(rr.d.script||rr.d.result,r); setTimeout(function(){cb();},Math.max(0,1500-(Date.now()-t0)));
+      })
+      .catch(function(){ r.script=r.script||{hook:r.cap,beats:[],close:""}; setTimeout(function(){cb();},800); });
   }
   function parseScript(sc,r){ if(sc&&typeof sc==="object"&&sc.hook) return sc; if(typeof sc==="string"){ var l=sc.split(/\n+/).map(function(s){return s.replace(/^▸\s*/,"").trim();}).filter(Boolean); return {hook:l[0]||r.cap,beats:l.slice(1,-1),close:l.length>1?l[l.length-1]:""}; } return {hook:r.cap,beats:[],close:""}; }
   function chain(kind){ if(kind==="record"){ S.view="prompter"; render(); return; } S.genKind=kind; S.resultKind=kind; S.view="gen"; render(); setTimeout(function(){ spend(COST[kind]||1); S.done[kind]=true; S.view="result"; render(); flashSpark(-(COST[kind]||1)); },1500); }
@@ -681,6 +932,31 @@
   function saveHook(scriptId,i){ var sc=findScript(scriptId); if(!sc||!sc.hooks) return; var h=sc.hooks[i]; addGuion({title:h, hook:h, beats:[], close:"", from:null, type:"hook"}); render(); showToast("Hook guardado en Guiones."); }
   function addReelManual(){ var url=window.prompt("Pega la URL de un reel (Instagram/TikTok) para meterlo a tu ecosistema:"); if(!url) return; showToast("Reel en cola. Lo añadimos a tu ecosistema en unos segundos."); bumpEco(0,1); }
 
+  // Captura del moat: el creador pega sus reels → derivamos su VoiceProfile.
+  function onboardVoice(){
+    var ta=document.getElementById("rsVoiceText"); var txt=ta?ta.value.trim():"";
+    if(!txt){ showToast("Pega el texto de al menos 1 reel tuyo."); return; }
+    if(isDemo()){
+      S.voice={ has_profile:true, tone:"Directo, sin postureo — como un audio a un colega.",
+        phrases:["te lo cuento porque","paso uno… paso dos","guárdate esto"], structure:"hook directo → 3 pasos → CTA",
+        avg_duration:40, avoid:"tecnicismos y motivacional vacío", confidence:62, source_count:1,
+        evidence:["abres con una afirmación tajante","frases cortas (<12 palabras)","cierras pidiendo guardar/comentar"] };
+      var b=brand(); b.voice=62; render(); showToast("Voz aprendida — te conozco al 62%."); return;
+    }
+    showToast("Aprendiendo tu voz…");
+    fetch("/api/voice/onboard",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({texts:[txt]})})
+      .then(function(r){ return r.json().catch(function(){return{};}); })
+      .then(function(d){
+        if(d&&d.ok){
+          return fetch("/api/voice",{credentials:"same-origin"}).then(function(r){return r.json();}).then(function(v){
+            S.voice=v; render(); showToast("Voz aprendida — te conozco al "+(v.confidence||0)+"%.");
+          });
+        }
+        showToast((d&&d.error)||"No pude aprender tu voz. Prueba con otro reel.");
+      })
+      .catch(function(){ showToast("Error de red. Inténtalo de nuevo."); });
+  }
+
   /* ── delegación de eventos ───────────────────────────────────── */
   function onClick(e){
     var el=root(); if(!el||!el.contains(e.target)) return;
@@ -688,13 +964,19 @@
     var act=btn.getAttribute("data-act"), id=btn.getAttribute("data-id"), k=btn.getAttribute("data-k");
     if(act==="tab") return switchTab(k);
     if(act==="brand-toggle"){ S.brandMenu=!S.brandMenu; return render(); }
-    if(act==="brand") return switchBrand(id);
+    if(act==="brand") return openBrand(id);
+    if(act==="all-brands"){ S.tab="portfolio"; S.brandMenu=false; S.view="feed"; return render(); }
+    if(act==="open-brand") return openBrand(id);
+    if(act==="demo-plan") return setDemoPlan(k);
+    if(act==="team-invite") return showToast("Invitar miembros: lo cableamos con la BBDD (roles + marcas).");
+    if(act==="team-edit") return showToast("Gestión de roles y marcas por miembro: próximamente.");
     if(act==="brand-add"){ S.brandMenu=false; render(); return showToast("Nueva marca: disponible en plan Agencia."); }
     if(act==="steal") return steal(id);
     if(act==="fav") return toggleFav(id);
     if(act==="filter"){ S.filter=k; return render(); }
     if(act==="expand-feed"){ S.feedExpanded=true; return render(); }
     if(act==="add-reel") return addReelManual();
+    if(act==="voice-onboard") return onboardVoice();
     if(act==="fillweek") return startFillWeek();
     if(act==="seed-go") return seedIdea("rsIdeaSeed", true);
     if(act==="seed-add") return addSeedIdea();
@@ -728,7 +1010,7 @@
      CARGA DE DATOS
      ════════════════════════════════════════════════════════════════ */
   function setDevice(){ S.device=window.matchMedia("(max-width:720px)").matches?"mobile":"desktop"; }
-  function skeletonHTML(){ return topbarHTML()+'<div class="scroll"><div class="pad"><div class="feed"><div class="rs-skel"></div><div class="rs-skel"></div></div></div></div>'; }
+  function skeletonHTML(){ return railHTML()+'<div class="work">'+cmdHTML()+'<div class="scroll"><div class="canvas"><div class="statbar"><div class="stat"></div><div class="stat"></div><div class="stat"></div><div class="stat"></div></div><div class="rs-skel" style="height:200px;margin-bottom:14px"></div><div class="rs-skel"></div><div class="rs-skel"></div></div></div></div>'; }
 
   function loadBrandData(){
     var el=root(); if(!el) return;
@@ -737,14 +1019,18 @@
     Promise.all([
       fetch("/api/radar/stats"+q,{credentials:"same-origin"}).then(function(r){return r.json();}).catch(function(){return{};}),
       fetch("/api/tracked-creators/reels"+(q?q+"&":"?")+"sort=explosion&limit=24",{credentials:"same-origin"}).then(function(r){return r.json();}).catch(function(){return{reels:[]};}),
-      fetch("/api/metrics/summary"+q,{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
+      fetch("/api/metrics/summary"+q,{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
+      fetch("/api/voice",{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
     ]).then(function(res){
       var stats=res[0]||{}, feed=res[1]||{}, met=res[2];
+      if(res[3]) S.voice=res[3];   // perfil de voz real (moat) — null en demo dummy
       S.stats={ competitors:stats.competitors||0, reels_week:stats.reels_week||0, exploded_week:stats.exploded_week||0, stolen_today:stats.stolen_today!=null?stats.stolen_today:(stats.stolen_total||0) };
       S.reels=(feed.reels||[]).map(normReel);
       S.favs={}; S.reels.forEach(function(r){ if(r.fav) S.favs[r.id]=true; });
+      S._reelPool=S.reels.slice();   // pool base para variar feed por-marca en demo
       if(met){ S.metrics=met; S.igConnected=(met.connected!==false); }
       else { S.metrics=null; }
+      if(isDemo() && !(isAgency() && S.tab==="portfolio")) applyDemoBrand();
       render();
     });
   }
@@ -761,8 +1047,19 @@
       if(me.user){ S.user.name=me.user.name||(me.user.email||"").split("@")[0]||""; S.user.handle=me.user.handle||(me.user.email||"").split("@")[0]||""; }
       if(me.credits!=null) S.user.credits=me.credits; else if(me.credits_cents!=null) S.user.credits=Math.round(me.credits_cents/18);
       if(me.streak!=null) S.user.streak=me.streak;
+      // Plan: en demo arranca en Agencia para ver el portfolio (toggle lo cambia);
+      // en prod sale de /auth/me (profiles.plan).
+      S.plan = isDemo() ? "agencia" : ((me.plan||(me.user&&me.user.plan))||"creador");
       S.brands=(bd.brands&&bd.brands.length)?bd.brands:[{id:"default",name:(me.user&&me.user.name)?me.user.name:"Mi marca",handle:S.user.handle,color:"#f97316",level:1,voice:40,reelsAnalyzed:0,scripts:0}];
+      if(isDemo()){ S.brands = isAgency() ? demoBrands() : [demoBrands()[0]]; }
       S.brandId=S.brands[0].id;
+      S.tab = isAgency() ? "portfolio" : "dashboard";   // agencia entra en MACRO
+      // Demo deep-link: ?plan= ?t=<tab> ?b=<brandId> para previsualizar cualquier vista.
+      if(isDemo()){ try{ var qs=new URLSearchParams(location.search);
+        var qp=qs.get("plan"); if(qp==="creador"){ S.plan="creador"; S.brands=[demoBrands()[0]]; S.brandId=S.brands[0].id; S.tab="dashboard"; } else if(qp==="agencia"){ S.plan="agencia"; S.brands=demoBrands(); S.brandId=S.brands[0].id; S.tab="portfolio"; }
+        var qb=qs.get("b"); if(qb && S.brands.some(function(x){return x.id===qb;})){ S.brandId=qb; S.tab="dashboard"; }
+        var qt=qs.get("t"); if(qt){ S.tab=qt; }
+      }catch(e){} }
       loadBrandData();
     });
   }

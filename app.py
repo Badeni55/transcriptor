@@ -67,7 +67,8 @@ POSTHOG_API_KEY       = os.environ.get("POSTHOG_API_KEY", "")
 
 FREE_DAILY_ANON  = 5   # transcripciones gratis para anónimos
 FREE_DAILY_USER  = 5   # transcripciones gratis para registrados
-FREE_DAILY_ADAPT = 5   # adaptaciones gratis para registrados (hazlo tuyo)
+FREE_DAILY_ADAPT = 0   # v0.19: "Hazlo tuyo" (adapt) es de compromiso → cuesta créditos/plan
+                       # (política A3: transcribir = gancho gratis; adapt/Hazlo mío = cuesta)
 COST_CENTS       = 18   # $0.18 por uso de pago (~7 usos por $1.29)
 
 UNLIMITED_EMAILS = {"davidmiragito@gmail.com"}  # sin límite ni coste
@@ -104,34 +105,34 @@ def admin_required(f):
 
 
 # ── Matriz de planes (fuente de verdad) ──────────────────────────────────────
+# v0.19 pricing: 3 planes (Free · Creador · Agencia). "pro" queda solo como
+# legacy (grandfathering) — no se ofrece. Modelo de créditos: 1 crédito = COST_CENTS
+# de saldo. La asignación mensual se enforce vía monthly_uses (= credits_month);
+# los topups suman a credits_cents. Free no tiene mensuales: 5 "Hazlo mío" de por vida.
 PLANS = {
     "free": {
-        "monthly_uses": 0,            # usa daily_free
-        "daily_free": 5,
+        "credits_month": 0,
+        "free_lifetime": 5,            # 5 "Hazlo mío" de por vida (NO resetean)
+        "monthly_uses": 0,             # → PLAN_LIMITS None (sin límite mensual; usa lifetime)
+        "daily_free": 0,
         "scripts_max": 5,
         "projects_max": 1,
+        "brands": 1,
         "assistants_max": 0,
         "history_days": None,          # persistente
         "seats": 1,
         "priority": False,
         "support": None,
     },
-    "pro": {
-        "monthly_uses": 50,
+    "creator": {
+        "credits_month": 100,
+        "price_month_eur": 29,
+        "price_year_eur": 276,
+        "monthly_uses": 100,           # 100 créditos/mes
         "daily_free": 0,
         "scripts_max": None,           # ilimitado
         "projects_max": None,
-        "assistants_max": 1,
-        "history_days": None,
-        "seats": 1,
-        "priority": False,
-        "support": "email",
-    },
-    "creator": {
-        "monthly_uses": 200,
-        "daily_free": 0,
-        "scripts_max": None,
-        "projects_max": None,
+        "brands": 1,
         "assistants_max": 10,
         "history_days": None,
         "seats": 1,
@@ -139,25 +140,77 @@ PLANS = {
         "support": "email",
     },
     "agency": {
-        "monthly_uses": 250,           # base, +50 por asiento extra
+        "credits_month": 500,
+        "price_month_eur": 129,
+        "price_year_eur": 1290,
+        "monthly_uses": 500,           # pool 500 créditos/mes (cuenta, no por marca)
         "daily_free": 0,
         "scripts_max": None,
         "projects_max": None,
+        "brands": 3,                   # 3 marcas incluidas
         "assistants_max": None,
         "history_days": None,
-        "seats": 2,                    # 2 asientos incluidos
-        "uses_per_seat": 50,
+        "seats": 3,                    # 3 asientos incluidos
+        "addon_brand_eur": 35,         # marca extra €35/mes
+        "addon_seat_eur": 19,          # asiento extra €19/mes
         "priority": True,
         "support": "email+chat",
     },
+    # ── Legacy (grandfathering): NO se ofrece, pero suscripciones activas lo conservan.
+    "pro": {
+        "credits_month": 50,
+        "monthly_uses": 50,
+        "daily_free": 0,
+        "scripts_max": None,
+        "projects_max": None,
+        "brands": 1,
+        "assistants_max": 1,
+        "history_days": None,
+        "seats": 1,
+        "priority": False,
+        "support": "email",
+    },
+}
+
+# Add-ons de Agencia (precio/mes, EUR)
+ADDONS = {"brand": 35, "seat": 19}
+
+# Topups (one-time): nombre → créditos otorgados + precio EUR. El price ID de Stripe
+# se inyecta por env (STRIPE_TOPUP_PRICE_<n>); nunca se hardcodea.
+TOPUPS = {
+    "100":  {"credits": 100,  "eur": 19},
+    "300":  {"credits": 300,  "eur": 49},
+    "1000": {"credits": 1000, "eur": 139},
 }
 
 # Derivados para compatibilidad con código existente
 PLAN_LIMITS = {p: v["monthly_uses"] or None for p, v in PLANS.items()}
 ASSISTANT_LIMITS = {p: v["assistants_max"] for p, v in PLANS.items()}
 
-# Topup: price ID de Stripe (one-time, multi-currency)
-STRIPE_TOPUP_PRICE = os.environ.get("STRIPE_TOPUP_PRICE", "")
+# ── Stripe price IDs (v0.19) — TODOS por env, nunca hardcodeados ──────────────
+# Suscripción: <plan>_<ciclo>. Topup: por nº de créditos. Legacy topup conservado.
+STRIPE_TOPUP_PRICE = os.environ.get("STRIPE_TOPUP_PRICE", "")  # legacy (7 usos)
+
+STRIPE_PRICES = {
+    "creator": {
+        "month": os.environ.get("STRIPE_PRICE_CREATOR_MONTH", ""),
+        "year":  os.environ.get("STRIPE_PRICE_CREATOR_YEAR", ""),
+    },
+    "agency": {
+        "month": os.environ.get("STRIPE_PRICE_AGENCY_MONTH", ""),
+        "year":  os.environ.get("STRIPE_PRICE_AGENCY_YEAR", ""),
+    },
+}
+# Add-ons de Agencia (suscripción recurrente adicional)
+STRIPE_PRICE_ADDON_BRAND = os.environ.get("STRIPE_PRICE_ADDON_BRAND", "")
+STRIPE_PRICE_ADDON_SEAT  = os.environ.get("STRIPE_PRICE_ADDON_SEAT", "")
+# Topups one-time: price ID → créditos otorgados
+STRIPE_TOPUP_PRICES = {
+    os.environ.get("STRIPE_TOPUP_PRICE_100", ""):  TOPUPS["100"]["credits"],
+    os.environ.get("STRIPE_TOPUP_PRICE_300", ""):  TOPUPS["300"]["credits"],
+    os.environ.get("STRIPE_TOPUP_PRICE_1000", ""): TOPUPS["1000"]["credits"],
+}
+STRIPE_TOPUP_PRICES.pop("", None)  # descarta los no configurados
 
 db: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
@@ -173,7 +226,67 @@ except ImportError:
 from flask_limiter import Limiter  # noqa: E402
 from flask_limiter.util import get_remote_address  # noqa: E402
 
-limiter = Limiter(app=app, key_func=get_remote_address, default_limits=["200 per hour"], storage_uri="memory://")
+# ── Store compartido (Redis) para rate-limit y locks de crédito ───────────────
+# Antes: limiter en memory:// (por-worker → burlable con varios gunicorn workers).
+# Ahora: Redis compartido. Si Redis no está disponible, cae a memoria (degradado).
+REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+import redis as _redis_lib  # noqa: E402  (ya en el stack: broker de Celery)
+import uuid as _uuid        # noqa: E402
+try:
+    rds = _redis_lib.from_url(REDIS_URL, socket_connect_timeout=2, socket_timeout=2)
+    rds.ping()
+    _RATE_STORE = REDIS_URL
+except Exception as _e:
+    rds = None
+    _RATE_STORE = "memory://"
+    logger.warning("Redis no disponible (%s) → rate-limit/locks en memoria (degradado).", _e)
+
+limiter = Limiter(app=app, key_func=get_remote_address, default_limits=["200 per hour"], storage_uri=_RATE_STORE)
+
+
+def acquire_credit_lock(uid: str, ttl: int = 8, wait_s: float = 4.0):
+    """Lock distribuido por-usuario para serializar el gasto de créditos entre
+    workers (evita doble-gasto en la carrera read-then-write). Devuelve un token
+    si lo adquiere, o None. Si Redis no está, devuelve "" (no bloquea: degradado).
+    Libera SIEMPRE con release_credit_lock(uid, token) en un finally."""
+    if rds is None:
+        return ""  # sin Redis: no hay lock (modo degradado)
+    key = "creditlock:" + str(uid)
+    token = _uuid.uuid4().hex
+    deadline = _time.time() + wait_s
+    while _time.time() < deadline:
+        try:
+            if rds.set(key, token, nx=True, ex=ttl):
+                return token
+        except Exception:
+            return ""  # Redis cayó a mitad → degradado, no bloquear al usuario
+        _time.sleep(0.04)
+    return None  # no se pudo adquirir (otra operación en curso)
+
+
+def release_credit_lock(uid: str, token) -> None:
+    if rds is None or not token:
+        return
+    key = "creditlock:" + str(uid)
+    try:
+        # Suelta solo si seguimos siendo dueños del lock (evita soltar el de otro).
+        if rds.get(key) == token.encode():
+            rds.delete(key)
+    except Exception:
+        pass
+
+
+def paid_features_active(profile: dict, user: dict | None = None) -> bool:
+    """Plan de pago REAL: bloquea 'fantasmas' (plan seteado sin pagar). Activo si
+    el plan es de pago Y (tiene stripe_subscription_id [el webhook lo baja a free al
+    cancelar] O el email está en la allowlist de cortesía UNLIMITED_EMAILS)."""
+    plan = profile.get("plan", "free")
+    if plan == "free":
+        return False
+    if profile.get("stripe_subscription_id"):
+        return True
+    email = ((user or {}).get("email") or "").lower()
+    return email in UNLIMITED_EMAILS
 
 
 @app.context_processor
@@ -375,6 +488,22 @@ def check_monthly_limit(profile: dict) -> tuple[bool, str | None]:
     if usage >= limit:
         return False, f"Has alcanzado el límite de {limit} transcripciones/mes de tu plan. Mejora tu plan para continuar."
     return True, None
+
+
+def credits_available(profile: dict) -> int:
+    """Créditos disponibles = restante de la asignación mensual del plan + topups.
+    1 crédito = COST_CENTS de saldo. Es el número que muestra la pill del radar."""
+    plan = profile.get("plan", "free")
+    limit = PLAN_LIMITS.get(plan)
+    monthly_rem = max(0, limit - (profile.get("monthly_usage", 0) or 0)) if limit else 0
+    topup = (profile.get("credits_cents", 0) or 0) // COST_CENTS
+    return monthly_rem + topup
+
+
+def free_lifetime_left(profile: dict) -> int:
+    """'Hazlo mío' gratis que le quedan a un free (5 de por vida)."""
+    cap = PLANS["free"]["free_lifetime"]
+    return max(0, cap - (profile.get("free_lifetime_uses", 0) or 0))
 
 
 # ── Download / transcription helpers ─────────────────────────────────────────
@@ -683,6 +812,12 @@ def auth_me():
         "plan": plan,
         "monthly_usage": profile.get("monthly_usage", 0),
         "monthly_limit": PLAN_LIMITS.get(plan),
+        # v0.19: créditos unificados (mensual restante + topups) para la pill del radar.
+        "credits": credits_available(profile),
+        # Free: 5 "Hazlo mío" de por vida (no resetean).
+        "free_lifetime_limit": PLANS["free"]["free_lifetime"],
+        "free_lifetime_used": profile.get("free_lifetime_uses", 0),
+        "free_lifetime_left": free_lifetime_left(profile),
         "avatar_seed": profile.get("avatar_seed", "default"),
         "has_stripe_sub": bool(profile.get("stripe_subscription_id")),
     })
@@ -785,8 +920,7 @@ def transcribe():
             }), 429
     else:
         profile = get_profile(user["id"])
-        user_plan = profile.get("plan", "free")
-        if user_plan in ("pro", "creator", "agency"):
+        if paid_features_active(profile, user):
             ok, err_msg = check_monthly_limit(profile)
             if not ok:
                 return jsonify({"error": err_msg}), 429
@@ -809,22 +943,25 @@ def transcribe():
             {"used_today": ip_usage["used_today"] + 1}
         ).eq("ip", ip).execute()
     elif not is_unlimited:
-        profile = get_profile(user["id"])
-        user_plan = profile.get("plan", "free")
-        if user_plan in ("pro", "creator", "agency"):
-            # Incrementar uso mensual
-            db.table("profiles").update({
-                "monthly_usage": profile.get("monthly_usage", 0) + 1
-            }).eq("id", user["id"]).execute()
-        elif profile["credits_cents"] >= COST_CENTS:
-            cost_cents = COST_CENTS
-            db.table("profiles").update(
-                {"credits_cents": profile["credits_cents"] - cost_cents}
-            ).eq("id", user["id"]).execute()
-        else:
-            db.table("profiles").update(
-                {"free_used_today": profile["free_used_today"] + 1}
-            ).eq("id", user["id"]).execute()
+        # BAJO LOCK por-usuario (Redis) + re-lectura: evita doble-gasto multi-worker.
+        _tclock = acquire_credit_lock(user["id"])
+        try:
+            fresh = get_profile(user["id"])
+            if paid_features_active(fresh, user):
+                db.table("profiles").update({
+                    "monthly_usage": (fresh.get("monthly_usage") or 0) + 1
+                }).eq("id", user["id"]).execute()
+            elif (fresh.get("credits_cents") or 0) >= COST_CENTS:
+                cost_cents = COST_CENTS
+                db.table("profiles").update(
+                    {"credits_cents": (fresh.get("credits_cents") or 0) - cost_cents}
+                ).eq("id", user["id"]).execute()
+            else:
+                db.table("profiles").update(
+                    {"free_used_today": (fresh.get("free_used_today") or 0) + 1}
+                ).eq("id", user["id"]).execute()
+        finally:
+            release_credit_lock(user["id"], _tclock)
 
     # ── Encolar tarea ─────────────────────────────────────────────────────
     # v0.14.7: paid plans (pro/creator/agency) → métricas Apify guardadas.
@@ -969,7 +1106,8 @@ _METRICS_BULK_LIMIT = 50
 
 
 def _is_metrics_plan(profile: dict) -> bool:
-    return profile.get("plan", "free") in ("pro", "creator", "agency")
+    # v0.19: exige plan de pago REAL (con sub o cortesía), no "fantasma".
+    return paid_features_active(profile)
 
 
 @app.route("/transcriptions/<int:tid>/refresh-metrics", methods=["POST"])
@@ -982,14 +1120,27 @@ def refresh_transcription_metrics(tid: int):
         return jsonify({"error": "Las métricas son una feature de los planes de pago.",
                         "upgrade_required": True}), 403
 
-    # Cooldown 30s por (uid, tid) para evitar abuso
-    key = (user["id"], tid)
-    now = _time.time()
-    last = _metrics_refresh_cooldown.get(key, 0)
-    if now - last < _METRICS_REFRESH_TTL:
-        wait = int(_METRICS_REFRESH_TTL - (now - last))
-        return jsonify({"error": f"Espera {wait}s antes de refrescar de nuevo.",
-                        "retry_after": wait}), 429
+    # Cooldown 30s por (uid, tid) para evitar abuso — en Redis (compartido entre
+    # workers; reserva atómica con SET NX EX). Fallback a memoria si Redis no está.
+    rkey = "metcd:%s:%s" % (user["id"], tid)
+    if rds is not None:
+        try:
+            if not rds.set(rkey, "1", nx=True, ex=_METRICS_REFRESH_TTL):
+                ttl = rds.ttl(rkey)
+                wait = ttl if (ttl and ttl > 0) else _METRICS_REFRESH_TTL
+                return jsonify({"error": f"Espera {wait}s antes de refrescar de nuevo.",
+                                "retry_after": wait}), 429
+        except Exception:
+            pass  # Redis caído → no bloquear (degradado)
+    else:
+        mkey = (user["id"], tid)
+        now = _time.time()
+        last = _metrics_refresh_cooldown.get(mkey, 0)
+        if now - last < _METRICS_REFRESH_TTL:
+            wait = int(_METRICS_REFRESH_TTL - (now - last))
+            return jsonify({"error": f"Espera {wait}s antes de refrescar de nuevo.",
+                            "retry_after": wait}), 429
+        _metrics_refresh_cooldown[mkey] = now
 
     # Ownership + platform check
     row_r = (db.table("transcriptions")
@@ -1005,9 +1156,8 @@ def refresh_transcription_metrics(tid: int):
         return jsonify({"error": "Las métricas solo están disponibles para Instagram",
                         "platform_unsupported": True}), 400
 
-    # Llamada Apify
+    # Llamada Apify (el cooldown ya quedó reservado arriba: Redis SET NX o memoria)
     from tasks import _apify_metrics_only, _extract_metrics  # noqa: E402
-    _metrics_refresh_cooldown[key] = now
     item = _apify_metrics_only(row["url"])
     if not item:
         return jsonify({"error": "No se pudieron obtener las métricas. ¿La URL sigue accesible?"}), 502
@@ -1175,14 +1325,23 @@ def stripe_webhook():
             # ── Suscripción ──────────────────────────────────────────
             line_items = stripe_lib.checkout.Session.list_line_items(stripe_session_id)
             price_id = line_items.data[0].price.id if line_items.data else None
-            plan = PRICE_TO_PLAN.get(price_id, "pro")
+            plan = PRICE_TO_PLAN.get(price_id, "creator")
             db.table("profiles").update({
                 "plan": plan,
                 "stripe_subscription_id": obj.get("subscription"),
             }).eq("id", user_id).execute()
+            # Acreditar créditos mensuales del plan (reset del contador + próximo reset).
+            grant_monthly_allowance(user_id, plan)
         else:
-            # ── Recarga de créditos (flujo existente) ────────────────
-            amount_cents = int(obj["metadata"]["amount_cents"])
+            # ── Recarga de créditos (topup) ──────────────────────────
+            # Nuevo: por price de topup (→ nº de créditos). Legacy: metadata amount_cents.
+            meta_amount = obj["metadata"].get("amount_cents")
+            if meta_amount is not None:
+                amount_cents = int(meta_amount)
+            else:
+                line_items = stripe_lib.checkout.Session.list_line_items(stripe_session_id)
+                price_id = line_items.data[0].price.id if line_items.data else None
+                amount_cents = STRIPE_TOPUP_PRICES.get(price_id, 0) * COST_CENTS
 
             db.table("payments").update({
                 "status":                "completed",
@@ -1210,6 +1369,22 @@ def stripe_webhook():
                         "stripe_session_id": stripe_session_id,
                     }).execute()
 
+    elif event["type"] == "invoice.paid":
+        # ── Renovación mensual: re-acreditar créditos del plan ───────────
+        inv = event["data"]["object"]
+        if inv.get("billing_reason") == "subscription_cycle":
+            sub_id = inv.get("subscription")
+            if sub_id:
+                prof = (db.table("profiles").select("id")
+                          .eq("stripe_subscription_id", sub_id).limit(1).execute())
+                if prof.data:
+                    uid2 = prof.data[0]["id"]
+                    line0 = (inv.get("lines", {}).get("data") or [{}])[0]
+                    price_id = (line0.get("price") or {}).get("id")
+                    plan2 = PRICE_TO_PLAN.get(price_id) or "creator"
+                    db.table("profiles").update({"plan": plan2}).eq("id", uid2).execute()
+                    grant_monthly_allowance(uid2, plan2)
+
     elif event["type"] == "customer.subscription.deleted":
         sub = event["data"]["object"]
         db.table("profiles").update({
@@ -1222,22 +1397,43 @@ def stripe_webhook():
 
 # ── Subscription endpoints ───────────────────────────────────────────────────
 
-PRICE_TO_PLAN = {
-    # ── Legacy price IDs (grandfathering) ────────────────────────────────────
-    # Existing active subscriptions keep their original price. The legacy
-    # "basic" plan was renamed to "pro" in v0.14.3 (option A). Do not remove
-    # these entries until Stripe reports zero subs against any of them.
+# Legacy price IDs (grandfathering): suscripciones activas conservan su precio.
+# NO se ofrecen ya; no borrar hasta que Stripe reporte 0 subs contra ellos.
+_LEGACY_PRICE_TO_PLAN = {
     "price_1TI14pCWQn5Tis1WycY83MrR": "pro",     # legacy basic → pro
     "price_1TI15ACWQn5Tis1WKNbdhFW1": "pro",     # legacy pro → pro
     "price_1TI15NCWQn5Tis1WwIIb1TX1": "agency",  # legacy agency
-    # ── v0.14.3 prices (multi-currency, EUR + USD inside each price) ─────────
-    "price_1TPz2tCWQn5Tis1W5CdUwBmN": "pro",      # Pro monthly
-    "price_1TPz2tCWQn5Tis1W1HNRJlL9": "pro",      # Pro yearly
-    "price_1TPz8tCWQn5Tis1WJDtNSlr7": "creator",  # Creator monthly
-    "price_1TPz8tCWQn5Tis1WxxF2WeHs": "creator",  # Creator yearly
-    "price_1TPzAbCWQn5Tis1WSylC7yNa": "agency",   # Agency monthly
-    "price_1TPzAbCWQn5Tis1WRGwN81Ca": "agency",   # Agency yearly
+    "price_1TPz2tCWQn5Tis1W5CdUwBmN": "pro",     # legacy Pro monthly
+    "price_1TPz2tCWQn5Tis1W1HNRJlL9": "pro",     # legacy Pro yearly
+    "price_1TPz8tCWQn5Tis1WJDtNSlr7": "creator", # legacy Creator monthly
+    "price_1TPz8tCWQn5Tis1WxxF2WeHs": "creator", # legacy Creator yearly
+    "price_1TPzAbCWQn5Tis1WSylC7yNa": "agency",  # legacy Agency monthly
+    "price_1TPzAbCWQn5Tis1WRGwN81Ca": "agency",  # legacy Agency yearly
 }
+
+# v0.19: price → plan se construye desde env (STRIPE_PRICES) + legacy. Sin hardcodear.
+def _build_price_to_plan():
+    m = dict(_LEGACY_PRICE_TO_PLAN)
+    for plan, cyc in STRIPE_PRICES.items():
+        for pid in (cyc.get("month"), cyc.get("year")):
+            if pid:
+                m[pid] = plan
+    return m
+
+PRICE_TO_PLAN = _build_price_to_plan()
+
+
+def grant_monthly_allowance(user_id: str, plan: str) -> None:
+    """Acredita los créditos mensuales del plan: resetea el contador de uso a 0 y
+    fija la próxima fecha de reset (1er día del mes siguiente). Se llama al
+    activar la suscripción y en cada renovación (invoice.paid)."""
+    now = datetime.now(timezone.utc)
+    next_reset = (now.replace(day=1) + timedelta(days=32)).replace(
+        day=1, hour=0, minute=0, second=0, microsecond=0)
+    db.table("profiles").update({
+        "monthly_usage": 0,
+        "usage_reset_at": next_reset.isoformat(),
+    }).eq("id", user_id).execute()
 
 
 @app.route("/create-subscription-checkout", methods=["POST"])
@@ -1247,8 +1443,18 @@ def create_subscription_checkout():
     if not STRIPE_OK:
         return jsonify({"error": "Pagos no disponibles"}), 503
 
-    body = request.get_json()
+    body = request.get_json() or {}
+    # v0.19: el cliente manda {plan, cycle} y el server resuelve el price desde env
+    # (sin price IDs en el cliente). Compat: acepta price_id directo (legacy/upgrade).
+    plan_req = body.get("plan", "")
+    cycle = body.get("cycle", "month")
+    if cycle not in ("month", "year"):
+        cycle = "month"
     price_id = body.get("price_id", "")
+    if not price_id and plan_req in STRIPE_PRICES:
+        price_id = STRIPE_PRICES[plan_req].get(cycle, "")
+    if not price_id:
+        return jsonify({"error": "Este plan aún no está configurado. Vuelve pronto."}), 400
     if price_id not in PRICE_TO_PLAN:
         return jsonify({"error": "Price ID no válido"}), 400
 
@@ -1539,7 +1745,223 @@ def _call_llm(system: str, user_content: str, temperature: float = 0.8, max_toke
     return content.strip()
 
 
-def adapt_with_ai(text: str, style: str, custom_prompt: str = "") -> dict:
+# ══════════════════════════════════════════════════════════════════════════════
+#  VOICEPROFILE — el moat: el modelo de voz por marca.
+#  - get/save: persistencia en voice_profiles (tolera tabla ausente pre-migración).
+#  - derive: extrae la voz de las transcripciones de los reels DEL PROPIO creador.
+#  - voice_prompt_block: inyecta esa voz en el system-prompt de generación.
+#  Tabla: ver PRE-DEPLOY.md (migración voice_profiles).
+# ══════════════════════════════════════════════════════════════════════════════
+def get_voice_profile(user_id, brand_id=None):
+    """Perfil de voz del usuario/marca → dict o None. Tolera tabla ausente."""
+    try:
+        # brand_id="" = marca por defecto (NULL rompería el UNIQUE → upsert duplicaría).
+        q = db.table("voice_profiles").select("*").eq("user_id", user_id).eq("brand_id", brand_id or "")
+        r = q.limit(1).execute()
+        return r.data[0] if r.data else None
+    except Exception:
+        return None
+
+
+def save_voice_profile(user_id, vp, brand_id=None):
+    try:
+        db.table("voice_profiles").upsert({
+            "user_id": user_id, "brand_id": brand_id or "",
+            "tone": vp.get("tone"), "phrases": vp.get("phrases") or [],
+            "structure": vp.get("structure"), "avg_duration": vp.get("avg_duration"),
+            "avoid": vp.get("avoid"), "confidence": int(vp.get("confidence") or 0),
+            "source_count": int(vp.get("source_count") or 0),
+            "raw": (vp.get("raw") if isinstance(vp.get("raw"), dict) else vp),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }, on_conflict="user_id,brand_id").execute()
+        return True
+    except Exception as e:
+        logger.warning("save_voice_profile failed user=%s err=%s", user_id, e)
+        return False
+
+
+_VOICE_DERIVE_SYS = (
+    "Eres un analista de estilo de creadores de contenido corto (reels/TikTok). "
+    "Te doy transcripciones de varios reels DEL PROPIO creador. Extrae SU voz. "
+    "Responde SOLO un objeto JSON con estas claves: "
+    "tone (1 frase), phrases (array de 3-6 expresiones/muletillas LITERALES que usa), "
+    "structure (cómo abre → desarrolla → cierra), avg_duration (entero, segundos aprox), "
+    "avoid (qué NO suena a él), confidence (0-100: cuán claro es el patrón con esta muestra), "
+    "evidence (array de 3 bullets concretos, ej. 'abre con pregunta', 'frases <12 palabras', 'evita tecnicismos')."
+)
+
+
+def derive_voice_profile(transcripts):
+    """Deriva un VoiceProfile a partir de las transcripciones de los reels del creador.
+    'voz al N%' = confianza del modelo atenuada por tamaño de muestra (cold-start honesto)."""
+    texts = [t for t in (transcripts or []) if t and t.strip()]
+    if not texts:
+        return None
+    user = "\n\n---\n\n".join("REEL %d:\n%s" % (i + 1, t[:2000]) for i, t in enumerate(texts))
+    try:
+        raw = _call_llm(_VOICE_DERIVE_SYS, user, temperature=0.4, max_tokens=900)
+    except Exception as e:
+        logger.warning("derive_voice_profile LLM failed: %s", e)
+        return None
+    import json as _json, re as _re
+    m = _re.search(r"\{.*\}", raw, _re.S)
+    try:
+        vp = _json.loads(m.group(0) if m else raw)
+    except Exception:
+        logger.warning("derive_voice_profile: JSON no parseable")
+        return None
+    if not isinstance(vp, dict):
+        return None
+    vp["source_count"] = len(texts)
+    base = int(vp.get("confidence") or 0)
+    sample_factor = min(1.0, len(texts) / 5.0)          # 5 reels = muestra plena
+    vp["confidence"] = max(8, min(95, int(base * (0.5 + 0.5 * sample_factor))))
+    return vp
+
+
+def voice_prompt_block(vp) -> str:
+    """Bloque de system-prompt que fuerza al LLM a sonar como el creador (no genérico)."""
+    if not vp:
+        return ""
+    phrases = vp.get("phrases") or []
+    if isinstance(phrases, str):
+        phrases = [phrases]
+    parts = ["\n\n=== VOZ DEL CREADOR (imítala fielmente: el guion debe sonar a ÉL, nada genérico) ==="]
+    if vp.get("tone"):         parts.append("Tono: " + str(vp["tone"]))
+    if phrases:                parts.append("Usa expresiones suyas como: " + " · ".join(str(p) for p in phrases[:6]))
+    if vp.get("structure"):    parts.append("Estructura típica: " + str(vp["structure"]))
+    if vp.get("avg_duration"): parts.append("Duración objetivo: ~%ss" % vp["avg_duration"])
+    if vp.get("avoid"):        parts.append("EVITA (no suena a él): " + str(vp["avoid"]))
+    # Loop de medición (C): lo que MÁS funciona en SU cuenta → priorízalo.
+    raw = vp.get("raw") if isinstance(vp.get("raw"), dict) else {}
+    ww = raw.get("what_works") or []
+    if ww:
+        parts.append("LO QUE MÁS FUNCIONA en su cuenta (priorízalo): " + " · ".join(str(w) for w in ww[:4]))
+    return "\n".join(parts)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  LOOP DE MEDICIÓN (C) — el lock-in: reel publicado → guión que lo originó →
+#  ¿superó tu media? → realimenta el VoiceProfile (B). El modelo de voz mejora
+#  con cada publicación. (El modelo: scripts ya lleva views_count/likes/… del reel
+#  publicado en que se convirtió; aquí atribuimos, analizamos y realimentamos.)
+# ══════════════════════════════════════════════════════════════════════════════
+def _tok(s):
+    import re as _re
+    return set(_re.findall(r"[a-záéíóúñ0-9]{4,}", (s or "").lower()))
+
+
+def attribute_reel_to_script(user_id, caption):
+    """Atribuye un reel publicado al guión que lo originó (overlap de texto con
+    título+hook del guión). Devuelve {script_id, score, method} o None."""
+    ct = _tok(caption)
+    if not ct:
+        return None
+    try:
+        r = (db.table("scripts").select("id, title, hook, created_at")
+               .eq("user_id", user_id).order("created_at", desc=True).limit(60).execute())
+    except Exception:
+        return None
+    best, best_score = None, 0.0
+    for s in (r.data or []):
+        st = _tok((s.get("title") or "") + " " + (s.get("hook") or ""))
+        if not st:
+            continue
+        score = len(ct & st) / max(1, len(st))
+        if score > best_score:
+            best_score, best = score, s
+    if best and best_score >= 0.35:
+        return {"script_id": best["id"], "score": round(best_score, 2), "method": "text"}
+    return None
+
+
+def compute_what_works(videos):
+    """De los reels publicados, qué supera tu mediana de vistas y por qué (patrón
+    de hook/duración/longitud). Devuelve bullets para Métricas + para la voz."""
+    vids = [v for v in (videos or []) if (v.get("views") or 0) > 0]
+    if len(vids) < 3:
+        return []
+    vs = sorted(v["views"] for v in vids)
+    n = len(vs)
+    median = vs[n // 2] if n % 2 else (vs[n // 2 - 1] + vs[n // 2]) / 2
+    winners = [v for v in vids if (v.get("views") or 0) > median]
+    if not winners:
+        return []
+    out = []
+    durs = [(v.get("duration_sec") or v.get("duration") or 0) for v in winners]
+    durs = [d for d in durs if d]
+    if durs:
+        out.append("tus reels de ~%ss superan tu media de vistas" % round(sum(durs) / len(durs)))
+    q = sum(1 for v in winners if "?" in (v.get("caption") or v.get("hook") or ""))
+    if q >= max(2, len(winners) // 2):
+        out.append("abrir con pregunta te funciona (%d de tus mejores lo hacen)" % q)
+    short = sum(1 for v in winners if len((v.get("caption") or "").split()) <= 12)
+    if short >= max(2, len(winners) // 2):
+        out.append("los textos cortos (<12 palabras) rinden mejor en tu cuenta")
+    out.append("tu mediana son %d vistas; %d reels la superan" % (int(median), len(winners)))
+    return out[:5]
+
+
+def feed_voice_with_metrics(user_id, insights):
+    """Realimenta el VoiceProfile (B) con lo que funciona (C). El modelo de voz se
+    afina con cada publicación medida → la generación lo prioriza."""
+    if not insights:
+        return
+    vp = get_voice_profile(user_id)
+    if not vp:
+        return
+    raw = vp.get("raw") if isinstance(vp.get("raw"), dict) else {}
+    raw["what_works"] = insights
+    save_voice_profile(user_id, {
+        "tone": vp.get("tone"), "phrases": vp.get("phrases"), "structure": vp.get("structure"),
+        "avg_duration": vp.get("avg_duration"), "avoid": vp.get("avoid"),
+        "confidence": min(95, (vp.get("confidence") or 0) + 5),  # publicar afina la voz
+        "source_count": vp.get("source_count"), "raw": raw,
+    })
+
+
+def attribute_and_learn(user_id, videos):
+    """Orquesta el loop al refrescar métricas IG: (1) atribuye cada reel a su guión y
+    escribe sus métricas en él; (2) calcula qué funciona; (3) realimenta la voz.
+    Devuelve los insights. Llamar tras traer los reels publicados del usuario."""
+    attributed = 0
+    for v in (videos or []):
+        cap = v.get("caption") or v.get("hook") or ""
+        m = attribute_reel_to_script(user_id, cap)
+        if not m:
+            continue
+        try:
+            db.table("scripts").update({
+                "views_count": v.get("views"), "likes": v.get("likes"),
+                "comments": v.get("comments"), "saves": v.get("saves"),
+            }).eq("id", m["script_id"]).eq("user_id", user_id).execute()
+            attributed += 1
+        except Exception as e:
+            logger.warning("attribute_and_learn: write metrics failed: %s", e)
+    insights = compute_what_works(videos)
+    feed_voice_with_metrics(user_id, insights)
+    return {"attributed": attributed, "insights": insights}
+
+
+def next_series_suggestion(user_id):
+    """Para Radar/email diario: tu guión que mejor rinde → 'haz el siguiente de esa serie'."""
+    try:
+        r = (db.table("scripts").select("id, title, views_count")
+               .eq("user_id", user_id).not_.is_("views_count", "null")
+               .order("views_count", desc=True).limit(1).execute())
+    except Exception:
+        return None
+    if not r.data:
+        return None
+    top = r.data[0]
+    return {
+        "script_id": top["id"], "title": top.get("title"), "views": top.get("views_count"),
+        "message": "Lo que grabaste («%s») está rindiendo. ¿Hacemos el siguiente de esa serie, en tu voz?"
+                   % (top.get("title") or "tu último guion"),
+    }
+
+
+def adapt_with_ai(text: str, style: str, custom_prompt: str = "", voice=None) -> dict:
     if style == "custom":
         if not custom_prompt:
             raise ValueError("Escribe tus instrucciones en el campo Custom")
@@ -1548,6 +1970,10 @@ def adapt_with_ai(text: str, style: str, custom_prompt: str = "") -> dict:
         system = STYLE_PROMPTS.get(style)
         if not system:
             raise ValueError("Estilo no válido")
+
+    # Moat: inyecta la voz real del creador en el prompt (si la tiene).
+    if voice:
+        system = system + voice_prompt_block(voice)
 
     raw = _call_llm(system, text)
     return _parse_ai_json(raw, style)
@@ -1574,6 +2000,57 @@ def save_script():
         "assistant_name": assistant_name,
     }).execute()
     return jsonify({"ok": True})
+
+
+# ── VoiceProfile API: onboarding (captura del moat) + lectura (Cerebro/voz%) ──
+@app.route("/api/voice", methods=["GET"])
+@require_auth
+def api_voice_get():
+    user = current_user()
+    vp = get_voice_profile(user["id"])
+    if not vp:
+        return jsonify({"has_profile": False, "confidence": 0, "source_count": 0})
+    raw = vp.get("raw") if isinstance(vp.get("raw"), dict) else {}
+    return jsonify({
+        "has_profile": True,
+        "tone": vp.get("tone"), "phrases": vp.get("phrases") or [],
+        "structure": vp.get("structure"), "avg_duration": vp.get("avg_duration"),
+        "avoid": vp.get("avoid"),
+        "confidence": vp.get("confidence") or 0,        # = "voz al N%"
+        "source_count": vp.get("source_count") or 0,
+        "evidence": (raw.get("evidence") or []),         # bullets de qué aprendió
+    })
+
+
+@app.route("/api/voice/onboard", methods=["POST"])
+@limiter.limit("5 per minute;20 per hour")
+@require_auth
+def api_voice_onboard():
+    """Momento de captura del moat: el creador pega 1-2 reels SUYOS (texto ya
+    transcrito por el motor existente) → derivamos y guardamos su VoiceProfile,
+    ANTES del primer 'Hazlo mío'. Devuelve evidencia + voz%."""
+    if not (OPENROUTER_API_KEY or GROQ_API_KEY):
+        return jsonify({"error": "Servicio no disponible"}), 503
+    user = current_user()
+    body = request.get_json() or {}
+    texts = body.get("texts") or []
+    if isinstance(texts, str):
+        texts = [texts]
+    texts = [t for t in texts if isinstance(t, str) and t.strip()]
+    if not texts:
+        return jsonify({"error": "Pega el texto de al menos 1 reel tuyo."}), 400
+    vp = derive_voice_profile(texts[:5])
+    if not vp:
+        return jsonify({"error": "No pude derivar tu voz. Prueba con otro reel."}), 502
+    save_voice_profile(user["id"], vp)
+    return jsonify({
+        "ok": True,
+        "confidence": vp.get("confidence"),
+        "source_count": vp.get("source_count"),
+        "tone": vp.get("tone"),
+        "phrases": vp.get("phrases") or [],
+        "evidence": vp.get("evidence") or [],
+    })
 
 
 @app.route("/adapt", methods=["POST"])
@@ -1619,45 +2096,45 @@ def adapt():
         }), 429
     else:
         profile = get_profile(user["id"])
-        user_plan = profile.get("plan", "free")
-        if user_plan in ("pro", "creator", "agency"):
+        if paid_features_active(profile, user):   # plan de pago REAL (no fantasma)
             ok, err_msg = check_monthly_limit(profile)
             if not ok:
                 return jsonify({"error": err_msg}), 429
             cost_cents = 0
         elif profile["credits_cents"] >= COST_CENTS:
             cost_cents = COST_CENTS
-        elif profile.get("free_adapt_used_today", 0) < FREE_DAILY_ADAPT:
-            cost_cents = 0
         else:
+            # A3: «Hazlo tuyo» es de pago. Free sin créditos → muro de planes.
             return jsonify({
-                "error": f"Has usado tus {FREE_DAILY_ADAPT} adaptaciones gratuitas de hoy. "
-                         "Recarga saldo para continuar."
-            }), 429
+                "error": "free_limit_reached",
+                "message": "«Hazlo tuyo» es una función de pago. Sube a Creador o recarga créditos."
+            }), 402
 
     try:
-        result = adapt_with_ai(text, style, custom_prompt)
+        result = adapt_with_ai(text, style, custom_prompt, voice=(get_voice_profile(user["id"]) if user else None))
     except requests.HTTPError as e:
         return jsonify({"error": f"Error de la API: {e}"}), 502
     except Exception as e:
         logger.error(f"Error: {e}", exc_info=True)
         return jsonify({"error": "Internal server error. Please try again."}), 500
 
-    # Actualizar contadores
+    # Actualizar contadores — BAJO LOCK por-usuario (Redis) + re-lectura, para que
+    # dos workers no doblen el gasto (carrera read-then-write entre workers).
     is_unlimited = user and user.get("email", "").lower() in UNLIMITED_EMAILS
     if not is_unlimited and user:
-        if profile.get("plan", "free") in ("pro", "creator", "agency"):
-            db.table("profiles").update({
-                "monthly_usage": profile.get("monthly_usage", 0) + 1
-            }).eq("id", user["id"]).execute()
-        elif cost_cents > 0:
-            db.table("profiles").update(
-                {"credits_cents": profile["credits_cents"] - cost_cents}
-            ).eq("id", user["id"]).execute()
-        else:
-            db.table("profiles").update(
-                {"free_adapt_used_today": profile.get("free_adapt_used_today", 0) + 1}
-            ).eq("id", user["id"]).execute()
+        _aclock = acquire_credit_lock(user["id"])
+        try:
+            fresh = get_profile(user["id"])
+            if paid_features_active(fresh, user):
+                db.table("profiles").update({
+                    "monthly_usage": (fresh.get("monthly_usage") or 0) + 1
+                }).eq("id", user["id"]).execute()
+            elif cost_cents > 0:
+                db.table("profiles").update(
+                    {"credits_cents": (fresh.get("credits_cents") or 0) - cost_cents}
+                ).eq("id", user["id"]).execute()
+        finally:
+            release_credit_lock(user["id"], _aclock)
 
     payload: dict = {"result": result, "cost_cents": cost_cents}
     if user:
@@ -2439,6 +2916,37 @@ def metrics_summary():
     })
 
 
+@app.route("/api/metrics/learn", methods=["POST"])
+@limiter.limit("10 per minute;60 per hour")
+@require_auth
+def api_metrics_learn():
+    """Loop de medición (C): el frontend, al traer los reels publicados del usuario
+    (Instagram conectado), los manda aquí → atribuimos cada uno a su guión, escribimos
+    sus métricas y realimentamos el VoiceProfile. Devuelve qué funciona + siguiente."""
+    user = current_user()
+    body = request.get_json() or {}
+    videos = body.get("videos") or []
+    if not isinstance(videos, list):
+        return jsonify({"error": "videos inválido"}), 400
+    res = attribute_and_learn(user["id"], videos)
+    res["next"] = next_series_suggestion(user["id"])
+    return jsonify(res)
+
+
+@app.route("/api/metrics/insights", methods=["GET"])
+@require_auth
+def api_metrics_insights():
+    """Lo que el sistema aprendió de TU cuenta (Métricas/Cerebro) + el siguiente de la
+    serie que rinde (Radar/email diario). Persistido en el VoiceProfile."""
+    user = current_user()
+    vp = get_voice_profile(user["id"])
+    raw = (vp.get("raw") if vp and isinstance(vp.get("raw"), dict) else {}) or {}
+    return jsonify({
+        "what_works": raw.get("what_works") or [],
+        "next": next_series_suggestion(user["id"]),
+    })
+
+
 @app.route("/metrics/winners")
 @require_auth
 def metrics_winners():
@@ -2875,7 +3383,7 @@ def idea_to_script(idea_id):
     )
 
     try:
-        result = adapt_with_ai(user_content, style_arg, custom_prompt)
+        result = adapt_with_ai(user_content, style_arg, custom_prompt, voice=get_voice_profile(uid))
     except Exception as e:
         logger.error(f"Idea to script failed: {e}", exc_info=True)
         _refund()
@@ -3062,7 +3570,7 @@ def transcription_to_script(t_id):
     )
 
     try:
-        result = adapt_with_ai(user_content, style_arg, custom_prompt)
+        result = adapt_with_ai(user_content, style_arg, custom_prompt, voice=get_voice_profile(uid))
     except Exception as e:
         logger.error(f"transcription_to_script LLM failed: {e}", exc_info=True)
         _refund()
@@ -5098,19 +5606,21 @@ def generate_script_from_competitor_reel(reel_id: str):
         logger.warning("generate_script: dup check failed user=%s reel=%s err=%s",
                        uid, reel_id, e)
 
-    # 1. Plan habilitado.
-    tc_limits = get_tracked_creators_limit(plan)
-    if not tc_limits["enabled"]:
-        return jsonify({"error": "upgrade_required",
-                        "message": "Esta función requiere plan Pro o superior."}), 402
-
-    # 2. Coste: chequear capacidad (sin cobrar todavía).
+    # 1-2. Quién puede generar y cómo se paga este guion (sin cobrar todavía).
+    #   paid  → cuenta contra su asignación mensual (monthly_usage).
+    #   free  → 5 "Hazlo mío" de por vida → luego topups (credits_cents) → muro.
     SCRIPT_COST = COST_CENTS  # 18 cents
     SCRIPT_USAGE_UNITS = 1
-    is_paid_unlimited = plan in ("pro", "creator", "agency")
-    if not is_paid_unlimited and (profile.get("credits_cents") or 0) < SCRIPT_COST:
-        return jsonify({"error": "no_credits",
-                        "message": "Necesitas créditos para generar guion. Sube de plan."}), 402
+    is_paid_unlimited = paid_features_active(profile, user)  # plan de pago REAL (no fantasma)
+    use_free_lifetime = False
+    if not is_paid_unlimited:
+        if free_lifetime_left(profile) > 0:
+            use_free_lifetime = True
+        elif (profile.get("credits_cents") or 0) < SCRIPT_COST:
+            return jsonify({
+                "error": "free_limit_reached",
+                "message": "Has usado tus 5 «Hazlo mío» gratis. Sube a Creador para seguir creando."
+            }), 402
 
     # 3. Cargar reel + ownership.
     try:
@@ -5277,26 +5787,52 @@ def generate_script_from_competitor_reel(reel_id: str):
         if _custom_too_short(style_arg, custom_prompt):
             return _assistant_too_short_response(style_label)
 
-        # Cobrar ANTES del LLM. Si LLM/insert falla → refund.
+        # Cobrar ANTES del LLM, BAJO LOCK por-usuario (Redis) para que dos workers
+        # no doblen el gasto en la carrera read-then-write. Re-leemos el perfil dentro
+        # del lock y re-validamos. Si LLM/insert falla → refund.
+        _clock = acquire_credit_lock(uid)
+        if _clock is None:
+            _release_lock()
+            return jsonify({"error": "busy", "message": "Otra generación tuya está en curso. Espera un segundo."}), 429
         try:
+            fresh = get_profile(uid)  # estado actual bajo lock (otros workers ya pudieron cobrar)
             if is_paid_unlimited:
                 db.table("profiles").update({
-                    "monthly_usage": (profile.get("monthly_usage") or 0) + SCRIPT_USAGE_UNITS
+                    "monthly_usage": (fresh.get("monthly_usage") or 0) + SCRIPT_USAGE_UNITS
+                }).eq("id", uid).execute()
+            elif use_free_lifetime:
+                if free_lifetime_left(fresh) <= 0:   # re-check bajo lock
+                    _release_lock()
+                    return jsonify({"error": "free_limit_reached",
+                                    "message": "Has usado tus 5 «Hazlo mío» gratis. Sube a Creador para seguir creando."}), 402
+                db.table("profiles").update({
+                    "free_lifetime_uses": (fresh.get("free_lifetime_uses") or 0) + 1
                 }).eq("id", uid).execute()
             else:
+                if (fresh.get("credits_cents") or 0) < SCRIPT_COST:   # re-check bajo lock
+                    _release_lock()
+                    return jsonify({"error": "no_credits",
+                                    "message": "Necesitas créditos para generar guion. Sube de plan."}), 402
                 db.table("profiles").update({
-                    "credits_cents": (profile.get("credits_cents") or 0) - SCRIPT_COST
+                    "credits_cents": (fresh.get("credits_cents") or 0) - SCRIPT_COST
                 }).eq("id", uid).execute()
+            profile = fresh  # el refund de abajo parte del estado bajo lock
         except Exception as e:
             logger.error("generate_script: pre-charge failed user=%s err=%s", uid, e, exc_info=True)
             _release_lock()
             return jsonify({"error": "internal", "message": "Inténtalo de nuevo."}), 500
+        finally:
+            release_credit_lock(uid, _clock)
 
         def _refund():
             try:
                 if is_paid_unlimited:
                     db.table("profiles").update({
                         "monthly_usage": max(0, (profile.get("monthly_usage") or 0))
+                    }).eq("id", uid).execute()
+                elif use_free_lifetime:
+                    db.table("profiles").update({
+                        "free_lifetime_uses": (profile.get("free_lifetime_uses") or 0)
                     }).eq("id", uid).execute()
                 else:
                     db.table("profiles").update({
@@ -5307,7 +5843,7 @@ def generate_script_from_competitor_reel(reel_id: str):
 
         # LLM call.
         try:
-            result = adapt_with_ai(user_content, style_arg, custom_prompt)
+            result = adapt_with_ai(user_content, style_arg, custom_prompt, voice=get_voice_profile(uid))
         except Exception as e:
             logger.error("generate_script: LLM failed user=%s err=%s", uid, e, exc_info=True)
             _refund()
