@@ -397,6 +397,7 @@
   function addGuion(p){
     var g={ id:gid("g"), seq:++_gseq, title:(p.title||p.hook||"Guión"),
       hook:p.hook||"", beats:p.beats||[], close:p.close||"",
+      hooks:p.hooks||[], expanded:false,
       from:p.from||null, brand:brand().name, type:p.type||"guión", status:"draft" };
     S.guiones.unshift(g); return g.id;
   }
@@ -407,7 +408,7 @@
     return { id:gid("sc"), hook:hook,
       beats:["Te lo cuento porque a mí me cambió la forma de trabajar.","Paso uno: lo más simple, lo que casi nadie hace.","Paso dos: aquí está el 80% del resultado.","Paso tres: lo dejas funcionando y te olvidas."],
       close:"Guárdate esto y dime en comentarios por dónde empiezas.",
-      hooks:null, saved:false, expanded:false, idea:ideaText };
+      hooks:null, savedHooks:{}, guionId:null, saved:false, expanded:false, idea:ideaText };
   }
   function makeIdea(text, seed){ return { id:gid("id"), text:text, scripts:[], expanded:true, seed:seed }; }
 
@@ -452,16 +453,27 @@
   function guiCardHTML(g){
     var rec=g.status==="recorded";
     var pill=rec?'<span class="gui-pill done">'+IC.check+' Grabado</span>':'<span class="gui-pill">Por grabar</span>';
-    var meta=(g.from?'robado de '+ESC(g.from)+' · ':'')+'voz '+ESC(g.brand)+(g.type==="hook"?' · hook':'');
-    return '<div class="gui-card'+(rec?" is-rec":"")+'">'+
-      '<div class="ava bava">'+ESC(initialsOf(g.from||g.brand))+'</div>'+
-      '<div class="gui-main"><div class="gui-title">'+ESC(g.title)+'</div><div class="gui-meta">'+meta+'</div></div>'+
-      pill+
-      '<div class="gui-acts">'+
-        '<button class="iconbtn" data-act="gui-record" data-id="'+g.id+'" title="Grabar (teleprompter)">'+IC.mic+'</button>'+
-        '<button class="iconbtn'+(rec?" on":"")+'" data-act="gui-toggle-rec" data-id="'+g.id+'" title="'+(rec?"Marcar por grabar":"Marcar grabado")+'">'+IC.check+'</button>'+
-        '<button class="iconbtn danger" data-act="gui-discard" data-id="'+g.id+'" title="Descartar">'+IC.x+'</button>'+
+    var nh=(g.hooks&&g.hooks.length)||0;
+    var meta=(g.from?'robado de '+ESC(g.from)+' · ':'')+'voz '+ESC(g.brand);
+    var toggle=nh?'<button class="gui-hooks-toggle'+(g.expanded?" open":"")+'" data-act="gui-hooks" data-id="'+g.id+'">'+IC.hook+' '+nh+' hook'+(nh===1?"":"s")+' alternativo'+(nh===1?"":"s")+' '+IC.chev+'</button>':'';
+    var hooksList=(nh&&g.expanded)?'<div class="gui-hooks">'+g.hooks.map(function(h,i){
+      return '<div class="gui-hook"><span class="hn">'+String(i+1).padStart(2,"0")+'</span><span class="gui-hook-t">'+ESC(h)+'</span>'+
+        '<button class="gui-hook-use" data-act="gui-use-hook" data-id="'+g.id+'" data-i="'+i+'" title="Usar como apertura">Usar</button>'+
+        '<button class="gui-hook-del" data-act="gui-del-hook" data-id="'+g.id+'" data-i="'+i+'" title="Quitar variante">'+IC.x+'</button>'+
+      '</div>';
+    }).join("")+'</div>':'';
+    return '<div class="gui-card-wrap">'+
+      '<div class="gui-card'+(rec?" is-rec":"")+'">'+
+        '<div class="ava bava">'+ESC(initialsOf(g.from||g.brand))+'</div>'+
+        '<div class="gui-main"><div class="gui-title">'+ESC(g.title)+'</div><div class="gui-meta">'+meta+'</div>'+toggle+'</div>'+
+        pill+
+        '<div class="gui-acts">'+
+          '<button class="iconbtn" data-act="gui-record" data-id="'+g.id+'" title="Grabar (teleprompter)">'+IC.mic+'</button>'+
+          '<button class="iconbtn'+(rec?" on":"")+'" data-act="gui-toggle-rec" data-id="'+g.id+'" title="'+(rec?"Marcar por grabar":"Marcar grabado")+'">'+IC.check+'</button>'+
+          '<button class="iconbtn danger" data-act="gui-discard" data-id="'+g.id+'" title="Descartar">'+IC.x+'</button>'+
+        '</div>'+
       '</div>'+
+      hooksList+
     '</div>';
   }
   function guionesHTML(){
@@ -928,8 +940,17 @@
   }
   function findIdea(id){ return S.ideas.filter(function(x){return x.id===id;})[0]; }
   function findScript(id){ for(var i=0;i<S.ideas.length;i++){ var s=S.ideas[i].scripts.filter(function(x){return x.id===id;})[0]; if(s) return s; } return null; }
-  function saveScript(scriptId){ var sc=findScript(scriptId); if(!sc||sc.saved) return; sc.saved=true; addGuion({title:sc.hook, hook:sc.hook, beats:sc.beats, close:sc.close, from:null, type:"guión"}); bumpEco(0,0); render(); showToast("Guardado en Guiones."); }
-  function saveHook(scriptId,i){ var sc=findScript(scriptId); if(!sc||!sc.hooks) return; var h=sc.hooks[i]; addGuion({title:h, hook:h, beats:[], close:"", from:null, type:"hook"}); render(); showToast("Hook guardado en Guiones."); }
+  function ensureGuion(sc){ if(sc.saved&&sc.guionId&&guionById(sc.guionId)) return sc.guionId; sc.saved=true; sc.guionId=addGuion({title:sc.hook, hook:sc.hook, beats:sc.beats, close:sc.close, from:null, type:"guión"}); bumpEco(0,0); return sc.guionId; }
+  function saveScript(scriptId){ var sc=findScript(scriptId); if(!sc||sc.saved) return; ensureGuion(sc); render(); showToast("Guardado en Guiones."); }
+  function saveHook(scriptId,i){
+    var sc=findScript(scriptId); if(!sc||!sc.hooks) return;
+    var h=sc.hooks[i]; if(h==null) return;
+    var g=guionById(ensureGuion(sc)); if(!g){ render(); return; }
+    g.hooks=g.hooks||[];
+    if(g.hooks.indexOf(h)===-1){ g.hooks.push(h); g.expanded=true; }
+    sc.savedHooks=sc.savedHooks||{}; sc.savedHooks[i]=true;
+    render(); showToast("Hook añadido al guión.");
+  }
   function addReelManual(){ var url=window.prompt("Pega la URL de un reel (Instagram/TikTok) para meterlo a tu ecosistema:"); if(!url) return; showToast("Reel en cola. Lo añadimos a tu ecosistema en unos segundos."); bumpEco(0,1); }
 
   // Captura del moat: el creador pega sus reels → derivamos su VoiceProfile.
@@ -986,6 +1007,10 @@
     if(act==="explosion") return explosion();
     if(act==="save-script") return saveScript(id);
     if(act==="save-hook") return saveHook(id, parseInt(btn.getAttribute("data-i"),10));
+    if(act==="idea-toggle"){ var idt=findIdea(id); if(idt){ idt.expanded=(idt.expanded===false); } return render(); }
+    if(act==="gui-hooks"){ var gh=guionById(id); if(gh){ gh.expanded=!gh.expanded; } return render(); }
+    if(act==="gui-use-hook"){ var gu=guionById(id); if(gu&&gu.hooks){ var ix=parseInt(btn.getAttribute("data-i"),10); var nv=gu.hooks[ix]; if(nv!=null){ gu.hooks[ix]=gu.hook; gu.hook=nv; gu.title=nv; } } render(); return showToast("Apertura actualizada."); }
+    if(act==="gui-del-hook"){ var gd=guionById(id); if(gd&&gd.hooks){ gd.hooks.splice(parseInt(btn.getAttribute("data-i"),10),1); if(!gd.hooks.length) gd.expanded=false; } return render(); }
     if(act==="chain") return chain(k);
     if(act==="record"){ S.view="prompter"; return render(); }
     if(act==="recorded") return recorded();

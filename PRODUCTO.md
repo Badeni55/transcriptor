@@ -110,10 +110,17 @@ de muestra (cold-start honesto: 1 reel ≈ 48%, 5 ≈ 80%). API: `POST /api/voic
 "pega 1-2 reels tuyos" y que Cerebro pinte la evidencia real (hoy demo).
 
 **Loop de medición (C) — v0.19, backend hecho:** al refrescar métricas IG, cada reel
-publicado se **atribuye a su guión** (overlap de texto) y sus métricas se escriben en
+publicado se **atribuye a su guión por el CONTENIDO HABLADO** — se transcribe el audio del
+reel (Apify/yt-dlp + Groq, **cacheado en `transcriptions` por url**, idempotente, tope
+6/refresco) y se compara (Jaccard) con el **cuerpo del guión** `scripts.script`, no con el
+caption (que casi nunca es el guion). Caption = respaldo. Sus métricas se escriben en
 `scripts.views_count/…`. `compute_what_works()` saca qué supera tu mediana (hook/duración/
 longitud) y **realimenta el VoiceProfile** (`what_works` → el prompt de generación lo prioriza:
 el moat se compone con cada publicación). `next_series_suggestion()` alimenta Radar/email.
+**Aprendizaje real en la generación:** `adapt_with_ai` inyecta tus **guiones ganadores como
+molde few-shot** (`top_scripts_for_voice`, mayor `views_count`, truncados) + una **señal
+negativa** de lo que te hunde (`underperformers_signal`, solo el patrón). No rompe el JSON
+(hook/body/closing) — es contexto, con reafirmación del formato al final.
 API: `POST /api/metrics/learn` (atribuir+aprender) + `GET /api/metrics/insights`.
 **Falta (frontend):** Métricas postea los reels IG a `/learn` y pinta el resultado; Radar/email
 muestran el "siguiente de la serie". Tabla `Publication` separada = opcional v2 (reels orgánicos).

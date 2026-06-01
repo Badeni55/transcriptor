@@ -1851,27 +1851,90 @@ def _tok(s):
     return set(_re.findall(r"[a-záéíóúñ0-9]{4,}", (s or "").lower()))
 
 
-def attribute_reel_to_script(user_id, caption):
-    """Atribuye un reel publicado al guión que lo originó (overlap de texto con
-    título+hook del guión). Devuelve {script_id, score, method} o None."""
-    ct = _tok(caption)
-    if not ct:
+def _reel_transcript_cached(user_id, url):
+    """Transcripción del reel ya cacheada en `transcriptions` por (user_id, url).
+    Devuelve el texto o None (sin coste). El caché evita re-descargar/re-pagar Groq."""
+    if not url:
         return None
     try:
-        r = (db.table("scripts").select("id, title, hook, created_at")
+        r = (db.table("transcriptions").select("text")
+               .eq("user_id", user_id).eq("url", url).limit(1).execute())
+        if r.data and (r.data[0].get("text") or "").strip():
+            return r.data[0]["text"]
+    except Exception:
+        pass
+    return None
+
+
+def _transcribe_reel(user_id, url):
+    """Descarga (Apify/yt-dlp) + transcribe (Groq) un reel y lo CACHEA en
+    `transcriptions`. COSTE real: 1 descarga + 1 Groq → solo se llama en cache-miss.
+    Devuelve el texto o None."""
+    import tempfile
+    from tasks import download_audio  # lazy import (rompe circular tasks↔app)
+    platform = detect_platform(url)
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            mp3, _thumb, _item = download_audio(url, tmp, platform)
+            if not mp3:
+                return None
+            text = transcribe_with_groq(mp3)
+    except Exception as e:
+        logger.warning("_transcribe_reel failed url=%s err=%s", url, e)
+        return None
+    if not (text or "").strip():
+        return None
+    try:  # cachear para no re-transcribir en próximos refrescos
+        db.table("transcriptions").insert({
+            "user_id": user_id, "url": url, "platform": platform,
+            "text": text, "cost_cents": 0,
+        }).execute()
+    except Exception as e:
+        logger.warning("_transcribe_reel cache insert failed url=%s err=%s", url, e)
+    return text
+
+
+def attribute_reel_to_script(user_id, caption, transcript=None):
+    """Atribuye un reel publicado al guión que lo originó. PRIORIZA el CONTENIDO
+    HABLADO (transcripción del reel vs cuerpo del guión `scripts.script`, que es lo
+    que el creador grabó) — el caption de IG casi nunca es el guión. Caption vs
+    título+hook queda solo como respaldo si no hay transcripción. Devuelve
+    {script_id, score, method} o None."""
+    try:
+        r = (db.table("scripts").select("id, title, hook, script, created_at")
                .eq("user_id", user_id).order("created_at", desc=True).limit(60).execute())
     except Exception:
         return None
-    best, best_score = None, 0.0
-    for s in (r.data or []):
-        st = _tok((s.get("title") or "") + " " + (s.get("hook") or ""))
-        if not st:
-            continue
-        score = len(ct & st) / max(1, len(st))
-        if score > best_score:
-            best_score, best = score, s
-    if best and best_score >= 0.35:
-        return {"script_id": best["id"], "score": round(best_score, 2), "method": "text"}
+    rows = r.data or []
+
+    # 1) Señal real: transcripción del reel ↔ cuerpo del guión (Jaccard).
+    if transcript and transcript.strip():
+        rt = _tok(transcript)
+        if rt:
+            best, best_score = None, 0.0
+            for s in rows:
+                sb = _tok(s.get("script") or "")
+                if not sb:
+                    continue
+                score = len(rt & sb) / max(1, len(rt | sb))   # Jaccard
+                if score > best_score:
+                    best_score, best = score, s
+            if best and best_score >= 0.18:   # dos paráfrasis del mismo guion comparten léxico
+                return {"script_id": best["id"], "score": round(best_score, 2), "method": "transcript"}
+
+    # 2) Respaldo (señal débil): caption ↔ título+hook. Umbral más alto (era 0.35).
+    ct = _tok(caption)
+    if ct:
+        best, best_score = None, 0.0
+        for s in rows:
+            st = _tok((s.get("title") or "") + " " + (s.get("hook") or ""))
+            if not st:
+                continue
+            score = len(ct & st) / max(1, len(st))
+            if score > best_score:
+                best_score, best = score, s
+        if best and best_score >= 0.45:
+            return {"script_id": best["id"], "score": round(best_score, 2), "method": "caption"}
     return None
 
 
@@ -1920,14 +1983,28 @@ def feed_voice_with_metrics(user_id, insights):
     })
 
 
-def attribute_and_learn(user_id, videos):
-    """Orquesta el loop al refrescar métricas IG: (1) atribuye cada reel a su guión y
-    escribe sus métricas en él; (2) calcula qué funciona; (3) realimenta la voz.
-    Devuelve los insights. Llamar tras traer los reels publicados del usuario."""
+_REEL_TRANSCRIBE_PER_RUN = 6   # tope de transcripciones NUEVAS por refresco (coste Groq+Apify)
+
+
+def attribute_and_learn(user_id, videos, max_transcribe=_REEL_TRANSCRIBE_PER_RUN):
+    """Orquesta el loop al refrescar métricas IG. Para cada reel publicado:
+    (1) consigue su TRANSCRIPCIÓN (caché en `transcriptions` por url; si no hay y
+        queda presupuesto, descarga+transcribe y la cachea → idempotente, sin re-pagar);
+    (2) atribuye por contenido HABLADO (transcripción ↔ cuerpo del guión), caption de
+        respaldo; escribe las métricas del reel en su guión;
+    (3) calcula qué funciona y realimenta la voz.
+    COSTE: solo transcribe reels sin caché, hasta `max_transcribe`."""
     attributed = 0
+    transcribed = 0
     for v in (videos or []):
         cap = v.get("caption") or v.get("hook") or ""
-        m = attribute_reel_to_script(user_id, cap)
+        url = v.get("url") or v.get("permalink") or v.get("ig_url") or ""
+        transcript = _reel_transcript_cached(user_id, url)
+        if transcript is None and url and transcribed < max_transcribe:
+            transcript = _transcribe_reel(user_id, url)   # cache-miss → coste real (cacheado)
+            if transcript:
+                transcribed += 1
+        m = attribute_reel_to_script(user_id, cap, transcript=transcript)
         if not m:
             continue
         try:
@@ -1940,7 +2017,7 @@ def attribute_and_learn(user_id, videos):
             logger.warning("attribute_and_learn: write metrics failed: %s", e)
     insights = compute_what_works(videos)
     feed_voice_with_metrics(user_id, insights)
-    return {"attributed": attributed, "insights": insights}
+    return {"attributed": attributed, "transcribed": transcribed, "insights": insights}
 
 
 def next_series_suggestion(user_id):
@@ -1961,7 +2038,54 @@ def next_series_suggestion(user_id):
     }
 
 
-def adapt_with_ai(text: str, style: str, custom_prompt: str = "", voice=None) -> dict:
+def top_scripts_for_voice(user_id, n=2, max_chars=700):
+    """Tus guiones que MÁS reventaron (mayor views_count) con cuerpo → molde few-shot.
+    Truncados para no inflar el prompt (riesgo content=null)."""
+    try:
+        r = (db.table("scripts").select("script, views_count")
+               .eq("user_id", user_id).not_.is_("views_count", "null")
+               .order("views_count", desc=True).limit(n * 4).execute())
+    except Exception:
+        return []
+    out = []
+    for s in (r.data or []):
+        body = (s.get("script") or "").strip()
+        if not body:
+            continue
+        out.append(body[:max_chars])
+        if len(out) >= n:
+            break
+    return out
+
+
+def underperformers_signal(user_id):
+    """Patrón breve de lo que NO te rinde (guiones muy por debajo de tu mediana).
+    Solo el PATRÓN (hook), nunca los textos enteros. Devuelve str corto o None."""
+    try:
+        r = (db.table("scripts").select("hook, views_count")
+               .eq("user_id", user_id).not_.is_("views_count", "null").limit(80).execute())
+    except Exception:
+        return None
+    rows = [x for x in (r.data or []) if (x.get("views_count") or 0) > 0]
+    if len(rows) < 4:
+        return None
+    vs = sorted(x["views_count"] for x in rows)
+    n = len(vs)
+    median = vs[n // 2] if n % 2 else (vs[n // 2 - 1] + vs[n // 2]) / 2
+    losers = [x for x in rows if (x.get("views_count") or 0) < 0.4 * median]
+    if len(losers) < 2:
+        return None
+    sig = []
+    noq = sum(1 for l in losers if "?" not in (l.get("hook") or ""))
+    if noq >= max(2, int(len(losers) * 0.6)):
+        sig.append("hooks que no abren con pregunta ni gancho directo")
+    lng = sum(1 for l in losers if len((l.get("hook") or "").split()) > 14)
+    if lng >= max(2, int(len(losers) * 0.5)):
+        sig.append("aperturas largas (>14 palabras antes del gancho)")
+    return ", ".join(sig) if sig else None
+
+
+def adapt_with_ai(text: str, style: str, custom_prompt: str = "", voice=None, user_id=None) -> dict:
     if style == "custom":
         if not custom_prompt:
             raise ValueError("Escribe tus instrucciones en el campo Custom")
@@ -1971,9 +2095,23 @@ def adapt_with_ai(text: str, style: str, custom_prompt: str = "", voice=None) ->
         if not system:
             raise ValueError("Estilo no válido")
 
-    # Moat: inyecta la voz real del creador en el prompt (si la tiene).
+    # Moat: CONTEXTO de estilo (no cambia el formato de salida). Se reafirma el JSON al final.
+    ctx = ""
     if voice:
-        system = system + voice_prompt_block(voice)
+        ctx += voice_prompt_block(voice)                      # voz + what_works (ya existente)
+    if user_id:
+        wins = top_scripts_for_voice(user_id)                 # aprendizaje real: tus ganadores
+        if wins:
+            ctx += ("\n\n=== EJEMPLOS DE TUS GUIONES QUE EXPLOTARON — genera en este MOLDE "
+                    "(misma cadencia, estructura y tono; NO los copies literalmente) ===\n"
+                    + "\n--- (otro) ---\n".join(wins))
+        neg = underperformers_signal(user_id)                 # evita lo que te hunde
+        if neg:
+            ctx += "\n\nEVITA (no te ha funcionado): " + neg
+    if ctx:
+        system = (system + ctx +
+                  "\n\nIMPORTANTE: lo anterior es CONTEXTO de estilo. Responde SOLO con el "
+                  "JSON pedido (hook, body, closing). No copies los ejemplos literalmente.")
 
     raw = _call_llm(system, text)
     return _parse_ai_json(raw, style)
@@ -2111,7 +2249,7 @@ def adapt():
             }), 402
 
     try:
-        result = adapt_with_ai(text, style, custom_prompt, voice=(get_voice_profile(user["id"]) if user else None))
+        result = adapt_with_ai(text, style, custom_prompt, voice=(get_voice_profile(user["id"]) if user else None), user_id=(user["id"] if user else None))
     except requests.HTTPError as e:
         return jsonify({"error": f"Error de la API: {e}"}), 502
     except Exception as e:
@@ -3383,7 +3521,7 @@ def idea_to_script(idea_id):
     )
 
     try:
-        result = adapt_with_ai(user_content, style_arg, custom_prompt, voice=get_voice_profile(uid))
+        result = adapt_with_ai(user_content, style_arg, custom_prompt, voice=get_voice_profile(uid), user_id=uid)
     except Exception as e:
         logger.error(f"Idea to script failed: {e}", exc_info=True)
         _refund()
@@ -3570,7 +3708,7 @@ def transcription_to_script(t_id):
     )
 
     try:
-        result = adapt_with_ai(user_content, style_arg, custom_prompt, voice=get_voice_profile(uid))
+        result = adapt_with_ai(user_content, style_arg, custom_prompt, voice=get_voice_profile(uid), user_id=uid)
     except Exception as e:
         logger.error(f"transcription_to_script LLM failed: {e}", exc_info=True)
         _refund()
@@ -4765,6 +4903,17 @@ def metrics_analyze():
             v["ig_profile_id"] = ig_profile_id
         db.table("ig_videos").upsert(videos, on_conflict="user_id,ig_video_id").execute()
 
+    # ── Cierra el loop de medición ────────────────────────────────────────────
+    # Atribuye cada reel publicado a su guión por el AUDIO (transcripción ↔ cuerpo
+    # del guión), escribe sus métricas en él, y realimenta el VoiceProfile. Síncrono
+    # y acotado (max_transcribe) para no disparar latencia/coste; idempotente (cachea).
+    learn = {}
+    if videos:
+        try:
+            learn = attribute_and_learn(user["id"], videos, max_transcribe=4)
+        except Exception as e:
+            logger.warning("metrics_analyze: attribute_and_learn falló user=%s err=%s", user["id"], e)
+
     db.table("ig_profiles").update({
         "last_scraped_at": datetime.now(timezone.utc).isoformat(),
     }).eq("id", ig_profile_id).execute()
@@ -4773,7 +4922,7 @@ def metrics_analyze():
         "metrics_analyses_this_week": profile.get("metrics_analyses_this_week", 0) + 1,
     }).eq("id", user["id"]).execute()
 
-    return jsonify({"ok": True, "videos_updated": len(videos)})
+    return jsonify({"ok": True, "videos_updated": len(videos), "learn": learn})
 
 
 @app.route("/metrics/analyze-one", methods=["POST"])
@@ -5843,7 +5992,7 @@ def generate_script_from_competitor_reel(reel_id: str):
 
         # LLM call.
         try:
-            result = adapt_with_ai(user_content, style_arg, custom_prompt, voice=get_voice_profile(uid))
+            result = adapt_with_ai(user_content, style_arg, custom_prompt, voice=get_voice_profile(uid), user_id=uid)
         except Exception as e:
             logger.error("generate_script: LLM failed user=%s err=%s", uid, e, exc_info=True)
             _refund()

@@ -889,7 +889,7 @@ def generate_script_competitor_task(self, reel_id, user_id, assistant_id):
         try:
             from app import adapt_with_ai, get_voice_profile  # lazy import (rompe circular tasks↔app).
             result = adapt_with_ai(user_content, style_arg, custom_prompt,
-                                   voice=get_voice_profile(user_id))  # moat: voz del creador
+                                   voice=get_voice_profile(user_id), user_id=user_id)  # moat: voz + few-shot
         except Exception as e:
             logger.exception("gen_script_task LLM failed reel=%s: %s", reel_id, e)
             # v0.15.7.b: mensaje contextual si custom + empty content.
