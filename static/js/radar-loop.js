@@ -1502,7 +1502,13 @@
     if(act==="add-reel") return addReelManual();
     if(act==="voice-onboard") return onboardVoice();
     if(act==="voice-refine") return refineVoice();
-    if(act==="next-series-go"){ var nt=btn.getAttribute("data-title")||(nextSeries()&&nextSeries().title)||""; if(nt){ S.ideas.unshift(makeIdea(nt, nt.length+S.ideas.length)); } S.tab="ideas"; S.view="feed"; render(); return showToast("Tu próxima serie, lista para multiplicar en Ideas."); }
+    if(act==="next-series-go"){ var nt=btn.getAttribute("data-title")||(nextSeries()&&nextSeries().title)||""; S.tab="ideas"; S.view="feed";
+      if(nt && !isDemo()){ var tmpNs=makeIdea(nt, nt.length+S.ideas.length); tmpNs._saving=true; S.ideas.unshift(tmpNs); render();
+        apiPost("/ideas",{raw_text:nt, language:rsLang(), develop:false}).then(function(r){
+          if(r.ok && r.d && r.d.id){ tmpNs.id=r.d.id; tmpNs._server=true; tmpNs._scriptsLoaded=true; tmpNs._saving=false; render(); }
+          else { tmpNs._saving=false; render(); } });
+      } else { if(nt){ S.ideas.unshift(makeIdea(nt, nt.length+S.ideas.length)); } render(); }
+      return showToast("Tu próxima serie, lista para multiplicar en Ideas."); }
     if(act==="fillweek") return startFillWeek();
     if(act==="seed-go") return seedIdea("rsIdeaSeed", true);
     if(act==="seed-add") return addSeedIdea();
