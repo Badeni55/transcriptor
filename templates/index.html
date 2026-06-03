@@ -170,6 +170,18 @@
       if (path==='/api/me/subscription') return Promise.resolve(J({plan:'creator', status:'active'}));
       if (path==='/profile/data') return Promise.resolve(J({}));
       if (/^\/metrics\//.test(path)) return Promise.resolve(J({ig_profile:null, videos:[], limits:{}}));
+      // Pagos en DEMO: packs de topup + checkout/suscripción simulados (sin Stripe real).
+      if (path==='/api/topups') return Promise.resolve(J({topups:[{key:'100',credits:100,price_cents:1900},{key:'300',credits:300,price_cents:4900}]}));
+      if (path==='/checkout' && method==='POST') return Promise.resolve(J({url:'https://checkout.stripe.com/demo/session_demo_xyz'}));
+      if (path==='/create-subscription-checkout' && method==='POST') return Promise.resolve(J({url:'https://checkout.stripe.com/demo/session_demo_sub'}));
+      // PATCH de estado de guión: refleja el cambio en el array demo para no quedar opaco.
+      if (/^\/scripts\/[^/]+$/.test(path) && method==='PATCH'){
+        var _sid=path.split('/')[2]; var _body={};
+        try { _body = (init&&init.body) ? JSON.parse(init.body) : {}; } catch(e){}
+        var _s=SCRIPTS.filter(function(x){return x.id===_sid;})[0];
+        if (_s && _body.recording_status) _s.recording_status=_body.recording_status;
+        return Promise.resolve(J({ok:true}));
+      }
 
       if (method==='GET') return Promise.resolve(J({}));   // fallback no rompe paneles
       return Promise.resolve(J({ok:true}));
