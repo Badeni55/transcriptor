@@ -235,8 +235,26 @@ def send_radar_digests():
             continue
         scored.sort(key=lambda x: x["explosion"], reverse=True)
         top = scored[:3]
+
+        # Sugerencia "el siguiente de esa serie": tu guión que mejor rinde.
+        # Réplica ligera de app.next_series_suggestion (evita importar Flask).
+        next_suggestion = None
         try:
-            res = send_radar_digest(uid, top, day_key)
+            sr = (db.table("scripts").select("id, title, views_count")
+                    .eq("user_id", uid).not_.is_("views_count", "null")
+                    .order("views_count", desc=True).limit(1).execute()).data or []
+            if sr:
+                next_suggestion = {
+                    "script_id": sr[0]["id"],
+                    "title": sr[0].get("title"),
+                    "views": sr[0].get("views_count"),
+                }
+        except Exception as e:
+            logger.warning("send_radar_digests: next_suggestion failed user=%s err=%s", uid, e)
+            next_suggestion = None
+
+        try:
+            res = send_radar_digest(uid, top, day_key, next_suggestion)
             if res.get("sent"):
                 sent += 1
             else:

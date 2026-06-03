@@ -7923,6 +7923,94 @@
     .scr-act.danger { color: var(--ink-ghost); }
     .scr-act.danger:hover { color: var(--danger-fg); border-color: color-mix(in srgb, var(--danger-fg) 30%, transparent); }
 
+    /* B7: banco de hooks alternativos en la scr-card de PRODUCCIÓN.
+       Réplica visual del patrón gui-hooks de la isla .rs, pero con tokens
+       Signal de producción (la isla está fuera de alcance). */
+    .scr-hooks-toggle {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 12px;
+      padding: 4px 10px 4px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 99px;
+      background: transparent;
+      color: var(--ink-muted);
+      font-family: var(--font-body);
+      font-size: 11.5px; font-weight: 600;
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+    }
+    .scr-hooks-toggle:hover { color: var(--brand-500); border-color: color-mix(in srgb, var(--brand-500) 35%, transparent); }
+    .scr-hooks-toggle .scr-hk-fish { width: 13px; height: 13px; flex-shrink: 0; }
+    .scr-hooks-toggle .scr-hk-caret { width: 14px; height: 14px; flex-shrink: 0; transition: transform .18s ease; }
+    .scr-card.hooks-open .scr-hooks-toggle .scr-hk-caret { transform: rotate(180deg); }
+
+    .scr-hooks {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows .3s ease, margin-top .3s ease;
+      margin-top: 0;
+    }
+    .scr-hooks > .scr-hooks-inner { overflow: hidden; }
+    .scr-card.hooks-open .scr-hooks {
+      grid-template-rows: 1fr;
+      margin-top: 10px;
+    }
+    .scr-hooks-inner {
+      display: flex; flex-direction: column; gap: 8px;
+      padding: 14px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.18);
+    }
+    [data-theme="light"] .scr-hooks-inner { background: rgba(0, 0, 0, 0.03); }
+    .scr-hook {
+      display: flex; align-items: center; gap: 10px;
+      font-family: var(--font-body);
+      font-size: 13.5px; line-height: 1.35;
+      color: var(--ink-body);
+    }
+    .scr-hook .scr-hk-n { font-family: var(--font-mono); font-size: 11px; color: var(--brand-500); flex-shrink: 0; }
+    .scr-hook-t { flex: 1; min-width: 0; }
+    .scr-hook-use {
+      flex-shrink: 0;
+      font-family: var(--font-body);
+      font-size: 11px; font-weight: 600;
+      color: var(--ink-muted);
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 7px;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+    }
+    .scr-hook-use:hover { color: var(--brand-500); border-color: color-mix(in srgb, var(--brand-500) 35%, transparent); }
+    .scr-hook-del {
+      flex-shrink: 0;
+      width: 26px; height: 26px;
+      border-radius: 7px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: transparent;
+      color: var(--ink-ghost);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+    }
+    .scr-hook-del svg { width: 13px; height: 13px; }
+    .scr-hook-del:hover { color: var(--danger-fg); border-color: color-mix(in srgb, var(--danger-fg) 30%, transparent); }
+    .scr-hook-add {
+      display: inline-flex; align-items: center; gap: 6px;
+      align-self: flex-start;
+      margin-top: 2px;
+      font-family: var(--font-mono);
+      font-size: 10.5px; font-weight: 500;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--brand-500);
+      background: none; border: none; padding: 0;
+      cursor: pointer;
+    }
+    .scr-hook-add:hover { text-decoration: underline; }
+    .scr-hooks-empty { font-family: var(--font-body); font-size: 12.5px; color: var(--ink-ghost); }
+
     /* Recording status badge */
     .scr-status-badge {
       display: inline-flex; align-items: center; gap: var(--space-1);
@@ -16693,6 +16781,51 @@ function _buildIdeaProjBadge(proj, id) {
   return `<button type="button" class="idea-proj-badge" style="--pc:${color}" data-idea-action="projectMenu" title="${esc(proj.name)}">${esc(proj.name)}</button>`;
 }
 
+// B7: banco de hooks alternativos de la scr-card de PRODUCCIÓN.
+// Réplica del patrón gui-hooks de la isla .rs (toggle "N hooks alternativos",
+// por hook botón "Usar" + "quitar", y añadir). Backend: POST/DELETE
+// /scripts/<id>/hooks · POST /scripts/<id>/hooks/use.
+function _buildScrHooks(it) {
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const hooks = Array.isArray(it.alt_hooks) ? it.alt_hooks : [];
+  const n = hooks.length;
+  const id = it.id;
+  const LBL_TOGGLE = n === 0
+    ? (lang === "en" ? "Alternative hooks" : "Hooks alternativos")
+    : (lang === "en"
+        ? `${n} alternative hook${n === 1 ? "" : "s"}`
+        : `${n} hook${n === 1 ? "" : "s"} alternativo${n === 1 ? "" : "s"}`);
+  const LBL_USE   = lang === "en" ? "Use" : "Usar";
+  const LBL_DEL   = lang === "en" ? "Remove variant" : "Quitar variante";
+  const LBL_ADD   = lang === "en" ? "+ Add hook" : "+ Añadir hook";
+  const LBL_EMPTY = lang === "en"
+    ? "No alternative hooks yet. Add one to bank openings."
+    : "Aún no hay hooks alternativos. Añade uno para tener aperturas en banco.";
+
+  const FISH  = `<svg class="scr-hk-fish" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16.69 7.44a6.973 6.973 0 0 0 -1.69 4.56c0 1.747 .64 3.345 1.699 4.571"/><path d="M2 9.504c7.715 8.647 14.75 10.265 20 2.498c-5.25 -7.761 -12.285 -6.142 -20 2.504"/><path d="M18 11v.01"/><path d="M11.5 10.5c-.667 1 -.667 2 0 3"/></svg>`;
+  const CARET = `<svg class="scr-hk-caret" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="6 9 12 15 18 9"/></svg>`;
+  const XICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>`;
+
+  const rows = hooks.length
+    ? hooks.map((h, i) => `
+        <div class="scr-hook">
+          <span class="scr-hk-n">${String(i + 1).padStart(2, "0")}</span>
+          <span class="scr-hook-t">${esc(h)}</span>
+          <button type="button" class="scr-hook-use" data-scr-action="hookUse" data-i="${i}" title="${LBL_USE}">${LBL_USE}</button>
+          <button type="button" class="scr-hook-del" data-scr-action="hookDel" data-i="${i}" title="${LBL_DEL}">${XICON}</button>
+        </div>`).join("")
+    : `<div class="scr-hooks-empty">${LBL_EMPTY}</div>`;
+
+  return `
+      <button type="button" class="scr-hooks-toggle" data-scr-action="hooksToggle">${FISH}<span>${LBL_TOGGLE}</span>${CARET}</button>
+      <div class="scr-hooks">
+        <div class="scr-hooks-inner">
+          ${rows}
+          <button type="button" class="scr-hook-add" data-scr-action="hookAdd">${LBL_ADD}</button>
+        </div>
+      </div>`;
+}
+
 function renderProfScripts() {
   const el = document.getElementById("profListScripts");
   if (!el) return;
@@ -16774,6 +16907,7 @@ function renderProfScripts() {
           <div class="scr-full-text">${esc(text)}</div>
         </div>
       </div>
+      ${_buildScrHooks(it)}
       <div class="scr-acts">
         <button class="scr-act primary" data-scr-action="edit">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M12 2 L14 4 L5 13 L2 14 L3 11 Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
@@ -16813,7 +16947,76 @@ function _bindScrListDelegation() {
     if (action === "delete") { delScript(id, trigger); return; }
     if (action === "statusMenu")  { _openScrStatusMenu(trigger, id); return; }
     if (action === "projectMenu") { _openScrProjectMenu(trigger, id); return; }
+    // B7: banco de hooks alternativos
+    if (action === "hooksToggle") { card.classList.toggle("hooks-open"); return; }
+    if (action === "hookUse") { _scrHookUse(id, parseInt(trigger.dataset.i, 10), trigger); return; }
+    if (action === "hookDel") { _scrHookDel(id, parseInt(trigger.dataset.i, 10), trigger); return; }
+    if (action === "hookAdd") { _scrHookAdd(id, trigger); return; }
   });
+}
+
+// B7: usar un hook alternativo como apertura activa (swap con el hook vivo).
+// POST /scripts/<id>/hooks/use {index}. El backend devuelve {hook, alt_hooks}.
+async function _scrHookUse(id, index, btn) {
+  if (Number.isNaN(index)) return;
+  if (btn) btn.disabled = true;
+  try {
+    const r = await fetch(`/scripts/${id}/hooks/use`, {
+      method: "POST", credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ index }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.ok) { showToast(d.error || t("toast.error")); if (btn) btn.disabled = false; return; }
+    const it = scriptsCache.find(s => s.id === id);
+    if (it) { it.hook = d.hook; it.alt_hooks = d.alt_hooks; }
+    _scrReRenderKeepOpen(id);
+    showToast((document.documentElement.lang || "es").toLowerCase() === "en" ? "Opening updated." : "Apertura actualizada.");
+  } catch { if (btn) btn.disabled = false; showToast(t("toast.error_connection")); }
+}
+
+// B7: quitar un hook del banco. DELETE /scripts/<id>/hooks?index=N → {alt_hooks}.
+async function _scrHookDel(id, index, btn) {
+  if (Number.isNaN(index)) return;
+  if (btn) btn.disabled = true;
+  try {
+    const r = await fetch(`/scripts/${id}/hooks?index=${index}`, { method: "DELETE", credentials: "same-origin" });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.ok) { showToast(d.error || t("toast.error")); if (btn) btn.disabled = false; return; }
+    const it = scriptsCache.find(s => s.id === id);
+    if (it) it.alt_hooks = d.alt_hooks;
+    _scrReRenderKeepOpen(id);
+  } catch { if (btn) btn.disabled = false; showToast(t("toast.error_connection")); }
+}
+
+// B7: añadir un hook al banco. POST /scripts/<id>/hooks {hook} → {alt_hooks}.
+async function _scrHookAdd(id, btn) {
+  const lang = (document.documentElement.lang || "es").toLowerCase();
+  const hook = window.prompt(lang === "en" ? "New alternative hook (opening line):" : "Nuevo hook alternativo (línea de apertura):");
+  if (hook == null) return;
+  if (!hook.trim()) { showToast(lang === "en" ? "Write a hook." : "Escribe un hook."); return; }
+  if (btn) btn.disabled = true;
+  try {
+    const r = await fetch(`/scripts/${id}/hooks`, {
+      method: "POST", credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hook: hook.trim() }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.ok) { showToast(d.error || t("toast.error")); if (btn) btn.disabled = false; return; }
+    const it = scriptsCache.find(s => s.id === id);
+    if (it) it.alt_hooks = d.alt_hooks;
+    _scrReRenderKeepOpen(id);
+    showToast(lang === "en" ? "Hook added." : "Hook añadido.");
+  } catch { if (btn) btn.disabled = false; showToast(t("toast.error_connection")); }
+}
+
+// Re-pinta la lista de scripts manteniendo abierto el panel de hooks de la card
+// tocada (renderProfScripts reconstruye el HTML y perdería el estado .hooks-open).
+function _scrReRenderKeepOpen(id) {
+  renderProfScripts();
+  const card = document.querySelector(`.scr-card[data-id="${id}"]`);
+  if (card) card.classList.add("hooks-open");
 }
 
 // v0.16.16: delegated listener para Ideas — clon de _bindScrListDelegation.

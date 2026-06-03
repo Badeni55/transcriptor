@@ -536,10 +536,14 @@ def fetch_pending_emails(limit=100):
 # (explosión >= 2x, últimas 48h) lo hace la tarea Beat tasks.send_radar_digests,
 # que pasa aquí la lista ya filtrada/ordenada.
 
-def _radar_digest_body(reels, lang):
+def _radar_digest_body(reels, lang, next_suggestion=None):
     """Devuelve (inner_html, inner_text). reels: lista de dicts con
     {username, caption, views, explosion}. Texto-forward (sin depender de
-    imágenes — muchos clientes de correo bloquean data: URIs / hotlinks IG)."""
+    imágenes — muchos clientes de correo bloquean data: URIs / hotlinks IG).
+
+    next_suggestion (opcional): dict {title, views, ...} de
+    next_series_suggestion → renderiza un bloque "el siguiente de esa serie"
+    ANTES del listado de reels. None = no se renderiza (firma retrocompatible)."""
     es = lang == "es"
     radar_url = f"{APP_URL}/profile/radar"
     intro = ("esto petó en tu nicho en las últimas 48h. róbalo antes que nadie 👇"
@@ -584,26 +588,59 @@ def _radar_digest_body(reels, lang):
             f"{user} · 🔥 {exp_txt}x {avg} · {views_fmt} {views_w}\n  {cap}\n  {cta_card} {radar_url}"
         )
 
+    # Bloque "el siguiente de esa serie, en tu voz" — antes del listado de reels.
+    sug_html = ""
+    sug_text = ""
+    if next_suggestion:
+        s_title = (str(next_suggestion.get("title") or "").strip()
+                   or ("tu último guion" if es else "your last script"))
+        s_views = next_suggestion.get("views")
+        try:
+            views_part = f" (×{int(s_views):,})".replace(",", ".") if s_views else ""
+        except Exception:
+            views_part = ""
+        cta_next = "✍️ El siguiente, en mi voz →" if es else "✍️ The next one, in my voice →"
+        if es:
+            sug_line = (f"Lo que grabaste sobre «{s_title}» está rindiendo{views_part}. "
+                        "¿El siguiente de esa serie, en tu voz?")
+        else:
+            sug_line = (f"What you recorded about “{s_title}” is taking off{views_part}. "
+                        "The next one in that series, in your voice?")
+        sug_html = (
+            '<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;'
+            'border:1px solid #ffe0b2;background:#fff8f0;border-radius:10px">'
+            '<tr><td style="padding:16px 18px">'
+            f'<div style="color:#1a1a1a;font-size:15px;line-height:1.45">{sug_line}</div>'
+            f'<a href="{radar_url}" style="display:inline-block;margin-top:10px;color:#ef6a29;'
+            f'font-weight:600;text-decoration:none;font-size:14px">{cta_next}</a>'
+            '</td></tr></table>'
+        )
+        sug_text = f"{sug_line}\n  {cta_next} {radar_url}\n\n"
+
     inner_html = (
         "<p>hola creador 👋</p>"
         f"<p>{intro}</p>"
+        + sug_html
         + "".join(cards_html)
         + _btn(radar_url, cta_big)
     )
     inner_text = (
         "hola creador 👋\n\n"
         f"{intro}\n\n"
+        + sug_text
         + "\n\n".join(cards_text)
         + f"\n\n{cta_big} {radar_url}"
     )
     return inner_html, inner_text
 
 
-def send_radar_digest(user_id, reels, day_key):
+def send_radar_digest(user_id, reels, day_key, next_suggestion=None):
     """Envía el digest diario del Radar. Idempotente por (user_id, día).
 
     reels: lista ya filtrada/ordenada (top reels explosivos). day_key:
-    'YYYY-MM-DD' UTC. Devuelve dict {sent|skipped|error}.
+    'YYYY-MM-DD' UTC. next_suggestion (opcional): dict de next_series_suggestion
+    → bloque "el siguiente de esa serie, en tu voz" antes del listado.
+    Devuelve dict {sent|skipped|error}.
     """
     if not reels:
         return {"skipped": "no_reels"}
@@ -653,7 +690,7 @@ def send_radar_digest(user_id, reels, day_key):
         subject = (f"🔥 {n} reels just blew up in your niche"
                    if n > 1 else "🔥 a reel just blew up in your niche")
 
-    inner_html, inner_text = _radar_digest_body(reels, lang)
+    inner_html, inner_text = _radar_digest_body(reels, lang, next_suggestion)
     html = _wrap_html(inner_html, unsub_url, lang)
     text = _wrap_text(inner_text, unsub_url, lang)
 

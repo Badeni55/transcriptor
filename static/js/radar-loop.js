@@ -194,6 +194,22 @@
   }
   function ecoLevelName(l){ return ({1:"Calentando",2:"Cogiendo forma",3:"En racha",4:"Afinado",5:"Imparable"})[l||1]||"Calentando"; }
 
+  /* B1: "tu próxima serie" — sugerencia del Cerebro a partir de lo que petó en TU
+     cuenta (S.metrics.insights.next = {title, views, message}). Surface como CARD
+     HERO en el Dashboard y bajo "Lo que funciona" en el Cerebro. Si no hay next,
+     no renderiza nada (sin hueco). Misma tarjeta en ambos sitios. */
+  function nextSeries(){ return (S.metrics && S.metrics.insights && S.metrics.insights.next) || null; }
+  function nextSeriesHTML(){
+    var nx=nextSeries(); if(!nx || !(nx.title||nx.message)) return '';
+    var views=nx.views!=null?(typeof nx.views==="string"?nx.views:fmtNum(nx.views)):"";
+    return '<article class="next-series">'+
+      '<div class="ns-eyebrow">'+IC.brain+'<span>Tu próxima serie</span>'+(views?'<span class="ns-views" title="Lo que hizo el reel que la inspira">'+IC.eye+' '+ESC(views)+'</span>':'')+'</div>'+
+      '<h3 class="ns-title">'+ESC(nx.title||"")+'</h3>'+
+      (nx.message?'<p class="ns-msg">'+ESC(nx.message)+'</p>':'')+
+      '<div class="ns-actions"><button class="btn btn-md btn-primary" data-act="next-series-go" data-title="'+ESC(nx.title||"")+'">'+IC.bolt+' Desarrollar esta serie</button></div>'+
+    '</article>';
+  }
+
   function ideaInputHTML(){
     return ''+
     '<div class="idea-launch">'+
@@ -344,6 +360,8 @@
 
     if(sorted.length===0){
       return '<div class="scroll"><div class="canvas">'+head+(isAgency()?brandTabsHTML():"")+statbarHTML()+
+        voiceOnboardCardHTML()+   // B6: en first-run sin reels, el onboarding de voz es lo primero que aporta
+        nextSeriesHTML()+         // B1
         '<div class="plays">'+ideaInputHTML()+'</div>'+
         '<div class="rs-empty">'+(S.filter==="fav"?"Sin favoritos aún. Toca la estrella en una señal.":"Sin reels todavía. Añade un competidor o pega un reel para empezar.")+'</div>'+
       '</div></div>';
@@ -361,6 +379,8 @@
       head+
       (isAgency()?brandTabsHTML():"")+
       statbarHTML()+
+      voiceOnboardCardHTML()+   // B6: 2º punto de entrada al onboarding de voz (first-run sin perfil)
+      nextSeriesHTML()+         // B1: card hero de "tu próxima serie" (si el Cerebro la sugiere)
       opportunityHTML(hero)+
       '<div class="plays">'+ideaInputHTML()+(S.reels.length?whaleHTML(fillCount):"")+'</div>'+
       (rest.length?('<div class="feed-head"><span class="feed-title">Más señales <span class="ct">· '+rest.length+'</span></span>'+filtersHTML()+'</div><div class="feed">'+rows+'</div>'+moreToggle):"")+
@@ -681,6 +701,21 @@
         '<button class="btn btn-md btn-primary" data-act="voice-onboard">'+IC.spark+' Aprender mi voz</button>'+
       '</div>';
   }
+  /* B6: onboarding de voz como 2º punto de entrada — inline en el Dashboard
+     (Cerebro ya es el 1º). First-run: si el usuario aún no tiene perfil de voz
+     (has_profile de /api/voice, que loadBrandData fetchea a S.voice), invitamos a
+     enseñarla ya desde el Radar. Reusa voiceCaptureHTML (textarea + botón
+     data-act="voice-onboard"), envuelto en una card del Dashboard. Si ya hay voz,
+     no renderiza nada → no duplica el bloque del Cerebro. */
+  function voiceOnboardCardHTML(){
+    if(hasRealVoice()) return '';
+    return '<div class="dash-voice-onboard">'+
+      '<div class="dvo-head"><span class="dvo-ic">'+IC.mic+'</span>'+
+        '<div><div class="dvo-eyebrow">Antes de empezar</div>'+
+        '<h3 class="dvo-title">Enséñame tu voz</h3></div></div>'+
+      voiceCaptureHTML()+
+    '</div>';
+  }
   function voiceEvidenceHTML(){
     var ev=(S.voice&&S.voice.evidence)||[];
     if(!ev.length) return '';
@@ -748,6 +783,7 @@
       // lo que funciona (métricas)
       '<div class="brain-section-t">Lo que funciona en tu cuenta'+(learned.length?' <span class="brain-tag">de tus métricas</span>':'')+'</div>'+
       '<div class="learn" style="margin-bottom:18px"><div class="learn-list">'+learnList+'</div></div>'+
+      nextSeriesHTML()+   // B1: la sugerencia de próxima serie, justo bajo lo que funciona
       // de quién aprendo
       '<div class="brain-section-t">De quién aprendo</div>'+
       '<div class="brain-comps">'+compList+'</div>'+
@@ -1013,6 +1049,12 @@
   function onboardVoice(){
     var ta=document.getElementById("rsVoiceText"); var txt=ta?ta.value.trim():"";
     if(!txt){ showToast("Pega el texto de al menos 1 reel tuyo."); return; }
+    // B8: en DEMO no llamamos al backend real (POST /api/voice/onboard + GET /api/voice).
+    // Sembramos un VoiceProfile dummy fijo para que la demo enseñe el "después" del moat
+    // (Cerebro con voz aprendida, confianza 62%, evidencia) sin claves ni red. NO ELIMINAR:
+    // la demo lo necesita para que el flujo de onboarding se vea completo. La integración
+    // REAL (transcripción → derivar voz → persistir) solo se ejercita en el branch de prod
+    // de abajo — este branch nunca la prueba a propósito.
     if(isDemo()){
       S.voice={ has_profile:true, tone:"Directo, sin postureo — como un audio a un colega.",
         phrases:["te lo cuento porque","paso uno… paso dos","guárdate esto"], structure:"hook directo → 3 pasos → CTA",
@@ -1032,6 +1074,70 @@
         showToast((d&&d.error)||"No pude aprender tu voz. Prueba con otro reel.");
       })
       .catch(function(){ showToast("Error de red. Inténtalo de nuevo."); });
+  }
+
+  // Refresca métricas + insights de la marca activa (summary + insights) y re-pinta.
+  // Devuelve la promesa para encadenar toasts. Solo prod (en demo las métricas son sembradas).
+  function refreshMetrics(){
+    var q=S.brandId?("?brand="+encodeURIComponent(S.brandId)):"";
+    return Promise.all([
+      fetch("/metrics/summary"+q,{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
+      fetch("/api/metrics/insights",{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
+    ]).then(function(res){
+      var met=res[0], ins=res[1];
+      if(met){ S.metrics=met; S.igConnected=(met.connected!==false); }
+      if(ins){ S.metrics=S.metrics||{}; S.metrics.insights={ what_works:ins.what_works||[], next:ins.next||null }; }
+      render();
+    });
+  }
+
+  // B3 (prod): al vincular un reel publicado a su guion, lo analizamos por audio
+  // (POST /metrics/analyze-one) y refrescamos las métricas del guion.
+  function linkReelPublished(g, url){
+    showToast("Analizando tu reel… esto entrena tu Cerebro.");
+    fetch("/metrics/analyze-one",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:url})})
+      .then(function(r){ return r.json().catch(function(){return{};}); })
+      .then(function(d){
+        if(d&&d.ok){
+          if(g) g.published={pending:false, url:url};
+          return refreshMetrics().then(function(){ showToast("Reel analizado. Tu Cerebro acaba de aprender de él."); });
+        }
+        showToast((d&&d.error)||"No pude analizar el reel. Revisa el link.");
+      })
+      .catch(function(){ showToast("Error de red al analizar el reel."); });
+  }
+
+  // B4 (prod): conectar la cuenta de Instagram (POST /metrics/ig-profile) y luego
+  // traer/actualizar los reels (POST /metrics/analyze → scrape + attribute_and_learn).
+  function igConnectProfile(){
+    var u=window.prompt("Tu usuario de Instagram (sin @) — leo solo tus métricas públicas:");
+    if(u==null) return;
+    u=(u||"").trim().replace(/^@/,"");
+    if(!u){ showToast("Escribe tu usuario de Instagram."); return; }
+    showToast("Conectando @"+u+"…");
+    fetch("/metrics/ig-profile",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:u})})
+      .then(function(r){ return r.json().catch(function(){return{};}); })
+      .then(function(d){
+        if(d&&d.ok){
+          S.igConnected=true; render();
+          showToast("Instagram conectado. Trayendo tus reels…");
+          return refreshReels();
+        }
+        showToast((d&&d.error)||"No pude conectar tu Instagram.");
+      })
+      .catch(function(){ showToast("Error de red al conectar Instagram."); });
+  }
+  function refreshReels(){
+    showToast("Actualizando tus reels…");
+    return fetch("/metrics/analyze",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({})})
+      .then(function(r){ return r.json().catch(function(){return{};}); })
+      .then(function(d){
+        if(d&&d.ok){
+          return refreshMetrics().then(function(){ showToast("Reels actualizados ("+(d.videos_updated||0)+"). Tu Cerebro ha aprendido."); });
+        }
+        showToast((d&&d.error)||"No pude actualizar tus reels.");
+      })
+      .catch(function(){ showToast("Error de red al actualizar tus reels."); });
   }
 
   /* ── delegación de eventos ───────────────────────────────────── */
@@ -1054,6 +1160,7 @@
     if(act==="expand-feed"){ S.feedExpanded=true; return render(); }
     if(act==="add-reel") return addReelManual();
     if(act==="voice-onboard") return onboardVoice();
+    if(act==="next-series-go"){ var nt=btn.getAttribute("data-title")||(nextSeries()&&nextSeries().title)||""; if(nt){ S.ideas.unshift(makeIdea(nt, nt.length+S.ideas.length)); } S.tab="ideas"; S.view="feed"; render(); return showToast("Tu próxima serie, lista para multiplicar en Ideas."); }
     if(act==="fillweek") return startFillWeek();
     if(act==="seed-go") return seedIdea("rsIdeaSeed", true);
     if(act==="seed-add") return addSeedIdea();
@@ -1073,11 +1180,11 @@
     if(act==="back-script"){ S.view="script"; return render(); }
     if(act==="close-feed"){ clearInterval(S.genStepTimer); clearTimeout(S.fillTimer); S.view="feed"; S._fillPhase=null; return render(); }
     if(act==="tp-back"){ if(S.tab==="guiones"){ S.view="feed"; } else { S.view=(S.reel&&S.reel.script&&Object.keys(S.done).length)?"script":(S.reel&&S.reel.script?"script":"feed"); } return render(); }
-    if(act==="ig-connect"){ S.igConnected=true; bumpEco(0,0); render(); return showToast("Instagram conectado. El sistema empezará a aprender de lo que publicas."); }
+    if(act==="ig-connect"){ if(!isDemo()) return igConnectProfile(); S.igConnected=true; bumpEco(0,0); render(); return showToast("Instagram conectado. El sistema empezará a aprender de lo que publicas."); }
     if(act==="ig-disconnect"){ S.igConnected=false; render(); return showToast("Instagram desvinculado."); }
     if(act==="metric-sort"){ S.metricSort=k; return render(); }
     if(act==="metric-chart"){ S.metricChart=k; return render(); }
-    if(act==="metric-refresh"){ render(); return showToast("Métricas actualizadas."); }
+    if(act==="metric-refresh"){ if(!isDemo()) return refreshReels(); render(); return showToast("Métricas actualizadas."); }
     if(act==="fw-guiones"){ S.view="feed"; S._fillPhase=null; S.tab="guiones"; S.guiFilter="all"; return render(); }
     if(act==="fw-record"){ var fid=S._fillGuionIds&&S._fillGuionIds[0]; var g0=fid?guionById(fid):null; if(g0){ S.activeGuionId=g0.id; S.reel={creator:{handle:(g0.from||"").replace("@","")},script:{hook:g0.hook,beats:g0.beats,close:g0.close}}; S.view="prompter"; render(); } return; }
     if(act==="gui-filter"){ S.guiFilter=k; return render(); }
@@ -1085,7 +1192,7 @@
     if(act==="gui-toggle-rec"){ var g2=guionById(id); if(g2){ g2.status=(g2.status==="recorded")?"draft":"recorded"; if(g2.status==="recorded"&&S.stats) S.stats.stolen_today+=1; render(); showToast(g2.status==="recorded"?"Marcado como grabado.":"Vuelto a borrador."); } return; }
     if(act==="gui-discard"){ var g3=guionById(id); if(g3){ g3.status="discarded"; render(); showToast("Descartado."); } return; }
     if(act==="gui-perf"){ S.perfGuion=id; S.view="perf"; return render(); }
-    if(act==="gui-link-reel"){ var gl=guionById(id); if(gl){ var u=window.prompt("Pega el link del reel publicado (Instagram/TikTok). Lo analizo cada semana y entrena tu Cerebro:"); if(u){ gl.published={pending:true, url:u}; gl.status="recorded"; render(); showToast("Reel vinculado. Se analizará en el próximo refresco y entrenará tu Cerebro."); } } return; }
+    if(act==="gui-link-reel"){ var gl=guionById(id); if(gl){ var u=window.prompt("Pega el link del reel publicado (Instagram/TikTok). Lo analizo cada semana y entrena tu Cerebro:"); if(u){ gl.published={pending:true, url:u}; gl.status="recorded"; render(); if(isDemo()){ showToast("Reel vinculado. Se analizará en el próximo refresco y entrenará tu Cerebro."); } else { linkReelPublished(gl, u); } } } return; }
     if(act==="copy"){ var txt=btn.getAttribute("data-txt"); if(navigator.clipboard) navigator.clipboard.writeText(txt); btn.textContent="✓"; setTimeout(function(){ btn.textContent="Copiar"; },1200); return; }
   }
 
@@ -1125,6 +1232,8 @@
     S.igConnected=true;
     S.metrics={
       connected:true, analyses_left:"1/1",
+      // B1 (demo): sugerencia de próxima serie sembrada (en prod sale de /api/metrics/insights).
+      insights:{ what_works:[], next:{ title:"Tu sistema de correo en 3 partes — uno por día", views:1400000, message:"Tu reel del correo petó (5,8× tu media). Estíralo en una miniserie: el problema, el montaje y el resultado. Misma vena, tres piezas." } },
       top:{ title:"Llevo 3 semanas sin tocar mi bandeja", views:"1,4 M" },
       learned:["Tus reels de ~40s superan tu media de vistas","Abrir con pregunta te funciona (3 de tus mejores lo hacen)","Los hooks de «yo hice X y pasó Y» rinden 2,4× más que los de pregunta"],
       videos:[
@@ -1143,10 +1252,11 @@
     Promise.all([
       fetch("/api/radar/stats"+q,{credentials:"same-origin"}).then(function(r){return r.json();}).catch(function(){return{};}),
       fetch("/api/tracked-creators/reels"+(q?q+"&":"?")+"sort=explosion&limit=24",{credentials:"same-origin"}).then(function(r){return r.json();}).catch(function(){return{reels:[]};}),
-      fetch("/api/metrics/summary"+q,{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
-      fetch("/api/voice",{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
+      fetch("/metrics/summary"+q,{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
+      fetch("/api/voice",{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
+      fetch("/api/metrics/insights",{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
     ]).then(function(res){
-      var stats=res[0]||{}, feed=res[1]||{}, met=res[2];
+      var stats=res[0]||{}, feed=res[1]||{}, met=res[2], ins=res[4];
       if(res[3]) S.voice=res[3];   // perfil de voz real (moat) — null en demo dummy
       S.stats={ competitors:stats.competitors||0, reels_week:stats.reels_week||0, exploded_week:stats.exploded_week||0, stolen_today:stats.stolen_today!=null?stats.stolen_today:(stats.stolen_total||0) };
       S.reels=(feed.reels||[]).map(normReel);
@@ -1154,6 +1264,8 @@
       S._reelPool=S.reels.slice();   // pool base para variar feed por-marca en demo
       if(met){ S.metrics=met; S.igConnected=(met.connected!==false); }
       else { S.metrics=null; }
+      // Insights del Cerebro (lo que funciona en TU cuenta + el siguiente de la serie).
+      if(ins){ S.metrics=S.metrics||{}; S.metrics.insights={ what_works:ins.what_works||[], next:ins.next||null }; }
       if(isDemo()) seedDemoContent();   // MVP demo: SIEMPRE siembra guiones+hooks+reels vinculados
       if(isDemo() && !(isAgency() && S.tab==="portfolio")) applyDemoBrand();
       render();

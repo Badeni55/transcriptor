@@ -2399,6 +2399,53 @@ def api_voice_onboard():
     })
 
 
+@app.route("/api/voice/refine", methods=["POST"])
+@limiter.limit("5 per minute;20 per hour")
+@require_auth
+def api_voice_refine():
+    """Refina el moat: el creador pega MÁS reels suyos → se ACUMULAN al perfil
+    existente (no lo reemplazan) y re-derivamos sobre la muestra completa. Sube
+    source_count/confidence → resuelve el '1 reel = 48% para siempre'. Si aún no
+    hay perfil, equivale a un onboard."""
+    if not (OPENROUTER_API_KEY or GROQ_API_KEY):
+        return jsonify({"error": "Servicio no disponible"}), 503
+    user = current_user()
+    body = request.get_json() or {}
+    texts = body.get("texts") or []
+    if isinstance(texts, str):
+        texts = [texts]
+    texts = [t for t in texts if isinstance(t, str) and t.strip()]
+    if not texts:
+        return jsonify({"error": "Pega el texto de al menos 1 reel tuyo."}), 400
+
+    # Acumular: muestras previas (raw.samples) + las nuevas. Cap a 5 (muestra plena).
+    existing = get_voice_profile(user["id"])
+    prev_raw = (existing.get("raw") if existing and isinstance(existing.get("raw"), dict) else {})
+    prev_samples = [s for s in (prev_raw.get("samples") or []) if isinstance(s, str) and s.strip()]
+    all_samples = (prev_samples + texts)[:5]
+
+    vp = derive_voice_profile(all_samples)
+    if not vp:
+        return jsonify({"error": "No pude refinar tu voz. Prueba con otro reel."}), 502
+
+    # Conservar el aprendizaje del loop (what_works) y dejar traza de la muestra acumulada.
+    raw = vp.get("raw") if isinstance(vp.get("raw"), dict) else dict(vp)
+    if prev_raw.get("what_works"):
+        raw["what_works"] = prev_raw["what_works"]
+    raw["samples"] = all_samples
+    vp["raw"] = raw
+
+    save_voice_profile(user["id"], vp)
+    return jsonify({
+        "ok": True,
+        "confidence": vp.get("confidence"),
+        "source_count": vp.get("source_count"),
+        "tone": vp.get("tone"),
+        "phrases": vp.get("phrases") or [],
+        "evidence": vp.get("evidence") or [],
+    })
+
+
 @app.route("/adapt", methods=["POST"])
 @limiter.limit("20 per minute;100 per hour")
 def adapt():
@@ -2754,7 +2801,7 @@ def update_script(script_id):
     user = current_user()
     body = request.get_json()
     updates = {}
-    for key in ("title", "transcription", "script", "performance_notes", "views_count", "engagement_rate", "project_id", "likes", "comments", "saves", "metrics_image_url", "published_at", "recording_status"):
+    for key in ("title", "transcription", "script", "performance_notes", "views_count", "engagement_rate", "project_id", "likes", "comments", "saves", "metrics_image_url", "published_at", "recording_status", "alt_hooks"):
         if key in body:
             updates[key] = body[key]
     if "recording_status" in updates and updates["recording_status"] not in ("pending", "recorded", "discarded"):
@@ -2763,6 +2810,90 @@ def update_script(script_id):
         return jsonify({"error": "Nothing to update"}), 400
     db.table("scripts").update(updates).eq("id", script_id).eq("user_id", user["id"]).execute()
     return jsonify({"ok": True})
+
+
+# ── Scripts: hooks alternativos (B7) — banco de ganchos por guión ────────────
+#  scripts.hook = gancho ACTIVO del guión · scripts.alt_hooks JSONB = banco de
+#  alternativas. Las 3 rutas exigen guion PROPIO (user_id = current_user).
+def _fetch_own_script_hooks(script_id, user_id):
+    """(hook activo, alt_hooks lista) del guión propio, o (None, None) si no existe."""
+    r = (db.table("scripts").select("hook, alt_hooks")
+           .eq("id", script_id).eq("user_id", user_id).limit(1).execute())
+    if not r.data:
+        return None, None
+    row = r.data[0]
+    alt = row.get("alt_hooks")
+    if not isinstance(alt, list):
+        alt = []
+    return row.get("hook"), alt
+
+
+@app.route("/scripts/<script_id>/hooks", methods=["POST"])
+@require_auth
+def add_script_hook(script_id):
+    """Añade un hook al banco (alt_hooks), con dedupe. Devuelve alt_hooks actualizado."""
+    user = current_user()
+    body = request.get_json() or {}
+    hook = body.get("hook")
+    if not isinstance(hook, str) or not hook.strip():
+        return jsonify({"error": "Hook required"}), 400
+    hook = hook.strip()
+    active, alt = _fetch_own_script_hooks(script_id, user["id"])
+    if alt is None:
+        return jsonify({"error": "Script not found"}), 404
+    # dedupe: ni duplicar en el banco ni clonar el gancho ya activo.
+    if hook not in alt and hook != (active or ""):
+        alt = alt + [hook]
+        db.table("scripts").update({"alt_hooks": alt}).eq("id", script_id).eq("user_id", user["id"]).execute()
+    return jsonify({"ok": True, "alt_hooks": alt})
+
+
+@app.route("/scripts/<script_id>/hooks", methods=["DELETE"])
+@require_auth
+def delete_script_hook(script_id):
+    """Quita un hook del banco por índice (?index=N). Devuelve alt_hooks actualizado."""
+    user = current_user()
+    try:
+        index = int(request.args.get("index", ""))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Invalid index"}), 400
+    _active, alt = _fetch_own_script_hooks(script_id, user["id"])
+    if alt is None:
+        return jsonify({"error": "Script not found"}), 404
+    if not (0 <= index < len(alt)):
+        return jsonify({"error": "Index out of range"}), 400
+    alt = alt[:index] + alt[index + 1:]
+    db.table("scripts").update({"alt_hooks": alt}).eq("id", script_id).eq("user_id", user["id"]).execute()
+    return jsonify({"ok": True, "alt_hooks": alt})
+
+
+@app.route("/scripts/<script_id>/hooks/use", methods=["POST"])
+@require_auth
+def use_script_hook(script_id):
+    """Swap: el hook activo del guión ↔ alt_hooks[index]. No se pierde ninguno
+    (el activo saliente cae al banco en la posición del que se promueve)."""
+    user = current_user()
+    body = request.get_json() or {}
+    try:
+        index = int(body.get("index"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Invalid index"}), 400
+    active, alt = _fetch_own_script_hooks(script_id, user["id"])
+    if alt is None:
+        return jsonify({"error": "Script not found"}), 404
+    if not (0 <= index < len(alt)):
+        return jsonify({"error": "Index out of range"}), 400
+    new_active = alt[index]
+    new_alt = list(alt)
+    # el activo saliente ocupa el hueco; si no había activo, simplemente se retira del banco.
+    if active and active.strip():
+        new_alt[index] = active
+    else:
+        new_alt = new_alt[:index] + new_alt[index + 1:]
+    db.table("scripts").update(
+        {"hook": new_active, "alt_hooks": new_alt}
+    ).eq("id", script_id).eq("user_id", user["id"]).execute()
+    return jsonify({"ok": True, "hook": new_active, "alt_hooks": new_alt})
 
 
 # ── Agency ───────────────────────────────────────────────────────────────────
