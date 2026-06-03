@@ -22388,10 +22388,13 @@ function endTour() {
   localStorage.setItem("onboarding_completed", "true");
 }
 
-// Auto-start on first visit
+// Auto-start on first visit — DESACTIVADO (2026-06-03): el tour es legacy del
+// transcriptor (copy en inglés "transform your script", pasos sobre transcribir/adapt
+// con targets #heroInputWrap/#adaptCard) y se colaba sobre la landing rebrandeada en
+// español. Reactivar solo cuando exista un tour nuevo del producto (ES, pasos del loop).
 window.addEventListener("DOMContentLoaded", () => {
   if (!localStorage.getItem("onboarding_completed")) {
-    setTimeout(startTour, 800);
+    // setTimeout(startTour, 800);
   }
 });
 
