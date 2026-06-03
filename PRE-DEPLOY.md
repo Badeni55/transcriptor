@@ -1,21 +1,54 @@
-# PRE-DEPLOY — checklist de Reelscript (rama `dev` → `prod`)
+# PRE-DEPLOY — checklist de Reelscript (rama `bernat`)
 
 > Todo lo manual/migraciones/config que hay que hacer **antes o durante** el deploy.
-> Marca `[x]` al completar. Rama de trabajo: `dev`. Deploy = push a `prod`.
-> Última actualización: 2026-06-01.
+> Marca `[x]` al completar. Rama de trabajo: `bernat`.
+> ⚠ **Deploy NO se dispara por push a `prod`.** Se dispara al **publicar un GitHub Release**
+> (ver `deploy.yml`): el VPS hace `git checkout <tag>` → **detached HEAD es normal y esperado** aquí.
+> Última actualización: **2026-06-03**.
 
 ---
 
-## 🔴 Migraciones de BBDD (aplicar a mano en Supabase — NO están aplicadas)
+## ⭐ Estado a 2026-06-03 (rama `bernat`)
 
-- [ ] **Free lifetime (pricing v0.19):**
+> Sesión de construcción cerrada en rama `bernat`. **Sin deploy** (en pausa). Resumen de en qué punto está todo.
+
+**✅ Construido y verificado en código:**
+- **Migraciones BBDD aplicadas a prod** (vía Supabase MCP): `profiles.free_lifetime_uses`, tabla `voice_profiles`,
+  nuevas tablas `plans` / `topups` / `app_settings`, `profiles.is_admin`, `scripts.alt_hooks`.
+  **`bernatcasanas@gmail.com` = admin** (`is_admin = true`).
+- **Pricing v0.19** + **gating real por plan** (`profiles.plan` vía `/auth/me`, no toggle demo).
+- **Pill de créditos del radar para free** → muestra `free_lifetime_left` ("N «Hazlo mío» restantes").
+- **Topups multi-monto** (100 / 300 / 1000 créditos).
+- **Hooks agrupados** (back + front): `alt_hooks` en `scripts`, endpoints de hooks, UI de variantes en la card.
+- **Loop cerrado**: métricas ↔ cerebro ↔ voz (VoiceProfile real) ↔ `next_series_suggestion`.
+- **Panel admin** (`/admin`, `/admin/api/*`) gobierna **precios y planes** (tablas `plans` / `topups` / `app_settings` DB-driven, con fallback). **Los precios YA NO van por env vars de Stripe.**
+
+**🟠 Pendiente (lo hará Bernat / fuera de esta sesión):**
+- **Stripe**: crear los **precios** en Stripe (test + live) y **pegar los price IDs en el panel admin** (`/admin` → Planes / Topups). El webhook existente sigue cableado.
+- **Deploy**: en pausa. Cuando toque, se dispara **publicando un GitHub Release** (no push a `prod`).
+
+---
+
+## 🟢 Migraciones de BBDD (APLICADAS a prod vía Supabase MCP — 2026-06-03)
+
+> Todas las migraciones de esta sesión están **aplicadas a la DB de prod** vía MCP. Quedan marcadas `[x]`.
+> Pendiente menor (no bloquea): poner `schema.sql` al día con la realidad de prod.
+
+- [x] **Free lifetime (pricing v0.19):** *(aplicada)*
   ```sql
   ALTER TABLE public.profiles
     ADD COLUMN IF NOT EXISTS free_lifetime_uses INTEGER NOT NULL DEFAULT 0;
   ```
   Sin esto, el contador de los 5 «Hazlo mío» de free no persiste (lee 0 → free ilimitado).
 
-- [ ] **Verificar columnas que el código YA usa pero NO están en `schema.sql`** (la DB de prod
+- [x] **Tablas/columnas del pricing DB-driven (panel admin):** *(aplicadas)*
+  - `plans`, `topups`, `app_settings` (tablas DB-driven con fallback en código).
+  - `profiles.is_admin BOOLEAN NOT NULL DEFAULT false` → `bernatcasanas@gmail.com = true`.
+  - `scripts.alt_hooks JSONB NOT NULL DEFAULT '[]'::jsonb` (hooks agrupados).
+  > Los **precios de planes/topups ya NO viven en env vars de Stripe**: se editan en `/admin` (Planes / Topups)
+  > y se persisten en estas tablas.
+
+- [x] **Verificar columnas que el código YA usa pero NO están en `schema.sql`** (la DB de prod
   las tiene por fuera; confírmalo antes de un deploy/DB nueva):
   `profiles.plan`, `profiles.monthly_usage`, `profiles.usage_reset_at`,
   `profiles.stripe_subscription_id`, `profiles.avatar_seed`.
@@ -30,7 +63,7 @@
   ```
   → **Tarea aparte:** poner `schema.sql` al día con la realidad de prod.
 
-- [ ] **VoiceProfile (moat — perfil de voz por marca):** *(propuesta, sin aplicar)*
+- [x] **VoiceProfile (moat — perfil de voz por marca):** *(aplicada a prod)*
   ```sql
   CREATE TABLE IF NOT EXISTS public.voice_profiles (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -82,22 +115,28 @@
 
 ---
 
-## 🟠 Stripe (crear precios + cablear webhook)
+## 🟠 Stripe — CAMBIO DE MODELO: precios gestionados desde el panel admin
 
-- [ ] Crear en Stripe los **precios** (multi-divisa EUR/USD dentro de cada price):
+> ⚠ **Los precios YA NO van por env vars.** Se gestionan **DB-driven desde el panel admin** (`/admin` → Planes / Topups,
+> tablas `plans` / `topups` con fallback en código). Las env vars `STRIPE_PRICE_*` quedan **obsoletas** para esto.
+> **El webhook existente sigue cableado** y no cambia.
+>
+> **Único pendiente (lo hará Bernat):** crear los precios en Stripe y **pegar los price IDs en el panel**.
+
+- [ ] **(Bernat)** Crear en Stripe los **precios** (multi-divisa EUR/USD dentro de cada price). Valores de referencia:
   - Creador: **€29/mes** · **€276/año**
   - Agencia: **€129/mes** · **€1290/año**
   - Add-ons (recurrentes): marca **€35/mes** · asiento **€19/mes**
   - Topups (one-time): **100cr/€19** · **300cr/€49** · **1000cr/€139**
-- [ ] Pegar los price IDs en las env vars (ver `.env.example`):
-  `STRIPE_PRICE_CREATOR_MONTH/YEAR`, `STRIPE_PRICE_AGENCY_MONTH/YEAR`,
-  `STRIPE_PRICE_ADDON_BRAND`, `STRIPE_PRICE_ADDON_SEAT`,
-  `STRIPE_TOPUP_PRICE_100/300/1000`.
-- [ ] Webhook en Stripe → endpoint **`/stripe-webhook`**; eventos:
+  > Los importes finales se editan en el panel; estos son los de partida.
+- [ ] **(Bernat)** Pegar los **price IDs en el panel admin** (`/admin` → Planes / Topups), **no** en env vars.
+  *(Histórico — las env vars `STRIPE_PRICE_CREATOR_MONTH/YEAR`, `STRIPE_PRICE_AGENCY_MONTH/YEAR`,
+  `STRIPE_PRICE_ADDON_BRAND/SEAT`, `STRIPE_TOPUP_PRICE_100/300/1000` quedan obsoletas para este flujo.)*
+- [x] Webhook en Stripe → endpoint **`/stripe-webhook`**; eventos:
   `checkout.session.completed`, `invoice.paid`, `customer.subscription.deleted`.
-  Set `STRIPE_WEBHOOK_SECRET`.
+  Set `STRIPE_WEBHOOK_SECRET`. *(El webhook existente se mantiene — sin cambios en este flujo.)*
 - [ ] Probar en **Stripe test mode** un checkout de cada plan + una renovación (`invoice.paid`)
-  y confirmar que el plan + créditos se asignan.
+  y confirmar que el plan + créditos se asignan (una vez los price IDs estén pegados en el panel).
 
 ---
 
@@ -117,27 +156,27 @@
 
 ---
 
-## 🟢 Código / decisiones de producto pendientes
+## 🟢 Código / decisiones de producto
 
-- [ ] **Commit del WIP en `dev`** (rediseño Signal + pricing + radar-loop) y merge `dev → prod`.
+- [x] **Pricing v0.19** implementado (gating real, pill free, topups multi-monto, hooks agrupados, loop cerrado). *Construido en rama `bernat`.*
+- [ ] **Deploy:** en pausa. Cuando toque, se dispara **publicando un GitHub Release** (no por push a `prod`); el VPS hace `git checkout <tag>` (detached HEAD normal).
 - [ ] **Takeover Signal en producción:** hoy la isla Radar solo ocupa toda la pantalla en
   DEMO. Decidir si prod usa la experiencia Signal a pantalla completa o el rail/command bar
   conviven con el chrome viejo (riesgo de chrome anidado). (`PRODUCTO.md` §8)
-- [ ] **Gating por plan real**: el front ya lee `profiles.plan` vía `/auth/me`; el toggle
-  Creador/Agencia es solo demo. Confirmar que prod no muestra el toggle.
-- [ ] (Polish) Pill de créditos del radar para **free** → mostrar `free_lifetime_left`
-  ("5 «Hazlo mío» restantes") en vez de los topups (0).
+- [x] **Gating por plan real**: el front lee `profiles.plan` vía `/auth/me`; el toggle
+  Creador/Agencia era solo demo. Gating real implementado (prod no muestra el toggle).
+- [x] (Polish) Pill de créditos del radar para **free** → muestra `free_lifetime_left`
+  ("N «Hazlo mío» restantes") en vez de los topups (0).
 
 ---
 
 ## 🧩 Pendiente — front & features (para una tanda "luego")
 
-- [ ] **Hooks agrupados en el guion** (recon hecho — replicar el modelo de la isla demo en prod):
-  - Migración: `ALTER TABLE public.scripts ADD COLUMN IF NOT EXISTS alt_hooks JSONB NOT NULL DEFAULT '[]'::jsonb;` (+ declarar `scripts` en `schema.sql`, hoy solo está `saved_scripts` legacy).
-  - Backend: `POST /scripts/<id>/hooks` (añadir, dedupe), `DELETE /scripts/<id>/hooks` (quitar por índice), `POST /scripts/<id>/hooks/use` (swap activo↔variante, sin perder nada). Redirigir hook-guardado-suelto → `alt_hooks` del padre.
+- [x] **Hooks agrupados en el guion** *(implementado en rama `bernat`, back + front):*
+  - Migración aplicada: `scripts.alt_hooks JSONB NOT NULL DEFAULT '[]'::jsonb` (+ pendiente declarar `scripts` en `schema.sql`, hoy solo está `saved_scripts` legacy).
+  - Backend: `POST /scripts/<id>/hooks` (añadir, dedupe), `DELETE /scripts/<id>/hooks` (quitar por índice), `POST /scripts/<id>/hooks/use` (swap activo↔variante, sin perder nada). Hook-guardado-suelto redirigido → `alt_hooks` del padre.
   - Frontend: desplegable "N hooks alternativos" + "Usar"/quitar en `scr-card` (`#profPanelScripts`), replicando `guiCardHTML`/`gui-use-hook`/`gui-del-hook` de `radar-loop.js`.
-  - Hoy en prod NO existe agrupación: "hooks" es un estilo de /adapt; guardar deja un guion suelto con los 5 hooks como texto.
-- [ ] **Radar/email muestran `next_series_suggestion`** ("lo que grabaste sobre X petó → el siguiente en tu voz"). (Métricas ya engancha el loop server-side al refrescar IG.)
+- [x] **Loop cerrado (`next_series_suggestion`)** ("lo que grabaste sobre X petó → el siguiente en tu voz"): métricas engancha el loop server-side al refrescar IG; VoiceProfile real + cerebro alimentan la sugerencia. *(Pendiente menor: superficie en email — el Radar ya lo muestra.)*
 - [ ] **Captura de voz también en el primer-run del Radar** (hoy solo en Cerebro).
 - [ ] **Retención real (Instagram Insights / OAuth)**: la vista "Rendimiento del guion"
   muestra hoy una curva de **muestra**. La retención / avg watch time / reach reales solo

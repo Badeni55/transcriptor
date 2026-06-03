@@ -22261,10 +22261,15 @@ function stopLoadingRotator(handle) {
 })();
 
 // ── Onboarding Tour ──────────────────────────────────────────────────────
+// v0.16.x — Tour nuevo del producto Signal. ES, gateado SOLO al workspace
+// (body.workspace). Targets estables de la isla #radarRoot (rail, command bar,
+// feature card, botón "Hazlo mío"). showTourStep hace skip si el target falta,
+// así que si una vista no monta alguno (p.ej. agencia en portfolio) se autocura.
 const TOUR_STEPS = [
-  { target: '#heroInputWrap',  text: "Paste any Instagram or TikTok link here and hit Transcribe. Your transcription appears right next to it." },
-  { target: '#adaptCard',      text: "Scroll down to transform your script — viral, LinkedIn, storytelling, or your own custom style." },
-  { target: '#userPill',       text: "Your profile: all your transcriptions, saved scripts, and projects live here." },
+  { target: '.rail',                text: "Este es tu radar. Aquí espías a tus competidores: cada día te traemos los reels que están explotando en tu nicho, ordenados por lo que merece tu próximo guion." },
+  { target: '.feature',             text: "Tu oportunidad de hoy. El reel más explosivo de tu nicho, con el porqué de por qué funcionó. No empiezas de cero: empiezas de lo que ya está pegando." },
+  { target: '[data-act="steal"]',   text: "Pulsa «Hazlo mío» y lo reescribimos con tu voz, no con la del competidor. De espiar a guión listo para grabar en un clic." },
+  { target: '.searchbox',           text: "Y el loop se cierra: cada guión que publicas afina tu voz. Cuanto más creas, más tuyo sale lo siguiente. Ese es el moat." },
 ];
 
 let tourStep = 0;
@@ -22311,14 +22316,14 @@ function showTourStep() {
   ).join("");
 
   // Buttons
-  const skipBtn = `<button class="tour-btn tour-btn-skip" onclick="skipTour()">Skip</button>`;
-  const prevBtn = tourStep > 0 ? `<button class="tour-btn tour-btn-prev" onclick="prevTourStep()">Back</button>` : "";
-  const nextLabel = tourStep === TOUR_STEPS.length - 1 ? "Done" : "Next";
+  const skipBtn = `<button class="tour-btn tour-btn-skip" onclick="skipTour()">Saltar</button>`;
+  const prevBtn = tourStep > 0 ? `<button class="tour-btn tour-btn-prev" onclick="prevTourStep()">Atrás</button>` : "";
+  const nextLabel = tourStep === TOUR_STEPS.length - 1 ? "Listo" : "Siguiente";
   const nextBtn = `<button class="tour-btn tour-btn-next" onclick="nextTourStep()">${nextLabel}</button>`;
 
   tourTooltip.innerHTML = `
     <div class="tour-handle"></div>
-    <div class="tour-step-count">Step ${tourStep + 1} of ${TOUR_STEPS.length}</div>
+    <div class="tour-step-count">Paso ${tourStep + 1} de ${TOUR_STEPS.length}</div>
     <div class="tour-text">${step.text}</div>
     <div class="tour-btns">
       <div class="tour-progress">${dots}</div>
@@ -22388,13 +22393,14 @@ function endTour() {
   localStorage.setItem("onboarding_completed", "true");
 }
 
-// Auto-start on first visit — DESACTIVADO (2026-06-03): el tour es legacy del
-// transcriptor (copy en inglés "transform your script", pasos sobre transcribir/adapt
-// con targets #heroInputWrap/#adaptCard) y se colaba sobre la landing rebrandeada en
-// español. Reactivar solo cuando exista un tour nuevo del producto (ES, pasos del loop).
+// Auto-start on first visit — REACTIVADO (2026-06-03) con el tour nuevo de Signal.
+// Gateado SOLO al workspace (body.workspace) para que NUNCA se cuele en la landing.
+// 1500ms para dar tiempo a que la isla #radarRoot monte sus targets (.rail, .feature,
+// [data-act="steal"], .searchbox). Si algún target no existe en esa vista, showTourStep
+// hace skip automático (if(!el) nextTourStep()), así que el arranque es robusto.
 window.addEventListener("DOMContentLoaded", () => {
-  if (!localStorage.getItem("onboarding_completed")) {
-    // setTimeout(startTour, 800);
+  if (document.body.classList.contains("workspace") && !localStorage.getItem("onboarding_completed")) {
+    setTimeout(startTour, 1500);
   }
 });
 

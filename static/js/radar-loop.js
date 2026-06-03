@@ -738,9 +738,11 @@
     var ev=(S.voice&&S.voice.evidence)||[];
     if(!ev.length) return '';
     return '<div class="brain-section-t">Lo que he aprendido de ti <span class="brain-tag">de '+(S.voice.source_count||0)+' reels tuyos</span></div>'+
-      '<div class="learn" style="margin-bottom:18px"><div class="learn-list">'+
+      '<div class="learn" style="margin-bottom:14px"><div class="learn-list">'+
         ev.map(function(e){ return '<div class="learn-item">'+IC.check+'<span>'+ESC(e)+'</span></div>'; }).join("")+
-      '</div></div>';
+      '</div></div>'+
+      // Refinar: acumula más reels tuyos → sube confianza (POST /api/voice/refine).
+      '<div class="voice-refine" style="margin-bottom:18px"><button class="btn btn-sm btn-secondary" data-act="voice-refine">'+IC.spark+' Refinar mi voz</button><span class="vr-hint" style="margin-left:10px;color:var(--text-tertiary);font-size:12.5px">Pega más reels tuyos y subo el % de voz.</span></div>';
   }
   function brainCompetitors(){
     var by={}; (S.reels||[]).forEach(function(r){ var h=r.creator&&r.creator.handle; if(!h) return; by[h]=(by[h]||0)+1; });
@@ -1094,6 +1096,39 @@
       .catch(function(){ showToast("Error de red. Inténtalo de nuevo."); });
   }
 
+  // Refinar el moat: acumula reels NUEVOS sobre la voz ya aprendida.
+  // El backend (POST /api/voice/refine) suma source_count y sube confidence.
+  // Mirror de onboardVoice: mismo auth (credentials same-origin), mismo refresh
+  // (GET /api/voice → re-pinta Cerebro), mismo branch demo (en demo NO postea).
+  function refineVoice(){
+    var txt=window.prompt("Pega lo que dices en 1-2 reels TUYOS más. Los sumo a tu voz y subo el % que te conozco:");
+    if(txt==null) return;
+    txt=(txt||"").trim();
+    if(!txt){ showToast("Pega el texto de al menos 1 reel tuyo."); return; }
+    // En DEMO no llamamos al backend real: subimos la confianza localmente
+    // y sumamos una fuente, para que el "después" del refino se vea sin red ni claves.
+    if(isDemo()){
+      S.voice=S.voice||{ has_profile:true };
+      S.voice.has_profile=true;
+      S.voice.source_count=(S.voice.source_count||1)+1;
+      S.voice.confidence=Math.min(100,(S.voice.confidence||62)+11);
+      brand().voice=S.voice.confidence; render();
+      showToast("Voz refinada — ahora te conozco al "+S.voice.confidence+"%."); return;
+    }
+    showToast("Refinando tu voz…");
+    fetch("/api/voice/refine",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({texts:[txt]})})
+      .then(function(r){ return r.json().catch(function(){return{};}); })
+      .then(function(d){
+        if(d&&d.ok){
+          return fetch("/api/voice",{credentials:"same-origin"}).then(function(r){return r.json();}).then(function(v){
+            S.voice=v; render(); showToast("Voz refinada — ahora te conozco al "+(v.confidence||0)+"%.");
+          });
+        }
+        showToast((d&&d.error)||"No pude refinar tu voz. Prueba con otro reel.");
+      })
+      .catch(function(){ showToast("Error de red. Inténtalo de nuevo."); });
+  }
+
   // Refresca métricas + insights de la marca activa (summary + insights) y re-pinta.
   // Devuelve la promesa para encadenar toasts. Solo prod (en demo las métricas son sembradas).
   function refreshMetrics(){
@@ -1181,6 +1216,7 @@
     if(act==="expand-feed"){ S.feedExpanded=true; return render(); }
     if(act==="add-reel") return addReelManual();
     if(act==="voice-onboard") return onboardVoice();
+    if(act==="voice-refine") return refineVoice();
     if(act==="next-series-go"){ var nt=btn.getAttribute("data-title")||(nextSeries()&&nextSeries().title)||""; if(nt){ S.ideas.unshift(makeIdea(nt, nt.length+S.ideas.length)); } S.tab="ideas"; S.view="feed"; render(); return showToast("Tu próxima serie, lista para multiplicar en Ideas."); }
     if(act==="fillweek") return startFillWeek();
     if(act==="seed-go") return seedIdea("rsIdeaSeed", true);
