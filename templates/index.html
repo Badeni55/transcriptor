@@ -3910,6 +3910,201 @@
     }
     .profile-overlay.on { display: block; }
 
+    /* ── ADMIN PANEL (v0.20) ─────────────────────────────────────────────
+       Superficie admin separada (#adminPage). Vive en <body>, full-screen
+       overlay como #profilePage. Estética Signal reutilizando los tokens
+       del :root (azul #4f7cff, Space Grotesk / Hanken / JetBrains Mono).
+       Todo el CSS está scopeado bajo #adminPage para no colisionar con las
+       clases globales (.card, .btn, .tab, .panel). NO toca el gating JS. */
+    #adminPage {
+      display: none; position: fixed; inset: 0;
+      background: var(--surface-base); color: var(--text-primary);
+      z-index: 400; overflow-y: auto;
+      font-family: var(--font-body);
+      background-image:
+        radial-gradient(ellipse at 15% -5%, rgba(79,124,255,.08) 0%, transparent 45%),
+        radial-gradient(ellipse at 85% 100%, rgba(79,124,255,.05) 0%, transparent 45%);
+    }
+    #adminPage.on { display: block; }
+    #adminPage .adm-wrap { max-width: 1200px; margin: 0 auto; padding: 40px 24px 96px; }
+
+    #adminPage .adm-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 16px; margin-bottom: 28px; flex-wrap: wrap;
+    }
+    #adminPage .adm-header h1 {
+      font-family: var(--font-display-2);
+      font-size: var(--text-3xl); font-weight: 700; letter-spacing: -0.5px;
+      color: var(--text-primary); line-height: 1.1;
+    }
+    #adminPage .adm-header .adm-sub {
+      font-size: var(--text-sm); color: var(--text-secondary); margin-top: 6px;
+    }
+    #adminPage .adm-header-actions { display: flex; gap: 8px; align-items: center; }
+
+    #adminPage .adm-tabs {
+      display: flex; gap: 4px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 28px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    }
+    #adminPage .adm-tab {
+      padding: 12px 16px; background: transparent; border: none;
+      color: var(--text-secondary); cursor: pointer;
+      font-family: var(--font-body); font-size: var(--text-sm); font-weight: 500;
+      border-bottom: 2px solid transparent;
+      transition: color .2s, border-color .2s; white-space: nowrap;
+    }
+    #adminPage .adm-tab:hover { color: var(--text-primary); }
+    #adminPage .adm-tab.on { color: var(--brand-500); border-bottom-color: var(--brand-500); }
+
+    #adminPage .adm-panel { display: none; animation: panelFadeIn 200ms ease-out; }
+    #adminPage .adm-panel.on { display: block; }
+
+    #adminPage .adm-card {
+      background: var(--surface-raised);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      padding: 20px; box-shadow: var(--shadow-sm);
+    }
+    #adminPage .adm-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+    }
+    #adminPage .adm-stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 16px; margin-bottom: 28px;
+    }
+    #adminPage .adm-stat-num {
+      font-family: var(--font-display-2);
+      font-size: var(--text-3xl); font-weight: 700; line-height: 1.1;
+      color: var(--text-primary); margin-top: 4px;
+    }
+    #adminPage .adm-stat-num.accent { color: var(--brand-500); }
+
+    #adminPage .adm-field { margin-bottom: 16px; }
+    #adminPage .adm-label {
+      display: block; font-size: 11px; font-weight: 600;
+      color: var(--text-tertiary); text-transform: uppercase;
+      letter-spacing: 0.06em; margin-bottom: 7px;
+    }
+    #adminPage .adm-input {
+      width: 100%; padding: 10px 12px;
+      background: var(--surface-base);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-family: var(--font-mono); font-size: var(--text-sm);
+      transition: border-color .15s, box-shadow .15s;
+    }
+    #adminPage .adm-input:focus {
+      outline: none; border-color: var(--brand-500);
+      box-shadow: 0 0 0 2px rgba(79,124,255,.2);
+    }
+    #adminPage .adm-check {
+      display: flex; align-items: center; gap: 8px; cursor: pointer;
+      font-size: var(--text-sm); color: var(--text-secondary);
+    }
+    #adminPage .adm-check input { width: 16px; height: 16px; accent-color: var(--brand-500); }
+
+    #adminPage .adm-btn {
+      padding: 10px 16px; background: var(--brand-600); color: #fff;
+      border: none; border-radius: var(--radius-md); cursor: pointer;
+      font-family: var(--font-body); font-size: var(--text-sm); font-weight: 600;
+      transition: background .15s; white-space: nowrap;
+    }
+    #adminPage .adm-btn:hover { background: var(--brand-500); }
+    #adminPage .adm-btn:disabled { background: var(--text-disabled); cursor: not-allowed; opacity: .6; }
+    #adminPage .adm-btn-secondary {
+      background: transparent; color: var(--text-secondary);
+      border: 1px solid var(--border-default);
+    }
+    #adminPage .adm-btn-secondary:hover { background: var(--surface-overlay); color: var(--text-primary); }
+
+    #adminPage .adm-table {
+      width: 100%; border-collapse: collapse;
+      background: var(--surface-raised);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg); overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    #adminPage .adm-table thead th {
+      padding: 12px 14px; background: var(--surface-overlay);
+      font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+      text-align: left; text-transform: uppercase; letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--border-default);
+    }
+    #adminPage .adm-table td {
+      padding: 11px 14px; font-size: var(--text-sm);
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-subtle);
+      font-family: var(--font-mono); vertical-align: middle;
+    }
+    #adminPage .adm-table tbody tr:last-child td { border-bottom: none; }
+    #adminPage .adm-table tbody tr:hover td { background: rgba(255,255,255,.02); }
+    #adminPage .adm-table-wrap { overflow-x: auto; border-radius: var(--radius-lg); }
+
+    #adminPage .adm-pill {
+      display: inline-block; padding: 2px 9px; border-radius: var(--radius-full);
+      font-size: 11px; font-weight: 600; font-family: var(--font-body);
+      background: rgba(79,124,255,.14); color: var(--brand-300);
+    }
+    #adminPage .adm-pill.muted { background: rgba(255,255,255,.06); color: var(--text-tertiary); }
+
+    #adminPage .adm-source {
+      font-size: var(--text-xs); color: var(--text-secondary);
+      margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+    }
+    #adminPage .adm-source .adm-src-tag {
+      font-family: var(--font-mono); font-weight: 600; color: var(--text-primary);
+      padding: 2px 8px; border-radius: var(--radius-sm);
+      background: var(--surface-overlay); border: 1px solid var(--border-default);
+    }
+
+    #adminPage .adm-msg { padding: 11px 14px; border-radius: var(--radius-md); font-size: var(--text-sm); margin-bottom: 16px; }
+    #adminPage .adm-msg.error { background: rgba(239,68,68,.14); color: #f87171; }
+    #adminPage .adm-msg.ok { background: rgba(34,197,94,.14); color: #4ade80; }
+    #adminPage .adm-msg.info { background: rgba(79,124,255,.14); color: var(--brand-300); }
+
+    #adminPage .adm-loading { text-align: center; padding: 48px 0; color: var(--text-secondary); }
+    #adminPage .adm-spinner {
+      display: inline-block; width: 18px; height: 18px;
+      border: 2px solid var(--brand-500); border-right-color: transparent;
+      border-radius: 50%; animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #adminPage .adm-toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--surface-overlay); color: var(--text-primary);
+      border: 1px solid var(--border-default); border-radius: var(--radius-md);
+      padding: 12px 20px; font-size: var(--text-sm); font-weight: 500;
+      box-shadow: var(--shadow-lg); z-index: 410;
+      opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+    }
+    #adminPage .adm-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #adminPage .adm-toast.error { border-color: rgba(239,68,68,.5); }
+    #adminPage .adm-toast.ok { border-color: rgba(34,197,94,.5); }
+
+    /* Floating entry chip (solo visible para admins, lo activa el boot JS) */
+    #adminEntry {
+      display: none; position: fixed; right: 16px; bottom: 16px; z-index: 350;
+      padding: 9px 14px; border-radius: var(--radius-full);
+      background: var(--surface-overlay); color: var(--text-primary);
+      border: 1px solid var(--border-default); box-shadow: var(--shadow-md);
+      font-family: var(--font-body); font-size: var(--text-sm); font-weight: 600;
+      cursor: pointer; gap: 7px; align-items: center;
+      transition: border-color .15s, background .15s;
+    }
+    #adminEntry.on { display: inline-flex; }
+    #adminEntry:hover { border-color: var(--brand-500); background: var(--surface-raised); }
+    #adminEntry .adm-entry-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--brand-500); }
+
+    @media (max-width: 640px) {
+      #adminPage .adm-wrap { padding: 24px 14px 80px; }
+      #adminPage .adm-header h1 { font-size: var(--text-2xl); }
+    }
+
     /* v0.14.31.d: .prof-mob-hamburger eliminada. Mobile usa bottom-bar 5 items. */
 
     .prof-layout {
@@ -23096,6 +23291,465 @@ async function removeCompetitor(trackingId, username) {
   </div>
 </div>
 <!-- v0.14.11a: tutorial bubble + YouTube modal removed -->
+
+<!-- ── ADMIN PANEL (v0.20) ──────────────────────────────────────────────
+     Superficie de administración independiente del workspace de usuario.
+     Full-screen overlay #adminPage. Vanilla JS autocontenido (closure IIFE):
+     NO toca profTab/gating (hasPaidPlan), NO depende del estado `st` global.
+     Entra vía /admin (botón "Actualizar" recarga), o desde el chip flotante
+     #adminEntry que el boot revela solo si /auth/me devuelve is_admin. Todas
+     las llamadas van a /admin/api/* (servidor proxy con @admin_required). -->
+<button id="adminEntry" onclick="window.__adminOpen && window.__adminOpen()" title="Panel admin">
+  <span class="adm-entry-dot"></span> Admin
+</button>
+
+<div id="adminPage" role="dialog" aria-label="Admin Panel">
+  <div class="adm-wrap">
+    <div class="adm-header">
+      <div>
+        <h1>Admin Panel</h1>
+        <div class="adm-sub">Planes, topups, usuarios, ajustes y métricas — ReelScript</div>
+      </div>
+      <div class="adm-header-actions">
+        <button class="adm-btn adm-btn-secondary" onclick="window.__adminRefresh && window.__adminRefresh()">Actualizar</button>
+        <button class="adm-btn adm-btn-secondary" onclick="window.__adminClose && window.__adminClose()">Cerrar</button>
+      </div>
+    </div>
+
+    <div class="adm-tabs" id="admTabs">
+      <button class="adm-tab on"  data-panel="metrics"  onclick="window.__adminTab('metrics', this)">Métricas</button>
+      <button class="adm-tab"     data-panel="plans"    onclick="window.__adminTab('plans', this)">Planes</button>
+      <button class="adm-tab"     data-panel="topups"   onclick="window.__adminTab('topups', this)">Topups</button>
+      <button class="adm-tab"     data-panel="users"    onclick="window.__adminTab('users', this)">Usuarios</button>
+      <button class="adm-tab"     data-panel="settings" onclick="window.__adminTab('settings', this)">Ajustes</button>
+    </div>
+
+    <div id="adm-metrics" class="adm-panel on">
+      <div class="adm-loading"><span class="adm-spinner"></span><div style="margin-top:14px">Cargando métricas…</div></div>
+    </div>
+    <div id="adm-plans" class="adm-panel"></div>
+    <div id="adm-topups" class="adm-panel"></div>
+    <div id="adm-users" class="adm-panel">
+      <div class="adm-field" style="max-width:420px">
+        <input type="text" class="adm-input" id="admUserSearch" placeholder="Buscar por email o ID…" autocomplete="off">
+      </div>
+      <div id="adm-users-content"></div>
+    </div>
+    <div id="adm-settings" class="adm-panel"></div>
+  </div>
+  <div class="adm-toast" id="admToast"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var BASE = "/admin/api";
+  var loaded = {};            // panels ya cargados (cache simple por sesión)
+  var usersDebounce = null;
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){
+    return String(s == null ? "" : s)
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+  }
+  function toast(msg, kind){
+    var t = $("admToast");
+    if (!t) { return; }
+    t.textContent = msg;
+    t.className = "adm-toast show" + (kind ? " " + kind : "");
+    clearTimeout(t.__tm);
+    t.__tm = setTimeout(function(){ t.className = "adm-toast" + (kind ? " " + kind : ""); }, 2600);
+  }
+  async function api(path, opts){
+    var r = await fetch(BASE + path, opts || {});
+    var data = null;
+    try { data = await r.json(); } catch(e){ data = null; }
+    if (!r.ok) {
+      var em = (data && (data.error || data.message)) || ("HTTP " + r.status);
+      throw new Error(em);
+    }
+    return data;
+  }
+  function sourceTag(src){
+    var label = src === "db" ? "Base de datos" : "Configuración (env)";
+    return '<div class="adm-source">Fuente activa: <span class="adm-src-tag">' + esc(label) + '</span></div>';
+  }
+
+  // ── Navegación de pestañas ──────────────────────────────────────────
+  function switchTab(name, btn){
+    var panels = document.querySelectorAll("#adminPage .adm-panel");
+    for (var i = 0; i < panels.length; i++) { panels[i].classList.remove("on"); }
+    var tabs = document.querySelectorAll("#adminPage .adm-tab");
+    for (var j = 0; j < tabs.length; j++) { tabs[j].classList.remove("on"); }
+    var panel = $("adm-" + name);
+    if (panel) { panel.classList.add("on"); }
+    if (btn) { btn.classList.add("on"); }
+    else {
+      var match = document.querySelector('#adminPage .adm-tab[data-panel="' + name + '"]');
+      if (match) { match.classList.add("on"); }
+    }
+    load(name);
+  }
+  function load(name, force){
+    if (loaded[name] && !force) { return; }
+    if (name === "metrics") { loadMetrics(); }
+    else if (name === "plans") { loadPlans(); }
+    else if (name === "topups") { loadTopups(); }
+    else if (name === "users") { loadUsers(); }
+    else if (name === "settings") { loadSettings(); }
+  }
+
+  // ── MÉTRICAS (reusa el endpoint admin existente /admin/metrics) ──────
+  async function loadMetrics(){
+    var el = $("adm-metrics"); if (!el) { return; }
+    el.innerHTML = '<div class="adm-loading"><span class="adm-spinner"></span><div style="margin-top:14px">Cargando métricas…</div></div>';
+    try {
+      var r = await fetch("/admin/metrics");
+      if (!r.ok) { throw new Error("HTTP " + r.status); }
+      var d = await r.json();
+      function stat(label, val, accent){
+        return '<div class="adm-card"><div class="adm-label">' + esc(label) + '</div>' +
+               '<div class="adm-stat-num' + (accent ? " accent" : "") + '">' +
+               (val == null ? "—" : esc(val)) + '</div></div>';
+      }
+      var html = '<div class="adm-stat-grid">';
+      html += stat("Usuarios totales", d.m1_total_users);
+      html += stat("Nuevos (7 días)", d.m2_new_users_7d, true);
+      html += stat("Guiones creados", d.m4_total_scripts);
+      html += stat("Ideas creadas", d.m6_total_ideas);
+      html += '</div>';
+      // Bloque crudo opcional: el resto de métricas del endpoint, por si las hay
+      var extra = Object.keys(d || {}).filter(function(k){
+        return ["m1_total_users","m2_new_users_7d","m4_total_scripts","m6_total_ideas"].indexOf(k) === -1
+          && (typeof d[k] === "number" || typeof d[k] === "string");
+      });
+      if (extra.length) {
+        html += '<div class="adm-card"><div class="adm-label" style="margin-bottom:12px">Otras métricas</div>' +
+                '<div class="adm-table-wrap"><table class="adm-table"><tbody>';
+        extra.forEach(function(k){
+          html += '<tr><td>' + esc(k) + '</td><td>' + esc(d[k]) + '</td></tr>';
+        });
+        html += '</tbody></table></div></div>';
+      }
+      el.innerHTML = html;
+      loaded.metrics = true;
+    } catch(e) {
+      el.innerHTML = '<div class="adm-msg error">No se pudieron cargar las métricas: ' + esc(e.message) + '</div>';
+    }
+  }
+
+  // ── PLANES ───────────────────────────────────────────────────────────
+  async function loadPlans(){
+    var el = $("adm-plans"); if (!el) { return; }
+    el.innerHTML = '<div class="adm-loading"><span class="adm-spinner"></span></div>';
+    try {
+      var data = await api("/plans");
+      var plans = data.plans || [];
+      var html = sourceTag(data.source);
+      if (!plans.length) { html += '<div class="adm-msg info">No hay planes configurados.</div>'; }
+      html += '<div class="adm-grid">';
+      plans.forEach(function(p){
+        var key = esc(p.key);
+        html +=
+          '<div class="adm-card">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">' +
+              '<div class="adm-label" style="margin:0">Plan · ' + key + '</div>' +
+              '<span class="adm-pill' + (p.active ? "" : " muted") + '">' + (p.active ? "activo" : "inactivo") + '</span>' +
+            '</div>' +
+            '<form data-key="' + key + '" onsubmit="return window.__adminSavePlan(event)">' +
+              field("Nombre", "name", p.name, "text", true) +
+              field("Precio mes (¢)", "price_month_cents", p.price_month_cents, "number") +
+              field("Precio año (¢)", "price_year_cents", p.price_year_cents, "number") +
+              field("Créditos mensuales", "monthly_credits", p.monthly_credits != null ? p.monthly_credits : 0, "number") +
+              field("Stripe Price ID (mes)", "stripe_price_month", p.stripe_price_month, "text") +
+              field("Stripe Price ID (año)", "stripe_price_year", p.stripe_price_year, "text") +
+              field("Orden", "sort_order", p.sort_order != null ? p.sort_order : 0, "number") +
+              '<div class="adm-field"><label class="adm-check"><input type="checkbox" name="active"' + (p.active ? " checked" : "") + '> Activo</label></div>' +
+              '<button type="submit" class="adm-btn" style="width:100%">Guardar plan</button>' +
+            '</form>' +
+          '</div>';
+      });
+      html += '</div>';
+      el.innerHTML = html;
+      loaded.plans = true;
+    } catch(e) {
+      el.innerHTML = '<div class="adm-msg error">Error al cargar planes: ' + esc(e.message) + '</div>';
+    }
+  }
+  function field(label, name, value, type, required){
+    var v = value == null ? "" : value;
+    return '<div class="adm-field"><label class="adm-label">' + esc(label) + '</label>' +
+           '<input class="adm-input" name="' + esc(name) + '" type="' + (type || "text") + '"' +
+           (required ? " required" : "") + ' value="' + esc(v) + '"></div>';
+  }
+  async function savePlan(evt){
+    evt.preventDefault();
+    var form = evt.target;
+    var key = form.getAttribute("data-key");
+    var fd = new FormData(form);
+    function numOrNull(n){ var x = fd.get(n); return (x === "" || x == null) ? null : parseInt(x, 10); }
+    var body = {
+      name: fd.get("name"),
+      price_month_cents: numOrNull("price_month_cents"),
+      price_year_cents: numOrNull("price_year_cents"),
+      monthly_credits: parseInt(fd.get("monthly_credits"), 10) || 0,
+      stripe_price_month: fd.get("stripe_price_month") || null,
+      stripe_price_year: fd.get("stripe_price_year") || null,
+      sort_order: parseInt(fd.get("sort_order"), 10) || 0,
+      active: !!fd.get("active")
+    };
+    var btn = form.querySelector("button[type=submit]");
+    if (btn) { btn.disabled = true; }
+    try {
+      var res = await api("/plans/" + encodeURIComponent(key), {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+      });
+      if (res && res.ok !== false) { toast("Plan «" + key + "» guardado", "ok"); load("plans", true); }
+      else { toast("Error: " + ((res && res.error) || "desconocido"), "error"); }
+    } catch(e) { toast("Error al guardar: " + e.message, "error"); }
+    finally { if (btn) { btn.disabled = false; } }
+    return false;
+  }
+
+  // ── TOPUPS ─────────────────────────────────────────────────────────
+  async function loadTopups(){
+    var el = $("adm-topups"); if (!el) { return; }
+    el.innerHTML = '<div class="adm-loading"><span class="adm-spinner"></span></div>';
+    try {
+      var data = await api("/topups");
+      var topups = data.topups || [];
+      var html = sourceTag(data.source);
+      if (!topups.length) { html += '<div class="adm-msg info">No hay topups configurados.</div>'; }
+      html += '<div class="adm-grid">';
+      topups.forEach(function(t){
+        var key = esc(t.key);
+        html +=
+          '<div class="adm-card">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">' +
+              '<div class="adm-label" style="margin:0">Topup · ' + key + '</div>' +
+              '<span class="adm-pill' + (t.active ? "" : " muted") + '">' + (t.active ? "activo" : "inactivo") + '</span>' +
+            '</div>' +
+            '<form data-key="' + key + '" onsubmit="return window.__adminSaveTopup(event)">' +
+              field("Créditos", "credits", t.credits != null ? t.credits : 0, "number", true) +
+              field("Precio (¢)", "price_cents", t.price_cents != null ? t.price_cents : 0, "number") +
+              field("Stripe Price ID", "stripe_price_id", t.stripe_price_id, "text") +
+              field("Orden", "sort_order", t.sort_order != null ? t.sort_order : 0, "number") +
+              '<div class="adm-field"><label class="adm-check"><input type="checkbox" name="active"' + (t.active ? " checked" : "") + '> Activo</label></div>' +
+              '<button type="submit" class="adm-btn" style="width:100%">Guardar topup</button>' +
+            '</form>' +
+          '</div>';
+      });
+      html += '</div>';
+      el.innerHTML = html;
+      loaded.topups = true;
+    } catch(e) {
+      el.innerHTML = '<div class="adm-msg error">Error al cargar topups: ' + esc(e.message) + '</div>';
+    }
+  }
+  async function saveTopup(evt){
+    evt.preventDefault();
+    var form = evt.target;
+    var key = form.getAttribute("data-key");
+    var fd = new FormData(form);
+    var body = {
+      credits: parseInt(fd.get("credits"), 10) || 0,
+      price_cents: parseInt(fd.get("price_cents"), 10) || 0,
+      stripe_price_id: fd.get("stripe_price_id") || null,
+      sort_order: parseInt(fd.get("sort_order"), 10) || 0,
+      active: !!fd.get("active")
+    };
+    var btn = form.querySelector("button[type=submit]");
+    if (btn) { btn.disabled = true; }
+    try {
+      var res = await api("/topups/" + encodeURIComponent(key), {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+      });
+      if (res && res.ok !== false) { toast("Topup «" + key + "» guardado", "ok"); load("topups", true); }
+      else { toast("Error: " + ((res && res.error) || "desconocido"), "error"); }
+    } catch(e) { toast("Error al guardar: " + e.message, "error"); }
+    finally { if (btn) { btn.disabled = false; } }
+    return false;
+  }
+
+  // ── USUARIOS ─────────────────────────────────────────────────────────
+  async function loadUsers(){
+    var el = $("adm-users-content"); if (!el) { return; }
+    var q = ($("admUserSearch") && $("admUserSearch").value || "").trim();
+    el.innerHTML = '<div class="adm-loading"><span class="adm-spinner"></span></div>';
+    try {
+      var params = new URLSearchParams({ q: q, page: "1", limit: "50" });
+      var data = await api("/users?" + params.toString());
+      var users = data.users || [];
+      var html = '<div class="adm-table-wrap"><table class="adm-table"><thead><tr>' +
+        '<th>Email / ID</th><th>Plan</th><th>Créditos ¢</th><th>Uso mes</th><th>Admin</th><th>Acciones</th>' +
+        '</tr></thead><tbody>';
+      if (!users.length) {
+        html += '<tr><td colspan="6" style="color:var(--text-tertiary)">Sin resultados.</td></tr>';
+      } else {
+        users.forEach(function(u){
+          var id = esc(u.id || "");
+          var who = u.email ? esc(u.email) : (esc((u.id || "").slice(0, 8)) + "…");
+          html +=
+            '<tr>' +
+              '<td title="' + id + '">' + who + '</td>' +
+              '<td><span class="adm-pill' + (u.plan && u.plan !== "free" ? "" : " muted") + '">' + esc(u.plan || "free") + '</span></td>' +
+              '<td>' + esc(u.credits_cents != null ? u.credits_cents : 0) + '</td>' +
+              '<td>' + esc(u.monthly_usage != null ? u.monthly_usage : "—") + '</td>' +
+              '<td>' + (u.is_admin ? '<span class="adm-pill">✓</span>' : '<span style="color:var(--text-tertiary)">—</span>') + '</td>' +
+              '<td><button class="adm-btn" data-id="' + id + '" onclick="window.__adminEditUser(this)">Editar</button></td>' +
+            '</tr>';
+        });
+      }
+      html += '</tbody></table></div>';
+      html += '<div style="margin-top:12px;color:var(--text-tertiary);font-size:var(--text-xs)">Mostrando ' +
+              users.length + ' de ' + (data.total != null ? data.total : users.length) + ' usuario(s)</div>';
+      el.innerHTML = html;
+      loaded.users = true;
+    } catch(e) {
+      el.innerHTML = '<div class="adm-msg error">Error al cargar usuarios: ' + esc(e.message) + '</div>';
+    }
+  }
+  async function editUser(btn){
+    var userId = btn.getAttribute("data-id");
+    if (!userId) { return; }
+    var newPlan = prompt("Nuevo plan (free / creator / agency / pro) — vacío = sin cambio:");
+    var creditsDelta = prompt("Cambio en créditos (¢) — ej. 1800 o -900 — vacío = sin cambio:");
+    var adminAns = prompt("¿Marcar como admin? (s/n) — vacío = sin cambio:");
+    var body = {};
+    if (newPlan != null && newPlan.trim() !== "") { body.plan = newPlan.trim(); }
+    if (creditsDelta != null && creditsDelta.trim() !== "") {
+      var n = parseInt(creditsDelta, 10);
+      if (!isNaN(n)) { body.credits_delta = n; }
+    }
+    if (adminAns != null && adminAns.trim() !== "") {
+      body.is_admin = /^s|^y|^1|^t/i.test(adminAns.trim());
+    }
+    if (!Object.keys(body).length) { toast("Sin cambios", "info"); return; }
+    btn.disabled = true;
+    try {
+      var res = await api("/users/" + encodeURIComponent(userId), {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+      });
+      if (res && res.ok !== false) { toast("Usuario actualizado", "ok"); load("users", true); }
+      else { toast("Error: " + ((res && res.error) || "desconocido"), "error"); }
+    } catch(e) { toast("Error: " + e.message, "error"); }
+    finally { btn.disabled = false; }
+  }
+
+  // ── AJUSTES ───────────────────────────────────────────────────────────
+  async function loadSettings(){
+    var el = $("adm-settings"); if (!el) { return; }
+    el.innerHTML = '<div class="adm-loading"><span class="adm-spinner"></span></div>';
+    try {
+      var data = await api("/settings");
+      var cost = (data && data.cost_cents != null) ? data.cost_cents : 18;
+      var src = data && data.cost_cents_source ? data.cost_cents_source : null;
+      var html = '<div class="adm-card" style="max-width:480px">';
+      if (src) { html += sourceTag(src); }
+      html +=
+        '<form onsubmit="return window.__adminSaveSettings(event)">' +
+          field("COST_CENTS · coste de 1 crédito en ¢", "cost_cents", cost, "number", true) +
+          '<button type="submit" class="adm-btn">Guardar ajustes</button>' +
+        '</form>' +
+      '</div>';
+      el.innerHTML = html;
+      loaded.settings = true;
+    } catch(e) {
+      el.innerHTML = '<div class="adm-msg error">Error al cargar ajustes: ' + esc(e.message) + '</div>';
+    }
+  }
+  async function saveSettings(evt){
+    evt.preventDefault();
+    var fd = new FormData(evt.target);
+    var body = { cost_cents: parseInt(fd.get("cost_cents"), 10) || 18 };
+    var btn = evt.target.querySelector("button[type=submit]");
+    if (btn) { btn.disabled = true; }
+    try {
+      var res = await api("/settings", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+      });
+      if (res && res.ok !== false) { toast("Ajustes guardados", "ok"); load("settings", true); }
+      else { toast("Error: " + ((res && res.error) || "desconocido"), "error"); }
+    } catch(e) { toast("Error al guardar: " + e.message, "error"); }
+    finally { if (btn) { btn.disabled = false; } }
+    return false;
+  }
+
+  // ── Apertura / cierre del overlay ─────────────────────────────────────
+  function open(){
+    var page = $("adminPage");
+    if (!page) { return; }
+    page.classList.add("on");
+    document.body.style.overflow = "hidden";
+    // Carga inicial: pestaña activa (métricas por defecto)
+    var activeTab = document.querySelector("#adminPage .adm-tab.on");
+    load(activeTab ? activeTab.getAttribute("data-panel") : "metrics");
+  }
+  function close(){
+    var page = $("adminPage");
+    if (page) { page.classList.remove("on"); }
+    document.body.style.overflow = "";
+    if (location.hash === "#admin") {
+      try { history.replaceState(null, "", location.pathname + location.search); } catch(e){}
+    }
+  }
+  function refresh(){
+    loaded = {};
+    var activeTab = document.querySelector("#adminPage .adm-tab.on");
+    load(activeTab ? activeTab.getAttribute("data-panel") : "metrics", true);
+    toast("Recargado", "info");
+  }
+
+  // ── Exponer handlers usados por onclick/onsubmit inline ───────────────
+  window.__adminTab = switchTab;
+  window.__adminOpen = open;
+  window.__adminClose = close;
+  window.__adminRefresh = refresh;
+  window.__adminSavePlan = savePlan;
+  window.__adminSaveTopup = saveTopup;
+  window.__adminEditUser = editUser;
+  window.__adminSaveSettings = saveSettings;
+
+  // ── Boot ──────────────────────────────────────────────────────────────
+  function boot(){
+    // Búsqueda de usuarios con debounce
+    var search = $("admUserSearch");
+    if (search) {
+      search.addEventListener("input", function(){
+        clearTimeout(usersDebounce);
+        usersDebounce = setTimeout(function(){ loadUsers(); }, 300);
+      });
+    }
+    // Cerrar con Escape
+    document.addEventListener("keydown", function(e){
+      if (e.key === "Escape") {
+        var page = $("adminPage");
+        if (page && page.classList.contains("on")) { close(); }
+      }
+    });
+
+    // Apertura directa por URL: /admin o #admin (la ruta /admin del servidor
+    // sirve este mismo template; el gate real es @admin_required en el backend).
+    var atAdmin = location.pathname.replace(/\/+$/, "") === "/admin"
+               || /(^|\/)admin$/.test(location.pathname.replace(/\/+$/, ""))
+               || location.hash === "#admin";
+    if (atAdmin) { open(); }
+
+    // Chip flotante para admins: comprobamos is_admin vía /auth/me (no toca
+    // el estado `st` del workspace). Tolerante a fallos: si no es admin, nada.
+    fetch("/auth/me").then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+      var isAdmin = d && (d.is_admin === true || (d.user && d.user.is_admin === true));
+      if (isAdmin) {
+        var chip = $("adminEntry");
+        if (chip) { chip.classList.add("on"); }
+      }
+    }).catch(function(){ /* silencioso */ });
+  }
+  if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", boot); }
+  else { boot(); }
+})();
+</script>
 
 <!-- v0.17.x RADAR LOOP — motor multi-marca. Módulo en /static/js/radar-loop.js
      (editable sin tocar el monolito). Monta dentro de #radarRoot. -->

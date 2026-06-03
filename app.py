@@ -89,7 +89,20 @@ ADMIN_EMAILS = {
 
 
 def _is_admin(user: dict | None) -> bool:
-    return bool(user and user.get("email", "").lower() in ADMIN_EMAILS)
+    if not user:
+        return False
+    # 1) Fallback sin DB: email en ADMIN_EMAILS env (siempre admin, no depende de tabla).
+    if user.get("email", "").lower() in ADMIN_EMAILS:
+        return True
+    # 2) DB-driven: profiles.is_admin. Tolerante a fallo (columna/tabla ausente → False).
+    try:
+        prof = (db.table("profiles").select("is_admin")
+                  .eq("id", user["id"]).single().execute())
+        if prof.data:
+            return bool(prof.data.get("is_admin"))
+    except Exception:
+        pass
+    return False
 
 
 def admin_required(f):
@@ -213,6 +226,147 @@ STRIPE_TOPUP_PRICES = {
 STRIPE_TOPUP_PRICES.pop("", None)  # descarta los no configurados
 
 db: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+
+# ── Config DB-driven (planes / topups / settings) con caché TTL + fallback ────
+# Patrón crítico: la DB es OPCIONAL. Si la tabla no existe, está vacía, o Supabase
+# falla, se degrada al config actual (PLANS / STRIPE_* / TOPUPS / COST_CENTS env).
+# El path de billing NO puede romperse por la ausencia de estas tablas.
+import time as _cfg_time  # noqa: E402
+
+_config_cache: dict[str, tuple] = {
+    "plans":    (None, 0.0),   # (data, timestamp)
+    "topups":   (None, 0.0),
+    "settings": (None, 0.0),
+}
+_CONFIG_TTL_S = 300  # 5 min
+
+
+def _plans_from_env() -> list[dict]:
+    """Construye la lista de planes desde PLANS/STRIPE_PRICES env (fallback)."""
+    out = []
+    for i, (k, v) in enumerate(PLANS.items()):
+        pm = v.get("price_month_eur")
+        py = v.get("price_year_eur")
+        out.append({
+            "key": k,
+            "name": v.get("name", k.capitalize()),
+            "price_month_cents": int(pm * 100) if pm is not None else None,
+            "price_year_cents":  int(py * 100) if py is not None else None,
+            "monthly_credits": v.get("credits_month", 0) or 0,
+            "stripe_price_month": STRIPE_PRICES.get(k, {}).get("month") or None,
+            "stripe_price_year":  STRIPE_PRICES.get(k, {}).get("year") or None,
+            "active": k != "pro",          # legacy 'pro' no se ofrece
+            "sort_order": i,
+        })
+    return out
+
+
+def _topups_from_env() -> list[dict]:
+    """Construye la lista de topups desde TOPUPS/STRIPE_TOPUP_PRICES env (fallback)."""
+    # invertir price_id→credits a credits→price_id para casar con la key TOPUPS
+    credits_to_price = {v: pid for pid, v in STRIPE_TOPUP_PRICES.items()}
+    out = []
+    for i, (k, v) in enumerate(TOPUPS.items()):
+        out.append({
+            "key": k,
+            "credits": v["credits"],
+            "price_cents": int(v.get("eur", 0)) * 100,
+            "stripe_price_id": credits_to_price.get(v["credits"], "") or "",
+            "active": True,
+            "sort_order": i,
+        })
+    return out
+
+
+def load_plans_config() -> dict:
+    """Lee planes de DB con fallback a PLANS env. Caché TTL 5min.
+    Devuelve {"plans": [...], "source": "db"|"env"}."""
+    now = _cfg_time.time()
+    cached_data, cached_ts = _config_cache["plans"]
+    if cached_data is not None and (now - cached_ts) < _CONFIG_TTL_S:
+        return cached_data
+
+    result = {"plans": [], "source": "env"}
+    try:
+        db_plans = (db.table("plans").select("*")
+                      .eq("active", True).order("sort_order").execute())
+        if db_plans.data:
+            result["plans"] = db_plans.data
+            result["source"] = "db"
+        else:
+            result["plans"] = _plans_from_env()
+            result["source"] = "env"
+    except Exception as e:
+        logger.warning(f"load_plans_config fallback a env: {e}")
+        result["plans"] = _plans_from_env()
+        result["source"] = "env"
+
+    _config_cache["plans"] = (result, now)
+    return result
+
+
+def load_topups_config() -> dict:
+    """Lee topups de DB con fallback a TOPUPS env. Caché TTL 5min.
+    Devuelve {"topups": [...], "source": "db"|"env"}."""
+    now = _cfg_time.time()
+    cached_data, cached_ts = _config_cache["topups"]
+    if cached_data is not None and (now - cached_ts) < _CONFIG_TTL_S:
+        return cached_data
+
+    result = {"topups": [], "source": "env"}
+    try:
+        db_topups = (db.table("topups").select("*")
+                       .eq("active", True).order("sort_order").execute())
+        if db_topups.data:
+            result["topups"] = db_topups.data
+            result["source"] = "db"
+        else:
+            result["topups"] = _topups_from_env()
+            result["source"] = "env"
+    except Exception as e:
+        logger.warning(f"load_topups_config fallback a env: {e}")
+        result["topups"] = _topups_from_env()
+        result["source"] = "env"
+
+    _config_cache["topups"] = (result, now)
+    return result
+
+
+def get_setting(key: str, default=None):
+    """Lee un valor de app_settings.value (JSONB). Fallback a `default` si falla."""
+    try:
+        result = (db.table("app_settings").select("value")
+                    .eq("key", key).single().execute())
+        if result.data is not None:
+            return result.data.get("value")
+    except Exception:
+        pass
+    return default
+
+
+def get_cost_cents() -> int:
+    """COST_CENTS efectivo: app_settings.cost_cents (DB) con fallback a env COST_CENTS."""
+    val = get_setting("cost_cents", None)
+    if isinstance(val, dict):
+        val = val.get("value")
+    try:
+        if val is not None:
+            return int(val)
+    except (TypeError, ValueError):
+        pass
+    return COST_CENTS
+
+
+def invalidate_config_cache():
+    """Limpia la caché de config (llamar tras cualquier update admin)."""
+    global _config_cache
+    _config_cache = {
+        "plans":    (None, 0.0),
+        "topups":   (None, 0.0),
+        "settings": (None, 0.0),
+    }
+
 
 try:
     import stripe as stripe_lib
@@ -806,6 +960,7 @@ def auth_me():
     plan = profile.get("plan", "free")
     return jsonify({
         "user": user,
+        "is_admin": _is_admin(user),
         "credits_cents":   profile["credits_cents"],
         "free_used_today": profile["free_used_today"],
         "free_daily_limit": FREE_DAILY_USER,
@@ -1262,23 +1417,39 @@ def create_checkout():
     if not STRIPE_OK:
         return jsonify({"error": "El sistema de pagos aún no está disponible. Vuelve pronto."}), 503
 
-    if not STRIPE_TOPUP_PRICE:
-        return jsonify({"error": "Topup no configurado"}), 500
-
-    body = request.get_json()
+    body = request.get_json() or {}
     currency = body.get("currency", "usd").lower()
     if currency not in ("usd", "eur"):
         currency = "usd"
 
-    # Ambas divisas dan 7 usos (7 × 18 = 126 cents de saldo)
-    amount_cents = 126
+    # ── Resolución de topup vía config DB con fallback a env (no rompe el path actual) ──
+    # Si el front manda `topup_key` y hay un topup con stripe_price_id configurado
+    # (DB o env), se usa ese precio + sus créditos. Si no, se degrada al topup legacy
+    # (STRIPE_TOPUP_PRICE + 7 usos = 126¢), idéntico al comportamiento previo.
+    cost_cents = get_cost_cents()
+    topup_key = body.get("topup_key")
+    stripe_price = None
+    amount_cents = None
+    if topup_key is not None:
+        topups = {t["key"]: t for t in load_topups_config().get("topups", [])}
+        t = topups.get(str(topup_key))
+        if t and t.get("stripe_price_id"):
+            stripe_price = t["stripe_price_id"]
+            amount_cents = int(t["credits"]) * cost_cents
+
+    if stripe_price is None:
+        # Fallback legacy: topup único de 7 usos (126¢) con STRIPE_TOPUP_PRICE.
+        if not STRIPE_TOPUP_PRICE:
+            return jsonify({"error": "Topup no configurado"}), 500
+        stripe_price = STRIPE_TOPUP_PRICE
+        amount_cents = 126
 
     user = current_user()
     try:
         checkout_session = stripe_lib.checkout.Session.create(
             payment_method_types=["card"],
             currency=currency,
-            line_items=[{"price": STRIPE_TOPUP_PRICE, "quantity": 1}],
+            line_items=[{"price": stripe_price, "quantity": 1}],
             mode="payment",
             success_url=request.host_url + "?topup=success",
             cancel_url=request.host_url + "?topup=cancel",
@@ -1341,7 +1512,20 @@ def stripe_webhook():
             else:
                 line_items = stripe_lib.checkout.Session.list_line_items(stripe_session_id)
                 price_id = line_items.data[0].price.id if line_items.data else None
-                amount_cents = STRIPE_TOPUP_PRICES.get(price_id, 0) * COST_CENTS
+                # Resolver créditos por price_id: config DB con fallback a env (STRIPE_TOPUP_PRICES).
+                credits = None
+                try:
+                    by_price = {
+                        t.get("stripe_price_id"): t.get("credits")
+                        for t in load_topups_config().get("topups", [])
+                        if t.get("stripe_price_id")
+                    }
+                    credits = by_price.get(price_id)
+                except Exception:
+                    credits = None
+                if credits is None:
+                    credits = STRIPE_TOPUP_PRICES.get(price_id, 0)
+                amount_cents = (credits or 0) * get_cost_cents()
 
             db.table("payments").update({
                 "status":                "completed",
@@ -6852,6 +7036,186 @@ def admin_scrape_creator(creator_id: str):
     }), 202
 
 
+# ── Admin API: gestión DB-driven de planes / topups / usuarios / ajustes ──────
+# Todas @admin_required. Acceso a Supabase via service_role (bypassa RLS). Las
+# lecturas degradan a env si la DB falla; las escrituras devuelven 500 con el
+# error real (la tabla puede no existir todavía → el admin la crea con la migración).
+
+_ADMIN_PROFILE_COLS = "id, email, plan, credits_cents, is_admin, monthly_usage, free_lifetime_uses, created_at"
+
+
+@app.route("/admin/api/plans", methods=["GET"])
+@admin_required
+def api_admin_plans():
+    """Matriz de planes (DB con fallback env). {"plans":[...], "source":"db"|"env"}."""
+    return jsonify(load_plans_config())
+
+
+@app.route("/admin/api/plans/<plan_key>", methods=["POST"])
+@admin_required
+def api_admin_update_plan(plan_key: str):
+    """Crea/actualiza un plan en la tabla `plans` (upsert por key)."""
+    try:
+        body = request.get_json() or {}
+        row = {
+            "key": plan_key,
+            "name": body.get("name", plan_key),
+            "price_month_cents": body.get("price_month_cents"),
+            "price_year_cents":  body.get("price_year_cents"),
+            "monthly_credits":   body.get("monthly_credits", 0),
+            "stripe_price_month": body.get("stripe_price_month"),
+            "stripe_price_year":  body.get("stripe_price_year"),
+            "active": bool(body.get("active", True)),
+            "sort_order": body.get("sort_order", 0),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        db.table("plans").upsert(row).execute()
+        invalidate_config_cache()
+        return jsonify({"ok": True, "plan": row})
+    except Exception as e:
+        logger.error(f"api_admin_update_plan({plan_key}): {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/admin/api/topups", methods=["GET"])
+@admin_required
+def api_admin_topups():
+    """Topups (DB con fallback env). {"topups":[...], "source":"db"|"env"}."""
+    return jsonify(load_topups_config())
+
+
+@app.route("/admin/api/topups/<topup_key>", methods=["POST"])
+@admin_required
+def api_admin_update_topup(topup_key: str):
+    """Crea/actualiza un topup en la tabla `topups` (upsert por key)."""
+    try:
+        body = request.get_json() or {}
+        row = {
+            "key": topup_key,
+            "credits": body.get("credits", 0),
+            "price_cents": body.get("price_cents", 0),
+            "stripe_price_id": body.get("stripe_price_id"),
+            "active": bool(body.get("active", True)),
+            "sort_order": body.get("sort_order", 0),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        db.table("topups").upsert(row).execute()
+        invalidate_config_cache()
+        return jsonify({"ok": True, "topup": row})
+    except Exception as e:
+        logger.error(f"api_admin_update_topup({topup_key}): {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/admin/api/users", methods=["GET"])
+@admin_required
+def api_admin_users():
+    """Listado/búsqueda de usuarios con paginación.
+    q: filtra por id (UUID exacto) o email (substring, filtrado server-side).
+    """
+    q = (request.args.get("q", "") or "").strip().lower()
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+    except (TypeError, ValueError):
+        page = 1
+    try:
+        limit = min(max(1, int(request.args.get("limit", 20))), 100)
+    except (TypeError, ValueError):
+        limit = 20
+    offset = (page - 1) * limit
+
+    try:
+        base = db.table("profiles").select(_ADMIN_PROFILE_COLS)
+        if q and len(q) == 36 and q.count("-") == 4:
+            # Parece UUID → filtro exacto por id (parametrizado por el cliente).
+            rows = base.eq("id", q).execute().data or []
+        else:
+            rows = base.execute().data or []
+            if q:
+                rows = [u for u in rows if q in ((u.get("email") or "").lower())]
+        total = len(rows)
+        users_page = rows[offset:offset + limit]
+        return jsonify({
+            "users": users_page,
+            "total": total,
+            "page": page,
+            "limit": limit,
+        })
+    except Exception as e:
+        logger.error(f"api_admin_users: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/admin/api/users/<user_id>", methods=["POST"])
+@admin_required
+def api_admin_update_user(user_id: str):
+    """Aplica cambios selectivos: plan, credits_delta (suma a credits_cents), is_admin.
+    No resetea créditos mensuales (admin manual, no llama grant_monthly_allowance).
+    """
+    try:
+        body = request.get_json() or {}
+        updates = {}
+        if "plan" in body and body["plan"]:
+            updates["plan"] = body["plan"]
+        if "is_admin" in body:
+            updates["is_admin"] = bool(body["is_admin"])
+        if "credits_delta" in body:
+            try:
+                delta = int(body["credits_delta"])
+            except (TypeError, ValueError):
+                delta = 0
+            if delta:
+                prof = (db.table("profiles").select("credits_cents")
+                          .eq("id", user_id).single().execute())
+                current = (prof.data or {}).get("credits_cents", 0) or 0
+                updates["credits_cents"] = max(0, current + delta)
+
+        if updates:
+            db.table("profiles").update(updates).eq("id", user_id).execute()
+
+        updated = (db.table("profiles").select(_ADMIN_PROFILE_COLS)
+                     .eq("id", user_id).single().execute())
+        return jsonify({"ok": True, "user": updated.data})
+    except Exception as e:
+        logger.error(f"api_admin_update_user({user_id}): {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/admin/api/settings", methods=["GET"])
+@admin_required
+def api_admin_settings():
+    """Lee ajustes globales (cost_cents) con fallback a env COST_CENTS."""
+    try:
+        cost_cents = get_cost_cents()
+        raw = get_setting("cost_cents", None)
+        return jsonify({
+            "cost_cents": cost_cents,
+            "cost_cents_source": "db" if raw is not None else "env",
+        })
+    except Exception as e:
+        logger.error(f"api_admin_settings: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/admin/api/settings", methods=["POST"])
+@admin_required
+def api_admin_update_settings():
+    """Actualiza ajustes globales en app_settings (cost_cents)."""
+    try:
+        body = request.get_json() or {}
+        if "cost_cents" in body:
+            db.table("app_settings").upsert({
+                "key": "cost_cents",
+                "value": {"value": int(body["cost_cents"])},
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }).execute()
+            invalidate_config_cache()
+        return jsonify({"ok": True})
+    except Exception as e:
+        logger.error(f"api_admin_update_settings: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/admin")
 def admin_page():
     user = current_user()
@@ -6859,7 +7223,9 @@ def admin_page():
         return redirect("/")
     if not _is_admin(user):
         abort(403)
-    return render_template("admin.html")
+    # El panel admin vive como overlay (#adminPage) dentro de index.html y se
+    # abre solo cuando location.pathname === "/admin". Cargamos el shell de app.
+    return render_template("index.html", lang=_resolve_lang(), workspace=True)
 
 
 @app.route("/admin/metrics")
