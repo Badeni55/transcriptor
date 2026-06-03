@@ -1,99 +1,71 @@
 # HANDOFF — Reelscript (rama `bernat`) · qué tienes que hacer tú
 
 > **Fecha:** 2026-06-03 · **Rama:** `bernat` (NADA desplegado a prod) · **Autor:** sesión Claude
-> **Para qué sirve:** este doc es tu lista de acción. Todo lo que se podía construir/arreglar sin tu login y sin decisiones de negocio está hecho y commiteado. Aquí queda lo que depende de ti.
+> Todo lo construible/arreglable de forma autónoma está hecho y commiteado. Aquí queda lo que depende de ti (tu login, tus decisiones). **Stripe NO es bloqueante** — va al final (§4), sin prisa.
 
 ---
 
 ## TL;DR
-
-- Esta sesión reconstruyó el producto en `bernat`: **rebrand de la landing** (Signal, oscuro+azul), **panel admin DB-driven**, **loop cerrado** (métricas/cerebro/voz/hooks/IG), **Equipo (invitar)**, y se cazaron **bugs reales de prod** (gating de plan de tus 23 cuentas Agency, `/api/brands` ausente, etc.).
-- **Migraciones YA aplicadas** a tu Supabase de prod (es compartida; la v0.16 viva las ignora, son aditivas). Tú eres **admin**.
-- **Nada está desplegado.** El código vive en `bernat`.
-- Quedan **4 cosas tuyas** (§1) + **1 proyecto de ingeniería** (§2, cablear la isla) que necesita tu login para testear.
+- Reconstruido en `bernat`: **rebrand landing** (Signal) · **panel admin** DB-driven · **loop cerrado** · **isla Signal CABLEADA al backend** (ideas/guiones/hooks/robar/explosión/estado **persisten de verdad en prod**, ya no es demo-grade) · bugs prod reales cazados (gating de tus **23 cuentas Agency**, `/api/brands`, etc.).
+- **Migraciones YA en tu Supabase de prod** (compartida; aditivas; la v0.16 viva las ignora). Tú eres **admin**.
+- **Nada desplegado.** ~17 commits en `bernat`.
+- **Lo que te toca:** validar con tu login (§1) → decidir el takeover (§2) → desplegar (§3). Stripe cuando quieras (§4).
 
 ---
 
-## 1. LO QUE TIENES QUE HACER TÚ
+## 1. ✅ VALIDAR CON TU LOGIN  *(yo no tengo sesión real → es tu review)*
+La isla ya persiste en prod, pero el flujo autenticado solo lo puedes probar tú (logueado). Valida en local (con creds reales) o tras desplegar:
+- [ ] **Loop completo (isla Signal):** apuntar idea → generar 5 guiones → 5 hooks → robar reel ("Hazlo mío") → guardar → marcar grabado. Todo debe **persistir tras recargar** y **descontar créditos del servidor** (sin doble-cobro).
+- [ ] **Explosión creativa** (5×5×5 = 30 créditos): que genere el árbol idea→guiones→hooks y persista.
+- [ ] **Panel `/admin`:** abrir overlay, editar plan/topup, buscar usuario, cambiar plan/créditos, toggle admin.
+- [ ] **Agency multi-marca** (tus 23 cuentas): Portfolio lista marcas, se entra a cada una. *(El bug que lo rompía ya está arreglado.)*
+- [ ] **Free wall:** un «Hazlo mío» free para al 6º.
 
-### A. 💳 Stripe — crear precios y pegarlos en el panel  *(bloqueante para cobrar)*
-Los precios YA no van por variables de entorno: se gestionan desde el **panel admin** (`/admin` → Planes/Topups, tablas `plans`/`topups`).
-1. En Stripe (modo live) crea los **Products/Prices** (multi-divisa EUR/USD dentro de cada price) y copia los `price_...`:
-   | Plan | Mensual | Anual |
-   |---|---|---|
-   | Creador | €29 | €276 (= €23/mes) |
-   | Agencia | €129 | €1290 (= €107,50/mes) |
-   | Topup 100 cr | €19 (one-time) | — |
-   | Topup 300 cr | €49 (one-time) | — |
-   | Topup 1000 cr | €139 (one-time) | — |
-2. Tras desplegar (§C), entra a `https://reelscript.net/admin` → **Planes** y **Topups** → pega los `price_...` → Guardar. (También puedo meterlos yo por MCP si me los pasas.)
-3. **Webhook:** ya tienes `STRIPE_WEBHOOK_SECRET` en prod (endpoint `/stripe-webhook`, eventos `checkout.session.completed`, `invoice.paid`, `customer.subscription.deleted`). Si reutilizas ese webhook, no toques nada. Si creas uno nuevo, hay que actualizar la var en el VPS con `docker compose down && up -d` (un restart no basta).
+---
 
-### B. 🤔 Decisión: ¿el "Signal" (la isla) pasa a ser la experiencia de prod?
-**Hoy la isla solo toma la pantalla en DEMO** (`radar-loop.js:1424`, gateado a `isDemo()`). En **producción real corre el workspace LEGACY** (las pestañas viejas de `index.html`), que **sí persiste** ideas/guiones contra el backend.
-- La isla Signal (rebrand, loop, dashboard "el despertar") es el **producto nuevo**, pero hoy es **demo-grade**: sus acciones de crear/generar/guardar son **estado local, no llaman al backend** (ver §2).
-- **Tu decisión:** ¿quieres que Signal sea la prod (flip del takeover) o conviven? Si dices que sí, hay que ejecutar el proyecto de §2 antes de flipar. El flip en sí es quitar el gate `isDemo()` de la línea 1424 — trivial — pero **no lo hagas hasta cablear §2**, o la isla en prod no guardará nada.
+## 2. 🤔 DECISIÓN: ¿el "Signal" (la isla) pasa a ser la experiencia de prod?
+- **Hoy** la isla solo toma la pantalla completa en DEMO (`radar-loop.js:1424`, gateado a `isDemo()`); en prod manda el **workspace legacy**.
+- **Ya NO es demo-grade:** sus acciones core están cableadas al backend (§1). El flip es **quitar el gate `isDemo()` de la línea 1424** (1 línea).
+- **Recomendación:** primero valida (§1) logueado; si todo va, flipa el takeover y Signal es tu prod. *(Lo dejo sin flipar — es tu decisión y conviene validar antes.)*
 
-### C. 🚀 Deploy  *(cuando lo decidas — hoy en pausa)*
-**OJO — corrección importante:** el deploy **NO** se dispara por push a `prod`. El `deploy.yml` real se dispara al **publicar un GitHub Release** (hace `git checkout <tag>` en el VPS; el detached HEAD del server es normal/esperado).
+---
+
+## 3. 🚀 DESPLEGAR  *(cuando decidas)*
+**OJO — corrección:** el deploy **NO** se dispara por push a `prod`. El `deploy.yml` real se dispara al **publicar un GitHub Release** (`git checkout <tag>` en el VPS; el detached HEAD del server es normal).
 1. Merge `bernat` → `prod`.
-2. **Publica un GitHub Release con un tag nuevo** ← esto dispara el deploy.
-3. Mira el progreso en **GitHub → pestaña Actions** (NO en el servidor).
-4. Verifica: `curl -I https://reelscript.net/es/` → 200.
-> Es un salto grande (prod está en v0.16.x; `bernat` es la reconstrucción completa). Considera desplegar fuera de horario punta.
-
-### D. ✅ Validación con login real  *(tu review — yo no tengo sesión)*
-Con tu cuenta admin, valida en prod (tras desplegar) o en local con creds reales:
-- [ ] **Panel `/admin`**: abre el overlay, edita un plan/topup, busca un usuario, cambia plan/créditos, toggle admin.
-- [ ] **Agency multi-marca** (tus 23 cuentas): que Portfolio liste marcas y se pueda entrar a cada una. *(El bug que lo rompía —`agency` vs `agencia` y `/api/brands` ausente— ya está arreglado.)*
-- [ ] **Free wall**: un «Hazlo mío» de free debe parar al 6º.
-- [ ] **Checkout** de prueba (test mode) de cada plan tras pegar los precios.
+2. **Publica un GitHub Release con tag nuevo** ← dispara el deploy.
+3. Progreso en **GitHub → Actions** (NO en el servidor). Verifica `curl -I https://reelscript.net/es/` → 200.
+> Salto grande (prod en v0.16.x → reconstrucción). Considera horario valle. El rebrand + panel admin + fixes van a prod aunque NO flipes el takeover.
 
 ---
 
-## 2. PROYECTO PENDIENTE — cablear la isla "Signal" al backend
-**Por qué no lo hice yo:** la isla se desarrolló contra el shim de demo; sus acciones de crear/generar/persistir son **estado local**. Cablearlas necesita **tu login para testear el flujo autenticado** (no puedo) y decisiones de producto. No lo medio-cableo a ciegas. Aquí queda el alcance exacto:
+## 4. 💳 Stripe — cuando te venga bien (NO bloquea nada)
+Los precios se gestionan desde el **panel `/admin`** (tablas `plans`/`topups`), no por env vars. Cuando quieras cobrar: crea los Products/Prices en Stripe (Creador €29/€276, Agencia €129/€1290, topups €19/€49/€139), y pega los `price_...` en `/admin` → Planes/Topups (o me los pasas y los meto por MCP). Webhook ya existe. *(Lo validas con tu socio, como dijiste.)*
 
-| Acción en la isla (`radar-loop.js`) | Hoy (demo) | Debe (prod) → endpoint backend (ya existe) |
+---
+
+## 5. ⏳ Cola "luego" — multiplicadores de la isla que faltan por cablear  *(necesitan backend nuevo + tu testeo; no los hice a ciegas)*
+| Acción isla | Estado | Para cablear |
 |---|---|---|
-| `seedIdea`/`addSeedIdea` (apuntar idea) | local `S.ideas` | `POST /ideas {raw_text}` |
-| `gen5ideas` (5 ideas IA) | banco fijo `BANK_IDEAS` | endpoint IA de ideas (confirmar/crear) |
-| `gen5scripts` (idea→5 guiones) | beats genéricos locales | endpoint de generación (confirmar/crear) |
-| `gen5hooks` | banco fijo `BANK_HOOKS` | endpoint de hooks IA |
-| robar reel → guion ("Hazlo mío") | local | flujo adapt-con-voz (`/transform` + voz) |
-| `saveScript` | local `S.guiones` | `POST /scripts` |
-| `gui-toggle-rec`/`gui-discard`/`recorded` | `g.status` local | `PATCH /scripts/<id> {recording_status}` |
-| Créditos | descuento local (`spend`) | verdad del servidor (el backend ya descuenta en sus endpoints) |
+| Conveyor `chain`: **LinkedIn** | local | mapea a `/transform` style=linkedin (ya existe) |
+| Conveyor `chain`: **carrusel / X / serie-de-3** | local | NO hay style en `/transform` → endpoints nuevos (como los batch que ya creé) |
+| `addReelManual` (pegar reel competidor por URL) | local | no hay endpoint "añadir reel por URL" (el tracking es por username) → backend/decisión |
+| Roles/marcas por miembro de **Equipo** (`team-edit`) | stub | "más adelante" en PRODUCTO.md (decisión). El **invitar** sí está cableado |
 
-**Notas:** `/ideas`, `/scripts`, `PATCH /scripts/<id>` y `/transform` ya existen y el **workspace legacy los usa correctamente** → es la referencia para cablear con las shapes correctas. Patrón: rama prod (`!isDemo()`) que llama al backend; demo intacto. Requiere testear logueado.
+Otros menores: `/auth/me` no devuelve `streak` (muestra 0); hooks en **demo** no persisten visual (prod sí); checkout en **demo** navega a URL Stripe falsa (cosmético demo); tabla `publications` (loop v2 orgánicos) sin aplicar (opcional).
 
 ---
 
-## 3. LO YA HECHO Y ARREGLADO ESTA SESIÓN (13 commits en `bernat`)
+## 6. Lo ya hecho y arreglado esta sesión (~17 commits en `bernat`)
+**Construido:** rebrand landing (Signal) · panel `/admin` DB-driven (planes/precios/topups/usuarios/ajustes/métricas) · loop B0–B8 (métricas, next_series en Radar+email, vincular-reel, conectar IG por username, refinar voz, banco de hooks) · Equipo invitar · tour nuevo ES · **isla cableada al backend** (5 endpoints batch nuevos: `/ideas/generate-batch`, `/ideas/<id>/scripts/generate-batch`, `/scripts/<id>/hooks/generate-batch`, `/reels/steal-batch`, `/ideas/explosion` — reusan `develop_idea`/`adapt_with_ai`+voz con cobro server-side anti-doble-gasto).
 
-**Construido:** rebrand landing (Signal) · panel `/admin` DB-driven (planes/precios/topups/usuarios/ajustes/métricas) · loop B0–B8 (fix métricas, next_series en Radar+email, vincular-reel real, conectar IG por username, refinar voz, banco de hooks) · Equipo invitar · tour nuevo en español (gateado a workspace).
+**Migraciones aplicadas a prod (Supabase, vía MCP):** `free_lifetime_uses`, `voice_profiles`, `plans`/`topups`/`app_settings`, `profiles.is_admin`, `scripts.alt_hooks`. **Tú = admin.** Advisors sin WARN nuevos.
 
-**Migraciones aplicadas a prod (Supabase, vía MCP):** `profiles.free_lifetime_uses`, tabla `voice_profiles`, tablas `plans`/`topups`/`app_settings`, `profiles.is_admin`, `scripts.alt_hooks`. **Tú = admin.** Advisors de seguridad sin WARN nuevos.
+**Bugs prod cazados (clase "funciona en demo, roto en prod"):** gating de plan (`agency`→`agencia`, tus 23 cuentas) · `/api/brands` ausente · `connected` en métricas · métricas por marca (`?brand`) · `stolen_today` · `igConnected` blindado · tour legacy en inglés desactivado · `raw_text` de ideas generadas guardaba un dict (arreglado) · lock anti-doble-gasto con 429 en contención.
 
-**Bugs de prod cazados y arreglados** (clase "funciona en demo, roto en prod"):
-- **Gating de plan**: `/auth/me` da `agency` (inglés) pero la isla comparaba con `agencia` (español) → tus **23 cuentas Agency** perdían Portfolio/Equipo/multi-marca. Normalizado.
-- **`/api/brands` no existía** (404) → Agency sin marcas. Creado.
-- **`/metrics/summary` sin `connected`** → ocultaba "Conecta Instagram" al revés. Añadido (real, de `ig_profiles`).
-- **Métricas no filtraban por marca** (front manda `?brand`, back leía `project_id`) → alias.
-- `stolen_today`, `igConnected` blindado, `S.team` init, tour legacy en inglés desactivado, pill free.
-
-**Verificado:** la app arranca (129 rutas, sin errores de runtime), todas las rutas dan 200, la landing rebrandeada y la isla renderizan, el tour ES funciona. *(Lo NO verificable sin tu login: CRUD autenticado real — §1.D.)*
+**Verificado:** arranca sin errores de runtime, rutas 200, landing+isla renderizan, tour ES funciona. *(NO verificable sin tu login: el CRUD autenticado real — §1.)*
 
 ---
 
-## 4. DIFERIDO / MENORES (no bloquean)
-- **Roles/marcas por miembro de Equipo** (`team-edit`): "más adelante" en PRODUCTO.md (decisión de producto abierta). El **invitar** sí está cableado.
-- `/auth/me` no devuelve `streak` (la isla lo espera; muestra 0/undefined) — menor.
-- Hooks en **modo demo** no persisten visualmente (cosmético, demo-only; en prod con backend sí).
-- Checkout en **demo** navega a una URL Stripe falsa (cosmético demo).
-- `publications` (tabla loop v2 para reels orgánicos): sin aplicar, opcional (el loop v1 reusa `scripts.*`).
-
----
-
-## 5. Atajo mínimo para lanzar
-**A** (Stripe) → **§2** (cablear isla, si quieres Signal en prod) → **B** (decidir takeover) → **C** (deploy) → pegar precios en `/admin` → **D** (validar). Si NO flipas el takeover todavía: puedes desplegar igual y prod sigue con el workspace legacy + las correcciones + el panel admin + el rebrand de la landing.
+## 7. Atajo mínimo
+**§1** (validar logueado) → **§2** (decidir takeover) → **§3** (deploy). Stripe (§4) y la cola (§5) cuando quieras. Si NO flipas el takeover: despliegas igual y prod sigue con el workspace legacy + el rebrand + el panel admin + todos los fixes.
