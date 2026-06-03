@@ -824,7 +824,8 @@
     ];
   }
   function teamHTML(){
-    var members=teamMembers();
+    // En prod pinta los miembros reales (S.team, cargado por loadTeam); en demo, el pool demo.
+    var members=(!isDemo() && Array.isArray(S.team)) ? S.team : teamMembers();
     var roleCls={"Owner":"owner","Editor":"editor","Solo lectura":"viewer"};
     var stats=[
       ["Miembros", members.length, "", ""],
@@ -1196,6 +1197,51 @@
       .catch(function(){ showToast("Error de red al actualizar tus reels."); });
   }
 
+  /* ── Equipo (Agencia): invitar + cargar miembros reales ──────────
+     Mirror del estilo de igConnectProfile/refreshReels (fetch same-origin).
+     Backend: POST /agency/invite {email}→{invite_url,token}; GET /agency/members→[]. */
+  function teamInvite(){
+    if(isDemo()){ return showToast("En la demo no se envían invitaciones reales. En tu cuenta Agencia generarías un enlace de invitación."); }
+    var em=window.prompt("Email del miembro que quieres invitar a tu equipo:");
+    if(em==null) return;
+    em=(em||"").trim();
+    if(!em){ showToast("Escribe un email para invitar."); return; }
+    showToast("Creando invitación…");
+    fetch("/agency/invite",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:em})})
+      .then(function(r){ return r.json().catch(function(){return{};}); })
+      .then(function(d){
+        if(d&&d.invite_url){
+          try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(d.invite_url); }catch(e){}
+          loadTeam();
+          showToast("Invitación creada · enlace copiado");
+          return;
+        }
+        showToast((d&&d.error)||"No pude crear la invitación.");
+      })
+      .catch(function(){ showToast("Error de red al crear la invitación."); });
+  }
+  function loadTeam(){
+    if(isDemo()) return;
+    fetch("/agency/members",{credentials:"same-origin"})
+      .then(function(r){ return r.json().catch(function(){return[];}); })
+      .then(function(rows){
+        if(!Array.isArray(rows)) rows=[];
+        S.team=rows.map(function(m){
+          var email=m.invited_email||"miembro";
+          var active=m.status==="active";
+          return {
+            name: email,
+            role: active?"Miembro":"Invitado · pendiente",
+            initials: (m.invited_email||"M").slice(0,2).toUpperCase(),
+            color: active?"#12a37c":"#6d6bf6",
+            brands: []
+          };
+        });
+        if(S.tab==="team") render();
+      })
+      .catch(function(){});
+  }
+
   /* ── delegación de eventos ───────────────────────────────────── */
   function onClick(e){
     var el=root(); if(!el||!el.contains(e.target)) return;
@@ -1207,7 +1253,7 @@
     if(act==="all-brands"){ S.tab="portfolio"; S.brandMenu=false; S.view="feed"; return render(); }
     if(act==="open-brand") return openBrand(id);
     if(act==="demo-plan") return setDemoPlan(k);
-    if(act==="team-invite") return showToast("Invitar miembros: lo cableamos con la BBDD (roles + marcas).");
+    if(act==="team-invite") return teamInvite();
     if(act==="team-edit") return showToast("Gestión de roles y marcas por miembro: próximamente.");
     if(act==="brand-add"){ S.brandMenu=false; render(); return showToast("Nueva marca: disponible en plan Agencia."); }
     if(act==="steal") return steal(id);
@@ -1329,6 +1375,7 @@
       if(ins){ S.metrics=S.metrics||{}; S.metrics.insights={ what_works:ins.what_works||[], next:ins.next||null }; }
       if(isDemo()) seedDemoContent();   // MVP demo: SIEMPRE siembra guiones+hooks+reels vinculados
       if(isDemo() && !(isAgency() && S.tab==="portfolio")) applyDemoBrand();
+      if(!isDemo() && isAgency()) loadTeam();   // miembros reales del equipo (re-render propio si está en la pestaña)
       render();
     });
   }
@@ -1350,7 +1397,11 @@
       if(me.free_lifetime_left!=null) S.user.freeLeft=me.free_lifetime_left;
       // Plan: en demo arranca en Agencia para ver el portfolio (toggle lo cambia);
       // en prod sale de /auth/me (profiles.plan).
-      S.plan = isDemo() ? "agencia" : ((me.plan||(me.user&&me.user.plan))||"creador");
+      // Normaliza el plan crudo de /auth/me → modos de la isla. Prod guarda valores en
+      // INGLÉS (verificado en DB: free, agency); la isla razona en creador|agencia. Sin esto
+      // los Agency (plan="agency") fallaban isAgency() y perdían Portfolio/Equipo en prod.
+      var _rawPlan = (me.plan||(me.user&&me.user.plan))||"free";
+      S.plan = isDemo() ? "agencia" : (_rawPlan === "agency" ? "agencia" : "creador");
       S.brands=(bd.brands&&bd.brands.length)?bd.brands:[{id:"default",name:(me.user&&me.user.name)?me.user.name:"Mi marca",handle:S.user.handle,color:"#f97316",level:1,voice:40,reelsAnalyzed:0,scripts:0}];
       if(isDemo()){ S.brands = isAgency() ? demoBrands() : [demoBrands()[0]]; }
       S.brandId=S.brands[0].id;
