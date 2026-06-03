@@ -130,6 +130,23 @@
 
 ---
 
+## 🧩 Pendiente — front & features (para una tanda "luego")
+
+- [ ] **Hooks agrupados en el guion** (recon hecho — replicar el modelo de la isla demo en prod):
+  - Migración: `ALTER TABLE public.scripts ADD COLUMN IF NOT EXISTS alt_hooks JSONB NOT NULL DEFAULT '[]'::jsonb;` (+ declarar `scripts` en `schema.sql`, hoy solo está `saved_scripts` legacy).
+  - Backend: `POST /scripts/<id>/hooks` (añadir, dedupe), `DELETE /scripts/<id>/hooks` (quitar por índice), `POST /scripts/<id>/hooks/use` (swap activo↔variante, sin perder nada). Redirigir hook-guardado-suelto → `alt_hooks` del padre.
+  - Frontend: desplegable "N hooks alternativos" + "Usar"/quitar en `scr-card` (`#profPanelScripts`), replicando `guiCardHTML`/`gui-use-hook`/`gui-del-hook` de `radar-loop.js`.
+  - Hoy en prod NO existe agrupación: "hooks" es un estilo de /adapt; guardar deja un guion suelto con los 5 hooks como texto.
+- [ ] **Radar/email muestran `next_series_suggestion`** ("lo que grabaste sobre X petó → el siguiente en tu voz"). (Métricas ya engancha el loop server-side al refrescar IG.)
+- [ ] **Captura de voz también en el primer-run del Radar** (hoy solo en Cerebro).
+- [ ] **Retención real (Instagram Insights / OAuth)**: la vista "Rendimiento del guion"
+  muestra hoy una curva de **muestra**. La retención / avg watch time / reach reales solo
+  vienen de la **Graph API de Instagram (Insights)** con la cuenta business/creator conectada
+  por **OAuth de Meta** (no scraping). Integración aparte; el scraper actual solo da views/likes/comentarios.
+- [ ] **Persistir el vínculo manual guion↔reel** (`scripts.reel_url`) + las métricas de
+  publicación en `scripts.views_count/...` (ya existe la columna) cuando se monte en prod.
+- [ ] **Takeover Signal en producción** (la isla solo ocupa pantalla completa en demo) — decidir integración rail/command bar vs chrome viejo.
+
 ## ✅ Verificación post-deploy
 
 - [ ] `curl -I https://reelscript.net/es/` → **200**.

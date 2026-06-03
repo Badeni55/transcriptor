@@ -427,20 +427,29 @@
     return '<div class="scroll">'+head+list+'</div></div>';
   }
   function ideaBlockHTML(idea){
+    var n=idea.scripts.length;
+    var open=idea.expanded!==false;
     var scripts=idea.scripts.map(scriptBlockHTML).join("");
-    var genBtn=idea.scripts.length===0
+    var genBtn=n===0
       ? '<button class="btn btn-sm btn-primary" data-act="gen5scripts" data-id="'+idea.id+'">'+IC.bolt+' 5 guiones</button>'
       : '<button class="btn btn-sm btn-secondary" data-act="gen5scripts" data-id="'+idea.id+'">+ 5 guiones más</button>';
+    var count=n?'<span class="idea-count">'+n+' guion'+(n===1?"":"es")+'</span>':'';
+    var caret=n?'<button class="idea-caret'+(open?" open":"")+'" data-act="idea-toggle" data-id="'+idea.id+'" title="'+(open?"Plegar":"Desplegar")+'">'+IC.chev+'</button>':'';
     return '<div class="idea-block">'+
-      '<div class="idea-block-head"><div class="idea-ic">'+IC.bulb+'</div><div class="idea-text">'+ESC(idea.text)+'</div>'+genBtn+'</div>'+
-      (idea.scripts.length?'<div class="idea-scripts">'+scripts+'</div>':'')+
+      '<div class="idea-block-head"><div class="idea-ic">'+IC.bulb+'</div><div class="idea-text">'+ESC(idea.text)+'</div>'+count+genBtn+caret+'</div>'+
+      ((n&&open)?'<div class="idea-scripts">'+scripts+'</div>':'')+
     '</div>';
   }
   function scriptBlockHTML(sc){
-    var hooks=sc.hooks?('<div class="sc-hooks">'+sc.hooks.map(function(h,i){return '<div class="sc-hook"><span class="hn">'+String(i+1).padStart(2,"0")+'</span><span>'+ESC(h)+'</span><button class="sc-hook-save" data-act="save-hook" data-id="'+sc.id+'" data-i="'+i+'">Guardar</button></div>';}).join("")+'</div>'):'';
+    var hooks=sc.hooks?('<div class="sc-hooks">'+sc.hooks.map(function(h,i){
+      var done=sc.savedHooks&&sc.savedHooks[i];
+      var act=done?'<span class="sc-hook-done">'+IC.check+' Añadido</span>'
+                  :'<button class="sc-hook-save" data-act="save-hook" data-id="'+sc.id+'" data-i="'+i+'">'+IC.plus+' Añadir</button>';
+      return '<div class="sc-hook"><span class="hn">'+String(i+1).padStart(2,"0")+'</span><span>'+ESC(h)+'</span>'+act+'</div>';
+    }).join("")+'</div>'):'';
     var hooksBtn=sc.hooks?'':'<button class="btn btn-sm btn-ghost" data-act="gen5hooks" data-id="'+sc.id+'">'+IC.hook+' 5 hooks</button>';
     var saved=sc.saved?'<span class="sc-saved">'+IC.check+' En Guiones</span>':'<button class="btn btn-sm btn-secondary" data-act="save-script" data-id="'+sc.id+'">Guardar guión</button>';
-    return '<div class="sc-block">'+
+    return '<div class="sc-block'+(sc.saved?" is-saved":"")+'">'+
       '<div class="sc-hook-line">'+ESC(sc.hook)+'</div>'+
       '<div class="sc-actions">'+hooksBtn+saved+'</div>'+
       hooks+
@@ -450,11 +459,53 @@
   /* ════════════════════════════════════════════════════════════════
      GUIONES — validados (guardados desde Ideas / robados)
      ════════════════════════════════════════════════════════════════ */
+  // Curva de retención de MUESTRA (demo). La real vendrá de Instagram Insights (OAuth).
+  function retentionPts(vsMedian){
+    return (vsMedian||1) >= 3 ? [100,94,87,80,74,69,65,62] : [100,80,65,54,46,41,37,34];
+  }
+  // Vista "Rendimiento del guion": cómo traccionó el reel publicado → entrena el Cerebro.
+  function guiPerfHTML(){
+    var g=guionById(S.perfGuion); if(!g) return '<div class="pad">—</div>';
+    var p=g.published||{}; var pts=retentionPts(p.vsMedian); var hold=pts[3];
+    var W=560,H=150,n=pts.length;
+    var co=pts.map(function(v,i){ return [Math.round(i/(n-1)*W), Math.round(H-(v/100)*(H-10)-5)]; });
+    var line=co.map(function(c,i){ return (i?"L":"M")+c[0]+" "+c[1]; }).join(" ");
+    var area=line+" L"+W+" "+H+" L0 "+H+" Z";
+    var dots=co.map(function(c){ return '<circle cx="'+c[0]+'" cy="'+c[1]+'" r="3"/>'; }).join("");
+    var dur=p.dur||"0:40";
+    var metrics=[["VIEWS",fmtNum(p.views||0)],["LIKES",fmtNum(p.likes||0)],["RETENCIÓN","~"+hold+"%"],["VS TU MEDIA",(p.vsMedian||1)+"×"]];
+    var voicePct=brand().voice||40;
+    return '<div class="perf">'+
+      '<div class="perf-eyebrow">'+IC.chart+' Reel publicado'+(g.from?' · de tu guion robado a '+ESC(g.from):'')+'</div>'+
+      '<h2 class="perf-title">'+ESC(g.title)+'</h2>'+
+      '<div class="perf-metrics">'+metrics.map(function(m){ return '<div class="pm"><div class="pm-k">'+m[0]+'</div><div class="pm-v">'+ESC(m[1])+'</div></div>'; }).join("")+'</div>'+
+      '<div class="perf-ret">'+
+        '<div class="perf-ret-h">Retención <span class="muted">· '+hold+'% sigue a la mitad del reel</span> <span class="perf-sample">muestra</span></div>'+
+        '<svg class="ret-svg" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"><path class="ret-area" d="'+area+'"/><path class="ret-line" d="'+line+'"/>'+dots+'</svg>'+
+        '<div class="perf-ret-x"><span>0s</span><span>'+ESC(dur)+'</span></div>'+
+      '</div>'+
+      '<div class="brain-section-t" style="margin-top:6px">Qué funcionó aquí</div>'+
+      '<div class="learn"><div class="learn-list">'+
+        ['<div class="learn-item">'+IC.check+'<span>El hook retiene al <b>'+pts[1]+'%</b> en los primeros segundos — gancho fuerte.</span></div>',
+         '<div class="learn-item">'+IC.check+'<span>Duración <b>'+ESC(dur)+'</b>'+((p.vsMedian||1)>=3?' — en tu punto dulce.':'.')+'</span></div>',
+         '<div class="learn-item">'+IC.check+'<span>Superó tu media <b>'+(p.vsMedian||1)+'×</b>.</span></div>'].join("")+
+      '</div></div>'+
+      '<div class="perf-foot">'+IC.brain+' Esto <b>entrena tu Cerebro</b> (voz al '+voicePct+'%): cada semana analizo cómo traccionan tus reels y genero más en la línea de los que petan.</div>'+
+    '</div>';
+  }
   function guiCardHTML(g){
     var rec=g.status==="recorded";
     var pill=rec?'<span class="gui-pill done">'+IC.check+' Grabado</span>':'<span class="gui-pill">Por grabar</span>';
     var nh=(g.hooks&&g.hooks.length)||0;
     var meta=(g.from?'robado de '+ESC(g.from)+' · ':'')+'voz '+ESC(g.brand);
+    var pub;
+    if(g.published && g.published.pending){
+      pub='<span class="gui-pub pending" title="Vinculado · pendiente de análisis">'+IC.repeat+' reel vinculado · se analiza en el próximo refresco</span>';
+    } else if(g.published){
+      pub='<button class="gui-pub'+((g.published.vsMedian||0)>=3?" hot":"")+'" data-act="gui-perf" data-id="'+g.id+'" title="Ver rendimiento y retención">'+IC.chart+' '+fmtNum(g.published.views)+' views · '+(g.published.vsMedian||1)+'× tu media · ver →</button>';
+    } else if(g.status==="recorded"){
+      pub='<button class="gui-link" data-act="gui-link-reel" data-id="'+g.id+'" title="Pega el link del reel publicado para analizarlo y entrenar tu Cerebro">'+IC.repeat+' Vincular reel publicado</button>';
+    } else { pub=''; }
     var toggle=nh?'<button class="gui-hooks-toggle'+(g.expanded?" open":"")+'" data-act="gui-hooks" data-id="'+g.id+'">'+IC.hook+' '+nh+' hook'+(nh===1?"":"s")+' alternativo'+(nh===1?"":"s")+' '+IC.chev+'</button>':'';
     var hooksList=(nh&&g.expanded)?'<div class="gui-hooks">'+g.hooks.map(function(h,i){
       return '<div class="gui-hook"><span class="hn">'+String(i+1).padStart(2,"0")+'</span><span class="gui-hook-t">'+ESC(h)+'</span>'+
@@ -465,7 +516,7 @@
     return '<div class="gui-card-wrap">'+
       '<div class="gui-card'+(rec?" is-rec":"")+'">'+
         '<div class="ava bava">'+ESC(initialsOf(g.from||g.brand))+'</div>'+
-        '<div class="gui-main"><div class="gui-title">'+ESC(g.title)+'</div><div class="gui-meta">'+meta+'</div>'+toggle+'</div>'+
+        '<div class="gui-main"><div class="gui-title">'+ESC(g.title)+'</div><div class="gui-meta">'+meta+'</div>'+pub+toggle+'</div>'+
         pill+
         '<div class="gui-acts">'+
           '<button class="iconbtn" data-act="gui-record" data-id="'+g.id+'" title="Grabar (teleprompter)">'+IC.mic+'</button>'+
@@ -556,7 +607,9 @@
     var cards=v.map(function(x){
       var thumbInner=x.thumb?'<img src="'+ESC(x.thumb)+'" alt="">':'<div class="play"></div>';
       var badges=(x.top?'<span class="vid-badge top">TOP</span>':"")+(x.viral?'<span class="vid-badge viral">VIRAL</span>':"");
-      var link=x.from_guion?'<div class="pub-link">'+IC.doc+' creado aquí'+(x.from_competitor?' · '+ESC(x.from_competitor):"")+'</div>':"";
+      var link=x.from_guion
+        ? '<div class="pub-link"'+(x.vsMedian?' title="'+x.vsMedian+'× tu media"':'')+'>'+IC.doc+' de tu guion «'+ESC(x.from_guion)+'»'+(x.vsMedian?' · <b>'+x.vsMedian+'×</b> tu media':'')+'</div>'
+        : '<div class="pub-link organic">○ orgánico · sin guion</div>';
       return '<div class="vid-card"><div class="vid-thumb thumb">'+thumbInner+'<span class="dur">'+ESC(x.dur||"0:30")+'</span>'+(badges?'<div class="vid-badges">'+badges+'</div>':"")+'</div>'+
         '<div class="vid-body"><div class="vid-cap">'+ESC(x.cap)+'</div>'+
         '<div class="vid-metrics"><span>'+IC.eye+' '+fmtK(x.views)+'</span><span>'+IC.heart+' '+fmtK(x.likes)+'</span><span>'+IC.chat+' '+(x.comments||0)+'</span></div>'+
@@ -809,6 +862,7 @@
     if(S.view==="gen") html+=overlayShellHTML(generatingHTML(S.genKind),"Trabajando…","close-feed",true);
     else if(S.view==="script") html+=overlayShellHTML(scriptRevealHTML(),"Tu guión, en tu voz","close-feed",true);
     else if(S.view==="result") html+=overlayShellHTML(formatResultHTML(S.resultKind),"Listo","back-script",false);
+    else if(S.view==="perf") html+=overlayShellHTML(guiPerfHTML(),"Rendimiento del guion","close-feed",true);
     else if(S.view==="prompter") html+=teleprompterHTML();
     else if(S.view==="fillweek") html+='<div class="overlay"><div class="obar"><button class="back" data-act="close-feed">'+IC.x+'</button><span class="otitle">Llena mi semana</span></div><div class="oscroll" id="rsFillHost">'+fillWeekHTML(fillReels(),S._fillPhase==null?0:S._fillPhase)+'</div></div>';
     html+='<div class="rs-toast" id="rsToast"><span class="tdot"></span><span id="rsToastMsg"></span></div>';
@@ -1028,6 +1082,8 @@
     if(act==="gui-record"){ var g=guionById(id); if(g){ S.activeGuionId=g.id; S.reel={creator:{handle:(g.from||"").replace("@","")},script:{hook:g.hook,beats:g.beats,close:g.close}}; S.view="prompter"; render(); } return; }
     if(act==="gui-toggle-rec"){ var g2=guionById(id); if(g2){ g2.status=(g2.status==="recorded")?"draft":"recorded"; if(g2.status==="recorded"&&S.stats) S.stats.stolen_today+=1; render(); showToast(g2.status==="recorded"?"Marcado como grabado.":"Vuelto a borrador."); } return; }
     if(act==="gui-discard"){ var g3=guionById(id); if(g3){ g3.status="discarded"; render(); showToast("Descartado."); } return; }
+    if(act==="gui-perf"){ S.perfGuion=id; S.view="perf"; return render(); }
+    if(act==="gui-link-reel"){ var gl=guionById(id); if(gl){ var u=window.prompt("Pega el link del reel publicado (Instagram/TikTok). Lo analizo cada semana y entrena tu Cerebro:"); if(u){ gl.published={pending:true, url:u}; gl.status="recorded"; render(); showToast("Reel vinculado. Se analizará en el próximo refresco y entrenará tu Cerebro."); } } return; }
     if(act==="copy"){ var txt=btn.getAttribute("data-txt"); if(navigator.clipboard) navigator.clipboard.writeText(txt); btn.textContent="✓"; setTimeout(function(){ btn.textContent="Copiar"; },1200); return; }
   }
 
@@ -1036,6 +1092,47 @@
      ════════════════════════════════════════════════════════════════ */
   function setDevice(){ S.device=window.matchMedia("(max-width:720px)").matches?"mobile":"desktop"; }
   function skeletonHTML(){ return railHTML()+'<div class="work">'+cmdHTML()+'<div class="scroll"><div class="canvas"><div class="statbar"><div class="stat"></div><div class="stat"></div><div class="stat"></div><div class="stat"></div></div><div class="rs-skel" style="height:200px;margin-bottom:14px"></div><div class="rs-skel"></div><div class="rs-skel"></div></div></div></div>'; }
+
+  // DEMO MVP: siembra guiones (con HOOKS agrupados + métricas de publicación) y un
+  // perfil de métricas con reels VINCULADOS a sus guiones — para ver el loop completo.
+  function seedDemoContent(){
+    if(!S._seeded){
+      S._seeded=true;
+      S.guiones=[
+        { id:"gd1", seq:1, title:"Llevo 3 semanas sin tocar mi bandeja de entrada",
+          hook:"Llevo 3 semanas sin tocar mi bandeja de entrada. Y no, no la estoy ignorando.",
+          beats:["Te lo cuento porque me devolvió 6 horas a la semana.","Paso uno: conectas tu correo a una herramienta.","Paso dos: la IA etiqueta cada email.","Paso tres: te deja el borrador escrito."],
+          close:"Guárdate esto, que mañana subo la plantilla.",
+          from:"@nick_saraev", brand:brand().name, type:"guión", status:"recorded", expanded:true,
+          hooks:["Si pasas más de 30 min al día en el correo, esto es para ti.","Mi IA respondió 212 emails este mes. Yo revisé 11.","Te enseño el flujo que borró el correo de mi lista de tareas."],
+          published:{ views:1400000, likes:112000, dur:"0:41", vsMedian:5.8 } },
+        { id:"gd2", seq:2, title:"El prompt de 9 palabras que arregla ChatGPT",
+          hook:"Hay 9 palabras que cambian por completo cómo te responde ChatGPT.",
+          beats:["El problema no es la IA, es cómo le pides las cosas.","Las 9 palabras: «antes de responder, hazme las preguntas que necesites».","De repente deja de inventar."],
+          close:"Copia esta frase y cuéntame qué cambió.",
+          from:"@aiwithanna", brand:brand().name, type:"guión", status:"recorded",
+          hooks:["Llevas usando ChatGPT mal todo este tiempo.","Deja de pedirle cosas como si fuera Google."],
+          published:{ views:680000, likes:54000, dur:"0:38", vsMedian:3.2 } },
+        { id:"gd3", seq:3, title:"Automaticé mi facturación de freelance en una tarde",
+          hook:"El año pasado perdí 2.000€ en facturas que olvidé enviar. Este año, imposible.",
+          beats:["Monté un sistema de la propuesta a la factura cobrada.","Se genera sola y manda recordatorios.","Yo solo me entero cuando entra el dinero."],
+          close:"Si facturas a mano, guárdate esto.",
+          from:"@marcbuilds", brand:brand().name, type:"guión", status:"draft", hooks:[] }
+      ];
+    }
+    S.igConnected=true;
+    S.metrics={
+      connected:true, analyses_left:"1/1",
+      top:{ title:"Llevo 3 semanas sin tocar mi bandeja", views:"1,4 M" },
+      learned:["Tus reels de ~40s superan tu media de vistas","Abrir con pregunta te funciona (3 de tus mejores lo hacen)","Los hooks de «yo hice X y pasó Y» rinden 2,4× más que los de pregunta"],
+      videos:[
+        { cap:"Llevo 3 semanas sin tocar mi bandeja…", views:1400000, likes:112000, comments:840, dur:"0:41", date:"hace 6 d", top:true, viral:true, from_guion:"Llevo 3 semanas sin tocar mi bandeja de entrada", vsMedian:5.8 },
+        { cap:"El prompt de 9 palabras que arregla ChatGPT", views:680000, likes:54000, comments:420, dur:"0:38", date:"hace 12 d", top:true, from_guion:"El prompt de 9 palabras que arregla ChatGPT", vsMedian:3.2 },
+        { cap:"Mi setup de creador en 2026 (tour)", views:90000, likes:5400, comments:80, dur:"1:10", date:"hace 18 d" },
+        { cap:"3 automatizaciones que deberías tener ya", views:210000, likes:16000, comments:190, dur:"0:33", date:"hace 22 d", from_guion:"Automaticé mi facturación de freelance en una tarde", vsMedian:1.6 }
+      ]
+    };
+  }
 
   function loadBrandData(){
     var el=root(); if(!el) return;
@@ -1055,6 +1152,7 @@
       S._reelPool=S.reels.slice();   // pool base para variar feed por-marca en demo
       if(met){ S.metrics=met; S.igConnected=(met.connected!==false); }
       else { S.metrics=null; }
+      if(isDemo()) seedDemoContent();   // MVP demo: SIEMPRE siembra guiones+hooks+reels vinculados
       if(isDemo() && !(isAgency() && S.tab==="portfolio")) applyDemoBrand();
       render();
     });
@@ -1083,7 +1181,7 @@
       if(isDemo()){ try{ var qs=new URLSearchParams(location.search);
         var qp=qs.get("plan"); if(qp==="creador"){ S.plan="creador"; S.brands=[demoBrands()[0]]; S.brandId=S.brands[0].id; S.tab="dashboard"; } else if(qp==="agencia"){ S.plan="agencia"; S.brands=demoBrands(); S.brandId=S.brands[0].id; S.tab="portfolio"; }
         var qb=qs.get("b"); if(qb && S.brands.some(function(x){return x.id===qb;})){ S.brandId=qb; S.tab="dashboard"; }
-        var qt=qs.get("t"); if(qt){ S.tab=qt; }
+        var qt=qs.get("t"); if(qt==="perf"){ S.tab="guiones"; S.view="perf"; S.perfGuion="gd1"; } else if(qt){ S.tab=qt; }
       }catch(e){} }
       loadBrandData();
     });
