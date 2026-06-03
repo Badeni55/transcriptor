@@ -199,7 +199,9 @@ CREATE TABLE IF NOT EXISTS public.scripts (
   from_competitor_reel_id  TEXT,
   from_competitor_username TEXT,
   recording_status         TEXT NOT NULL DEFAULT 'pending',
-  assistant_name           TEXT
+  assistant_name           TEXT,
+  hook                     TEXT,
+  alt_hooks                JSONB NOT NULL DEFAULT '[]'  -- migración 20260603_scripts_alt_hooks.sql (2026-06-03)
 );
 
 -- ════════════════════════════════════════════════════════════

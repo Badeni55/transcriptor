@@ -102,6 +102,24 @@
       script:r.script||null, hooks:r.hooks||null };
   }
 
+  // Mapea una fila cruda de /metrics/videos (tabla ig_videos: caption/thumbnail_b64/
+  // duration/published_at/tag…) a la shape que metricGridHTML/metricStatsHTML leen
+  // (cap/thumb/dur/date/top/viral). from_guion/vsMedian no vienen de este endpoint
+  // (la atribución vive en scripts) → quedan vacíos y el grid muestra "orgánico".
+  function normMetricVideo(v){
+    var tag=(v.tag||"")+"";
+    return {
+      cap: v.cap||v.caption||"",
+      views: v.views||0, likes: v.likes||0, comments: v.comments||0,
+      thumb: v.thumb||v.thumbnail_b64||v.thumbnail_url||null,
+      dur: v.dur||durFmt(v.duration),
+      date: v.date||relTime(v.published_at),
+      top: !!(v.top || tag==="top"),
+      viral: !!(v.viral || tag==="viral"),
+      from_guion: v.from_guion||null, vsMedian: v.vsMedian||null
+    };
+  }
+
   function greetWord(){ var h=new Date().getHours(); return h<6?"Buenas noches":h<13?"Buenos días":h<21?"Buenas tardes":"Buenas noches"; }
 
   /* ════════════════════════════════════════════════════════════════
@@ -526,7 +544,7 @@
     } else if(g.published){
       pub='<button class="gui-pub'+((g.published.vsMedian||0)>=3?" hot":"")+'" data-act="gui-perf" data-id="'+g.id+'" title="Ver rendimiento y retención">'+IC.chart+' '+fmtNum(g.published.views)+' views · '+(g.published.vsMedian||1)+'× tu media · ver →</button>';
     } else if(g.status==="recorded"){
-      pub='<button class="gui-link" data-act="gui-link-reel" data-id="'+g.id+'" title="Pega el link del reel publicado para analizarlo y entrenar tu Cerebro">'+IC.repeat+' Vincular reel publicado</button>';
+      pub='<button class="gui-link" data-act="gui-link-reel" data-id="'+g.id+'" title="Pega el link del reel publicado en Instagram para analizarlo y entrenar tu Cerebro">'+IC.repeat+' Vincular reel publicado</button>';
     } else { pub=''; }
     var toggle=nh?'<button class="gui-hooks-toggle'+(g.expanded?" open":"")+'" data-act="gui-hooks" data-id="'+g.id+'">'+IC.hook+' '+nh+' hook'+(nh===1?"":"s")+' alternativo'+(nh===1?"":"s")+' '+IC.chev+'</button>':'';
     var hooksList=(nh&&g.expanded)?'<div class="gui-hooks">'+g.hooks.map(function(h,i){
@@ -1082,11 +1100,14 @@
     var q=S.brandId?("?brand="+encodeURIComponent(S.brandId)):"";
     return Promise.all([
       fetch("/metrics/summary"+q,{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
-      fetch("/api/metrics/insights",{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
+      fetch("/api/metrics/insights",{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
+      fetch("/metrics/videos"+q,{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
     ]).then(function(res){
-      var met=res[0], ins=res[1];
+      var met=res[0], ins=res[1], vids=res[2];
       if(met){ S.metrics=met; S.igConnected=(met.connected!==false); }
       if(ins){ S.metrics=S.metrics||{}; S.metrics.insights={ what_works:ins.what_works||[], next:ins.next||null }; }
+      // Los reels reales viven en /metrics/videos (summary solo trae agregados).
+      if(vids){ S.metrics=S.metrics||{}; S.metrics.videos=(vids.videos||[]).map(normMetricVideo); }
       render();
     });
   }
@@ -1192,7 +1213,7 @@
     if(act==="gui-toggle-rec"){ var g2=guionById(id); if(g2){ g2.status=(g2.status==="recorded")?"draft":"recorded"; if(g2.status==="recorded"&&S.stats) S.stats.stolen_today+=1; render(); showToast(g2.status==="recorded"?"Marcado como grabado.":"Vuelto a borrador."); } return; }
     if(act==="gui-discard"){ var g3=guionById(id); if(g3){ g3.status="discarded"; render(); showToast("Descartado."); } return; }
     if(act==="gui-perf"){ S.perfGuion=id; S.view="perf"; return render(); }
-    if(act==="gui-link-reel"){ var gl=guionById(id); if(gl){ var u=window.prompt("Pega el link del reel publicado (Instagram/TikTok). Lo analizo cada semana y entrena tu Cerebro:"); if(u){ gl.published={pending:true, url:u}; gl.status="recorded"; render(); if(isDemo()){ showToast("Reel vinculado. Se analizará en el próximo refresco y entrenará tu Cerebro."); } else { linkReelPublished(gl, u); } } } return; }
+    if(act==="gui-link-reel"){ var gl=guionById(id); if(gl){ var u=window.prompt("Pega el link del reel publicado en Instagram. Lo analizo cada semana y entrena tu Cerebro:"); if(u){ gl.published={pending:true, url:u}; gl.status="recorded"; render(); if(isDemo()){ showToast("Reel vinculado. Se analizará en el próximo refresco y entrenará tu Cerebro."); } else { linkReelPublished(gl, u); } } } return; }
     if(act==="copy"){ var txt=btn.getAttribute("data-txt"); if(navigator.clipboard) navigator.clipboard.writeText(txt); btn.textContent="✓"; setTimeout(function(){ btn.textContent="Copiar"; },1200); return; }
   }
 
@@ -1254,9 +1275,10 @@
       fetch("/api/tracked-creators/reels"+(q?q+"&":"?")+"sort=explosion&limit=24",{credentials:"same-origin"}).then(function(r){return r.json();}).catch(function(){return{reels:[]};}),
       fetch("/metrics/summary"+q,{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
       fetch("/api/voice",{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
-      fetch("/api/metrics/insights",{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
+      fetch("/api/metrics/insights",{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
+      fetch("/metrics/videos"+q,{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
     ]).then(function(res){
-      var stats=res[0]||{}, feed=res[1]||{}, met=res[2], ins=res[4];
+      var stats=res[0]||{}, feed=res[1]||{}, met=res[2], ins=res[4], vids=res[5];
       if(res[3]) S.voice=res[3];   // perfil de voz real (moat) — null en demo dummy
       S.stats={ competitors:stats.competitors||0, reels_week:stats.reels_week||0, exploded_week:stats.exploded_week||0, stolen_today:stats.stolen_today!=null?stats.stolen_today:(stats.stolen_total||0) };
       S.reels=(feed.reels||[]).map(normReel);
@@ -1264,6 +1286,9 @@
       S._reelPool=S.reels.slice();   // pool base para variar feed por-marca en demo
       if(met){ S.metrics=met; S.igConnected=(met.connected!==false); }
       else { S.metrics=null; }
+      // /metrics/summary solo trae agregados; los reels reales viven en /metrics/videos.
+      // Volcamos a S.metrics.videos (shape que lee metricGridHTML). En demo lo pisa seedDemoContent.
+      if(vids){ S.metrics=S.metrics||{}; S.metrics.videos=(vids.videos||[]).map(normMetricVideo); }
       // Insights del Cerebro (lo que funciona en TU cuenta + el siguiente de la serie).
       if(ins){ S.metrics=S.metrics||{}; S.metrics.insights={ what_works:ins.what_works||[], next:ins.next||null }; }
       if(isDemo()) seedDemoContent();   // MVP demo: SIEMPRE siembra guiones+hooks+reels vinculados

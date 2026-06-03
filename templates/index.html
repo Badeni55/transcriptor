@@ -9727,6 +9727,17 @@
     .rs .idea-launch-input::placeholder { color:var(--text-tertiary); }
     .rs--mobile .idea-launch { flex-wrap:wrap; }
 
+    /* ══ B1: "tu próxima serie" — card hero sugerida por el Cerebro ══ */
+    .rs .next-series { position:relative; overflow:hidden; border:1px solid color-mix(in srgb, var(--brand-500) 30%, transparent); border-radius:18px; padding:20px 22px; margin-bottom:18px; background:linear-gradient(135deg, color-mix(in srgb, var(--brand-500) 12%, var(--surface-raised)), var(--surface-raised)); }
+    .rs .next-series::before { content:""; position:absolute; top:0; left:0; bottom:0; width:3px; background:linear-gradient(180deg, var(--brand-400), var(--brand-600)); }
+    .rs .ns-eyebrow { display:flex; align-items:center; gap:8px; font-size:12px; text-transform:uppercase; letter-spacing:.09em; font-weight:700; color:var(--brand-400); margin-bottom:9px; }
+    .rs .ns-eyebrow svg { width:15px; height:15px; flex-shrink:0; }
+    .rs .ns-views { display:inline-flex; align-items:center; gap:4px; margin-left:auto; font-family:var(--font-mono); font-size:11.5px; letter-spacing:0; text-transform:none; color:var(--text-tertiary); }
+    .rs .ns-views svg { width:13px; height:13px; }
+    .rs .ns-title { margin:0 0 6px; font-family:var(--font-display); font-size:21px; line-height:1.2; color:var(--text-primary); }
+    .rs .ns-msg { margin:0 0 14px; font-size:14px; line-height:1.5; color:var(--text-secondary); }
+    .rs .ns-actions { display:flex; flex-wrap:wrap; gap:10px; }
+
     /* ══ fábrica de ideas ══ */
     .rs .ideas-pad { padding:30px 40px 20px; }
     .rs--mobile .ideas-pad { padding:20px 18px 12px; }
@@ -9930,6 +9941,14 @@
     .rs .voice-capture .vc-lead { margin:0 0 12px; font-size:14px; line-height:1.5; color:var(--text-secondary); } .rs .voice-capture .vc-lead b { color:var(--text-primary); }
     .rs .voice-capture .vc-ta { width:100%; min-height:110px; resize:vertical; padding:12px 14px; border:1px solid var(--border-default); border-radius:12px; background:var(--surface-base); color:var(--text-primary); font:inherit; font-family:var(--font-body); font-size:14px; outline:none; margin-bottom:12px; }
     .rs .voice-capture .vc-ta:focus { border-color:color-mix(in srgb, var(--brand-500) 50%, transparent); }
+    /* B6: onboarding de voz inline en el Dashboard (reusa .voice-capture dentro) */
+    .rs .dash-voice-onboard { border:1px solid color-mix(in srgb, var(--brand-500) 28%, transparent); border-radius:20px; padding:20px 22px; margin-bottom:18px; background:linear-gradient(135deg, color-mix(in srgb, var(--brand-500) 10%, var(--surface-raised)), var(--surface-raised)); }
+    .rs .dash-voice-onboard .voice-capture { margin-bottom:0; border-color:var(--border-default); background:var(--surface-raised); }
+    .rs .dvo-head { display:flex; align-items:center; gap:14px; margin-bottom:14px; }
+    .rs .dvo-ic { width:46px; height:46px; flex-shrink:0; border-radius:14px; display:flex; align-items:center; justify-content:center; color:#fff; background:linear-gradient(135deg, var(--brand-500), #6f93ff); box-shadow:0 6px 20px rgba(79,124,255,.32); }
+    .rs .dvo-ic svg { width:23px; height:23px; }
+    .rs .dvo-eyebrow { font-size:12px; text-transform:uppercase; letter-spacing:.08em; font-weight:700; color:var(--brand-400); margin-bottom:3px; }
+    .rs .dvo-title { margin:0; font-family:var(--font-display); font-size:19px; line-height:1.2; color:var(--text-primary); }
     .rs .brain-comps { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .rs--mobile .brain-comps { grid-template-columns:1fr; }
     .rs .brain-comp { display:flex; align-items:center; gap:11px; padding:12px 14px; border:1px solid var(--border-default); border-radius:12px; background:var(--surface-raised); }
