@@ -52,27 +52,21 @@ COMMENT ON TABLE app_settings IS 'Ajustes globales (COST_CENTS, flags, etc.). Cl
 
 ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
 
--- 1.5. SEED: Insertar valores actuales (v0.19, ON CONFLICT DO NOTHING)
+-- 1.5. SEED: valores actuales v0.19 (ON CONFLICT DO NOTHING).
+--   Los stripe_price_* arrancan NULL: se rellenan desde el panel admin (/admin -> Planes/Topups).
 INSERT INTO plans (key, name, price_month_cents, price_year_cents, monthly_credits, stripe_price_month, stripe_price_year, active, sort_order) VALUES
-  ('free', 'Free', NULL, NULL, 0, NULL, NULL, true, 1),
-  ('creator', 'Creator', 2900, 27600, 100,
-   (SELECT value->>'stripe_price_creator_month' FROM app_settings WHERE key='env'),
-   (SELECT value->>'stripe_price_creator_year' FROM app_settings WHERE key='env'),
-   true, 2),
-  ('agency', 'Agency', 12900, 129000, 500,
-   (SELECT value->>'stripe_price_agency_month' FROM app_settings WHERE key='env'),
-   (SELECT value->>'stripe_price_agency_year' FROM app_settings WHERE key='env'),
-   true, 3),
-  ('pro', 'Pro (Legacy)', NULL, NULL, 50, NULL, NULL, false, 4)
+  ('free',    'Free',          NULL,  NULL,   0,   NULL, NULL, true,  1),
+  ('creator', 'Creator',       2900,  27600,  100, NULL, NULL, true,  2),
+  ('agency',  'Agency',        12900, 129000, 500, NULL, NULL, true,  3),
+  ('pro',     'Pro (Legacy)',  NULL,  NULL,   50,  NULL, NULL, false, 4)
 ON CONFLICT DO NOTHING;
 
 INSERT INTO topups (key, credits, price_cents, stripe_price_id, active, sort_order) VALUES
-  ('100', 100, 1900, (SELECT value->>'stripe_topup_100' FROM app_settings WHERE key='env'), true, 1),
-  ('300', 300, 4900, (SELECT value->>'stripe_topup_300' FROM app_settings WHERE key='env'), true, 2),
-  ('1000', 1000, 13900, (SELECT value->>'stripe_topup_1000' FROM app_settings WHERE key='env'), true, 3)
+  ('100',  100,  1900,  NULL, true, 1),
+  ('300',  300,  4900,  NULL, true, 2),
+  ('1000', 1000, 13900, NULL, true, 3)
 ON CONFLICT DO NOTHING;
 
 INSERT INTO app_settings (key, value) VALUES
-  ('cost_cents', '{"value": 18}'),
-  ('env', '{"stripe_price_creator_month": "", "stripe_price_creator_year": "", "stripe_price_agency_month": "", "stripe_price_agency_year": "", "stripe_topup_100": "", "stripe_topup_300": "", "stripe_topup_1000": ""}')
+  ('cost_cents', '{"value": 18}')
 ON CONFLICT DO NOTHING;
