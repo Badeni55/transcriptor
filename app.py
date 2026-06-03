@@ -7653,6 +7653,726 @@ def admin_metrics():
     })
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+#  ISLA "SIGNAL" — generación/persistencia en lote para los botones del radar
+#  (gen 5 ideas · gen 5 guiones · gen 5 hooks · explosión · llenar semana).
+#
+#  En la demo (window.__DEMO__) estas acciones son estado local (no llaman aquí).
+#  En PROD (!isDemo()) la isla pega contra ESTOS endpoints, que reúsan la lógica
+#  probada del workspace legacy: develop_idea(), adapt_with_ai() + voz inyectada
+#  (voice_prompt_block via get_voice_profile), persistencia en ideas/scripts y el
+#  patrón anti-doble-gasto (acquire_credit_lock + re-check + refund-on-fail).
+#
+#  UNIDAD DE CRÉDITO: el frontend trata 1 crédito = COST_CENTS (radar-loop.js:1393
+#  → S.user.credits = credits_cents / COST_CENTS). El COST map de la isla está en
+#  CRÉDITOS: {idea5:1, scripts5:5, hooks5:1, explosion:30} y fillweek = nº de reels.
+#  Estos endpoints cobran EXACTAMENTE esos créditos × COST_CENTS para que el
+#  flashSpark(-COST.x) cosmético del frontend cuadre con el descuento server-side.
+#  Backend = fuente de verdad: se cobra ANTES del LLM bajo lock y se refunda si falla.
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _charge_units_locked(uid, units, user):
+    """Cobro server-side anti-doble-gasto de `units` créditos (1 crédito =
+    COST_CENTS). Adquiere el lock por-usuario, re-lee el perfil bajo lock y
+    descuenta según el modo del usuario:
+      - paid REAL  → suma `units` a monthly_usage (sin tocar credits_cents).
+      - free       → consume free_lifetime (de 1 en 1, hasta agotar) y el resto
+                     contra credits_cents (topups). Si no llega → corta.
+
+    Devuelve una tupla (err_response, refund_fn, charged_state):
+      - err_response: jsonify(...) con código si NO se pudo cobrar (o None si OK).
+      - refund_fn:    callable best-effort que revierte el cargo (no-op si err).
+      - charged_state: dict con {'mode','free_used','credits_charged'} para logging.
+    El llamador hace: err, refund, _ = _charge_units_locked(...); if err: return err
+    y luego refund() en cualquier rama de fallo del LLM.
+    """
+    cost_per_unit = get_cost_cents()
+    profile = get_profile(uid)
+    is_paid_unlimited = paid_features_active(profile, user)
+    is_admin = (user or {}).get("email", "").lower() in UNLIMITED_EMAILS
+
+    if is_admin:
+        # Cuentas admin/cortesía: sin coste ni contador.
+        return None, (lambda: None), {"mode": "admin", "free_used": 0, "credits_charged": 0}
+
+    total_cost = max(0, int(units)) * cost_per_unit
+    _lock = acquire_credit_lock(uid)
+    if _lock is None:
+        # Contención same-user (otra operación en curso) → 429, como el path legacy (no serializar a ciegas).
+        return (jsonify({"error": "busy"}), 429), (lambda: None), {"mode": "busy"}
+    try:
+        fresh = get_profile(uid)
+        if is_paid_unlimited:
+            db.table("profiles").update({
+                "monthly_usage": (fresh.get("monthly_usage") or 0) + int(units)
+            }).eq("id", uid).execute()
+            state = {"mode": "paid", "free_used": 0, "credits_charged": 0, "units": int(units)}
+        else:
+            free_avail = free_lifetime_left(fresh)
+            free_used = min(free_avail, int(units))
+            paid_units = int(units) - free_used
+            credits_needed = paid_units * cost_per_unit
+            if (fresh.get("credits_cents") or 0) < credits_needed:
+                release_credit_lock(uid, _lock)
+                return (jsonify({
+                    "error": "no_credits",
+                    "message": "Necesitas más créditos para esta acción. "
+                               "Sube a Creador o recarga créditos.",
+                }), 402), (lambda: None), {}
+            updates = {}
+            if free_used:
+                updates["free_lifetime_uses"] = (fresh.get("free_lifetime_uses") or 0) + free_used
+            if credits_needed:
+                updates["credits_cents"] = (fresh.get("credits_cents") or 0) - credits_needed
+            if updates:
+                db.table("profiles").update(updates).eq("id", uid).execute()
+            state = {"mode": "free", "free_used": free_used,
+                     "credits_charged": credits_needed, "units": int(units)}
+    except Exception as e:
+        logger.error("_charge_units_locked: pre-charge failed user=%s err=%s", uid, e, exc_info=True)
+        release_credit_lock(uid, _lock)
+        return (jsonify({"error": "internal", "message": "Inténtalo de nuevo."}), 500), (lambda: None), {}
+    finally:
+        release_credit_lock(uid, _lock)
+
+    def _refund():
+        """Revertir el cargo aplicado arriba. Best-effort, bajo lock."""
+        _rl = acquire_credit_lock(uid)
+        try:
+            cur = get_profile(uid)
+            if state.get("mode") == "paid":
+                db.table("profiles").update({
+                    "monthly_usage": max(0, (cur.get("monthly_usage") or 0) - state.get("units", 0))
+                }).eq("id", uid).execute()
+            elif state.get("mode") == "free":
+                upd = {}
+                if state.get("free_used"):
+                    upd["free_lifetime_uses"] = max(0, (cur.get("free_lifetime_uses") or 0) - state["free_used"])
+                if state.get("credits_charged"):
+                    upd["credits_cents"] = (cur.get("credits_cents") or 0) + state["credits_charged"]
+                if upd:
+                    db.table("profiles").update(upd).eq("id", uid).execute()
+        except Exception as e:
+            logger.error("_charge_units_locked refund failed user=%s err=%s", uid, e)
+        finally:
+            release_credit_lock(uid, _rl)
+
+    return None, _refund, state
+
+
+def _credits_display(uid):
+    """Créditos que debe mostrar la pill del radar tras una operación
+    (= credits_available: restante mensual + topups). El frontend lo lee como
+    `credits_cents`/COST_CENTS, así que devolvemos ambos coherentes."""
+    prof = get_profile(uid)
+    return {
+        "credits_cents": prof.get("credits_cents", 0) or 0,
+        "credits": credits_available(prof),
+    }
+
+
+def _flatten_script_result(result):
+    """Aplana el dict del LLM (hook/body/closing | hooks[]) a string plano + saca
+    el título si lo trae. Mismo contrato que idea_to_script/generate_script."""
+    llm_title = ""
+    if isinstance(result, dict) and result.get("title"):
+        llm_title = str(result["title"]).strip()[:80]
+    if isinstance(result, dict) and "hook" in result:
+        flat = (result["hook"] + "\n" +
+                "\n".join(result.get("body", [])) + "\n" +
+                result.get("closing", ""))
+        return flat.strip(), llm_title
+    if isinstance(result, dict) and isinstance(result.get("hooks"), list):
+        return ("\n".join(h.get("text", "") for h in result["hooks"]
+                          if isinstance(h, dict) and h.get("text")).strip(), llm_title)
+    if not isinstance(result, str):
+        return str(result), llm_title
+    return result, llm_title
+
+
+@app.route("/ideas/generate-batch", methods=["POST"])
+@require_auth
+@limiter.limit("5 per minute;30 per hour")
+def ideas_generate_batch():
+    """Isla Signal — botón «5 ideas». Genera y persiste un lote de ideas
+    desarrolladas (develop_idea x N). Cobra 1 crédito por el lote (COST.idea5=1
+    en el frontend) ANTES del LLM y refunda si NINGUNA idea sale.
+    Response: {ideas:[{id,raw_text,title,category,status}], cost_cents, credits_cents, credits}."""
+    user = current_user()
+    uid = user["id"]
+    body = request.get_json(silent=True) or {}
+    count = max(1, min(int(body.get("count") or 5), 5))
+    language = body.get("language", "es")
+    project_id = body.get("project_id") or None
+    assistant_id = body.get("assistant_id") or None
+
+    if not assistant_id:
+        prof = db.table("profiles").select("default_idea_assistant").eq("id", uid).execute()
+        if prof.data and prof.data[0].get("default_idea_assistant"):
+            assistant_id = prof.data[0]["default_idea_assistant"]
+
+    # Coste del lote: COST.idea5 = 1 crédito (no 1 por idea).
+    err, refund, _ = _charge_units_locked(uid, 1, user)
+    if err:
+        return err
+
+    # Semillas: variamos el prompt para que las 5 ideas no sean clones.
+    seeds = [
+        "Dame un ángulo nuevo y específico para un reel sobre tu nicho, evita lo obvio.",
+        "Una idea contraintuitiva o que rompa una creencia común de tu audiencia.",
+        "Una idea basada en un error típico que comete tu audiencia y cómo evitarlo.",
+        "Una idea tipo 'cómo conseguir X sin Y' para tu nicho.",
+        "Una idea con gancho de historia personal o caso real (sin inventar datos).",
+    ]
+    ideas_out = []
+    for i in range(count):
+        raw_seed = seeds[i % len(seeds)]
+        try:
+            result = develop_idea(raw_seed, assistant_id, uid, language)
+        except Exception as e:
+            logger.warning("ideas_generate_batch: develop failed user=%s i=%s err=%s", uid, i, e)
+            continue
+        try:
+            row = db.table("ideas").insert({
+                "user_id": uid,
+                "project_id": project_id,
+                "raw_text": result.get("title") or raw_seed,
+                "assistant_id": assistant_id,
+                "title": result.get("title"),
+                "category": result.get("category"),
+                "script_draft": result.get("script_draft"),
+                "status": "developed",
+            }).execute()
+            if row.data:
+                r = row.data[0]
+                ideas_out.append({
+                    "id": r.get("id"),
+                    "raw_text": r.get("raw_text"),
+                    "title": r.get("title"),
+                    "category": r.get("category"),
+                    "status": "developed",
+                })
+        except Exception as e:
+            logger.error("ideas_generate_batch: insert failed user=%s err=%s", uid, e, exc_info=True)
+
+    if not ideas_out:
+        refund()
+        return jsonify({"error": "llm_error",
+                        "message": "No se pudieron generar ideas. Inténtalo de nuevo."}), 502
+
+    return jsonify({"ideas": ideas_out, "cost_cents": get_cost_cents(), **_credits_display(uid)})
+
+
+@app.route("/ideas/<idea_id>/scripts/generate-batch", methods=["POST"])
+@require_auth
+@limiter.limit("5 per minute;30 per hour")
+def idea_scripts_generate_batch(idea_id):
+    """Isla Signal — botón «5 guiones» sobre una idea. Genera N guiones con
+    variaciones (adapt_with_ai x N, voz del usuario inyectada) y los persiste en
+    `scripts` (idea_id link). Cobra 5 créditos (COST.scripts5=5) ANTES del LLM y
+    refunda si NINGÚN guion sale. Response: {scripts:[{id,title,script,assistant_name}],
+    cost_cents, credits_cents, credits}."""
+    user = current_user()
+    uid = user["id"]
+    row = db.table("ideas").select("*").eq("id", idea_id).eq("user_id", uid).execute()
+    if not row.data:
+        return jsonify({"error": "Not found"}), 404
+    idea = row.data[0]
+    body = request.get_json(silent=True) or {}
+    count = max(1, min(int(body.get("count") or 5), 5))
+
+    # Resolver asistente/estilo (mismo orden que idea_to_script).
+    assistant_id = body.get("assistant_id") or idea.get("assistant_id")
+    profile = get_profile(uid)
+    if not assistant_id and profile.get("default_idea_assistant"):
+        assistant_id = profile["default_idea_assistant"]
+
+    style_arg, custom_prompt, style_label = "viral", "", "viral"
+    if assistant_id in _BUILTIN_SCRIPT_STYLES:
+        style_arg = style_label = assistant_id
+    elif assistant_id:
+        try:
+            asst_r = db.table("assistants").select("name, instructions").eq(
+                "id", assistant_id).eq("user_id", uid).execute()
+            if asst_r.data and asst_r.data[0].get("instructions"):
+                style_arg = "custom"
+                custom_prompt = asst_r.data[0]["instructions"]
+                style_label = asst_r.data[0].get("name") or "custom"
+        except Exception:
+            pass
+    if _custom_too_short(style_arg, custom_prompt):
+        return _assistant_too_short_response(style_label)
+
+    # Coste del lote: COST.scripts5 = 5 créditos.
+    err, refund, _ = _charge_units_locked(uid, 5, user)
+    if err:
+        return err
+
+    title = idea.get("title") or ""
+    category = idea.get("category") or ""
+    raw_text = idea.get("raw_text") or ""
+    # Ángulos para que los 5 guiones no salgan idénticos.
+    angles = [
+        "Enfoque directo y práctico, paso a paso.",
+        "Enfoque de historia: arranca con una anécdota o caso concreto.",
+        "Enfoque contraintuitivo: ataca una creencia común desde el hook.",
+        "Enfoque lista: estructura el body como pasos numerados claros.",
+        "Enfoque emocional: conecta con la frustración o el deseo de la audiencia.",
+    ]
+    voice = get_voice_profile(uid)
+    scripts_out = []
+    for i in range(count):
+        user_content = (
+            f"[Idea original del usuario]\n{raw_text}\n\n"
+            f"[Título]\n{title}\n\n"
+            f"[Categoría]\n{category or '—'}\n\n"
+            f"[Ángulo para ESTA variación]\n{angles[i % len(angles)]}\n\n"
+            f"Tarea: convierte esto en un guion completo de 30-45 segundos hablados "
+            f"para un reel de Instagram, siguiendo el ángulo indicado. Output con "
+            f"desarrollo real, ejemplos concretos (sin inventar datos numéricos), "
+            f"profundidad y ritmo. Total: 100-140 palabras, mínimo 8 frases en body."
+        )
+        try:
+            result = adapt_with_ai(user_content, style_arg, custom_prompt, voice=voice, user_id=uid)
+        except Exception as e:
+            logger.warning("idea_scripts_batch: LLM failed user=%s idea=%s i=%s err=%s", uid, idea_id, i, e)
+            continue
+        flat, llm_title = _flatten_script_result(result)
+        if not flat:
+            continue
+        today = datetime.now(timezone.utc).strftime("%d %b %Y").lower()
+        script_title = llm_title or f"Guión {i+1} · {style_label} · {today}"
+        asst_name = _resolve_assistant_name(
+            {"assistant_id": assistant_id, "style": style_label}, uid, db)
+        try:
+            ins = db.table("scripts").insert({
+                "user_id": uid,
+                "idea_id": idea_id,
+                "title": script_title,
+                "script": flat,
+                "project_id": idea.get("project_id"),
+                "assistant_name": asst_name,
+            }).execute()
+            sid = ins.data[0].get("id") if ins.data else None
+        except Exception as e:
+            logger.error("idea_scripts_batch: insert failed user=%s err=%s", uid, e, exc_info=True)
+            sid = None
+        scripts_out.append({
+            "id": sid, "title": script_title, "script": flat,
+            "assistant_name": asst_name,
+        })
+
+    if not scripts_out:
+        refund()
+        return jsonify({"error": "llm_error",
+                        "message": "No se pudieron generar guiones. Inténtalo de nuevo."}), 502
+
+    try:
+        db.table("ideas").update({
+            "status": "scripted",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }).eq("id", idea_id).eq("user_id", uid).execute()
+    except Exception:
+        pass
+
+    return jsonify({"scripts": scripts_out, "cost_cents": 5 * get_cost_cents(), **_credits_display(uid)})
+
+
+@app.route("/scripts/<script_id>/hooks/generate-batch", methods=["POST"])
+@require_auth
+@limiter.limit("10 per minute;40 per hour")
+def script_hooks_generate_batch(script_id):
+    """Isla Signal — botón «5 hooks» sobre un guion. Regenera N hooks alternativos
+    (mismo prompt que /transform-hook, temp=0.9) y los persiste en scripts.alt_hooks
+    (JSONB). Cobra 1 crédito (COST.hooks5=1) ANTES del LLM y refunda si ninguno sale.
+    Response: {hooks:[str], alt_hooks:[str], cost_cents, credits_cents, credits}."""
+    user = current_user()
+    uid = user["id"]
+    row = db.table("scripts").select("*").eq("id", script_id).eq("user_id", uid).execute()
+    if not row.data:
+        return jsonify({"error": "Not found"}), 404
+    script = row.data[0]
+    body = request.get_json(silent=True) or {}
+    count = max(1, min(int(body.get("count") or 5), 5))
+
+    # Contexto del guion para el regenerador de hooks (body + closing).
+    full = (script.get("script") or "").strip()
+    lines = [l.strip() for l in full.split("\n") if l.strip()]
+    ctx_body = lines[1:] if len(lines) > 1 else lines
+    context = "\n".join(ctx_body)
+    original_text = script.get("hook") or (lines[0] if lines else "") or full
+    user_msg = f"Guión actual:\n{context}\n\nTexto original del que salió:\n{original_text}"
+
+    # Coste del lote: COST.hooks5 = 1 crédito.
+    err, refund, _ = _charge_units_locked(uid, 1, user)
+    if err:
+        return err
+
+    new_hooks = []
+    for _ in range(count):
+        try:
+            raw = _call_llm(_HOOK_REGEN_PROMPT, user_msg, temperature=0.9)
+            parsed = _parse_ai_json(raw, "hook_regen")
+            h = (parsed.get("hook") or raw or "").strip()
+            if h and h not in new_hooks:
+                new_hooks.append(h)
+        except Exception as e:
+            logger.warning("script_hooks_batch: hook regen failed user=%s script=%s err=%s", uid, script_id, e)
+            continue
+
+    if not new_hooks:
+        refund()
+        return jsonify({"error": "llm_error",
+                        "message": "No se pudieron generar hooks. Inténtalo de nuevo."}), 502
+
+    # Persistir en alt_hooks (acumula sobre los existentes).
+    existing = script.get("alt_hooks")
+    if not isinstance(existing, list):
+        existing = []
+    merged = existing + [h for h in new_hooks if h not in existing]
+    try:
+        db.table("scripts").update({"alt_hooks": merged}).eq("id", script_id).eq("user_id", uid).execute()
+    except Exception as e:
+        logger.error("script_hooks_batch: alt_hooks persist failed user=%s err=%s", uid, e, exc_info=True)
+
+    return jsonify({"hooks": new_hooks, "alt_hooks": merged,
+                    "cost_cents": get_cost_cents(), **_credits_display(uid)})
+
+
+@app.route("/reels/steal-batch", methods=["POST"])
+@require_auth
+@limiter.limit("3 per minute;15 per hour")
+def reels_steal_batch():
+    """Isla Signal — botón «Llena mi semana». Convierte un lote de reels (los más
+    explosivos del feed, creator_reels_global) en guiones con la voz del usuario y
+    los persiste en `scripts`. Cobra 1 crédito por reel generado (fillweek cobra
+    nº de reels) ANTES del LLM y refunda los que fallen.
+    Request: {reel_ids:[id,...]} o {count:N} (se resuelven N reels del feed trackeado).
+    Response: {scripts:[{id,hook,beats,close,from,script_id}], cost_cents, credits_cents, credits}."""
+    user = current_user()
+    uid = user["id"]
+    body = request.get_json(silent=True) or {}
+    reel_ids = body.get("reel_ids") or []
+    count = max(1, min(int(body.get("count") or 5), 5))
+
+    # Si no pasan ids, resolvemos los N reels más explosivos que el usuario sigue
+    # (mismo origen que feedReels() en el frontend).
+    if not reel_ids:
+        try:
+            tracked = (db.table("user_tracked_creators")
+                         .select("creator_id")
+                         .eq("user_id", uid)
+                         .is_("archived_at", "null")
+                         .execute())
+            cids = [t["creator_id"] for t in (tracked.data or []) if t.get("creator_id")]
+            if cids:
+                rr = (db.table("creator_reels_global")
+                        .select("id, explosion_score")
+                        .in_("creator_id", cids)
+                        .eq("is_archived", False)
+                        .order("explosion_score", desc=True)
+                        .limit(count)
+                        .execute())
+                reel_ids = [r["id"] for r in (rr.data or [])]
+        except Exception as e:
+            logger.warning("reels_steal_batch: feed resolve failed user=%s err=%s", uid, e)
+    reel_ids = reel_ids[:count]
+    if not reel_ids:
+        return jsonify({"error": "no_reels",
+                        "message": "No hay reels en tu radar para esta acción."}), 400
+
+    # Cargar reels + ownership (un solo lote).
+    voice = get_voice_profile(uid)
+    assistant_id = body.get("assistant_id") or get_profile(uid).get("default_idea_assistant") or None
+    style_arg, custom_prompt, style_label = "viral", "", "viral"
+    if assistant_id in _BUILTIN_SCRIPT_STYLES:
+        style_arg = style_label = assistant_id
+    elif assistant_id:
+        try:
+            asst_r = db.table("assistants").select("name, instructions").eq(
+                "id", assistant_id).eq("user_id", uid).execute()
+            if asst_r.data and asst_r.data[0].get("instructions"):
+                style_arg, custom_prompt = "custom", asst_r.data[0]["instructions"]
+                style_label = asst_r.data[0].get("name") or "custom"
+        except Exception:
+            pass
+    if _custom_too_short(style_arg, custom_prompt):
+        return _assistant_too_short_response(style_label)
+
+    # Reels válidos (que el usuario realmente sigue).
+    valid = []
+    for rid in reel_ids:
+        try:
+            reel_r = (db.table("creator_reels_global")
+                        .select("id, caption, transcript, "
+                                "creator:creators_global(id, ig_username)")
+                        .eq("id", rid).eq("is_archived", False).single().execute())
+            reel = reel_r.data
+        except Exception:
+            reel = None
+        if not reel or not reel.get("creator"):
+            continue
+        own = (db.table("user_tracked_creators").select("id")
+                 .eq("user_id", uid).eq("creator_id", reel["creator"]["id"])
+                 .is_("archived_at", "null").limit(1).execute())
+        if own.data:
+            valid.append(reel)
+    if not valid:
+        return jsonify({"error": "no_reels",
+                        "message": "No hay reels válidos en tu radar para esta acción."}), 400
+
+    # Cobro: 1 crédito por reel que vamos a intentar.
+    err, refund, state = _charge_units_locked(uid, len(valid), user)
+    if err:
+        return err
+
+    scripts_out, failures = [], 0
+    for reel in valid:
+        ig_username = reel["creator"].get("ig_username") or ""
+        source = (reel.get("transcript") or reel.get("caption") or "").strip()
+        if not source:
+            failures += 1
+            continue
+        user_content = (
+            f"[Reel de @{ig_username} que queremos versionar con MI voz]\n{source}\n\n"
+            f"Tarea: escribe un guion original de 30-45s para un reel de Instagram "
+            f"inspirado en el tema/ángulo del anterior, NO una copia. Output con "
+            f"desarrollo real y ritmo. 100-140 palabras, mínimo 8 frases en body."
+        )
+        try:
+            result = adapt_with_ai(user_content, style_arg, custom_prompt, voice=voice, user_id=uid)
+        except Exception as e:
+            logger.warning("reels_steal_batch: LLM failed user=%s reel=%s err=%s", uid, reel["id"], e)
+            failures += 1
+            continue
+        flat, llm_title = _flatten_script_result(result)
+        if not flat:
+            failures += 1
+            continue
+        today = datetime.now(timezone.utc).strftime("%d %b %Y").lower()
+        script_title = llm_title or f"Guion desde @{ig_username} · {today}"
+        sid = None
+        try:
+            ins = db.table("scripts").insert({
+                "user_id": uid,
+                "title": script_title,
+                "script": flat,
+                "from_competitor_reel_id": reel["id"],
+                "from_competitor_username": ig_username,
+                "assistant_name": _resolve_assistant_name(
+                    {"assistant_id": assistant_id, "style": style_label}, uid, db),
+            }).execute()
+            sid = ins.data[0].get("id") if ins.data else None
+        except Exception as e:
+            logger.error("reels_steal_batch: insert failed user=%s err=%s", uid, e, exc_info=True)
+        parts = flat.split("\n")
+        scripts_out.append({
+            "id": sid, "script_id": sid,
+            "hook": parts[0] if parts else "",
+            "beats": [p for p in parts[1:-1] if p.strip()] if len(parts) > 2 else [],
+            "close": parts[-1] if len(parts) > 1 else "",
+            "from": f"@{ig_username}",
+        })
+
+    if not scripts_out:
+        refund()
+        return jsonify({"error": "llm_error",
+                        "message": "No se pudieron generar guiones. Inténtalo de nuevo."}), 502
+
+    # Refund parcial: si algunos reels fallaron, devolvemos esos créditos.
+    # (Cobramos len(valid); generamos len(scripts_out); refund de la diferencia.)
+    if failures and state.get("mode") != "admin":
+        # Refund de `failures` unidades: ajustamos el perfil directamente bajo lock
+        # (primero free_lifetime consumido de más, luego créditos de pago).
+        _rl = acquire_credit_lock(uid)
+        try:
+            cur = get_profile(uid)
+            cost_per_unit = get_cost_cents()
+            if state.get("mode") == "paid":
+                db.table("profiles").update({
+                    "monthly_usage": max(0, (cur.get("monthly_usage") or 0) - failures)
+                }).eq("id", uid).execute()
+            else:
+                # Devolvemos primero a credits_cents lo cobrado por unidades de pago;
+                # los free_lifetime consumidos extra se restauran si los hubo.
+                free_used = state.get("free_used", 0)
+                paid_units = state.get("units", len(valid)) - free_used
+                free_to_restore = max(0, min(failures, free_used))
+                credit_units_to_restore = failures - free_to_restore
+                upd = {}
+                if free_to_restore:
+                    upd["free_lifetime_uses"] = max(0, (cur.get("free_lifetime_uses") or 0) - free_to_restore)
+                if credit_units_to_restore > 0 and paid_units > 0:
+                    upd["credits_cents"] = (cur.get("credits_cents") or 0) + credit_units_to_restore * cost_per_unit
+                if upd:
+                    db.table("profiles").update(upd).eq("id", uid).execute()
+        except Exception as e:
+            logger.warning("reels_steal_batch: partial refund failed user=%s err=%s", uid, e)
+        finally:
+            release_credit_lock(uid, _rl)
+
+    return jsonify({"scripts": scripts_out,
+                    "cost_cents": len(scripts_out) * get_cost_cents(),
+                    **_credits_display(uid)})
+
+
+@app.route("/ideas/explosion", methods=["POST"])
+@require_auth
+@limiter.limit("2 per minute;8 per hour")
+def ideas_explosion():
+    """Isla Signal — botón «Explosión creativa». Secuencia 5 ideas × 5 guiones ×
+    5 hooks, todo persistido. Cobra 30 créditos (COST.explosion=30) ANTES de la
+    secuencia y refunda TODO si la primera fase (ideas) no produce nada.
+    Reúsa develop_idea + adapt_with_ai + regen de hooks, con la voz inyectada.
+    Response: {ideas:[...], scripts:[...], hooks:[str], cost_cents, credits_cents, credits}.
+
+    Nota: el frontend puede en su lugar encadenar 3 llamadas (generate-batch ideas
+    → scripts → hooks) con async/await; este endpoint hace la secuencia server-side
+    en una sola transacción de crédito (30 créditos, refund-all-on-empty)."""
+    user = current_user()
+    uid = user["id"]
+    body = request.get_json(silent=True) or {}
+    language = body.get("language", "es")
+    project_id = body.get("project_id") or None
+    assistant_id = body.get("assistant_id") or get_profile(uid).get("default_idea_assistant") or None
+
+    # Estilo/voz comunes a toda la secuencia.
+    style_arg, custom_prompt, style_label = "viral", "", "viral"
+    if assistant_id in _BUILTIN_SCRIPT_STYLES:
+        style_arg = style_label = assistant_id
+    elif assistant_id:
+        try:
+            asst_r = db.table("assistants").select("name, instructions").eq(
+                "id", assistant_id).eq("user_id", uid).execute()
+            if asst_r.data and asst_r.data[0].get("instructions"):
+                style_arg, custom_prompt = "custom", asst_r.data[0]["instructions"]
+                style_label = asst_r.data[0].get("name") or "custom"
+        except Exception:
+            pass
+    if _custom_too_short(style_arg, custom_prompt):
+        return _assistant_too_short_response(style_label)
+
+    # Coste total de la explosión: COST.explosion = 30 créditos.
+    err, refund, _ = _charge_units_locked(uid, 30, user)
+    if err:
+        return err
+
+    voice = get_voice_profile(uid)
+    seeds = [
+        "Dame un ángulo nuevo y específico para un reel sobre tu nicho, evita lo obvio.",
+        "Una idea contraintuitiva o que rompa una creencia común de tu audiencia.",
+        "Una idea basada en un error típico de tu audiencia y cómo evitarlo.",
+        "Una idea tipo 'cómo conseguir X sin Y' para tu nicho.",
+        "Una idea con gancho de historia personal o caso real (sin inventar datos).",
+    ]
+
+    # Fase 1: 5 ideas.
+    ideas_out = []
+    for i in range(5):
+        try:
+            result = develop_idea(seeds[i], assistant_id, uid, language)
+        except Exception as e:
+            logger.warning("explosion: develop failed user=%s i=%s err=%s", uid, i, e)
+            continue
+        try:
+            r = db.table("ideas").insert({
+                "user_id": uid, "project_id": project_id,
+                "raw_text": result.get("title") or seeds[i],
+                "assistant_id": assistant_id,
+                "title": result.get("title"), "category": result.get("category"),
+                "script_draft": result.get("script_draft"), "status": "developed",
+            }).execute()
+            if r.data:
+                ideas_out.append(r.data[0])
+        except Exception as e:
+            logger.error("explosion: idea insert failed user=%s err=%s", uid, e, exc_info=True)
+
+    if not ideas_out:
+        refund()
+        return jsonify({"error": "llm_error",
+                        "message": "La explosión no pudo arrancar. Inténtalo de nuevo."}), 502
+
+    # Fase 2: 5 guiones por idea. Fase 3: 5 hooks por guion.
+    angles = [
+        "Enfoque directo y práctico, paso a paso.",
+        "Enfoque de historia: arranca con una anécdota o caso concreto.",
+        "Enfoque contraintuitivo: ataca una creencia común desde el hook.",
+        "Enfoque lista: estructura el body como pasos numerados claros.",
+        "Enfoque emocional: conecta con la frustración o el deseo de la audiencia.",
+    ]
+    scripts_out, hooks_out = [], []
+    for idea in ideas_out:
+        title = idea.get("title") or ""
+        raw_text = idea.get("raw_text") or ""
+        category = idea.get("category") or ""
+        for j in range(5):
+            user_content = (
+                f"[Idea original del usuario]\n{raw_text}\n\n"
+                f"[Título]\n{title}\n\n[Categoría]\n{category or '—'}\n\n"
+                f"[Ángulo para ESTA variación]\n{angles[j]}\n\n"
+                f"Tarea: guion completo de 30-45s para un reel siguiendo el ángulo. "
+                f"100-140 palabras, mínimo 8 frases en body, ejemplos concretos."
+            )
+            try:
+                result = adapt_with_ai(user_content, style_arg, custom_prompt, voice=voice, user_id=uid)
+            except Exception as e:
+                logger.warning("explosion: script LLM failed user=%s err=%s", uid, e)
+                continue
+            flat, llm_title = _flatten_script_result(result)
+            if not flat:
+                continue
+            today = datetime.now(timezone.utc).strftime("%d %b %Y").lower()
+            script_title = llm_title or f"Guión · {style_label} · {today}"
+            sid = None
+            # Hooks alternativos para este guion (fase 3).
+            lines = [l.strip() for l in flat.split("\n") if l.strip()]
+            ctx = "\n".join(lines[1:]) if len(lines) > 1 else flat
+            user_msg = f"Guión actual:\n{ctx}\n\nTexto original del que salió:\n{lines[0] if lines else flat}"
+            alt = []
+            for _ in range(5):
+                try:
+                    raw = _call_llm(_HOOK_REGEN_PROMPT, user_msg, temperature=0.9)
+                    h = (_parse_ai_json(raw, "hook_regen").get("hook") or raw or "").strip()
+                    if h and h not in alt:
+                        alt.append(h)
+                        hooks_out.append(h)
+                except Exception:
+                    continue
+            try:
+                ins = db.table("scripts").insert({
+                    "user_id": uid, "idea_id": idea.get("id"),
+                    "title": script_title, "script": flat,
+                    "project_id": idea.get("project_id"),
+                    "alt_hooks": alt,
+                    "assistant_name": _resolve_assistant_name(
+                        {"assistant_id": assistant_id, "style": style_label}, uid, db),
+                }).execute()
+                sid = ins.data[0].get("id") if ins.data else None
+            except Exception as e:
+                logger.error("explosion: script insert failed user=%s err=%s", uid, e, exc_info=True)
+            scripts_out.append({
+                "id": sid, "title": script_title, "script": flat,
+                "idea_id": idea.get("id"), "alt_hooks": alt,
+            })
+        try:
+            db.table("ideas").update({
+                "status": "scripted",
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }).eq("id", idea.get("id")).eq("user_id", uid).execute()
+        except Exception:
+            pass
+
+    return jsonify({
+        "ideas": [{"id": i.get("id"), "raw_text": i.get("raw_text"),
+                   "title": i.get("title"), "category": i.get("category"),
+                   "status": "scripted"} for i in ideas_out],
+        "scripts": scripts_out,
+        "hooks": hooks_out,
+        "cost_cents": 30 * get_cost_cents(),
+        **_credits_display(uid),
+    })
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5555))
     app.run(debug=True, host="0.0.0.0", port=port)

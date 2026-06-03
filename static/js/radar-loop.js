@@ -9,6 +9,56 @@
   var ESC = (window.esc || function(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); });
   function isDemo(){ return !!window.__DEMO__; }
 
+  /* ── prod API helpers (solo se usan en la rama !isDemo()) ─────────────
+     Mismo estilo que el resto del archivo (fetch same-origin + .json()).
+     apiPost/apiGet resuelven a {ok, status, d} para distinguir 402/409/502. */
+  function rsLang(){ try{ var l=(document.documentElement.lang||"es").toLowerCase(); return l.indexOf("en")===0?"en":"es"; }catch(e){ return "es"; } }
+  function apiPost(url, body){
+    return fetch(url,{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify(body||{})})
+      .then(function(res){ return res.json().catch(function(){return{};}).then(function(d){ return {ok:res.ok, status:res.status, d:d}; }); })
+      .catch(function(){ return {ok:false, status:0, d:{error:"network"}}; });
+  }
+  function apiPatch(url, body){
+    return fetch(url,{method:"PATCH",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify(body||{})})
+      .then(function(res){ return res.json().catch(function(){return{};}).then(function(d){ return {ok:res.ok, status:res.status, d:d}; }); })
+      .catch(function(){ return {ok:false, status:0, d:{error:"network"}}; });
+  }
+  function apiGet(url){
+    return fetch(url,{credentials:"same-origin"})
+      .then(function(res){ return res.json().catch(function(){return null;}).then(function(d){ return {ok:res.ok, status:res.status, d:d}; }); })
+      .catch(function(){ return {ok:false, status:0, d:null}; });
+  }
+  // En prod el backend es la FUENTE DE VERDAD de créditos: las respuestas de
+  // generación traen `credits` (= credits_available). Reflejamos ese saldo en la
+  // pill sin descontar local (evita doble-cobro). flashSpark queda cosmético.
+  function applyCredits(d, costForFlash){
+    if(d && d.credits!=null){ S.user.credits=d.credits; }
+    if(costForFlash){ flashSpark(-costForFlash); }
+  }
+  // El backend guarda `script` como texto plano (hook\n…body…\nclose). Lo
+  // partimos a la shape {hook,beats,close} que pinta la isla (igual que parseScript).
+  function scriptToParts(scriptStr){
+    var l=String(scriptStr||"").split(/\n+/).map(function(s){return s.replace(/^▸\s*/,"").trim();}).filter(Boolean);
+    if(!l.length) return {hook:"",beats:[],close:""};
+    return {hook:l[0]||"", beats:l.slice(1,-1), close:l.length>1?l[l.length-1]:""};
+  }
+  // Mapea una fila de GET /scripts (backend) → guión local de la isla.
+  function normScript(s){
+    var p=scriptToParts(s.script);
+    var alt=Array.isArray(s.alt_hooks)?s.alt_hooks:[];
+    return { id:gid("g"), seq:++_gseq, _sid:s.id,
+      title:s.title||p.hook||"Guión", hook:p.hook, beats:p.beats, close:p.close,
+      hooks:alt, expanded:false,
+      from:s.from_competitor_username?("@"+s.from_competitor_username):null,
+      brand:brand().name, type:"guión",
+      status:(s.recording_status==="recorded"?"recorded":(s.recording_status==="discarded"?"discarded":"draft")) };
+  }
+  // Mapea una fila de GET /ideas (backend) → idea local (con script_draft como
+  // primer "guión" si lo hay; los scripts reales se cargan aparte por idea_id).
+  function normIdea(i){
+    return { id:i.id, text:i.raw_text||i.title||"", scripts:[], expanded:false, seed:0, _server:true, _scriptsLoaded:false };
+  }
+
   /* ── iconos ──────────────────────────────────────────────────── */
   var IC = {
     spark:'<svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2z" fill="currentColor"/></svg>',
@@ -979,10 +1029,23 @@
     S.reel=r; S.genKind="script"; S.done={}; S.view="gen"; render();
     ensureScript(r,function(err){
       if(err){ S.view="feed"; render(); showPaywall(err); return; }
-      spend(COST.script); bumpEco(1,1);
       // El guión generado se guarda SIEMPRE en Guiones (draft). No se pierde nada.
       var s=r.script||{}; S.activeGuionId=addGuion({title:s.hook, hook:s.hook, beats:s.beats, close:s.close, from:"@"+r.creator.handle, type:"guión"});
-      S.view="script"; render(); flashSpark(-COST.script);
+      if(!isDemo() && r._sid){ var g=guionById(S.activeGuionId); if(g) g._sid=r._sid; }
+      S.view="script"; render();
+      // Demo: descuento local cosmético. Prod: el backend ya cobró server-side →
+      // refrescamos el saldo real (/auth/me) sin descontar local (evita doble-cobro).
+      if(isDemo()){ spend(COST.script); bumpEco(1,1); flashSpark(-COST.script); }
+      else { refreshCredits().then(function(){ flashSpark(0); }); }
+    });
+  }
+  // Re-lee el saldo real de créditos del servidor y lo refleja en la pill.
+  function refreshCredits(){
+    return apiGet("/auth/me").then(function(r){
+      var me=r.d||{};
+      if(me.credits!=null) S.user.credits=me.credits;
+      else if(me.credits_cents!=null) S.user.credits=Math.round(me.credits_cents/18);
+      if(me.free_lifetime_left!=null) S.user.freeLeft=me.free_lifetime_left;
     });
   }
   // Muro: free agotó sus 5 «Hazlo mío» (o sin créditos). Abre el modal de planes.
@@ -997,33 +1060,99 @@
     if(r.script&&r.script.hook){ setTimeout(function(){cb();},1700); return; }
     if(isDemo()){ setTimeout(function(){cb();},1700); return; }
     var t0=Date.now();
-    fetch("/api/competitors/reels/"+encodeURIComponent(r.id)+"/generate-script",{method:"POST",credentials:"same-origin"})
-      .then(function(res){ return res.json().catch(function(){return{};}).then(function(d){ return {ok:res.ok, d:d}; }); })
-      .then(function(rr){
-        if(!rr.ok){ var ec=(rr.d&&rr.d.error)||"error"; setTimeout(function(){ cb(ec); },300); return; }
-        r.script=parseScript(rr.d.script||rr.d.result,r); setTimeout(function(){cb();},Math.max(0,1500-(Date.now()-t0)));
-      })
-      .catch(function(){ r.script=r.script||{hook:r.cap,beats:[],close:""}; setTimeout(function(){cb();},800); });
+    apiPost("/api/competitors/reels/"+encodeURIComponent(r.id)+"/generate-script",{}).then(function(rr){
+      // Duplicado reciente (409) → reusamos el guion existente (sin re-cobro). Traemos su texto.
+      if(rr.status===409 && rr.d && rr.d.script_id){ return fetchScriptText(rr.d.script_id, r, t0, cb); }
+      if(!rr.ok){ var ec=(rr.d&&rr.d.error)||"error"; return setTimeout(function(){ cb(ec); },300); }
+      // Sync (200): el script viene en la respuesta.
+      if(rr.d && (rr.d.mode==="sync" || rr.d.script || rr.d.result)){
+        r._sid=rr.d.script_id||r._sid; r.script=parseScript(rr.d.script||rr.d.result,r);
+        return setTimeout(function(){cb();},Math.max(0,1500-(Date.now()-t0)));
+      }
+      // Async (202): pollear /task/script/<id> hasta SUCCESS, luego traer el texto.
+      if(rr.d && rr.d.task_id){ return pollScriptTask(rr.d.task_id, r, t0, cb); }
+      // Respuesta inesperada → fallback al caption.
+      r.script=r.script||{hook:r.cap,beats:[],close:""}; setTimeout(function(){cb();},600);
+    }).catch(function(){ r.script=r.script||{hook:r.cap,beats:[],close:""}; setTimeout(function(){cb();},800); });
+  }
+  // Polling del task de generación async (steal cache-miss). Máx ~90s.
+  function pollScriptTask(taskId, r, t0, cb){
+    var tries=0, MAX=45;
+    (function loop(){
+      tries++;
+      apiGet("/task/script/"+encodeURIComponent(taskId)).then(function(rr){
+        var d=rr.d||{};
+        if(d.state==="success"){ return fetchScriptText(d.script_id, r, t0, cb); }
+        if(d.state==="failed"){ return cb(d.error||"error"); }
+        if(tries>=MAX){ return cb("timeout"); }
+        setTimeout(loop, 2000);
+      }).catch(function(){ if(tries>=MAX) return cb("error"); setTimeout(loop,2000); });
+    })();
+  }
+  // El task/dup solo devuelve script_id; el texto vive en /scripts → lo buscamos ahí.
+  function fetchScriptText(sid, r, t0, cb){
+    if(!sid){ r.script=r.script||{hook:r.cap,beats:[],close:""}; return cb(); }
+    apiGet("/scripts").then(function(rr){
+      var rows=Array.isArray(rr.d)?rr.d:[];
+      var row=rows.filter(function(s){return s.id===sid;})[0];
+      r._sid=sid;
+      r.script=row?scriptToParts(row.script):{hook:r.cap,beats:[],close:""};
+      setTimeout(function(){cb();},Math.max(0,1200-(Date.now()-t0)));
+    }).catch(function(){ r.script=r.script||{hook:r.cap,beats:[],close:""}; cb(); });
   }
   function parseScript(sc,r){ if(sc&&typeof sc==="object"&&sc.hook) return sc; if(typeof sc==="string"){ var l=sc.split(/\n+/).map(function(s){return s.replace(/^▸\s*/,"").trim();}).filter(Boolean); return {hook:l[0]||r.cap,beats:l.slice(1,-1),close:l.length>1?l[l.length-1]:""}; } return {hook:r.cap,beats:[],close:""}; }
   function chain(kind){ if(kind==="record"){ S.view="prompter"; render(); return; } S.genKind=kind; S.resultKind=kind; S.view="gen"; render(); setTimeout(function(){ spend(COST[kind]||1); S.done[kind]=true; S.view="result"; render(); flashSpark(-(COST[kind]||1)); },1500); }
   function recorded(){
     // Cierra el loop (momento 4): marca el guión activo como grabado en Guiones.
-    if(S.activeGuionId){ var g=guionById(S.activeGuionId); if(g) g.status="recorded"; }
+    if(S.activeGuionId){ var g=guionById(S.activeGuionId); if(g){ g.status="recorded"; persistRecStatus(g); } }
     S.done.record=true; if(S.stats) S.stats.stolen_today+=1; S.activeGuionId=null;
     S.view="feed"; S.tab="dashboard"; render();
     showToast("Grabado y marcado en Guiones. Te esperan más oportunidades hoy →");
   }
-  function startFillWeek(){ var reels=fillReels(); spend(reels.length); bumpEco(reels.length,reels.length); S._fillGuionIds=[]; S.view="fillweek"; S._fillPhase=0; render(); flashSpark(-reels.length); runFillPhase(); }
+  // Prod: persiste el estado de grabación del guion (PATCH /scripts/<id>). La isla
+  // usa draft|recorded|discarded; el backend pending|recorded|discarded (draft→pending).
+  function persistRecStatus(g){
+    if(isDemo() || !g || !g._sid) return;
+    var rs=(g.status==="recorded")?"recorded":(g.status==="discarded"?"discarded":"pending");
+    apiPatch("/scripts/"+encodeURIComponent(g._sid), {recording_status:rs});
+  }
+  function startFillWeek(){
+    var reels=fillReels();
+    S._fillGuionIds=[]; S._fillResult=null; S._fillErr=null; S.view="fillweek"; S._fillPhase=0; render();
+    if(isDemo()){ spend(reels.length); bumpEco(reels.length,reels.length); flashSpark(-reels.length); runFillPhase(); return; }
+    // Prod: dispara el lote real (/reels/steal-batch). La animación corre en
+    // paralelo; al completar la fase, aterrizamos los guiones REALES del backend.
+    apiPost("/reels/steal-batch",{count:Math.max(1,reels.length)||5}).then(function(r){
+      if(!r.ok || !r.d || !Array.isArray(r.d.scripts)){
+        S._fillErr=r;
+        // No abortamos la animación a media; al cerrar fase, mostramos el error.
+        return;
+      }
+      S._fillResult=r.d; applyCredits(r.d, r.d.scripts.length);
+    });
+    runFillPhase();
+  }
   function runFillPhase(){
     var reels=fillReels(); clearTimeout(S.fillTimer);
     S.fillTimer=setTimeout(function(){
       if(S._fillPhase>=reels.length){
+        // Prod: si el lote falló, salimos al feed con el error (no dejamos guiones a medias).
+        if(!isDemo() && S._fillErr){ var er=S._fillErr; S._fillErr=null; S.view="feed"; S._fillPhase=null; render(); return showPaywallOrError(er); }
+        // Prod: si el lote aún no volvió, esperamos un tick más (sin completar).
+        if(!isDemo() && !S._fillResult){ S.fillTimer=setTimeout(runFillPhase,400); return; }
         S._fillPhase=-1;
-        // Al completar: los 5 guiones aterrizan en Guiones (draft). El usuario
+        // Al completar: los guiones aterrizan en Guiones (draft). El usuario
         // decide allí cuáles graba/descarta. Nada se pierde.
         if(!S._fillGuionIds.length){
-          S._fillGuionIds=reels.map(function(r){ var s=r.script||{hook:r.cap,beats:[],close:""}; return addGuion({title:s.hook||r.cap, hook:s.hook||r.cap, beats:s.beats, close:s.close, from:"@"+r.creator.handle, type:"guión"}); });
+          if(!isDemo() && S._fillResult){
+            // Guiones REALES del backend (ya persistidos en scripts; llevan _sid).
+            S._fillGuionIds=S._fillResult.scripts.map(function(s){
+              var gidL=addGuion({title:s.hook||s.from||"Guión", hook:s.hook||"", beats:s.beats||[], close:s.close||"", from:s.from||null, type:"guión"});
+              var g=guionById(gidL); if(g) g._sid=s.id||s.script_id||null; return gidL;
+            });
+          } else {
+            S._fillGuionIds=reels.map(function(r){ var s=r.script||{hook:r.cap,beats:[],close:""}; return addGuion({title:s.hook||r.cap, hook:s.hook||r.cap, beats:s.beats, close:s.close, from:"@"+r.creator.handle, type:"guión"}); });
+          }
         }
         updateFillHost(); return;
       }
@@ -1038,22 +1167,125 @@
   function seedIdea(inputId, jumpToIdeas){
     var inp=document.getElementById(inputId); var txt=inp?inp.value.trim():"";
     if(!txt){ if(jumpToIdeas){ S.tab="ideas"; render(); } return; }
-    S.ideas.unshift(makeIdea(txt, txt.length+S.ideas.length));
+    if(isDemo()){
+      S.ideas.unshift(makeIdea(txt, txt.length+S.ideas.length));
+      if(jumpToIdeas) S.tab="ideas";
+      render(); return;
+    }
+    // Prod: persiste como draft (develop:false) → POST /ideas. El id real vuelve
+    // del backend para poder generar guiones después (/ideas/{id}/scripts/...).
+    if(txt.length<5){ showToast("Escribe una idea un poco más larga."); return; }
+    if(inp) inp.value="";
     if(jumpToIdeas) S.tab="ideas";
-    render();
+    var tmp=makeIdea(txt, txt.length+S.ideas.length); tmp._saving=true; S.ideas.unshift(tmp); render();
+    apiPost("/ideas",{raw_text:txt, language:rsLang(), develop:false}).then(function(r){
+      if(r.ok && r.d && r.d.id){ tmp.id=r.d.id; tmp._server=true; tmp._scriptsLoaded=true; tmp._saving=false; render(); }
+      else { tmp._saving=false; showToast((r.d&&r.d.error)||"No pude guardar la idea."); render(); }
+    });
   }
-  function addSeedIdea(){ var inp=document.getElementById("rsIdeaSeed2"); var txt=inp?inp.value.trim():""; if(!txt) return; S.ideas.unshift(makeIdea(txt, txt.length+S.ideas.length)); render(); }
-  function gen5ideas(){ spend(COST.idea5); var seed=Date.now()%97; var fresh=pick(BANK_IDEAS,5,seed).map(function(t,i){return makeIdea(t,seed+i*7);}); S.ideas=fresh.concat(S.ideas); render(); flashSpark(-COST.idea5); showToast("5 ideas nuevas para expandir."); }
-  function gen5scripts(ideaId){ var idea=findIdea(ideaId); if(!idea) return; spend(COST.scripts5); for(var i=0;i<5;i++) idea.scripts.push(makeScript(idea.text,(idea.seed||0)+idea.scripts.length+i)); bumpEco(5,0); render(); flashSpark(-COST.scripts5); showToast("5 guiones a partir de tu idea."); }
-  function gen5hooks(scriptId){ var sc=findScript(scriptId); if(!sc) return; spend(COST.hooks5); sc.hooks=pick(BANK_HOOKS,5,(sc.hook||"").length+ Object.keys(S.ideas).length); render(); flashSpark(-COST.hooks5); }
+  function addSeedIdea(){
+    var inp=document.getElementById("rsIdeaSeed2"); var txt=inp?inp.value.trim():""; if(!txt) return;
+    if(isDemo()){ S.ideas.unshift(makeIdea(txt, txt.length+S.ideas.length)); render(); return; }
+    if(txt.length<5){ showToast("Escribe una idea un poco más larga."); return; }
+    if(inp) inp.value="";
+    var tmp=makeIdea(txt, txt.length+S.ideas.length); tmp._saving=true; S.ideas.unshift(tmp); render();
+    apiPost("/ideas",{raw_text:txt, language:rsLang(), develop:false}).then(function(r){
+      if(r.ok && r.d && r.d.id){ tmp.id=r.d.id; tmp._server=true; tmp._scriptsLoaded=true; tmp._saving=false; render(); }
+      else { tmp._saving=false; showToast((r.d&&r.d.error)||"No pude guardar la idea."); render(); }
+    });
+  }
+  // Un "script block" de Ideas a partir de una fila de scripts del backend
+  // (generate-batch / explosion). Lleva _sid para los endpoints por-guión.
+  function makeScriptFromServer(s, ideaText){
+    var p=scriptToParts(s.script);
+    return { id:gid("sc"), _sid:s.id, hook:p.hook||s.title||"", beats:p.beats, close:p.close,
+      hooks:(Array.isArray(s.alt_hooks)&&s.alt_hooks.length)?s.alt_hooks:null, savedHooks:{},
+      guionId:null, saved:false, expanded:false, idea:ideaText||"", title:s.title||p.hook||"" };
+  }
+  function gen5ideas(){
+    if(isDemo()){ spend(COST.idea5); var seed=Date.now()%97; var fresh=pick(BANK_IDEAS,5,seed).map(function(t,i){return makeIdea(t,seed+i*7);}); S.ideas=fresh.concat(S.ideas); render(); flashSpark(-COST.idea5); showToast("5 ideas nuevas para expandir."); return; }
+    showToast("Generando 5 ideas…");
+    apiPost("/ideas/generate-batch",{count:5, project_id:S.brandId&&S.brandId!=="default"?S.brandId:null, language:rsLang()}).then(function(r){
+      if(!r.ok || !r.d || !Array.isArray(r.d.ideas)){ return showPaywallOrError(r); }
+      var fresh=r.d.ideas.map(function(i){ var it=normIdea(i); it.expanded=true; it._scriptsLoaded=true; return it; });
+      S.ideas=fresh.concat(S.ideas); applyCredits(r.d, COST.idea5); render(); showToast("5 ideas nuevas para expandir.");
+    });
+  }
+  function gen5scripts(ideaId){
+    var idea=findIdea(ideaId); if(!idea) return;
+    if(isDemo()){ spend(COST.scripts5); for(var i=0;i<5;i++) idea.scripts.push(makeScript(idea.text,(idea.seed||0)+idea.scripts.length+i)); bumpEco(5,0); render(); flashSpark(-COST.scripts5); showToast("5 guiones a partir de tu idea."); return; }
+    if(idea._saving){ return showToast("Espera, estoy guardando esa idea…"); }
+    if(!idea._server){ return showToast("Esa idea aún no está guardada. Recarga e inténtalo."); }
+    showToast("Generando 5 guiones…");
+    apiPost("/ideas/"+encodeURIComponent(idea.id)+"/scripts/generate-batch",{count:5, language:rsLang()}).then(function(r){
+      if(!r.ok || !r.d || !Array.isArray(r.d.scripts)){ return showPaywallOrError(r); }
+      idea.expanded=true;
+      r.d.scripts.forEach(function(s){ idea.scripts.push(makeScriptFromServer(s, idea.text)); });
+      applyCredits(r.d, COST.scripts5); render(); showToast("5 guiones a partir de tu idea.");
+    });
+  }
+  function gen5hooks(scriptId){
+    var sc=findScript(scriptId); if(!sc) return;
+    if(isDemo()){ spend(COST.hooks5); sc.hooks=pick(BANK_HOOKS,5,(sc.hook||"").length+ Object.keys(S.ideas).length); render(); flashSpark(-COST.hooks5); return; }
+    if(!sc._sid){ return showToast("Este guion aún no está persistido."); }
+    showToast("Generando 5 hooks…");
+    apiPost("/scripts/"+encodeURIComponent(sc._sid)+"/hooks/generate-batch",{count:5}).then(function(r){
+      if(!r.ok || !r.d || !Array.isArray(r.d.hooks)){ return showPaywallOrError(r); }
+      sc.hooks=r.d.hooks.slice();
+      // Si ya estaba guardado en Guiones, su alt_hooks del backend = r.d.alt_hooks.
+      if(sc.saved && sc.guionId){ var g=guionById(sc.guionId); if(g && Array.isArray(r.d.alt_hooks)){ g.hooks=r.d.alt_hooks.slice(); } }
+      applyCredits(r.d, COST.hooks5); render(); showToast("5 hooks nuevos para tu guion.");
+    });
+  }
   function explosion(){
-    spend(COST.explosion); var seed=Date.now()%89;
-    var ideas=pick(BANK_IDEAS,5,seed).map(function(t,i){ var idea=makeIdea(t,seed+i*5); for(var j=0;j<5;j++){ var sc=makeScript(t,seed+i*5+j); sc.hooks=pick(BANK_HOOKS,5,seed+i+j); idea.scripts.push(sc); } return idea; });
-    S.ideas=ideas.concat(S.ideas); bumpEco(25,0); render(); flashSpark(-COST.explosion); showToast("💥 5 ideas × 5 guiones × 5 hooks. La semana entera, de un golpe.");
+    if(isDemo()){
+      spend(COST.explosion); var seed=Date.now()%89;
+      var ideasD=pick(BANK_IDEAS,5,seed).map(function(t,i){ var idea=makeIdea(t,seed+i*5); for(var j=0;j<5;j++){ var sc=makeScript(t,seed+i*5+j); sc.hooks=pick(BANK_HOOKS,5,seed+i+j); idea.scripts.push(sc); } return idea; });
+      S.ideas=ideasD.concat(S.ideas); bumpEco(25,0); render(); flashSpark(-COST.explosion); showToast("💥 5 ideas × 5 guiones × 5 hooks. La semana entera, de un golpe."); return;
+    }
+    showToast("💥 Explosión en marcha… esto tarda un poco.");
+    apiPost("/ideas/explosion",{project_id:S.brandId&&S.brandId!=="default"?S.brandId:null, language:rsLang()}).then(function(r){
+      if(!r.ok || !r.d || !Array.isArray(r.d.ideas)){ return showPaywallOrError(r); }
+      // Reconstruye el árbol idea→guiones→hooks desde la respuesta (scripts traen idea_id).
+      var byIdea={};
+      (r.d.scripts||[]).forEach(function(s){ var k=s.idea_id||"_"; (byIdea[k]=byIdea[k]||[]).push(s); });
+      var fresh=r.d.ideas.map(function(i){
+        var it=normIdea(i); it.expanded=true; it._scriptsLoaded=true;
+        (byIdea[i.id]||[]).forEach(function(s){ it.scripts.push(makeScriptFromServer(s, it.text)); });
+        return it;
+      });
+      S.ideas=fresh.concat(S.ideas); applyCredits(r.d, COST.explosion); render();
+      showToast("💥 5 ideas × 5 guiones × 5 hooks. La semana entera, de un golpe.");
+    });
+  }
+  // Distingue muro de pago (402/free_limit) de error genérico, reusando showPaywall.
+  function showPaywallOrError(r){
+    var ec=(r.d&&r.d.error)||"error";
+    if(r.status===402 || ec==="free_limit_reached" || ec==="no_credits"){ return showPaywall(ec); }
+    showToast((r.d&&r.d.message)||(r.d&&r.d.error)||"No se pudo completar. Inténtalo de nuevo.");
   }
   function findIdea(id){ return S.ideas.filter(function(x){return x.id===id;})[0]; }
   function findScript(id){ for(var i=0;i<S.ideas.length;i++){ var s=S.ideas[i].scripts.filter(function(x){return x.id===id;})[0]; if(s) return s; } return null; }
-  function ensureGuion(sc){ if(sc.saved&&sc.guionId&&guionById(sc.guionId)) return sc.guionId; sc.saved=true; sc.guionId=addGuion({title:sc.hook, hook:sc.hook, beats:sc.beats, close:sc.close, from:null, type:"guión"}); bumpEco(0,0); return sc.guionId; }
+  // En prod, ensureGuion persiste el guion en /scripts si aún no tiene _sid (script
+  // generado por gen5scripts ya viene con _sid → no re-crea). Devuelve guionId local.
+  function ensureGuion(sc){
+    if(sc.saved&&sc.guionId&&guionById(sc.guionId)) return sc.guionId;
+    sc.saved=true; sc.guionId=addGuion({title:sc.hook, hook:sc.hook, beats:sc.beats, close:sc.close, from:null, type:"guión"});
+    var g=guionById(sc.guionId);
+    if(!isDemo()){
+      if(sc._sid){
+        // Ya persistido (vino de generate-batch): solo enlazamos el _sid al guión.
+        if(g) g._sid=sc._sid;
+      } else {
+        // Guion local (idea suelta sin batch): lo creamos en /scripts ahora.
+        var flat=[sc.hook].concat(sc.beats||[],[sc.close]).filter(Boolean).join("\n");
+        apiPost("/scripts",{title:sc.hook||"Guión", script:flat, project_id:S.brandId&&S.brandId!=="default"?S.brandId:null}).then(function(r){
+          if(r.ok && r.d && r.d.id){ sc._sid=r.d.id; if(g) g._sid=r.d.id; }
+        });
+      }
+    } else { bumpEco(0,0); }
+    return sc.guionId;
+  }
   function saveScript(scriptId){ var sc=findScript(scriptId); if(!sc||sc.saved) return; ensureGuion(sc); render(); showToast("Guardado en Guiones."); }
   function saveHook(scriptId,i){
     var sc=findScript(scriptId); if(!sc||!sc.hooks) return;
@@ -1063,6 +1295,13 @@
     if(g.hooks.indexOf(h)===-1){ g.hooks.push(h); g.expanded=true; }
     sc.savedHooks=sc.savedHooks||{}; sc.savedHooks[i]=true;
     render(); showToast("Hook añadido al guión.");
+    // Prod: persiste el hook en el banco del guion (alt_hooks). Si el _sid aún no
+    // llegó (POST /scripts en vuelo desde ensureGuion), reintenta una vez.
+    if(!isDemo()){
+      var doPost=function(sid){ apiPost("/scripts/"+encodeURIComponent(sid)+"/hooks",{hook:h}).then(function(r){ if(r.ok && r.d && Array.isArray(r.d.alt_hooks) && g){ g.hooks=r.d.alt_hooks.slice(); } }); };
+      if(g._sid) doPost(g._sid);
+      else setTimeout(function(){ if(g._sid) doPost(g._sid); },900);
+    }
   }
   function addReelManual(){ var url=window.prompt("Pega la URL de un reel (Instagram/TikTok) para meterlo a tu ecosistema:"); if(!url) return; showToast("Reel en cola. Lo añadimos a tu ecosistema en unos segundos."); bumpEco(0,1); }
 
@@ -1292,8 +1531,8 @@
     if(act==="fw-record"){ var fid=S._fillGuionIds&&S._fillGuionIds[0]; var g0=fid?guionById(fid):null; if(g0){ S.activeGuionId=g0.id; S.reel={creator:{handle:(g0.from||"").replace("@","")},script:{hook:g0.hook,beats:g0.beats,close:g0.close}}; S.view="prompter"; render(); } return; }
     if(act==="gui-filter"){ S.guiFilter=k; return render(); }
     if(act==="gui-record"){ var g=guionById(id); if(g){ S.activeGuionId=g.id; S.reel={creator:{handle:(g.from||"").replace("@","")},script:{hook:g.hook,beats:g.beats,close:g.close}}; S.view="prompter"; render(); } return; }
-    if(act==="gui-toggle-rec"){ var g2=guionById(id); if(g2){ g2.status=(g2.status==="recorded")?"draft":"recorded"; if(g2.status==="recorded"&&S.stats) S.stats.stolen_today+=1; render(); showToast(g2.status==="recorded"?"Marcado como grabado.":"Vuelto a borrador."); } return; }
-    if(act==="gui-discard"){ var g3=guionById(id); if(g3){ g3.status="discarded"; render(); showToast("Descartado."); } return; }
+    if(act==="gui-toggle-rec"){ var g2=guionById(id); if(g2){ g2.status=(g2.status==="recorded")?"draft":"recorded"; if(g2.status==="recorded"&&S.stats) S.stats.stolen_today+=1; render(); showToast(g2.status==="recorded"?"Marcado como grabado.":"Vuelto a borrador."); persistRecStatus(g2); } return; }
+    if(act==="gui-discard"){ var g3=guionById(id); if(g3){ g3.status="discarded"; render(); showToast("Descartado."); persistRecStatus(g3); } return; }
     if(act==="gui-perf"){ S.perfGuion=id; S.view="perf"; return render(); }
     if(act==="gui-link-reel"){ var gl=guionById(id); if(gl){ var u=window.prompt("Pega el link del reel publicado en Instagram. Lo analizo cada semana y entrena tu Cerebro:"); if(u){ gl.published={pending:true, url:u}; gl.status="recorded"; render(); if(isDemo()){ showToast("Reel vinculado. Se analizará en el próximo refresco y entrenará tu Cerebro."); } else { linkReelPublished(gl, u); } } } return; }
     if(act==="copy"){ var txt=btn.getAttribute("data-txt"); if(navigator.clipboard) navigator.clipboard.writeText(txt); btn.textContent="✓"; setTimeout(function(){ btn.textContent="Copiar"; },1200); return; }
@@ -1352,15 +1591,21 @@
     var el=root(); if(!el) return;
     el.innerHTML=skeletonHTML();
     var q=S.brandId?("?brand="+encodeURIComponent(S.brandId)):"";
+    var _pq=(S.brandId&&S.brandId!=="default")?("?project_id="+encodeURIComponent(S.brandId)):"";
     Promise.all([
       fetch("/api/radar/stats"+q,{credentials:"same-origin"}).then(function(r){return r.json();}).catch(function(){return{};}),
       fetch("/api/tracked-creators/reels"+(q?q+"&":"?")+"sort=explosion&limit=24",{credentials:"same-origin"}).then(function(r){return r.json();}).catch(function(){return{reels:[]};}),
       fetch("/metrics/summary"+q,{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
       fetch("/api/voice",{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
       fetch("/api/metrics/insights",{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
-      fetch("/metrics/videos"+q,{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
+      fetch("/metrics/videos"+q,{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
+      // Contenido REAL del usuario (solo prod): ideas guardadas + guiones persistidos.
+      // /ideas y /scripts filtran por project_id (no por "brand"); la marca de la isla
+      // es un project. Marca "default" (sin projects) → sin filtro (todo el user).
+      isDemo()?Promise.resolve(null):fetch("/ideas"+_pq,{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
+      isDemo()?Promise.resolve(null):fetch("/scripts"+_pq,{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
     ]).then(function(res){
-      var stats=res[0]||{}, feed=res[1]||{}, met=res[2], ins=res[4], vids=res[5];
+      var stats=res[0]||{}, feed=res[1]||{}, met=res[2], ins=res[4], vids=res[5], ideasRows=res[6], scriptRows=res[7];
       if(res[3]) S.voice=res[3];   // perfil de voz real (moat) — null en demo dummy
       S.stats={ competitors:stats.competitors||0, reels_week:stats.reels_week||0, exploded_week:stats.exploded_week||0, stolen_today:stats.stolen_today!=null?stats.stolen_today:(stats.stolen_total||0) };
       S.reels=(feed.reels||[]).map(normReel);
@@ -1373,6 +1618,28 @@
       if(vids){ S.metrics=S.metrics||{}; S.metrics.videos=(vids.videos||[]).map(normMetricVideo); }
       // Insights del Cerebro (lo que funciona en TU cuenta + el siguiente de la serie).
       if(ins){ S.metrics=S.metrics||{}; S.metrics.insights={ what_works:ins.what_works||[], next:ins.next||null }; }
+      // Prod: hidrata Ideas (con sus guiones por idea_id) y Guiones desde el backend.
+      // Guiones = TODOS los scripts del user; los que tienen idea_id también cuelgan
+      // de su idea en la fábrica de Ideas. _sid preserva el id de backend para PATCH/hooks.
+      if(!isDemo()){
+        var rows=Array.isArray(scriptRows)?scriptRows:[];
+        S.guiones=rows.filter(function(s){return s.recording_status!=="discarded";}).map(normScript);
+        // _sid → guionId local, para enlazar las script-cards de Ideas con su guión ya
+        // persistido (así saveHook no duplica el guión: reusa el existente).
+        var guBySid={}; S.guiones.forEach(function(g){ if(g._sid) guBySid[g._sid]=g.id; });
+        var byIdea={}; rows.forEach(function(s){ if(s.idea_id){ (byIdea[s.idea_id]=byIdea[s.idea_id]||[]).push(s); } });
+        var irows=Array.isArray(ideasRows)?ideasRows:[];
+        S.ideas=irows.map(function(i){
+          var it=normIdea(i); it._scriptsLoaded=true;
+          (byIdea[i.id]||[]).forEach(function(s){
+            var sb=makeScriptFromServer(s, it.text);
+            if(s.recording_status!=="discarded" && guBySid[s.id]){ sb.saved=true; sb.guionId=guBySid[s.id]; }
+            it.scripts.push(sb);
+          });
+          if(it.scripts.length) it.expanded=true;
+          return it;
+        });
+      }
       if(isDemo()) seedDemoContent();   // MVP demo: SIEMPRE siembra guiones+hooks+reels vinculados
       if(isDemo() && !(isAgency() && S.tab==="portfolio")) applyDemoBrand();
       if(!isDemo() && isAgency()){ S.team=[]; loadTeam(); }   // S.team=[] antes de render: evita que teamHTML caiga al pool demo mientras loadTeam (async) resuelve; loadTeam re-renderiza al volver
