@@ -1200,6 +1200,30 @@ def api_stats_today():
     return jsonify(data)
 
 
+@app.route("/api/topups", methods=["GET"])
+def api_topups_public():
+    """Público (sin admin): packs de créditos ACTIVOS para pintar la UI de recarga.
+    Devuelve {"topups":[{"key","credits","price_cents"}]} ordenados por sort_order.
+    NO expone stripe_price_id. Degrada a [] si la config falla."""
+    try:
+        topups = load_topups_config().get("topups", [])
+    except Exception as e:
+        logger.warning("api_topups_public error: %s", e)
+        topups = []
+    # load_topups_config ya devuelve los topups ordenados por sort_order
+    # (DB .order("sort_order") y, en fallback env, en orden de inserción).
+    out = []
+    for t in sorted(topups, key=lambda x: x.get("sort_order", 0)):
+        if not t.get("active", True):
+            continue
+        out.append({
+            "key": str(t.get("key", "")),
+            "credits": t.get("credits", 0),
+            "price_cents": t.get("price_cents", 0),
+        })
+    return jsonify({"topups": out})
+
+
 @app.route("/task/<task_id>")
 def task_status(task_id):
     task = transcribe_task.AsyncResult(task_id)

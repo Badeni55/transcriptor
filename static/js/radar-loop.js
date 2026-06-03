@@ -51,7 +51,7 @@
   /* ── estado ──────────────────────────────────────────────────── */
   var S = {
     device:"desktop", _wired:false,
-    user:{ name:"", handle:"", credits:0, streak:0 },
+    user:{ name:"", handle:"", credits:0, streak:0, plan:"", freeLeft:0 },
     brands:[], brandId:null,
     plan:"creador",                     // creador | agencia (de /auth/me; en demo, toggle)
     scope:"brand",                      // brand (radar de 1 marca) | portfolio (todas — solo agencia)
@@ -158,7 +158,9 @@
       '<div class="searchbox">'+IC.eye+'<span>Buscar señal o creador</span><span class="kbd">⌘K</span></div>'+
       demoToggle+
       streak+
-      '<div class="spark pill-stat credits" id="rsSpark" title="Créditos disponibles">'+IC.spark+'<span class="num"><b id="rsSparkN">'+S.user.credits+'</b></span> créditos</div>'+
+      ((S.user.plan==="free")
+        ? '<div class="spark pill-stat credits" id="rsSpark" title="«Hazlo mío» gratis restantes">'+IC.spark+'<span class="num"><b id="rsSparkN">'+S.user.freeLeft+'</b></span> «Hazlo mío»</div>'
+        : '<div class="spark pill-stat credits" id="rsSpark" title="Créditos disponibles">'+IC.spark+'<span class="num"><b id="rsSparkN">'+S.user.credits+'</b></span> créditos</div>')+
     '</div>';
   }
 
@@ -1170,6 +1172,9 @@
       if(me.user){ S.user.name=me.user.name||(me.user.email||"").split("@")[0]||""; S.user.handle=me.user.handle||(me.user.email||"").split("@")[0]||""; }
       if(me.credits!=null) S.user.credits=me.credits; else if(me.credits_cents!=null) S.user.credits=Math.round(me.credits_cents/18);
       if(me.streak!=null) S.user.streak=me.streak;
+      // Plan crudo de /auth/me (puede ser "free") + «Hazlo mío» de por vida restantes.
+      S.user.plan=(me.plan||(me.user&&me.user.plan))||"";
+      if(me.free_lifetime_left!=null) S.user.freeLeft=me.free_lifetime_left;
       // Plan: en demo arranca en Agencia para ver el portfolio (toggle lo cambia);
       // en prod sale de /auth/me (profiles.plan).
       S.plan = isDemo() ? "agencia" : ((me.plan||(me.user&&me.user.plan))||"creador");

@@ -12078,8 +12078,10 @@
     <button class="modal-x" onclick="closeModal('topupOverlay')">✕</button>
     <h2 data-i18n="topup.title">Top up balance</h2>
     <p id="topupSubtitle"></p>
-    <div class="topup-grid" style="grid-template-columns:1fr">
-      <div class="topup-opt on">
+    <!-- Packs dinámicos (GET /api/topups). Si falla o no hay packs configurados,
+         se rellena con el pack legacy (1 opción · 7 usos). -->
+    <div class="topup-grid" id="topupGrid" style="grid-template-columns:1fr">
+      <div class="topup-opt on" data-legacy="1">
         <div class="topup-amt" id="topupPrice"></div><div class="topup-cred">7 <span data-i18n="topup.uses">uses</span></div>
       </div>
     </div>
@@ -13270,6 +13272,8 @@ function curr(c) { return isEUR ? `${(c/100).toFixed(2).replace(".",",")}€` : 
 // ── State ─────────────────────────────────────────────────────────────────
 let st = { user: null, credits: 0, freeUsed: 0, freeLimit: 5, freeDailyAnon: 3 };
 let topupAmt = "129";
+let topupKey = null;          // pack de créditos elegido (key del /api/topups). null = legacy.
+let topupPacksLoaded = false; // ya intentamos cargar /api/topups en esta sesión.
 let authMode = "login";
 let activeStyle = null;
 let selectedAssistantId = null;
@@ -21432,18 +21436,66 @@ function openTopup() {
   if (!st.user) { openAuth("register"); return; }
   document.getElementById("topupErr").classList.remove("on");
   openModal("topupOverlay");
+  loadTopupPacks();   // pinta los packs dinámicos (con caché en sesión)
 }
 function pickTopup(el) {
   document.querySelectorAll(".topup-opt").forEach(o => o.classList.remove("on"));
   el.classList.add("on"); topupAmt = el.dataset.amt;
 }
+
+// Carga los packs de créditos desde GET /api/topups y los pinta en #topupGrid.
+// Degrada con gracia: si el endpoint falla o no devuelve packs con precio, deja
+// el pack legacy (7 usos) que ya está en el HTML y topupKey=null → flujo legacy.
+async function loadTopupPacks() {
+  if (topupPacksLoaded) return;        // ya resuelto en esta sesión
+  topupPacksLoaded = true;
+  const grid = document.getElementById("topupGrid");
+  if (!grid) return;
+  let packs = [];
+  try {
+    const res = await fetch("/api/topups");
+    if (res.ok) {
+      const d = await res.json();
+      // solo packs con precio configurado; sin precio → ocultar (degradación)
+      packs = (d.topups || []).filter(p => p && p.key && (p.price_cents || 0) > 0);
+    }
+  } catch (e) { /* red caída → packs vacío → legacy */ }
+
+  if (!packs.length) {
+    // Sin packs utilizables: mantenemos el HTML legacy tal cual. topupKey=null.
+    topupKey = null;
+    return;
+  }
+
+  const credLbl = t("topup.uses");    // "usos"/"uses"
+  grid.style.gridTemplateColumns = packs.length >= 2 ? "repeat(" + packs.length + ",1fr)" : "1fr";
+  grid.innerHTML = packs.map((p, i) => (
+    '<div class="topup-opt' + (i === 0 ? ' on' : '') + '" data-key="' + p.key +
+    '" onclick="pickTopupPack(this)">' +
+      '<div class="topup-amt">' + curr(p.price_cents) + '</div>' +
+      '<div class="topup-cred">' + p.credits + ' ' + credLbl + '</div>' +
+    '</div>'
+  )).join("");
+  topupKey = packs[0].key;            // selecciona el primero por defecto
+}
+
+function pickTopupPack(el) {
+  document.querySelectorAll("#topupGrid .topup-opt").forEach(o => o.classList.remove("on"));
+  el.classList.add("on");
+  topupKey = el.dataset.key || null;
+}
+
 async function submitTopup() {
   const btn = document.getElementById("btnTopupOk");
   const err = document.getElementById("topupErr");
   err.classList.remove("on"); btn.disabled = true; btn.textContent = currentLang === "es" ? "Redirigiendo…" : "Redirecting…";
+  // Si hay un pack elegido manda {topup_key}; el server resuelve precio/créditos
+  // vía load_topups_config(). Sin pack utilizable → solo {currency} (legacy 7 usos).
+  const payload = { currency: CUR };
+  if (topupKey) payload.topup_key = topupKey;
   const res = await fetch("/checkout", {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ currency: CUR }),
+    body: JSON.stringify(payload),
   });
   const d = await res.json();
   if (!res.ok) { err.textContent = d.error; err.classList.add("on"); btn.disabled = false; btn.textContent = t("topup.go"); return; }
