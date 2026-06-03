@@ -1140,7 +1140,7 @@
       fetch("/metrics/videos"+q,{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
     ]).then(function(res){
       var met=res[0], ins=res[1], vids=res[2];
-      if(met){ S.metrics=met; S.igConnected=(met.connected!==false); }
+      if(met){ S.metrics=met; S.igConnected=!!(met && met.connected); }
       if(ins){ S.metrics=S.metrics||{}; S.metrics.insights={ what_works:ins.what_works||[], next:ins.next||null }; }
       // Los reels reales viven en /metrics/videos (summary solo trae agregados).
       if(vids){ S.metrics=S.metrics||{}; S.metrics.videos=(vids.videos||[]).map(normMetricVideo); }
@@ -1366,7 +1366,7 @@
       S.reels=(feed.reels||[]).map(normReel);
       S.favs={}; S.reels.forEach(function(r){ if(r.fav) S.favs[r.id]=true; });
       S._reelPool=S.reels.slice();   // pool base para variar feed por-marca en demo
-      if(met){ S.metrics=met; S.igConnected=(met.connected!==false); }
+      if(met){ S.metrics=met; S.igConnected=!!(met && met.connected); }
       else { S.metrics=null; }
       // /metrics/summary solo trae agregados; los reels reales viven en /metrics/videos.
       // Volcamos a S.metrics.videos (shape que lee metricGridHTML). En demo lo pisa seedDemoContent.
@@ -1375,7 +1375,7 @@
       if(ins){ S.metrics=S.metrics||{}; S.metrics.insights={ what_works:ins.what_works||[], next:ins.next||null }; }
       if(isDemo()) seedDemoContent();   // MVP demo: SIEMPRE siembra guiones+hooks+reels vinculados
       if(isDemo() && !(isAgency() && S.tab==="portfolio")) applyDemoBrand();
-      if(!isDemo() && isAgency()) loadTeam();   // miembros reales del equipo (re-render propio si está en la pestaña)
+      if(!isDemo() && isAgency()){ S.team=[]; loadTeam(); }   // S.team=[] antes de render: evita que teamHTML caiga al pool demo mientras loadTeam (async) resuelve; loadTeam re-renderiza al volver
       render();
     });
   }

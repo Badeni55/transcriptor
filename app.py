@@ -2709,6 +2709,85 @@ def list_projects():
     return jsonify(items)
 
 
+def _slugify_handle(name):
+    """Deriva un handle estilo @ a partir del nombre de la marca (a-z0-9), o '' si vacío."""
+    if not name or not isinstance(name, str):
+        return ""
+    return re.sub(r"[^a-z0-9]", "", name.lower())
+
+
+@app.route("/api/brands", methods=["GET"])
+@require_auth
+def api_brands():
+    """Marcas del usuario para el loop (Portfolio/multi-marca de radar-loop.js).
+    Las "marcas" son la tabla projects. Devuelve {brands:[{id,name,handle,color,
+    level,voice,reelsAnalyzed,scripts}, ...]} con la shape EXACTA que consume el JS.
+    Agency: projects donde agency_owner_id==user O user_id==user. Resto: sus projects.
+    Sin projects → una marca derivada del profile (id:'default')."""
+    user = current_user()
+    uid = user["id"]
+    profile = get_profile(uid)
+    plan = (profile or {}).get("plan", "free")
+
+    projects = []
+    try:
+        if plan == "agency":
+            owned = db.table("projects").select("*").eq("user_id", uid).execute().data or []
+            managed = db.table("projects").select("*").eq("agency_owner_id", uid).execute().data or []
+            seen = set()
+            for p in owned + managed:
+                if p.get("id") and p["id"] not in seen:
+                    seen.add(p["id"])
+                    projects.append(p)
+        else:
+            projects = db.table("projects").select("*").eq("user_id", uid).execute().data or []
+    except Exception as e:
+        logger.warning("api_brands query failed user=%s err=%s", uid, e)
+        projects = []
+
+    # Voz del usuario: confidence del VoiceProfile (marca por defecto) si existe, si no 40.
+    vp = get_voice_profile(uid)
+    voice = int(vp.get("confidence") or 0) if vp else 40
+    if voice <= 0:
+        voice = 40
+
+    def _scripts_count(project_id):
+        try:
+            sc = db.table("scripts").select("id", count="exact").eq("project_id", project_id).execute()
+            return sc.count if hasattr(sc, "count") and sc.count is not None else 0
+        except Exception:
+            return 0
+
+    brands = []
+    for p in projects:
+        name = p.get("name") or "Mi marca"
+        brands.append({
+            "id": p.get("id"),
+            "name": name,
+            "handle": _slugify_handle(name),
+            "color": p.get("color") or "#4f7cff",
+            "level": 1,
+            "voice": voice,
+            "reelsAnalyzed": 0,
+            "scripts": _scripts_count(p.get("id")),
+        })
+
+    if not brands:
+        default_name = (user.get("email") or "").split("@")[0] or "Mi marca"
+        brands = [{
+            "id": "default",
+            "name": default_name,
+            "handle": _slugify_handle(default_name),
+            "color": "#4f7cff",
+            "level": 1,
+            "voice": voice,
+            "reelsAnalyzed": 0,
+            "scripts": 0,
+        }]
+
+    return jsonify({"brands": brands})
+
+
 @app.route("/projects", methods=["POST"])
 @require_auth
 def create_project():
@@ -3369,7 +3448,8 @@ def api_me_overview():
 @require_auth
 def metrics_summary():
     user = current_user()
-    project_id = request.args.get("project_id")
+    # El front (isla) manda ?brand=<id>; el legacy manda ?project_id. brand == project_id.
+    project_id = request.args.get("project_id") or request.args.get("brand")
 
     q = db.table("scripts").select("views_count, likes, comments, saves, engagement_rate").eq("user_id", user["id"])
     if project_id:
@@ -3383,6 +3463,14 @@ def metrics_summary():
     rates = [r.get("engagement_rate") for r in rows.data if r.get("engagement_rate")]
     avg_engagement = round(sum(rates) / len(rates), 2) if rates else 0
 
+    # IG conectado: el JS hace S.igConnected=(met.connected!==false). Sin este campo
+    # quedaba undefined → siempre true → ocultaba la tarjeta "Conecta Instagram".
+    try:
+        ig = db.table("ig_profiles").select("id").eq("user_id", user["id"]).limit(1).execute()
+        connected = bool(ig.data)
+    except Exception:
+        connected = False
+
     return jsonify({
         "total_views": total_views,
         "total_likes": total_likes,
@@ -3390,6 +3478,7 @@ def metrics_summary():
         "total_saves": total_saves,
         "avg_engagement": avg_engagement,
         "scripts_with_metrics": len([r for r in rows.data if r.get("views_count")]),
+        "connected": connected,
     })
 
 
@@ -7057,6 +7146,21 @@ def radar_stats():
     except Exception:
         stolen_total = 0
 
+    # stolen_today: el JS lee stolen_today (label "robados hoy"). Filtramos por hoy
+    # via created_at; si falla, lo aliaseamos a stolen_total (no crashea el front).
+    try:
+        today = str(date.today())
+        stolen_t = (db.table("scripts")
+                      .select("id", count="exact")
+                      .eq("user_id", uid)
+                      .not_.is_("from_competitor_reel_id", "null")
+                      .gte("created_at", today)
+                      .limit(1)
+                      .execute())
+        stolen_today = stolen_t.count or 0
+    except Exception:
+        stolen_today = stolen_total
+
     plan = (get_profile(uid) or {}).get("plan", "free")
     enabled = bool(get_tracked_creators_limit(plan).get("enabled"))
 
@@ -7065,6 +7169,7 @@ def radar_stats():
         "reels_week": reels_week,
         "exploded_week": exploded_week,
         "stolen_total": stolen_total,
+        "stolen_today": stolen_today,
         "enabled": enabled,
     })
 
