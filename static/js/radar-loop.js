@@ -226,7 +226,7 @@
       '<div class="searchbox">'+IC.eye+'<span>Buscar señal o creador</span><span class="kbd">⌘K</span></div>'+
       demoToggle+
       streak+
-      ((S.user.plan==="free")
+      ((S.user.plan==="free" && !S.user.credits)
         ? '<div class="spark pill-stat credits" id="rsSpark" title="«Hazlo mío» gratis restantes">'+IC.spark+'<span class="num"><b id="rsSparkN">'+S.user.freeLeft+'</b></span> «Hazlo mío»</div>'
         : '<div class="spark pill-stat credits" id="rsSpark" title="Créditos disponibles">'+IC.spark+'<span class="num"><b id="rsSparkN">'+S.user.credits+'</b></span> créditos</div>')+
     '</div>';
@@ -981,7 +981,7 @@
 
   /* ── animaciones ─────────────────────────────────────────────── */
   function startGenSteps(){ clearInterval(S.genStepTimer); var steps=GEN_STEPS[S.genKind]||GEN_STEPS.script,i=0; S.genStepTimer=setInterval(function(){ i=(i+1)%steps.length; var n=document.getElementById("rsGenStep"); if(n){ n.style.opacity=0; setTimeout(function(){ n.textContent=steps[i]; n.style.opacity=1; },150); } },700); }
-  function flashSpark(delta){ var sp=document.getElementById("rsSpark"),nEl=document.getElementById("rsSparkN"); if(nEl) nEl.textContent=(S.user.plan==="free")?S.user.freeLeft:S.user.credits; if(sp&&delta<0){ sp.classList.add("flash"); var fly=document.createElement("span"); fly.className="spark-fly"; fly.textContent=delta; sp.appendChild(fly); setTimeout(function(){ sp.classList.remove("flash"); if(fly.parentNode) fly.parentNode.removeChild(fly); },1000); } }
+  function flashSpark(delta){ var sp=document.getElementById("rsSpark"),nEl=document.getElementById("rsSparkN"); if(nEl) nEl.textContent=(S.user.plan==="free" && !S.user.credits)?S.user.freeLeft:S.user.credits; if(sp&&delta<0){ sp.classList.add("flash"); var fly=document.createElement("span"); fly.className="spark-fly"; fly.textContent=delta; sp.appendChild(fly); setTimeout(function(){ sp.classList.remove("flash"); if(fly.parentNode) fly.parentNode.removeChild(fly); },1000); } }
   function showToast(msg){ var t=document.getElementById("rsToast"),m=document.getElementById("rsToastMsg"); if(!t||!m) return; m.textContent=msg; t.classList.add("show"); clearTimeout(S.toastTimer); S.toastTimer=setTimeout(function(){ t.classList.remove("show"); },2800); }
   function spend(n){ S.user.credits=Math.max(0,S.user.credits-n); }
   function bumpEco(scripts, reels){ var b=brand(); if(!b) return; b.scripts=(b.scripts||0)+(scripts||0); b.reelsAnalyzed=(b.reelsAnalyzed||0)+(reels||0); b.voice=Math.min(98,(b.voice||40)+(scripts||0)*1.5+(reels||0)); if(b.voice>=20*(b.level||1)+30) b.level=Math.min(5,(b.level||1)+1); }
