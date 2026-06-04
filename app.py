@@ -2537,6 +2537,27 @@ def adapt():
     return jsonify(payload)
 
 
+def _extract_hook(raw: str) -> str:
+    """Saca el texto del hook de la respuesta del LLM ({"hook": "..."}), tolerando
+    fences markdown. Si no se puede parsear, devuelve "" (NO vuelca el JSON crudo a
+    la UI). Reemplaza el uso erroneo de _parse_ai_json(style="hook_regen"), que exigia
+    'body' y descartaba el hook bueno."""
+    text = (raw or "").strip()
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\s*", "", text)
+        text = re.sub(r"\s*```$", "", text)
+    try:
+        data = json.loads(text)
+        if isinstance(data, dict) and isinstance(data.get("hook"), str):
+            return data["hook"].strip()
+    except Exception:
+        pass
+    m = re.search(r'"hook"\s*:\s*"([^"]+)"', text)
+    if m:
+        return m.group(1).strip()
+    return ""
+
+
 _HOOK_REGEN_PROMPT = (
     "Eres un guionista de reels. Se te da un guión ya escrito (body + closing). "
     "Tu trabajo es escribir UN SOLO hook alternativo para este guión. "
@@ -2563,8 +2584,7 @@ def transform_hook():
 
     try:
         raw = _call_llm(_HOOK_REGEN_PROMPT, user_msg, temperature=0.9)
-        parsed = _parse_ai_json(raw, "hook_regen")
-        new_hook = parsed.get("hook", raw)
+        new_hook = _extract_hook(raw) or original_text
     except Exception as e:
         logger.error(f"Hook regen failed: {e}", exc_info=True)
         return jsonify({"error": "Failed to regenerate hook"}), 502
@@ -8019,8 +8039,7 @@ def script_hooks_generate_batch(script_id):
     for _ in range(count):
         try:
             raw = _call_llm(_HOOK_REGEN_PROMPT, user_msg, temperature=0.9)
-            parsed = _parse_ai_json(raw, "hook_regen")
-            h = (parsed.get("hook") or raw or "").strip()
+            h = _extract_hook(raw)
             if h and h not in new_hooks:
                 new_hooks.append(h)
         except Exception as e:
