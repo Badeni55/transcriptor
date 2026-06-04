@@ -3450,6 +3450,13 @@ def metrics_summary():
     user = current_user()
     # El front (isla) manda ?brand=<id>; el legacy manda ?project_id. brand == project_id.
     project_id = request.args.get("project_id") or request.args.get("brand")
+    # FIX: 'brand=default' (centinela del front) no es UUID valido -> no filtrar por marca
+    # (Postgres rechazaba el valor en la columna UUID y devolvia 500).
+    if project_id:
+        try:
+            _uuid.UUID(str(project_id))
+        except Exception:
+            project_id = None
 
     q = db.table("scripts").select("views_count, likes, comments, saves, engagement_rate").eq("user_id", user["id"])
     if project_id:
