@@ -1,5 +1,10 @@
 """Transcriptor — Flask app con Supabase, créditos y Apify."""
 
+# Monkey-patch debe ir ANTES de cualquier import de requests/ssl/socket para que
+# gevent pueda reemplazarlos. Gunicorn gevent worker ya lo aplica, pero añadirlo
+# aquí garantiza cobertura en tests locales y ejecución directa con `python app.py`.
+from gevent import monkey as _gmonkey; _gmonkey.patch_all()
+
 import json
 import logging
 import os
@@ -8325,14 +8330,40 @@ def ideas_explosion():
         "Una idea tipo 'cómo conseguir X sin Y' para tu nicho.",
         "Una idea con gancho de historia personal o caso real (sin inventar datos).",
     ]
+    angles = [
+        "Enfoque directo y práctico, paso a paso.",
+        "Enfoque de historia: arranca con una anécdota o caso concreto.",
+        "Enfoque contraintuitivo: ataca una creencia común desde el hook.",
+        "Enfoque lista: estructura el body como pasos numerados claros.",
+        "Enfoque emocional: conecta con la frustración o el deseo de la audiencia.",
+    ]
 
-    # Fase 1: 5 ideas.
-    ideas_out = []
-    for i in range(5):
+    import time as _t
+    import gevent
+    from gevent.pool import Pool as _GPool
+
+    # Pool de 8 greenlets concurrentes — suficiente para solapar I/O de red sin
+    # saturar el rate-limit de OpenRouter/Groq (que rechaza ráfagas de >10 rpm).
+    _POOL_SIZE = 8
+
+    # ── Fase 1: 5 ideas en paralelo ──────────────────────────────────────────
+    def _gen_idea(i):
         try:
-            result = develop_idea(seeds[i], assistant_id, uid, language)
+            return develop_idea(seeds[i], assistant_id, uid, language)
         except Exception as e:
             logger.warning("explosion: develop failed user=%s i=%s err=%s", uid, i, e)
+            return None
+
+    _t0 = _t.time()
+    _pool1 = _GPool(_POOL_SIZE)
+    _idea_jobs = [_pool1.spawn(_gen_idea, i) for i in range(5)]
+    gevent.joinall(_idea_jobs, timeout=120)
+    logger.info("explosion: fase1 ideas %.1fs user=%s", _t.time() - _t0, uid)
+
+    ideas_out = []
+    for i, job in enumerate(_idea_jobs):
+        result = job.value
+        if not result:
             continue
         try:
             r = db.table("ideas").insert({
@@ -8352,68 +8383,123 @@ def ideas_explosion():
         return jsonify({"error": "llm_error",
                         "message": "La explosión no pudo arrancar. Inténtalo de nuevo."}), 502
 
-    # Fase 2: 5 guiones por idea. Fase 3: 5 hooks por guion.
-    angles = [
-        "Enfoque directo y práctico, paso a paso.",
-        "Enfoque de historia: arranca con una anécdota o caso concreto.",
-        "Enfoque contraintuitivo: ataca una creencia común desde el hook.",
-        "Enfoque lista: estructura el body como pasos numerados claros.",
-        "Enfoque emocional: conecta con la frustración o el deseo de la audiencia.",
-    ]
-    scripts_out, hooks_out = [], []
-    for idea in ideas_out:
+    # ── Fase 2: 25 guiones en paralelo (5 ideas × 5 ángulos) ─────────────────
+    def _gen_script(idea, j):
         title = idea.get("title") or ""
         raw_text = idea.get("raw_text") or ""
         category = idea.get("category") or ""
+        _sd = idea.get("script_draft")
+        if isinstance(_sd, dict):
+            _sd_i = _sd.get("intro") or ""
+            _sd_d = _sd.get("desarrollo") or ""
+            _sd_c = _sd.get("cierre") or ""
+            draft_block = (
+                f"\n\n[Borrador de desarrollo]\nIntro: {_sd_i}\n"
+                f"Desarrollo: {_sd_d}\nCierre: {_sd_c}"
+            ) if (_sd_i or _sd_d or _sd_c) else ""
+        else:
+            draft_block = ""
+        user_content = (
+            f"[Idea original del usuario]\n{raw_text}\n\n"
+            f"[Título]\n{title}\n\n[Categoría]\n{category or '—'}{draft_block}\n\n"
+            f"[Ángulo para ESTA variación]\n{angles[j]}\n\n"
+            f"Tarea: convierte esto en un guion completo de 30-45 segundos hablados "
+            f"para un reel de Instagram, siguiendo el ángulo indicado. Tu output debe tener "
+            f"desarrollo real, ejemplos concretos (sin inventar datos numéricos), profundidad y ritmo. "
+            f"Total: 100-140 palabras, mínimo 8 frases en body. "
+            f"Incluye al menos 1 ejemplo concreto o anécdota dentro del desarrollo."
+        )
+        try:
+            return adapt_with_ai(user_content, style_arg, custom_prompt, voice=voice, user_id=uid)
+        except Exception as e:
+            logger.warning("explosion: script LLM failed user=%s err=%s", uid, e)
+            return None
+
+    _t1 = _t.time()
+    _pool2 = _GPool(_POOL_SIZE)
+    _script_jobs, _script_meta = [], []
+    for idea in ideas_out:
         for j in range(5):
-            user_content = (
-                f"[Idea original del usuario]\n{raw_text}\n\n"
-                f"[Título]\n{title}\n\n[Categoría]\n{category or '—'}\n\n"
-                f"[Ángulo para ESTA variación]\n{angles[j]}\n\n"
-                f"Tarea: guion completo de 30-45s para un reel siguiendo el ángulo. "
-                f"100-140 palabras, mínimo 8 frases en body, ejemplos concretos."
-            )
-            try:
-                result = adapt_with_ai(user_content, style_arg, custom_prompt, voice=voice, user_id=uid)
-            except Exception as e:
-                logger.warning("explosion: script LLM failed user=%s err=%s", uid, e)
-                continue
-            flat, llm_title = _flatten_script_result(result)
-            if not flat:
-                continue
-            today = datetime.now(timezone.utc).strftime("%d %b %Y").lower()
-            script_title = llm_title or f"Guión · {style_label} · {today}"
-            sid = None
-            # Hooks alternativos para este guion (fase 3).
-            lines = [l.strip() for l in flat.split("\n") if l.strip()]
-            ctx = "\n".join(lines[1:]) if len(lines) > 1 else flat
-            user_msg = f"Guión actual:\n{ctx}\n\nTexto original del que salió:\n{lines[0] if lines else flat}"
-            alt = []
-            for _ in range(5):
-                try:
-                    raw = _call_llm(_HOOK_REGEN_PROMPT, user_msg, temperature=0.9)
-                    h = (_parse_ai_json(raw, "hook_regen").get("hook") or raw or "").strip()
-                    if h and h not in alt:
-                        alt.append(h)
-                        hooks_out.append(h)
-                except Exception:
-                    continue
-            try:
-                ins = db.table("scripts").insert({
-                    "user_id": uid, "idea_id": idea.get("id"),
-                    "title": script_title, "script": flat,
-                    "project_id": idea.get("project_id"),
-                    "alt_hooks": alt,
-                    "assistant_name": _resolve_assistant_name(
-                        {"assistant_id": assistant_id, "style": style_label}, uid, db),
-                }).execute()
-                sid = ins.data[0].get("id") if ins.data else None
-            except Exception as e:
-                logger.error("explosion: script insert failed user=%s err=%s", uid, e, exc_info=True)
-            scripts_out.append({
-                "id": sid, "title": script_title, "script": flat,
-                "idea_id": idea.get("id"), "alt_hooks": alt,
-            })
+            _script_jobs.append(_pool2.spawn(_gen_script, idea, j))
+            _script_meta.append((idea, j))
+    gevent.joinall(_script_jobs, timeout=180)
+    logger.info("explosion: fase2 scripts %.1fs user=%s ok=%d/%d",
+                _t.time() - _t1, uid,
+                sum(1 for j in _script_jobs if j.value is not None), len(_script_jobs))
+
+    # Aplanar resultados exitosos antes de los inserts y de la fase de hooks.
+    _pending = []   # [(idea, j, flat, llm_title)]
+    for k, job in enumerate(_script_jobs):
+        result = job.value
+        if not result:
+            continue
+        flat, llm_title = _flatten_script_result(result)
+        if flat:
+            idea, j = _script_meta[k]
+            _pending.append((idea, j, flat, llm_title))
+
+    # ── Fase 3: hooks en paralelo (5 por guion) ───────────────────────────────
+    def _gen_hook(flat):
+        lines = [ln.strip() for ln in flat.split("\n") if ln.strip()]
+        ctx = "\n".join(lines[1:]) if len(lines) > 1 else flat
+        user_msg = (f"Guión actual:\n{ctx}\n\n"
+                    f"Texto original del que salió:\n{lines[0] if lines else flat}")
+        try:
+            raw = _call_llm(_HOOK_REGEN_PROMPT, user_msg, temperature=0.9)
+            return _extract_hook(raw) or None
+        except Exception:
+            return None
+
+    _t2 = _t.time()
+    _pool3 = _GPool(_POOL_SIZE)
+    _hook_jobs, _hook_meta = [], []
+    for k, (idea, j, flat, llm_title) in enumerate(_pending):
+        for _ in range(5):
+            _hook_jobs.append(_pool3.spawn(_gen_hook, flat))
+            _hook_meta.append(k)
+    gevent.joinall(_hook_jobs, timeout=180)
+    logger.info("explosion: fase3 hooks %.1fs user=%s ok=%d/%d",
+                _t.time() - _t2, uid,
+                sum(1 for j in _hook_jobs if j.value), len(_hook_jobs))
+
+    _hooks_by_script = {}
+    for m, job in enumerate(_hook_jobs):
+        h = job.value
+        if not h:
+            continue
+        k = _hook_meta[m]
+        bucket = _hooks_by_script.setdefault(k, [])
+        if h not in bucket and len(bucket) < 5:
+            bucket.append(h)
+
+    # Insertar guiones y construir respuesta.
+    scripts_out, hooks_out = [], []
+    today = datetime.now(timezone.utc).strftime("%d %b %Y").lower()
+    asst_name = _resolve_assistant_name(
+        {"assistant_id": assistant_id, "style": style_label}, uid, db)
+
+    for k, (idea, j, flat, llm_title) in enumerate(_pending):
+        script_title = llm_title or f"Guión · {style_label} · {today}"
+        alt = _hooks_by_script.get(k, [])
+        hooks_out.extend(alt)
+        sid = None
+        try:
+            ins = db.table("scripts").insert({
+                "user_id": uid, "idea_id": idea.get("id"),
+                "title": script_title, "script": flat,
+                "project_id": idea.get("project_id"),
+                "alt_hooks": alt,
+                "assistant_name": asst_name,
+            }).execute()
+            sid = ins.data[0].get("id") if ins.data else None
+        except Exception as e:
+            logger.error("explosion: script insert failed user=%s err=%s", uid, e, exc_info=True)
+        scripts_out.append({
+            "id": sid, "title": script_title, "script": flat,
+            "idea_id": idea.get("id"), "alt_hooks": alt,
+        })
+
+    for idea in ideas_out:
         try:
             db.table("ideas").update({
                 "status": "scripted",
