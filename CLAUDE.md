@@ -27,6 +27,13 @@ Opcionales: `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `APIFY_TOKEN`, `STRIPE_TOP
 ## Ejecución local
 `docker compose up` — levanta app + worker + Redis. La app escucha en `:5555`.
 
+**Demo sin claves** (la isla Signal con datos falsos, sin Supabase/Stripe/Redis):
+`DEMO_MODE=1 PORT=3100 SUPABASE_URL=https://demo-dummy.supabase.co SUPABASE_SERVICE_KEY=dummy venv/bin/python app.py`
+→ http://localhost:3100 entra directo al Radar. Deep-links (`?plan=creador|agencia`, `?t=`, `?b=`) **solo** entrando por `/profile/radar?…` (entrar por `/es/` los pierde en el replaceState del shim).
+
+## Harness funcional de la isla
+`node scripts/verify-island.mjs` (cero deps; Chrome headless + CDP) contra el server demo de arriba. 30 checks: montaje, deep-links, criterios IDI T1-T9 (acción primaria única, sheets sin prompt, Esc/Enter, aria/foco, targets móviles, anti-duplicado de robo). Correr tras cualquier cambio en `static/js/radar-loop.js`. Trampas que ya resuelve solo: mata su Chrome al salir (los huérfanos a 60% CPU degradan los runs siguientes), desactiva animaciones CSS (el orbe satura el renderer headless) y auto-descarta diálogos JS nativos.
+
 ---
 
 ## Deploy flow
