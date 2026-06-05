@@ -916,7 +916,21 @@
   /* ════════════════════════════════════════════════════════════════
      OVERLAYS (gen / script / formatos / teleprompter / fillweek)
      ════════════════════════════════════════════════════════════════ */
-  function generatingHTML(kind){ var steps=GEN_STEPS[kind]||GEN_STEPS.script; return '<div class="gen"><div class="orb"></div><div><div class="gtitle">'+ESC(GEN_TITLE[kind]||"Trabajando")+'</div><div class="gstep" id="rsGenStep">'+ESC(steps[0])+'</div></div></div>'; }
+  /* T6 (IDI): espera honesta. Los pasos cosméticos venden valor ~8s; si el robo
+     real sigue sin responder, pasamos a mensajes HONESTOS (rotación lenta) y
+     ofrecemos seguir navegando — la generación termina en segundo plano y avisa
+     con un toast. Flow: «reacción directa» + «sentido de control». */
+  var HONEST_MSGS=[
+    "Tu rival hablaba mucho — dame unos segundos más…",
+    "Sigo en ello. Reescribir bien lleva un momento…",
+    "Ya casi. Puliendo tu versión…"
+  ];
+  function generatingHTML(kind){
+    var steps=S._genSlow?HONEST_MSGS:(GEN_STEPS[kind]||GEN_STEPS.script);
+    return '<div class="gen"><div class="orb"></div><div><div class="gtitle">'+ESC(GEN_TITLE[kind]||"Trabajando")+'</div><div class="gstep" id="rsGenStep">'+ESC(steps[0])+'</div>'+
+      (S._genSlow?'<div class="gen-bg"><div class="gen-bg-hint">No hace falta que esperes aquí: el guion aterriza en Guiones igualmente.</div><button class="btn btn-md btn-secondary" data-act="gen-background">Seguir navegando — te aviso al terminar</button></div>':'')+
+    '</div></div>';
+  }
   function conveyorHTML(){
     var items=[["record",IC.mic,"Grábalo ahora","Teleprompter listo · gratis",true],["hooks",IC.hook,"5 hooks alternativos","El hook es el 80% del reel",false],["carousel",IC.layers,"Conviértelo en carrusel","La misma idea, en post",false],["linkedin",'<span style="font-weight:800;font-size:13px">in</span>',"Versión LinkedIn","Llega a otro público",false],["x",'<span style="font-weight:800;font-size:15px">𝕏</span>',"Hilo para X","Exprime el mismo ángulo",false],["serie",IC.repeat,"Genérame una serie de 3","Contenido para toda la semana",false]];
     var rows=items.map(function(it){ var k=it[0],d=!!S.done[k]; var lbl=d?(k==="record"?"Grabado ✓":"Hecho ✓"):it[2];
@@ -1071,7 +1085,8 @@
   }
 
   /* ── animaciones ─────────────────────────────────────────────── */
-  function startGenSteps(){ clearInterval(S.genStepTimer); var steps=GEN_STEPS[S.genKind]||GEN_STEPS.script,i=0; S.genStepTimer=setInterval(function(){ i=(i+1)%steps.length; var n=document.getElementById("rsGenStep"); if(n){ n.style.opacity=0; setTimeout(function(){ n.textContent=steps[i]; n.style.opacity=1; },150); } },700); }
+  // T6: con S._genSlow los mensajes honestos rotan LENTO (no es teatro, es espera real).
+  function startGenSteps(){ clearInterval(S.genStepTimer); var steps=S._genSlow?HONEST_MSGS:(GEN_STEPS[S.genKind]||GEN_STEPS.script),i=0; S.genStepTimer=setInterval(function(){ i=(i+1)%steps.length; var n=document.getElementById("rsGenStep"); if(n){ n.style.opacity=0; setTimeout(function(){ n.textContent=steps[i]; n.style.opacity=1; },150); } },S._genSlow?9000:700); }
   function flashSpark(delta){ var sp=document.getElementById("rsSpark"),nEl=document.getElementById("rsSparkN"); if(nEl) nEl.textContent=(S.user.plan==="free" && !S.user.credits)?S.user.freeLeft:S.user.credits; if(sp&&delta<0){ sp.classList.add("flash"); var fly=document.createElement("span"); fly.className="spark-fly"; fly.textContent=delta; sp.appendChild(fly); setTimeout(function(){ sp.classList.remove("flash"); if(fly.parentNode) fly.parentNode.removeChild(fly); },1000); } }
   function showToast(msg){ var t=document.getElementById("rsToast"),m=document.getElementById("rsToastMsg"); if(!t||!m) return; m.textContent=msg; t.classList.add("show"); clearTimeout(S.toastTimer); S.toastTimer=setTimeout(function(){ t.classList.remove("show"); },2800); }
   // T4 (IDI): los errores NO se esfuman — persisten hasta que el usuario los
@@ -1124,13 +1139,30 @@
   }
   function steal(id){
     var r=S.reels.filter(function(x){return x.id===id;})[0]; if(!r) return;
-    S.reel=r; S.genKind="script"; S.done={}; S.view="gen"; render();
+    S.reel=r; S.genKind="script"; S.done={}; S.view="gen";
+    // T6: token de generación — si el usuario lanza otro robo o sigue navegando,
+    // este robo pasa a "background": guarda el guion y avisa, sin secuestrar la vista.
+    S._genSeq=(S._genSeq||0)+1; var tok=S._genSeq;
+    S._genBg=false; S._genSlow=false; clearTimeout(S._genHonestTimer);
+    render();
+    // T6: a los ~8s sin respuesta, el orbe deja el teatro y habla claro.
+    S._genHonestTimer=setTimeout(function(){ if(S.view==="gen" && tok===S._genSeq){ S._genSlow=true; render(); } },8000);
     ensureScript(r,function(err){
-      if(err){ S.view="feed"; render(); showPaywall(err); return; }
+      var bg=S._genBg || tok!==S._genSeq;   // cerró el orbe, siguió navegando o lanzó otro robo
+      if(tok===S._genSeq){ clearTimeout(S._genHonestTimer); S._genSlow=false; S._genBg=false; }
+      if(err){
+        if(bg){
+          if(err==="free_limit_reached"||err==="no_credits") showPaywall(err);
+          else showError("No pude terminar tu guion. Inténtalo de nuevo.");   // persistente (T4): el usuario está en otra vista
+          return;
+        }
+        S.view="feed"; render(); showPaywall(err); return;
+      }
       // El guión generado se guarda SIEMPRE en Guiones (draft). No se pierde nada.
-      var s=r.script||{}; S.activeGuionId=addGuion({title:s.hook, hook:s.hook, beats:s.beats, close:s.close, from:"@"+r.creator.handle, type:"guión"});
-      if(!isDemo() && r._sid){ var g=guionById(S.activeGuionId); if(g) g._sid=r._sid; }
-      S.view="script"; render();
+      var s=r.script||{}; var gidNew=addGuion({title:s.hook, hook:s.hook, beats:s.beats, close:s.close, from:"@"+r.creator.handle, type:"guión"});
+      if(!isDemo() && r._sid){ var g=guionById(gidNew); if(g) g._sid=r._sid; }
+      if(bg){ render(); showToast("Tu guion ya está listo — te espera en Guiones."); }
+      else { S.activeGuionId=gidNew; S.view="script"; render(); }
       // Demo: descuento local cosmético. Prod: el backend ya cobró server-side →
       // refrescamos el saldo real (/auth/me) sin descontar local (evita doble-cobro).
       if(isDemo()){ spend(COST.script); bumpEco(1,1); flashSpark(-COST.script); }
@@ -1625,7 +1657,8 @@
   }
 
   /* ── teclado (T3, IDI): Esc cierra, Enter envía — como la chrome legacy ── */
-  function closeOverlay(){ clearInterval(S.genStepTimer); clearTimeout(S.fillTimer); S.view="feed"; S._fillPhase=null; render(); }
+  // T6: cerrar el orbe NO cancela el robo — sigue en background y avisa al acabar.
+  function closeOverlay(){ if(S.view==="gen") S._genBg=true; clearInterval(S.genStepTimer); clearTimeout(S.fillTimer); S.view="feed"; S._fillPhase=null; render(); }
   function tpBack(){ if(S.tab==="guiones"){ S.view="feed"; } else { S.view=(S.reel&&S.reel.script)?"script":"feed"; } render(); }
   // Cierra lo más "encima" primero: sheet → menú de marca → overlay activo.
   // Equivalencias: result→volver al guión; prompter→tp-back; resto→close-feed.
@@ -1704,6 +1737,7 @@
     if(act==="gui-hooks"){ var gh=guionById(id); if(gh){ gh.expanded=!gh.expanded; } return render(); }
     if(act==="gui-use-hook"){ var gu=guionById(id); if(gu&&gu.hooks){ var ix=parseInt(btn.getAttribute("data-i"),10); var nv=gu.hooks[ix]; if(nv!=null){ gu.hooks[ix]=gu.hook; gu.hook=nv; gu.title=nv; } } render(); return showToast("Apertura actualizada."); }
     if(act==="gui-del-hook"){ var gd=guionById(id); if(gd&&gd.hooks){ gd.hooks.splice(parseInt(btn.getAttribute("data-i"),10),1); if(!gd.hooks.length) gd.expanded=false; } return render(); }
+    if(act==="gen-background") return closeOverlay();   // T6: seguir navegando (el robo sigue detrás)
     if(act==="chain") return chain(k);
     if(act==="record"){ S.view="prompter"; return render(); }
     if(act==="recorded") return recorded();
