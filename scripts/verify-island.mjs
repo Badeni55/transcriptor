@@ -254,6 +254,22 @@ async function main() {
     check(`monta ${q}`, ok && errs.length === 0, errs[0]);
   }
 
+  /* ═══ Loop completo (los 4 momentos): despertar → robo → reveal → grabar ═══ */
+  console.log("\n■ Loop completo demo");
+  await nav(`${BASE}/profile/radar?plan=creador`);
+  await click('.feature [data-act="steal"]'); await sleep(2300);   // espera teatral 1.7s
+  const reveal2 = await evaluate(`!!document.querySelector('#radarRoot .script-hook')`);
+  await click('[data-act="chain"][data-k="record"]'); await sleep(300);
+  const prompter = await evaluate(`!!document.querySelector('#radarRoot .overlay.prompter')`);
+  await click('[data-act="recorded"]'); await sleep(300);
+  const closed = await evaluate(`(function(){
+    return { feed: !document.querySelector('#radarRoot .overlay'),
+             toast: (document.getElementById('rsToastMsg')||{}).textContent||"" };
+  })()`);
+  check("robo → reveal → teleprompter → «Ya lo grabé» cierra el loop",
+    reveal2 && prompter && closed.feed && /Grabado/.test(closed.toast),
+    JSON.stringify({ reveal2, prompter, closed }));
+
   /* ═══ T9: deshacer al descartar guion ═══ */
   console.log("\n■ T9 · deshacer descarte");
   await nav(`${BASE}/profile/radar?plan=creador&t=guiones`);
