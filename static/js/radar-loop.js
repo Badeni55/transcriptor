@@ -87,6 +87,14 @@
     users:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 20a5.5 5.5 0 0111 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16 6.2a3 3 0 010 5.6M20.5 19.5a5 5 0 00-3.2-4.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
   };
 
+  // Spinner CSS inyectado una vez.
+  (function(){
+    if(document.getElementById("rs-ldr-style")) return;
+    var s=document.createElement("style"); s.id="rs-ldr-style";
+    s.textContent="@keyframes rs-spin{to{transform:rotate(360deg)}}.rs-ldr{display:inline-block;width:11px;height:11px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:rs-spin .7s linear infinite;vertical-align:middle;margin-right:5px;flex-shrink:0}";
+    document.head.appendChild(s);
+  })();
+
   var GEN_STEPS = {
     script:["Leyendo el reel de tu rival…","Extrayendo la estructura que funcionó…","Reescribiéndolo en TU voz…","Puliendo el hook…"],
     hooks:["Analizando el ángulo…","Probando 5 entradas distintas…","Ordenando por gancho…"],
@@ -1202,50 +1210,62 @@
       hooks:(Array.isArray(s.alt_hooks)&&s.alt_hooks.length)?s.alt_hooks:null, savedHooks:{},
       guionId:null, saved:false, expanded:false, idea:ideaText||"", title:s.title||p.hook||"" };
   }
-  function gen5ideas(){
+  function _btnLoading(btn){
+    if(!btn) return function(){};
+    var orig=btn.innerHTML, dis=btn.disabled;
+    btn.disabled=true;
+    btn.innerHTML='<span class="rs-ldr"></span>Generando…';
+    return function(){ btn.disabled=dis; btn.innerHTML=orig; };
+  }
+
+  function gen5ideas(btn){
     if(isDemo()){ spend(COST.idea5); var seed=Date.now()%97; var fresh=pick(BANK_IDEAS,5,seed).map(function(t,i){return makeIdea(t,seed+i*7);}); S.ideas=fresh.concat(S.ideas); render(); flashSpark(-COST.idea5); showToast("5 ideas nuevas para expandir."); return; }
+    var restore=_btnLoading(btn);
     showToast("Generando 5 ideas…");
     apiPost("/ideas/generate-batch",{count:5, project_id:S.brandId&&S.brandId!=="default"?S.brandId:null, language:rsLang()}).then(function(r){
-      if(!r.ok || !r.d || !Array.isArray(r.d.ideas)){ return showPaywallOrError(r); }
+      if(!r.ok || !r.d || !Array.isArray(r.d.ideas)){ restore(); return showPaywallOrError(r); }
       var fresh=r.d.ideas.map(function(i){ var it=normIdea(i); it.expanded=true; it._scriptsLoaded=true; return it; });
       S.ideas=fresh.concat(S.ideas); applyCredits(r.d, COST.idea5); render(); showToast("5 ideas nuevas para expandir.");
     });
   }
-  function gen5scripts(ideaId){
+  function gen5scripts(ideaId, btn){
     var idea=findIdea(ideaId); if(!idea) return;
     if(isDemo()){ spend(COST.scripts5); for(var i=0;i<5;i++) idea.scripts.push(makeScript(idea.text,(idea.seed||0)+idea.scripts.length+i)); bumpEco(5,0); render(); flashSpark(-COST.scripts5); showToast("5 guiones a partir de tu idea."); return; }
     if(idea._saving){ return showToast("Espera, estoy guardando esa idea…"); }
     if(!idea._server){ return showToast("Esa idea aún no está guardada. Recarga e inténtalo."); }
+    var restore=_btnLoading(btn);
     showToast("Generando 5 guiones…");
     apiPost("/ideas/"+encodeURIComponent(idea.id)+"/scripts/generate-batch",{count:5, language:rsLang()}).then(function(r){
-      if(!r.ok || !r.d || !Array.isArray(r.d.scripts)){ return showPaywallOrError(r); }
+      if(!r.ok || !r.d || !Array.isArray(r.d.scripts)){ restore(); return showPaywallOrError(r); }
       idea.expanded=true;
       r.d.scripts.forEach(function(s){ idea.scripts.push(makeScriptFromServer(s, idea.text)); });
       applyCredits(r.d, COST.scripts5); render(); showToast("5 guiones a partir de tu idea.");
     });
   }
-  function gen5hooks(scriptId){
+  function gen5hooks(scriptId, btn){
     var sc=findScript(scriptId); if(!sc) return;
     if(isDemo()){ spend(COST.hooks5); sc.hooks=pick(BANK_HOOKS,5,(sc.hook||"").length+ Object.keys(S.ideas).length); render(); flashSpark(-COST.hooks5); return; }
     if(!sc._sid){ return showToast("Este guion aún no está persistido."); }
+    var restore=_btnLoading(btn);
     showToast("Generando 5 hooks…");
     apiPost("/scripts/"+encodeURIComponent(sc._sid)+"/hooks/generate-batch",{count:5}).then(function(r){
-      if(!r.ok || !r.d || !Array.isArray(r.d.hooks)){ return showPaywallOrError(r); }
+      if(!r.ok || !r.d || !Array.isArray(r.d.hooks)){ restore(); return showPaywallOrError(r); }
       sc.hooks=r.d.hooks.slice();
       // Si ya estaba guardado en Guiones, su alt_hooks del backend = r.d.alt_hooks.
       if(sc.saved && sc.guionId){ var g=guionById(sc.guionId); if(g && Array.isArray(r.d.alt_hooks)){ g.hooks=r.d.alt_hooks.slice(); } }
       applyCredits(r.d, COST.hooks5); render(); showToast("5 hooks nuevos para tu guion.");
     });
   }
-  function explosion(){
+  function explosion(btn){
     if(isDemo()){
       spend(COST.explosion); var seed=Date.now()%89;
       var ideasD=pick(BANK_IDEAS,5,seed).map(function(t,i){ var idea=makeIdea(t,seed+i*5); for(var j=0;j<5;j++){ var sc=makeScript(t,seed+i*5+j); sc.hooks=pick(BANK_HOOKS,5,seed+i+j); idea.scripts.push(sc); } return idea; });
       S.ideas=ideasD.concat(S.ideas); bumpEco(25,0); render(); flashSpark(-COST.explosion); showToast("💥 5 ideas × 5 guiones × 5 hooks. La semana entera, de un golpe."); return;
     }
+    var restore=_btnLoading(btn);
     showToast("💥 Explosión en marcha… esto tarda un poco.");
     apiPost("/ideas/explosion",{project_id:S.brandId&&S.brandId!=="default"?S.brandId:null, language:rsLang()}).then(function(r){
-      if(!r.ok || !r.d || !Array.isArray(r.d.ideas)){ return showPaywallOrError(r); }
+      if(!r.ok || !r.d || !Array.isArray(r.d.ideas)){ restore(); return showPaywallOrError(r); }
       // Reconstruye el árbol idea→guiones→hooks desde la respuesta (scripts traen idea_id).
       var byIdea={};
       (r.d.scripts||[]).forEach(function(s){ var k=s.idea_id||"_"; (byIdea[k]=byIdea[k]||[]).push(s); });
@@ -1512,10 +1532,10 @@
     if(act==="fillweek") return startFillWeek();
     if(act==="seed-go") return seedIdea("rsIdeaSeed", true);
     if(act==="seed-add") return addSeedIdea();
-    if(act==="gen5ideas") return gen5ideas();
-    if(act==="gen5scripts") return gen5scripts(id);
-    if(act==="gen5hooks") return gen5hooks(id);
-    if(act==="explosion") return explosion();
+    if(act==="gen5ideas") return gen5ideas(btn);
+    if(act==="gen5scripts") return gen5scripts(id, btn);
+    if(act==="gen5hooks") return gen5hooks(id, btn);
+    if(act==="explosion") return explosion(btn);
     if(act==="save-script") return saveScript(id);
     if(act==="save-hook") return saveHook(id, parseInt(btn.getAttribute("data-i"),10));
     if(act==="idea-toggle"){ var idt=findIdea(id); if(idt){ idt.expanded=(idt.expanded===false); } return render(); }

@@ -7930,6 +7930,11 @@ def idea_scripts_generate_batch(idea_id):
     if _custom_too_short(style_arg, custom_prompt):
         return _assistant_too_short_response(style_label)
 
+    # "hooks" produce solo hooks sueltos (5 one-liners), no guiones completos.
+    # Degradar a viral para que el batch genere scripts estructurados.
+    if style_arg == "hooks":
+        style_arg = style_label = "viral"
+
     # Coste del lote: COST.scripts5 = 5 créditos.
     err, refund, _ = _charge_units_locked(uid, 5, user)
     if err:
@@ -7938,6 +7943,20 @@ def idea_scripts_generate_batch(idea_id):
     title = idea.get("title") or ""
     category = idea.get("category") or ""
     raw_text = idea.get("raw_text") or ""
+    # Si la idea viene de gen5ideas, raw_text es solo el título (thin). El
+    # script_draft (intro/desarrollo/cierre generado por develop_idea) da contexto
+    # rico para que el LLM genere guiones completos en lugar de expandir un título.
+    _sd = idea.get("script_draft")
+    if isinstance(_sd, dict):
+        _sd_intro = _sd.get("intro") or ""
+        _sd_dev = _sd.get("desarrollo") or ""
+        _sd_cierre = _sd.get("cierre") or ""
+        _draft_block = (
+            f"\n\n[Borrador de desarrollo]\nIntro: {_sd_intro}\n"
+            f"Desarrollo: {_sd_dev}\nCierre: {_sd_cierre}"
+        ) if (_sd_intro or _sd_dev or _sd_cierre) else ""
+    else:
+        _draft_block = ""
     # Ángulos para que los 5 guiones no salgan idénticos.
     angles = [
         "Enfoque directo y práctico, paso a paso.",
@@ -7947,22 +7966,37 @@ def idea_scripts_generate_batch(idea_id):
         "Enfoque emocional: conecta con la frustración o el deseo de la audiencia.",
     ]
     voice = get_voice_profile(uid)
-    scripts_out = []
-    for i in range(count):
-        user_content = (
+
+    def _build_user_content(i):
+        return (
             f"[Idea original del usuario]\n{raw_text}\n\n"
             f"[Título]\n{title}\n\n"
-            f"[Categoría]\n{category or '—'}\n\n"
+            f"[Categoría]\n{category or '—'}{_draft_block}\n\n"
             f"[Ángulo para ESTA variación]\n{angles[i % len(angles)]}\n\n"
             f"Tarea: convierte esto en un guion completo de 30-45 segundos hablados "
-            f"para un reel de Instagram, siguiendo el ángulo indicado. Output con "
-            f"desarrollo real, ejemplos concretos (sin inventar datos numéricos), "
-            f"profundidad y ritmo. Total: 100-140 palabras, mínimo 8 frases en body."
+            f"para un reel de Instagram, siguiendo el ángulo indicado. Tu output debe tener "
+            f"desarrollo real, ejemplos concretos (sin inventar datos numéricos), profundidad y ritmo. "
+            f"Total: 100-140 palabras, mínimo 8 frases en body. "
+            f"Incluye al menos 1 ejemplo concreto o anécdota dentro del desarrollo."
         )
+
+    def _gen_variation(i):
         try:
-            result = adapt_with_ai(user_content, style_arg, custom_prompt, voice=voice, user_id=uid)
+            return adapt_with_ai(_build_user_content(i), style_arg, custom_prompt, voice=voice, user_id=uid)
         except Exception as e:
             logger.warning("idea_scripts_batch: LLM failed user=%s idea=%s i=%s err=%s", uid, idea_id, i, e)
+            return None
+
+    # v0.19-fix: N llamadas al LLM EN PARALELO (worker gevent) en vez de en serie
+    # -> el request deja de colgarse (5 guiones tardan ~= 1 llamada, no 5).
+    import gevent
+    _jobs = [gevent.spawn(_gen_variation, i) for i in range(count)]
+    gevent.joinall(_jobs, timeout=120)
+
+    scripts_out = []
+    for i in range(count):
+        result = _jobs[i].value
+        if not result:
             continue
         flat, llm_title = _flatten_script_result(result)
         if not flat:
