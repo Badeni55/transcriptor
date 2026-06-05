@@ -1,0 +1,219 @@
+#!/usr/bin/env node
+/* ═══════════════════════════════════════════════════════════════════════════
+   verify-island.mjs — harness funcional de la isla .rs (Signal / RadarLoop)
+   Cero dependencias: Chrome headless + CDP por WebSocket nativo (Node ≥22).
+
+   Uso:  node scripts/verify-island.mjs [URL_BASE]
+         (por defecto http://localhost:3100 — la app debe correr con DEMO_MODE=1)
+
+   Qué verifica (docs/TODO-mejoras-ux-idi.md · Verificación final):
+   - La isla monta y renderiza el feed sin errores de consola (demo).
+   - Deep-links del demo (?plan=creador/agencia, ?t=, ?b=) montan.
+   - T1: un solo .btn-primary sobre el fold del Dashboard ("Hazlo mío").
+   - T2: los flujos abren sheet propio (sin window.prompt).
+   - T3: Esc cierra overlays; Enter envía la idea.
+   - T4: toast con aria-live; error persistente.
+   - T5: overlays role=dialog + foco dentro.
+   ═══════════════════════════════════════════════════════════════════════════ */
+import { spawn, execSync } from "node:child_process";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+const BASE = process.argv[2] || "http://localhost:3100";
+const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const PORT = 9222 + Math.floor(Math.random() * 500);
+
+// Watchdog: si algo cuelga (CDP mudo, promesa sin resolver), salimos con código 3
+// en vez de quedarnos vivos para siempre. stderr no se bufferiza → trazas visibles.
+const WATCHDOG_MS = 150000;
+const watchdog = setTimeout(() => { console.error("WATCHDOG: harness colgado >150s — abortando"); process.exit(3); }, WATCHDOG_MS);
+watchdog.unref?.();
+const trace = (m) => process.stderr.write(`· ${m}\n`);
+
+let passed = 0, failed = 0;
+const fails = [];
+function check(name, ok, extra) {
+  if (ok) { passed++; console.log(`  ✓ ${name}`); }
+  else { failed++; fails.push(name + (extra ? ` — ${extra}` : "")); console.log(`  ✗ ${name}${extra ? " — " + extra : ""}`); }
+}
+
+/* ── CDP plumbing ──────────────────────────────────────────────────────── */
+let ws, msgId = 0;
+const pending = new Map();
+const events = [];
+function send(method, params = {}, sessionId) {
+  return new Promise((resolve, reject) => {
+    const id = ++msgId;
+    pending.set(id, { resolve, reject });
+    ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
+  });
+}
+function connect(url) {
+  return new Promise((resolve, reject) => {
+    ws = new WebSocket(url);
+    ws.onopen = () => resolve();
+    ws.onerror = (e) => reject(e);
+    ws.onmessage = (m) => {
+      const d = JSON.parse(m.data);
+      if (d.id && pending.has(d.id)) {
+        const { resolve, reject } = pending.get(d.id);
+        pending.delete(d.id);
+        d.error ? reject(new Error(d.error.message)) : resolve(d.result);
+      } else if (d.method) {
+        events.push(d);
+        // Un window.prompt/alert nativo BLOQUEA el renderer (y con él, todo
+        // Runtime.evaluate posterior) → auto-descartar para no colgar el harness.
+        if (d.method === "Page.javascriptDialogOpening") {
+          trace("diálogo JS nativo detectado → auto-descartado (" + (d.params?.type || "?") + ")");
+          send("Page.handleJavaScriptDialog", { accept: false }, d.sessionId).catch(() => {});
+        }
+      }
+    };
+  });
+}
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+let sid; // session id de la pestaña
+async function evaluate(expr) {
+  const r = await send("Runtime.evaluate", { expression: expr, returnByValue: true, awaitPromise: true }, sid);
+  if (r.exceptionDetails) throw new Error("eval: " + (r.exceptionDetails.exception?.description || r.exceptionDetails.text));
+  return r.result.value;
+}
+async function nav(url) {
+  events.length = 0;
+  await send("Page.navigate", { url }, sid);
+  // espera a que la isla monte (#radarRoot con contenido)
+  for (let i = 0; i < 60; i++) {
+    await sleep(250);
+    try {
+      const ready = await evaluate(`!!document.querySelector('#radarRoot .phead')`); // .rail ya está en el skeleton; .phead = vista real
+      if (ready) { await sleep(400); return true; }
+    } catch {}
+  }
+  return false;
+}
+async function key(keyName, modifiers = 0) {
+  const defs = { Escape: { key: "Escape", code: "Escape", keyCode: 27 }, Enter: { key: "Enter", code: "Enter", keyCode: 13 } };
+  const d = defs[keyName];
+  for (const type of ["rawKeyDown", "keyUp"])
+    await send("Input.dispatchKeyEvent", { type, key: d.key, code: d.code, windowsVirtualKeyCode: d.keyCode, nativeVirtualKeyCode: d.keyCode, modifiers }, sid);
+}
+async function click(selector) {
+  return evaluate(`(function(){ var el=document.querySelector(${JSON.stringify(selector)}); if(!el) return false; el.click(); return true; })()`);
+}
+const consoleErrors = () => events.filter((e) => e.method === "Runtime.exceptionThrown").map((e) => e.params?.exceptionDetails?.exception?.description || "exception");
+
+/* ── arranque de Chrome ───────────────────────────────────────────────── */
+const profile = mkdtempSync(join(tmpdir(), "rs-verify-"));
+const chrome = spawn(CHROME, [
+  `--headless=new`, `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`,
+  `--no-first-run`, `--no-default-browser-check`, `--disable-extensions`, `--window-size=1440,900`, "about:blank",
+], { stdio: "ignore" });
+
+async function main() {
+  // espera al endpoint CDP
+  let info;
+  trace("esperando CDP en :" + PORT);
+  for (let i = 0; i < 40; i++) {
+    await sleep(250);
+    try { info = await (await fetch(`http://127.0.0.1:${PORT}/json/version`, { signal: AbortSignal.timeout(2000) })).json(); break; } catch {}
+  }
+  if (!info) throw new Error("Chrome CDP no responde");
+  trace("CDP listo, conectando WS");
+  await connect(info.webSocketDebuggerUrl);
+  trace("WS conectado");
+
+  const { targetId } = await send("Target.createTarget", { url: "about:blank" });
+  ({ sessionId: sid } = await send("Target.attachToTarget", { targetId, flatten: true }));
+  await send("Page.enable", {}, sid);
+  await send("Runtime.enable", {}, sid);
+  trace("target listo");
+
+  /* ═══ 1. Montaje base (demo creador) ═══ */
+  console.log("\n■ Montaje base (?plan=creador)");
+  // OJO: entrar por /es/ pierde la query (el shim demo hace replaceState a /profile/radar).
+  // Los deep-links solo sobreviven entrando directo por /profile/radar?….
+  const mounted = await nav(`${BASE}/profile/radar?plan=creador`);
+  check("la isla monta (rail presente)", mounted);
+  check("feed/dashboard renderiza", await evaluate(`!!document.querySelector('#radarRoot .feature, #radarRoot .rs-empty')`));
+  check("sin excepciones JS", consoleErrors().length === 0, consoleErrors()[0]);
+
+  /* ═══ T1: una sola acción primaria sobre el fold ═══ */
+  console.log("\n■ T1 · acción primaria única");
+  const t1 = await evaluate(`(function(){
+    var work=document.querySelector('#radarRoot .work'); if(!work) return {err:'no work'};
+    var fold=window.innerHeight;
+    var prim=[].slice.call(work.querySelectorAll('.btn-primary')).filter(function(b){
+      var r=b.getBoundingClientRect(); return r.top < fold && r.bottom > 0 && r.width>0;
+    });
+    return { n: prim.length, labels: prim.map(function(b){return b.textContent.trim();}) };
+  })()`);
+  check("único .btn-primary sobre el fold = «Hazlo mío»", t1.n === 1 && /Hazlo mío/.test(t1.labels?.[0] || ""), JSON.stringify(t1));
+
+  /* ═══ T3: Enter en #rsIdeaSeed dispara seed-go ═══ */
+  console.log("\n■ T3 · teclado");
+  await evaluate(`(function(){ var i=document.getElementById('rsIdeaSeed'); if(i){ i.value='Idea de prueba desde harness'; i.focus(); } })()`);
+  await key("Enter");
+  await sleep(300);
+  const onIdeas = await evaluate(`!!document.querySelector('#radarRoot .ideas-list') && document.body.textContent.indexOf('Idea de prueba desde harness')>-1`);
+  check("Enter en #rsIdeaSeed crea la idea y salta a Ideas", onIdeas);
+
+  // overlay + Esc: robar desde Dashboard
+  await click('[data-act="tab"][data-k="dashboard"]'); await sleep(250);
+  await click('.feature [data-act="steal"]'); await sleep(300);
+  const hasOverlay = await evaluate(`!!document.querySelector('#radarRoot .overlay')`);
+  check("robar abre overlay (gen)", hasOverlay);
+  await sleep(2200); // deja terminar la espera teatral demo (1.7s)
+  const reveal = await evaluate(`!!document.querySelector('#radarRoot .script-hook')`);
+  check("reveal del guión llega", reveal);
+  await key("Escape"); await sleep(300);
+  check("Esc cierra el overlay", await evaluate(`!document.querySelector('#radarRoot .overlay')`));
+
+  /* ═══ T5: overlay como diálogo accesible ═══ */
+  console.log("\n■ T5 · diálogo accesible");
+  await click('.feature [data-act="steal"]'); await sleep(400);
+  const dlg = await evaluate(`(function(){
+    var o=document.querySelector('#radarRoot .overlay'); if(!o) return {};
+    return { role:o.getAttribute('role'), modal:o.getAttribute('aria-modal'),
+             focusInside: o.contains(document.activeElement) };
+  })()`);
+  check("overlay role=dialog + aria-modal", dlg.role === "dialog" && dlg.modal === "true", JSON.stringify(dlg));
+  check("foco dentro del overlay al abrir", !!dlg.focusInside);
+  await key("Escape"); await sleep(250);
+
+  /* ═══ T2: sheets sin window.prompt ═══ */
+  console.log("\n■ T2 · promptSheet");
+  await nav(`${BASE}/profile/radar?plan=creador`);   // estado limpio (sin overlays colgando de checks previos)
+  await evaluate(`window.__promptCalled=false; window.prompt=function(){ window.__promptCalled=true; return null; };`);
+  await click('[data-act="add-reel"]'); await sleep(300);
+  const sheet = await evaluate(`(function(){
+    var s=document.querySelector('#radarRoot .sheet, #radarRoot .overlay');
+    return { open: !!s, hasField: !!(s&&s.querySelector('input,textarea')), prompt: window.__promptCalled };
+  })()`);
+  check("«Añadir reel» abre sheet con campo (sin window.prompt)", sheet.open && sheet.hasField && !sheet.prompt, JSON.stringify(sheet));
+  await key("Escape"); await sleep(200);
+
+  /* ═══ T4: toast accesible ═══ */
+  console.log("\n■ T4 · toast accesible");
+  const toast = await evaluate(`(function(){
+    var t=document.getElementById('rsToast'); if(!t) return {};
+    return { role:t.getAttribute('role'), live:t.getAttribute('aria-live') };
+  })()`);
+  check("#rsToast role=status + aria-live", toast.role === "status" && toast.live === "polite", JSON.stringify(toast));
+
+  /* ═══ deep-links ═══ */
+  console.log("\n■ Deep-links demo");
+  for (const q of ["?plan=agencia", "?plan=creador&t=ideas", "?plan=creador&t=guiones", "?plan=creador&t=metrics", "?plan=creador&t=brain", "?plan=agencia&t=team", "?plan=creador&t=perf", "?plan=agencia&b=b2"]) {
+    const ok = await nav(`${BASE}/profile/radar${q}`);
+    const errs = consoleErrors();
+    check(`monta ${q}`, ok && errs.length === 0, errs[0]);
+  }
+
+  console.log(`\n═══ RESULTADO: ${passed} ✓ · ${failed} ✗ ═══`);
+  if (fails.length) { console.log(fails.map((f) => "  ✗ " + f).join("\n")); }
+  process.exitCode = failed ? 1 : 0;
+}
+
+main().catch((e) => { console.error("HARNESS ERROR:", e.message); process.exitCode = 2; })
+  .finally(() => { try { chrome.kill(); } catch {} try { rmSync(profile, { recursive: true, force: true }); } catch {} });
