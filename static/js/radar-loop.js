@@ -1028,7 +1028,23 @@
     var el=root(); if(!el) return;
     el.className="rs app "+(S.device==="mobile"?"rs--mobile":"rs--desktop");
     el.setAttribute("data-theme",(document.documentElement.getAttribute("data-theme")==="light"?"light":"dark"));
-    var html=railHTML()+'<div class="work">'+cmdHTML();
+    // Fix review (T2/T6): si hay un sheet abierto con texto sin enviar, consérvalo —
+    // un render de fondo (p.ej. robo en background al resolver) no debe borrarlo.
+    if(S.sheet){ var _si=document.getElementById("rsSheetInput"); if(_si) S.sheet.initial=_si.value; }
+    // Fix review (T4/a11y): #rsToast/#rsErr deben ser nodos PERSISTENTES — una región
+    // aria-live solo se anuncia cuando su contenido MUTA estando ya en el DOM. Si se
+    // recrean en cada innerHTML, el patrón render()+showToast() no se anuncia. La vista
+    // se pinta en #rsView (display:contents → transparente al layout) y el toast/error
+    // viven fuera, estables.
+    var view=document.getElementById("rsView");
+    if(!view || view.parentNode!==el){
+      el.innerHTML='<div class="rs-view" id="rsView"></div>'+
+        '<div class="rs-toast" id="rsToast" role="status" aria-live="polite"><span class="tdot"></span><span id="rsToastMsg"></span><button class="rs-toast-act" id="rsToastAct" style="display:none"></button></div>'+
+        '<div class="rs-toast rs-err" id="rsErr" role="alert" aria-live="assertive"><span class="tdot err"></span><span id="rsErrMsg"></span><button class="rs-err-x" data-act="err-close" title="Cerrar" aria-label="Cerrar el error">'+IC.x+'</button></div>';
+      view=document.getElementById("rsView");
+    }
+    var html='';
+    html+=railHTML()+'<div class="work">'+cmdHTML();
     if(S.tab==="portfolio") html+=(isAgency()?portfolioHTML():dashboardHTML());
     else if(S.tab==="dashboard") html+=dashboardHTML();
     else if(S.tab==="ideas") html+=ideasHTML();
@@ -1044,11 +1060,10 @@
     else if(S.view==="prompter") html+=teleprompterHTML();
     else if(S.view==="fillweek") html+='<div class="overlay" role="dialog" aria-modal="true" aria-label="Llena mi semana"><div class="obar"><button class="back" data-act="close-feed" aria-label="Cerrar">'+IC.x+'</button><span class="otitle">Llena mi semana</span></div><div class="oscroll" id="rsFillHost">'+fillWeekHTML(fillReels(),S._fillPhase==null?0:S._fillPhase)+'</div></div>';
     if(S.sheet) html+=sheetHTML();   // T2: el sheet de entrada va SOBRE cualquier overlay
-    // T4 (IDI): toast informativo (aria-live polite, auto-oculta) + error PERSISTENTE
-    // (role=alert + assertive, con botón de cerrar — un error de red no se esfuma).
-    html+='<div class="rs-toast" id="rsToast" role="status" aria-live="polite"><span class="tdot"></span><span id="rsToastMsg"></span><button class="rs-toast-act" id="rsToastAct" style="display:none"></button></div>';
-    html+='<div class="rs-toast rs-err'+(S.errMsg?' show':'')+'" id="rsErr" role="alert" aria-live="assertive"><span class="tdot err"></span><span id="rsErrMsg">'+ESC(S.errMsg||"")+'</span><button class="rs-err-x" data-act="err-close" title="Cerrar" aria-label="Cerrar el error">'+IC.x+'</button></div>';
-    el.innerHTML=html;
+    view.innerHTML=html;
+    // T4: el error persistente sobrevive a los re-render mutando el nodo estable.
+    var errN=document.getElementById("rsErr"),errM=document.getElementById("rsErrMsg");
+    if(errN&&errM){ if(S.errMsg){ errM.textContent=S.errMsg; errN.classList.add("show"); } else { errN.classList.remove("show"); } }
     if(S.view==="gen") startGenSteps();
     manageOverlayFocus(el);
   }
@@ -1151,17 +1166,23 @@
   }
   function steal(id){
     var r=S.reels.filter(function(x){return x.id===id;})[0]; if(!r) return;
+    // Fix review (T6): si ESTE reel ya tiene un robo en vuelo (lo mandó a background
+    // con X/Esc/«seguir navegando»), no relanzamos — reabrimos el orbe del que ya
+    // corre. Evita guiones duplicados y, en demo, el doble descuento de crédito.
+    if(S._stealInFlight===id){ S.reel=r; S.genKind="script"; S._genBg=false; S.view="gen"; render(); return; }
     S.reel=r; S.genKind="script"; S.done={}; S.view="gen";
     // T6: token de generación — si el usuario lanza otro robo o sigue navegando,
     // este robo pasa a "background": guarda el guion y avisa, sin secuestrar la vista.
     S._genSeq=(S._genSeq||0)+1; var tok=S._genSeq;
+    S._stealInFlight=id;
     S._genBg=false; S._genSlow=false; clearTimeout(S._genHonestTimer);
     render();
     // T6: a los ~8s sin respuesta, el orbe deja el teatro y habla claro.
     S._genHonestTimer=setTimeout(function(){ if(S.view==="gen" && tok===S._genSeq){ S._genSlow=true; render(); } },8000);
     ensureScript(r,function(err){
       var bg=S._genBg || tok!==S._genSeq;   // cerró el orbe, siguió navegando o lanzó otro robo
-      if(tok===S._genSeq){ clearTimeout(S._genHonestTimer); S._genSlow=false; S._genBg=false; }
+      if(tok===S._genSeq){ clearTimeout(S._genHonestTimer); S._genSlow=false; S._genBg=false; S._stealInFlight=null; }
+      else if(S._stealInFlight===id) S._stealInFlight=null;   // robo superado: libera el guard de ESTE reel
       if(err){
         if(bg){
           if(err==="free_limit_reached"||err==="no_credits") showPaywall(err);

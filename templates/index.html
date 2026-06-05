@@ -9674,6 +9674,10 @@
     .rs .rs-toast { position:absolute; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px); z-index:80; background:var(--text-primary); color:var(--surface-base); padding:13px 18px; border-radius:13px; font-size:13.5px; font-weight:600; box-shadow:var(--shadow-lg); opacity:0; pointer-events:none; transition: all .4s var(--ease-out); display:flex; align-items:center; gap:10px; max-width:90%; }
     .rs .rs-toast.show { opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; }
     .rs .rs-toast .tdot { width:8px; height:8px; border-radius:99px; background:var(--success); flex-shrink:0; }
+    /* Fix review (T4/a11y): #rsView envuelve la vista re-renderizable sin afectar al
+       layout (display:contents) — así #rsToast/#rsErr quedan FUERA del subárbol que
+       se reescribe y las regiones aria-live son estables (se anuncian al mutar). */
+    .rs .rs-view { display:contents; }
     /* T9 (IDI): acción inline del toast («Deshacer») */
     .rs .rs-toast .rs-toast-act { margin-left:6px; border:none; flex-shrink:0; background:color-mix(in srgb, var(--surface-base) 16%, transparent); color:var(--surface-base); font-weight:700; font-size:12.5px; font-family:var(--font-body); padding:5px 11px; border-radius:8px; cursor:pointer; }
     .rs .rs-toast .rs-toast-act:hover { background:color-mix(in srgb, var(--surface-base) 28%, transparent); }
@@ -10109,6 +10113,10 @@
     .rs--mobile .sc-hook-save, .rs--mobile .gui-hook-use { display:inline-flex; align-items:center; min-height:44px; padding:0 12px; }
     .rs--mobile .gui-hook-del { width:44px; height:44px; }
     .rs--mobile .rs-err .rs-err-x { width:44px; height:44px; }
+    /* Fix review (T8): faltaban el botón cerrar/volver de TODOS los overlays (38px)
+       y los tabs de marca de agencia (36px). */
+    .rs--mobile .overlay .obar .back { width:44px; height:44px; }
+    .rs--mobile .btab { height:auto; min-height:44px; }
     .rs .see-all { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:18px; padding:14px; background:transparent; border:1px solid var(--border-default); border-radius:10px; color:var(--text-secondary); font:inherit; font-family:var(--font-body); font-size:13.5px; font-weight:600; cursor:pointer; }
     .rs .see-all:hover { border-color:var(--border-strong); color:var(--text-primary); }
     .rs .see-all svg { width:15px; height:15px; }

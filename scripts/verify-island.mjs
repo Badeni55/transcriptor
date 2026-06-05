@@ -245,6 +245,25 @@ async function main() {
     return { role:t.getAttribute('role'), live:t.getAttribute('aria-live'), persiste:stillThere, cierra:!t.classList.contains('show') };
   })()`);
   check("#rsErr role=alert + assertive, persiste y cierra con su botón", err.role === "alert" && err.live === "assertive" && err.persiste && err.cierra, JSON.stringify(err));
+  // Fix review (a11y): las regiones live deben ser nodos ESTABLES — si render() las
+  // recreara, el lector de pantalla no anunciaría el patrón render()+showToast().
+  const stable = await evaluate(`(function(){
+    window.__rsT=document.getElementById('rsToast');
+    var f=document.querySelector('#radarRoot .fchip'); if(f) f.click();   // fuerza un render()
+    return document.getElementById('rsToast')===window.__rsT;
+  })()`);
+  check("#rsToast sobrevive a un re-render (nodo estable, aria-live fiable)", stable === true, String(stable));
+  // Fix review (T2/T6): el texto sin enviar de un sheet sobrevive a un render() de fondo.
+  await click('[data-act="add-reel"]'); await sleep(250);
+  const kept = await evaluate(`(function(){
+    var i=document.getElementById('rsSheetInput'); if(!i) return 'no-sheet';
+    i.value='texto a medio escribir';
+    var f=document.querySelector('#radarRoot .rail-btn'); if(f) f.click();   // render() de fondo (no cambia de tab: ya activo)
+    var i2=document.getElementById('rsSheetInput');
+    return i2?i2.value:'gone';
+  })()`);
+  check("sheet conserva el texto tecleado tras un re-render", kept === "texto a medio escribir", String(kept));
+  await key("Escape"); await sleep(200);
 
   /* ═══ deep-links ═══ */
   console.log("\n■ Deep-links demo");
@@ -253,6 +272,23 @@ async function main() {
     const errs = consoleErrors();
     check(`monta ${q}`, ok && errs.length === 0, errs[0]);
   }
+
+  /* ═══ Fix review (T6): re-robar un reel en vuelo NO duplica el guion ═══ */
+  console.log("\n■ T6 · robo en vuelo sin duplicados");
+  await nav(`${BASE}/profile/radar?plan=creador&t=guiones`);
+  const g0 = await evaluate(`document.querySelectorAll('#radarRoot .gui-card').length`);
+  await click('[data-act="tab"][data-k="dashboard"]'); await sleep(200);
+  await click('.feature [data-act="steal"]'); await sleep(150);
+  await key("Escape"); await sleep(150);              // manda el robo a background
+  await click('.feature [data-act="steal"]'); await sleep(2500);   // re-robo del MISMO reel + espera resolución
+  const dup = await evaluate(`(function(){
+    var reveal=!!document.querySelector('#radarRoot .script-hook');
+    return { reveal: reveal };
+  })()`);
+  await key("Escape"); await sleep(150);
+  await click('[data-act="tab"][data-k="guiones"]'); await sleep(250);
+  const g1 = await evaluate(`document.querySelectorAll('#radarRoot .gui-card').length`);
+  check("re-robo del mismo reel en vuelo → 1 solo guion nuevo (y reveal)", dup.reveal && g1 === g0 + 1, JSON.stringify({ g0, g1, reveal: dup.reveal }));
 
   /* ═══ Loop completo (los 4 momentos): despertar → robo → reveal → grabar ═══ */
   console.log("\n■ Loop completo demo");
@@ -303,6 +339,18 @@ async function main() {
   check("móvil: targets táctiles ≥44px", t8.mobile && t8.cortos.length === 0, JSON.stringify(t8));
   const t8b = await evaluate(`(function(){ var s=document.querySelector('#radarRoot .row-score.hi .sx'); return s?s.textContent:null; })()`);
   check("reel explosivo identificable por etiqueta (no solo color)", !!t8b && /explota/.test(t8b), String(t8b));
+  // Fix review (T8): el botón cerrar de los overlays también debe llegar a 44px.
+  await click('.feature [data-act="steal"]'); await sleep(400);
+  const backH = await evaluate(`(function(){ var b=document.querySelector('#radarRoot .overlay .obar .back'); return b?Math.round(b.getBoundingClientRect().height):0; })()`);
+  check("móvil: botón cerrar/volver de overlay ≥44px", backH >= 44, String(backH));
+  await key("Escape"); await sleep(2000);   // deja resolver el robo demo en background
+  // Fix review (T8): tabs de marca en agencia móvil ≥44px.
+  await nav(`${BASE}/profile/radar?plan=agencia&b=b1`);
+  const btabs = await evaluate(`(function(){
+    return [].slice.call(document.querySelectorAll('#radarRoot .btab')).slice(0,5)
+      .map(function(b){ return Math.round(b.getBoundingClientRect().height); });
+  })()`);
+  check("móvil agencia: tabs de marca ≥44px", btabs.length > 0 && btabs.every((h) => h >= 44), JSON.stringify(btabs));
   await send("Emulation.clearDeviceMetricsOverride", {}, sid);
 
   console.log(`\n═══ RESULTADO: ${passed} ✓ · ${failed} ✗ ═══`);
