@@ -485,15 +485,17 @@
       --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
       /* v0.16.3: escala con más contraste H1↔body (Stripe-fingerprint). */
-      --text-xs:   12px;
-      --text-sm:   13px;
-      --text-base: 15px;
-      --text-lg:   17px;
-      --text-xl:   20px;
-      --text-2xl:  26px;
-      --text-3xl:  32px;
-      --text-4xl:  42px;
-      --text-5xl:  56px;
+      /* T7 (IDI): escala en rem (base 16px) — respeta el tamaño de fuente del
+         SO/navegador (accesibilidad). Valores visuales idénticos a los px previos. */
+      --text-xs:   0.75rem;    /* 12px */
+      --text-sm:   0.8125rem;  /* 13px */
+      --text-base: 0.9375rem;  /* 15px */
+      --text-lg:   1.0625rem;  /* 17px */
+      --text-xl:   1.25rem;    /* 20px */
+      --text-2xl:  1.625rem;   /* 26px */
+      --text-3xl:  2rem;       /* 32px */
+      --text-4xl:  2.625rem;   /* 42px */
+      --text-5xl:  3.5rem;     /* 56px */
 
       --leading-tight:   1.2;
       --leading-snug:    1.35;
