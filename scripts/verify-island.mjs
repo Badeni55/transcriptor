@@ -254,6 +254,22 @@ async function main() {
     check(`monta ${q}`, ok && errs.length === 0, errs[0]);
   }
 
+  /* ═══ T9: deshacer al descartar guion ═══ */
+  console.log("\n■ T9 · deshacer descarte");
+  await nav(`${BASE}/profile/radar?plan=creador&t=guiones`);
+  const antes = await evaluate(`document.querySelectorAll('#radarRoot .gui-card').length`);
+  await click('[data-act="gui-discard"]'); await sleep(250);
+  const tras = await evaluate(`document.querySelectorAll('#radarRoot .gui-card').length`);
+  await click('#rsToastAct'); await sleep(250);
+  const t9 = await evaluate(`(function(){
+    var n=document.querySelectorAll('#radarRoot .gui-card').length;
+    var pill=document.querySelector('#radarRoot .gui-pill'); // primera card = la restaurada
+    return { n:n, pill:pill?pill.textContent.trim():null };
+  })()`);
+  check("descartar quita la card y «Deshacer» la restaura a «Por grabar»",
+    antes > 0 && tras === antes - 1 && t9.n === antes && t9.pill === "Por grabar",
+    JSON.stringify({ antes, tras, despues: t9 }));
+
   /* ═══ T8: targets táctiles en móvil + dato no dependiente del color ═══ */
   console.log("\n■ T8 · móvil y colorblind");
   await send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 2, mobile: true }, sid);

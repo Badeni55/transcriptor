@@ -1046,7 +1046,7 @@
     if(S.sheet) html+=sheetHTML();   // T2: el sheet de entrada va SOBRE cualquier overlay
     // T4 (IDI): toast informativo (aria-live polite, auto-oculta) + error PERSISTENTE
     // (role=alert + assertive, con botón de cerrar — un error de red no se esfuma).
-    html+='<div class="rs-toast" id="rsToast" role="status" aria-live="polite"><span class="tdot"></span><span id="rsToastMsg"></span></div>';
+    html+='<div class="rs-toast" id="rsToast" role="status" aria-live="polite"><span class="tdot"></span><span id="rsToastMsg"></span><button class="rs-toast-act" id="rsToastAct" style="display:none"></button></div>';
     html+='<div class="rs-toast rs-err'+(S.errMsg?' show':'')+'" id="rsErr" role="alert" aria-live="assertive"><span class="tdot err"></span><span id="rsErrMsg">'+ESC(S.errMsg||"")+'</span><button class="rs-err-x" data-act="err-close" title="Cerrar" aria-label="Cerrar el error">'+IC.x+'</button></div>';
     el.innerHTML=html;
     if(S.view==="gen") startGenSteps();
@@ -1088,7 +1088,19 @@
   // T6: con S._genSlow los mensajes honestos rotan LENTO (no es teatro, es espera real).
   function startGenSteps(){ clearInterval(S.genStepTimer); var steps=S._genSlow?HONEST_MSGS:(GEN_STEPS[S.genKind]||GEN_STEPS.script),i=0; S.genStepTimer=setInterval(function(){ i=(i+1)%steps.length; var n=document.getElementById("rsGenStep"); if(n){ n.style.opacity=0; setTimeout(function(){ n.textContent=steps[i]; n.style.opacity=1; },150); } },S._genSlow?9000:700); }
   function flashSpark(delta){ var sp=document.getElementById("rsSpark"),nEl=document.getElementById("rsSparkN"); if(nEl) nEl.textContent=(S.user.plan==="free" && !S.user.credits)?S.user.freeLeft:S.user.credits; if(sp&&delta<0){ sp.classList.add("flash"); var fly=document.createElement("span"); fly.className="spark-fly"; fly.textContent=delta; sp.appendChild(fly); setTimeout(function(){ sp.classList.remove("flash"); if(fly.parentNode) fly.parentNode.removeChild(fly); },1000); } }
-  function showToast(msg){ var t=document.getElementById("rsToast"),m=document.getElementById("rsToastMsg"); if(!t||!m) return; m.textContent=msg; t.classList.add("show"); clearTimeout(S.toastTimer); S.toastTimer=setTimeout(function(){ t.classList.remove("show"); },2800); }
+  // T9 (IDI): showToast acepta una acción opcional («Deshacer») — con acción el
+  // toast dura más (6s) para dar tiempo a reaccionar.
+  function showToast(msg, actionLabel, actionAct){
+    var t=document.getElementById("rsToast"),m=document.getElementById("rsToastMsg"),a=document.getElementById("rsToastAct");
+    if(!t||!m) return;
+    m.textContent=msg;
+    if(a){
+      if(actionLabel&&actionAct){ a.textContent=actionLabel; a.setAttribute("data-act",actionAct); a.style.display=""; }
+      else { a.style.display="none"; a.removeAttribute("data-act"); }
+    }
+    t.classList.add("show"); clearTimeout(S.toastTimer);
+    S.toastTimer=setTimeout(function(){ t.classList.remove("show"); },actionLabel?6000:2800);
+  }
   // T4 (IDI): los errores NO se esfuman — persisten hasta que el usuario los
   // cierra (data-act="err-close"). S.errMsg sobrevive a los re-render.
   function showError(msg){
@@ -1754,7 +1766,8 @@
     if(act==="gui-filter"){ S.guiFilter=k; return render(); }
     if(act==="gui-record"){ var g=guionById(id); if(g){ S.activeGuionId=g.id; S.reel={creator:{handle:(g.from||"").replace("@","")},script:{hook:g.hook,beats:g.beats,close:g.close}}; S.view="prompter"; render(); } return; }
     if(act==="gui-toggle-rec"){ var g2=guionById(id); if(g2){ g2.status=(g2.status==="recorded")?"draft":"recorded"; if(g2.status==="recorded"&&S.stats) S.stats.stolen_today+=1; render(); showToast(g2.status==="recorded"?"Marcado como grabado.":"Vuelto a borrador."); persistRecStatus(g2); } return; }
-    if(act==="gui-discard"){ var g3=guionById(id); if(g3){ g3.status="discarded"; render(); showToast("Descartado."); persistRecStatus(g3); } return; }
+    if(act==="gui-discard"){ var g3=guionById(id); if(g3){ g3.status="discarded"; S._lastDiscarded=id; render(); showToast("Descartado.","Deshacer","undo-discard"); persistRecStatus(g3); } return; }   // T9: descartar siempre con vuelta atrás
+    if(act==="undo-discard"){ var gU=S._lastDiscarded?guionById(S._lastDiscarded):null; S._lastDiscarded=null; if(gU){ gU.status="draft"; persistRecStatus(gU); render(); showToast("Recuperado — vuelve a «Por grabar»."); } return; }
     if(act==="gui-perf"){ S.perfGuion=id; S.view="perf"; return render(); }
     if(act==="gui-link-reel"){ var gl=guionById(id); if(gl){
       // T2 (IDI): sheet con validación de URL en vez de window.prompt.
