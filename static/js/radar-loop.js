@@ -941,7 +941,10 @@
     var foot='<div class="cluster" style="margin-top:24px;gap:10px"><button class="btn btn-md btn-secondary" data-act="back-script">← Volver al guión</button>'+((kind==="hooks"||kind==="carousel")?'<button class="btn btn-md btn-primary" data-act="record">'+IC.mic+' Grábalo</button>':'')+'</div>';
     return '<div class="script-wrap fade-in"><h2 class="result-head serif">'+ESC(meta[0])+'</h2><p class="result-sub">'+ESC(meta[1])+'</p>'+inner+foot+'</div>';
   }
-  function overlayShellHTML(inner,title,backAct,closeIcon,extraCls){ return '<div class="overlay'+(extraCls?' '+extraCls:'')+'"><div class="obar"><button class="back" data-act="'+backAct+'">'+(closeIcon?IC.x:IC.back)+'</button><span class="otitle">'+ESC(title)+'</span></div><div class="oscroll">'+inner+'</div></div>'; }
+  // T5 (IDI): todo overlay es un diálogo accesible — role=dialog + aria-modal +
+  // aria-label (el título). El foco entra al abrir y vuelve al disparador al
+  // cerrar (gestión en render) y Tab no escapa al fondo (trap en onKeydown).
+  function overlayShellHTML(inner,title,backAct,closeIcon,extraCls){ return '<div class="overlay'+(extraCls?' '+extraCls:'')+'" role="dialog" aria-modal="true" aria-label="'+ESC(title)+'"><div class="obar"><button class="back" data-act="'+backAct+'" aria-label="'+(closeIcon?"Cerrar":"Volver")+'">'+(closeIcon?IC.x:IC.back)+'</button><span class="otitle">'+ESC(title)+'</span></div><div class="oscroll">'+inner+'</div></div>'; }
 
   /* T2 (IDI): promptSheet — el sustituto de window.prompt. Un sheet (overlay)
      con label + campo + helper + error inline (primitivos .field del design
@@ -989,7 +992,7 @@
     var s=r.script||{hook:"",beats:[],close:""};
     var body='<p class="hook">'+ESC(s.hook)+'</p>'+(s.beats||[]).map(function(b){return '<p>'+ESC(b)+'</p>';}).join("")+(s.close?'<p>'+ESC(s.close)+'</p>':"");
     var src=(r.creator&&r.creator.handle)?'@'+ESC(r.creator.handle)+' · en tu voz':'en tu voz';
-    return '<div class="overlay prompter"><div class="obar"><button class="back" data-act="tp-back">'+IC.back+'</button><span class="otitle">Teleprompter</span><span style="flex:1"></span><span style="font-size:12px;color:rgba(255,255,255,.5)">'+src+'</span></div>'+
+    return '<div class="overlay prompter" role="dialog" aria-modal="true" aria-label="Teleprompter"><div class="obar"><button class="back" data-act="tp-back" aria-label="Volver">'+IC.back+'</button><span class="otitle">Teleprompter</span><span style="flex:1"></span><span style="font-size:12px;color:rgba(255,255,255,.5)">'+src+'</span></div>'+
       '<div class="tp-scroll"><div class="tp-text">'+body+'</div></div>'+
       '<div class="tp-foot"><button class="btn btn-lg" style="background:rgba(255,255,255,.12);color:#fff;border:none;flex:0 0 auto" data-act="tp-back">Aún no</button><button class="btn btn-lg btn-primary" data-act="recorded">'+IC.check+' Ya lo grabé</button></div></div>';
   }
@@ -1025,7 +1028,7 @@
     else if(S.view==="result") html+=overlayShellHTML(formatResultHTML(S.resultKind),"Listo","back-script",false);
     else if(S.view==="perf") html+=overlayShellHTML(guiPerfHTML(),"Rendimiento del guion","close-feed",true);
     else if(S.view==="prompter") html+=teleprompterHTML();
-    else if(S.view==="fillweek") html+='<div class="overlay"><div class="obar"><button class="back" data-act="close-feed">'+IC.x+'</button><span class="otitle">Llena mi semana</span></div><div class="oscroll" id="rsFillHost">'+fillWeekHTML(fillReels(),S._fillPhase==null?0:S._fillPhase)+'</div></div>';
+    else if(S.view==="fillweek") html+='<div class="overlay" role="dialog" aria-modal="true" aria-label="Llena mi semana"><div class="obar"><button class="back" data-act="close-feed" aria-label="Cerrar">'+IC.x+'</button><span class="otitle">Llena mi semana</span></div><div class="oscroll" id="rsFillHost">'+fillWeekHTML(fillReels(),S._fillPhase==null?0:S._fillPhase)+'</div></div>';
     if(S.sheet) html+=sheetHTML();   // T2: el sheet de entrada va SOBRE cualquier overlay
     // T4 (IDI): toast informativo (aria-live polite, auto-oculta) + error PERSISTENTE
     // (role=alert + assertive, con botón de cerrar — un error de red no se esfuma).
@@ -1033,6 +1036,38 @@
     html+='<div class="rs-toast rs-err'+(S.errMsg?' show':'')+'" id="rsErr" role="alert" aria-live="assertive"><span class="tdot err"></span><span id="rsErrMsg">'+ESC(S.errMsg||"")+'</span><button class="rs-err-x" data-act="err-close" title="Cerrar" aria-label="Cerrar el error">'+IC.x+'</button></div>';
     el.innerHTML=html;
     if(S.view==="gen") startGenSteps();
+    manageOverlayFocus(el);
+  }
+
+  /* T5 (IDI): gestión de foco de los diálogos. Al ABRIR un overlay/sheet, el foco
+     entra (primer campo o el botón de cerrar). Mientras está abierto, cada
+     re-render (innerHTML destruye el nodo enfocado) lo re-ancla dentro. Al
+     CERRAR, el foco vuelve al elemento que lo abrió (selector capturado en
+     onClick — las referencias a nodos no sobreviven al re-render, un selector sí). */
+  function topOverlay(el){ var ovs=el.querySelectorAll(".overlay"); return ovs.length?ovs[ovs.length-1]:null; }
+  function manageOverlayFocus(el){
+    var open=(S.view && S.view!=="feed") || !!S.sheet;
+    var was=!!S._overlayOpen;
+    if(open){
+      if(!was) S._returnSel=S._lastClickSel||null;   // recuerda el disparador al abrir
+      var ov=topOverlay(el);
+      if(ov && !ov.contains(document.activeElement)){
+        var f=ov.querySelector("input,textarea") || ov.querySelector(".back") || ov;
+        try{ f.focus(); }catch(e){}
+      }
+    } else if(was && S._returnSel){
+      var rt=null; try{ rt=el.querySelector(S._returnSel); }catch(e){}
+      if(rt){ try{ rt.focus(); }catch(e){} }
+      S._returnSel=null;
+    }
+    S._overlayOpen=open;
+  }
+  // Selector estable de un botón [data-act] (para devolverle el foco tras un re-render).
+  function actSelector(btn){
+    var s='[data-act="'+(btn.getAttribute("data-act")||"")+'"]';
+    if(btn.getAttribute("data-id")) s+='[data-id="'+btn.getAttribute("data-id")+'"]';
+    if(btn.getAttribute("data-k")) s+='[data-k="'+btn.getAttribute("data-k")+'"]';
+    return s;
   }
 
   /* ── animaciones ─────────────────────────────────────────────── */
@@ -1612,6 +1647,16 @@
       if(e.target.id==="rsIdeaSeed"){ e.preventDefault(); return seedIdea("rsIdeaSeed", true); }
       if(e.target.id==="rsIdeaSeed2"){ e.preventDefault(); return addSeedIdea(); }
     }
+    // T5: trap de foco — con un diálogo abierto, Tab circula dentro y no escapa al fondo.
+    if(e.key==="Tab" && (S.sheet || (S.view && S.view!=="feed"))){
+      var ov=topOverlay(el); if(!ov) return;
+      var foc=ov.querySelectorAll('button,[href],input,textarea,select,[tabindex]:not([tabindex="-1"])');
+      if(!foc.length) return;
+      var first=foc[0], last=foc[foc.length-1], a=document.activeElement;
+      if(!ov.contains(a)){ e.preventDefault(); first.focus(); return; }
+      if(e.shiftKey && a===first){ e.preventDefault(); last.focus(); }
+      else if(!e.shiftKey && a===last){ e.preventDefault(); first.focus(); }
+    }
   }
 
   /* ── delegación de eventos ───────────────────────────────────── */
@@ -1619,6 +1664,7 @@
     var el=root(); if(!el||!el.contains(e.target)) return;
     var btn=e.target.closest("[data-act]"); if(!btn) return;
     var act=btn.getAttribute("data-act"), id=btn.getAttribute("data-id"), k=btn.getAttribute("data-k");
+    S._lastClickSel=actSelector(btn);   // T5: por si esta acción abre un diálogo — saber a quién devolver el foco
     if(act==="sheet-close") return closeSheet();
     if(act==="sheet-submit") return submitSheet();
     if(act==="err-close"){ S.errMsg=null; var _te=document.getElementById("rsErr"); if(_te) _te.classList.remove("show"); return; }
