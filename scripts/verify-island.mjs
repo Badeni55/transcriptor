@@ -31,6 +31,13 @@ const watchdog = setTimeout(() => { console.error("WATCHDOG: harness colgado >15
 watchdog.unref?.();
 const trace = (m) => process.stderr.write(`· ${m}\n`);
 
+// Pase lo que pase (watchdog, kill, error), Chrome muere con el proceso.
+// Sin esto, cada run abortado deja un Chrome headless huérfano comiendo CPU
+// y los siguientes runs se vuelven glaciales (los evaluate caducan en cascada).
+process.on("exit", () => { try { chrome.kill("SIGKILL"); } catch {} });
+process.on("SIGINT", () => process.exit(130));
+process.on("SIGTERM", () => process.exit(143));
+
 let passed = 0, failed = 0;
 const fails = [];
 function check(name, ok, extra) {
@@ -45,7 +52,10 @@ const events = [];
 function send(method, params = {}, sessionId) {
   return new Promise((resolve, reject) => {
     const id = ++msgId;
-    pending.set(id, { resolve, reject });
+    // Si Chrome no responde (renderer crasheado, WS muerto) el harness no se
+    // queda colgado: cada llamada CDP caduca a los 15s con el método en el error.
+    const t = setTimeout(() => { pending.delete(id); reject(new Error(`CDP timeout: ${method}`)); }, 15000);
+    pending.set(id, { resolve: (v) => { clearTimeout(t); resolve(v); }, reject: (e) => { clearTimeout(t); reject(e); } });
     ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
   });
 }
@@ -68,7 +78,13 @@ function connect(url) {
           trace("diálogo JS nativo detectado → auto-descartado (" + (d.params?.type || "?") + ")");
           send("Page.handleJavaScriptDialog", { accept: false }, d.sessionId).catch(() => {});
         }
+        if (d.method === "Inspector.targetCrashed" || d.method === "Target.targetCrashed") trace("⚠ TARGET CRASHED");
       }
+    };
+    ws.onclose = () => {
+      trace("⚠ WS cerrado");
+      for (const { reject } of pending.values()) reject(new Error("WS cerrado"));
+      pending.clear();
     };
   });
 }
@@ -82,7 +98,8 @@ async function evaluate(expr) {
 }
 async function nav(url) {
   events.length = 0;
-  await send("Page.navigate", { url }, sid);
+  try { await send("Page.navigate", { url }, sid); }
+  catch (e) { trace("nav: " + e.message); return false; }
   // espera a que la isla monte (#radarRoot con contenido)
   for (let i = 0; i < 60; i++) {
     await sleep(250);
@@ -108,7 +125,12 @@ const consoleErrors = () => events.filter((e) => e.method === "Runtime.exception
 const profile = mkdtempSync(join(tmpdir(), "rs-verify-"));
 const chrome = spawn(CHROME, [
   `--headless=new`, `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`,
-  `--no-first-run`, `--no-default-browser-check`, `--disable-extensions`, `--window-size=1440,900`, "about:blank",
+  `--no-first-run`, `--no-default-browser-check`, `--disable-extensions`, `--window-size=1440,900`,
+  // headless=new throttlea timers/raf de pestañas "ocultas" → la isla (setTimeout
+  // teatral, polling) se congela y los evaluate se quedan sin responder. Apagarlo.
+  `--disable-background-timer-throttling`, `--disable-renderer-backgrounding`,
+  `--disable-backgrounding-occluded-windows`, `--disable-ipc-flooding-protection`,
+  "about:blank",
 ], { stdio: "ignore" });
 
 async function main() {
@@ -128,6 +150,12 @@ async function main() {
   ({ sessionId: sid } = await send("Target.attachToTarget", { targetId, flatten: true }));
   await send("Page.enable", {}, sid);
   await send("Runtime.enable", {}, sid);
+  // Sin GPU, las animaciones infinitas (orbe conic-gradient) saturan el main
+  // thread del renderer headless y los Runtime.evaluate caducan. Para el harness
+  // las matamos: probamos lógica/estado, no la estética del movimiento.
+  await send("Page.addScriptToEvaluateOnNewDocument", { source:
+    `document.addEventListener('DOMContentLoaded',function(){var s=document.createElement('style');s.textContent='*,*::before,*::after{animation:none!important;transition:none!important}';document.head.appendChild(s);});`
+  }, sid);
   trace("target listo");
 
   /* ═══ 1. Montaje base (demo creador) ═══ */
@@ -160,11 +188,15 @@ async function main() {
   check("Enter en #rsIdeaSeed crea la idea y salta a Ideas", onIdeas);
 
   // overlay + Esc: robar desde Dashboard
+  trace("T3: tab dashboard");
   await click('[data-act="tab"][data-k="dashboard"]'); await sleep(250);
+  trace("T3: click steal");
   await click('.feature [data-act="steal"]'); await sleep(300);
+  trace("T3: check overlay");
   const hasOverlay = await evaluate(`!!document.querySelector('#radarRoot .overlay')`);
   check("robar abre overlay (gen)", hasOverlay);
   await sleep(2200); // deja terminar la espera teatral demo (1.7s)
+  trace("T3: check reveal");
   const reveal = await evaluate(`!!document.querySelector('#radarRoot .script-hook')`);
   check("reveal del guión llega", reveal);
   await key("Escape"); await sleep(300);
@@ -184,9 +216,13 @@ async function main() {
 
   /* ═══ T2: sheets sin window.prompt ═══ */
   console.log("\n■ T2 · promptSheet");
+  trace("T2: nav fresco");
   await nav(`${BASE}/profile/radar?plan=creador`);   // estado limpio (sin overlays colgando de checks previos)
+  trace("T2: nav ok, override prompt");
   await evaluate(`window.__promptCalled=false; window.prompt=function(){ window.__promptCalled=true; return null; };`);
+  trace("T2: click add-reel");
   await click('[data-act="add-reel"]'); await sleep(300);
+  trace("T2: click ok");
   const sheet = await evaluate(`(function(){
     var s=document.querySelector('#radarRoot .sheet, #radarRoot .overlay');
     return { open: !!s, hasField: !!(s&&s.querySelector('input,textarea')), prompt: window.__promptCalled };
