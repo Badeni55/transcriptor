@@ -9957,14 +9957,16 @@
     .rs .voice-capture .vc-lead { margin:0 0 12px; font-size:14px; line-height:1.5; color:var(--text-secondary); } .rs .voice-capture .vc-lead b { color:var(--text-primary); }
     .rs .voice-capture .vc-ta { width:100%; min-height:110px; resize:vertical; padding:12px 14px; border:1px solid var(--border-default); border-radius:12px; background:var(--surface-base); color:var(--text-primary); font:inherit; font-family:var(--font-body); font-size:14px; outline:none; margin-bottom:12px; }
     .rs .voice-capture .vc-ta:focus { border-color:color-mix(in srgb, var(--brand-500) 50%, transparent); }
-    /* B6: onboarding de voz inline en el Dashboard (reusa .voice-capture dentro) */
-    .rs .dash-voice-onboard { border:1px solid color-mix(in srgb, var(--brand-500) 28%, transparent); border-radius:20px; padding:20px 22px; margin-bottom:18px; background:linear-gradient(135deg, color-mix(in srgb, var(--brand-500) 10%, var(--surface-raised)), var(--surface-raised)); }
-    .rs .dash-voice-onboard .voice-capture { margin-bottom:0; border-color:var(--border-default); background:var(--surface-raised); }
-    .rs .dvo-head { display:flex; align-items:center; gap:14px; margin-bottom:14px; }
-    .rs .dvo-ic { width:46px; height:46px; flex-shrink:0; border-radius:14px; display:flex; align-items:center; justify-content:center; color:#fff; background:linear-gradient(135deg, var(--brand-500), #6f93ff); box-shadow:0 6px 20px rgba(79,124,255,.32); }
-    .rs .dvo-ic svg { width:23px; height:23px; }
-    .rs .dvo-eyebrow { font-size:12px; text-transform:uppercase; letter-spacing:.08em; font-weight:700; color:var(--brand-400); margin-bottom:3px; }
-    .rs .dvo-title { margin:0; font-family:var(--font-display); font-size:19px; line-height:1.2; color:var(--text-primary); }
+    /* B6+T1 (IDI): onboarding de voz en el Dashboard como BANNER delgado (no card):
+       una línea + CTA secundario que lleva al Cerebro. No empuja la Oportunidad #1. */
+    .rs .voice-banner { display:flex; align-items:center; gap:12px; padding:10px 14px; margin-bottom:18px; border:1px solid color-mix(in srgb, var(--brand-500) 28%, transparent); border-radius:14px; background:linear-gradient(135deg, color-mix(in srgb, var(--brand-500) 8%, var(--surface-raised)), var(--surface-raised)); }
+    .rs .voice-banner .vb-ic { width:30px; height:30px; flex-shrink:0; border-radius:9px; display:flex; align-items:center; justify-content:center; color:#fff; background:linear-gradient(135deg, var(--brand-500), #6f93ff); }
+    .rs .voice-banner .vb-ic svg { width:16px; height:16px; }
+    .rs .voice-banner .vb-text { flex:1; min-width:0; font-size:13.5px; line-height:1.4; color:var(--text-secondary); }
+    .rs .voice-banner .vb-text b { color:var(--text-primary); }
+    .rs .voice-banner .btn { flex-shrink:0; }
+    .rs--mobile .voice-banner { flex-wrap:wrap; }
+    .rs--mobile .voice-banner .btn { width:100%; }
     .rs .brain-comps { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .rs--mobile .brain-comps { grid-template-columns:1fr; }
     .rs .brain-comp { display:flex; align-items:center; gap:11px; padding:12px 14px; border:1px solid var(--border-default); border-radius:12px; background:var(--surface-raised); }

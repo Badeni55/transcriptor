@@ -275,14 +275,18 @@
      HERO en el Dashboard y bajo "Lo que funciona" en el Cerebro. Si no hay next,
      no renderiza nada (sin hueco). Misma tarjeta en ambos sitios. */
   function nextSeries(){ return (S.metrics && S.metrics.insights && S.metrics.insights.next) || null; }
-  function nextSeriesHTML(){
+  // T1 (IDI): una sola acción primaria por pantalla. En el Dashboard el CTA es
+  // secundario (el primario es el «Hazlo mío» de la Oportunidad #1); en el
+  // Cerebro sigue primario porque ahí ES la acción principal. ctx: "brain"|"dash".
+  function nextSeriesHTML(ctx){
     var nx=nextSeries(); if(!nx || !(nx.title||nx.message)) return '';
     var views=nx.views!=null?(typeof nx.views==="string"?nx.views:fmtNum(nx.views)):"";
+    var btnCls=(ctx==="brain")?"btn-primary":"btn-secondary";
     return '<article class="next-series">'+
       '<div class="ns-eyebrow">'+IC.brain+'<span>Tu próxima serie</span>'+(views?'<span class="ns-views" title="Lo que hizo el reel que la inspira">'+IC.eye+' '+ESC(views)+'</span>':'')+'</div>'+
       '<h3 class="ns-title">'+ESC(nx.title||"")+'</h3>'+
       (nx.message?'<p class="ns-msg">'+ESC(nx.message)+'</p>':'')+
-      '<div class="ns-actions"><button class="btn btn-md btn-primary" data-act="next-series-go" data-title="'+ESC(nx.title||"")+'">'+IC.bolt+' Desarrollar esta serie</button></div>'+
+      '<div class="ns-actions"><button class="btn btn-md '+btnCls+'" data-act="next-series-go" data-title="'+ESC(nx.title||"")+'">'+IC.bolt+' Desarrollar esta serie</button></div>'+
     '</article>';
   }
 
@@ -291,12 +295,12 @@
     '<div class="idea-launch">'+
       '<div class="idea-launch-ic">'+IC.bulb+'</div>'+
       '<input class="idea-launch-input" id="rsIdeaSeed" placeholder="Tienes una idea suelta? Escríbela y la convertimos en guiones…" />'+
-      '<button class="btn btn-md btn-primary" data-act="seed-go">'+IC.bolt+' Desarrollar</button>'+
+      '<button class="btn btn-md btn-secondary" data-act="seed-go">'+IC.bolt+' Desarrollar</button>'+
     '</div>';
   }
 
   function whaleHTML(count){
-    return '<div class="whale"><div class="wicon">⚡</div><div class="wtext"><h4>Llena mi semana</h4><p>Convierte los '+count+' reels más explosivos en '+count+' guiones con tu voz, listos para grabar. De golpe.</p></div><button class="btn btn-md btn-primary" data-act="fillweek">Hazlo</button></div>';
+    return '<div class="whale"><div class="wicon">⚡</div><div class="wtext"><h4>Llena mi semana</h4><p>Convierte los '+count+' reels más explosivos en '+count+' guiones con tu voz, listos para grabar. De golpe.</p></div><button class="btn btn-md btn-secondary" data-act="fillweek">Hazlo</button></div>';
   }
   function filtersHTML(){
     var base=[["explosion","🔥 Explotando"],["recent","Recientes"],["fav","★ Favoritos"]];
@@ -436,8 +440,8 @@
 
     if(sorted.length===0){
       return '<div class="scroll"><div class="canvas">'+head+(isAgency()?brandTabsHTML():"")+statbarHTML()+
-        voiceOnboardCardHTML()+   // B6: en first-run sin reels, el onboarding de voz es lo primero que aporta
-        nextSeriesHTML()+         // B1
+        voiceOnboardCardHTML()+   // B6: en first-run sin reels, el banner de voz es lo primero que aporta
+        nextSeriesHTML("dash")+   // B1+T1: CTA secundario en el Dashboard
         '<div class="plays">'+ideaInputHTML()+'</div>'+
         '<div class="rs-empty">'+(S.filter==="fav"?"Sin favoritos aún. Toca la estrella en una señal.":"Sin reels todavía. Añade un competidor o pega un reel para empezar.")+'</div>'+
       '</div></div>';
@@ -455,9 +459,9 @@
       head+
       (isAgency()?brandTabsHTML():"")+
       statbarHTML()+
-      voiceOnboardCardHTML()+   // B6: 2º punto de entrada al onboarding de voz (first-run sin perfil)
-      nextSeriesHTML()+         // B1: card hero de "tu próxima serie" (si el Cerebro la sugiere)
       opportunityHTML(hero)+
+      voiceOnboardCardHTML()+   // B6+T1: banner de voz BAJO la oportunidad — no empuja el hero bajo el fold
+      nextSeriesHTML("dash")+   // B1+T1: "tu próxima serie" con CTA secundario en el Dashboard
       '<div class="plays">'+ideaInputHTML()+(S.reels.length?whaleHTML(fillCount):"")+'</div>'+
       (rest.length?('<div class="feed-head"><span class="feed-title">Más señales <span class="ct">· '+rest.length+'</span></span>'+filtersHTML()+'</div><div class="feed">'+rows+'</div>'+moreToggle):"")+
     '</div></div>';
@@ -777,19 +781,17 @@
         '<button class="btn btn-md btn-primary" data-act="voice-onboard">'+IC.spark+' Aprender mi voz</button>'+
       '</div>';
   }
-  /* B6: onboarding de voz como 2º punto de entrada — inline en el Dashboard
-     (Cerebro ya es el 1º). First-run: si el usuario aún no tiene perfil de voz
-     (has_profile de /api/voice, que loadBrandData fetchea a S.voice), invitamos a
-     enseñarla ya desde el Radar. Reusa voiceCaptureHTML (textarea + botón
-     data-act="voice-onboard"), envuelto en una card del Dashboard. Si ya hay voz,
-     no renderiza nada → no duplica el bloque del Cerebro. */
+  /* B6 + T1 (IDI): onboarding de voz como 2º punto de entrada — en el Dashboard
+     es un BANNER delgado (no una card con CTA primario): no compite con la
+     Oportunidad #1 ni la empuja bajo el fold. El CTA (secundario) lleva al
+     Cerebro, donde vive el formulario completo (voiceCaptureHTML). Si ya hay
+     perfil de voz, no renderiza nada. */
   function voiceOnboardCardHTML(){
     if(hasRealVoice()) return '';
-    return '<div class="dash-voice-onboard">'+
-      '<div class="dvo-head"><span class="dvo-ic">'+IC.mic+'</span>'+
-        '<div><div class="dvo-eyebrow">Antes de empezar</div>'+
-        '<h3 class="dvo-title">Enséñame tu voz</h3></div></div>'+
-      voiceCaptureHTML()+
+    return '<div class="voice-banner">'+
+      '<span class="vb-ic">'+IC.mic+'</span>'+
+      '<span class="vb-text"><b>Enséñame tu voz</b> — pega 1-2 reels tuyos y tu próximo «Hazlo mío» saldrá sonando a ti, no genérico.</span>'+
+      '<button class="btn btn-sm btn-secondary" data-act="tab" data-k="brain">Enseñar mi voz</button>'+
     '</div>';
   }
   function voiceEvidenceHTML(){
@@ -861,7 +863,7 @@
       // lo que funciona (métricas)
       '<div class="brain-section-t">Lo que funciona en tu cuenta'+(learned.length?' <span class="brain-tag">de tus métricas</span>':'')+'</div>'+
       '<div class="learn" style="margin-bottom:18px"><div class="learn-list">'+learnList+'</div></div>'+
-      nextSeriesHTML()+   // B1: la sugerencia de próxima serie, justo bajo lo que funciona
+      nextSeriesHTML("brain")+   // B1: la sugerencia de próxima serie, justo bajo lo que funciona (aquí SÍ primaria — T1)
       // de quién aprendo
       '<div class="brain-section-t">De quién aprendo</div>'+
       '<div class="brain-comps">'+compList+'</div>'+
