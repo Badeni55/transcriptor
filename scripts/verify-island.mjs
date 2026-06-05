@@ -230,13 +230,21 @@ async function main() {
   check("«Añadir reel» abre sheet con campo (sin window.prompt)", sheet.open && sheet.hasField && !sheet.prompt, JSON.stringify(sheet));
   await key("Escape"); await sleep(200);
 
-  /* ═══ T4: toast accesible ═══ */
+  /* ═══ T4: toast accesible + error persistente ═══ */
   console.log("\n■ T4 · toast accesible");
   const toast = await evaluate(`(function(){
     var t=document.getElementById('rsToast'); if(!t) return {};
     return { role:t.getAttribute('role'), live:t.getAttribute('aria-live') };
   })()`);
   check("#rsToast role=status + aria-live", toast.role === "status" && toast.live === "polite", JSON.stringify(toast));
+  const err = await evaluate(`(function(){
+    var t=document.getElementById('rsErr'); if(!t) return {};
+    t.classList.add('show');                                  // simula un error visible
+    var stillThere = t.classList.contains('show');            // no se auto-oculta
+    var btn=t.querySelector('[data-act="err-close"]'); if(btn) btn.click();
+    return { role:t.getAttribute('role'), live:t.getAttribute('aria-live'), persiste:stillThere, cierra:!t.classList.contains('show') };
+  })()`);
+  check("#rsErr role=alert + assertive, persiste y cierra con su botón", err.role === "alert" && err.live === "assertive" && err.persiste && err.cierra, JSON.stringify(err));
 
   /* ═══ deep-links ═══ */
   console.log("\n■ Deep-links demo");

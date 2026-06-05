@@ -1027,7 +1027,10 @@
     else if(S.view==="prompter") html+=teleprompterHTML();
     else if(S.view==="fillweek") html+='<div class="overlay"><div class="obar"><button class="back" data-act="close-feed">'+IC.x+'</button><span class="otitle">Llena mi semana</span></div><div class="oscroll" id="rsFillHost">'+fillWeekHTML(fillReels(),S._fillPhase==null?0:S._fillPhase)+'</div></div>';
     if(S.sheet) html+=sheetHTML();   // T2: el sheet de entrada va SOBRE cualquier overlay
-    html+='<div class="rs-toast" id="rsToast"><span class="tdot"></span><span id="rsToastMsg"></span></div>';
+    // T4 (IDI): toast informativo (aria-live polite, auto-oculta) + error PERSISTENTE
+    // (role=alert + assertive, con botón de cerrar — un error de red no se esfuma).
+    html+='<div class="rs-toast" id="rsToast" role="status" aria-live="polite"><span class="tdot"></span><span id="rsToastMsg"></span></div>';
+    html+='<div class="rs-toast rs-err'+(S.errMsg?' show':'')+'" id="rsErr" role="alert" aria-live="assertive"><span class="tdot err"></span><span id="rsErrMsg">'+ESC(S.errMsg||"")+'</span><button class="rs-err-x" data-act="err-close" title="Cerrar" aria-label="Cerrar el error">'+IC.x+'</button></div>';
     el.innerHTML=html;
     if(S.view==="gen") startGenSteps();
   }
@@ -1036,6 +1039,13 @@
   function startGenSteps(){ clearInterval(S.genStepTimer); var steps=GEN_STEPS[S.genKind]||GEN_STEPS.script,i=0; S.genStepTimer=setInterval(function(){ i=(i+1)%steps.length; var n=document.getElementById("rsGenStep"); if(n){ n.style.opacity=0; setTimeout(function(){ n.textContent=steps[i]; n.style.opacity=1; },150); } },700); }
   function flashSpark(delta){ var sp=document.getElementById("rsSpark"),nEl=document.getElementById("rsSparkN"); if(nEl) nEl.textContent=(S.user.plan==="free" && !S.user.credits)?S.user.freeLeft:S.user.credits; if(sp&&delta<0){ sp.classList.add("flash"); var fly=document.createElement("span"); fly.className="spark-fly"; fly.textContent=delta; sp.appendChild(fly); setTimeout(function(){ sp.classList.remove("flash"); if(fly.parentNode) fly.parentNode.removeChild(fly); },1000); } }
   function showToast(msg){ var t=document.getElementById("rsToast"),m=document.getElementById("rsToastMsg"); if(!t||!m) return; m.textContent=msg; t.classList.add("show"); clearTimeout(S.toastTimer); S.toastTimer=setTimeout(function(){ t.classList.remove("show"); },2800); }
+  // T4 (IDI): los errores NO se esfuman — persisten hasta que el usuario los
+  // cierra (data-act="err-close"). S.errMsg sobrevive a los re-render.
+  function showError(msg){
+    S.errMsg=msg;
+    var t=document.getElementById("rsErr"),m=document.getElementById("rsErrMsg");
+    if(t&&m){ m.textContent=msg; t.classList.add("show"); } else { render(); }
+  }
   function spend(n){ S.user.credits=Math.max(0,S.user.credits-n); }
   function bumpEco(scripts, reels){ var b=brand(); if(!b) return; b.scripts=(b.scripts||0)+(scripts||0); b.reelsAnalyzed=(b.reelsAnalyzed||0)+(reels||0); b.voice=Math.min(98,(b.voice||40)+(scripts||0)*1.5+(reels||0)); if(b.voice>=20*(b.level||1)+30) b.level=Math.min(5,(b.level||1)+1); }
 
@@ -1406,9 +1416,9 @@
             S.voice=v; render(); showToast("Voz aprendida — te conozco al "+(v.confidence||0)+"%.");
           });
         }
-        showToast((d&&d.error)||"No pude aprender tu voz. Prueba con otro reel.");
+        showError((d&&d.error)||"No pude aprender tu voz. Prueba con otro reel.");
       })
-      .catch(function(){ showToast("Error de red. Inténtalo de nuevo."); });
+      .catch(function(){ showError("Error de red. Inténtalo de nuevo."); });
   }
 
   // Refinar el moat: acumula reels NUEVOS sobre la voz ya aprendida.
@@ -1448,9 +1458,9 @@
             S.voice=v; render(); showToast("Voz refinada — ahora te conozco al "+(v.confidence||0)+"%.");
           });
         }
-        showToast((d&&d.error)||"No pude refinar tu voz. Prueba con otro reel.");
+        showError((d&&d.error)||"No pude refinar tu voz. Prueba con otro reel.");
       })
-      .catch(function(){ showToast("Error de red. Inténtalo de nuevo."); });
+      .catch(function(){ showError("Error de red. Inténtalo de nuevo."); });
   }
 
   // Refresca métricas + insights de la marca activa (summary + insights) y re-pinta.
@@ -1482,9 +1492,9 @@
           if(g) g.published={pending:false, url:url};
           return refreshMetrics().then(function(){ showToast("Reel analizado. Tu Cerebro acaba de aprender de él."); });
         }
-        showToast((d&&d.error)||"No pude analizar el reel. Revisa el link.");
+        showError((d&&d.error)||"No pude analizar el reel. Revisa el link.");
       })
-      .catch(function(){ showToast("Error de red al analizar el reel."); });
+      .catch(function(){ showError("Error de red al analizar el reel."); });
   }
 
   // B4 (prod): conectar la cuenta de Instagram (POST /metrics/ig-profile) y luego
@@ -1510,9 +1520,9 @@
           showToast("Instagram conectado. Trayendo tus reels…");
           return refreshReels();
         }
-        showToast((d&&d.error)||"No pude conectar tu Instagram.");
+        showError((d&&d.error)||"No pude conectar tu Instagram.");
       })
-      .catch(function(){ showToast("Error de red al conectar Instagram."); });
+      .catch(function(){ showError("Error de red al conectar Instagram."); });
   }
   function refreshReels(){
     showToast("Actualizando tus reels…");
@@ -1522,9 +1532,9 @@
         if(d&&d.ok){
           return refreshMetrics().then(function(){ showToast("Reels actualizados ("+(d.videos_updated||0)+"). Tu Cerebro ha aprendido."); });
         }
-        showToast((d&&d.error)||"No pude actualizar tus reels.");
+        showError((d&&d.error)||"No pude actualizar tus reels.");
       })
-      .catch(function(){ showToast("Error de red al actualizar tus reels."); });
+      .catch(function(){ showError("Error de red al actualizar tus reels."); });
   }
 
   /* ── Equipo (Agencia): invitar + cargar miembros reales ──────────
@@ -1553,9 +1563,9 @@
           showToast("Invitación creada · enlace copiado");
           return;
         }
-        showToast((d&&d.error)||"No pude crear la invitación.");
+        showError((d&&d.error)||"No pude crear la invitación.");
       })
-      .catch(function(){ showToast("Error de red al crear la invitación."); });
+      .catch(function(){ showError("Error de red al crear la invitación."); });
   }
   function loadTeam(){
     if(isDemo()) return;
@@ -1611,6 +1621,7 @@
     var act=btn.getAttribute("data-act"), id=btn.getAttribute("data-id"), k=btn.getAttribute("data-k");
     if(act==="sheet-close") return closeSheet();
     if(act==="sheet-submit") return submitSheet();
+    if(act==="err-close"){ S.errMsg=null; var _te=document.getElementById("rsErr"); if(_te) _te.classList.remove("show"); return; }
     if(act==="tab") return switchTab(k);
     if(act==="brand-toggle"){ S.brandMenu=!S.brandMenu; return render(); }
     if(act==="brand") return openBrand(id);

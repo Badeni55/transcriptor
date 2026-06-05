@@ -9667,8 +9667,15 @@
     .rs .mini-spin { width:14px; height:14px; border-radius:99px; border:2px solid var(--border-default); border-top-color:var(--brand-500); animation:rsSpin .7s linear infinite; }
     /* toast */
     .rs .rs-toast { position:absolute; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px); z-index:80; background:var(--text-primary); color:var(--surface-base); padding:13px 18px; border-radius:13px; font-size:13.5px; font-weight:600; box-shadow:var(--shadow-lg); opacity:0; pointer-events:none; transition: all .4s var(--ease-out); display:flex; align-items:center; gap:10px; max-width:90%; }
-    .rs .rs-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .rs .rs-toast.show { opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; }
     .rs .rs-toast .tdot { width:8px; height:8px; border-radius:99px; background:var(--success); flex-shrink:0; }
+    /* T4 (IDI): error persistente — más arriba que el toast (pueden convivir), punto
+       rojo y botón de cerrar. No se va solo: lo cierra el usuario. */
+    .rs .rs-err { bottom:84px; z-index:81; }
+    .rs .rs-err .tdot.err { background:var(--danger, #e0556b); }
+    .rs .rs-err .rs-err-x { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; margin-left:4px; border:none; border-radius:7px; background:transparent; color:var(--surface-base); opacity:.7; cursor:pointer; flex-shrink:0; }
+    .rs .rs-err .rs-err-x:hover { opacity:1; background:color-mix(in srgb, var(--surface-base) 14%, transparent); }
+    .rs .rs-err .rs-err-x svg { width:14px; height:14px; }
     /* enter anims */
     .rs .fade-in { animation: rsFadeIn .5s var(--ease-out) both; }
     @keyframes rsFadeIn { from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:translateY(0); } }
