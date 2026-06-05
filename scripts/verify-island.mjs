@@ -254,6 +254,25 @@ async function main() {
     check(`monta ${q}`, ok && errs.length === 0, errs[0]);
   }
 
+  /* ═══ T8: targets táctiles en móvil + dato no dependiente del color ═══ */
+  console.log("\n■ T8 · móvil y colorblind");
+  await send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 2, mobile: true }, sid);
+  await nav(`${BASE}/profile/radar?plan=creador`);
+  const t8 = await evaluate(`(function(){
+    var rootEl=document.querySelector('#radarRoot');
+    var out={ mobile: rootEl && rootEl.className.indexOf('rs--mobile')>-1, cortos:[] };
+    ['.fchip','.btn-sm','.iconbtn','.idea-caret','.chip-sm'].forEach(function(sel){
+      [].slice.call(document.querySelectorAll('#radarRoot '+sel)).slice(0,8).forEach(function(b){
+        var h=b.getBoundingClientRect().height; if(h>0 && h<43.5) out.cortos.push(sel+':'+Math.round(h));
+      });
+    });
+    return out;
+  })()`);
+  check("móvil: targets táctiles ≥44px", t8.mobile && t8.cortos.length === 0, JSON.stringify(t8));
+  const t8b = await evaluate(`(function(){ var s=document.querySelector('#radarRoot .row-score.hi .sx'); return s?s.textContent:null; })()`);
+  check("reel explosivo identificable por etiqueta (no solo color)", !!t8b && /explota/.test(t8b), String(t8b));
+  await send("Emulation.clearDeviceMetricsOverride", {}, sid);
+
   console.log(`\n═══ RESULTADO: ${passed} ✓ · ${failed} ✗ ═══`);
   if (fails.length) { console.log(fails.map((f) => "  ✗ " + f).join("\n")); }
   process.exitCode = failed ? 1 : 0;

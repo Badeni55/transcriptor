@@ -320,7 +320,7 @@
     var hi=(r.explosion||0)>=3, isFav=!!S.favs[r.id];
     var thumbInner=r.thumb?'<img src="'+ESC(r.thumb)+'" alt="">':'<div class="play"></div>';
     return '<div class="row">'+
-      '<div class="row-score'+(hi?" hi":"")+'"><span class="sv">'+(r.explosionTxt!=null?ESC(r.explosionTxt):"–")+'×</span><span class="sx">media</span></div>'+
+      '<div class="row-score'+(hi?" hi":"")+'"><span class="sv">'+(r.explosionTxt!=null?ESC(r.explosionTxt):"–")+'×</span><span class="sx">'+(hi?"🔥 explota":"media")+'</span></div>'+   // T8 (IDI): el "explosivo" se lee por etiqueta, no solo por color
       '<div class="row-thumb"><div class="thumb">'+thumbInner+'<span class="dur">'+ESC(r.dur)+'</span></div></div>'+
       '<div class="row-mid"><div class="row-crow"><span class="ava">'+ESC(r.creator.initials)+'</span><span class="row-who">@'+ESC(r.creator.handle)+'</span><span class="row-when">'+ESC(r.when)+'</span></div><p class="row-cap">'+ESC(r.cap)+'</p></div>'+
       '<div class="row-metrics"><span>'+IC.eye+' '+ESC(r.views)+'</span><span>'+IC.heart+' '+ESC(r.likes)+'</span></div>'+

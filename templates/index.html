@@ -10094,6 +10094,18 @@
     .rs .row-metrics svg { width:13px; height:13px; }
     .rs .row-actions { display:flex; gap:8px; align-items:center; }
     .rs .row-actions .iconbtn { width:34px; height:34px; } .rs .row-actions .iconbtn svg { width:16px; height:16px; }
+    /* T8 (IDI): targets táctiles ≥44px en móvil (chips a 28-34px y btn-sm a 36px
+       se quedan cortos para el pulgar). Solo .rs--mobile — el desktop no cambia. */
+    .rs--mobile .fchip { min-height:44px; }
+    .rs--mobile .btn-sm { height:auto; min-height:44px; }
+    .rs--mobile .chip-sm { display:inline-flex; align-items:center; min-height:44px; padding-top:0; padding-bottom:0; }
+    .rs--mobile .iconbtn { min-width:44px; min-height:44px; }
+    .rs--mobile .row-actions .iconbtn { width:44px; height:44px; }
+    .rs--mobile .gui-acts .iconbtn { width:44px; height:44px; }
+    .rs--mobile .idea-caret { width:44px; height:44px; }
+    .rs--mobile .sc-hook-save, .rs--mobile .gui-hook-use { display:inline-flex; align-items:center; min-height:44px; padding:0 12px; }
+    .rs--mobile .gui-hook-del { width:44px; height:44px; }
+    .rs--mobile .rs-err .rs-err-x { width:44px; height:44px; }
     .rs .see-all { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:18px; padding:14px; background:transparent; border:1px solid var(--border-default); border-radius:10px; color:var(--text-secondary); font:inherit; font-family:var(--font-body); font-size:13.5px; font-weight:600; cursor:pointer; }
     .rs .see-all:hover { border-color:var(--border-strong); color:var(--text-primary); }
     .rs .see-all svg { width:15px; height:15px; }
