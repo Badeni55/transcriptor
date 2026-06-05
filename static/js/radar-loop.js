@@ -941,7 +941,49 @@
     var foot='<div class="cluster" style="margin-top:24px;gap:10px"><button class="btn btn-md btn-secondary" data-act="back-script">← Volver al guión</button>'+((kind==="hooks"||kind==="carousel")?'<button class="btn btn-md btn-primary" data-act="record">'+IC.mic+' Grábalo</button>':'')+'</div>';
     return '<div class="script-wrap fade-in"><h2 class="result-head serif">'+ESC(meta[0])+'</h2><p class="result-sub">'+ESC(meta[1])+'</p>'+inner+foot+'</div>';
   }
-  function overlayShellHTML(inner,title,backAct,closeIcon){ return '<div class="overlay"><div class="obar"><button class="back" data-act="'+backAct+'">'+(closeIcon?IC.x:IC.back)+'</button><span class="otitle">'+ESC(title)+'</span></div><div class="oscroll">'+inner+'</div></div>'; }
+  function overlayShellHTML(inner,title,backAct,closeIcon,extraCls){ return '<div class="overlay'+(extraCls?' '+extraCls:'')+'"><div class="obar"><button class="back" data-act="'+backAct+'">'+(closeIcon?IC.x:IC.back)+'</button><span class="otitle">'+ESC(title)+'</span></div><div class="oscroll">'+inner+'</div></div>'; }
+
+  /* T2 (IDI): promptSheet — el sustituto de window.prompt. Un sheet (overlay)
+     con label + campo + helper + error inline (primitivos .field del design
+     system), validación antes de entregar y coherente en demo y prod.
+     promptSheet({title,label,placeholder,helper,multiline,initial,submitLabel,
+     validate,onSubmit}) — validate(v) devuelve un string de error (o nada si ok);
+     onSubmit(v) recibe el valor ya validado. */
+  function sheetHTML(){
+    var sh=S.sheet; if(!sh) return '';
+    var field = sh.multiline
+      ? '<textarea class="field-textarea" id="rsSheetInput" rows="5" placeholder="'+ESC(sh.placeholder||"")+'">'+ESC(sh.initial||"")+'</textarea>'
+      : '<input class="field-input" id="rsSheetInput" type="text" placeholder="'+ESC(sh.placeholder||"")+'" value="'+ESC(sh.initial||"")+'">';
+    var inner='<div class="sheet-body">'+
+      '<div class="field'+(sh.error?' has-error':'')+'">'+
+        '<label class="field-label" for="rsSheetInput">'+ESC(sh.label||"")+'</label>'+
+        field+
+        (sh.helper?'<div class="field-helper">'+ESC(sh.helper)+'</div>':'')+
+        (sh.error?'<div class="field-error" role="alert">'+ESC(sh.error)+'</div>':'')+
+      '</div>'+
+      '<div class="sheet-actions">'+
+        '<button class="btn btn-md btn-ghost" data-act="sheet-close">Cancelar</button>'+
+        '<button class="btn btn-md btn-primary" data-act="sheet-submit">'+ESC(sh.submitLabel||"Aceptar")+'</button>'+
+      '</div>'+
+    '</div>';
+    return overlayShellHTML(inner, sh.title||"", "sheet-close", true, "sheet");
+  }
+  function promptSheet(opts){
+    S.sheet={ title:opts.title, label:opts.label, placeholder:opts.placeholder, helper:opts.helper,
+      multiline:!!opts.multiline, initial:opts.initial||"", submitLabel:opts.submitLabel,
+      _validate:opts.validate||null, _onSubmit:opts.onSubmit||null, error:null };
+    render();
+    var inp=document.getElementById("rsSheetInput"); if(inp) inp.focus();
+  }
+  function closeSheet(){ S.sheet=null; render(); }
+  function submitSheet(){
+    var sh=S.sheet; if(!sh) return;
+    var inp=document.getElementById("rsSheetInput"); var v=inp?inp.value:"";
+    var err=sh._validate?sh._validate(v):null;
+    if(err){ sh.error=err; sh.initial=v; render(); var i2=document.getElementById("rsSheetInput"); if(i2) i2.focus(); return; }
+    var cb=sh._onSubmit; S.sheet=null; render();
+    if(cb) cb(v);
+  }
   function teleprompterHTML(){
     var r=S.reel||{creator:{handle:""},script:{hook:"",beats:[],close:""}};
     var s=r.script||{hook:"",beats:[],close:""};
@@ -984,6 +1026,7 @@
     else if(S.view==="perf") html+=overlayShellHTML(guiPerfHTML(),"Rendimiento del guion","close-feed",true);
     else if(S.view==="prompter") html+=teleprompterHTML();
     else if(S.view==="fillweek") html+='<div class="overlay"><div class="obar"><button class="back" data-act="close-feed">'+IC.x+'</button><span class="otitle">Llena mi semana</span></div><div class="oscroll" id="rsFillHost">'+fillWeekHTML(fillReels(),S._fillPhase==null?0:S._fillPhase)+'</div></div>';
+    if(S.sheet) html+=sheetHTML();   // T2: el sheet de entrada va SOBRE cualquier overlay
     html+='<div class="rs-toast" id="rsToast"><span class="tdot"></span><span id="rsToastMsg"></span></div>';
     el.innerHTML=html;
     if(S.view==="gen") startGenSteps();
@@ -1325,7 +1368,17 @@
       else setTimeout(function(){ if(g._sid) doPost(g._sid); },900);
     }
   }
-  function addReelManual(){ var url=window.prompt("Pega la URL de un reel (Instagram/TikTok) para meterlo a tu ecosistema:"); if(!url) return; showToast("Reel en cola. Lo añadimos a tu ecosistema en unos segundos."); bumpEco(0,1); }
+  // T2 (IDI): sheet con validación en vez de window.prompt.
+  function addReelManual(){
+    promptSheet({
+      title:"Añadir reel", label:"URL del reel",
+      placeholder:"https://www.instagram.com/reel/…",
+      helper:"Pega la URL de un reel (Instagram/TikTok) para meterlo a tu ecosistema.",
+      submitLabel:"Añadir al ecosistema",
+      validate:function(v){ if(!/^https?:\/\/\S+\.\S+/i.test(v.trim())) return "Pega una URL válida (empieza por http)."; },
+      onSubmit:function(){ showToast("Reel en cola. Lo añadimos a tu ecosistema en unos segundos."); bumpEco(0,1); }
+    });
+  }
 
   // Captura del moat: el creador pega sus reels → derivamos su VoiceProfile.
   function onboardVoice(){
@@ -1362,9 +1415,18 @@
   // El backend (POST /api/voice/refine) suma source_count y sube confidence.
   // Mirror de onboardVoice: mismo auth (credentials same-origin), mismo refresh
   // (GET /api/voice → re-pinta Cerebro), mismo branch demo (en demo NO postea).
+  // T2 (IDI): sheet con textarea (igual que el onboarding) en vez de window.prompt.
   function refineVoice(){
-    var txt=window.prompt("Pega lo que dices en 1-2 reels TUYOS más. Los sumo a tu voz y subo el % que te conozco:");
-    if(txt==null) return;
+    promptSheet({
+      title:"Refinar mi voz", label:"Transcripción de tus reels",
+      placeholder:"Pega aquí lo que dices en 1-2 reels TUYOS más…",
+      helper:"Los sumo a tu voz y subo el % que te conozco.",
+      multiline:true, submitLabel:"Refinar mi voz",
+      validate:function(v){ if(!v.trim()) return "Pega el texto de al menos 1 reel tuyo."; },
+      onSubmit:refineVoiceWith
+    });
+  }
+  function refineVoiceWith(txt){
     txt=(txt||"").trim();
     if(!txt){ showToast("Pega el texto de al menos 1 reel tuyo."); return; }
     // En DEMO no llamamos al backend real: subimos la confianza localmente
@@ -1427,11 +1489,18 @@
 
   // B4 (prod): conectar la cuenta de Instagram (POST /metrics/ig-profile) y luego
   // traer/actualizar los reels (POST /metrics/analyze → scrape + attribute_and_learn).
+  // T2 (IDI): sheet con validación (usuario sin @, sin espacios) en vez de window.prompt.
   function igConnectProfile(){
-    var u=window.prompt("Tu usuario de Instagram (sin @) — leo solo tus métricas públicas:");
-    if(u==null) return;
-    u=(u||"").trim().replace(/^@/,"");
-    if(!u){ showToast("Escribe tu usuario de Instagram."); return; }
+    promptSheet({
+      title:"Conectar Instagram", label:"Tu usuario de Instagram",
+      placeholder:"tu_usuario",
+      helper:"Sin @. Leo solo tus métricas públicas — sin contraseñas.",
+      submitLabel:"Conectar",
+      validate:function(v){ v=v.trim().replace(/^@/,""); if(!v) return "Escribe tu usuario de Instagram."; if(/\s/.test(v)) return "El usuario no lleva espacios."; },
+      onSubmit:function(v){ igConnectWith(v.trim().replace(/^@/,"")); }
+    });
+  }
+  function igConnectWith(u){
     showToast("Conectando @"+u+"…");
     fetch("/metrics/ig-profile",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:u})})
       .then(function(r){ return r.json().catch(function(){return{};}); })
@@ -1461,12 +1530,19 @@
   /* ── Equipo (Agencia): invitar + cargar miembros reales ──────────
      Mirror del estilo de igConnectProfile/refreshReels (fetch same-origin).
      Backend: POST /agency/invite {email}→{invite_url,token}; GET /agency/members→[]. */
+  // T2 (IDI): sheet con validación de email en vez de window.prompt.
   function teamInvite(){
     if(isDemo()){ return showToast("En la demo no se envían invitaciones reales. En tu cuenta Agencia generarías un enlace de invitación."); }
-    var em=window.prompt("Email del miembro que quieres invitar a tu equipo:");
-    if(em==null) return;
-    em=(em||"").trim();
-    if(!em){ showToast("Escribe un email para invitar."); return; }
+    promptSheet({
+      title:"Invitar miembro", label:"Email del miembro",
+      placeholder:"nombre@equipo.com",
+      helper:"Le creo un enlace de invitación para unirse a tu equipo.",
+      submitLabel:"Crear invitación",
+      validate:function(v){ v=v.trim(); if(!v) return "Escribe un email para invitar."; if(v.indexOf("@")<1 || v.indexOf("@")===v.length-1) return "Eso no parece un email válido."; },
+      onSubmit:function(v){ teamInviteWith(v.trim()); }
+    });
+  }
+  function teamInviteWith(em){
     showToast("Creando invitación…");
     fetch("/agency/invite",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:em})})
       .then(function(r){ return r.json().catch(function(){return{};}); })
@@ -1508,6 +1584,8 @@
     var el=root(); if(!el||!el.contains(e.target)) return;
     var btn=e.target.closest("[data-act]"); if(!btn) return;
     var act=btn.getAttribute("data-act"), id=btn.getAttribute("data-id"), k=btn.getAttribute("data-k");
+    if(act==="sheet-close") return closeSheet();
+    if(act==="sheet-submit") return submitSheet();
     if(act==="tab") return switchTab(k);
     if(act==="brand-toggle"){ S.brandMenu=!S.brandMenu; return render(); }
     if(act==="brand") return openBrand(id);
@@ -1562,7 +1640,17 @@
     if(act==="gui-toggle-rec"){ var g2=guionById(id); if(g2){ g2.status=(g2.status==="recorded")?"draft":"recorded"; if(g2.status==="recorded"&&S.stats) S.stats.stolen_today+=1; render(); showToast(g2.status==="recorded"?"Marcado como grabado.":"Vuelto a borrador."); persistRecStatus(g2); } return; }
     if(act==="gui-discard"){ var g3=guionById(id); if(g3){ g3.status="discarded"; render(); showToast("Descartado."); persistRecStatus(g3); } return; }
     if(act==="gui-perf"){ S.perfGuion=id; S.view="perf"; return render(); }
-    if(act==="gui-link-reel"){ var gl=guionById(id); if(gl){ var u=window.prompt("Pega el link del reel publicado en Instagram. Lo analizo cada semana y entrena tu Cerebro:"); if(u){ gl.published={pending:true, url:u}; gl.status="recorded"; render(); if(isDemo()){ showToast("Reel vinculado. Se analizará en el próximo refresco y entrenará tu Cerebro."); } else { linkReelPublished(gl, u); } } } return; }
+    if(act==="gui-link-reel"){ var gl=guionById(id); if(gl){
+      // T2 (IDI): sheet con validación de URL en vez de window.prompt.
+      promptSheet({
+        title:"Vincular reel publicado", label:"Link del reel en Instagram",
+        placeholder:"https://www.instagram.com/reel/…",
+        helper:"Lo analizo y entrena tu Cerebro: aprendo de cómo tracciona lo que publicas.",
+        submitLabel:"Vincular y analizar",
+        validate:function(v){ if(!/^https?:\/\/\S+\.\S+/i.test(v.trim())) return "Pega el link completo del reel (empieza por http)."; },
+        onSubmit:function(u){ u=u.trim(); gl.published={pending:true, url:u}; gl.status="recorded"; render(); if(isDemo()){ showToast("Reel vinculado. Se analizará en el próximo refresco y entrenará tu Cerebro."); } else { linkReelPublished(gl, u); } }
+      });
+    } return; }
     if(act==="copy"){ var txt=btn.getAttribute("data-txt"); if(navigator.clipboard) navigator.clipboard.writeText(txt); btn.textContent="✓"; setTimeout(function(){ btn.textContent="Copiar"; },1200); return; }
   }
 

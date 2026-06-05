@@ -9567,6 +9567,13 @@
     .rs .overlay .obar .back { width:38px; height:38px; border-radius:99px; border:1px solid var(--border-default); background:transparent; color:var(--text-primary); display:flex; align-items:center; justify-content:center; cursor:pointer; }
     .rs .overlay .obar .otitle { font-size:14px; font-weight:600; }
     .rs .overlay .oscroll { flex:1; overflow-y:auto; }
+    /* T2 (IDI): sheet de entrada (sustituto de window.prompt) — overlay + primitivos .field */
+    .rs .sheet-body { width:100%; max-width:560px; margin:4vh auto 0; padding:26px 22px; display:flex; flex-direction:column; gap:16px; }
+    .rs .sheet-body .field { margin:0; display:flex; flex-direction:column; gap:7px; }
+    .rs .sheet-body .field-label { display:block; text-transform:none; letter-spacing:0; font-size:13.5px; font-weight:600; color:var(--text-primary); margin:0; }
+    .rs .sheet-body .field-input, .rs .sheet-body .field-textarea { width:100%; }
+    .rs .sheet-actions { display:flex; gap:10px; justify-content:flex-end; }
+    .rs--mobile .sheet-body { padding:20px 16px; }
     /* generating */
     .rs .gen { height:100%; min-height:460px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding:40px; text-align:center; }
     .rs .gen .orb { width:74px; height:74px; border-radius:99px; background:conic-gradient(from 0deg, var(--brand-500), #6f93ff, var(--brand-400), var(--brand-500)); animation: rsSpin 1.1s linear infinite; position:relative; }
