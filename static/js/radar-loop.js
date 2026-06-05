@@ -231,7 +231,7 @@
       (isAgency()?brandSwitchHTML():brandStaticHTML())+
       crumb+
       '<span class="grow"></span>'+
-      '<div class="searchbox">'+IC.eye+'<span>Buscar señal o creador</span><span class="kbd">⌘K</span></div>'+
+      '<div class="searchbox">'+IC.eye+'<span>Buscar señal o creador</span></div>'+   // T3 (IDI): sin pista ⌘K — no prometemos un atajo que no existe
       demoToggle+
       streak+
       ((S.user.plan==="free" && !S.user.credits)
@@ -1579,6 +1579,31 @@
       .catch(function(){});
   }
 
+  /* ── teclado (T3, IDI): Esc cierra, Enter envía — como la chrome legacy ── */
+  function closeOverlay(){ clearInterval(S.genStepTimer); clearTimeout(S.fillTimer); S.view="feed"; S._fillPhase=null; render(); }
+  function tpBack(){ if(S.tab==="guiones"){ S.view="feed"; } else { S.view=(S.reel&&S.reel.script)?"script":"feed"; } render(); }
+  // Cierra lo más "encima" primero: sheet → menú de marca → overlay activo.
+  // Equivalencias: result→volver al guión; prompter→tp-back; resto→close-feed.
+  function onKeydown(e){
+    var el=root(); if(!el || !el.offsetParent) return;   // isla no montada/visible → no interceptar
+    if(e.key==="Escape"){
+      if(S.sheet){ e.preventDefault(); return closeSheet(); }
+      if(S.brandMenu){ e.preventDefault(); S.brandMenu=false; return render(); }
+      if(S.view && S.view!=="feed"){
+        e.preventDefault();
+        if(S.view==="result"){ S.view="script"; return render(); }
+        if(S.view==="prompter") return tpBack();
+        return closeOverlay();
+      }
+      return;   // nada que cerrar → que lo gestione la chrome legacy
+    }
+    if(e.key==="Enter" && !e.shiftKey && (e.target.tagName||"").toLowerCase()!=="textarea"){
+      if(S.sheet && e.target.id==="rsSheetInput"){ e.preventDefault(); return submitSheet(); }
+      if(e.target.id==="rsIdeaSeed"){ e.preventDefault(); return seedIdea("rsIdeaSeed", true); }
+      if(e.target.id==="rsIdeaSeed2"){ e.preventDefault(); return addSeedIdea(); }
+    }
+  }
+
   /* ── delegación de eventos ───────────────────────────────────── */
   function onClick(e){
     var el=root(); if(!el||!el.contains(e.target)) return;
@@ -1626,8 +1651,8 @@
     if(act==="record"){ S.view="prompter"; return render(); }
     if(act==="recorded") return recorded();
     if(act==="back-script"){ S.view="script"; return render(); }
-    if(act==="close-feed"){ clearInterval(S.genStepTimer); clearTimeout(S.fillTimer); S.view="feed"; S._fillPhase=null; return render(); }
-    if(act==="tp-back"){ if(S.tab==="guiones"){ S.view="feed"; } else { S.view=(S.reel&&S.reel.script&&Object.keys(S.done).length)?"script":(S.reel&&S.reel.script?"script":"feed"); } return render(); }
+    if(act==="close-feed") return closeOverlay();
+    if(act==="tp-back") return tpBack();
     if(act==="ig-connect"){ if(!isDemo()) return igConnectProfile(); S.igConnected=true; bumpEco(0,0); render(); return showToast("Instagram conectado. El sistema empezará a aprender de lo que publicas."); }
     if(act==="ig-disconnect"){ S.igConnected=false; render(); return showToast("Instagram desvinculado."); }
     if(act==="metric-sort"){ S.metricSort=k; return render(); }
@@ -1805,7 +1830,7 @@
       // Demo takeover: la isla ocupa todo el workspace y oculta la chrome vieja
       // (sidebar, subtabs). Solo en demo → producción mantiene su navegación.
       if(isDemo()){ try{ document.body.classList.add("rs-takeover"); }catch(e){} }
-      if(!S._wired){ document.addEventListener("click", onClick); window.addEventListener("resize", function(){ var d=S.device; setDevice(); if(d!==S.device) render(); }); S._wired=true; }
+      if(!S._wired){ document.addEventListener("click", onClick); document.addEventListener("keydown", onKeydown); window.addEventListener("resize", function(){ var d=S.device; setDevice(); if(d!==S.device) render(); }); S._wired=true; }
       loadAll();
     }
   };
