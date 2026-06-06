@@ -2114,7 +2114,7 @@ def attribute_reel_to_script(user_id, caption, transcript=None):
     título+hook queda solo como respaldo si no hay transcripción. Devuelve
     {script_id, score, method} o None."""
     try:
-        r = (db.table("scripts").select("id, title, hook, script, created_at")
+        r = (db.table("scripts").select("id, title, script, created_at")
                .eq("user_id", user_id).order("created_at", desc=True).limit(60).execute())
     except Exception:
         return None
@@ -2140,7 +2140,8 @@ def attribute_reel_to_script(user_id, caption, transcript=None):
     if ct:
         best, best_score = None, 0.0
         for s in rows:
-            st = _tok((s.get("title") or "") + " " + (s.get("hook") or ""))
+            _hook_line = ((s.get("script") or "").strip().split("\n")[0])
+            st = _tok((s.get("title") or "") + " " + _hook_line)
             if not st:
                 continue
             score = len(ct & st) / max(1, len(st))
@@ -2275,7 +2276,7 @@ def underperformers_signal(user_id):
     """Patrón breve de lo que NO te rinde (guiones muy por debajo de tu mediana).
     Solo el PATRÓN (hook), nunca los textos enteros. Devuelve str corto o None."""
     try:
-        r = (db.table("scripts").select("hook, views_count")
+        r = (db.table("scripts").select("script, views_count")
                .eq("user_id", user_id).not_.is_("views_count", "null").limit(80).execute())
     except Exception:
         return None
@@ -2289,10 +2290,12 @@ def underperformers_signal(user_id):
     if len(losers) < 2:
         return None
     sig = []
-    noq = sum(1 for l in losers if "?" not in (l.get("hook") or ""))
+    # El hook es la primera línea del campo `script` (texto plano; no existe columna hook).
+    def _hook(row): return (row.get("script") or "").strip().split("\n")[0]
+    noq = sum(1 for l in losers if "?" not in _hook(l))
     if noq >= max(2, int(len(losers) * 0.6)):
         sig.append("hooks que no abren con pregunta ni gancho directo")
-    lng = sum(1 for l in losers if len((l.get("hook") or "").split()) > 14)
+    lng = sum(1 for l in losers if len(_hook(l).split()) > 14)
     if lng >= max(2, int(len(losers) * 0.5)):
         sig.append("aperturas largas (>14 palabras antes del gancho)")
     return ", ".join(sig) if sig else None
@@ -2921,7 +2924,7 @@ def update_script(script_id):
 #  alternativas. Las 3 rutas exigen guion PROPIO (user_id = current_user).
 def _fetch_own_script_hooks(script_id, user_id):
     """(hook activo, alt_hooks lista) del guión propio, o (None, None) si no existe."""
-    r = (db.table("scripts").select("hook, alt_hooks")
+    r = (db.table("scripts").select("script, alt_hooks")
            .eq("id", script_id).eq("user_id", user_id).limit(1).execute())
     if not r.data:
         return None, None
@@ -2929,7 +2932,9 @@ def _fetch_own_script_hooks(script_id, user_id):
     alt = row.get("alt_hooks")
     if not isinstance(alt, list):
         alt = []
-    return row.get("hook"), alt
+    # No existe columna `hook`; el hook es la primera línea del campo `script`.
+    hook = (row.get("script") or "").strip().split("\n")[0] or None
+    return hook, alt
 
 
 @app.route("/scripts/<script_id>/hooks", methods=["POST"])
@@ -3633,7 +3638,11 @@ def develop_idea(raw_text, assistant_id=None, user_id=None, language="es"):
         payload["response_format"] = {"type": "json_object"}
     resp = requests.post(url, headers=headers, json=payload, timeout=60)
     resp.raise_for_status()
-    content = resp.json()["choices"][0]["message"]["content"].strip()
+    content = resp.json()["choices"][0]["message"]["content"]
+    if not content:
+        logger.warning("develop_idea: LLM returned empty content user=%s", raw_text[:60])
+        return None
+    content = content.strip()
 
     # Parse JSON from response
     import json as json_mod
