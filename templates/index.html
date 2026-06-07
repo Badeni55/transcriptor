@@ -306,7 +306,7 @@
       "@type": "Offer",
       "price": "0",
       "priceCurrency": "EUR",
-      "description": "Free plan: full Radar + 5 lifetime «Make it mine»"
+      "description": "Free plan: full Radar + 12 lifetime «Make it mine»"
     }
   }
   </script>
@@ -336,14 +336,14 @@
       {"@type": "Question", "name": "What exactly is Reelscript?", "acceptedAnswer": {"@type": "Answer", "text": "It's not a transcriber: it's the operating system for your content. Every day it shows what's already exploding in your niche, turns it into scripts in your voice ready to record, and learns from what you publish to sound more like you."}},
       {"@type": "Question", "name": "How is it different from just asking ChatGPT?", "acceptedAnswer": {"@type": "Answer", "text": "Reelscript doesn't write \"AI text\": it writes what you'd say. It learns your tone, structure and tics from your own reels, and sharpens with every script you record. \"Your voice at N%\" measures how well it knows you — and it only climbs."}},
       {"@type": "Question", "name": "Where do the ideas come from?", "acceptedAnswer": {"@type": "Answer", "text": "From the Radar: it watches your competitors and ranks their reels by what's exploding most versus their average. You don't start from a blank page, you start from what already works in your niche."}},
-      {"@type": "Question", "name": "Is there a free plan?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The full Radar and 5 lifetime «Make it mine», no card. Creator (€29/mo) brings 100 credits a month, Brain and metrics; Agency (€129/mo) adds multi-brand and team."}},
+      {"@type": "Question", "name": "Is there a free plan?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The full Radar and 12 lifetime «Make it mine», no card. Creator (€29/mo) brings 200 credits a month, Brain and metrics; Agency (€129/mo) adds multi-brand and team."}},
       {"@type": "Question", "name": "Can I cancel anytime?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Cancel from the Stripe portal in one click and keep access until the end of the billing period. No commitments."}},
       {"@type": "Question", "name": "Are my data and scripts safe?", "acceptedAnswer": {"@type": "Answer", "text": "Your transcriptions, ideas and scripts live on Supabase with row-level security: only you can access your own. Payments are processed by Stripe — we never see or store card data. You can export or delete everything whenever you want."}}
       {% else %}
       {"@type": "Question", "name": "¿Qué es Reelscript exactamente?", "acceptedAnswer": {"@type": "Answer", "text": "No es un transcriptor: es el sistema operativo de tu contenido. Cada día te muestra lo que ya explota en tu nicho, lo convierte en guiones con tu voz listos para grabar, y aprende de lo que publicas para sonar cada vez más a ti."}},
       {"@type": "Question", "name": "¿En qué se diferencia de pedírselo a ChatGPT?", "acceptedAnswer": {"@type": "Answer", "text": "Reelscript no escribe \"texto de IA\": escribe lo que dirías tú. Aprende tu tono, tu estructura y tus muletillas de tus propios reels, y se afina con cada guión que grabas. \"Tu voz al N%\" mide cuánto te conoce — y solo sube."}},
       {"@type": "Question", "name": "¿De dónde salen las ideas?", "acceptedAnswer": {"@type": "Answer", "text": "Del Radar: vigila a tus competidores y ordena sus reels por lo que más está explotando frente a su media. No partes de una página en blanco, partes de lo que ya funciona en tu nicho."}},
-      {"@type": "Question", "name": "¿Hay plan gratis?", "acceptedAnswer": {"@type": "Answer", "text": "Sí. El Radar completo y 5 «Hazlo mío» de por vida, sin tarjeta. Creador (29€/mes) trae 100 créditos al mes, Cerebro y métricas; Agencia (129€/mes) añade multi-marca y equipo."}},
+      {"@type": "Question", "name": "¿Hay plan gratis?", "acceptedAnswer": {"@type": "Answer", "text": "Sí. El Radar completo y 12 «Hazlo mío» de por vida, sin tarjeta. Creador (29€/mes) trae 200 créditos al mes, Cerebro y métricas; Agencia (129€/mes) añade multi-marca y equipo."}},
       {"@type": "Question", "name": "¿Puedo cancelar cuando quiera?", "acceptedAnswer": {"@type": "Answer", "text": "Sí. Cancelas desde el portal de Stripe en un click y mantienes el acceso hasta el final del periodo facturado. Sin permanencias."}},
       {"@type": "Question", "name": "¿Mis datos y mis guiones están seguros?", "acceptedAnswer": {"@type": "Answer", "text": "Tus transcripciones, ideas y guiones viven en Supabase con row-level security: solo tú accedes a lo tuyo. Los pagos los procesa Stripe — nunca vemos ni guardamos datos de tarjeta. Puedes exportar o borrar todos tus datos cuando quieras."}}
       {% endif %}
@@ -10747,6 +10747,10 @@
 <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);max-width:600px;margin:0 auto"></div>
 
 <!-- ── PRICING ────────────────────────────────────────────────────────── -->
+<!-- TODO(econ): precios/créditos hardcodeados en 2 sitios (estas tarjetas y el
+     objeto PLAN_META en JS, ~L21950). Lo ideal sería renderizarlas desde las
+     tablas `plans`/`topups` de la DB para tener una sola fuente de verdad y no
+     tocar texto a mano en cada cambio de economía. -->
 <div class="section-sm fade-in" id="pricingSection">
   <div style="text-align:center;margin-bottom:8px;position:relative;z-index:1">
     <div class="s-label" data-i18n="pricing.tag">PLANS</div>
@@ -10772,7 +10776,7 @@
       <div class="price-ideal" data-i18n-es="Mira tu nicho y crea tus primeros 5 guiones." data-i18n-en="Watch your niche and create your first 5 scripts.">Mira tu nicho y crea tus primeros 5 guiones.</div>
       <ul class="price-features">
         <li data-i18n-es="Radar de tu nicho" data-i18n-en="Your niche radar">Radar de tu nicho</li>
-        <li data-i18n-es="5 «Hazlo mío» de por vida" data-i18n-en="5 «Make it mine» lifetime">5 «Hazlo mío» de por vida</li>
+        <li data-i18n-es="12 «Hazlo mío» de por vida" data-i18n-en="12 «Make it mine» lifetime">12 «Hazlo mío» de por vida</li>
         <li data-i18n-es="Guiones guardados" data-i18n-en="Saved scripts">Guiones guardados</li>
         <li data-i18n-es="Teleprompter + grabación" data-i18n-en="Teleprompter + recording">Teleprompter + grabación</li>
         <li data-i18n-es="Historial persistente" data-i18n-en="Persistent history">Historial persistente</li>
@@ -10790,7 +10794,7 @@
       <div class="price-billed" data-billed-eur="27600" data-billed-usd="30000"></div>
       <div class="price-ideal" data-i18n-es="Para creadores que viven del contenido." data-i18n-en="For creators who live off their content.">Para creadores que viven del contenido.</div>
       <ul class="price-features">
-        <li data-i18n-es="100 créditos/mes" data-i18n-en="100 credits/mo">100 créditos/mes</li>
+        <li data-i18n-es="200 créditos/mes" data-i18n-en="200 credits/mo">200 créditos/mes</li>
         <li data-i18n-es="1 marca" data-i18n-en="1 brand">1 marca</li>
         <li data-i18n-es="Cerebro: aprende tu voz" data-i18n-en="Brain: learns your voice">Cerebro: aprende tu voz</li>
         <li data-i18n-es="Ideas, hooks y formatos" data-i18n-en="Ideas, hooks & formats">Ideas, hooks y formatos</li>
@@ -10810,10 +10814,10 @@
       <div class="price-billed" data-billed-eur="129000" data-billed-usd="139000"></div>
       <div class="price-ideal" data-i18n-es="Para agencias con varias marcas." data-i18n-en="For agencies running multiple brands.">Para agencias con varias marcas.</div>
       <ul class="price-features">
-        <li data-i18n-es="500 créditos/mes (pool)" data-i18n-en="500 credits/mo (pool)">500 créditos/mes (pool)</li>
+        <li data-i18n-es="800 créditos/mes (pool)" data-i18n-en="800 credits/mo (pool)">800 créditos/mes (pool)</li>
         <li data-i18n-es="3 marcas incluidas" data-i18n-en="3 brands included">3 marcas incluidas</li>
         <li data-i18n-es="3 asientos de equipo" data-i18n-en="3 team seats">3 asientos de equipo</li>
-        <li data-i18n-es="Marca extra €35/mes · asiento €19/mes" data-i18n-en="Extra brand €35/mo · seat €19/mo">Marca extra €35/mes · asiento €19/mes</li>
+        <li data-i18n-es="Marca extra €14,99/mes · asiento €14,99/mes" data-i18n-en="Extra brand €14.99/mo · seat €14.99/mo">Marca extra €14,99/mes · asiento €14,99/mes</li>
         <li data-i18n-es="Cerebro por marca" data-i18n-en="Brain per brand">Cerebro por marca</li>
         <li data-i18n-es="Portfolio multi-marca" data-i18n-en="Multi-brand portfolio">Portfolio multi-marca</li>
         <li data-i18n-es="Soporte email + chat" data-i18n-en="Email + chat support">Soporte email + chat</li>
@@ -10834,7 +10838,7 @@
     <span data-i18n-es="Deja de mirar la página en blanco." data-i18n-en="Stop staring at the blank page.">Deja de mirar la página en blanco.</span>
     <em data-i18n-es="Empieza gratis." data-i18n-en="Start free.">Empieza gratis.</em>
   </h2>
-  <p class="cta-sub" data-i18n-es="Radar completo y 5 «Hazlo mío» gratis. Sin tarjeta." data-i18n-en="Full Radar and 5 free «Make it mine». No card.">Radar completo y 5 «Hazlo mío» gratis. Sin tarjeta.</p>
+  <p class="cta-sub" data-i18n-es="Radar completo y 12 «Hazlo mío» gratis. Sin tarjeta." data-i18n-en="Full Radar and 12 free «Make it mine». No card.">Radar completo y 12 «Hazlo mío» gratis. Sin tarjeta.</p>
   <button class="cta-btn-final" onclick="openAuth('register','cta_final')" data-i18n-es="Empieza gratis →" data-i18n-en="Start free →">Empieza gratis →</button>
 </div>
 {% endif %}
@@ -12349,7 +12353,7 @@ const LANGS = {
     "pricing.free.f1": "5 usos/día", "pricing.free.f2": "5 guiones guardados", "pricing.free.f3": "1 proyecto", "pricing.free.f4": "Teleprompter + grabación", "pricing.free.f5": "Ideas con IA", "pricing.free.f6": "Historial persistente",
     "pricing.pro.f1": "50 usos/mes", "pricing.pro.f2": "Guiones ilimitados", "pricing.pro.f3": "Proyectos ilimitados", "pricing.pro.f4": "Teleprompter + grabación", "pricing.pro.f5": "Ideas con IA", "pricing.pro.f6": "1 asistente personalizado", "pricing.pro.f7": "Soporte por email",
     "pricing.creator.f1": "200 usos/mes", "pricing.creator.f2": "Guiones ilimitados", "pricing.creator.f3": "Proyectos ilimitados", "pricing.creator.f4": "Teleprompter + grabación", "pricing.creator.f5": "Ideas con IA", "pricing.creator.f6": "10 asistentes personalizados", "pricing.creator.f7": "Procesado prioritario", "pricing.creator.f8": "Soporte por email",
-    "pricing.agency.f1": "250 usos/mes + 50/asiento", "pricing.agency.f2": "Guiones ilimitados", "pricing.agency.f3": "Proyectos ilimitados", "pricing.agency.f4": "Teleprompter + grabación", "pricing.agency.f5": "Asistentes ilimitados", "pricing.agency.f6": "2 asientos de equipo incluidos", "pricing.agency.f7": "Procesamiento prioritario", "pricing.agency.f8": "Soporte email + chat",
+    "pricing.agency.f1": "800 créditos/mes (pool)", "pricing.agency.f2": "Guiones ilimitados", "pricing.agency.f3": "Proyectos ilimitados", "pricing.agency.f4": "Teleprompter + grabación", "pricing.agency.f5": "Asistentes ilimitados", "pricing.agency.f6": "2 asientos de equipo incluidos", "pricing.agency.f7": "Procesamiento prioritario", "pricing.agency.f8": "Soporte email + chat",
     "cta.h2": 'Empieza ahora.<br><span class="grad-txt">Es gratis.</span>',
     "cta.sub": "Tu primer reel transcrito en menos de 10 segundos.",
     "cta.pill1": "5 gratis al día", "cta.pill2": "Sin suscripción", "cta.pill3": "Saldo sin caducidad",
@@ -12851,7 +12855,7 @@ const LANGS = {
     "pricing.free.f1": "5 uses/day", "pricing.free.f2": "5 saved scripts", "pricing.free.f3": "1 project", "pricing.free.f4": "Teleprompter + recording", "pricing.free.f5": "Ideas with AI", "pricing.free.f6": "Persistent history",
     "pricing.pro.f1": "50 uses/month", "pricing.pro.f2": "Unlimited scripts", "pricing.pro.f3": "Unlimited projects", "pricing.pro.f4": "Teleprompter + recording", "pricing.pro.f5": "Ideas with AI", "pricing.pro.f6": "1 custom assistant", "pricing.pro.f7": "Email support",
     "pricing.creator.f1": "200 uses/month", "pricing.creator.f2": "Unlimited scripts", "pricing.creator.f3": "Unlimited projects", "pricing.creator.f4": "Teleprompter + recording", "pricing.creator.f5": "Ideas with AI", "pricing.creator.f6": "10 custom assistants", "pricing.creator.f7": "Priority processing", "pricing.creator.f8": "Email support",
-    "pricing.agency.f1": "250 uses/month + 50/seat", "pricing.agency.f2": "Unlimited scripts", "pricing.agency.f3": "Unlimited projects", "pricing.agency.f4": "Teleprompter + recording", "pricing.agency.f5": "Unlimited assistants", "pricing.agency.f6": "2 team seats included", "pricing.agency.f7": "Priority processing", "pricing.agency.f8": "Email + chat support",
+    "pricing.agency.f1": "800 credits/mo (pool)", "pricing.agency.f2": "Unlimited scripts", "pricing.agency.f3": "Unlimited projects", "pricing.agency.f4": "Teleprompter + recording", "pricing.agency.f5": "Unlimited assistants", "pricing.agency.f6": "2 team seats included", "pricing.agency.f7": "Priority processing", "pricing.agency.f8": "Email + chat support",
     "cta.h2": 'Start now.<br><span class="grad-txt">It\'s free.</span>',
     "cta.sub": "Your first reel transcribed in under 10 seconds.",
     "cta.pill1": "5 free/day", "cta.pill2": "No subscription", "cta.pill3": "Balance never expires",
@@ -21947,13 +21951,16 @@ function settingsViewPlans() {
 }
 
 // ── Upgrade modal ─────────────────────────────────────────────────────────
+// TODO(econ): segundo sitio con precios/créditos hardcodeados (el otro son las
+// tarjetas estáticas de #pricingSection). Una sola fuente de verdad = renderizar
+// desde las tablas `plans`/`topups` de la DB.
 const PLAN_META = {
   free: {
     icon: "✅", label: "Free",
     price:    { monthEur: 0,    monthUsd: 0,    yearEur: 0,    yearUsd: 0,    billedEur: 0,     billedUsd: 0 },
     ideal:    { es: "Prueba el radar y crea tus primeros 5 guiones.", en: "Try the radar and create your first 5 scripts." },
-    features: { es: ["Radar de tu nicho","5 «Hazlo mío» de por vida","Guiones guardados","Teleprompter + grabación","Historial persistente"],
-                en: ["Your niche radar","5 «Make it mine» lifetime","Saved scripts","Teleprompter + recording","Persistent history"] },
+    features: { es: ["Radar de tu nicho","12 «Hazlo mío» de por vida","Guiones guardados","Teleprompter + grabación","Historial persistente"],
+                en: ["Your niche radar","12 «Make it mine» lifetime","Saved scripts","Teleprompter + recording","Persistent history"] },
   },
   pro: {
     icon: "⚡", label: "Pro",
@@ -21967,8 +21974,8 @@ const PLAN_META = {
     icon: "🚀", label: "Creador",
     price:    { monthEur: 2900, monthUsd: 3200, yearEur: 2300, yearUsd: 2500, billedEur: 27600, billedUsd: 30000 },
     ideal:    { es: "Para creadores activos que viven del contenido.", en: "For active creators living off their content." },
-    features: { es: ["100 créditos/mes","1 marca","Cerebro: aprende tu voz","Ideas, hooks y formatos","Métricas de Instagram","Teleprompter + grabación","Soporte por email"],
-                en: ["100 credits/mo","1 brand","Brain: learns your voice","Ideas, hooks & formats","Instagram metrics","Teleprompter + recording","Email support"] },
+    features: { es: ["200 créditos/mes","1 marca","Cerebro: aprende tu voz","Ideas, hooks y formatos","Métricas de Instagram","Teleprompter + grabación","Soporte por email"],
+                en: ["200 credits/mo","1 brand","Brain: learns your voice","Ideas, hooks & formats","Instagram metrics","Teleprompter + recording","Email support"] },
     stripeKeys: { month: "", year: "" },
     featured: true,
   },
@@ -21976,8 +21983,8 @@ const PLAN_META = {
     icon: "🏢", label: "Agencia",
     price:    { monthEur: 12900, monthUsd: 13900, yearEur: 10750, yearUsd: 11600, billedEur: 129000, billedUsd: 139000 },
     ideal:    { es: "Para agencias que gestionan varias marcas.", en: "For agencies managing multiple brands." },
-    features: { es: ["500 créditos/mes (pool)","3 marcas incluidas","3 asientos de equipo","Marca extra €35/mes · asiento €19/mes","Cerebro por marca","Portfolio multi-marca","Soporte email + chat"],
-                en: ["500 credits/mo (pool)","3 brands included","3 team seats","Extra brand €35/mo · seat €19/mo","Brain per brand","Multi-brand portfolio","Email + chat support"] },
+    features: { es: ["800 créditos/mes (pool)","3 marcas incluidas","3 asientos de equipo","Marca extra €14,99/mes · asiento €14,99/mes","Cerebro por marca","Portfolio multi-marca","Soporte email + chat"],
+                en: ["800 credits/mo (pool)","3 brands included","3 team seats","Extra brand €14.99/mo · seat €14.99/mo","Brain per brand","Multi-brand portfolio","Email + chat support"] },
     stripeKeys: { month: "", year: "" },
   },
 };
@@ -23540,7 +23547,7 @@ async function removeCompetitor(trackingId, username) {
 
   <details class="faq-item">
     <summary data-i18n-es="¿Hay plan gratis?" data-i18n-en="Is there a free plan?">¿Hay plan gratis?</summary>
-    <p data-i18n-es="Sí. El Radar completo y 5 «Hazlo mío» de por vida, sin tarjeta. Creador (29€/mes) trae 100 créditos al mes, Cerebro y métricas; Agencia (129€/mes) añade multi-marca y equipo." data-i18n-en="Yes. The full Radar and 5 lifetime «Make it mine», no card. Creator (€29/mo) brings 100 credits a month, Brain and metrics; Agency (€129/mo) adds multi-brand and team.">Sí. El Radar completo y 5 «Hazlo mío» de por vida, sin tarjeta. Creador (29€/mes) trae 100 créditos al mes, Cerebro y métricas; Agencia (129€/mes) añade multi-marca y equipo.</p>
+    <p data-i18n-es="Sí. El Radar completo y 12 «Hazlo mío» de por vida, sin tarjeta. Creador (29€/mes) trae 200 créditos al mes, Cerebro y métricas; Agencia (129€/mes) añade multi-marca y equipo." data-i18n-en="Yes. The full Radar and 12 lifetime «Make it mine», no card. Creator (€29/mo) brings 200 credits a month, Brain and metrics; Agency (€129/mo) adds multi-brand and team.">Sí. El Radar completo y 12 «Hazlo mío» de por vida, sin tarjeta. Creador (29€/mes) trae 200 créditos al mes, Cerebro y métricas; Agencia (129€/mes) añade multi-marca y equipo.</p>
   </details>
 
   <details class="faq-item">
