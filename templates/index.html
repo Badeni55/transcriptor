@@ -3265,23 +3265,32 @@
     }
     .nav-upgrade-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(79,124,255,.35); }
     .nav-upgrade-btn:active { transform: translateY(0); }
-    /* Upgrade modal */
-    .upgrade-modal { max-width: 980px; width: 96vw; }
+    /* Upgrade modal — layout horizontal y compacto: planes lado a lado, features en 2 columnas */
+    /* .modal.upgrade-modal (2 clases) para ganar a .modal{max-width:420px}, definido después en el fuente */
+    .modal.upgrade-modal { max-width: 900px; width: 96vw; max-height: calc(100vh - 40px); overflow-y: auto; }
     .upgrade-modal h2 { text-align: center; }
     .upgrade-modal > p { text-align: center; color: var(--text2); }
     .upgrade-modal .billing-toggle { display: flex; justify-content: center; margin: 8px auto 18px; width: max-content; }
     .upgrade-cards-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 16px;
       align-items: stretch;
     }
+    /* Tarjeta más ancha y menos vertical dentro del modal (override solo aquí, no toca el landing) */
+    .upgrade-card { padding: 22px 22px 20px; }
+    .upgrade-card .price-icon { margin-bottom: 4px; }
+    .upgrade-card .price-ideal { min-height: 0; margin-bottom: 8px; }
+    /* Features en 2 columnas → corta la altura ~a la mitad */
+    .upgrade-card .price-features { margin: 6px 0 16px; columns: 2; column-gap: 22px; }
+    .upgrade-card .price-features li { break-inside: avoid; margin-bottom: 3px; }
     .upgrade-card.is-current { opacity: .7; filter: saturate(.7); }
     .upgrade-card.is-current .price-icon { background: var(--surf2); }
     .upgrade-card .btn-plan:disabled {
       background: transparent; border: 1px solid var(--brand); color: var(--brand);
       opacity: .9; box-shadow: none;
     }
-    @media (max-width: 768px) {
+    @media (max-width: 700px) {
       .upgrade-cards-grid { grid-template-columns: 1fr; }
+      .upgrade-card .price-features { columns: 1; }
     }
     /* Settings: billing card */
     .settings-billing-row {
