@@ -169,8 +169,10 @@ PLANS = {
         "assistants_max": None,
         "history_days": None,
         "seats": 3,                    # 3 asientos incluidos
-        "addon_brand_eur": 35,         # marca extra €35/mes
-        "addon_seat_eur": 19,          # asiento extra €19/mes
+        "addon_brand_eur": 14.99,      # marca extra €14,99/mes
+        # TODO(econ): cada marca extra debe conceder +150 créditos al pool. No hay
+        # lógica que lo aplique todavía (estos campos solo definen precio).
+        "addon_seat_eur": 14.99,       # asiento extra €14,99/mes
         "priority": True,
         "support": "email+chat",
     },
@@ -191,7 +193,9 @@ PLANS = {
 }
 
 # Add-ons de Agencia (precio/mes, EUR)
-ADDONS = {"brand": 35, "seat": 19}
+# TODO(econ): "brand" debe sumar +150 créditos/mes al pool de la agencia. Falta la
+# lógica de concesión (este dict solo define el precio del add-on).
+ADDONS = {"brand": 14.99, "seat": 14.99}
 
 # Topups (one-time): nombre → créditos otorgados + precio EUR. El price ID de Stripe
 # se inyecta por env (STRIPE_TOPUP_PRICE_<n>); nunca se hardcodea.
