@@ -543,6 +543,7 @@
     '</div>';
   }
   function scriptBlockHTML(sc){
+    var open=!!sc.expanded;
     var hooks=sc.hooks?('<div class="sc-hooks">'+sc.hooks.map(function(h,i){
       var done=sc.savedHooks&&sc.savedHooks[i];
       var act=done?'<span class="sc-hook-done">'+IC.check+' Añadido</span>'
@@ -551,8 +552,18 @@
     }).join("")+'</div>'):'';
     var hooksBtn=sc.hooks?'':'<button class="btn btn-sm btn-ghost" data-act="gen5hooks" data-id="'+sc.id+'">'+IC.hook+' 5 hooks</button>';
     var saved=sc.saved?'<span class="sc-saved">'+IC.check+' En Guiones</span>':'<button class="btn btn-sm btn-secondary" data-act="save-script" data-id="'+sc.id+'">Guardar guión</button>';
-    return '<div class="sc-block'+(sc.saved?" is-saved":"")+'">'+
-      '<div class="sc-hook-line">'+ESC(sc.hook)+'</div>'+
+    // Acordeón: el texto completo (cuerpo + cierre) ya vive en el objeto (sc.beats/sc.close);
+    // se despliega in situ, SIN fetch. Mismo markup que scriptRevealHTML. Mismo patrón que
+    // el caret de las ideas (.idea-caret + .open). Colapsado por defecto.
+    var beats=(sc.beats||[]).map(function(b,i){return '<div class="beat"><span class="n">'+String(i+1).padStart(2,"0")+'</span><span>'+ESC(b)+'</span></div>';}).join("");
+    var full=(open&&(beats||sc.close))?('<div class="sc-full">'+
+        (beats?'<div class="script-body">'+beats+'</div>':'')+
+        (sc.close?'<div class="script-close">'+ESC(sc.close)+'</div>':'')+
+      '</div>'):'';
+    var caret='<button class="idea-caret sc-caret'+(open?" open":"")+'" data-act="sc-toggle" data-id="'+sc.id+'" aria-expanded="'+(open?"true":"false")+'" title="'+(open?"Plegar":"Ver guión completo")+'" aria-label="'+(open?"Plegar guión":"Ver guión completo")+'">'+IC.chev+'</button>';
+    return '<div class="sc-block'+(sc.saved?" is-saved":"")+(open?" open":"")+'">'+
+      '<div class="sc-hook-line" data-act="sc-toggle" data-id="'+sc.id+'"><span class="sc-hook-t">'+ESC(sc.hook)+'</span>'+caret+'</div>'+
+      full+
       '<div class="sc-actions">'+hooksBtn+saved+'</div>'+
       hooks+
     '</div>';
@@ -1767,6 +1778,7 @@
     if(act==="save-script") return saveScript(id);
     if(act==="save-hook") return saveHook(id, parseInt(btn.getAttribute("data-i"),10));
     if(act==="idea-toggle"){ var idt=findIdea(id); if(idt){ idt.expanded=(idt.expanded===false); } return render(); }
+    if(act==="sc-toggle"){ var sct=findScript(id); if(sct){ sct.expanded=!sct.expanded; } return render(); }
     if(act==="gui-hooks"){ var gh=guionById(id); if(gh){ gh.expanded=!gh.expanded; } return render(); }
     if(act==="gui-use-hook"){ var gu=guionById(id); if(gu&&gu.hooks){ var ix=parseInt(btn.getAttribute("data-i"),10); var nv=gu.hooks[ix]; if(nv!=null){ gu.hooks[ix]=gu.hook; gu.hook=nv; gu.title=nv; } } render(); return showToast("Apertura actualizada."); }
     if(act==="gui-del-hook"){ var gd=guionById(id); if(gd&&gd.hooks){ gd.hooks.splice(parseInt(btn.getAttribute("data-i"),10),1); if(!gd.hooks.length) gd.expanded=false; } return render(); }
