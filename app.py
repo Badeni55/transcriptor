@@ -130,7 +130,7 @@ def admin_required(f):
 PLANS = {
     "free": {
         "credits_month": 0,
-        "free_lifetime": 5,            # 5 "Hazlo mío" de por vida (NO resetean)
+        "free_lifetime": 12,           # 12 "Hazlo mío" de por vida (NO resetean)
         "monthly_uses": 0,             # → PLAN_LIMITS None (sin límite mensual; usa lifetime)
         "daily_free": 0,
         "scripts_max": 5,
@@ -8325,6 +8325,14 @@ def ideas_explosion():
             pass
     if _custom_too_short(style_arg, custom_prompt):
         return _assistant_too_short_response(style_label)
+
+    # La Explosión es exclusiva de planes de pago.
+    profile = get_profile(uid)
+    if not paid_features_active(profile, user) and (user.get("email", "").lower() not in UNLIMITED_EMAILS):
+        return jsonify({
+            "error": "paid_only",
+            "message": "La Explosión creativa es de los planes de pago. Sube a Creator o Agency.",
+        }), 402
 
     # Coste total de la explosión: COST.explosion = 30 créditos.
     err, refund, _ = _charge_units_locked(uid, 30, user)
