@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS public.transcriptions (
   cost_cents          INTEGER     NOT NULL DEFAULT 0,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   thumbnail_b64       TEXT,
+  author_username     TEXT,        -- autor del reel (IG ownerUsername / TikTok @user) → "añadir como competidor"
   views               BIGINT,
   likes               BIGINT,
   comments            BIGINT,
