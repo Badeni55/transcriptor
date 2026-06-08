@@ -1088,15 +1088,14 @@ def transcribe():
             ok, err_msg = check_monthly_limit(profile)
             if not ok:
                 return jsonify({"error": err_msg}), 429
-        elif profile["credits_cents"] >= COST_CENTS:
-            pass
-        elif profile["free_used_today"] < FREE_DAILY_USER:
+        elif profile["credits_cents"] >= 2 * COST_CENTS:
             pass
         else:
+            # Sin cupo gratis diario para logueados: pagan siempre con créditos
+            # (2 créditos/análisis). Sin saldo → 402.
             return jsonify({
-                "error": f"Has usado tus {FREE_DAILY_USER} transcripciones gratuitas de hoy. "
-                         "Recarga saldo para continuar sin límite."
-            }), 429
+                "error": "Te has quedado sin créditos. Recarga saldo para seguir analizando."
+            }), 402
 
     # ── Actualizar contador antes de encolar ──────────────────────────────
     is_unlimited = user and user.get("email", "").lower() in UNLIMITED_EMAILS
@@ -1115,15 +1114,17 @@ def transcribe():
                 db.table("profiles").update({
                     "monthly_usage": (fresh.get("monthly_usage") or 0) + 1
                 }).eq("id", user["id"]).execute()
-            elif (fresh.get("credits_cents") or 0) >= COST_CENTS:
-                cost_cents = COST_CENTS
+            elif (fresh.get("credits_cents") or 0) >= 2 * COST_CENTS:
+                cost_cents = 2 * COST_CENTS
                 db.table("profiles").update(
                     {"credits_cents": (fresh.get("credits_cents") or 0) - cost_cents}
                 ).eq("id", user["id"]).execute()
             else:
-                db.table("profiles").update(
-                    {"free_used_today": (fresh.get("free_used_today") or 0) + 1}
-                ).eq("id", user["id"]).execute()
+                # Carrera: el saldo cayó por debajo de 2×COST_CENTS entre el check y
+                # el lock. No cobramos ni encolamos. El lock se libera en finally.
+                return jsonify({
+                    "error": "Te has quedado sin créditos. Recarga saldo para seguir analizando."
+                }), 402
         finally:
             release_credit_lock(user["id"], _tclock)
 
@@ -1245,7 +1246,8 @@ def task_status(task_id):
         result = task.result
         if not result.get("ok"):
             return jsonify({"state": "error", "error": result.get("error", "Error desconocido")})
-        payload = {"state": "success", "text": result["text"], "platform": result["platform"]}
+        payload = {"state": "success", "text": result["text"], "platform": result["platform"],
+                   "username": result.get("username")}
         user = current_user()
         if user:
             updated = get_profile(user["id"])
@@ -1268,7 +1270,7 @@ def history():
         db.table("transcriptions")
         .select(
             "id, url, platform, language, text, cost_cents, created_at, thumbnail_b64, "
-            "views, likes, comments, shares, published_at, metrics_updated_at"
+            "author_username, views, likes, comments, shares, published_at, metrics_updated_at"
         )
         .eq("user_id", user["id"])
         .order("id", desc=True)
