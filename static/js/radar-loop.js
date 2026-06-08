@@ -84,7 +84,8 @@
     ig:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3.6" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="7" r="1.1" fill="currentColor"/></svg>',
     brain:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M9 4a3 3 0 00-3 3 3 3 0 00-1 5.8A2.5 2.5 0 007 17a3 3 0 005 1 3 3 0 005-1 2.5 2.5 0 002-4.2A3 3 0 0015 4a2.5 2.5 0 00-6 0z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
     chat:'<svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M21 12a8 8 0 01-11.5 7.2L4 20l.9-5.2A8 8 0 1121 12z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
-    users:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 20a5.5 5.5 0 0111 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16 6.2a3 3 0 010 5.6M20.5 19.5a5 5 0 00-3.2-4.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
+    users:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 20a5.5 5.5 0 0111 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16 6.2a3 3 0 010 5.6M20.5 19.5a5 5 0 00-3.2-4.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+    gear:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 13a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-2.9 1.2V19a2 2 0 11-4 0v-.1a1.7 1.7 0 00-2.9-1.2l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.7 1.7 0 004.6 13H4.5a2 2 0 110-4h.1a1.7 1.7 0 001.2-2.9l-.1-.1a2 2 0 112.8-2.8l.1.1A1.7 1.7 0 0011 4.6V4.5a2 2 0 114 0v.1a1.7 1.7 0 002.9 1.2l.1-.1a2 2 0 112.8 2.8l-.1.1A1.7 1.7 0 0019.4 11h.1a2 2 0 110 4h-.1a1.7 1.7 0 00-1.6 1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>'
   };
 
   // Spinner CSS inyectado una vez.
@@ -214,8 +215,11 @@
     var av=initialsOf(S.user.handle||S.user.name||"R");
     return '<nav class="rail">'+
       '<img class="rail-logo" src="/static/img/branding/isotipo-128.png" srcset="/static/img/branding/isotipo-128.png 1x, /static/img/branding/isotipo-256.png 2x" alt="Reelscript">'+
-      navTabs.map(function(t){return '<button class="rail-btn'+(S.tab===t[0]?" on":"")+'" data-act="tab" data-k="'+t[0]+'">'+t[1]+'<span class="tip">'+t[2]+'</span></button>';}).join("")+
+      navTabs.map(function(t){return '<button class="rail-btn'+(S.tab===t[0]&&!S.legacy?" on":"")+'" data-act="tab" data-k="'+t[0]+'">'+t[1]+'<span class="tip">'+t[2]+'</span></button>';}).join("")+
+      // Accesos a las secciones legacy reutilizadas (no son S.tab internos).
+      '<button class="rail-btn'+(S.legacy==="transc"?" on":"")+'" data-act="legacy" data-k="transc" aria-label="Analizar">'+IC.mic+'<span class="tip">Analizar</span></button>'+
       '<span class="rail-spacer"></span>'+
+      '<button class="rail-btn'+(S.legacy==="settings"?" on":"")+'" data-act="legacy" data-k="settings" aria-label="Configuración">'+IC.gear+'<span class="tip">Configuración</span></button>'+
       '<span class="rail-ava" title="'+ESC(S.user.name||"")+'">'+ESC(av)+'</span>'+
     '</nav>';
   }
@@ -1050,6 +1054,9 @@
     var view=document.getElementById("rsView");
     if(!view || view.parentNode!==el){
       el.innerHTML='<div class="rs-view" id="rsView"></div>'+
+        // Host estable (hermano de #rsView, no se re-renderiza) para montar dentro
+        // una sección legacy (Analizar/Configuración) reparentando su contenedor.
+        '<div class="rs-legacy" id="rsLegacy" style="display:none"></div>'+
         '<div class="rs-toast" id="rsToast" role="status" aria-live="polite"><span class="tdot"></span><span id="rsToastMsg"></span><button class="rs-toast-act" id="rsToastAct" style="display:none"></button></div>'+
         '<div class="rs-toast rs-err" id="rsErr" role="alert" aria-live="assertive"><span class="tdot err"></span><span id="rsErrMsg"></span><button class="rs-err-x" data-act="err-close" title="Cerrar" aria-label="Cerrar el error">'+IC.x+'</button></div>';
       view=document.getElementById("rsView");
@@ -1141,10 +1148,47 @@
      ACCIONES
      ════════════════════════════════════════════════════════════════ */
   function switchTab(t){
+    if(S.legacy) _exitLegacy();   // salir de Analizar/Configuración al cambiar de tab
     S.tab=t; S.brandMenu=false; S.view="feed";
     // Vistas de marca (no macro/equipo) refrescan stats+feed de la marca activa.
     if(isDemo() && t!=="portfolio" && t!=="team") applyDemoBrand();
     render();
+  }
+
+  /* ── Secciones legacy reutilizadas (Analizar = #profPanelTransc, Configuración =
+     #profPanelSettings). No son S.tab internos: reparentamos su contenedor de la
+     chrome a un host estable de la isla (#rsLegacy), lo activamos con el JS legacy
+     vía window.rsActivateLegacySection, y lo devolvemos a su sitio al salir. Así la
+     isla expone el acceso sin reescribir esas vistas. ── */
+  function _legacyPanelId(k){ return k==="transc" ? "profPanelTransc" : (k==="settings" ? "profPanelSettings" : null); }
+  function mountLegacy(k){
+    var host=document.getElementById("rsLegacy"); if(!host) return;
+    var pid=_legacyPanelId(k); var panel=pid&&document.getElementById(pid); if(!panel) return;
+    S._legacyNode=panel; S._legacyHome=panel.parentNode;   // recordar de dónde vino
+    host.innerHTML='<div class="rs-legacy-bar"><button class="btn btn-sm btn-secondary" data-act="legacy-back" aria-label="Volver al radar">'+IC.back+' Volver al radar</button></div>';
+    panel.style.display="";          // el chrome lo deja en display:none por defecto
+    host.appendChild(panel);
+    host.style.display="";
+    try{ if(typeof window.rsActivateLegacySection==="function") window.rsActivateLegacySection(k); }catch(e){}
+  }
+  function _exitLegacy(){
+    if(!S.legacy && !S._legacyNode) return;
+    if(S._legacyNode){
+      S._legacyNode.style.display="none";   // restaurar estado chrome (oculto)
+      var home=S._legacyHome||document.getElementById("profMain")||document.body;
+      home.appendChild(S._legacyNode);
+      S._legacyNode=null; S._legacyHome=null;
+    }
+    var host=document.getElementById("rsLegacy"); if(host){ host.style.display="none"; host.innerHTML=""; }
+    S.legacy=null;
+  }
+  function closeLegacy(){ _exitLegacy(); render(); }
+  function openLegacy(k){
+    if(S.legacy===k) return closeLegacy();   // toggle: re-pulsar cierra
+    _exitLegacy();                           // por si había otra sección legacy abierta
+    S.legacy=k;
+    render();                                // el rail marca el botón activo
+    mountLegacy(k);                          // #rsLegacy es estable → sobrevive al render
   }
   function switchBrand(id){ if(S.brandId===id){ S.brandMenu=false; return render(); } S.brandId=id; S.brandMenu=false; loadBrandData(); }
   // Zoom de portfolio → radar de una marca. En demo no recarga (reusa el feed),
@@ -1746,6 +1790,8 @@
     if(act==="sheet-submit") return submitSheet();
     if(act==="err-close"){ S.errMsg=null; var _te=document.getElementById("rsErr"); if(_te) _te.classList.remove("show"); return; }
     if(act==="tab") return switchTab(k);
+    if(act==="legacy") return openLegacy(k);
+    if(act==="legacy-back") return closeLegacy();
     if(act==="brand-toggle"){ S.brandMenu=!S.brandMenu; return render(); }
     if(act==="brand") return openBrand(id);
     if(act==="all-brands"){ S.tab="portfolio"; S.brandMenu=false; S.view="feed"; return render(); }
