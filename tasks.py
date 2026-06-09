@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 import requests
 import yt_dlp
 from celery import Celery
+from celery.schedules import crontab
 from dotenv import load_dotenv
 from supabase import create_client
 
@@ -48,6 +49,7 @@ celery_app.conf.update(
 
 # v0.14.24: beat schedule — process_pending_emails cada 1h
 # v0.15.8: sweep_stale_resources cada 5min (transcript stale + locks huérfanos)
+# v0.16.x Radar: send_radar_digests diario 08:00 UTC ("Lo que petó en tu nicho").
 celery_app.conf.beat_schedule = {
     "process-pending-emails": {
         "task": "tasks.process_pending_emails",
@@ -56,6 +58,10 @@ celery_app.conf.beat_schedule = {
     "sweep-stale-resources": {
         "task": "tasks.sweep_stale_resources",
         "schedule": 300.0,
+    },
+    "send-radar-digests": {
+        "task": "tasks.send_radar_digests",
+        "schedule": crontab(hour=8, minute=0),
     },
 }
 celery_app.conf.timezone = "UTC"
@@ -98,6 +104,169 @@ def process_pending_emails():
     except Exception as e:
         logger.error("process_pending_emails failed: %s", e, exc_info=True)
         return {"error": str(e)[:200]}
+
+
+# ── v0.16.x Radar: email diario "Lo que petó en tu nicho" ──────────────────
+# Helpers locales (duplican la lógica de app._creator_view_baselines para no
+# acoplar el worker al import de app/Flask en el beat). Mediana de views de los
+# reels recientes de cada creador → índice de explosión = views / baseline.
+
+RADAR_ENABLED_PLANS = {"pro", "creator", "agency"}
+
+
+def _radar_baselines(db, creator_ids):
+    if not creator_ids:
+        return {}
+    cap = min(800, 60 * len(creator_ids))
+    try:
+        rows = (db.table("creator_reels_global")
+                  .select("creator_id, views")
+                  .in_("creator_id", creator_ids)
+                  .eq("is_archived", False)
+                  .order("posted_at", desc=True)
+                  .limit(cap)
+                  .execute()).data or []
+    except Exception as e:
+        logger.warning("_radar_baselines failed: %s", e)
+        return {}
+    buckets = {}
+    for r in rows:
+        v = int(r.get("views") or 0)
+        if v > 0:
+            buckets.setdefault(r["creator_id"], []).append(v)
+    out = {}
+    for cid, vs in buckets.items():
+        vs.sort()
+        n = len(vs)
+        out[cid] = vs[n // 2] if n % 2 else (vs[n // 2 - 1] + vs[n // 2]) / 2.0
+    return out
+
+
+def _radar_explosion(views, baseline):
+    if not baseline or baseline < 1:
+        return None
+    return round(float(views or 0) / float(baseline), 2)
+
+
+@celery_app.task(name="tasks.send_radar_digests")
+def send_radar_digests():
+    """Beat diario: email "Lo que petó en tu nicho" a usuarios con competidores.
+
+    Por usuario: reels de sus competidores en las últimas 48h con explosión
+    >= 2x (máx 3, ordenados por explosión). Idempotente por día vía email_log.
+    Solo planes con la feature (pro/creator/agency) y email_marketing on.
+    """
+    SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+    SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return {"error": "supabase_not_configured"}
+    db = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+    try:
+        from emails import send_radar_digest
+    except Exception as e:
+        logger.error("send_radar_digests: import emails failed: %s", e)
+        return {"error": "import_emails"}
+
+    now = datetime.now(timezone.utc)
+    day_key = now.date().isoformat()
+    since = (now - timedelta(hours=48)).isoformat()
+
+    # 1. Usuarios con competidores activos → {user_id: set(creator_id)}.
+    try:
+        tracked = (db.table("user_tracked_creators")
+                     .select("user_id, creator_id")
+                     .is_("archived_at", "null")
+                     .execute()).data or []
+    except Exception as e:
+        logger.error("send_radar_digests: tracked query failed: %s", e)
+        return {"error": "tracked_query"}
+    by_user = {}
+    for t in tracked:
+        by_user.setdefault(t["user_id"], set()).add(t["creator_id"])
+    if not by_user:
+        return {"users": 0, "sent": 0}
+
+    # 2. Filtrar por plan con la feature activa (un único query a profiles).
+    uids = list(by_user.keys())
+    try:
+        profs = (db.table("profiles")
+                   .select("id, plan")
+                   .in_("id", uids)
+                   .execute()).data or []
+        plan_by_uid = {p["id"]: (p.get("plan") or "free") for p in profs}
+    except Exception as e:
+        logger.warning("send_radar_digests: profiles query failed: %s", e)
+        plan_by_uid = {}
+
+    sent = skipped = 0
+    for uid, cid_set in by_user.items():
+        if plan_by_uid.get(uid, "free") not in RADAR_ENABLED_PLANS:
+            skipped += 1
+            continue
+        cids = list(cid_set)
+        baselines = _radar_baselines(db, cids)
+        try:
+            rows = (db.table("creator_reels_global")
+                      .select("id, ig_reel_id, creator_id, caption, views, likes, "
+                              "posted_at, creator:creators_global(ig_username)")
+                      .in_("creator_id", cids)
+                      .eq("is_archived", False)
+                      .gte("posted_at", since)
+                      .limit(200)
+                      .execute()).data or []
+        except Exception as e:
+            logger.warning("send_radar_digests: reels query failed user=%s err=%s", uid, e)
+            skipped += 1
+            continue
+
+        scored = []
+        for r in rows:
+            sc = _radar_explosion(r.get("views"), baselines.get(r.get("creator_id")))
+            if sc is not None and sc >= 2.0:
+                scored.append({
+                    "username": ((r.get("creator") or {}).get("ig_username") or ""),
+                    "caption": r.get("caption") or "",
+                    "views": r.get("views") or 0,
+                    "explosion": sc,
+                })
+        if not scored:
+            skipped += 1
+            continue
+        scored.sort(key=lambda x: x["explosion"], reverse=True)
+        top = scored[:3]
+
+        # Sugerencia "el siguiente de esa serie": tu guión que mejor rinde.
+        # Réplica ligera de app.next_series_suggestion (evita importar Flask).
+        next_suggestion = None
+        try:
+            sr = (db.table("scripts").select("id, title, views_count")
+                    .eq("user_id", uid).not_.is_("views_count", "null")
+                    .order("views_count", desc=True).limit(1).execute()).data or []
+            if sr:
+                next_suggestion = {
+                    "script_id": sr[0]["id"],
+                    "title": sr[0].get("title"),
+                    "views": sr[0].get("views_count"),
+                }
+        except Exception as e:
+            logger.warning("send_radar_digests: next_suggestion failed user=%s err=%s", uid, e)
+            next_suggestion = None
+
+        try:
+            res = send_radar_digest(uid, top, day_key, next_suggestion)
+            if res.get("sent"):
+                sent += 1
+            else:
+                skipped += 1
+        except Exception as e:
+            logger.warning("send_radar_digests: send failed user=%s err=%s", uid, e)
+            skipped += 1
+
+    logger.info("send_radar_digests done users=%s sent=%s skipped=%s",
+                len(by_user), sent, skipped)
+    return {"users": len(by_user), "sent": sent, "skipped": skipped}
+
 
 def detect_platform(url):
     if "instagram.com" in url:
@@ -736,8 +905,9 @@ def generate_script_competitor_task(self, reel_id, user_id, assistant_id):
             return _fail("assistant_too_short", msg)
 
         try:
-            from app import adapt_with_ai  # lazy import (rompe circular tasks↔app).
-            result = adapt_with_ai(user_content, style_arg, custom_prompt)
+            from app import adapt_with_ai, get_voice_profile  # lazy import (rompe circular tasks↔app).
+            result = adapt_with_ai(user_content, style_arg, custom_prompt,
+                                   voice=get_voice_profile(user_id), user_id=user_id)  # moat: voz + few-shot
         except Exception as e:
             logger.exception("gen_script_task LLM failed reel=%s: %s", reel_id, e)
             # v0.15.7.b: mensaje contextual si custom + empty content.

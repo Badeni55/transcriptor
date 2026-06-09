@@ -529,6 +529,189 @@ def fetch_pending_emails(limit=100):
         return []
 
 
+# ── v0.16.x Radar: email diario "Lo que petó en tu nicho" ──────────────────
+# Dinámico (reels distintos por usuario) → no usa TEMPLATES estático ni
+# send_template. Idempotente por día vía UNIQUE(user_id, template_key) con
+# template_key = "radar_digest_<YYYY-MM-DD>". El cálculo de qué reels enviar
+# (explosión >= 2x, últimas 48h) lo hace la tarea Beat tasks.send_radar_digests,
+# que pasa aquí la lista ya filtrada/ordenada.
+
+def _radar_digest_body(reels, lang, next_suggestion=None):
+    """Devuelve (inner_html, inner_text). reels: lista de dicts con
+    {username, caption, views, explosion}. Texto-forward (sin depender de
+    imágenes — muchos clientes de correo bloquean data: URIs / hotlinks IG).
+
+    next_suggestion (opcional): dict {title, views, ...} de
+    next_series_suggestion → renderiza un bloque "el siguiente de esa serie"
+    ANTES del listado de reels. None = no se renderiza (firma retrocompatible)."""
+    es = lang == "es"
+    radar_url = f"{APP_URL}/profile/radar"
+    intro = ("esto petó en tu nicho en las últimas 48h. róbalo antes que nadie 👇"
+             if es else
+             "this blew up in your niche in the last 48h. steal it before anyone else 👇")
+    cta_card = "✨ Hazlo mío →" if es else "✨ Make it mine →"
+    cta_big = "abrir mi Radar →" if es else "open my Radar →"
+    avg = "su media" if es else "their avg"
+    views_w = "vistas" if es else "views"
+
+    cards_html = []
+    cards_text = []
+    for r in reels:
+        user = "@" + str(r.get("username") or "")
+        exp = r.get("explosion") or 0
+        try:
+            exp_txt = (str(int(round(exp))) if exp >= 10 else f"{float(exp):.1f}")
+        except Exception:
+            exp_txt = "2"
+        views = r.get("views") or 0
+        try:
+            views_fmt = f"{int(views):,}".replace(",", ".")
+        except Exception:
+            views_fmt = str(views)
+        cap = (str(r.get("caption") or "").strip().replace("\n", " "))
+        if len(cap) > 120:
+            cap = cap[:120].rstrip() + "…"
+        cap_html = (cap or ("(sin texto)" if es else "(no caption)"))
+        cards_html.append(
+            '<table width="100%" cellpadding="0" cellspacing="0" style="margin:14px 0;'
+            'border:1px solid #eee;border-radius:10px"><tr><td style="padding:16px 18px">'
+            f'<div style="font-weight:700;color:#1a1a1a;font-size:15px">{user}</div>'
+            f'<div style="margin:6px 0;font-size:13px"><span style="background:#ff2d55;'
+            'color:#fff;border-radius:999px;padding:2px 9px;font-weight:700;font-size:12px">'
+            f'🔥 {exp_txt}x {avg}</span> &nbsp;<span style="color:#666">{views_fmt} {views_w}</span></div>'
+            f'<div style="color:#444;font-size:14px;margin:8px 0 4px">{cap_html}</div>'
+            f'<a href="{radar_url}" style="display:inline-block;margin-top:8px;color:#ef6a29;'
+            f'font-weight:600;text-decoration:none;font-size:14px">{cta_card}</a>'
+            '</td></tr></table>'
+        )
+        cards_text.append(
+            f"{user} · 🔥 {exp_txt}x {avg} · {views_fmt} {views_w}\n  {cap}\n  {cta_card} {radar_url}"
+        )
+
+    # Bloque "el siguiente de esa serie, en tu voz" — antes del listado de reels.
+    sug_html = ""
+    sug_text = ""
+    if next_suggestion:
+        s_title = (str(next_suggestion.get("title") or "").strip()
+                   or ("tu último guion" if es else "your last script"))
+        s_views = next_suggestion.get("views")
+        try:
+            views_part = f" (×{int(s_views):,})".replace(",", ".") if s_views else ""
+        except Exception:
+            views_part = ""
+        cta_next = "✍️ El siguiente, en mi voz →" if es else "✍️ The next one, in my voice →"
+        if es:
+            sug_line = (f"Lo que grabaste sobre «{s_title}» está rindiendo{views_part}. "
+                        "¿El siguiente de esa serie, en tu voz?")
+        else:
+            sug_line = (f"What you recorded about “{s_title}” is taking off{views_part}. "
+                        "The next one in that series, in your voice?")
+        sug_html = (
+            '<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;'
+            'border:1px solid #ffe0b2;background:#fff8f0;border-radius:10px">'
+            '<tr><td style="padding:16px 18px">'
+            f'<div style="color:#1a1a1a;font-size:15px;line-height:1.45">{sug_line}</div>'
+            f'<a href="{radar_url}" style="display:inline-block;margin-top:10px;color:#ef6a29;'
+            f'font-weight:600;text-decoration:none;font-size:14px">{cta_next}</a>'
+            '</td></tr></table>'
+        )
+        sug_text = f"{sug_line}\n  {cta_next} {radar_url}\n\n"
+
+    inner_html = (
+        "<p>hola creador 👋</p>"
+        f"<p>{intro}</p>"
+        + sug_html
+        + "".join(cards_html)
+        + _btn(radar_url, cta_big)
+    )
+    inner_text = (
+        "hola creador 👋\n\n"
+        f"{intro}\n\n"
+        + sug_text
+        + "\n\n".join(cards_text)
+        + f"\n\n{cta_big} {radar_url}"
+    )
+    return inner_html, inner_text
+
+
+def send_radar_digest(user_id, reels, day_key, next_suggestion=None):
+    """Envía el digest diario del Radar. Idempotente por (user_id, día).
+
+    reels: lista ya filtrada/ordenada (top reels explosivos). day_key:
+    'YYYY-MM-DD' UTC. next_suggestion (opcional): dict de next_series_suggestion
+    → bloque "el siguiente de esa serie, en tu voz" antes del listado.
+    Devuelve dict {sent|skipped|error}.
+    """
+    if not reels:
+        return {"skipped": "no_reels"}
+
+    key = f"radar_digest_{day_key}"
+    db = _db()
+    now = datetime.now(timezone.utc).isoformat()
+
+    # Idempotencia atómica: insertar fila queued. Si choca con UNIQUE
+    # (user_id, template_key) → ya gestionado hoy, salir sin reenviar.
+    try:
+        db.table("email_log").insert({
+            "user_id": user_id, "template_key": key,
+            "status": "queued", "scheduled_for": now,
+        }).execute()
+    except Exception:
+        return {"skipped": "already_today"}
+
+    def _skip(reason):
+        db.table("email_log").update({
+            "status": "skipped", "error": reason, "sent_at": now
+        }).eq("user_id", user_id).eq("template_key", key).execute()
+        return {"skipped": reason}
+
+    profile = _profile(user_id)
+    email, confirmed_at = _user_email(user_id)
+    if not email:
+        return _skip("no_email")
+    if not confirmed_at:
+        return _skip("email_not_confirmed")
+    if not profile.get("email_marketing", True):
+        return _skip("marketing_opted_out")
+    if _rate_limited(user_id):
+        return _skip("rate_limited")
+
+    lang = profile.get("lang") or "es"
+    if lang not in ("es", "en"):
+        lang = "es"
+    token = profile.get("unsubscribe_token") or ""
+    unsub_url = f"{APP_URL}/unsubscribe?token={token}"
+
+    n = len(reels)
+    if lang == "es":
+        subject = (f"🔥 {n} reels petaron en tu nicho"
+                   if n > 1 else "🔥 un reel acaba de petar en tu nicho")
+    else:
+        subject = (f"🔥 {n} reels just blew up in your niche"
+                   if n > 1 else "🔥 a reel just blew up in your niche")
+
+    inner_html, inner_text = _radar_digest_body(reels, lang, next_suggestion)
+    html = _wrap_html(inner_html, unsub_url, lang)
+    text = _wrap_text(inner_text, unsub_url, lang)
+
+    resend_id, err = _send_via_resend(email, subject, html, text)
+    now2 = datetime.now(timezone.utc).isoformat()
+    if err:
+        db.table("email_log").update({
+            "status": "failed", "error": err, "sent_at": now2
+        }).eq("user_id", user_id).eq("template_key", key).execute()
+        track("email_failed", user_id, {"template_key": "radar_digest", "error": err})
+        return {"error": err}
+
+    db.table("email_log").update({
+        "status": "sent", "sent_at": now2, "resend_id": resend_id
+    }).eq("user_id", user_id).eq("template_key", key).execute()
+    track("email_sent", user_id, {"template_key": "radar_digest",
+                                  "resend_id": resend_id, "reels": n})
+    logger.info("radar_digest sent user=%s reels=%s", user_id, n)
+    return {"sent": True}
+
+
 # ── Signup hook ───────────────────────────────────────────────────────────
 
 def gen_unsubscribe_token():
