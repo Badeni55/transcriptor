@@ -10031,6 +10031,18 @@
     .rs .rail-btn:hover .tip { opacity:1; transform:translateY(-50%) translateX(0); }
     .rs .rail-spacer { flex:1; }
     .rs .rail-ava { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:var(--surface-overlay); border:1px solid var(--border-strong); color:var(--text-primary); font-weight:600; font-size:12px; font-family:var(--font-mono); }
+    /* Cuenta: botón avatar (abajo del rail) + menú (email · plan · Configuración · Cerrar sesión) */
+    .rs .rail-acct { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:var(--surface-overlay); border:1px solid var(--border-strong); color:var(--text-primary); font-weight:600; font-size:12px; font-family:var(--font-mono); cursor:pointer; transition:border-color .14s var(--ease), background .14s var(--ease); }
+    .rs .rail-acct:hover, .rs .rail-acct.on { border-color:var(--brand-500); background:var(--surface-raised); }
+    .rs .rs-acct-backdrop { position:fixed; inset:0; z-index:95; background:transparent; }
+    .rs .rs-acct-menu { position:absolute; left:72px; bottom:12px; z-index:100; min-width:240px; background:var(--surface-overlay); border:1px solid var(--border-default); border-radius:14px; box-shadow:var(--shadow-lg); padding:6px; }
+    .rs .rs-acct-head { display:flex; align-items:center; gap:10px; padding:10px 12px 12px; border-bottom:1px solid var(--border-subtle); margin-bottom:4px; }
+    .rs .rs-acct-av { width:34px; height:34px; flex:0 0 34px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:var(--surface-raised); border:1px solid var(--border-strong); color:var(--text-primary); font-weight:600; font-size:12px; font-family:var(--font-mono); }
+    .rs .rs-acct-id { min-width:0; display:flex; flex-direction:column; gap:3px; }
+    .rs .rs-acct-email { font-size:13px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:170px; }
+    .rs .rs-acct-menu .brand-opt svg { width:16px; height:16px; flex:0 0 16px; }
+    .rs .rs-acct-logout { color:#f87171; }
+    .rs .rs-acct-logout:hover { background:color-mix(in srgb, #f87171 12%, transparent); }
     /* ── WORK column ── */
     .rs .work { min-width:0; min-height:0; display:flex; flex-direction:column; height:100%; }
     /* ── Host de sección legacy (Analizar/Configuración) reparentada: overlay sobre
@@ -10203,6 +10215,7 @@
       .rs.app { grid-template-columns:1fr; }
       .rs .rail { position:fixed; bottom:0; left:0; right:0; height:auto; width:100%; flex-direction:row; justify-content:center; border-right:none; border-top:1px solid var(--border-default); padding:8px 0; z-index:40; }
       .rs .rail-logo, .rs .rail-spacer, .rs .rail-ava { display:none; }
+      .rs .rs-acct-menu { left:8px; right:8px; bottom:72px; min-width:0; }   /* sobre la barra inferior */
       .rs .rail-btn.on::before { left:11px; right:11px; top:auto; bottom:-8px; width:auto; height:3px; border-radius:3px 3px 0 0; }
       .rs .rs-legacy { inset:0 0 64px 0; }   /* rail es barra inferior fija → deja hueco */
       .rs .feature { grid-template-columns:1fr; } .rs .feature-thumb .thumb { height:200px; min-height:200px; border-right:none; border-bottom:1px solid var(--border-default); } .rs .feature-data { border-left:none; border-top:1px solid var(--border-default); flex-direction:row; flex-wrap:wrap; gap:24px; }

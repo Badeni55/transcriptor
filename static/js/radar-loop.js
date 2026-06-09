@@ -85,7 +85,8 @@
     brain:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M9 4a3 3 0 00-3 3 3 3 0 00-1 5.8A2.5 2.5 0 007 17a3 3 0 005 1 3 3 0 005-1 2.5 2.5 0 002-4.2A3 3 0 0015 4a2.5 2.5 0 00-6 0z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
     chat:'<svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M21 12a8 8 0 01-11.5 7.2L4 20l.9-5.2A8 8 0 1121 12z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>',
     users:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 20a5.5 5.5 0 0111 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16 6.2a3 3 0 010 5.6M20.5 19.5a5 5 0 00-3.2-4.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
-    gear:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 13a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-2.9 1.2V19a2 2 0 11-4 0v-.1a1.7 1.7 0 00-2.9-1.2l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.7 1.7 0 004.6 13H4.5a2 2 0 110-4h.1a1.7 1.7 0 001.2-2.9l-.1-.1a2 2 0 112.8-2.8l.1.1A1.7 1.7 0 0011 4.6V4.5a2 2 0 114 0v.1a1.7 1.7 0 002.9 1.2l.1-.1a2 2 0 112.8 2.8l-.1.1A1.7 1.7 0 0019.4 11h.1a2 2 0 110 4h-.1a1.7 1.7 0 00-1.6 1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>'
+    gear:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 13a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-2.9 1.2V19a2 2 0 11-4 0v-.1a1.7 1.7 0 00-2.9-1.2l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.7 1.7 0 004.6 13H4.5a2 2 0 110-4h.1a1.7 1.7 0 001.2-2.9l-.1-.1a2 2 0 112.8-2.8l.1.1A1.7 1.7 0 0011 4.6V4.5a2 2 0 114 0v.1a1.7 1.7 0 002.9 1.2l.1-.1a2 2 0 112.8 2.8l-.1.1A1.7 1.7 0 0019.4 11h.1a2 2 0 110 4h-.1a1.7 1.7 0 00-1.6 1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>',
+    logout:'<svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
   };
 
   // Spinner CSS inyectado una vez.
@@ -110,7 +111,7 @@
   /* ── estado ──────────────────────────────────────────────────── */
   var S = {
     device:"desktop", _wired:false,
-    user:{ name:"", handle:"", credits:0, streak:0, plan:"", freeLeft:0 },
+    user:{ name:"", handle:"", email:"", credits:0, streak:0, plan:"", freeLeft:0 },
     brands:[], brandId:null,
     plan:"creador",                     // creador | agencia (de /auth/me; en demo, toggle)
     scope:"brand",                      // brand (radar de 1 marca) | portfolio (todas — solo agencia)
@@ -120,7 +121,7 @@
     tab:"dashboard",                    // dashboard | ideas | guiones
     view:"feed",                        // feed(overlay off) | gen | script | result | prompter | fillweek
     reel:null, genKind:"script", resultKind:"hooks", done:{},
-    _fillPhase:null, brandMenu:false,
+    _fillPhase:null, brandMenu:false, acctMenu:false,
     genStepTimer:null, fillTimer:null, toastTimer:null
   };
   function root(){ return document.getElementById("radarRoot"); }
@@ -208,6 +209,28 @@
     var b=brand();
     return '<span class="brand-static"><span class="brand-dot" style="background:'+ESC(b.color||"#4f7cff")+'"></span><span class="brand-name">'+ESC(b.name)+'</span></span>';
   }
+  // ── Menú de cuenta (rail, abajo): email + plan + Configuración + Cerrar sesión.
+  //    El logout reusa la función global logout() de la chrome (POST /auth/logout). ──
+  function _planLabel(p){ p=(p||"").toLowerCase(); return ({free:"Free",pro:"Pro",creator:"Creator",creador:"Creator",agency:"Agency",agencia:"Agency"})[p] || (p?p.charAt(0).toUpperCase()+p.slice(1):"Free"); }
+  function _planClass(p){ p=(p||"").toLowerCase(); if(p==="creador")p="creator"; if(p==="agencia")p="agency"; return ({free:"free",pro:"pro",creator:"creator",agency:"agency"})[p]||"free"; }
+  function acctMenuHTML(){
+    if(!S.acctMenu) return '';
+    var av=ESC(initialsOf(S.user.handle||S.user.name||S.user.email||"U"));
+    var email=ESC(S.user.email||S.user.name||"");
+    var pl=S.user.plan||"";
+    return '<div class="rs-acct-backdrop" data-act="acct-close"></div>'+
+      '<div class="rs-acct-menu" role="menu">'+
+        '<div class="rs-acct-head">'+
+          '<span class="rs-acct-av">'+av+'</span>'+
+          '<span class="rs-acct-id">'+
+            '<span class="rs-acct-email" title="'+email+'">'+(email||"—")+'</span>'+
+            '<span class="plan-badge '+_planClass(pl)+'">'+_planLabel(pl)+'</span>'+
+          '</span>'+
+        '</div>'+
+        '<button class="brand-opt" data-act="acct-settings" role="menuitem">'+IC.gear+' Configuración</button>'+
+        '<button class="brand-opt rs-acct-logout" data-act="acct-logout" role="menuitem">'+IC.logout+' Cerrar sesión</button>'+
+      '</div>';
+  }
   function railHTML(){
     var navTabs = isAgency()
       ? [["portfolio",IC.layers,"Portfolio"],["dashboard",IC.grid,"Radar"],["ideas",IC.bulb,"Ideas"],["guiones",IC.doc,"Guiones"],["metrics",IC.chart,"Métricas"],["brain",IC.brain,"Cerebro"],["team",IC.users,"Equipo"]]
@@ -218,10 +241,12 @@
       // Accesos a las secciones legacy reutilizadas (no son S.tab internos).
       '<button class="rail-btn'+(S.legacy==="transc"?" on":"")+'" data-act="legacy" data-k="transc" aria-label="Analizar">'+IC.mic+'<span class="tip">Analizar</span></button>'+
       '<button class="rail-btn'+(S.legacy==="settings"?" on":"")+'" data-act="legacy" data-k="settings" aria-label="Configuración">'+IC.gear+'<span class="tip">Configuración</span></button>'+
-      // El spacer va AL FINAL: top-ancla logo/tabs/Analizar/Configuración para que
-      // sean visibles también en la isla embebida (rail alto pre-takeover).
+      // El spacer empuja el botón de cuenta al fondo del rail.
       '<span class="rail-spacer"></span>'+
-    '</nav>';
+      '<button class="rail-acct'+(S.acctMenu?" on":"")+'" data-act="acct-toggle" aria-label="Tu cuenta" aria-haspopup="menu" aria-expanded="'+(S.acctMenu?"true":"false")+'">'+ESC(initialsOf(S.user.handle||S.user.name||S.user.email||"U"))+'</button>'+
+    '</nav>'+
+    // El menú va FUERA del <nav> (su z-index queda por encima de #rsLegacy, etc.).
+    acctMenuHTML();
   }
   function cmdHTML(){
     var tabName=({dashboard:"RADAR",ideas:"IDEAS",guiones:"GUIONES",metrics:"MÉTRICAS",brain:"CEREBRO",team:"EQUIPO"})[S.tab]||"";
@@ -1754,6 +1779,7 @@
     var el=root(); if(!el || !el.offsetParent) return;   // isla no montada/visible → no interceptar
     if(e.key==="Escape"){
       if(S.sheet){ e.preventDefault(); return closeSheet(); }
+      if(S.acctMenu){ e.preventDefault(); S.acctMenu=false; return render(); }
       if(S.brandMenu){ e.preventDefault(); S.brandMenu=false; return render(); }
       if(S.view && S.view!=="feed"){
         e.preventDefault();
@@ -1791,6 +1817,15 @@
     if(act==="err-close"){ S.errMsg=null; var _te=document.getElementById("rsErr"); if(_te) _te.classList.remove("show"); return; }
     if(act==="tab") return switchTab(k);
     if(act==="legacy") return openLegacy(k);
+    if(act==="acct-toggle"){ S.acctMenu=!S.acctMenu; S.brandMenu=false; return render(); }
+    if(act==="acct-close"){ S.acctMenu=false; return render(); }
+    if(act==="acct-settings"){ S.acctMenu=false; return openLegacy("settings"); }
+    if(act==="acct-logout"){ S.acctMenu=false;
+      // Reusa el logout real de la chrome (POST /auth/logout + reset tracking + redirect).
+      if(typeof window.logout==="function") return window.logout();
+      try{ fetch("/auth/logout",{method:"POST",credentials:"same-origin"}); }catch(e){}
+      window.location.href="/"+(document.documentElement.lang||"es")+"/"; return;
+    }
     if(act==="legacy-back") return closeLegacy();
     if(act==="brand-toggle"){ S.brandMenu=!S.brandMenu; return render(); }
     if(act==="brand") return openBrand(id);
@@ -1980,7 +2015,7 @@
       fetch("/api/brands",{credentials:"same-origin"}).then(function(r){return r.ok?r.json():{brands:[]};}).catch(function(){return{brands:[]};})
     ]).then(function(res){
       var me=res[0]||{}, bd=res[1]||{};
-      if(me.user){ S.user.name=me.user.name||(me.user.email||"").split("@")[0]||""; S.user.handle=me.user.handle||(me.user.email||"").split("@")[0]||""; }
+      if(me.user){ S.user.name=me.user.name||(me.user.email||"").split("@")[0]||""; S.user.handle=me.user.handle||(me.user.email||"").split("@")[0]||""; S.user.email=me.user.email||""; }
       if(me.credits!=null) S.user.credits=me.credits; else if(me.credits_cents!=null) S.user.credits=Math.round(me.credits_cents/18);
       if(me.streak!=null) S.user.streak=me.streak;
       // Plan crudo de /auth/me (puede ser "free") + «Hazlo mío» de por vida restantes.
