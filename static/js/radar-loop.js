@@ -907,14 +907,15 @@
         '<div class="voice-row"><span class="voice-k">Duración</span><span class="voice-val">'+ESC(v.duracion)+'</span></div>'+
         '<div class="voice-row"><span class="voice-k">Evito</span><span class="voice-val">'+ESC(v.evita)+'</span></div>'+
       '</div>'+
-      // T2: tus asistentes — estilos propios para guionizar. La gestión completa
-      // (listar/crear/editar/borrar) reutiliza el panel legacy #profPanelAssistants,
-      // reparentado en la isla igual que Analizar/Configuración (data-act="legacy").
+      // T2: tus asistentes — estilos propios para guionizar, LISTADOS inline
+      // (visibilidad del estado, reconocer>recordar). Reusa los CRUD globales
+      // (openAssistantModal/editAssistant/deleteAssistant + el modal existente).
+      // «Gestionar» abre el panel legacy completo (reparentado, data-act=legacy).
       '<div class="brain-section-t">Tus asistentes'+(nAsst?' <span class="brain-tag">'+nAsst+'</span>':'')+'</div>'+
-      '<div class="whale">'+
-        '<div class="wicon">🧠</div>'+
-        '<div class="wtext"><h4>Estilos propios para guionizar</h4><p>Asistentes con tu tono y tus reglas. Aparecen al «Hazlo mío» y al desarrollar ideas.'+(nAsst?'':' Aún no tienes ninguno — crea el primero.')+'</p></div>'+
-        '<button class="btn btn-md btn-secondary" data-act="legacy" data-k="assistants">'+IC.gear+' Gestionar</button>'+
+      brainAsstListHTML(nAsst)+
+      '<div class="cluster cluster-sm" style="margin:12px 0 18px;gap:10px">'+
+        '<button class="btn btn-md btn-secondary" onclick="openAssistantModal()">'+IC.bulb+' Nuevo asistente</button>'+
+        '<button class="btn btn-md btn-ghost" data-act="legacy" data-k="assistants">'+IC.gear+' Gestionar</button>'+
       '</div>'+
       // lo que funciona (métricas)
       '<div class="brain-section-t">Lo que funciona en tu cuenta'+(learned.length?' <span class="brain-tag">de tus métricas</span>':'')+'</div>'+
@@ -924,6 +925,29 @@
       '<div class="brain-section-t">De quién aprendo</div>'+
       '<div class="brain-comps">'+compList+'</div>'+
     '</div></div>';
+  }
+
+  // T2: lista inline de asistentes en Cerebro. Lee el global userAssistants
+  // (cargado por loadAssistants en el arranque y refrescado tras cada CRUD vía
+  // RadarLoop.refresh). Editar/Borrar usan los handlers globales + su modal.
+  function brainAsstListHTML(n){
+    var arr=[]; try{ if(typeof userAssistants!=="undefined" && Array.isArray(userAssistants)) arr=userAssistants; }catch(e){}
+    if(!arr.length){
+      return '<div class="rs-empty" style="padding:18px;margin-top:4px">Aún no tienes asistentes. Crea tu primer estilo con tu tono y tus reglas.</div>';
+    }
+    return '<div class="brain-asst-list">'+arr.map(function(a){
+      var name=ESC(a.name||"Asistente");
+      var prev=(a.instructions||"").trim();
+      var prevTxt=ESC(prev.slice(0,90))+(prev.length>90?"…":"");
+      var aid=ESC(String(a.id));
+      return '<div class="brain-asst-item">'+
+        '<div class="ava bava">'+ESC(initialsOf(a.name||"A"))+'</div>'+
+        '<div class="brain-asst-meta"><div class="brain-asst-name">'+name+(a.is_default?' <span class="brain-tag">default</span>':'')+'</div>'+
+          (prevTxt?'<div class="brain-asst-prev">'+prevTxt+'</div>':'')+'</div>'+
+        '<button class="brain-asst-act" onclick="editAssistant(\''+aid+'\')" aria-label="Editar '+name+'">Editar</button>'+
+        '<button class="brain-asst-act del" onclick="deleteAssistant(\''+aid+'\')" aria-label="Borrar '+name+'">Borrar</button>'+
+      '</div>';
+    }).join("")+'</div>';
   }
 
   /* ════════════════════════════════════════════════════════════════
@@ -1198,6 +1222,9 @@
     S.tab=t; S.brandMenu=false; S.view="feed";
     // Vistas de marca (no macro/equipo) refrescan stats+feed de la marca activa.
     if(isDemo() && t!=="portfolio" && t!=="team") applyDemoBrand();
+    // T2: al entrar en Cerebro, asegura la lista de asistentes fresca (loadAssistants
+    // refresca la isla vía RadarLoop.refresh al resolver).
+    if(t==="brain"){ try{ if(typeof loadAssistants==="function") loadAssistants(); }catch(e){} }
     render();
   }
 
@@ -2113,6 +2140,9 @@
       try{ document.body.classList.add("rs-takeover"); }catch(e){}
       if(!S._wired){ document.addEventListener("click", onClick); document.addEventListener("keydown", onKeydown); window.addEventListener("resize", function(){ var d=S.device; setDevice(); if(d!==S.device) render(); }); S._wired=true; }
       loadAll();
-    }
+    },
+    // T2: puente para que el CRUD legacy de asistentes (modal en index.html)
+    // repinte la isla tras crear/editar/borrar. Seguro si la isla no está montada.
+    refresh:function(){ try{ render(); }catch(e){} }
   };
 })();

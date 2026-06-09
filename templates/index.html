@@ -10029,6 +10029,16 @@
     .rs .brain-comp { display:flex; align-items:center; gap:11px; padding:12px 14px; border:1px solid var(--border-default); border-radius:12px; background:var(--surface-raised); }
     .rs .brain-comp-h { font-size:13.5px; font-weight:600; }
     .rs .brain-comp-n { margin-left:auto; font-size:12px; color:var(--text-tertiary); }
+    /* T2: lista inline de asistentes en Cerebro. */
+    .rs .brain-asst-list { display:flex; flex-direction:column; gap:10px; }
+    .rs .brain-asst-item { display:flex; align-items:center; gap:12px; padding:12px 14px; border:1px solid var(--border-default); border-radius:12px; background:var(--surface-raised); }
+    .rs .brain-asst-meta { flex:1; min-width:0; }
+    .rs .brain-asst-name { font-size:13.5px; font-weight:600; display:flex; align-items:center; gap:8px; }
+    .rs .brain-asst-prev { font-size:12px; color:var(--text-tertiary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:2px; }
+    .rs .brain-asst-act { flex-shrink:0; height:32px; padding:0 12px; border-radius:8px; border:1px solid var(--border-default); background:transparent; color:var(--text-secondary); font-size:12.5px; font-family:var(--font-body); cursor:pointer; transition:border-color .15s, color .15s; }
+    .rs .brain-asst-act:hover { border-color:color-mix(in srgb, var(--brand-500) 50%, transparent); color:var(--text-primary); }
+    .rs .brain-asst-act.del:hover { border-color:color-mix(in srgb, #e0556b 55%, transparent); color:#e0556b; }
+    .rs--mobile .brain-asst-act { height:40px; }
 
     /* ════════════════════════════════════════════════════════════════
        v2 "SIGNAL" — layout consola: rail 64px + command bar + statbar +
@@ -13544,6 +13554,8 @@ async function loadAssistants() {
       renderProfTransc();
     }
   } catch (e) {}
+  // isla-v2 T2: refrescar la lista inline de asistentes en Cerebro tras cada CRUD.
+  try { if (window.RadarLoop && typeof window.RadarLoop.refresh === "function") window.RadarLoop.refresh(); } catch (e) {}
 }
 
 function renderStyleGrid() {
