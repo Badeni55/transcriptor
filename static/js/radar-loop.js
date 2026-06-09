@@ -61,7 +61,7 @@
   // Mapea una fila de GET /ideas (backend) → idea local (con script_draft como
   // primer "guión" si lo hay; los scripts reales se cargan aparte por idea_id).
   function normIdea(i){
-    return { id:i.id, text:i.raw_text||i.title||"", scripts:[], expanded:false, seed:0, _server:true, _scriptsLoaded:false };
+    return { id:i.id, text:i.raw_text||i.title||"", scripts:[], expanded:false, seed:0, _server:true, _scriptsLoaded:false, _brand:(i.project_id||"default") };
   }
 
   /* ── iconos ──────────────────────────────────────────────────── */
@@ -506,8 +506,14 @@
   // Una idea es la MISMA entidad: al desarrollarla gana guiones y cambia de grupo
   // en el mismo sitio (no se duplica). Clasificamos por tener guiones/scripts.
   function ideaIsDeveloped(idea){ return !!(idea && idea.scripts && idea.scripts.length>0); }
+  // Marca/cliente ⇄ project_id. "default" (marca única sin project) → project_id null.
+  function _pidOf(bid){ return (bid && bid!=="default") ? bid : null; }
+  function brandNameOf(bid){ var b=(S.brands||[]).filter(function(x){return x.id===bid;})[0]; return b?b.name:null; }
+  // La fábrica muestra solo las ideas de la marca activa (en prod /ideas ya viene
+  // filtrado por project_id; esto además aísla las ideas en memoria del demo).
+  function ideaBelongsToActiveBrand(idea){ return (idea._brand||"default") === (S.brandId||"default"); }
   function ideasZoneHTML(){
-    var ideas=S.ideas||[];
+    var ideas=(S.ideas||[]).filter(ideaBelongsToActiveBrand);   // solo la marca activa
     var raw=ideas.filter(function(i){ return !ideaIsDeveloped(i); });
     var dev=ideas.filter(ideaIsDeveloped);
     var rawList=raw.length
@@ -586,7 +592,9 @@
       close:"Guárdate esto y dime en comentarios por dónde empiezas.",
       hooks:null, savedHooks:{}, guionId:null, saved:false, expanded:false, idea:ideaText };
   }
-  function makeIdea(text, seed){ return { id:gid("id"), text:text, scripts:[], expanded:true, seed:seed }; }
+  // _brand: marca/cliente al que pertenece la idea (project_id). Por defecto la
+  // marca activa; se puede forzar otra (apuntar para el cliente B desde el A).
+  function makeIdea(text, seed, brandId){ return { id:gid("id"), text:text, scripts:[], expanded:true, seed:seed, _brand:(brandId||S.brandId||"default") }; }
 
   function ideaBlockHTML(idea){
     var n=idea.scripts.length;
@@ -1111,6 +1119,7 @@
         (sh.helper?'<div class="field-helper">'+ESC(sh.helper)+'</div>':'')+
         (sh.error?'<div class="field-error" role="alert">'+ESC(sh.error)+'</div>':'')+
       '</div>'+
+      (sh.extraHTML||'')+   // campo extra opcional (p.ej. selector de marca/cliente)
       '<div class="sheet-actions">'+
         '<button class="btn btn-md btn-ghost" data-act="sheet-close">Cancelar</button>'+
         // Acción secundaria opcional (p.ej. «Desarrollar ahora» que CUESTA créditos),
@@ -1124,20 +1133,23 @@
   function promptSheet(opts){
     S.sheet={ title:opts.title, label:opts.label, placeholder:opts.placeholder, helper:opts.helper,
       multiline:!!opts.multiline, initial:opts.initial||"", submitLabel:opts.submitLabel,
-      secondaryLabel:opts.secondaryLabel||null,
-      _validate:opts.validate||null, _onSubmit:opts.onSubmit||null, _onSecondary:opts.onSecondary||null, error:null };
+      secondaryLabel:opts.secondaryLabel||null, extraHTML:opts.extraHTML||null,
+      _validate:opts.validate||null, _readExtra:opts.readExtra||null,
+      _onSubmit:opts.onSubmit||null, _onSecondary:opts.onSecondary||null, error:null };
     render();
     var inp=document.getElementById("rsSheetInput"); if(inp) inp.focus();
   }
   function closeSheet(){ S.sheet=null; render(); }
-  // Lee+valida el input del sheet y, si pasa, lo cierra y ejecuta `cb(valor)`.
+  // Lee+valida el input del sheet y, si pasa, lo cierra y ejecuta `cb(valor, extra)`.
+  // `extra` se lee ANTES de desmontar el sheet (p.ej. el valor del selector de marca).
   function _resolveSheet(cb){
     var sh=S.sheet; if(!sh) return;
     var inp=document.getElementById("rsSheetInput"); var v=inp?inp.value:"";
     var err=sh._validate?sh._validate(v):null;
     if(err){ sh.error=err; sh.initial=v; render(); var i2=document.getElementById("rsSheetInput"); if(i2) i2.focus(); return; }
+    var extra=sh._readExtra?sh._readExtra():null;
     S.sheet=null; render();
-    if(cb) cb(v);
+    if(cb) cb(v, extra);
   }
   function submitSheet(){ var sh=S.sheet; if(sh) _resolveSheet(sh._onSubmit); }
   function submitSheetSecondary(){ var sh=S.sheet; if(sh) _resolveSheet(sh._onSecondary); }
@@ -1542,6 +1554,16 @@
   //    en Guiones › Sin desarrollar. Enter dispara esta (la segura/gratis).
   //  · Secundaria «Desarrollar ahora» → CUESTA créditos: la genera ya (5 guiones).
   function openIdeaCapture(){
+    // Agency con >1 marca: selector de marca/cliente (default = la activa) para poder
+    // apuntar para el cliente B mientras ves el A (visibilidad + control). Creator
+    // (1 marca): sin selector, se asigna sola (IDI: no pidas elegir si solo hay 1).
+    var multi = isAgency() && (S.brands||[]).length>1;
+    var extraHTML = multi
+      ? '<div class="field" style="margin-top:12px"><label class="field-label" for="rsSheetBrand">Marca / cliente</label>'+
+          '<select class="field-input" id="rsSheetBrand">'+
+            (S.brands||[]).map(function(b){ return '<option value="'+ESC(b.id)+'"'+(b.id===S.brandId?' selected':'')+'>'+ESC(b.name)+'</option>'; }).join("")+
+          '</select></div>'
+      : null;
     promptSheet({
       title:"Apunta una idea",
       label:"Tu idea",
@@ -1550,9 +1572,11 @@
       helper:"Guardar es gratis. Desarrollar ahora cuesta "+COST.scripts5+" créditos.",
       submitLabel:"Guardar idea · gratis",
       secondaryLabel:"Desarrollar ahora · "+COST.scripts5+" créd.",
+      extraHTML:extraHTML,
+      readExtra:function(){ var s=document.getElementById("rsSheetBrand"); return { brand: s ? s.value : null }; },
       validate:function(v){ return (v||"").trim().length<5 ? "Escribe una idea un poco más larga." : null; },
-      onSubmit:function(v){ saveIdeaRaw(v); },        // gratis
-      onSecondary:function(v){ developIdeaNow(v); }   // cuesta créditos
+      onSubmit:function(v, x){ saveIdeaRaw(v, x&&x.brand); },        // gratis
+      onSecondary:function(v, x){ developIdeaNow(v, x&&x.brand); }   // cuesta créditos
     });
   }
   // T3: dejar de seguir un competidor, CON confirmación (control y libertad +
@@ -1575,29 +1599,37 @@
   }
   // GRATIS: guarda la idea en bruto (status draft) sin desarrollar ni cobrar. No
   // navega — captura sin fricción desde cualquier vista; el toast dice dónde quedó.
-  function saveIdeaRaw(txt){
+  // Sufijo de marca para el toast (solo agency multi-marca, para visibilidad).
+  function _brandToastSuffix(bid){ var n=(isAgency() && (S.brands||[]).length>1) ? brandNameOf(bid) : null; return n?(" · "+n):""; }
+  function saveIdeaRaw(txt, bid){
     txt=(txt||"").trim(); if(!txt) return;
-    if(isDemo()){ S.ideas.unshift(makeIdea(txt, txt.length+S.ideas.length)); render(); showToast("Idea guardada (gratis) · en Guiones › Sin desarrollar."); return; }
-    var tmp=makeIdea(txt, txt.length+S.ideas.length); tmp._saving=true; S.ideas.unshift(tmp); render();
-    showToast("Idea guardada (gratis) · en Guiones › Sin desarrollar.");
-    apiPost("/ideas",{raw_text:txt, language:rsLang(), develop:false}).then(function(r){
+    bid=bid||S.brandId;
+    if(isDemo()){ S.ideas.unshift(makeIdea(txt, txt.length+S.ideas.length, bid)); render(); showToast("Idea guardada (gratis) · Sin desarrollar"+_brandToastSuffix(bid)+"."); return; }
+    var tmp=makeIdea(txt, txt.length+S.ideas.length, bid); tmp._saving=true; S.ideas.unshift(tmp); render();
+    showToast("Idea guardada (gratis) · Sin desarrollar"+_brandToastSuffix(bid)+".");
+    apiPost("/ideas",{raw_text:txt, language:rsLang(), develop:false, project_id:_pidOf(bid)}).then(function(r){
       if(r.ok && r.d && r.d.id){ tmp.id=r.d.id; tmp._server=true; tmp._scriptsLoaded=true; tmp._saving=false; render(); }
       else { tmp._saving=false; showToast((r.d&&r.d.error)||"No pude guardar la idea."); render(); }
     });
   }
   // CUESTA créditos: guarda la idea y la desarrolla ya (5 guiones). Navega a Guiones
   // para ver el resultado. Reutiliza gen5scripts (cobro + persistencia reales).
-  function developIdeaNow(txt){
+  function developIdeaNow(txt, bid){
     txt=(txt||"").trim(); if(!txt) return;
+    bid=bid||S.brandId;
+    // Desarrollar SÍ navega a Guiones a ver el resultado → conmutamos a la marca
+    // elegida para que la fábrica (filtrada por marca activa) lo muestre. La vista
+    // Guiones no depende de reels/stats, así que basta con fijar S.brandId.
+    if(bid && bid!==S.brandId){ S.brandId=bid; S.brandMenu=false; if(isDemo()) applyDemoBrand(); }
     if(isDemo()){
-      var idea=makeIdea(txt, txt.length+S.ideas.length); S.ideas.unshift(idea);
+      var idea=makeIdea(txt, txt.length+S.ideas.length, bid); S.ideas.unshift(idea);
       spend(COST.scripts5); for(var i=0;i<5;i++) idea.scripts.push(makeScript(idea.text,(idea.seed||0)+i));
       bumpEco(5,0); S.tab="guiones"; render(); flashSpark(-COST.scripts5);
-      showToast("Idea desarrollada · 5 guiones listos."); return;
+      showToast("Idea desarrollada · 5 guiones listos"+_brandToastSuffix(bid)+"."); return;
     }
-    var tmp=makeIdea(txt, txt.length+S.ideas.length); tmp._saving=true; S.ideas.unshift(tmp); S.tab="guiones"; render();
-    showToast("Guardando y desarrollando…");
-    apiPost("/ideas",{raw_text:txt, language:rsLang(), develop:false}).then(function(r){
+    var tmp=makeIdea(txt, txt.length+S.ideas.length, bid); tmp._saving=true; S.ideas.unshift(tmp); S.tab="guiones"; render();
+    showToast("Guardando y desarrollando"+_brandToastSuffix(bid)+"…");
+    apiPost("/ideas",{raw_text:txt, language:rsLang(), develop:false, project_id:_pidOf(bid)}).then(function(r){
       if(r.ok && r.d && r.d.id){ tmp.id=r.d.id; tmp._server=true; tmp._scriptsLoaded=true; tmp._saving=false; render(); gen5scripts(tmp.id); }
       else { tmp._saving=false; showToast((r.d&&r.d.error)||"No pude guardar la idea."); render(); }
     });
@@ -1635,7 +1667,7 @@
     showToast("Generando 5 ideas…");
     apiPost("/ideas/generate-batch",{count:5, project_id:S.brandId&&S.brandId!=="default"?S.brandId:null, language:rsLang()}).then(function(r){
       if(!r.ok || !r.d || !Array.isArray(r.d.ideas)){ restore(); return showPaywallOrError(r); }
-      var fresh=r.d.ideas.map(function(i){ var it=normIdea(i); it.expanded=true; it._scriptsLoaded=true; return it; });
+      var fresh=r.d.ideas.map(function(i){ var it=normIdea(i); it.expanded=true; it._scriptsLoaded=true; it._brand=(i.project_id||S.brandId||"default"); return it; });
       S.ideas=fresh.concat(S.ideas); applyCredits(r.d, COST.idea5); render(); showToast("5 ideas nuevas para expandir.");
     });
   }
@@ -1681,7 +1713,7 @@
       var byIdea={};
       (r.d.scripts||[]).forEach(function(s){ var k=s.idea_id||"_"; (byIdea[k]=byIdea[k]||[]).push(s); });
       var fresh=r.d.ideas.map(function(i){
-        var it=normIdea(i); it.expanded=true; it._scriptsLoaded=true;
+        var it=normIdea(i); it.expanded=true; it._scriptsLoaded=true; it._brand=(i.project_id||S.brandId||"default");
         (byIdea[i.id]||[]).forEach(function(s){ it.scripts.push(makeScriptFromServer(s, it.text)); });
         return it;
       });
