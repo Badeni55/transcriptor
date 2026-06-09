@@ -862,6 +862,8 @@
     var nGuiones=S.guiones.filter(function(g){return g.status!=="discarded";}).length;
     var nPublished=(S.metrics&&S.metrics.videos)?S.metrics.videos.length:0;
     var learned=(S.metrics&&S.metrics.learned)||[];
+    // userAssistants es global (index.html); typeof-guard por si aún no cargó.
+    var nAsst=0; try{ if(typeof userAssistants!=="undefined" && Array.isArray(userAssistants)) nAsst=userAssistants.length; }catch(e){}
 
     var sources=[
       [b.reelsAnalyzed||0,"reels tuyos leídos","de aquí modelo tu voz","var(--brand-500)"],
@@ -903,6 +905,15 @@
         '<div class="voice-row"><span class="voice-k">Estructura</span><span class="voice-val">'+ESC(v.estructura)+'</span></div>'+
         '<div class="voice-row"><span class="voice-k">Duración</span><span class="voice-val">'+ESC(v.duracion)+'</span></div>'+
         '<div class="voice-row"><span class="voice-k">Evito</span><span class="voice-val">'+ESC(v.evita)+'</span></div>'+
+      '</div>'+
+      // T2: tus asistentes — estilos propios para guionizar. La gestión completa
+      // (listar/crear/editar/borrar) reutiliza el panel legacy #profPanelAssistants,
+      // reparentado en la isla igual que Analizar/Configuración (data-act="legacy").
+      '<div class="brain-section-t">Tus asistentes'+(nAsst?' <span class="brain-tag">'+nAsst+'</span>':'')+'</div>'+
+      '<div class="whale">'+
+        '<div class="wicon">🧠</div>'+
+        '<div class="wtext"><h4>Estilos propios para guionizar</h4><p>Asistentes con tu tono y tus reglas. Aparecen al «Hazlo mío» y al desarrollar ideas.'+(nAsst?'':' Aún no tienes ninguno — crea el primero.')+'</p></div>'+
+        '<button class="btn btn-md btn-secondary" data-act="legacy" data-k="assistants">'+IC.gear+' Gestionar</button>'+
       '</div>'+
       // lo que funciona (métricas)
       '<div class="brain-section-t">Lo que funciona en tu cuenta'+(learned.length?' <span class="brain-tag">de tus métricas</span>':'')+'</div>'+
@@ -1194,7 +1205,7 @@
      chrome a un host estable de la isla (#rsLegacy), lo activamos con el JS legacy
      vía window.rsActivateLegacySection, y lo devolvemos a su sitio al salir. Así la
      isla expone el acceso sin reescribir esas vistas. ── */
-  function _legacyPanelId(k){ return k==="transc" ? "profPanelTransc" : (k==="settings" ? "profPanelSettings" : null); }
+  function _legacyPanelId(k){ return k==="transc" ? "profPanelTransc" : (k==="settings" ? "profPanelSettings" : (k==="assistants" ? "profPanelAssistants" : null)); }
   function mountLegacy(k){
     var host=document.getElementById("rsLegacy"); if(!host) return;
     var pid=_legacyPanelId(k); var panel=pid&&document.getElementById(pid); if(!panel) return;

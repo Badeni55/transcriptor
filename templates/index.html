@@ -16003,6 +16003,11 @@ window.rsActivateLegacySection = function(kind) {
     if (kind === "transc") {
       if (typeof renderProfTransc === "function") renderProfTransc();
       if (typeof loadHistory === "function") loadHistory().then(function(){ try { renderProfTransc(); } catch(e){} });
+    } else if (kind === "assistants") {
+      // T2 (isla-v2): gestión de asistentes embebida en Cerebro. Mismo patrón que
+      // transc: pinta con la cache actual y refresca cuando /assistants resuelve.
+      if (typeof renderProfAssistants === "function") renderProfAssistants();
+      if (typeof loadAssistants === "function") loadAssistants().then(function(){ try { renderProfAssistants(); } catch(e){} });
     } else if (kind === "settings") {
       try { highlightActiveLang(); } catch(e){}
       try { applyTheme(themePref); } catch(e){}
