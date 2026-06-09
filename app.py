@@ -146,7 +146,7 @@ PLANS = {
         "credits_month": 100,
         "price_month_eur": 29,
         "price_year_eur": 276,
-        "monthly_uses": 100,           # 100 créditos/mes
+        "monthly_uses": 200,           # 200 créditos/mes
         "daily_free": 0,
         "scripts_max": None,           # ilimitado
         "projects_max": None,
@@ -161,7 +161,7 @@ PLANS = {
         "credits_month": 500,
         "price_month_eur": 129,
         "price_year_eur": 1290,
-        "monthly_uses": 500,           # pool 500 créditos/mes (cuenta, no por marca)
+        "monthly_uses": 800,           # pool 800 créditos/mes (cuenta, no por marca)
         "daily_free": 0,
         "scripts_max": None,
         "projects_max": None,
@@ -653,6 +653,9 @@ def check_monthly_limit(profile: dict) -> tuple[bool, str | None]:
     return True, None
 
 
+# TODO(econ): credits_available usa PLAN_LIMITS, derivado del dict PLANS hardcodeado.
+# Lo ideal es que lea de load_plans_config() (tabla `plans` de la DB) para tener una
+# única fuente de verdad y no mantener PLANS sincronizado a mano. No implementar ahora.
 def credits_available(profile: dict) -> int:
     """Créditos disponibles = restante de la asignación mensual del plan + topups.
     1 crédito = COST_CENTS de saldo. Es el número que muestra la pill del radar."""
