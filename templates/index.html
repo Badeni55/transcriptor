@@ -146,6 +146,13 @@
         return Promise.resolve(J({competitors:bs.competitors,reels_week:bs.reels_week,exploded_week:bs.exploded_week,stolen_today:0,stolen_total:SCRIPTS.length,enabled:true}));
       }
       if (path==='/api/tracked-creators' && method==='GET') return Promise.resolve(J({tracked:TRACKED, limits:{enabled:true, base_slots_global:5}, plan:'agency'}));
+      // isla-v2 T3: dejar de seguir un competidor (demo: lo quita de TRACKED para que persista en la sesión).
+      if (/^\/api\/tracked-creators\/[^/]+$/.test(path) && method==='DELETE'){
+        var _tid=path.split('/').pop();
+        var _i=TRACKED.findIndex(function(t){return String(t.id)===String(_tid);});
+        if(_i>=0) TRACKED.splice(_i,1);
+        return Promise.resolve(new Response(null,{status:204}));
+      }
       if (path==='/api/tracked-creators/reels'){
         // marca b1 → set completo; b2/b3 → subconjuntos (menos contexto).
         var list=REELS;
@@ -10029,6 +10036,21 @@
     .rs .brain-comp { display:flex; align-items:center; gap:11px; padding:12px 14px; border:1px solid var(--border-default); border-radius:12px; background:var(--surface-raised); }
     .rs .brain-comp-h { font-size:13.5px; font-weight:600; }
     .rs .brain-comp-n { margin-left:auto; font-size:12px; color:var(--text-tertiary); }
+    /* T3: dejar de seguir competidor. */
+    .rs .brain-comp-x { flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:8px; border:1px solid transparent; background:transparent; color:var(--text-tertiary); cursor:pointer; transition:color .15s, border-color .15s, background .15s; }
+    .rs .brain-comp-x:hover { color:#e0556b; border-color:color-mix(in srgb, #e0556b 45%, transparent); background:color-mix(in srgb, #e0556b 8%, transparent); }
+    .rs .brain-comp-x svg { width:15px; height:15px; }
+    .rs--mobile .brain-comp-x { width:44px; height:44px; }
+    /* T2: lista inline de asistentes en Cerebro. */
+    .rs .brain-asst-list { display:flex; flex-direction:column; gap:10px; }
+    .rs .brain-asst-item { display:flex; align-items:center; gap:12px; padding:12px 14px; border:1px solid var(--border-default); border-radius:12px; background:var(--surface-raised); }
+    .rs .brain-asst-meta { flex:1; min-width:0; }
+    .rs .brain-asst-name { font-size:13.5px; font-weight:600; display:flex; align-items:center; gap:8px; }
+    .rs .brain-asst-prev { font-size:12px; color:var(--text-tertiary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:2px; }
+    .rs .brain-asst-act { flex-shrink:0; height:32px; padding:0 12px; border-radius:8px; border:1px solid var(--border-default); background:transparent; color:var(--text-secondary); font-size:12.5px; font-family:var(--font-body); cursor:pointer; transition:border-color .15s, color .15s; }
+    .rs .brain-asst-act:hover { border-color:color-mix(in srgb, var(--brand-500) 50%, transparent); color:var(--text-primary); }
+    .rs .brain-asst-act.del:hover { border-color:color-mix(in srgb, #e0556b 55%, transparent); color:#e0556b; }
+    .rs--mobile .brain-asst-act { height:40px; }
 
     /* ════════════════════════════════════════════════════════════════
        v2 "SIGNAL" — layout consola: rail 64px + command bar + statbar +
@@ -10086,6 +10108,11 @@
     .rs .searchbox span:first-of-type { white-space:nowrap; }
     .rs .searchbox .kbd { margin-left:auto; font-family:var(--font-mono); font-size:11px; padding:1px 6px; border-radius:4px; border:1px solid var(--border-strong); color:var(--text-tertiary); }
     .rs .cmd-streak { display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--text-secondary); white-space:nowrap; } .rs .cmd-streak svg { color:var(--brand-500); width:15px; height:15px; }
+    /* T1: captura global de ideas en la command bar. */
+    .rs .cmd-idea { display:inline-flex; align-items:center; gap:7px; height:36px; padding:0 13px; background:var(--surface-raised); border:1px solid var(--border-default); border-radius:8px; color:var(--text-secondary); font-size:13.5px; font-family:var(--font-body); cursor:pointer; white-space:nowrap; transition:border-color .15s, color .15s; }
+    .rs .cmd-idea:hover { border-color:color-mix(in srgb, var(--brand-500) 50%, transparent); color:var(--text-primary); }
+    .rs .cmd-idea .cmd-idea-bulb { display:flex; color:var(--brand-500); }
+    .rs .cmd-idea .cmd-idea-bulb svg { width:16px; height:16px; }
     .rs .cmd .spark.pill-stat { display:inline-flex; align-items:center; gap:7px; height:34px; padding:0 12px; background:var(--surface-raised); border:1px solid var(--border-default); border-radius:8px; font-size:13px; color:var(--text-secondary); white-space:nowrap; }
     .rs .cmd .spark.pill-stat svg { width:15px; height:15px; color:var(--brand-500); }
     .rs .cmd .spark .num { font-family:var(--font-mono); color:var(--text-primary); font-weight:500; }
@@ -10238,6 +10265,8 @@
       .rs .feature { grid-template-columns:1fr; } .rs .feature-thumb .thumb { height:200px; min-height:200px; border-right:none; border-bottom:1px solid var(--border-default); } .rs .feature-data { border-left:none; border-top:1px solid var(--border-default); flex-direction:row; flex-wrap:wrap; gap:24px; }
       .rs .statbar { grid-template-columns:1fr 1fr; } .rs .stat:nth-child(2n){ border-right:none; }
       .rs .searchbox, .rs .cmd-streak { display:none; }
+      .rs .cmd-idea .cmd-idea-t { display:none; }   /* móvil: solo la bombilla… */
+      .rs .cmd-idea { height:44px; min-width:44px; justify-content:center; padding:0 12px; }  /* …con target táctil ≥44px */
       .rs .canvas { padding:24px 16px 100px; } .rs .h-title { font-size:30px; }
       .rs .row { grid-template-columns:48px 1fr auto; } .rs .row-thumb, .rs .row-when { display:none; }
     }
@@ -13537,6 +13566,8 @@ async function loadAssistants() {
       renderProfTransc();
     }
   } catch (e) {}
+  // isla-v2 T2: refrescar la lista inline de asistentes en Cerebro tras cada CRUD.
+  try { if (window.RadarLoop && typeof window.RadarLoop.refresh === "function") window.RadarLoop.refresh(); } catch (e) {}
 }
 
 function renderStyleGrid() {

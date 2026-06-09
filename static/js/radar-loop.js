@@ -28,6 +28,11 @@
       .then(function(res){ return res.json().catch(function(){return null;}).then(function(d){ return {ok:res.ok, status:res.status, d:d}; }); })
       .catch(function(){ return {ok:false, status:0, d:null}; });
   }
+  function apiDelete(url){
+    return fetch(url,{method:"DELETE",credentials:"same-origin"})
+      .then(function(res){ return res.json().catch(function(){return{};}).then(function(d){ return {ok:res.ok, status:res.status, d:d||{}}; }); })
+      .catch(function(){ return {ok:false, status:0, d:{error:"network"}}; });
+  }
   // En prod el backend es la FUENTE DE VERDAD de créditos: las respuestas de
   // generación traen `credits` (= credits_available). Reflejamos ese saldo en la
   // pill sin descontar local (evita doble-cobro). flashSpark queda cosmético.
@@ -263,6 +268,8 @@
       crumb+
       '<span class="grow"></span>'+
       '<div class="searchbox">'+IC.eye+'<span>Buscar señal o creador</span></div>'+   // T3 (IDI): sin pista ⌘K — no prometemos un atajo que no existe
+      // T1 (IDI): captura de ideas siempre a mano, en cualquier vista de la isla.
+      '<button class="cmd-idea" data-act="idea-capture" title="Apunta una idea — se desarrolla en Guiones" aria-label="Apunta una idea"><span class="cmd-idea-bulb">'+IC.bulb+'</span><span class="cmd-idea-t">Apunta una idea</span></button>'+
       demoToggle+
       streak+
       ((S.user.plan==="free" && !S.user.credits)
@@ -465,7 +472,6 @@
         voiceOnboardCardHTML()+   // B6: en first-run sin reels, el banner de voz es lo primero que aporta
         nextSeriesHTML("dash")+   // B1+T1: CTA secundario en el Dashboard
         '<div class="rs-empty">'+(S.filter==="fav"?"Sin favoritos aún. Toca la estrella en una señal.":"Sin reels todavía. Añade un competidor o pega un reel para empezar.")+'</div>'+
-        ideasZoneHTML()+          // T1: la Fábrica de ideas vive aquí (antes era un tab del rail)
       '</div></div>';
     }
 
@@ -486,7 +492,6 @@
       nextSeriesHTML("dash")+   // B1+T1: "tu próxima serie" con CTA secundario en el Dashboard
       (S.reels.length?'<div class="plays">'+whaleHTML(fillCount)+'</div>':'')+
       (rest.length?('<div class="feed-head"><span class="feed-title">Más señales <span class="ct">· '+rest.length+'</span></span>'+filtersHTML()+'</div><div class="feed">'+rows+'</div>'+moreToggle):"")+
-      ideasZoneHTML()+          // T1: Fábrica de ideas, en zona propia bajo las señales del día
     '</div></div>';
   }
 
@@ -495,23 +500,45 @@
      handlers existentes (seed-go, gen5ideas, explosion, gen5scripts, gen5hooks).
      Una sola acción primaria en Radar sigue siendo «Hazlo mío»: aquí todo es
      secundario/ghost. */
+  // T1+refino: la fábrica de ideas vive en GUIONES, en DOS grupos por estado:
+  //   · "Sin desarrollar" — ideas en bruto (gratis), sin guiones. Botón Desarrollar (cuesta).
+  //   · "Desarrolladas"   — acordeón idea→guiones→hooks.
+  // Una idea es la MISMA entidad: al desarrollarla gana guiones y cambia de grupo
+  // en el mismo sitio (no se duplica). Clasificamos por tener guiones/scripts.
+  function ideaIsDeveloped(idea){ return !!(idea && idea.scripts && idea.scripts.length>0); }
   function ideasZoneHTML(){
-    var n=S.ideas.length;
-    var list=n
-      ? '<div class="ideas-list">'+S.ideas.map(ideaBlockHTML).join("")+'</div>'
-      : '<div class="rs-empty" style="margin-top:14px">Aún no hay ideas. Escribe una arriba, pulsa «5 ideas» o lanza una explosión.</div>';
+    var ideas=S.ideas||[];
+    var raw=ideas.filter(function(i){ return !ideaIsDeveloped(i); });
+    var dev=ideas.filter(ideaIsDeveloped);
+    var rawList=raw.length
+      ? '<div class="ideas-list">'+raw.map(rawIdeaHTML).join("")+'</div>'
+      : '<div class="rs-empty" style="margin-top:10px">Nada pendiente. Apunta una idea con 💡 «Apunta una idea» (arriba).</div>';
+    var devList=dev.length
+      ? '<div class="ideas-list">'+dev.map(ideaBlockHTML).join("")+'</div>'
+      : '<div class="rs-empty" style="margin-top:10px">Aún ninguna desarrollada. Desarrolla una de arriba o genera 5 de golpe.</div>';
     return '<section class="ideas-zone">'+
-      '<div class="feed-head"><span class="feed-title">'+IC.bulb+' Fábrica de ideas'+(n?' <span class="ct">· '+n+'</span>':'')+'</span></div>'+
-      '<p class="ideas-zone-sub">Apunta una idea suelta y multiplícala: idea → guiones → hooks. Guarda los que te convenzan.</p>'+
-      '<div class="idea-launch">'+
-        '<div class="idea-launch-ic">'+IC.bulb+'</div>'+
-        '<input class="idea-launch-input" id="rsIdeaSeed" placeholder="Tienes una idea suelta? Escríbela y la convertimos en guiones…" />'+
-        '<button class="btn btn-md btn-secondary" data-act="seed-go">'+IC.bolt+' Desarrollar</button>'+
-        '<button class="btn btn-md btn-secondary" data-act="gen5ideas">'+IC.spark+' 5 ideas</button>'+
+      '<div class="feed-head"><span class="feed-title">'+IC.bulb+' Sin desarrollar'+(raw.length?' <span class="ct">· '+raw.length+'</span>':'')+'</span>'+
+        '<button class="btn btn-sm btn-secondary" data-act="gen5ideas">'+IC.spark+' 5 ideas</button>'+
       '</div>'+
+      '<p class="ideas-zone-sub">Ideas en bruto, guardadas gratis. Desarrolla cuando quieras (cuesta '+COST.scripts5+' créditos).</p>'+
       '<button class="explosion-btn" data-act="explosion">💥 Explosión creativa<span>5 ideas × 5 guiones × 5 hooks — '+COST.explosion+' créditos</span></button>'+
-      list+
+      rawList+
+      '<div class="feed-head" style="margin-top:30px"><span class="feed-title">'+IC.doc+' Desarrolladas'+(dev.length?' <span class="ct">· '+dev.length+'</span>':'')+'</span></div>'+
+      devList+
     '</section>';
+  }
+  // Idea en bruto (sin desarrollar): texto + Desarrollar (indica el coste).
+  function rawIdeaHTML(idea){
+    var saving=!!idea._saving;
+    return '<div class="idea-block idea-raw"'+(saving?' style="opacity:.55"':'')+'>'+
+      '<div class="idea-block-head">'+
+        '<div class="idea-ic">'+IC.bulb+'</div>'+
+        '<div class="idea-text">'+ESC(idea.text)+'</div>'+
+        (saving
+          ? '<span class="idea-count"><span class="rs-ldr"></span>Guardando…</span>'
+          : '<button class="btn btn-sm btn-secondary" data-act="gen5scripts" data-id="'+idea.id+'" title="Genera 5 guiones a partir de esta idea (cuesta '+COST.scripts5+' créditos)">'+IC.bolt+' Desarrollar · '+COST.scripts5+' créd.</button>')+
+      '</div>'+
+    '</div>';
   }
 
   /* ════════════════════════════════════════════════════════════════
@@ -683,12 +710,14 @@
     }).join("")+'</div>';
     var body=items.length===0
       ? '<div class="rs-empty" style="margin-top:24px">'+(cAll===0
-          ? 'Aún no tienes guiones. Roba un reel en el <b>Dashboard</b> o crea en <b>Ideas</b> — todo lo que generes aterriza aquí.'
+          ? 'Aún no tienes guiones. Roba un reel en el <b>Radar</b> o apunta una idea (💡 arriba) — todo lo que generes aterriza aquí.'
           : 'Nada en este filtro.')+'</div>'
       : '<div class="gui-list">'+items.map(guiCardHTML).join("")+'</div>';
     return '<div class="scroll"><div class="canvas">'+
       pheadHTML("Guiones · @"+(brand().handle||S.user.handle||""), "Tus guiones", "Todo lo que creas vive aquí. Ordena, descarta lo que no, y graba cuando quieras.")+
-      chips+body+'</div></div>';
+      chips+body+
+      ideasZoneHTML()+          // T1: fábrica de ideas (idea→guiones→hooks) junto a los guiones
+    '</div></div>';
   }
 
   /* ════════════════════════════════════════════════════════════════
@@ -852,6 +881,13 @@
     var by={}; (S.reels||[]).forEach(function(r){ var h=r.creator&&r.creator.handle; if(!h) return; by[h]=(by[h]||0)+1; });
     return Object.keys(by).map(function(h){ return {handle:h, n:by[h]}; }).sort(function(a,b){return b.n-a.n;});
   }
+  // T3: lista REAL de competidores seguidos (con id de tracking → permite dejar de
+  // seguir). Se carga aparte del feed; al resolver, repinta Cerebro si está abierto.
+  function loadTracked(){
+    apiGet("/api/tracked-creators").then(function(r){
+      if(r.ok && r.d && Array.isArray(r.d.tracked)){ S.tracked=r.d.tracked; if(S.tab==="brain") render(); }
+    });
+  }
   function brainHTML(){
     var b=brand();
     var v=brainVoice(b);
@@ -876,9 +912,27 @@
     var learnList=learned.length
       ? learned.map(function(l){ return '<div class="learn-item">'+IC.check+'<span>'+ESC(l)+'</span></div>'; }).join("")
       : '<div class="learn-item" style="opacity:.6">Conecta Instagram en Métricas y empezaré a ver qué funciona en tu cuenta.</div>';
-    var compList=comps.length
-      ? comps.map(function(c){ return '<div class="brain-comp"><div class="ava bava">'+ESC(initialsOf(c.handle))+'</div><span class="brain-comp-h">@'+ESC(c.handle)+'</span><span class="brain-comp-n">'+c.n+' reels analizados</span></div>'; }).join("")
-      : '<div class="rs-empty" style="padding:20px">Aún no sigues a nadie. Añade competidores en el Dashboard.</div>';
+    // T3: si tenemos la lista REAL de seguidos (con id), la mostramos con acción de
+    // dejar de seguir. Sin ella aún (cargando), caemos al derivado de reels (read-only).
+    var tracked = Array.isArray(S.tracked) ? S.tracked : null;
+    var compList;
+    if(tracked){
+      compList = tracked.length
+        ? tracked.map(function(t){
+            var h=(t.creator&&t.creator.ig_username)||t.ig_username||"";
+            var n=(t.reels_count!=null)?(t.reels_count+' reel'+(t.reels_count===1?'':'es')):'';
+            return '<div class="brain-comp"><div class="ava bava">'+ESC(initialsOf(h))+'</div>'+
+              '<span class="brain-comp-h">@'+ESC(h)+'</span>'+
+              '<span class="brain-comp-n">'+ESC(n)+'</span>'+
+              '<button class="brain-comp-x" data-act="untrack" data-id="'+ESC(String(t.id))+'" data-handle="'+ESC(h)+'" title="Dejar de seguir a @'+ESC(h)+'" aria-label="Dejar de seguir a @'+ESC(h)+'">'+IC.x+'</button>'+
+            '</div>';
+          }).join("")
+        : '<div class="rs-empty" style="padding:20px">Aún no sigues a ningún competidor. Añádelos desde el Radar o un análisis.</div>';
+    } else {
+      compList = comps.length
+        ? comps.map(function(c){ return '<div class="brain-comp"><div class="ava bava">'+ESC(initialsOf(c.handle))+'</div><span class="brain-comp-h">@'+ESC(c.handle)+'</span><span class="brain-comp-n">'+c.n+' reels analizados</span></div>'; }).join("")
+        : '<div class="rs-empty" style="padding:20px">Aún no sigues a nadie. Añade competidores en el Dashboard.</div>';
+    }
 
     return '<div class="scroll"><div class="canvas">'+
       pheadHTML("Cerebro · @"+(b.handle||S.user.handle||""), "El cerebro de "+b.name, "Todo lo que el sistema sabe de esta marca, y cómo crece. Cuanto más creas y publicas, más tuyo suena todo.")+
@@ -906,14 +960,15 @@
         '<div class="voice-row"><span class="voice-k">Duración</span><span class="voice-val">'+ESC(v.duracion)+'</span></div>'+
         '<div class="voice-row"><span class="voice-k">Evito</span><span class="voice-val">'+ESC(v.evita)+'</span></div>'+
       '</div>'+
-      // T2: tus asistentes — estilos propios para guionizar. La gestión completa
-      // (listar/crear/editar/borrar) reutiliza el panel legacy #profPanelAssistants,
-      // reparentado en la isla igual que Analizar/Configuración (data-act="legacy").
+      // T2: tus asistentes — estilos propios para guionizar, LISTADOS inline
+      // (visibilidad del estado, reconocer>recordar). Reusa los CRUD globales
+      // (openAssistantModal/editAssistant/deleteAssistant + el modal existente).
+      // «Gestionar» abre el panel legacy completo (reparentado, data-act=legacy).
       '<div class="brain-section-t">Tus asistentes'+(nAsst?' <span class="brain-tag">'+nAsst+'</span>':'')+'</div>'+
-      '<div class="whale">'+
-        '<div class="wicon">🧠</div>'+
-        '<div class="wtext"><h4>Estilos propios para guionizar</h4><p>Asistentes con tu tono y tus reglas. Aparecen al «Hazlo mío» y al desarrollar ideas.'+(nAsst?'':' Aún no tienes ninguno — crea el primero.')+'</p></div>'+
-        '<button class="btn btn-md btn-secondary" data-act="legacy" data-k="assistants">'+IC.gear+' Gestionar</button>'+
+      brainAsstListHTML(nAsst)+
+      '<div class="cluster cluster-sm" style="margin:12px 0 18px;gap:10px">'+
+        '<button class="btn btn-md btn-secondary" onclick="openAssistantModal()">'+IC.bulb+' Nuevo asistente</button>'+
+        '<button class="btn btn-md btn-ghost" data-act="legacy" data-k="assistants">'+IC.gear+' Gestionar</button>'+
       '</div>'+
       // lo que funciona (métricas)
       '<div class="brain-section-t">Lo que funciona en tu cuenta'+(learned.length?' <span class="brain-tag">de tus métricas</span>':'')+'</div>'+
@@ -923,6 +978,29 @@
       '<div class="brain-section-t">De quién aprendo</div>'+
       '<div class="brain-comps">'+compList+'</div>'+
     '</div></div>';
+  }
+
+  // T2: lista inline de asistentes en Cerebro. Lee el global userAssistants
+  // (cargado por loadAssistants en el arranque y refrescado tras cada CRUD vía
+  // RadarLoop.refresh). Editar/Borrar usan los handlers globales + su modal.
+  function brainAsstListHTML(n){
+    var arr=[]; try{ if(typeof userAssistants!=="undefined" && Array.isArray(userAssistants)) arr=userAssistants; }catch(e){}
+    if(!arr.length){
+      return '<div class="rs-empty" style="padding:18px;margin-top:4px">Aún no tienes asistentes. Crea tu primer estilo con tu tono y tus reglas.</div>';
+    }
+    return '<div class="brain-asst-list">'+arr.map(function(a){
+      var name=ESC(a.name||"Asistente");
+      var prev=(a.instructions||"").trim();
+      var prevTxt=ESC(prev.slice(0,90))+(prev.length>90?"…":"");
+      var aid=ESC(String(a.id));
+      return '<div class="brain-asst-item">'+
+        '<div class="ava bava">'+ESC(initialsOf(a.name||"A"))+'</div>'+
+        '<div class="brain-asst-meta"><div class="brain-asst-name">'+name+(a.is_default?' <span class="brain-tag">default</span>':'')+'</div>'+
+          (prevTxt?'<div class="brain-asst-prev">'+prevTxt+'</div>':'')+'</div>'+
+        '<button class="brain-asst-act" onclick="editAssistant(\''+aid+'\')" aria-label="Editar '+name+'">Editar</button>'+
+        '<button class="brain-asst-act del" onclick="deleteAssistant(\''+aid+'\')" aria-label="Borrar '+name+'">Borrar</button>'+
+      '</div>';
+    }).join("")+'</div>';
   }
 
   /* ════════════════════════════════════════════════════════════════
@@ -1035,6 +1113,9 @@
       '</div>'+
       '<div class="sheet-actions">'+
         '<button class="btn btn-md btn-ghost" data-act="sheet-close">Cancelar</button>'+
+        // Acción secundaria opcional (p.ej. «Desarrollar ahora» que CUESTA créditos),
+        // a la izquierda de la primaria para que la primaria gratis sea la prominente.
+        (sh.secondaryLabel?'<button class="btn btn-md btn-secondary" data-act="sheet-secondary">'+ESC(sh.secondaryLabel)+'</button>':'')+
         '<button class="btn btn-md btn-primary" data-act="sheet-submit">'+ESC(sh.submitLabel||"Aceptar")+'</button>'+
       '</div>'+
     '</div>';
@@ -1043,19 +1124,23 @@
   function promptSheet(opts){
     S.sheet={ title:opts.title, label:opts.label, placeholder:opts.placeholder, helper:opts.helper,
       multiline:!!opts.multiline, initial:opts.initial||"", submitLabel:opts.submitLabel,
-      _validate:opts.validate||null, _onSubmit:opts.onSubmit||null, error:null };
+      secondaryLabel:opts.secondaryLabel||null,
+      _validate:opts.validate||null, _onSubmit:opts.onSubmit||null, _onSecondary:opts.onSecondary||null, error:null };
     render();
     var inp=document.getElementById("rsSheetInput"); if(inp) inp.focus();
   }
   function closeSheet(){ S.sheet=null; render(); }
-  function submitSheet(){
+  // Lee+valida el input del sheet y, si pasa, lo cierra y ejecuta `cb(valor)`.
+  function _resolveSheet(cb){
     var sh=S.sheet; if(!sh) return;
     var inp=document.getElementById("rsSheetInput"); var v=inp?inp.value:"";
     var err=sh._validate?sh._validate(v):null;
     if(err){ sh.error=err; sh.initial=v; render(); var i2=document.getElementById("rsSheetInput"); if(i2) i2.focus(); return; }
-    var cb=sh._onSubmit; S.sheet=null; render();
+    S.sheet=null; render();
     if(cb) cb(v);
   }
+  function submitSheet(){ var sh=S.sheet; if(sh) _resolveSheet(sh._onSubmit); }
+  function submitSheetSecondary(){ var sh=S.sheet; if(sh) _resolveSheet(sh._onSecondary); }
   function teleprompterHTML(){
     var r=S.reel||{creator:{handle:""},script:{hook:"",beats:[],close:""}};
     var s=r.script||{hook:"",beats:[],close:""};
@@ -1197,6 +1282,9 @@
     S.tab=t; S.brandMenu=false; S.view="feed";
     // Vistas de marca (no macro/equipo) refrescan stats+feed de la marca activa.
     if(isDemo() && t!=="portfolio" && t!=="team") applyDemoBrand();
+    // T2: al entrar en Cerebro, asegura la lista de asistentes fresca (loadAssistants
+    // refresca la isla vía RadarLoop.refresh al resolver).
+    if(t==="brain"){ try{ if(typeof loadAssistants==="function") loadAssistants(); }catch(e){} loadTracked(); }
     render();
   }
 
@@ -1443,6 +1531,74 @@
     var tmp=makeIdea(txt, txt.length+S.ideas.length); tmp._saving=true; S.ideas.unshift(tmp); render();
     apiPost("/ideas",{raw_text:txt, language:rsLang(), develop:false}).then(function(r){
       if(r.ok && r.d && r.d.id){ tmp.id=r.d.id; tmp._server=true; tmp._scriptsLoaded=true; tmp._saving=false; render(); }
+      else { tmp._saving=false; showToast((r.d&&r.d.error)||"No pude guardar la idea."); render(); }
+    });
+  }
+  // T1: captura global de ideas (bombilla de la command bar). Modal mínimo
+  // reusando promptSheet (Esc cierra, Enter envía). Al desarrollar, la idea
+  // aterriza en Guiones, donde vive la fábrica.
+  // Captura global de ideas (bombilla). Dos caminos claros:
+  //  · Primaria «Guardar idea» → GRATIS, la apunta en bruto (status draft) y la deja
+  //    en Guiones › Sin desarrollar. Enter dispara esta (la segura/gratis).
+  //  · Secundaria «Desarrollar ahora» → CUESTA créditos: la genera ya (5 guiones).
+  function openIdeaCapture(){
+    promptSheet({
+      title:"Apunta una idea",
+      label:"Tu idea",
+      placeholder:"Una idea suelta… guárdala ahora, desarróllala cuando quieras",
+      multiline:false,   // input de una línea → Enter envía (el handler salta textareas)
+      helper:"Guardar es gratis. Desarrollar ahora cuesta "+COST.scripts5+" créditos.",
+      submitLabel:"Guardar idea · gratis",
+      secondaryLabel:"Desarrollar ahora · "+COST.scripts5+" créd.",
+      validate:function(v){ return (v||"").trim().length<5 ? "Escribe una idea un poco más larga." : null; },
+      onSubmit:function(v){ saveIdeaRaw(v); },        // gratis
+      onSecondary:function(v){ developIdeaNow(v); }   // cuesta créditos
+    });
+  }
+  // T3: dejar de seguir un competidor, CON confirmación (control y libertad +
+  // prevención de errores). Reusa el confirmModal global (mismo patrón que borrar
+  // asistente). Optimista: lo quita de la lista y archiva en backend (204).
+  function untrackCreator(tid, handle){
+    var doIt=function(){
+      S.tracked=(S.tracked||[]).filter(function(x){ return String(x.id)!==String(tid); });
+      if(S.stats && S.stats.competitors>0) S.stats.competitors-=1;
+      render();
+      showToast("Dejaste de seguir a @"+handle+".");
+      apiDelete("/api/tracked-creators/"+encodeURIComponent(tid)).then(function(r){
+        if(!r.ok && !isDemo()){ showError("No pude dejar de seguir a @"+handle+". Reintenta."); loadTracked(); }
+      });
+    };
+    if(typeof window!=="undefined" && typeof window.confirmModal==="function"){
+      window.confirmModal({ title:"Dejar de seguir", body:"¿Dejar de seguir a @"+handle+"? Sus reels dejarán de aparecer en tu Radar.", confirmText:"Dejar de seguir", cancelText:"Cancelar", danger:true })
+        .then(function(ok){ if(ok) doIt(); });
+    } else { doIt(); }
+  }
+  // GRATIS: guarda la idea en bruto (status draft) sin desarrollar ni cobrar. No
+  // navega — captura sin fricción desde cualquier vista; el toast dice dónde quedó.
+  function saveIdeaRaw(txt){
+    txt=(txt||"").trim(); if(!txt) return;
+    if(isDemo()){ S.ideas.unshift(makeIdea(txt, txt.length+S.ideas.length)); render(); showToast("Idea guardada (gratis) · en Guiones › Sin desarrollar."); return; }
+    var tmp=makeIdea(txt, txt.length+S.ideas.length); tmp._saving=true; S.ideas.unshift(tmp); render();
+    showToast("Idea guardada (gratis) · en Guiones › Sin desarrollar.");
+    apiPost("/ideas",{raw_text:txt, language:rsLang(), develop:false}).then(function(r){
+      if(r.ok && r.d && r.d.id){ tmp.id=r.d.id; tmp._server=true; tmp._scriptsLoaded=true; tmp._saving=false; render(); }
+      else { tmp._saving=false; showToast((r.d&&r.d.error)||"No pude guardar la idea."); render(); }
+    });
+  }
+  // CUESTA créditos: guarda la idea y la desarrolla ya (5 guiones). Navega a Guiones
+  // para ver el resultado. Reutiliza gen5scripts (cobro + persistencia reales).
+  function developIdeaNow(txt){
+    txt=(txt||"").trim(); if(!txt) return;
+    if(isDemo()){
+      var idea=makeIdea(txt, txt.length+S.ideas.length); S.ideas.unshift(idea);
+      spend(COST.scripts5); for(var i=0;i<5;i++) idea.scripts.push(makeScript(idea.text,(idea.seed||0)+i));
+      bumpEco(5,0); S.tab="guiones"; render(); flashSpark(-COST.scripts5);
+      showToast("Idea desarrollada · 5 guiones listos."); return;
+    }
+    var tmp=makeIdea(txt, txt.length+S.ideas.length); tmp._saving=true; S.ideas.unshift(tmp); S.tab="guiones"; render();
+    showToast("Guardando y desarrollando…");
+    apiPost("/ideas",{raw_text:txt, language:rsLang(), develop:false}).then(function(r){
+      if(r.ok && r.d && r.d.id){ tmp.id=r.d.id; tmp._server=true; tmp._scriptsLoaded=true; tmp._saving=false; render(); gen5scripts(tmp.id); }
       else { tmp._saving=false; showToast((r.d&&r.d.error)||"No pude guardar la idea."); render(); }
     });
   }
@@ -1834,6 +1990,7 @@
     S._lastClickSel=actSelector(btn);   // T5: por si esta acción abre un diálogo — saber a quién devolver el foco
     if(act==="sheet-close") return closeSheet();
     if(act==="sheet-submit") return submitSheet();
+    if(act==="sheet-secondary") return submitSheetSecondary();
     if(act==="err-close"){ S.errMsg=null; var _te=document.getElementById("rsErr"); if(_te) _te.classList.remove("show"); return; }
     if(act==="tab") return switchTab(k);
     if(act==="legacy") return openLegacy(k);
@@ -1870,6 +2027,8 @@
       } else { if(nt){ S.ideas.unshift(makeIdea(nt, nt.length+S.ideas.length)); } render(); }
       return showToast("Tu próxima serie, lista para multiplicar en Ideas."); }
     if(act==="fillweek") return startFillWeek();
+    if(act==="idea-capture") return openIdeaCapture();
+    if(act==="untrack") return untrackCreator(id, btn.getAttribute("data-handle")||"");
     if(act==="seed-go") return seedIdea("rsIdeaSeed", true);
     if(act==="seed-add") return addSeedIdea();
     if(act==="gen5ideas") return gen5ideas(btn);
@@ -1988,6 +2147,7 @@
       if(res[3]) S.voice=res[3];   // perfil de voz real (moat) — null en demo dummy
       S.stats={ competitors:stats.competitors||0, reels_week:stats.reels_week||0, exploded_week:stats.exploded_week||0, stolen_today:stats.stolen_today!=null?stats.stolen_today:(stats.stolen_total||0) };
       S.reels=(feed.reels||[]).map(normReel);
+      loadTracked();   // T3: lista de competidores seguidos (manejable en Cerebro)
       S.favs={}; S.reels.forEach(function(r){ if(r.fav) S.favs[r.id]=true; });
       S._reelPool=S.reels.slice();   // pool base para variar feed por-marca en demo
       if(met){ S.metrics=met; S.igConnected=!!(met && met.connected); }
@@ -2087,6 +2247,9 @@
       try{ document.body.classList.add("rs-takeover"); }catch(e){}
       if(!S._wired){ document.addEventListener("click", onClick); document.addEventListener("keydown", onKeydown); window.addEventListener("resize", function(){ var d=S.device; setDevice(); if(d!==S.device) render(); }); S._wired=true; }
       loadAll();
-    }
+    },
+    // T2: puente para que el CRUD legacy de asistentes (modal en index.html)
+    // repinte la isla tras crear/editar/borrar. Seguro si la isla no está montada.
+    refresh:function(){ try{ render(); }catch(e){} }
   };
 })();
