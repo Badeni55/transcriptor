@@ -2010,9 +2010,10 @@
   window.RadarLoop={
     mount:function(){
       if(!root()) return;
-      // Demo takeover: la isla ocupa todo el workspace y oculta la chrome vieja
-      // (sidebar, subtabs). Solo en demo → producción mantiene su navegación.
-      if(isDemo()){ try{ document.body.classList.add("rs-takeover"); }catch(e){} }
+      // Takeover definitivo: la isla ocupa todo el workspace y oculta la chrome
+      // vieja (sidebar, subtabs). Las secciones legacy (Analizar/Configuración) se
+      // alcanzan desde el rail. Siempre activo (ya no solo en demo).
+      try{ document.body.classList.add("rs-takeover"); }catch(e){}
       if(!S._wired){ document.addEventListener("click", onClick); document.addEventListener("keydown", onKeydown); window.addEventListener("resize", function(){ var d=S.device; setDevice(); if(d!==S.device) render(); }); S._wired=true; }
       loadAll();
     }

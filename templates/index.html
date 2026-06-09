@@ -10221,6 +10221,9 @@
     body.rs-takeover .ideas-tabs,
     body.rs-takeover .prof-bottom-tab,
     body.rs-takeover #profSidebarNav { display:none !important; }
+    /* Excepción: las vistas legacy reparentadas en la isla (#rsLegacy) conservan su
+       .panel-header (lleva el título de la sección). El ID gana al hide de arriba. */
+    #rsLegacy .panel-header { display: revert !important; }
     body.rs-takeover .prof-main { padding:0 !important; margin:0 !important; max-width:none !important; width:100% !important; overflow:hidden !important; }
     body.rs-takeover #profPanelIdeas,
     body.rs-takeover #ideasPanelCompetitors { height:100%; width:100%; padding:0 !important; margin:0 !important; }
