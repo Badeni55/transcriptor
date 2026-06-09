@@ -212,15 +212,15 @@
     var navTabs = isAgency()
       ? [["portfolio",IC.layers,"Portfolio"],["dashboard",IC.grid,"Radar"],["ideas",IC.bulb,"Ideas"],["guiones",IC.doc,"Guiones"],["metrics",IC.chart,"Métricas"],["brain",IC.brain,"Cerebro"],["team",IC.users,"Equipo"]]
       : [["dashboard",IC.grid,"Radar"],["ideas",IC.bulb,"Ideas"],["guiones",IC.doc,"Guiones"],["metrics",IC.chart,"Métricas"],["brain",IC.brain,"Cerebro"]];
-    var av=initialsOf(S.user.handle||S.user.name||"R");
     return '<nav class="rail">'+
       '<img class="rail-logo" src="/static/img/branding/isotipo-128.png" srcset="/static/img/branding/isotipo-128.png 1x, /static/img/branding/isotipo-256.png 2x" alt="Reelscript">'+
       navTabs.map(function(t){return '<button class="rail-btn'+(S.tab===t[0]&&!S.legacy?" on":"")+'" data-act="tab" data-k="'+t[0]+'">'+t[1]+'<span class="tip">'+t[2]+'</span></button>';}).join("")+
       // Accesos a las secciones legacy reutilizadas (no son S.tab internos).
       '<button class="rail-btn'+(S.legacy==="transc"?" on":"")+'" data-act="legacy" data-k="transc" aria-label="Analizar">'+IC.mic+'<span class="tip">Analizar</span></button>'+
-      '<span class="rail-spacer"></span>'+
       '<button class="rail-btn'+(S.legacy==="settings"?" on":"")+'" data-act="legacy" data-k="settings" aria-label="Configuración">'+IC.gear+'<span class="tip">Configuración</span></button>'+
-      '<span class="rail-ava" title="'+ESC(S.user.name||"")+'">'+ESC(av)+'</span>'+
+      // El spacer va AL FINAL: top-ancla logo/tabs/Analizar/Configuración para que
+      // sean visibles también en la isla embebida (rail alto pre-takeover).
+      '<span class="rail-spacer"></span>'+
     '</nav>';
   }
   function cmdHTML(){
@@ -1182,7 +1182,7 @@
     var host=document.getElementById("rsLegacy"); if(host){ host.style.display="none"; host.innerHTML=""; }
     S.legacy=null;
   }
-  function closeLegacy(){ _exitLegacy(); render(); }
+  function closeLegacy(){ _exitLegacy(); S.tab="dashboard"; S.view="feed"; render(); }   // "Volver al radar" → Radar (dashboard)
   function openLegacy(k){
     if(S.legacy===k) return closeLegacy();   // toggle: re-pulsar cierra
     _exitLegacy();                           // por si había otra sección legacy abierta
