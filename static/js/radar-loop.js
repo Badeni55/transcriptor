@@ -500,22 +500,45 @@
      handlers existentes (seed-go, gen5ideas, explosion, gen5scripts, gen5hooks).
      Una sola acción primaria en Radar sigue siendo «Hazlo mío»: aquí todo es
      secundario/ghost. */
-  // T1: la fábrica de ideas (acordeón idea→guiones→hooks) vive en GUIONES. La
-  // captura suelta es global (bombilla de la command bar → openIdeaCapture). Aquí
-  // solo se DESARROLLAN: generar 5 ideas / explosión + el acordeón.
+  // T1+refino: la fábrica de ideas vive en GUIONES, en DOS grupos por estado:
+  //   · "Sin desarrollar" — ideas en bruto (gratis), sin guiones. Botón Desarrollar (cuesta).
+  //   · "Desarrolladas"   — acordeón idea→guiones→hooks.
+  // Una idea es la MISMA entidad: al desarrollarla gana guiones y cambia de grupo
+  // en el mismo sitio (no se duplica). Clasificamos por tener guiones/scripts.
+  function ideaIsDeveloped(idea){ return !!(idea && idea.scripts && idea.scripts.length>0); }
   function ideasZoneHTML(){
-    var n=S.ideas.length;
-    var list=n
-      ? '<div class="ideas-list">'+S.ideas.map(ideaBlockHTML).join("")+'</div>'
-      : '<div class="rs-empty" style="margin-top:14px">Aún no hay ideas. Pulsa 💡 «Apunta una idea» arriba, o genera 5 de golpe.</div>';
+    var ideas=S.ideas||[];
+    var raw=ideas.filter(function(i){ return !ideaIsDeveloped(i); });
+    var dev=ideas.filter(ideaIsDeveloped);
+    var rawList=raw.length
+      ? '<div class="ideas-list">'+raw.map(rawIdeaHTML).join("")+'</div>'
+      : '<div class="rs-empty" style="margin-top:10px">Nada pendiente. Apunta una idea con 💡 «Apunta una idea» (arriba).</div>';
+    var devList=dev.length
+      ? '<div class="ideas-list">'+dev.map(ideaBlockHTML).join("")+'</div>'
+      : '<div class="rs-empty" style="margin-top:10px">Aún ninguna desarrollada. Desarrolla una de arriba o genera 5 de golpe.</div>';
     return '<section class="ideas-zone">'+
-      '<div class="feed-head"><span class="feed-title">'+IC.bulb+' Ideas en desarrollo'+(n?' <span class="ct">· '+n+'</span>':'')+'</span>'+
+      '<div class="feed-head"><span class="feed-title">'+IC.bulb+' Sin desarrollar'+(raw.length?' <span class="ct">· '+raw.length+'</span>':'')+'</span>'+
         '<button class="btn btn-sm btn-secondary" data-act="gen5ideas">'+IC.spark+' 5 ideas</button>'+
       '</div>'+
-      '<p class="ideas-zone-sub">Cada idea se multiplica: idea → guiones → hooks. Lo que guardes aterriza en tus guiones.</p>'+
+      '<p class="ideas-zone-sub">Ideas en bruto, guardadas gratis. Desarrolla cuando quieras (cuesta '+COST.scripts5+' créditos).</p>'+
       '<button class="explosion-btn" data-act="explosion">💥 Explosión creativa<span>5 ideas × 5 guiones × 5 hooks — '+COST.explosion+' créditos</span></button>'+
-      list+
+      rawList+
+      '<div class="feed-head" style="margin-top:30px"><span class="feed-title">'+IC.doc+' Desarrolladas'+(dev.length?' <span class="ct">· '+dev.length+'</span>':'')+'</span></div>'+
+      devList+
     '</section>';
+  }
+  // Idea en bruto (sin desarrollar): texto + Desarrollar (indica el coste).
+  function rawIdeaHTML(idea){
+    var saving=!!idea._saving;
+    return '<div class="idea-block idea-raw"'+(saving?' style="opacity:.55"':'')+'>'+
+      '<div class="idea-block-head">'+
+        '<div class="idea-ic">'+IC.bulb+'</div>'+
+        '<div class="idea-text">'+ESC(idea.text)+'</div>'+
+        (saving
+          ? '<span class="idea-count"><span class="rs-ldr"></span>Guardando…</span>'
+          : '<button class="btn btn-sm btn-secondary" data-act="gen5scripts" data-id="'+idea.id+'" title="Genera 5 guiones a partir de esta idea (cuesta '+COST.scripts5+' créditos)">'+IC.bolt+' Desarrollar · '+COST.scripts5+' créd.</button>')+
+      '</div>'+
+    '</div>';
   }
 
   /* ════════════════════════════════════════════════════════════════
@@ -1090,6 +1113,9 @@
       '</div>'+
       '<div class="sheet-actions">'+
         '<button class="btn btn-md btn-ghost" data-act="sheet-close">Cancelar</button>'+
+        // Acción secundaria opcional (p.ej. «Desarrollar ahora» que CUESTA créditos),
+        // a la izquierda de la primaria para que la primaria gratis sea la prominente.
+        (sh.secondaryLabel?'<button class="btn btn-md btn-secondary" data-act="sheet-secondary">'+ESC(sh.secondaryLabel)+'</button>':'')+
         '<button class="btn btn-md btn-primary" data-act="sheet-submit">'+ESC(sh.submitLabel||"Aceptar")+'</button>'+
       '</div>'+
     '</div>';
@@ -1098,19 +1124,23 @@
   function promptSheet(opts){
     S.sheet={ title:opts.title, label:opts.label, placeholder:opts.placeholder, helper:opts.helper,
       multiline:!!opts.multiline, initial:opts.initial||"", submitLabel:opts.submitLabel,
-      _validate:opts.validate||null, _onSubmit:opts.onSubmit||null, error:null };
+      secondaryLabel:opts.secondaryLabel||null,
+      _validate:opts.validate||null, _onSubmit:opts.onSubmit||null, _onSecondary:opts.onSecondary||null, error:null };
     render();
     var inp=document.getElementById("rsSheetInput"); if(inp) inp.focus();
   }
   function closeSheet(){ S.sheet=null; render(); }
-  function submitSheet(){
+  // Lee+valida el input del sheet y, si pasa, lo cierra y ejecuta `cb(valor)`.
+  function _resolveSheet(cb){
     var sh=S.sheet; if(!sh) return;
     var inp=document.getElementById("rsSheetInput"); var v=inp?inp.value:"";
     var err=sh._validate?sh._validate(v):null;
     if(err){ sh.error=err; sh.initial=v; render(); var i2=document.getElementById("rsSheetInput"); if(i2) i2.focus(); return; }
-    var cb=sh._onSubmit; S.sheet=null; render();
+    S.sheet=null; render();
     if(cb) cb(v);
   }
+  function submitSheet(){ var sh=S.sheet; if(sh) _resolveSheet(sh._onSubmit); }
+  function submitSheetSecondary(){ var sh=S.sheet; if(sh) _resolveSheet(sh._onSecondary); }
   function teleprompterHTML(){
     var r=S.reel||{creator:{handle:""},script:{hook:"",beats:[],close:""}};
     var s=r.script||{hook:"",beats:[],close:""};
@@ -1507,15 +1537,22 @@
   // T1: captura global de ideas (bombilla de la command bar). Modal mínimo
   // reusando promptSheet (Esc cierra, Enter envía). Al desarrollar, la idea
   // aterriza en Guiones, donde vive la fábrica.
+  // Captura global de ideas (bombilla). Dos caminos claros:
+  //  · Primaria «Guardar idea» → GRATIS, la apunta en bruto (status draft) y la deja
+  //    en Guiones › Sin desarrollar. Enter dispara esta (la segura/gratis).
+  //  · Secundaria «Desarrollar ahora» → CUESTA créditos: la genera ya (5 guiones).
   function openIdeaCapture(){
     promptSheet({
       title:"Apunta una idea",
       label:"Tu idea",
-      placeholder:"Una idea suelta… la convertimos en guiones y hooks",
+      placeholder:"Una idea suelta… guárdala ahora, desarróllala cuando quieras",
       multiline:false,   // input de una línea → Enter envía (el handler salta textareas)
-      submitLabel:"Desarrollar",
+      helper:"Guardar es gratis. Desarrollar ahora cuesta "+COST.scripts5+" créditos.",
+      submitLabel:"Guardar idea · gratis",
+      secondaryLabel:"Desarrollar ahora · "+COST.scripts5+" créd.",
       validate:function(v){ return (v||"").trim().length<5 ? "Escribe una idea un poco más larga." : null; },
-      onSubmit:function(v){ captureIdeaText(v); }
+      onSubmit:function(v){ saveIdeaRaw(v); },        // gratis
+      onSecondary:function(v){ developIdeaNow(v); }   // cuesta créditos
     });
   }
   // T3: dejar de seguir un competidor, CON confirmación (control y libertad +
@@ -1536,13 +1573,32 @@
         .then(function(ok){ if(ok) doIt(); });
     } else { doIt(); }
   }
-  function captureIdeaText(txt){
+  // GRATIS: guarda la idea en bruto (status draft) sin desarrollar ni cobrar. No
+  // navega — captura sin fricción desde cualquier vista; el toast dice dónde quedó.
+  function saveIdeaRaw(txt){
     txt=(txt||"").trim(); if(!txt) return;
-    if(isDemo()){ S.ideas.unshift(makeIdea(txt, txt.length+S.ideas.length)); S.tab="guiones"; render(); showToast("Idea apuntada — desarróllala en Guiones."); return; }
-    var tmp=makeIdea(txt, txt.length+S.ideas.length); tmp._saving=true; S.ideas.unshift(tmp); S.tab="guiones"; render();
-    showToast("Idea apuntada en Guiones.");
+    if(isDemo()){ S.ideas.unshift(makeIdea(txt, txt.length+S.ideas.length)); render(); showToast("Idea guardada (gratis) · en Guiones › Sin desarrollar."); return; }
+    var tmp=makeIdea(txt, txt.length+S.ideas.length); tmp._saving=true; S.ideas.unshift(tmp); render();
+    showToast("Idea guardada (gratis) · en Guiones › Sin desarrollar.");
     apiPost("/ideas",{raw_text:txt, language:rsLang(), develop:false}).then(function(r){
       if(r.ok && r.d && r.d.id){ tmp.id=r.d.id; tmp._server=true; tmp._scriptsLoaded=true; tmp._saving=false; render(); }
+      else { tmp._saving=false; showToast((r.d&&r.d.error)||"No pude guardar la idea."); render(); }
+    });
+  }
+  // CUESTA créditos: guarda la idea y la desarrolla ya (5 guiones). Navega a Guiones
+  // para ver el resultado. Reutiliza gen5scripts (cobro + persistencia reales).
+  function developIdeaNow(txt){
+    txt=(txt||"").trim(); if(!txt) return;
+    if(isDemo()){
+      var idea=makeIdea(txt, txt.length+S.ideas.length); S.ideas.unshift(idea);
+      spend(COST.scripts5); for(var i=0;i<5;i++) idea.scripts.push(makeScript(idea.text,(idea.seed||0)+i));
+      bumpEco(5,0); S.tab="guiones"; render(); flashSpark(-COST.scripts5);
+      showToast("Idea desarrollada · 5 guiones listos."); return;
+    }
+    var tmp=makeIdea(txt, txt.length+S.ideas.length); tmp._saving=true; S.ideas.unshift(tmp); S.tab="guiones"; render();
+    showToast("Guardando y desarrollando…");
+    apiPost("/ideas",{raw_text:txt, language:rsLang(), develop:false}).then(function(r){
+      if(r.ok && r.d && r.d.id){ tmp.id=r.d.id; tmp._server=true; tmp._scriptsLoaded=true; tmp._saving=false; render(); gen5scripts(tmp.id); }
       else { tmp._saving=false; showToast((r.d&&r.d.error)||"No pude guardar la idea."); render(); }
     });
   }
@@ -1934,6 +1990,7 @@
     S._lastClickSel=actSelector(btn);   // T5: por si esta acción abre un diálogo — saber a quién devolver el foco
     if(act==="sheet-close") return closeSheet();
     if(act==="sheet-submit") return submitSheet();
+    if(act==="sheet-secondary") return submitSheetSecondary();
     if(act==="err-close"){ S.errMsg=null; var _te=document.getElementById("rsErr"); if(_te) _te.classList.remove("show"); return; }
     if(act==="tab") return switchTab(k);
     if(act==="legacy") return openLegacy(k);

@@ -179,14 +179,15 @@ async function main() {
   })()`);
   check("único .btn-primary sobre el fold = «Hazlo mío»", t1.n === 1 && /Hazlo mío/.test(t1.labels?.[0] || ""), JSON.stringify(t1));
 
-  /* ═══ T3: bombilla global → modal de captura → Enter crea la idea (en Guiones) ═══ */
+  /* ═══ T3: bombilla → modal → Enter «Guardar idea» (gratis) → en Guiones › Sin desarrollar ═══ */
   console.log("\n■ T3 · teclado");
   await click('[data-act="idea-capture"]'); await sleep(250);
   await evaluate(`(function(){ var i=document.getElementById('rsSheetInput'); if(i){ i.value='Idea de prueba desde harness'; i.focus(); } })()`);
-  await key("Enter");
+  await key("Enter");        // Enter → acción primaria GRATIS «Guardar idea»
   await sleep(400);
-  const onIdeas = await evaluate(`!!document.querySelector('#radarRoot .ideas-list') && document.body.textContent.indexOf('Idea de prueba desde harness')>-1`);
-  check("bombilla → Enter en el modal crea la idea (en Guiones)", onIdeas);
+  await click('[data-act="tab"][data-k="guiones"]'); await sleep(300);
+  const onIdeas = await evaluate(`!!document.querySelector('#radarRoot .ideas-zone') && document.body.textContent.indexOf('Idea de prueba desde harness')>-1`);
+  check("bombilla → «Guardar idea» (gratis) aparece en Guiones", onIdeas);
 
   // overlay + Esc: robar desde Dashboard
   trace("T3: tab dashboard");
