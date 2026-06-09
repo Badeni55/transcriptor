@@ -7197,6 +7197,18 @@
     }
     .trans-url:hover { color: var(--brand-500); gap: 7px; }
     .trans-url svg { flex-shrink: 0; opacity: .7; }
+    /* T3 (isla-v2): autor del reel analizado, junto a la plataforma. */
+    .trans-author {
+      display: inline-flex; align-items: center;
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 500;
+      color: var(--ink-cream);
+      padding: 2px 8px; border-radius: 5px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      flex-shrink: 0;
+    }
+    [data-theme="light"] .trans-author { background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.08); }
     .trans-meta {
       display: inline-flex; align-items: center; gap: 8px;
       font-family: var(--font-mono);
@@ -9798,6 +9810,11 @@
     .rs .explosion-btn span { font-size:12px; font-weight:600; color:var(--text-secondary); }
     .rs .ideas-list { padding:0 40px 40px; display:flex; flex-direction:column; gap:14px; margin-top:18px; }
     .rs--mobile .ideas-list { padding:0 18px 30px; }
+    /* T1: Fábrica de ideas embebida en Radar — dentro del .canvas (que ya pone su
+       propio padding), así que la lista no necesita el padding lateral de la página suelta. */
+    .rs .ideas-zone { margin-top:8px; }
+    .rs .ideas-zone .ideas-list { padding:0; }
+    .rs .ideas-zone-sub { color:var(--text-secondary); font-size:13.5px; margin:12px 0 16px; }
     .rs .idea-block { border:1px solid var(--border-default); border-radius:16px; background:var(--surface-raised); overflow:hidden; }
     .rs .idea-block-head { display:flex; align-items:center; gap:12px; padding:15px 16px; }
     .rs .idea-ic { width:34px; height:34px; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:color-mix(in srgb, var(--brand-500) 14%, transparent); color:var(--brand-400); }
@@ -15998,6 +16015,11 @@ window.rsActivateLegacySection = function(kind) {
     if (kind === "transc") {
       if (typeof renderProfTransc === "function") renderProfTransc();
       if (typeof loadHistory === "function") loadHistory().then(function(){ try { renderProfTransc(); } catch(e){} });
+    } else if (kind === "assistants") {
+      // T2 (isla-v2): gestión de asistentes embebida en Cerebro. Mismo patrón que
+      // transc: pinta con la cache actual y refresca cuando /assistants resuelve.
+      if (typeof renderProfAssistants === "function") renderProfAssistants();
+      if (typeof loadAssistants === "function") loadAssistants().then(function(){ try { renderProfAssistants(); } catch(e){} });
     } else if (kind === "settings") {
       try { highlightActiveLang(); } catch(e){}
       try { applyTheme(themePref); } catch(e){}
@@ -16697,6 +16719,7 @@ function renderTranscCardHTML(it, opts) {
   const LBL_FULL   = lang === "en" ? "VIEW FULL TEXT" : "VER TEXTO COMPLETO";
   const LBL_COLL   = lang === "en" ? "COLLAPSE" : "COLAPSAR";
   const LBL_SAVED  = lang === "en" ? "Saved in Transcriptions" : "Guardada en Transcripciones";
+  const LBL_ADDCOMP = lang === "en" ? "+ Track competitor" : "+ Seguir competidor";
 
   const text = it.text || "";
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
@@ -16708,6 +16731,10 @@ function renderTranscCardHTML(it, opts) {
   const urlFull = esc(it.url || "");
   const id = it.id;
   const autoTitle = esc(transAutoTitle(text)) || platLabel;
+  // T3 (isla-v2): autor del reel analizado → reconocer el reel + "seguir como
+  // competidor" en un clic (reusa el modal openAddCompetitorModal prefijado).
+  const author = (it.author_username || "").replace(/^@/, "");
+  const authorEsc = esc(author);
 
   const thumbHtml = it.thumbnail_b64
     ? `<img class="trans-thumb" src="${it.thumbnail_b64}" alt="" loading="lazy">`
@@ -16744,6 +16771,7 @@ function renderTranscCardHTML(it, opts) {
           </div>
           <div class="trans-card-head">
             <span class="trans-plat ${platClass}">${platLabel}</span>
+            ${author ? `<span class="trans-author" title="Autor del reel">@${authorEsc}</span>` : ""}
             ${urlFull ? `<a class="trans-url" href="${urlFull}" target="_blank" rel="noopener" title="${urlFull}" onclick="event.stopPropagation()">
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M3 3 H7 V7 M7 3 L3 7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
               ${urlShort}
@@ -16778,6 +16806,7 @@ function renderTranscCardHTML(it, opts) {
         <button class="trans-act" onclick="cpHist(${id},this)">${LBL_COPY}</button>
         <button class="trans-act mob-hide" onclick="tpOpenFromTransc(${id})">${LBL_TP}</button>
         <button class="trans-act mob-hide" onclick="saveTranscToProject(${id})">${LBL_PROJ}</button>
+        ${author ? `<button class="trans-act mob-hide" onclick="openAddCompetitorModal('${authorEsc}')" title="Seguir a @${authorEsc} en tu Radar">${LBL_ADDCOMP}</button>` : ""}
         <button class="trans-act danger mob-hide" onclick="delItem(${id},this);setTimeout(()=>{renderProfTransc();if(typeof loadOverviewMiniGrid==='function')loadOverviewMiniGrid()},300)">${LBL_DEL}</button>
         <button class="trans-more" onclick="openCardActions(${id},'transc')" aria-label="More">···</button>
       </div>

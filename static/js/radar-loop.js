@@ -232,9 +232,11 @@
       '</div>';
   }
   function railHTML(){
+    // Ideas ya no es un tab suelto: la "Fábrica de ideas" vive dentro de Radar
+    // (dashboardHTML → ideasZoneHTML), bajo las señales del día.
     var navTabs = isAgency()
-      ? [["portfolio",IC.layers,"Portfolio"],["dashboard",IC.grid,"Radar"],["ideas",IC.bulb,"Ideas"],["guiones",IC.doc,"Guiones"],["metrics",IC.chart,"Métricas"],["brain",IC.brain,"Cerebro"],["team",IC.users,"Equipo"]]
-      : [["dashboard",IC.grid,"Radar"],["ideas",IC.bulb,"Ideas"],["guiones",IC.doc,"Guiones"],["metrics",IC.chart,"Métricas"],["brain",IC.brain,"Cerebro"]];
+      ? [["portfolio",IC.layers,"Portfolio"],["dashboard",IC.grid,"Radar"],["guiones",IC.doc,"Guiones"],["metrics",IC.chart,"Métricas"],["brain",IC.brain,"Cerebro"],["team",IC.users,"Equipo"]]
+      : [["dashboard",IC.grid,"Radar"],["guiones",IC.doc,"Guiones"],["metrics",IC.chart,"Métricas"],["brain",IC.brain,"Cerebro"]];
     return '<nav class="rail">'+
       '<img class="rail-logo" src="/static/img/branding/isotipo-128.png" srcset="/static/img/branding/isotipo-128.png 1x, /static/img/branding/isotipo-256.png 2x" alt="Reelscript">'+
       navTabs.map(function(t){return '<button class="rail-btn'+(S.tab===t[0]&&!S.legacy?" on":"")+'" data-act="tab" data-k="'+t[0]+'">'+t[1]+'<span class="tip">'+t[2]+'</span></button>';}).join("")+
@@ -317,15 +319,6 @@
       (nx.message?'<p class="ns-msg">'+ESC(nx.message)+'</p>':'')+
       '<div class="ns-actions"><button class="btn btn-md '+btnCls+'" data-act="next-series-go" data-title="'+ESC(nx.title||"")+'">'+IC.bolt+' Desarrollar esta serie</button></div>'+
     '</article>';
-  }
-
-  function ideaInputHTML(){
-    return ''+
-    '<div class="idea-launch">'+
-      '<div class="idea-launch-ic">'+IC.bulb+'</div>'+
-      '<input class="idea-launch-input" id="rsIdeaSeed" placeholder="Tienes una idea suelta? Escríbela y la convertimos en guiones…" />'+
-      '<button class="btn btn-md btn-secondary" data-act="seed-go">'+IC.bolt+' Desarrollar</button>'+
-    '</div>';
   }
 
   function whaleHTML(count){
@@ -471,8 +464,8 @@
       return '<div class="scroll"><div class="canvas">'+head+(isAgency()?brandTabsHTML():"")+statbarHTML()+
         voiceOnboardCardHTML()+   // B6: en first-run sin reels, el banner de voz es lo primero que aporta
         nextSeriesHTML("dash")+   // B1+T1: CTA secundario en el Dashboard
-        '<div class="plays">'+ideaInputHTML()+'</div>'+
         '<div class="rs-empty">'+(S.filter==="fav"?"Sin favoritos aún. Toca la estrella en una señal.":"Sin reels todavía. Añade un competidor o pega un reel para empezar.")+'</div>'+
+        ideasZoneHTML()+          // T1: la Fábrica de ideas vive aquí (antes era un tab del rail)
       '</div></div>';
     }
 
@@ -491,9 +484,34 @@
       opportunityHTML(hero)+
       voiceOnboardCardHTML()+   // B6+T1: banner de voz BAJO la oportunidad — no empuja el hero bajo el fold
       nextSeriesHTML("dash")+   // B1+T1: "tu próxima serie" con CTA secundario en el Dashboard
-      '<div class="plays">'+ideaInputHTML()+(S.reels.length?whaleHTML(fillCount):"")+'</div>'+
+      (S.reels.length?'<div class="plays">'+whaleHTML(fillCount)+'</div>':'')+
       (rest.length?('<div class="feed-head"><span class="feed-title">Más señales <span class="ct">· '+rest.length+'</span></span>'+filtersHTML()+'</div><div class="feed">'+rows+'</div>'+moreToggle):"")+
+      ideasZoneHTML()+          // T1: Fábrica de ideas, en zona propia bajo las señales del día
     '</div></div>';
+  }
+
+  /* T1 · Fábrica de ideas embebida en Radar — input suelto + generadores +
+     lista acordeón (idea → guiones → hooks). Reutiliza ideaBlockHTML y los
+     handlers existentes (seed-go, gen5ideas, explosion, gen5scripts, gen5hooks).
+     Una sola acción primaria en Radar sigue siendo «Hazlo mío»: aquí todo es
+     secundario/ghost. */
+  function ideasZoneHTML(){
+    var n=S.ideas.length;
+    var list=n
+      ? '<div class="ideas-list">'+S.ideas.map(ideaBlockHTML).join("")+'</div>'
+      : '<div class="rs-empty" style="margin-top:14px">Aún no hay ideas. Escribe una arriba, pulsa «5 ideas» o lanza una explosión.</div>';
+    return '<section class="ideas-zone">'+
+      '<div class="feed-head"><span class="feed-title">'+IC.bulb+' Fábrica de ideas'+(n?' <span class="ct">· '+n+'</span>':'')+'</span></div>'+
+      '<p class="ideas-zone-sub">Apunta una idea suelta y multiplícala: idea → guiones → hooks. Guarda los que te convenzan.</p>'+
+      '<div class="idea-launch">'+
+        '<div class="idea-launch-ic">'+IC.bulb+'</div>'+
+        '<input class="idea-launch-input" id="rsIdeaSeed" placeholder="Tienes una idea suelta? Escríbela y la convertimos en guiones…" />'+
+        '<button class="btn btn-md btn-secondary" data-act="seed-go">'+IC.bolt+' Desarrollar</button>'+
+        '<button class="btn btn-md btn-secondary" data-act="gen5ideas">'+IC.spark+' 5 ideas</button>'+
+      '</div>'+
+      '<button class="explosion-btn" data-act="explosion">💥 Explosión creativa<span>5 ideas × 5 guiones × 5 hooks — '+COST.explosion+' créditos</span></button>'+
+      list+
+    '</section>';
   }
 
   /* ════════════════════════════════════════════════════════════════
@@ -543,20 +561,6 @@
   }
   function makeIdea(text, seed){ return { id:gid("id"), text:text, scripts:[], expanded:true, seed:seed }; }
 
-  function ideasHTML(){
-    var head='<div class="canvas ideas-pad">'+
-      pheadHTML("Ideas · @"+(brand().handle||S.user.handle||""), "Fábrica de ideas", "Apunta una idea suelta y multiplícala. Idea → guiones → hooks. Guarda los que te convenzan.")+
-      '<div class="idea-launch"><div class="idea-launch-ic">'+IC.bulb+'</div>'+
-        '<input class="idea-launch-input" id="rsIdeaSeed2" placeholder="Apunta una idea rápida…" />'+
-        '<button class="btn btn-md btn-secondary" data-act="seed-add">Añadir</button>'+
-        '<button class="btn btn-md btn-primary" data-act="gen5ideas">'+IC.spark+' 5 ideas</button>'+
-      '</div>'+
-      '<button class="explosion-btn" data-act="explosion">💥 Explosión creativa<span>5 ideas × 5 guiones × 5 hooks — '+COST.explosion+' créditos</span></button>';
-    var list=S.ideas.length===0
-      ? '<div class="rs-empty" style="margin-top:24px">Aún no hay ideas. Escribe una arriba o pulsa “5 ideas”.</div>'
-      : '<div class="ideas-list">'+S.ideas.map(ideaBlockHTML).join("")+'</div>';
-    return '<div class="scroll">'+head+list+'</div></div>';
-  }
   function ideaBlockHTML(idea){
     var n=idea.scripts.length;
     var open=idea.expanded!==false;
@@ -858,6 +862,8 @@
     var nGuiones=S.guiones.filter(function(g){return g.status!=="discarded";}).length;
     var nPublished=(S.metrics&&S.metrics.videos)?S.metrics.videos.length:0;
     var learned=(S.metrics&&S.metrics.learned)||[];
+    // userAssistants es global (index.html); typeof-guard por si aún no cargó.
+    var nAsst=0; try{ if(typeof userAssistants!=="undefined" && Array.isArray(userAssistants)) nAsst=userAssistants.length; }catch(e){}
 
     var sources=[
       [b.reelsAnalyzed||0,"reels tuyos leídos","de aquí modelo tu voz","var(--brand-500)"],
@@ -899,6 +905,15 @@
         '<div class="voice-row"><span class="voice-k">Estructura</span><span class="voice-val">'+ESC(v.estructura)+'</span></div>'+
         '<div class="voice-row"><span class="voice-k">Duración</span><span class="voice-val">'+ESC(v.duracion)+'</span></div>'+
         '<div class="voice-row"><span class="voice-k">Evito</span><span class="voice-val">'+ESC(v.evita)+'</span></div>'+
+      '</div>'+
+      // T2: tus asistentes — estilos propios para guionizar. La gestión completa
+      // (listar/crear/editar/borrar) reutiliza el panel legacy #profPanelAssistants,
+      // reparentado en la isla igual que Analizar/Configuración (data-act="legacy").
+      '<div class="brain-section-t">Tus asistentes'+(nAsst?' <span class="brain-tag">'+nAsst+'</span>':'')+'</div>'+
+      '<div class="whale">'+
+        '<div class="wicon">🧠</div>'+
+        '<div class="wtext"><h4>Estilos propios para guionizar</h4><p>Asistentes con tu tono y tus reglas. Aparecen al «Hazlo mío» y al desarrollar ideas.'+(nAsst?'':' Aún no tienes ninguno — crea el primero.')+'</p></div>'+
+        '<button class="btn btn-md btn-secondary" data-act="legacy" data-k="assistants">'+IC.gear+' Gestionar</button>'+
       '</div>'+
       // lo que funciona (métricas)
       '<div class="brain-section-t">Lo que funciona en tu cuenta'+(learned.length?' <span class="brain-tag">de tus métricas</span>':'')+'</div>'+
@@ -1086,11 +1101,13 @@
         '<div class="rs-toast rs-err" id="rsErr" role="alert" aria-live="assertive"><span class="tdot err"></span><span id="rsErrMsg"></span><button class="rs-err-x" data-act="err-close" title="Cerrar" aria-label="Cerrar el error">'+IC.x+'</button></div>';
       view=document.getElementById("rsView");
     }
+    // T1: "ideas" dejó de ser una vista propia — la Fábrica de ideas vive dentro
+    // de Radar. Normalizamos cualquier ruta/deep-link heredado (/profile/ideas, ?t=ideas).
+    if(S.tab==="ideas") S.tab="dashboard";
     var html='';
     html+=railHTML()+'<div class="work">'+cmdHTML();
     if(S.tab==="portfolio") html+=(isAgency()?portfolioHTML():dashboardHTML());
     else if(S.tab==="dashboard") html+=dashboardHTML();
-    else if(S.tab==="ideas") html+=ideasHTML();
     else if(S.tab==="guiones") html+=guionesHTML();
     else if(S.tab==="metrics") html+=metricsHTML();
     else if(S.tab==="brain") html+=brainHTML();
@@ -1188,7 +1205,7 @@
      chrome a un host estable de la isla (#rsLegacy), lo activamos con el JS legacy
      vía window.rsActivateLegacySection, y lo devolvemos a su sitio al salir. Así la
      isla expone el acceso sin reescribir esas vistas. ── */
-  function _legacyPanelId(k){ return k==="transc" ? "profPanelTransc" : (k==="settings" ? "profPanelSettings" : null); }
+  function _legacyPanelId(k){ return k==="transc" ? "profPanelTransc" : (k==="settings" ? "profPanelSettings" : (k==="assistants" ? "profPanelAssistants" : null)); }
   function mountLegacy(k){
     var host=document.getElementById("rsLegacy"); if(!host) return;
     var pid=_legacyPanelId(k); var panel=pid&&document.getElementById(pid); if(!panel) return;
@@ -2020,7 +2037,7 @@
     if(seg==="transc"||seg==="transcriptions"){ S._pendingLegacy="transc"; return; }
     if(seg==="settings"){ S._pendingLegacy="settings"; return; }
     // Cualquier /profile/<x> con sección → tab del rail. Sin equivalente → "dashboard" (Radar).
-    S.tab = ({scripts:"guiones", guiones:"guiones", ideas:"ideas", metrics:"metrics",
+    S.tab = ({scripts:"guiones", guiones:"guiones", ideas:"dashboard", metrics:"metrics",
               brain:"brain", cerebro:"brain", portfolio:"portfolio", team:"team",
               radar:"dashboard", overview:"dashboard", dashboard:"dashboard"})[seg] || "dashboard";
   }

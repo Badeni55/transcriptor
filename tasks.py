@@ -16,26 +16,45 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
-def _download_thumbnail_b64(url):
-    """Download an image URL and return it as a small data-URL base64 JPEG."""
+def _download_thumbnail_b64(url, attempts=2):
+    """Download an image URL and return it as a small data-URL base64 JPEG.
+
+    Hardened (isla-v2 T3): los thumbnails NULL del 2026-06-09 fueron fallos
+    TRANSITORIOS de descarga (la misma displayUrl de Apify baja 200/JPEG al
+    reintentar). El CDN de Instagram a veces 403ea o corta peticiones en ráfaga
+    (varias transcripciones seguidas). Mitigamos con (1) cabeceras de navegador
+    + Referer y (2) un reintento con backoff. Si aun así falla, devolvemos None
+    y la UI degrada a un placeholder limpio.
+    """
     if not url:
         return None
-    try:
-        from PIL import Image
-        from io import BytesIO
-        import base64
-        r = requests.get(url, timeout=10)
-        r.raise_for_status()
-        img = Image.open(BytesIO(r.content))
-        img.thumbnail((320, 400))
-        if img.mode in ("RGBA", "P"):
-            img = img.convert("RGB")
-        buf = BytesIO()
-        img.save(buf, format="JPEG", quality=75, optimize=True)
-        return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
-    except Exception as e:
-        logger.warning("Thumbnail download failed for %s: %s", url, e)
-        return None
+    from PIL import Image
+    from io import BytesIO
+    import base64
+    headers = {
+        "User-Agent": ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                       "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"),
+        "Referer": "https://www.instagram.com/",
+        "Accept": "image/avif,image/webp,image/jpeg,image/png,*/*",
+    }
+    last_err = None
+    for attempt in range(max(1, attempts)):
+        try:
+            r = requests.get(url, timeout=12, headers=headers)
+            r.raise_for_status()
+            img = Image.open(BytesIO(r.content))
+            img.thumbnail((320, 400))
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+            buf = BytesIO()
+            img.save(buf, format="JPEG", quality=75, optimize=True)
+            return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
+        except Exception as e:
+            last_err = e
+            if attempt + 1 < attempts:
+                time.sleep(0.8)
+    logger.warning("Thumbnail download failed for %s after %d attempts: %s", url, attempts, last_err)
+    return None
 
 REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 
@@ -320,7 +339,19 @@ def _apify_instagram(url, output_dir):
     video_url = item.get("videoUrl") or item.get("video_url")
     if not video_url:
         raise ValueError("No se encontró videoUrl en la respuesta de Apify")
-    thumbnail_url = item.get("displayUrl") or item.get("display_url") or item.get("thumbnailUrl")
+    # Apify devuelve la imagen en displayUrl casi siempre; cubrimos también las
+    # variantes conocidas (carruseles → childPosts, lotes → images) por robustez.
+    thumbnail_url = (item.get("displayUrl") or item.get("display_url")
+                     or item.get("thumbnailUrl") or item.get("imageUrl"))
+    if not thumbnail_url:
+        imgs = item.get("images") or []
+        if imgs:
+            first = imgs[0]
+            thumbnail_url = first if isinstance(first, str) else (first.get("url") if isinstance(first, dict) else None)
+    if not thumbnail_url:
+        childs = item.get("childPosts") or []
+        if childs and isinstance(childs[0], dict):
+            thumbnail_url = childs[0].get("displayUrl") or childs[0].get("display_url")
     video_path = os.path.join(output_dir, "video.mp4")
     with requests.get(video_url, stream=True, timeout=60) as r:
         r.raise_for_status()
