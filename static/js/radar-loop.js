@@ -28,6 +28,11 @@
       .then(function(res){ return res.json().catch(function(){return null;}).then(function(d){ return {ok:res.ok, status:res.status, d:d}; }); })
       .catch(function(){ return {ok:false, status:0, d:null}; });
   }
+  function apiDelete(url){
+    return fetch(url,{method:"DELETE",credentials:"same-origin"})
+      .then(function(res){ return res.json().catch(function(){return{};}).then(function(d){ return {ok:res.ok, status:res.status, d:d||{}}; }); })
+      .catch(function(){ return {ok:false, status:0, d:{error:"network"}}; });
+  }
   // En prod el backend es la FUENTE DE VERDAD de créditos: las respuestas de
   // generación traen `credits` (= credits_available). Reflejamos ese saldo en la
   // pill sin descontar local (evita doble-cobro). flashSpark queda cosmético.
@@ -853,6 +858,13 @@
     var by={}; (S.reels||[]).forEach(function(r){ var h=r.creator&&r.creator.handle; if(!h) return; by[h]=(by[h]||0)+1; });
     return Object.keys(by).map(function(h){ return {handle:h, n:by[h]}; }).sort(function(a,b){return b.n-a.n;});
   }
+  // T3: lista REAL de competidores seguidos (con id de tracking → permite dejar de
+  // seguir). Se carga aparte del feed; al resolver, repinta Cerebro si está abierto.
+  function loadTracked(){
+    apiGet("/api/tracked-creators").then(function(r){
+      if(r.ok && r.d && Array.isArray(r.d.tracked)){ S.tracked=r.d.tracked; if(S.tab==="brain") render(); }
+    });
+  }
   function brainHTML(){
     var b=brand();
     var v=brainVoice(b);
@@ -877,9 +889,27 @@
     var learnList=learned.length
       ? learned.map(function(l){ return '<div class="learn-item">'+IC.check+'<span>'+ESC(l)+'</span></div>'; }).join("")
       : '<div class="learn-item" style="opacity:.6">Conecta Instagram en Métricas y empezaré a ver qué funciona en tu cuenta.</div>';
-    var compList=comps.length
-      ? comps.map(function(c){ return '<div class="brain-comp"><div class="ava bava">'+ESC(initialsOf(c.handle))+'</div><span class="brain-comp-h">@'+ESC(c.handle)+'</span><span class="brain-comp-n">'+c.n+' reels analizados</span></div>'; }).join("")
-      : '<div class="rs-empty" style="padding:20px">Aún no sigues a nadie. Añade competidores en el Dashboard.</div>';
+    // T3: si tenemos la lista REAL de seguidos (con id), la mostramos con acción de
+    // dejar de seguir. Sin ella aún (cargando), caemos al derivado de reels (read-only).
+    var tracked = Array.isArray(S.tracked) ? S.tracked : null;
+    var compList;
+    if(tracked){
+      compList = tracked.length
+        ? tracked.map(function(t){
+            var h=(t.creator&&t.creator.ig_username)||t.ig_username||"";
+            var n=(t.reels_count!=null)?(t.reels_count+' reel'+(t.reels_count===1?'':'es')):'';
+            return '<div class="brain-comp"><div class="ava bava">'+ESC(initialsOf(h))+'</div>'+
+              '<span class="brain-comp-h">@'+ESC(h)+'</span>'+
+              '<span class="brain-comp-n">'+ESC(n)+'</span>'+
+              '<button class="brain-comp-x" data-act="untrack" data-id="'+ESC(String(t.id))+'" data-handle="'+ESC(h)+'" title="Dejar de seguir a @'+ESC(h)+'" aria-label="Dejar de seguir a @'+ESC(h)+'">'+IC.x+'</button>'+
+            '</div>';
+          }).join("")
+        : '<div class="rs-empty" style="padding:20px">Aún no sigues a ningún competidor. Añádelos desde el Radar o un análisis.</div>';
+    } else {
+      compList = comps.length
+        ? comps.map(function(c){ return '<div class="brain-comp"><div class="ava bava">'+ESC(initialsOf(c.handle))+'</div><span class="brain-comp-h">@'+ESC(c.handle)+'</span><span class="brain-comp-n">'+c.n+' reels analizados</span></div>'; }).join("")
+        : '<div class="rs-empty" style="padding:20px">Aún no sigues a nadie. Añade competidores en el Dashboard.</div>';
+    }
 
     return '<div class="scroll"><div class="canvas">'+
       pheadHTML("Cerebro · @"+(b.handle||S.user.handle||""), "El cerebro de "+b.name, "Todo lo que el sistema sabe de esta marca, y cómo crece. Cuanto más creas y publicas, más tuyo suena todo.")+
@@ -1224,7 +1254,7 @@
     if(isDemo() && t!=="portfolio" && t!=="team") applyDemoBrand();
     // T2: al entrar en Cerebro, asegura la lista de asistentes fresca (loadAssistants
     // refresca la isla vía RadarLoop.refresh al resolver).
-    if(t==="brain"){ try{ if(typeof loadAssistants==="function") loadAssistants(); }catch(e){} }
+    if(t==="brain"){ try{ if(typeof loadAssistants==="function") loadAssistants(); }catch(e){} loadTracked(); }
     render();
   }
 
@@ -1487,6 +1517,24 @@
       validate:function(v){ return (v||"").trim().length<5 ? "Escribe una idea un poco más larga." : null; },
       onSubmit:function(v){ captureIdeaText(v); }
     });
+  }
+  // T3: dejar de seguir un competidor, CON confirmación (control y libertad +
+  // prevención de errores). Reusa el confirmModal global (mismo patrón que borrar
+  // asistente). Optimista: lo quita de la lista y archiva en backend (204).
+  function untrackCreator(tid, handle){
+    var doIt=function(){
+      S.tracked=(S.tracked||[]).filter(function(x){ return String(x.id)!==String(tid); });
+      if(S.stats && S.stats.competitors>0) S.stats.competitors-=1;
+      render();
+      showToast("Dejaste de seguir a @"+handle+".");
+      apiDelete("/api/tracked-creators/"+encodeURIComponent(tid)).then(function(r){
+        if(!r.ok && !isDemo()){ showError("No pude dejar de seguir a @"+handle+". Reintenta."); loadTracked(); }
+      });
+    };
+    if(typeof window!=="undefined" && typeof window.confirmModal==="function"){
+      window.confirmModal({ title:"Dejar de seguir", body:"¿Dejar de seguir a @"+handle+"? Sus reels dejarán de aparecer en tu Radar.", confirmText:"Dejar de seguir", cancelText:"Cancelar", danger:true })
+        .then(function(ok){ if(ok) doIt(); });
+    } else { doIt(); }
   }
   function captureIdeaText(txt){
     txt=(txt||"").trim(); if(!txt) return;
@@ -1923,6 +1971,7 @@
       return showToast("Tu próxima serie, lista para multiplicar en Ideas."); }
     if(act==="fillweek") return startFillWeek();
     if(act==="idea-capture") return openIdeaCapture();
+    if(act==="untrack") return untrackCreator(id, btn.getAttribute("data-handle")||"");
     if(act==="seed-go") return seedIdea("rsIdeaSeed", true);
     if(act==="seed-add") return addSeedIdea();
     if(act==="gen5ideas") return gen5ideas(btn);
@@ -2041,6 +2090,7 @@
       if(res[3]) S.voice=res[3];   // perfil de voz real (moat) — null en demo dummy
       S.stats={ competitors:stats.competitors||0, reels_week:stats.reels_week||0, exploded_week:stats.exploded_week||0, stolen_today:stats.stolen_today!=null?stats.stolen_today:(stats.stolen_total||0) };
       S.reels=(feed.reels||[]).map(normReel);
+      loadTracked();   // T3: lista de competidores seguidos (manejable en Cerebro)
       S.favs={}; S.reels.forEach(function(r){ if(r.fav) S.favs[r.id]=true; });
       S._reelPool=S.reels.slice();   // pool base para variar feed por-marca en demo
       if(met){ S.metrics=met; S.igConnected=!!(met && met.connected); }

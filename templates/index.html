@@ -146,6 +146,13 @@
         return Promise.resolve(J({competitors:bs.competitors,reels_week:bs.reels_week,exploded_week:bs.exploded_week,stolen_today:0,stolen_total:SCRIPTS.length,enabled:true}));
       }
       if (path==='/api/tracked-creators' && method==='GET') return Promise.resolve(J({tracked:TRACKED, limits:{enabled:true, base_slots_global:5}, plan:'agency'}));
+      // isla-v2 T3: dejar de seguir un competidor (demo: lo quita de TRACKED para que persista en la sesión).
+      if (/^\/api\/tracked-creators\/[^/]+$/.test(path) && method==='DELETE'){
+        var _tid=path.split('/').pop();
+        var _i=TRACKED.findIndex(function(t){return String(t.id)===String(_tid);});
+        if(_i>=0) TRACKED.splice(_i,1);
+        return Promise.resolve(new Response(null,{status:204}));
+      }
       if (path==='/api/tracked-creators/reels'){
         // marca b1 → set completo; b2/b3 → subconjuntos (menos contexto).
         var list=REELS;
@@ -10029,6 +10036,11 @@
     .rs .brain-comp { display:flex; align-items:center; gap:11px; padding:12px 14px; border:1px solid var(--border-default); border-radius:12px; background:var(--surface-raised); }
     .rs .brain-comp-h { font-size:13.5px; font-weight:600; }
     .rs .brain-comp-n { margin-left:auto; font-size:12px; color:var(--text-tertiary); }
+    /* T3: dejar de seguir competidor. */
+    .rs .brain-comp-x { flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:8px; border:1px solid transparent; background:transparent; color:var(--text-tertiary); cursor:pointer; transition:color .15s, border-color .15s, background .15s; }
+    .rs .brain-comp-x:hover { color:#e0556b; border-color:color-mix(in srgb, #e0556b 45%, transparent); background:color-mix(in srgb, #e0556b 8%, transparent); }
+    .rs .brain-comp-x svg { width:15px; height:15px; }
+    .rs--mobile .brain-comp-x { width:44px; height:44px; }
     /* T2: lista inline de asistentes en Cerebro. */
     .rs .brain-asst-list { display:flex; flex-direction:column; gap:10px; }
     .rs .brain-asst-item { display:flex; align-items:center; gap:12px; padding:12px 14px; border:1px solid var(--border-default); border-radius:12px; background:var(--surface-raised); }
