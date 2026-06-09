@@ -11504,7 +11504,7 @@
                 <option value="de" data-i18n-es="Alemán" data-i18n-en="German">German</option>
                 <option value="it" data-i18n-es="Italiano" data-i18n-en="Italian">Italian</option>
               </select>
-              <button id="panelTranscribeBtn" class="btn btn-lg btn-primary" onclick="doTranscribeFromPanel()" data-i18n-es="✦ Transcribir" data-i18n-en="✦ Transcribe">✦ Transcribir</button>
+              <button id="panelTranscribeBtn" class="btn btn-lg btn-primary" onclick="doTranscribeFromPanel()" data-i18n-es="✦ Analizar" data-i18n-en="✦ Analyze">✦ Analizar</button>
             </div>
 
             <div id="panelTranscribeStatus" class="trans-input-status" style="display:none"></div>
@@ -11520,7 +11520,7 @@
         <!-- Header de la lista: título + count + bulk refresh -->
         <div class="cluster" style="justify-content:space-between; margin-bottom:var(--space-4)">
           <div class="cluster cluster-sm">
-            <h2 class="heading-2" style="margin:0" data-i18n-es="Tus transcripciones" data-i18n-en="Your transcriptions">Tus transcripciones</h2>
+            <h2 class="heading-2" style="margin:0" data-i18n-es="Tus análisis" data-i18n-en="Your analyses">Tus análisis</h2>
             <span class="badge badge-neutral" id="transListCount"><span id="transCountNum">0</span></span>
           </div>
           <button id="transBulkRefresh" class="btn btn-sm btn-ghost" onclick="refreshAllTransMetrics()" style="display:none">
@@ -16359,13 +16359,13 @@ function renderProfTransc() {
 
   if (!histCache.length) {
     const lang = (document.documentElement.lang || "es").toLowerCase();
-    const title = lang === "en" ? "You haven't transcribed anything yet." : "Todavía no has transcrito nada.";
+    const title = lang === "en" ? "You haven't analyzed anything yet." : "Todavía no has analizado nada.";
     const sub = lang === "en"
       ? "Paste an Instagram or TikTok URL above and get started."
       : "Pega una URL de Instagram o TikTok arriba y empieza.";
+    // Estado vacío sin ilustración decorativa: solo texto.
     el.innerHTML = `
       <div class="trans-empty">
-        <img src="${window.HOOKS_TRANSC_SVG || '/static/img/hooks/hooks-transcribir.svg'}" alt="" aria-hidden="true" />
         <h3>${title}</h3>
         <p>${sub}</p>
       </div>`;
