@@ -9798,6 +9798,11 @@
     .rs .explosion-btn span { font-size:12px; font-weight:600; color:var(--text-secondary); }
     .rs .ideas-list { padding:0 40px 40px; display:flex; flex-direction:column; gap:14px; margin-top:18px; }
     .rs--mobile .ideas-list { padding:0 18px 30px; }
+    /* T1: Fábrica de ideas embebida en Radar — dentro del .canvas (que ya pone su
+       propio padding), así que la lista no necesita el padding lateral de la página suelta. */
+    .rs .ideas-zone { margin-top:8px; }
+    .rs .ideas-zone .ideas-list { padding:0; }
+    .rs .ideas-zone-sub { color:var(--text-secondary); font-size:13.5px; margin:12px 0 16px; }
     .rs .idea-block { border:1px solid var(--border-default); border-radius:16px; background:var(--surface-raised); overflow:hidden; }
     .rs .idea-block-head { display:flex; align-items:center; gap:12px; padding:15px 16px; }
     .rs .idea-ic { width:34px; height:34px; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:color-mix(in srgb, var(--brand-500) 14%, transparent); color:var(--brand-400); }
