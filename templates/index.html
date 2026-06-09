@@ -10033,6 +10033,11 @@
     .rs .rail-ava { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:var(--surface-overlay); border:1px solid var(--border-strong); color:var(--text-primary); font-weight:600; font-size:12px; font-family:var(--font-mono); }
     /* ── WORK column ── */
     .rs .work { min-width:0; min-height:0; display:flex; flex-direction:column; height:100%; }
+    /* ── Host de sección legacy (Analizar/Configuración) reparentada: overlay sobre
+       la columna de trabajo dejando visible el rail (64px). Es un nodo estable, no
+       lo toca el re-render de #rsView. ── */
+    .rs .rs-legacy { position:absolute; inset:0 0 0 64px; overflow-y:auto; background:var(--surface-base); z-index:9; }
+    .rs .rs-legacy-bar { position:sticky; top:0; z-index:2; padding:12px 16px; background:color-mix(in srgb, var(--surface-base) 92%, transparent); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border-bottom:1px solid var(--border-subtle); }
     /* ── COMMAND BAR ── */
     .rs .cmd { position:sticky; top:0; z-index:7; display:flex; align-items:center; gap:14px; height:58px; padding:0 26px; background:color-mix(in srgb, var(--surface-base) 84%, transparent); backdrop-filter:saturate(1.3) blur(14px); -webkit-backdrop-filter:saturate(1.3) blur(14px); border-bottom:1px solid var(--border-subtle); }
     .rs .cmd .brand-switch { display:inline-flex; align-items:center; gap:10px; height:36px; padding:0 12px; background:var(--surface-raised); border:1px solid var(--border-default); border-radius:8px; color:var(--text-primary); font:inherit; font-family:var(--font-body); font-weight:600; font-size:14px; cursor:pointer; transition:border-color .14s var(--ease); }
@@ -10199,6 +10204,7 @@
       .rs .rail { position:fixed; bottom:0; left:0; right:0; height:auto; width:100%; flex-direction:row; justify-content:center; border-right:none; border-top:1px solid var(--border-default); padding:8px 0; z-index:40; }
       .rs .rail-logo, .rs .rail-spacer, .rs .rail-ava { display:none; }
       .rs .rail-btn.on::before { left:11px; right:11px; top:auto; bottom:-8px; width:auto; height:3px; border-radius:3px 3px 0 0; }
+      .rs .rs-legacy { inset:0 0 64px 0; }   /* rail es barra inferior fija → deja hueco */
       .rs .feature { grid-template-columns:1fr; } .rs .feature-thumb .thumb { height:200px; min-height:200px; border-right:none; border-bottom:1px solid var(--border-default); } .rs .feature-data { border-left:none; border-top:1px solid var(--border-default); flex-direction:row; flex-wrap:wrap; gap:24px; }
       .rs .statbar { grid-template-columns:1fr 1fr; } .rs .stat:nth-child(2n){ border-right:none; }
       .rs .searchbox, .rs .cmd-streak { display:none; }
@@ -10215,6 +10221,9 @@
     body.rs-takeover .ideas-tabs,
     body.rs-takeover .prof-bottom-tab,
     body.rs-takeover #profSidebarNav { display:none !important; }
+    /* Excepción: las vistas legacy reparentadas en la isla (#rsLegacy) conservan su
+       .panel-header (lleva el título de la sección). El ID gana al hide de arriba. */
+    #rsLegacy .panel-header { display: revert !important; }
     body.rs-takeover .prof-main { padding:0 !important; margin:0 !important; max-width:none !important; width:100% !important; overflow:hidden !important; }
     body.rs-takeover #profPanelIdeas,
     body.rs-takeover #ideasPanelCompetitors { height:100%; width:100%; padding:0 !important; margin:0 !important; }
@@ -10469,7 +10478,7 @@
       </button>
       <button onclick="closeNavMob();openProfile();profTab('transc')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
-        <span data-i18n="prof.transcriptions">Transcriptions</span>
+        <span data-i18n="prof.transcriptions">Analyze</span>
       </button>
       <button class="mob-nav-paid" onclick="closeNavMob();openProfile();profTab('projects')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
@@ -10943,7 +10952,7 @@
 
         <button class="chrome-nav-item" onclick="profTab('transc')">
           <svg class="chrome-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M0 0h24v24H0z" stroke="none"/><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2"/><path d="M8 21h8"/><path d="M12 18v3"/></svg>
-          <span data-i18n="prof.transcriptions">Transcribir</span>
+          <span data-i18n="prof.transcriptions">Analizar</span>
         </button>
         <button class="chrome-nav-item" onclick="profTab('scripts')">
           <svg class="chrome-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M0 0h24v24H0z" stroke="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/><path d="M9 9h1"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>
@@ -11156,7 +11165,7 @@
             <div class="ov-card-head">
               <img class="ov-card-hooks" src="{{ url_for('static', filename='img/hooks/hooks-transcribir.svg') }}" alt="" aria-hidden="true">
               <div class="ov-card-meta">
-                <div class="ov-card-label" data-i18n-es="Transcribir" data-i18n-en="Transcribe">Transcribir</div>
+                <div class="ov-card-label" data-i18n-es="Analizar" data-i18n-en="Analyze">Analizar</div>
                 <div class="ov-card-sub"></div>
               </div>
             </div>
@@ -11471,8 +11480,8 @@
         <!-- v0.16.6: panel migrado a design system Stripe-like (utilidades v0.16.4 + primitivos v0.16.2-3). -->
         <header class="panel-header">
           <div class="panel-header-content">
-            <p class="eyebrow" data-i18n-es="TRANSCRIBIR" data-i18n-en="TRANSCRIBE">TRANSCRIBIR</p>
-            <h1 class="heading-1" data-i18n-es="Transcripciones" data-i18n-en="Transcriptions">Transcripciones</h1>
+            <p class="eyebrow" data-i18n-es="ANALIZAR" data-i18n-en="ANALYZE">ANALIZAR</p>
+            <h1 class="heading-1" data-i18n-es="Analizar" data-i18n-en="Analyze">Analizar</h1>
             <p class="body-sm" style="margin:var(--space-3) 0 0 0" data-i18n-es="Todos tus reels convertidos en texto." data-i18n-en="All your reels turned into text.">Todos tus reels convertidos en texto.</p>
           </div>
         </header>
@@ -11498,7 +11507,7 @@
                 <option value="de" data-i18n-es="Alemán" data-i18n-en="German">German</option>
                 <option value="it" data-i18n-es="Italiano" data-i18n-en="Italian">Italian</option>
               </select>
-              <button id="panelTranscribeBtn" class="btn btn-lg btn-primary" onclick="doTranscribeFromPanel()" data-i18n-es="✦ Transcribir" data-i18n-en="✦ Transcribe">✦ Transcribir</button>
+              <button id="panelTranscribeBtn" class="btn btn-lg btn-primary" onclick="doTranscribeFromPanel()" data-i18n-es="✦ Analizar" data-i18n-en="✦ Analyze">✦ Analizar</button>
             </div>
 
             <div id="panelTranscribeStatus" class="trans-input-status" style="display:none"></div>
@@ -11514,7 +11523,7 @@
         <!-- Header de la lista: título + count + bulk refresh -->
         <div class="cluster" style="justify-content:space-between; margin-bottom:var(--space-4)">
           <div class="cluster cluster-sm">
-            <h2 class="heading-2" style="margin:0" data-i18n-es="Tus transcripciones" data-i18n-en="Your transcriptions">Tus transcripciones</h2>
+            <h2 class="heading-2" style="margin:0" data-i18n-es="Tus análisis" data-i18n-en="Your analyses">Tus análisis</h2>
             <span class="badge badge-neutral" id="transListCount"><span id="transCountNum">0</span></span>
           </div>
           <button id="transBulkRefresh" class="btn btn-sm btn-ghost" onclick="refreshAllTransMetrics()" style="display:none">
@@ -11971,7 +11980,7 @@
     <button class="prof-bottom-tab" onclick="profTabMobile('adapt')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><path d="M8 1 L9 5 L13 6 L9 7 L8 11 L7 7 L3 6 L7 5 Z" fill="currentColor"/><circle cx="13" cy="13" r="1.2" fill="currentColor" opacity=".5"/><circle cx="3" cy="2" r="1" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.adapt">Hazlo tuyo</span></button>
     <button class="prof-bottom-tab" onclick="profTabMobile('ideas')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="3" y="1" width="10" height="2" fill="currentColor"/><rect x="2" y="3" width="12" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="5" y="6" width="6" height="1.5" fill="currentColor" opacity=".5"/><rect x="5" y="9" width="4" height="1.5" fill="currentColor" opacity=".3"/></svg><span data-i18n="prof.ideas">Ideas</span></button>
     <button class="prof-bottom-tab prof-bottom-tab--featured on" onclick="profTabMobile('radar')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="10"/></svg><span data-i18n-es="Radar" data-i18n-en="Radar">Radar</span></button>
-    <button class="prof-bottom-tab" onclick="profTabMobile('transc')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.transcriptions">Transcribir</span></button>
+    <button class="prof-bottom-tab" onclick="profTabMobile('transc')"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="6" y="0" width="4" height="8" fill="currentColor"/><rect x="4" y="8" width="8" height="2" fill="currentColor"/><circle cx="8" cy="14" r="2" fill="currentColor" opacity=".4"/></svg><span data-i18n="prof.transcriptions">Analizar</span></button>
     <button class="prof-bottom-tab" onclick="openProfMoreSheet()"><svg class="prof-bottom-tab-icon" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="7" width="3" height="3" fill="currentColor"/><rect x="7" y="7" width="3" height="3" fill="currentColor"/><rect x="12" y="7" width="3" height="3" fill="currentColor"/></svg><span data-i18n-es="Más" data-i18n-en="More">Más</span></button>
   </div>
 </div>
@@ -12120,6 +12129,7 @@
       <button class="btn-sm" onclick="adaptFromView()" data-i18n="view.transform">Transform →</button>
       <button class="btn-sm" onclick="saveViewToProject()" data-i18n="view.save_project">Save to project</button>
       <button class="btn-sm" id="viewDlBtn" data-i18n="view.download">Download</button>
+      <button class="btn-sm" id="viewAddCompBtn" onclick="viewAddCompetitor()" style="display:none">➕ <span data-i18n="comp.add_modal_title">Añadir competidor</span></button>
     </div>
   </div>
 </div>
@@ -12391,7 +12401,7 @@ const LANGS = {
     "prof.adapt": "Hazlo tuyo",
     "greet_fallback": "Hola, creador.",
     "prof.saved_scripts": "Guiones",
-    "prof.transcriptions": "Transcribir",
+    "prof.transcriptions": "Analizar",
     "prof.projects": "Proyectos",
     "prof.assistants": "Asistentes",
     "prof.metrics": "Métricas",
@@ -12893,7 +12903,7 @@ const LANGS = {
     "prof.adapt": "Make it yours",
     "greet_fallback": "Hi there.",
     "prof.saved_scripts": "Scripts",
-    "prof.transcriptions": "Transcribe",
+    "prof.transcriptions": "Analyze",
     "prof.projects": "Projects",
     "prof.assistants": "Assistants",
     "prof.metrics": "Metrics",
@@ -15522,8 +15532,8 @@ const PROF_SECTION_MAP = {
 };
 const PROF_TAB_TO_SLUG = Object.fromEntries(Object.entries(PROF_SECTION_MAP).map(([k, v]) => [v, k]));
 const PROF_TITLES = {
-  es: { overview: "Perfil", radar: "Radar", scripts: "Scripts", transc: "Transcripciones", projects: "Proyectos", assistants: "Asistentes", metrics: "Métricas", ideas: "Ideas", team: "Equipo", privacy: "Privacidad", settings: "Configuración", adapt: "Hazlo tuyo" },
-  en: { overview: "Profile", radar: "Radar", scripts: "Scripts", transc: "Transcriptions", projects: "Projects", assistants: "Assistants", metrics: "Metrics", ideas: "Ideas", team: "Team", privacy: "Privacy", settings: "Settings", adapt: "Make it yours" },
+  es: { overview: "Perfil", radar: "Radar", scripts: "Scripts", transc: "Analizar", projects: "Proyectos", assistants: "Asistentes", metrics: "Métricas", ideas: "Ideas", team: "Equipo", privacy: "Privacidad", settings: "Configuración", adapt: "Hazlo tuyo" },
+  en: { overview: "Profile", radar: "Radar", scripts: "Scripts", transc: "Analyze", projects: "Projects", assistants: "Assistants", metrics: "Metrics", ideas: "Ideas", team: "Team", privacy: "Privacy", settings: "Settings", adapt: "Make it yours" },
 };
 
 // v0.14.32: ovGreetingName / ovRenderGreeting eliminados (Dashboard header sin greeting).
@@ -15953,6 +15963,25 @@ function profTab(tab, pushHistory) {
 
 function profTabMobile(tab) { profTab(tab, true); }
 
+// Bridge isla v2 (feature/isla-v2): activa los DATOS de una sección legacy
+// (transc/settings) sin tocar visibilidad de paneles, nav ni history. La isla
+// reparenta el contenedor (#profPanelTransc / #profPanelSettings) en su área de
+// trabajo y llama aquí para poblarlo reutilizando exactamente el JS que ya usa
+// profTab() para esas tabs. Solo es la mínima superficie que la isla necesita.
+window.rsActivateLegacySection = function(kind) {
+  try {
+    if (kind === "transc") {
+      if (typeof renderProfTransc === "function") renderProfTransc();
+      if (typeof loadHistory === "function") loadHistory().then(function(){ try { renderProfTransc(); } catch(e){} });
+    } else if (kind === "settings") {
+      try { highlightActiveLang(); } catch(e){}
+      try { applyTheme(themePref); } catch(e){}
+      try { loadSubscriptionInfo(); } catch(e){}
+      if (typeof settingsSwitchTab === "function") settingsSwitchTab("general", { skipHistory: true });
+    }
+  } catch (e) { /* no romper la isla si una vista legacy falla */ }
+};
+
 // v0.14.39: tabs internos Scripts (list/create) + Settings (general/team/privacy).
 function _readScriptsTabFromUrl() {
   try {
@@ -16333,13 +16362,13 @@ function renderProfTransc() {
 
   if (!histCache.length) {
     const lang = (document.documentElement.lang || "es").toLowerCase();
-    const title = lang === "en" ? "You haven't transcribed anything yet." : "Todavía no has transcrito nada.";
+    const title = lang === "en" ? "You haven't analyzed anything yet." : "Todavía no has analizado nada.";
     const sub = lang === "en"
       ? "Paste an Instagram or TikTok URL above and get started."
       : "Pega una URL de Instagram o TikTok arriba y empieza.";
+    // Estado vacío sin ilustración decorativa: solo texto.
     el.innerHTML = `
       <div class="trans-empty">
-        <img src="${window.HOOKS_TRANSC_SVG || '/static/img/hooks/hooks-transcribir.svg'}" alt="" aria-hidden="true" />
         <h3>${title}</h3>
         <p>${sub}</p>
       </div>`;
@@ -17580,6 +17609,7 @@ function viewScript(id) {
   const title = item.title || "Guion";
   document.getElementById("viewTitle").textContent = `${title} · ${fmtDate(item.created_at)}`;
   document.getElementById("viewBody").textContent = text;
+  document.getElementById("viewAddCompBtn").style.display = "none";
   document.getElementById("viewOverlay").classList.add("on");
 }
 
@@ -18164,6 +18194,7 @@ function viewProjScript(idx) {
   const text = s.script || s.transcription || "";
   document.getElementById("viewTitle").textContent = `${s.title || "Script"} · ${fmtDate(s.created_at)}`;
   document.getElementById("viewBody").textContent = text;
+  document.getElementById("viewAddCompBtn").style.display = "none";
   document.getElementById("viewOverlay").classList.add("on");
 }
 
@@ -21236,7 +21267,34 @@ function viewItem(id) {
   document.getElementById("viewTitle").textContent = `${plat} · ${fmtDate(item.created_at)} · ${words} ${wordsLbl}`;
   document.getElementById("viewBody").textContent = text;
   document.getElementById("viewDlBtn").onclick = () => window.open(`/download/${id}`, "_blank");
+  // Botón "Añadir competidor": visible si conocemos al autor del reel analizado
+  // (author_username persistido, o derivado de la URL de TikTok) y hay sesión.
+  const addBtn = document.getElementById("viewAddCompBtn");
+  if (addBtn) {
+    const author = _reelAuthor(item);
+    addBtn.style.display = (st.user && author) ? "" : "none";
+  }
   document.getElementById("viewOverlay").classList.add("on");
+}
+
+// Autor del reel de una transcripción: columna persistida o, en su defecto,
+// el @usuario embebido en la URL de TikTok (los reels de IG no lo llevan).
+function _reelAuthor(item) {
+  if (!item) return "";
+  if (item.author_username) return String(item.author_username).replace(/^@/, "").toLowerCase();
+  const m = (item.url || "").match(/tiktok\.com\/@([A-Za-z0-9._]+)/i);
+  return m ? m[1].toLowerCase() : "";
+}
+
+// Añade como competidor al autor del reel que se está viendo. Reusa el modal de
+// alta (gating de plan + selector de proyecto Agency + errores) prellenando el @.
+function viewAddCompetitor() {
+  const item = histCache.find(i => i.id === viewId);
+  const author = _reelAuthor(item);
+  if (!author) return;
+  if (!st.user) { openAuth("register"); return; }
+  closeView();
+  openAddCompetitorModal(author);
 }
 
 function closeView() { document.getElementById("viewOverlay").classList.remove("on"); viewId = null; }
@@ -23194,10 +23252,10 @@ function _compRenderFreeUpsell() {
     <a class="empty-cta" href="${pricingUrl}">${M.cta}</a></div>`;
 }
 
-function openAddCompetitorModal() {
+function openAddCompetitorModal(prefillUsername) {
   const overlay = document.getElementById("addCompetitorOverlay");
   if (!overlay) return;
-  document.getElementById("addCompInput").value = "";
+  document.getElementById("addCompInput").value = prefillUsername ? String(prefillUsername).replace(/^@/, "") : "";
   document.getElementById("addCompErr").textContent = "";
   // Si Agency: cargar select de proyectos.
   const plan = (st && st.plan) || "free";

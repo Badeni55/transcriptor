@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import logging
 import tempfile
@@ -422,6 +423,17 @@ def transcribe_task(self, url, language, user_id, ip, is_paid=False):
     except Exception as e:
         logger.warning("Thumbnail capture failed for %s: %s", url, e)
 
+    # Autor del reel analizado → permite "añadir como competidor" desde el resultado.
+    # IG: ownerUsername del scrape Apify. TikTok: se extrae del path de la URL
+    # (tiktok.com/@usuario/…). Los short-links (vm./vt.) no lo llevan → None.
+    author_username = None
+    if apify_item:
+        author_username = (apify_item.get("ownerUsername") or "").strip().lstrip("@").lower() or None
+    if not author_username and platform == "tiktok":
+        m = re.search(r"tiktok\.com/@([A-Za-z0-9._]+)", url)
+        if m:
+            author_username = m.group(1).lower()
+
     insert_data = {
         "user_id": user_id,
         "ip": ip if not user_id else None,
@@ -431,6 +443,7 @@ def transcribe_task(self, url, language, user_id, ip, is_paid=False):
         "text": text,
         "cost_cents": COST_CENTS if user_id else 0,
         "thumbnail_b64": thumb_b64,
+        "author_username": author_username,
     }
     # v0.14.7: métricas solo para paid plans con datos Apify reales (Instagram).
     if is_paid and apify_item and platform == "instagram":
@@ -438,7 +451,7 @@ def transcribe_task(self, url, language, user_id, ip, is_paid=False):
 
     db.table("transcriptions").insert(insert_data).execute()
 
-    return {"ok": True, "text": text, "platform": platform}
+    return {"ok": True, "text": text, "platform": platform, "username": author_username}
 
 
 @celery_app.task(bind=True)
