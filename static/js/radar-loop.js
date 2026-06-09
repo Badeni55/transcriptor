@@ -1108,6 +1108,9 @@
     var errN=document.getElementById("rsErr"),errM=document.getElementById("rsErrMsg");
     if(errN&&errM){ if(S.errMsg){ errM.textContent=S.errMsg; errN.classList.add("show"); } else { errN.classList.remove("show"); } }
     if(S.view==="gen") startGenSteps();
+    // Sección legacy pendiente de la URL (/profile/transcriptions|settings): se abre
+    // una vez que #rsLegacy ya existe (primer render). openLegacy consume el flag.
+    if(S._pendingLegacy && document.getElementById("rsLegacy")){ var _pl=S._pendingLegacy; S._pendingLegacy=null; openLegacy(_pl); }
     manageOverlayFocus(el);
   }
 
@@ -2006,6 +2009,21 @@
     });
   }
 
+  // Lee la sección de la URL (/profile/<x>) y la traduce al rail de la isla:
+  //   radar/overview/dashboard → Radar (deja el default)  ·  scripts → Guiones
+  //   ideas → Ideas · metrics → Métricas · brain → Cerebro · transc(riptions) → Analizar
+  //   settings → Configuración · sin equivalente → Radar (default).
+  // Los deep-links del demo (?plan/?t=) se aplican DESPUÉS y siguen mandando.
+  function _routeFromPath(){
+    var seg=""; try{ var m=(location.pathname||"").match(/^\/profile\/([^\/?#]+)/); seg=m?m[1].toLowerCase():""; }catch(e){}
+    if(!seg) return;
+    if(seg==="transc"||seg==="transcriptions"){ S._pendingLegacy="transc"; return; }
+    if(seg==="settings"){ S._pendingLegacy="settings"; return; }
+    // Cualquier /profile/<x> con sección → tab del rail. Sin equivalente → "dashboard" (Radar).
+    S.tab = ({scripts:"guiones", guiones:"guiones", ideas:"ideas", metrics:"metrics",
+              brain:"brain", cerebro:"brain", portfolio:"portfolio", team:"team",
+              radar:"dashboard", overview:"dashboard", dashboard:"dashboard"})[seg] || "dashboard";
+  }
   function loadAll(){
     setDevice();
     var el=root(); if(!el) return;
@@ -2032,6 +2050,7 @@
       if(isDemo()){ S.brands = isAgency() ? demoBrands() : [demoBrands()[0]]; }
       S.brandId=S.brands[0].id;
       S.tab = isAgency() ? "portfolio" : "dashboard";   // agencia entra en MACRO
+      _routeFromPath();   // la isla muestra la sección de /profile/<x> en el rail
       // Demo deep-link: ?plan= ?t=<tab> ?b=<brandId> para previsualizar cualquier vista.
       if(isDemo()){ try{ var qs=new URLSearchParams(location.search);
         var qp=qs.get("plan"); if(qp==="creador"){ S.plan="creador"; S.brands=[demoBrands()[0]]; S.brandId=S.brands[0].id; S.tab="dashboard"; } else if(qp==="agencia"){ S.plan="agencia"; S.brands=demoBrands(); S.brandId=S.brands[0].id; S.tab="portfolio"; }
