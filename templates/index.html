@@ -10242,6 +10242,15 @@
     body.rs-takeover #ideasPanelCompetitors { height:100%; width:100%; padding:0 !important; margin:0 !important; }
     body.rs-takeover #radarRoot { height:100vh; width:100%; min-height:600px; }
     body.rs-takeover .rs.app { height:100vh; width:100%; border:none; border-radius:0; }
+    /* Consistencia (Nielsen): bajo takeover, NINGÚN panel legacy de #profMain se cuela
+       (entrar por /profile/<x> hacía profTab() mostrar el panel viejo y ocultar la isla).
+       Solo vive la isla (#radarRoot, dentro de #profPanelIdeas > #ideasPanelCompetitors).
+       El `>` exime los paneles reparentados en #rsLegacy (Analizar/Configuración), que ya
+       no son hijos directos de #profMain. */
+    body.rs-takeover #profMain > div[id^="profPanel"]:not(#profPanelIdeas) { display:none !important; }
+    body.rs-takeover #profPanelIdeas { display:block !important; }
+    body.rs-takeover #profPanelIdeas > :not(#ideasPanelCompetitors) { display:none !important; }
+    body.rs-takeover #ideasPanelCompetitors { display:block !important; }
   </style>
 
   {% if clarity_project_id %}
