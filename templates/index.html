@@ -10086,6 +10086,11 @@
     .rs .searchbox span:first-of-type { white-space:nowrap; }
     .rs .searchbox .kbd { margin-left:auto; font-family:var(--font-mono); font-size:11px; padding:1px 6px; border-radius:4px; border:1px solid var(--border-strong); color:var(--text-tertiary); }
     .rs .cmd-streak { display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--text-secondary); white-space:nowrap; } .rs .cmd-streak svg { color:var(--brand-500); width:15px; height:15px; }
+    /* T1: captura global de ideas en la command bar. */
+    .rs .cmd-idea { display:inline-flex; align-items:center; gap:7px; height:36px; padding:0 13px; background:var(--surface-raised); border:1px solid var(--border-default); border-radius:8px; color:var(--text-secondary); font-size:13.5px; font-family:var(--font-body); cursor:pointer; white-space:nowrap; transition:border-color .15s, color .15s; }
+    .rs .cmd-idea:hover { border-color:color-mix(in srgb, var(--brand-500) 50%, transparent); color:var(--text-primary); }
+    .rs .cmd-idea .cmd-idea-bulb { display:flex; color:var(--brand-500); }
+    .rs .cmd-idea .cmd-idea-bulb svg { width:16px; height:16px; }
     .rs .cmd .spark.pill-stat { display:inline-flex; align-items:center; gap:7px; height:34px; padding:0 12px; background:var(--surface-raised); border:1px solid var(--border-default); border-radius:8px; font-size:13px; color:var(--text-secondary); white-space:nowrap; }
     .rs .cmd .spark.pill-stat svg { width:15px; height:15px; color:var(--brand-500); }
     .rs .cmd .spark .num { font-family:var(--font-mono); color:var(--text-primary); font-weight:500; }
@@ -10238,6 +10243,8 @@
       .rs .feature { grid-template-columns:1fr; } .rs .feature-thumb .thumb { height:200px; min-height:200px; border-right:none; border-bottom:1px solid var(--border-default); } .rs .feature-data { border-left:none; border-top:1px solid var(--border-default); flex-direction:row; flex-wrap:wrap; gap:24px; }
       .rs .statbar { grid-template-columns:1fr 1fr; } .rs .stat:nth-child(2n){ border-right:none; }
       .rs .searchbox, .rs .cmd-streak { display:none; }
+      .rs .cmd-idea .cmd-idea-t { display:none; }   /* móvil: solo la bombilla… */
+      .rs .cmd-idea { height:44px; min-width:44px; justify-content:center; padding:0 12px; }  /* …con target táctil ≥44px */
       .rs .canvas { padding:24px 16px 100px; } .rs .h-title { font-size:30px; }
       .rs .row { grid-template-columns:48px 1fr auto; } .rs .row-thumb, .rs .row-when { display:none; }
     }

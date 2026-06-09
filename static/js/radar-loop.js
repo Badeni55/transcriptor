@@ -263,6 +263,8 @@
       crumb+
       '<span class="grow"></span>'+
       '<div class="searchbox">'+IC.eye+'<span>Buscar señal o creador</span></div>'+   // T3 (IDI): sin pista ⌘K — no prometemos un atajo que no existe
+      // T1 (IDI): captura de ideas siempre a mano, en cualquier vista de la isla.
+      '<button class="cmd-idea" data-act="idea-capture" title="Apunta una idea — se desarrolla en Guiones" aria-label="Apunta una idea"><span class="cmd-idea-bulb">'+IC.bulb+'</span><span class="cmd-idea-t">Apunta una idea</span></button>'+
       demoToggle+
       streak+
       ((S.user.plan==="free" && !S.user.credits)
@@ -465,7 +467,6 @@
         voiceOnboardCardHTML()+   // B6: en first-run sin reels, el banner de voz es lo primero que aporta
         nextSeriesHTML("dash")+   // B1+T1: CTA secundario en el Dashboard
         '<div class="rs-empty">'+(S.filter==="fav"?"Sin favoritos aún. Toca la estrella en una señal.":"Sin reels todavía. Añade un competidor o pega un reel para empezar.")+'</div>'+
-        ideasZoneHTML()+          // T1: la Fábrica de ideas vive aquí (antes era un tab del rail)
       '</div></div>';
     }
 
@@ -486,7 +487,6 @@
       nextSeriesHTML("dash")+   // B1+T1: "tu próxima serie" con CTA secundario en el Dashboard
       (S.reels.length?'<div class="plays">'+whaleHTML(fillCount)+'</div>':'')+
       (rest.length?('<div class="feed-head"><span class="feed-title">Más señales <span class="ct">· '+rest.length+'</span></span>'+filtersHTML()+'</div><div class="feed">'+rows+'</div>'+moreToggle):"")+
-      ideasZoneHTML()+          // T1: Fábrica de ideas, en zona propia bajo las señales del día
     '</div></div>';
   }
 
@@ -495,20 +495,19 @@
      handlers existentes (seed-go, gen5ideas, explosion, gen5scripts, gen5hooks).
      Una sola acción primaria en Radar sigue siendo «Hazlo mío»: aquí todo es
      secundario/ghost. */
+  // T1: la fábrica de ideas (acordeón idea→guiones→hooks) vive en GUIONES. La
+  // captura suelta es global (bombilla de la command bar → openIdeaCapture). Aquí
+  // solo se DESARROLLAN: generar 5 ideas / explosión + el acordeón.
   function ideasZoneHTML(){
     var n=S.ideas.length;
     var list=n
       ? '<div class="ideas-list">'+S.ideas.map(ideaBlockHTML).join("")+'</div>'
-      : '<div class="rs-empty" style="margin-top:14px">Aún no hay ideas. Escribe una arriba, pulsa «5 ideas» o lanza una explosión.</div>';
+      : '<div class="rs-empty" style="margin-top:14px">Aún no hay ideas. Pulsa 💡 «Apunta una idea» arriba, o genera 5 de golpe.</div>';
     return '<section class="ideas-zone">'+
-      '<div class="feed-head"><span class="feed-title">'+IC.bulb+' Fábrica de ideas'+(n?' <span class="ct">· '+n+'</span>':'')+'</span></div>'+
-      '<p class="ideas-zone-sub">Apunta una idea suelta y multiplícala: idea → guiones → hooks. Guarda los que te convenzan.</p>'+
-      '<div class="idea-launch">'+
-        '<div class="idea-launch-ic">'+IC.bulb+'</div>'+
-        '<input class="idea-launch-input" id="rsIdeaSeed" placeholder="Tienes una idea suelta? Escríbela y la convertimos en guiones…" />'+
-        '<button class="btn btn-md btn-secondary" data-act="seed-go">'+IC.bolt+' Desarrollar</button>'+
-        '<button class="btn btn-md btn-secondary" data-act="gen5ideas">'+IC.spark+' 5 ideas</button>'+
+      '<div class="feed-head"><span class="feed-title">'+IC.bulb+' Ideas en desarrollo'+(n?' <span class="ct">· '+n+'</span>':'')+'</span>'+
+        '<button class="btn btn-sm btn-secondary" data-act="gen5ideas">'+IC.spark+' 5 ideas</button>'+
       '</div>'+
+      '<p class="ideas-zone-sub">Cada idea se multiplica: idea → guiones → hooks. Lo que guardes aterriza en tus guiones.</p>'+
       '<button class="explosion-btn" data-act="explosion">💥 Explosión creativa<span>5 ideas × 5 guiones × 5 hooks — '+COST.explosion+' créditos</span></button>'+
       list+
     '</section>';
@@ -683,12 +682,14 @@
     }).join("")+'</div>';
     var body=items.length===0
       ? '<div class="rs-empty" style="margin-top:24px">'+(cAll===0
-          ? 'Aún no tienes guiones. Roba un reel en el <b>Dashboard</b> o crea en <b>Ideas</b> — todo lo que generes aterriza aquí.'
+          ? 'Aún no tienes guiones. Roba un reel en el <b>Radar</b> o apunta una idea (💡 arriba) — todo lo que generes aterriza aquí.'
           : 'Nada en este filtro.')+'</div>'
       : '<div class="gui-list">'+items.map(guiCardHTML).join("")+'</div>';
     return '<div class="scroll"><div class="canvas">'+
       pheadHTML("Guiones · @"+(brand().handle||S.user.handle||""), "Tus guiones", "Todo lo que creas vive aquí. Ordena, descarta lo que no, y graba cuando quieras.")+
-      chips+body+'</div></div>';
+      chips+body+
+      ideasZoneHTML()+          // T1: fábrica de ideas (idea→guiones→hooks) junto a los guiones
+    '</div></div>';
   }
 
   /* ════════════════════════════════════════════════════════════════
@@ -1446,6 +1447,30 @@
       else { tmp._saving=false; showToast((r.d&&r.d.error)||"No pude guardar la idea."); render(); }
     });
   }
+  // T1: captura global de ideas (bombilla de la command bar). Modal mínimo
+  // reusando promptSheet (Esc cierra, Enter envía). Al desarrollar, la idea
+  // aterriza en Guiones, donde vive la fábrica.
+  function openIdeaCapture(){
+    promptSheet({
+      title:"Apunta una idea",
+      label:"Tu idea",
+      placeholder:"Una idea suelta… la convertimos en guiones y hooks",
+      multiline:false,   // input de una línea → Enter envía (el handler salta textareas)
+      submitLabel:"Desarrollar",
+      validate:function(v){ return (v||"").trim().length<5 ? "Escribe una idea un poco más larga." : null; },
+      onSubmit:function(v){ captureIdeaText(v); }
+    });
+  }
+  function captureIdeaText(txt){
+    txt=(txt||"").trim(); if(!txt) return;
+    if(isDemo()){ S.ideas.unshift(makeIdea(txt, txt.length+S.ideas.length)); S.tab="guiones"; render(); showToast("Idea apuntada — desarróllala en Guiones."); return; }
+    var tmp=makeIdea(txt, txt.length+S.ideas.length); tmp._saving=true; S.ideas.unshift(tmp); S.tab="guiones"; render();
+    showToast("Idea apuntada en Guiones.");
+    apiPost("/ideas",{raw_text:txt, language:rsLang(), develop:false}).then(function(r){
+      if(r.ok && r.d && r.d.id){ tmp.id=r.d.id; tmp._server=true; tmp._scriptsLoaded=true; tmp._saving=false; render(); }
+      else { tmp._saving=false; showToast((r.d&&r.d.error)||"No pude guardar la idea."); render(); }
+    });
+  }
   function addSeedIdea(){
     var inp=document.getElementById("rsIdeaSeed2"); var txt=inp?inp.value.trim():""; if(!txt) return;
     if(isDemo()){ S.ideas.unshift(makeIdea(txt, txt.length+S.ideas.length)); render(); return; }
@@ -1870,6 +1895,7 @@
       } else { if(nt){ S.ideas.unshift(makeIdea(nt, nt.length+S.ideas.length)); } render(); }
       return showToast("Tu próxima serie, lista para multiplicar en Ideas."); }
     if(act==="fillweek") return startFillWeek();
+    if(act==="idea-capture") return openIdeaCapture();
     if(act==="seed-go") return seedIdea("rsIdeaSeed", true);
     if(act==="seed-add") return addSeedIdea();
     if(act==="gen5ideas") return gen5ideas(btn);
