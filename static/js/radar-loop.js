@@ -334,6 +334,7 @@
   function filtersHTML(){
     var base=[["explosion","🔥 Explotando"],["recent","Recientes"],["fav","★ Favoritos"]];
     return '<div class="filters">'+base.map(function(f){return '<button class="fchip'+(S.filter===f[0]?" on":"")+'" data-act="filter" data-k="'+f[0]+'">'+f[1]+'</button>';}).join("")+
+      '<button class="fchip ghost" data-act="add-comp" title="Sigue a un creador para ver sus reels en el Radar">'+IC.plus+' Añadir competidor</button>'+
       '<button class="fchip ghost" data-act="add-reel" title="Pega la URL de un reel para meterlo al ecosistema">'+IC.plus+' Añadir reel</button>'+
     '</div>';
   }
@@ -2049,6 +2050,9 @@
     if(act==="filter"){ S.filter=k; return render(); }
     if(act==="expand-feed"){ S.feedExpanded=true; return render(); }
     if(act==="add-reel") return addReelManual();
+    // Reusa el modal legacy global (index.html); al añadir, submitAddCompetitor
+    // recarga el Radar vía window.RS_reloadRadar (puente en loadBrandData).
+    if(act==="add-comp"){ if(typeof window.openAddCompetitorModal==="function") window.openAddCompetitorModal(); return; }
     if(act==="voice-onboard") return onboardVoice();
     if(act==="voice-refine") return refineVoice();
     if(act==="next-series-go"){ var nt=btn.getAttribute("data-title")||(nextSeries()&&nextSeries().title)||""; S.tab="ideas"; S.view="feed";
@@ -2159,6 +2163,7 @@
 
   function loadBrandData(){
     var el=root(); if(!el) return;
+    try{ window.RS_reloadRadar=loadBrandData; }catch(e){}   // puente: el chrome legacy recarga el Radar tras añadir competidor
     el.innerHTML=skeletonHTML();
     var q=S.brandId?("?brand="+encodeURIComponent(S.brandId)):"";
     var _pq=(S.brandId&&S.brandId!=="default")?("?project_id="+encodeURIComponent(S.brandId)):"";
