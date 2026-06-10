@@ -364,7 +364,7 @@
   <!-- v0.16.1: foundations — DM Sans 400/500/700 + Instrument Serif 400.
        Eliminadas Fraunces y JetBrains Mono (no usadas, ahorro bandwidth ~30%).
        --font-mono ahora resuelve a ui-monospace del sistema. -->
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
   <style>
     /* ── Reset & tokens ─────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -10697,120 +10697,1183 @@
 <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);max-width:600px;margin:0 auto"></div>
 
 {% if not workspace %}
-<!-- ── HOW IT WORKS (v0.14.11c) ──────────────────────────────────────── -->
-<section class="how-section fade-in" id="howItWorks">
-  <div class="how-head">
-    <div class="how-eyebrow"><span data-i18n-es="EL LOOP" data-i18n-en="THE LOOP">EL LOOP</span></div>
-    <h2 class="how-h2">
-      <span data-i18n-es="De lo que petó" data-i18n-en="From what blew up">De lo que petó</span>
-      <em data-i18n-es="a tu próximo reel." data-i18n-en="to your next reel.">a tu próximo reel.</em>
-    </h2>
-    <p class="how-sub" data-i18n-es="Sin descargas. Sin extensiones. Sin empezar de cero." data-i18n-en="No downloads. No extensions. No starting from zero.">Sin descargas. Sin extensiones. Sin empezar de cero.</p>
-  </div>
-  <div class="how-grid">
-    <div class="how-step" style="--step-acc:79,124,255">
-      <div class="how-step-num">01</div>
-      <div class="how-step-video">
-        <video class="how-vid" data-src="/static/img/landing/videos/transcribir.mp4" loop muted playsinline preload="metadata" aria-label="Espía tu nicho"></video>
-      </div>
-      <h3 class="how-step-title" data-i18n-es="Espía tu nicho." data-i18n-en="Spy your niche.">Espía tu nicho.</h3>
-      <p class="how-step-desc" data-i18n-es="El Radar te muestra lo que ya explota entre tus competidores, ordenado por lo que más petó." data-i18n-en="The Radar shows what's already exploding among your competitors, ranked by what blew up most.">El Radar te muestra lo que ya explota entre tus competidores, ordenado por lo que más petó.</p>
-    </div>
-    <div class="how-step" style="--step-acc:79,124,255">
-      <div class="how-step-num">02</div>
-      <div class="how-step-video">
-        <video class="how-vid" data-src="/static/img/landing/videos/metricas.mp4" loop muted playsinline preload="metadata" aria-label="Róbalo a tu voz"></video>
-      </div>
-      <h3 class="how-step-title" data-i18n-es="Róbalo a tu voz." data-i18n-en="Steal it into your voice.">Róbalo a tu voz.</h3>
-      <p class="how-step-desc" data-i18n-es="Un clic y nace el guión en tu tono, tu estructura, tu forma de hablar. Listo para grabar." data-i18n-en="One click and the script is born in your tone, your structure, your way of talking. Ready to record.">Un clic y nace el guión en tu tono, tu estructura, tu forma de hablar. Listo para grabar.</p>
-    </div>
-    <div class="how-step" style="--step-acc:79,124,255">
-      <div class="how-step-num">03</div>
-      <div class="how-step-video">
-        <video class="how-vid" data-src="/static/img/landing/videos/teleprompter.mp4" loop muted playsinline preload="metadata" aria-label="Publica y aprende"></video>
-      </div>
-      <h3 class="how-step-title" data-i18n-es="Publica y aprende." data-i18n-en="Publish and learn.">Publica y aprende.</h3>
-      <p class="how-step-desc" data-i18n-es="Grabas con teleprompter, publicas, y Reelscript mide qué funcionó para sonar aún más a ti." data-i18n-en="Record with the teleprompter, publish, and Reelscript measures what worked to sound even more like you.">Grabas con teleprompter, publicas, y Reelscript mide qué funcionó para sonar aún más a ti.</p>
-    </div>
-  </div>
-</section>
-<div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);max-width:600px;margin:0 auto"></div>
+<!-- ════════════════════════════════════════════════════════════════════
+     LANDING V2 (porte de docs/mockup-landing-v2.html v2.4 · 2026-06-10)
+     TODO el tema oscuro vive scoped en .rs-landing (vars + selectores .rsl-*,
+     keyframes rsl*): NO se filtra a la app ni la app a él (clases prefijadas).
+     Aurora: reutiliza el #globalAurora del producto (fixed z0; el contenido
+     va en .rsl-main z1, como el main del mockup). Nav y footer: los del app.
+     El hero viejo queda en DOM oculto (su #urlInput lo usa JS sin guard).
+     ⚠️ TODOs de assets (vídeo hero, fotos david/bernat/testi-*) en /static/img/landing/
+     — los <img>/<video> con onerror se auto-ocultan hasta que existan.
+     ⚠️ DEUDA: copy solo ES (el /en/ enseña ES); i18n de la landing pendiente.
+     ════════════════════════════════════════════════════════════════════ -->
+<style>
 
-<!-- ── TRY FREE (preview transcribe) ─────────────────────────────────── -->
-<section class="try-free-section fade-in" id="tryFree">
-  <div class="try-free-grid">
-    <div class="try-free-left">
-      <div class="s-label" data-i18n-es="TU MOAT" data-i18n-en="YOUR MOAT">TU MOAT</div>
-      <h2 class="try-free-h2">
-        <span data-i18n-es="Tu voz al 64%." data-i18n-en="Your voice at 64%.">Tu voz al 64%.</span>
-        <em data-i18n-es="Y subiendo." data-i18n-en="And climbing.">Y subiendo.</em>
-      </h2>
-      <p class="try-free-sub" data-i18n-es="Cada reel tuyo que lee, cada guión que grabas, lo afina. Reelscript no genera «texto de IA»: genera lo que dirías tú. Irte es empezar de cero con uno que no sabe quién eres." data-i18n-en="Every reel of yours it reads, every script you record, sharpens it. Reelscript doesn't generate &quot;AI text&quot;: it generates what you'd say. Leaving means starting over with one that doesn't know who you are.">Cada reel tuyo que lee, cada guión que grabas, lo afina. Reelscript no genera «texto de IA»: genera lo que dirías tú. Irte es empezar de cero con uno que no sabe quién eres.</p>
-      <div class="try-free-hooks-line">
-        <img src="/static/img/hooks/hooks-transcribir.svg" alt="" loading="lazy" width="22" height="22">
-        <span data-i18n-es="Pega un reel que petó y te saco el guion en segundos." data-i18n-en="Paste a reel that blew up and I'll pull the script in seconds.">Pega un reel que petó y te saco el guion en segundos.</span>
+  .rs-landing{
+    --bg:#0a0b0f; --surf:#11131a; --surf2:#171a23;
+    --text:#eef1f8; --text2:#a8b0c2; --text3:#828a9e;
+    --border:rgba(168,176,194,.14);
+    --brand:#4f7cff; --brand2:#6f93ff; --orange:#ff7847; --teal:#5eead4;
+    --grad:linear-gradient(135deg,#4f7cff 0%,#6f93ff 100%);
+    /* superficie de botón: mismas tintas de marca, ~12% más oscuras → texto blanco legible (AA) */
+    --grad-btn:linear-gradient(135deg,#3a5fd9 0%,#5a82f0 100%);
+    /* sistema de elevación (R29): reposo · hover · flotante */
+    --sh-1:0 8px 24px rgba(0,0,0,.30);
+    --sh-2:0 18px 50px rgba(0,0,0,.40);
+    --sh-3:0 30px 80px rgba(0,0,0,.50);
+    --serif:'Instrument Serif',Georgia,serif;
+    --disp:'Space Grotesk',system-ui,sans-serif;
+    --body:'Hanken Grotesk',system-ui,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --ease:cubic-bezier(.4,0,.2,1);
+    --bounce:cubic-bezier(.34,1.56,.64,1);
+  }
+  .rs-landing *{margin:0;padding:0;box-sizing:border-box}
+  
+  .rs-landing{background:var(--bg);color:var(--text);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  /* grain sutil sobre todo (craft anti-plantilla): estático, pointer-events none, casi imperceptible */
+  .rs-landing::after{content:"";position:fixed;inset:0;z-index:3;pointer-events:none;opacity:.045;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+  .rs-landing ::selection{background:rgba(79,124,255,.35)}
+  .rs-landing a{color:inherit;text-decoration:none}
+  .rs-landing button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  .rs-landing :focus-visible{outline:2px solid var(--brand2);outline-offset:3px;border-radius:4px}
+  .rs-landing .rsl-wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  .rs-landing section{position:relative;padding:96px 0}
+  .rs-landing .rsl-eyebrow{font-family:var(--mono);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--brand2);display:block;margin-bottom:14px}
+  .rs-landing h2{font-family:var(--serif);font-size:clamp(1.95rem,4vw,2.8rem);font-weight:400;letter-spacing:-.005em;line-height:1.12;margin-bottom:14px}
+  .rs-landing .rsl-sub{color:var(--text2);font-size:1.06rem;max-width:560px}
+  /* solo se ocultan si hay JS (la clase .js la pone el script): sin JS o si el script peta, el contenido se ve igual */
+  .rs-landing.rsl-js .rsl-rise{opacity:0;transform:translateY(22px)}
+  .rs-landing .rsl-rise.rsl-vis{opacity:1;transform:none;transition:opacity .6s var(--ease),transform .6s var(--ease)}
+
+  /* ── WAVES (aurora del producto — seña de identidad, NO tocar) ── */
+  
+  .rs-landing .rsl-sticky-cta{position:relative;z-index:1}
+
+  /* ── NAV ── */
+  .rs-landing .rsl-nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);background:rgba(10,11,15,.72);border-bottom:1px solid var(--border)}
+  .rs-landing .rsl-nav-in{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .rs-landing .rsl-logo{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:700;font-size:1.15rem}
+  .rs-landing .rsl-logo-dot{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--orange),#ff9a6b);display:grid;place-items:center;font-size:.8rem;color:#fff;font-family:var(--mono)}
+  .rs-landing .rsl-nav-cta{display:flex;align-items:center;gap:18px}
+  .rs-landing .rsl-nav-login{color:var(--text2);font-size:.95rem;padding:10px 6px;min-height:44px;display:inline-flex;align-items:center}
+  .rs-landing .rsl-nav-login:hover{color:var(--text)}
+  .rs-landing .rsl-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--disp);font-weight:500;border-radius:12px;transition:transform .15s var(--ease),box-shadow .15s var(--ease);min-height:44px;position:relative;overflow:hidden}
+  .rs-landing .rsl-btn:hover{transform:translateY(-1px)}
+  .rs-landing .rsl-btn-primary{background:var(--grad-btn);color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.35);padding:12px 22px;box-shadow:0 6px 24px rgba(79,124,255,.35)}
+  .rs-landing .rsl-btn-primary:hover{box-shadow:0 10px 32px rgba(79,124,255,.5)}
+  /* shine que barre el CTA */
+  .rs-landing .rsl-btn-primary::after{content:"";position:absolute;top:0;bottom:0;left:-80%;width:50%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);animation:rslShine 4.5s infinite}
+  @keyframes rslShine{0%,72%{left:-80%}88%,100%{left:130%}}
+  /* el barrido solo en los CTA grandes (hero/final): con varios a la vez se lee «barato» */
+  .rs-landing .rsl-nav .rsl-btn-primary::after, .rs-landing .rsl-sticky-cta .rsl-btn-primary::after, .rs-landing .rsl-plan .rsl-btn-primary::after{display:none}
+  .rs-landing .rsl-btn-ghost{border:1px solid var(--border);color:var(--text2);padding:12px 22px}
+  .rs-landing .rsl-btn-ghost:hover{color:var(--text);border-color:var(--text3)}
+
+  /* ── HERO ── */
+  .rs-landing .rsl-hero{padding:84px 0 48px;text-align:center}
+  .rs-landing .rsl-hero-badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--brand2);border:1px solid rgba(79,124,255,.35);background:rgba(79,124,255,.08);padding:7px 14px;border-radius:999px;margin-bottom:26px;animation:rslFadeDown .7s var(--ease) both}
+  @keyframes rslFadeDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+  .rs-landing .rsl-hero-badge .rsl-pulse{width:7px;height:7px;border-radius:50%;background:var(--brand2);animation:rslPulse 2.2s infinite}
+  @keyframes rslPulse{0%,100%{box-shadow:0 0 0 0 rgba(111,147,255,.6)}55%{box-shadow:0 0 0 7px rgba(111,147,255,0)}}
+  .rs-landing .rsl-hero h1{font-family:var(--serif);font-weight:400;font-size:clamp(2.9rem,7.2vw,5.4rem);line-height:1.04;letter-spacing:-.01em;max-width:820px;margin:0 auto 22px}
+  .rs-landing .rsl-hero h1 .rsl-w{display:inline-block;opacity:0;transform:translateY(.45em) rotate(2deg);filter:blur(6px);animation:rslWordIn .7s var(--ease) forwards}
+  @keyframes rslWordIn{to{opacity:1;transform:none;filter:blur(0)}}
+  .rs-landing .rsl-hero h1 em{font-style:italic;background:linear-gradient(120deg,#4f7cff,#8b5cf6,#6f93ff,#4f7cff);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:#7e9bff;-webkit-text-fill-color:transparent;animation:rslGradShift 6s ease infinite}
+  @keyframes rslGradShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+  .rs-landing .rsl-hero-sub{color:var(--text2);font-size:clamp(1.05rem,1.6vw,1.25rem);max-width:640px;margin:0 auto 34px;animation:rslFadeDown .7s var(--ease) .55s both}
+  .rs-landing .rsl-hero-sub strong{color:var(--text)}
+  /* FIX descentrado del hero: antes primario+enlace iban en FILA centrada como grupo,
+     y el primario quedaba desplazado del eje del H1. En columna, el primario cae
+     exactamente en el eje y además DOMINA sin competencia lateral (IDI). */
+  .rs-landing .rsl-hero-ctas{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:14px;animation:rslFadeDown .7s var(--ease) .7s both}
+  .rs-landing .rsl-hero-ctas .rsl-btn-primary{padding:16px 30px;font-size:1.05rem}
+  /* CTA secundario: enlace de texto, claramente subordinado al primario (IDI: una acción primaria) */
+  .rs-landing .rsl-hero-link{display:inline-flex;align-items:center;gap:7px;font-family:var(--disp);font-size:1rem;color:var(--text2);min-height:44px;padding:0 10px;transition:color .15s var(--ease)}
+  .rs-landing .rsl-hero-link:hover{color:var(--text)}
+  .rs-landing .rsl-hero-link span{transition:transform .2s var(--ease)}
+  .rs-landing .rsl-hero-link:hover span{transform:translateX(3px)}
+  .rs-landing .rsl-hero-micro{font-family:var(--mono);font-size:.78rem;color:var(--text3);animation:rslFadeDown .7s var(--ease) .8s both}
+
+  /* ── TICKER de señales (FOMO con calma) ── */
+  .rs-landing .rsl-ticker{margin-top:58px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:rgba(17,19,26,.32);overflow:hidden;position:relative;padding:11px 0}
+  .rs-landing .rsl-ticker::before, .rs-landing .rsl-ticker::after{content:"";position:absolute;top:0;bottom:0;width:120px;z-index:2;pointer-events:none}
+  .rs-landing .rsl-ticker::before{left:0;background:linear-gradient(90deg,var(--bg),transparent)}
+  .rs-landing .rsl-ticker::after{right:0;background:linear-gradient(-90deg,var(--bg),transparent)}
+  .rs-landing .rsl-ticker-track{display:flex;gap:42px;width:max-content;animation:rslTick 36s linear infinite}
+  .rs-landing .rsl-ticker:hover .rsl-ticker-track{animation-play-state:paused}
+  @keyframes rslTick{to{transform:translateX(-50%)}}
+  .rs-landing .rsl-tk{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:.76rem;color:var(--text2);white-space:nowrap}
+  .rs-landing .rsl-tk b{color:var(--teal);font-weight:500}
+  .rs-landing .rsl-tk .rsl-dot{width:6px;height:6px;border-radius:50%;background:var(--brand2);flex:none;animation:rslPulse 2.4s infinite}
+  .rs-landing .rsl-tk-label{font-family:var(--mono);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--brand2);padding-right:42px;border-right:1px solid var(--border)}
+
+  /* ── MARCOS DE APP (navegador y móvil) — para vídeo y CAPTURAS REALES ──
+     El <img>/<video> real va ENCIMA; si el asset no existe, su onerror lo oculta
+     y debajo queda la nota TODO (nunca un icono roto). */
+  .rs-landing .rsl-frame{position:relative;border-radius:20px;border:1px solid var(--border);background:rgba(17,19,26,.88);backdrop-filter:blur(8px);box-shadow:var(--sh-3),0 0 60px rgba(79,124,255,.07);overflow:hidden}
+  .rs-landing .rsl-frame-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border);background:rgba(10,11,15,.45)}
+  .rs-landing .rsl-frame-bar i{width:10px;height:10px;border-radius:50%;background:var(--surf2);display:block}
+  .rs-landing .rsl-frame-bar span{font-family:var(--mono);font-size:.7rem;color:var(--text3);margin-left:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rs-landing .rsl-shot{position:relative;aspect-ratio:16/10;overflow:hidden;background:
+    radial-gradient(circle at 28% 18%,rgba(79,124,255,.12),transparent 55%),
+    repeating-linear-gradient(45deg,rgba(168,176,194,.035) 0 14px,transparent 14px 28px),var(--surf2)}
+  .rs-landing .shot-todo{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:20px}
+  .rs-landing .shot-todo span{font-family:var(--mono);font-size:.72rem;line-height:1.6;color:var(--text3);border:1px dashed rgba(168,176,194,.35);border-radius:12px;padding:12px 18px;background:rgba(10,11,15,.55);max-width:85%}
+  .rs-landing .rsl-shot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center}
+  .rs-landing .rsl-phone{position:relative;width:min(264px,78%);aspect-ratio:9/18.5;margin:0 auto;border-radius:38px;background:#07080c;border:1px solid rgba(168,176,194,.22);box-shadow:var(--sh-3),0 0 50px rgba(79,124,255,.08);padding:9px}
+  .rs-landing .rsl-phone::before{content:"";position:absolute;top:17px;left:50%;transform:translateX(-50%);width:78px;height:20px;border-radius:11px;background:#040508;z-index:3}
+  .rs-landing .rsl-phone .rsl-shot{position:absolute;inset:9px;aspect-ratio:auto;border-radius:30px}
+
+  /* ── HERO MEDIA: vídeo explicativo en marco de navegador ── */
+  .rs-landing .rsl-hero-media{margin:58px auto 0;max-width:840px;position:relative;animation:rslFadeDown .8s var(--ease) .9s both}
+  .rs-landing .rsl-hero-video{position:relative;aspect-ratio:16/9;background:radial-gradient(circle at 50% 30%,rgba(79,124,255,.1),transparent 60%),var(--surf)}
+  .rs-landing .rsl-hero-video video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2}
+  /* composición de respaldo (visible hasta que exista el póster/vídeo real) */
+  .rs-landing .rsl-video-fallback{position:absolute;inset:0;z-index:1;padding:26px 32px;text-align:left}
+  .rs-landing .rsl-video-fallback .rsl-tag{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--brand2);margin-bottom:14px;display:block}
+  .rs-landing .play-btn{position:absolute;z-index:4;left:50%;top:50%;transform:translate(-50%,-50%);width:84px;height:84px;border-radius:50%;background:rgba(10,11,15,.72);border:1px solid rgba(111,147,255,.5);backdrop-filter:blur(8px);display:grid;place-items:center;box-shadow:0 0 0 0 rgba(79,124,255,.4);animation:rslPlayPulse 2.6s infinite;transition:transform .2s var(--ease)}
+  .rs-landing .play-btn:hover{transform:translate(-50%,-50%) scale(1.07)}
+  .rs-landing .play-btn svg{margin-left:5px}
+  @keyframes rslPlayPulse{0%{box-shadow:0 0 0 0 rgba(79,124,255,.4)}70%{box-shadow:0 0 0 22px rgba(79,124,255,0)}100%{box-shadow:0 0 0 0 rgba(79,124,255,0)}}
+  .rs-landing .video-todo{position:absolute;z-index:4;bottom:14px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:.66rem;color:var(--text3);background:rgba(10,11,15,.7);border:1px dashed rgba(168,176,194,.35);border-radius:9px;padding:6px 12px;white-space:nowrap}
+  /* tarjetas de señal (se reusan en el respaldo del vídeo y en ejemplos) */
+  .rs-landing .rsl-sig{display:flex;align-items:center;gap:14px;padding:13px 16px;border:1px solid var(--border);border-radius:12px;margin-bottom:10px;background:rgba(23,26,35,.72)}
+  .rs-landing .rsl-sig .rsl-thumb{width:44px;height:58px;border-radius:8px;background:linear-gradient(160deg,#26304d,#11131a);flex:none;position:relative;overflow:hidden}
+  .rs-landing .rsl-sig .rsl-thumb::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.07) 50%,transparent 60%);animation:rslThumbShine 3s infinite}
+  @keyframes rslThumbShine{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
+  .rs-landing .rsl-sig .rsl-meta{flex:1;min-width:0}
+  .rs-landing .rsl-sig .rsl-meta b{font-family:var(--disp);font-size:.92rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rs-landing .rsl-sig .rsl-meta span{font-family:var(--mono);font-size:.72rem;color:var(--text3)}
+  .rs-landing .rsl-sig .rsl-x{font-family:var(--mono);color:var(--teal);font-size:.8rem;flex:none}
+  .rs-landing .rsl-sig.rsl-hot{border-color:rgba(79,124,255,.5);box-shadow:0 0 24px rgba(79,124,255,.12)}
+  .rs-landing .rsl-sig.rsl-hot .rsl-x{animation:rslXPulse 1.6s ease-in-out infinite}
+  @keyframes rslXPulse{0%,100%{text-shadow:0 0 0 rgba(94,234,212,0)}50%{text-shadow:0 0 14px rgba(94,234,212,.8)}}
+  .rs-landing .rsl-steal-btn{margin-top:6px;display:inline-flex;align-items:center;gap:8px;background:var(--grad-btn);color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.35);font-family:var(--disp);font-size:.9rem;font-weight:500;padding:11px 20px;border-radius:10px;box-shadow:0 6px 20px rgba(79,124,255,.3)}
+  /* chips flotando alrededor del marco (profundidad) — fuera en móvil */
+  .rs-landing .rsl-float-chip{position:absolute;z-index:5;display:flex;align-items:center;gap:9px;border:1px solid var(--border);border-radius:14px;background:rgba(17,19,26,.92);backdrop-filter:blur(8px);padding:12px 16px;box-shadow:var(--sh-2);font-family:var(--mono);font-size:.74rem;color:var(--text2);animation:rslChipFloat 7s ease-in-out infinite}
+  .rs-landing .rsl-float-chip b{color:var(--teal);font-weight:500}
+  .rs-landing .rsl-float-chip.rsl-fc1{top:46px;left:-72px}
+  .rs-landing .rsl-float-chip.rsl-fc2{bottom:40px;right:-66px;animation-delay:1.6s}
+  @keyframes rslChipFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+
+  /* ── FRANJA PROMESAS con count-up ── */
+  .rs-landing .rsl-strip{border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:rgba(17,19,26,.5);padding:34px 0}
+  .rs-landing .rsl-strip-in{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;text-align:center}
+  .rs-landing .rsl-strip b{font-family:var(--disp);font-size:.98rem;color:var(--text2);display:block;margin-bottom:4px}
+  .rs-landing .rsl-strip .rsl-num{font-family:var(--mono);color:var(--brand2);font-size:clamp(2rem,3.4vw,2.6rem);line-height:1;display:block;margin-bottom:8px;font-weight:500}
+  .rs-landing .rsl-strip span{color:var(--text3);font-size:.88rem}
+
+  /* ── PRUEBA SOCIAL: creadores reales (hecho en público) ── */
+  .rs-landing .rsl-proof{border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:rgba(10,11,15,.5);padding:26px 0}
+  .rs-landing .rsl-proof-in{display:flex;align-items:center;justify-content:center;gap:38px;flex-wrap:wrap}
+  .rs-landing .rsl-proof-label{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--text3)}
+  .rs-landing .rsl-creator-chip{display:flex;align-items:center;gap:12px;min-height:44px}
+  .rs-landing .rsl-creator-chip:hover b{color:var(--brand2)}
+  .rs-landing .rsl-creator-chip .rsl-ph{position:relative;width:46px;height:46px;border-radius:50%;flex:none;overflow:hidden;border:2px solid rgba(79,124,255,.45);background:linear-gradient(135deg,#26304d,#11131a);display:grid;place-items:center;font-family:var(--disp);font-weight:700;font-size:.85rem;color:var(--text2)}
+  .rs-landing .rsl-creator-chip .rsl-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .rs-landing .rsl-creator-chip b{font-family:var(--disp);font-size:.92rem;display:block;transition:color .15s}
+  .rs-landing .rsl-creator-chip span{font-family:var(--mono);font-size:.7rem;color:var(--text3)}
+
+  /* ── LOOP en zigzag: cada paso con su CAPTURA REAL (layouts variados, no card repetida) ── */
+  .rs-landing .rsl-how-row{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;margin-top:84px}
+  .rs-landing .rsl-how-row:first-of-type{margin-top:60px}
+  /* alterna lado sin tocar el orden DOM (los lectores de pantalla leen 1→2→3→4) */
+  .rs-landing .rsl-how-row.rsl-flip .rsl-how-media{order:2}
+  .rs-landing .rsl-how-copy .rsl-n{font-family:var(--mono);font-size:.72rem;color:var(--brand2);letter-spacing:.16em;display:block;margin-bottom:12px}
+  .rs-landing .rsl-how-copy h3{font-family:var(--disp);font-size:clamp(1.35rem,2.4vw,1.7rem);margin-bottom:10px;letter-spacing:-.01em}
+  .rs-landing .rsl-how-copy p{color:var(--text2);font-size:1rem;max-width:460px}
+  .rs-landing .rsl-how-copy .rsl-pt{display:flex;gap:10px;margin-top:14px;font-size:.92rem;color:var(--text2)}
+  .rs-landing .rsl-how-copy .rsl-pt::before{content:"✓";color:var(--brand2);font-weight:700;flex:none}
+  .rs-landing .rsl-how-media{position:relative}
+  /* guión real renderizado (contenido de verdad — lo contrario del placeholder) */
+  .rs-landing .rsl-script-card{border:1px solid rgba(79,124,255,.4);border-radius:20px;background:rgba(17,19,26,.9);padding:28px;box-shadow:var(--sh-2),0 0 44px rgba(79,124,255,.08)}
+  .rs-landing .rsl-script-card .rsl-sc-from{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:14px}
+  .rs-landing .rsl-script-card .rsl-sc-from b{color:var(--teal);font-weight:500}
+  .rs-landing .rsl-script-card h4{font-family:var(--serif);font-weight:400;font-size:1.45rem;line-height:1.3;margin-bottom:16px}
+  .rs-landing .rsl-script-card .rsl-beat{display:flex;gap:12px;font-size:.92rem;color:var(--text2);margin-bottom:10px}
+  .rs-landing .rsl-script-card .rsl-beat i{font-family:var(--mono);font-style:normal;font-size:.7rem;color:var(--brand2);flex:none;padding-top:3px}
+  .rs-landing .rsl-script-card .rsl-voice{display:inline-flex;align-items:center;gap:8px;margin-top:12px;font-family:var(--mono);font-size:.72rem;color:var(--teal);border:1px solid rgba(94,234,212,.3);padding:6px 12px;border-radius:999px}
+  /* barra de voz (paso 4) */
+  .rs-landing .rsl-viz-voice{display:flex;align-items:center;gap:14px;margin-top:20px;max-width:420px}
+  .rs-landing .rsl-vbar{flex:1;height:10px;border-radius:6px;background:var(--surf);border:1px solid var(--border);overflow:hidden}
+  .rs-landing .rsl-vbar i{display:block;height:100%;width:0;background:var(--grad);border-radius:6px}
+  .rs-landing .rsl-rise.rsl-vis .rsl-vbar i{animation:rslVoiceUp 2.4s var(--ease) forwards .3s}
+  @keyframes rslVoiceUp{to{width:82%}}
+  .rs-landing .rsl-vpct{font-family:var(--mono);font-size:.85rem;color:var(--brand2)}
+
+  /* ── ASPIRACIONAL + ejemplos de nicho ── */
+  .rs-landing .rsl-aspire{text-align:center}
+  .rs-landing .rsl-aspire h2{font-size:clamp(2.1rem,4.6vw,3.2rem)}
+  .rs-landing .rsl-aspire h2 em{font-style:italic;background:linear-gradient(120deg,#4f7cff,#8b5cf6,#6f93ff,#4f7cff);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:#7e9bff;-webkit-text-fill-color:transparent;animation:rslGradShift 6s ease infinite}
+  .rs-landing .rsl-hooks-row{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:52px;text-align:left}
+  .rs-landing .rsl-hook-card{border:1px solid var(--border);border-radius:18px;background:rgba(17,19,26,.7);padding:24px;box-shadow:var(--sh-1);display:flex;flex-direction:column;gap:12px;transition:transform .2s,border-color .2s,box-shadow .2s}
+  .rs-landing .rsl-hook-card:hover{transform:translateY(-4px);border-color:rgba(79,124,255,.4);box-shadow:var(--sh-2)}
+  .rs-landing .rsl-hook-card .rsl-niche{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--teal)}
+  .rs-landing .rsl-hook-card .rsl-from{font-size:.85rem;color:var(--text3)}
+  .rs-landing .rsl-hook-card .rsl-from b{color:var(--text2);font-weight:500}
+  .rs-landing .rsl-hook-card .rsl-arrow{font-family:var(--mono);font-size:.7rem;color:var(--brand2);letter-spacing:.1em}
+  .rs-landing .rsl-hook-card .rsl-to{font-family:var(--serif);font-size:1.18rem;line-height:1.35}
+
+  /* ── LA CUENTA ES SIMPLE (ventas) ── */
+  .rs-landing .rsl-math{background:rgba(17,19,26,.45)}
+  .rs-landing .rsl-math-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:50px}
+  .rs-landing .rsl-math-card{border:1px solid var(--border);border-radius:18px;padding:30px;background:rgba(10,11,15,.6);position:relative;box-shadow:var(--sh-1)}
+  .rs-landing .rsl-math-card .rsl-who{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:16px}
+  .rs-landing .rsl-math-card .rsl-big{font-family:var(--disp);font-size:2.1rem;font-weight:700;letter-spacing:-.02em}
+  .rs-landing .rsl-math-card .rsl-big small{font-size:.95rem;color:var(--text3);font-weight:400}
+  .rs-landing .rsl-math-card p{color:var(--text2);font-size:.9rem;margin-top:10px}
+  .rs-landing .rsl-math-card.rsl-win{border-color:rgba(79,124,255,.55);background:rgba(79,124,255,.06);box-shadow:0 0 44px rgba(79,124,255,.1)}
+  .rs-landing .rsl-math-card.rsl-win .rsl-big{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .rs-landing .rsl-math-card .rsl-tach{text-decoration:line-through;text-decoration-color:rgba(255,120,71,.7);text-decoration-thickness:3px}
+  .rs-landing .rsl-timebar{margin-top:54px;border:1px solid var(--border);border-radius:18px;padding:28px 30px;background:rgba(10,11,15,.6)}
+  .rs-landing .rsl-timebar .rsl-tb-row{display:grid;grid-template-columns:190px 1fr 86px;align-items:center;gap:18px;margin-bottom:18px}
+  .rs-landing .rsl-timebar .rsl-tb-row:last-child{margin-bottom:0}
+  .rs-landing .rsl-timebar label{font-family:var(--disp);font-size:.95rem}
+  .rs-landing .rsl-timebar label small{display:block;font-family:var(--mono);font-size:.68rem;color:var(--text3);font-weight:400}
+  .rs-landing .rsl-tb-track{height:14px;border-radius:8px;background:var(--surf2);border:1px solid var(--border);overflow:hidden}
+  .rs-landing .rsl-tb-fill{display:block;height:100%;width:0;border-radius:8px}
+  .rs-landing .rsl-tb-old .rsl-tb-fill{background:linear-gradient(90deg,#3c4257,#565e78)}
+  .rs-landing .rsl-tb-new .rsl-tb-fill{background:var(--grad);box-shadow:0 0 18px rgba(79,124,255,.5)}
+  .rs-landing .rsl-timebar.rsl-vis .rsl-tb-old .rsl-tb-fill{animation:rslFillOld 1.8s var(--ease) forwards .2s}
+  .rs-landing .rsl-timebar.rsl-vis .rsl-tb-new .rsl-tb-fill{animation:rslFillNew 1.4s var(--ease) forwards 1s}
+  @keyframes rslFillOld{to{width:96%}}
+  @keyframes rslFillNew{to{width:9%}}
+  .rs-landing .rsl-tb-val{font-family:var(--mono);font-size:.85rem;color:var(--text2);text-align:right}
+  .rs-landing .rsl-tb-new .rsl-tb-val{color:var(--teal)}
+
+  /* ── MOAT / CEREBRO ── */
+  .rs-landing .rsl-moat-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:60px;align-items:center}
+  .rs-landing .rsl-moat-list{display:grid;gap:16px;margin-top:26px}
+  .rs-landing .rsl-moat-item{display:flex;gap:14px;align-items:flex-start}
+  .rs-landing .rsl-moat-item .rsl-ic{width:34px;height:34px;flex:none;border-radius:10px;background:rgba(79,124,255,.12);border:1px solid rgba(79,124,255,.3);display:grid;place-items:center;font-size:.9rem}
+  .rs-landing .rsl-moat-item b{font-family:var(--disp);display:block;font-size:1rem}
+  .rs-landing .rsl-moat-item span{color:var(--text2);font-size:.92rem}
+  .rs-landing .rsl-brain{border:1px solid var(--border);border-radius:20px;background:rgba(17,19,26,.8);padding:28px;box-shadow:0 24px 70px rgba(0,0,0,.45);position:relative;overflow:hidden}
+  .rs-landing .rsl-brain::before{content:"";position:absolute;top:-60%;right:-40%;width:80%;height:120%;background:radial-gradient(circle,rgba(79,124,255,.08),transparent 65%);animation:rslBrainGlow 5s ease-in-out infinite}
+  @keyframes rslBrainGlow{0%,100%{opacity:.5}50%{opacity:1}}
+  .rs-landing .rsl-brain .rsl-bh{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+  .rs-landing .rsl-brain .rsl-bh b{font-family:var(--disp)}
+  .rs-landing .rsl-brain .rsl-bh span{font-family:var(--mono);font-size:.72rem;color:var(--text3)}
+  .rs-landing .rsl-brain .rsl-bh .rsl-live{width:7px;height:7px;border-radius:50%;background:var(--teal);display:inline-block;margin-right:6px;animation:rslPulse 2s infinite}
+  .rs-landing .rsl-brain .rsl-row{margin-bottom:16px}
+  .rs-landing .rsl-brain .rsl-row label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.74rem;color:var(--text2);margin-bottom:7px}
+  .rs-landing .rsl-brain .rsl-row label em{color:var(--brand2);font-style:normal}
+  .rs-landing .rsl-brain .rsl-bar{height:8px;border-radius:5px;background:var(--surf2);overflow:hidden}
+  .rs-landing .rsl-brain .rsl-bar i{display:block;height:100%;width:0;background:var(--grad);border-radius:5px;transition:width 1.6s var(--ease) .2s}
+  .rs-landing .rsl-brain .rsl-chip{display:inline-block;font-family:var(--mono);font-size:.7rem;color:var(--text2);border:1px solid var(--border);border-radius:999px;padding:5px 11px;margin:4px 4px 0 0;opacity:0;transform:translateY(8px) scale(.92)}
+  .rs-landing .rsl-brain.rsl-vis .rsl-chip{opacity:1;transform:none;transition:opacity .45s var(--bounce),transform .45s var(--bounce)}
+  .rs-landing .rsl-brain.rsl-vis .rsl-chip:nth-child(1){transition-delay:.9s}.rs-landing .rsl-brain.rsl-vis .rsl-chip:nth-child(2){transition-delay:1.05s}
+  .rs-landing .rsl-brain.rsl-vis .rsl-chip:nth-child(3){transition-delay:1.2s}.rs-landing .rsl-brain.rsl-vis .rsl-chip:nth-child(4){transition-delay:1.35s}
+
+  /* ── AGENCIAS (spaces auto-shuffle) ── */
+  .rs-landing .rsl-ag-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:60px;align-items:center}
+  .rs-landing .rsl-spaces{position:relative;height:300px}
+  .rs-landing .rsl-space{position:absolute;left:0;right:0;top:0;border:1px solid var(--border);border-radius:16px;background:var(--surf);padding:18px 22px;display:flex;align-items:center;gap:14px;box-shadow:0 18px 50px rgba(0,0,0,.4);animation:9s var(--ease) infinite}
+  .rs-landing .rsl-space:nth-child(1){animation-name:rslShuf1}
+  .rs-landing .rsl-space:nth-child(2){animation-name:rslShuf2}
+  .rs-landing .rsl-space:nth-child(3){animation-name:rslShuf3}
+  @keyframes rslShuf1{0%,28%{transform:translateY(0);z-index:3}33%,61%{transform:translateY(96px)}66%,94%{transform:translateY(192px)}100%{transform:translateY(0)}}
+  @keyframes rslShuf2{0%,28%{transform:translateY(96px)}33%,61%{transform:translateY(192px)}66%,94%{transform:translateY(0)}100%{transform:translateY(96px)}}
+  @keyframes rslShuf3{0%,28%{transform:translateY(192px)}33%,61%{transform:translateY(0)}66%,94%{transform:translateY(96px)}100%{transform:translateY(192px)}}
+  .rs-landing .rsl-space .rsl-dot{width:34px;height:34px;border-radius:10px;flex:none;font-family:var(--disp);font-weight:700;display:grid;place-items:center;font-size:.85rem;color:#fff}
+  .rs-landing .rsl-space b{font-family:var(--disp);font-size:.95rem;display:block}
+  .rs-landing .rsl-space span{font-family:var(--mono);font-size:.7rem;color:var(--text3)}
+  .rs-landing .rsl-space .rsl-lvl{margin-left:auto;font-family:var(--mono);font-size:.72rem;color:var(--teal)}
+
+  /* ── TESTIMONIOS (PLACEHOLDER — sustituir por reales) ── */
+  .rs-landing .rsl-testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:50px}
+  .rs-landing .rsl-testi{border:1px solid var(--border);border-radius:18px;background:rgba(17,19,26,.7);padding:28px;display:flex;flex-direction:column;gap:16px;box-shadow:var(--sh-1);transition:transform .2s,border-color .2s,box-shadow .2s}
+  .rs-landing .rsl-testi:hover{transform:translateY(-4px);border-color:rgba(79,124,255,.4);box-shadow:var(--sh-2)}
+  .rs-landing .rsl-testi .rsl-stars{color:#ffc24b;font-size:.9rem;letter-spacing:2px}
+  .rs-landing .rsl-testi p{color:var(--text2);font-size:.95rem;font-style:italic}
+  .rs-landing .rsl-testi p strong{color:var(--text);font-style:normal}
+  .rs-landing .rsl-testi .rsl-who{display:flex;align-items:center;gap:12px;margin-top:auto}
+  .rs-landing .rsl-testi .rsl-av{position:relative;width:38px;height:38px;border-radius:50%;flex:none;overflow:hidden;display:grid;place-items:center;font-family:var(--disp);font-weight:700;font-size:.8rem;color:#fff}
+  .rs-landing .rsl-testi .rsl-av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .rs-landing .rsl-testi .rsl-who b{font-family:var(--disp);font-size:.9rem;display:block}
+  .rs-landing .rsl-testi .rsl-who span{font-family:var(--mono);font-size:.7rem;color:var(--text3)}
+
+  /* ── PRICING ── */
+  .rs-landing .rsl-toggle{display:inline-flex;border:1px solid var(--border);border-radius:12px;padding:4px;margin:26px 0 44px;background:rgba(17,19,26,.7)}
+  .rs-landing .rsl-toggle button{font-family:var(--disp);font-size:.9rem;padding:10px 20px;border-radius:9px;color:var(--text2);min-height:44px}
+  .rs-landing .rsl-toggle button.rsl-on{background:var(--grad-btn);color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.3)}
+  .rs-landing .rsl-toggle .rsl-save{font-family:var(--mono);font-size:.68rem;color:var(--teal);margin-left:6px}
+  .rs-landing .rsl-plans{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;text-align:left}
+  .rs-landing .rsl-plan{border:1px solid var(--border);border-radius:20px;background:rgba(17,19,26,.72);padding:32px 28px;display:flex;flex-direction:column;position:relative;transition:transform .2s}
+  .rs-landing .rsl-plan:hover{transform:translateY(-4px)}
+  /* borde gradiente animado del plan destacado */
+  .rs-landing .rsl-plan.rsl-hot{transform:scale(1.03);border:1px solid transparent;background:linear-gradient(rgba(17,19,26,.96),rgba(17,19,26,.96)) padding-box,linear-gradient(var(--ang,135deg),#4f7cff,#8b5cf6,#4f7cff) border-box;box-shadow:0 0 50px rgba(79,124,255,.16);animation:rslHotSpin 5s linear infinite}
+  @property --ang{syntax:"<angle>";initial-value:135deg;inherits:false}
+  @keyframes rslHotSpin{to{--ang:495deg}}
+  .rs-landing .rsl-plan.rsl-hot:hover{transform:scale(1.04)}
+  .rs-landing .rsl-plan .rsl-pop{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--grad-btn);color:#fff;font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;padding:6px 14px;border-radius:999px;white-space:nowrap}
+  .rs-landing .rsl-plan h3{font-family:var(--disp);font-size:1.15rem;margin-bottom:4px}
+  .rs-landing .rsl-plan .rsl-for{color:var(--text3);font-size:.85rem;min-height:42px}
+  .rs-landing .rsl-plan .rsl-price{font-family:var(--disp);font-size:2.6rem;font-weight:700;letter-spacing:-.03em;margin:14px 0 2px}
+  .rs-landing .rsl-plan .rsl-price small{font-size:.95rem;color:var(--text3);font-weight:400;font-family:var(--body)}
+  .rs-landing .rsl-plan .rsl-yr{font-family:var(--mono);font-size:.72rem;color:var(--text3);min-height:18px}
+  .rs-landing .rsl-plan .rsl-day{font-family:var(--mono);font-size:.72rem;color:var(--teal);min-height:18px;margin-bottom:14px}
+  .rs-landing .rsl-plan ul{list-style:none;display:grid;gap:11px;margin-bottom:26px;flex:1}
+  .rs-landing .rsl-plan li{display:flex;gap:10px;font-size:.92rem;color:var(--text2)}
+  .rs-landing .rsl-plan li::before{content:"✓";color:var(--brand2);font-weight:700;flex:none}
+  .rs-landing .rsl-plan li.rsl-zero::before{content:"→";color:var(--text3)}
+  .rs-landing .rsl-plan .rsl-btn{width:100%}
+  .rs-landing .rsl-plan .rsl-risk{font-family:var(--mono);font-size:.68rem;color:var(--text3);text-align:center;margin-top:10px}
+  .rs-landing .rsl-pricing-foot{margin-top:30px;font-family:var(--mono);font-size:.74rem;color:var(--text3);text-align:center}
+
+  /* ── FAQ ── */
+  .rs-landing .rsl-faq{max-width:720px;margin:48px auto 0}
+  .rs-landing .rsl-faq details{border:1px solid var(--border);border-radius:14px;background:rgba(17,19,26,.6);margin-bottom:12px;overflow:hidden}
+  .rs-landing .rsl-faq summary{font-family:var(--disp);font-size:1rem;padding:19px 22px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:14px;min-height:44px}
+  .rs-landing .rsl-faq summary::after{content:"+";font-size:1.3rem;color:var(--brand2);transition:transform .2s}
+  .rs-landing .rsl-faq details[open] summary::after{transform:rotate(45deg)}
+  .rs-landing .rsl-faq .rsl-a{padding:0 22px 20px;color:var(--text2);font-size:.95rem}
+
+  /* ── CTA FINAL ── */
+  .rs-landing .rsl-final{text-align:center;padding:130px 0;overflow:hidden}
+  .rs-landing .rsl-final .rsl-halo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:680px;height:680px;border-radius:50%;background:radial-gradient(circle,rgba(79,124,255,.13),transparent 60%);animation:rslHaloBreathe 6s ease-in-out infinite;pointer-events:none}
+  @keyframes rslHaloBreathe{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.12)}}
+  .rs-landing .rsl-final h2{font-family:var(--serif);font-weight:400;font-size:clamp(2.2rem,5vw,3.6rem)}
+  .rs-landing .rsl-final h2 em{font-style:italic;background:linear-gradient(120deg,#4f7cff,#8b5cf6,#6f93ff,#4f7cff);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:#7e9bff;-webkit-text-fill-color:transparent;animation:rslGradShift 6s ease infinite}
+  .rs-landing .rsl-final .rsl-sub{margin:16px auto 34px}
+  
+  .rs-landing .rsl-foot-in{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px}
+  .rs-landing .rsl-foot-in nav{display:flex;gap:22px}
+  .rs-landing .rsl-foot-in nav a:hover{color:var(--text)}
+
+  /* ── STICKY CTA BAR (ventas) ── */
+  .rs-landing .rsl-sticky-cta{position:fixed;left:0;right:0;bottom:0;z-index:60;transform:translateY(110%);transition:transform .45s var(--ease);background:rgba(10,11,15,.88);backdrop-filter:blur(16px);border-top:1px solid rgba(79,124,255,.3);box-shadow:0 -14px 50px rgba(0,0,0,.45)}
+  .rs-landing .rsl-sticky-cta.rsl-show{transform:none}
+  .rs-landing .rsl-sticky-in{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:13px 24px;max-width:1120px;margin:0 auto}
+  .rs-landing .rsl-sticky-in .rsl-msg{font-family:var(--disp);font-size:.95rem}
+  .rs-landing .rsl-sticky-in .rsl-msg .rsl-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--teal);margin-right:9px;animation:rslPulse 2s infinite}
+  .rs-landing .rsl-sticky-in .rsl-msg small{display:block;font-family:var(--mono);font-size:.7rem;color:var(--text3);font-weight:400;margin-top:2px}
+  .rs-landing .rsl-sticky-in .rsl-btn-primary{flex:none;padding:11px 22px}
+
+  /* ── MOBILE-FIRST (≈390px es el caso base de uso: la mayoría de creadores entran
+     desde el móvil). El CSS base está escrito desktop-first por herencia del v2.1,
+     pero TODO componente nuevo se diseñó y verificó primero a 390px: hero, vídeo,
+     capturas y CTAs legibles/tocables (≥44px), cero scroll horizontal. Al portar
+     a templates/index.html, validar SIEMPRE primero el viewport móvil. ── */
+  @media (max-width:880px){
+    .rs-landing section{padding:64px 0}
+    .rs-landing .rsl-plans, .rs-landing .rsl-strip-in, .rs-landing .rsl-math-grid, .rs-landing .rsl-testi-grid, .rs-landing .rsl-hooks-row{grid-template-columns:1fr}
+    .rs-landing .rsl-moat-grid, .rs-landing .rsl-ag-grid{grid-template-columns:1fr;gap:40px}
+    /* zigzag → columna: SIEMPRE media arriba, texto debajo (orden natural de lectura) */
+    .rs-landing .rsl-how-row{grid-template-columns:1fr;gap:26px;margin-top:56px}
+    .rs-landing .rsl-how-row.rsl-flip .rsl-how-media{order:0}
+    .rs-landing .rsl-plan.rsl-hot{transform:none}
+    /* los chips flotantes se salen del viewport → fuera */
+    .rs-landing .rsl-float-chip{display:none}
+    .rs-landing .play-btn{width:64px;height:64px}
+    .rs-landing .rsl-video-fallback{padding:18px 20px}
+    /* móvil-first: a 16/9 en ~390px caben tag + 1 señal + botón; la 2ª señal sobra */
+    .rs-landing .rsl-video-fallback .rsl-sig + .rsl-sig{display:none}
+    .rs-landing .video-todo{white-space:normal;max-width:86%;text-align:center;line-height:1.5}
+    /* tarjetas de señal más compactas: el multiplicador no envuelve y «Hazlo mío» no se recorta */
+    .rs-landing .rsl-sig{padding:10px 12px;margin-bottom:8px}
+    .rs-landing .rsl-sig .rsl-thumb{width:38px;height:50px}
+    .rs-landing .rsl-sig .rsl-meta b{font-size:.86rem}
+    .rs-landing .rsl-sig .rsl-x{white-space:nowrap;font-size:.72rem}
+    .rs-landing .rsl-hero{padding:52px 0 36px}
+    /* nav: el CTA no se parte en dos líneas */
+    .rs-landing .rsl-nav .rsl-btn-primary{white-space:nowrap;padding:10px 15px;font-size:.9rem}
+    .rs-landing .rsl-nav-cta{gap:12px}
+    .rs-landing .rsl-timebar .rsl-tb-row{grid-template-columns:1fr;gap:8px}
+    .rs-landing .rsl-tb-val{text-align:left}
+    .rs-landing .rsl-sticky-in .rsl-msg small{display:none}
+    .rs-landing .rsl-proof-in{gap:22px}
+  }
+  /* tablet: usa el ancho intermedio en vez de saltar a 1 columna */
+  @media (min-width:620px) and (max-width:880px){
+    .rs-landing .rsl-math-grid, .rs-landing .rsl-testi-grid, .rs-landing .rsl-hooks-row{grid-template-columns:repeat(2,1fr)}
+    .rs-landing .rsl-strip-in{grid-template-columns:repeat(3,1fr)}
+  }
+  /* móvil estrecho: red de seguridad <400px */
+  @media (max-width:400px){
+    .rs-landing .rsl-wrap{padding:0 16px}
+    .rs-landing .rsl-hero h1{font-size:clamp(2.3rem,9.5vw,2.9rem)}
+    .rs-landing section{padding:52px 0}
+    .rs-landing .rsl-nav-login{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .rs-landing *, .rs-landing *::before, .rs-landing *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+    
+    .rs-landing .rsl-hero h1 .rsl-w, .rs-landing .rsl-brain .rsl-chip{opacity:1;transform:none;filter:none}
+    .rs-landing .rsl-rise{opacity:1;transform:none}
+    /* tracks cuyo keyframe acaba en un transform distinto al inicial: forzar reposo para no dejarlos a medio frame */
+    .rs-landing .rsl-ticker-track, .rs-landing .rsl-float-chip{animation:none!important;transform:none!important}
+    .rs-landing .play-btn{animation:none!important}
+    /* el sticky-CTA es conversión, no decoración: se queda visible, solo sin animación de entrada */
+    .rs-landing .rsl-sticky-cta{transition:none}
+  }
+
+  /* ════════ CAPTURAS REALES reconstruidas en HTML/CSS (super pro, sin PNG) ════════
+     Replican 1:1 las vistas de la app. Radar y Cerebro en CLARO (como la app),
+     Teleprompter en OSCURO (como la app). Llenan el .rsl-shot (inset:0). */
+  .rs-landing .rsl-mr, .rs-landing .rsl-mc{position:absolute;inset:0;overflow:hidden;background:#f4f1ec;color:#1b1a18;
+    font-family:var(--body);text-align:left;display:flex;flex-direction:column;
+    --b:#3b3fd4;--bd:#e7e2d9;--t2:#6c6a64;--t3:#9a968d;--card:#fffdf9}
+  .rs-landing .rsl-mr *, .rs-landing .rsl-mc *{box-sizing:border-box}
+  /* top bar */
+  .rs-landing .rsl-mr-top, .rs-landing .rsl-mc-top{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--bd);background:#faf8f3;flex:none}
+  .rs-landing .rsl-mr-mk, .rs-landing .rsl-mc-mk{display:inline-flex;align-items:center;gap:6px;font-family:var(--disp);font-weight:600;font-size:11px;border:1px solid var(--bd);border-radius:8px;padding:4px 9px;background:#fff}
+  .rs-landing .rsl-mr-mk i, .rs-landing .rsl-mc-mk i{width:7px;height:7px;border-radius:50%;background:#6d5ae6;display:block}
+  .rs-landing .rsl-mr-cr, .rs-landing .rsl-mc-cr{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--t3);text-transform:uppercase}
+  .rs-landing .rsl-mr-cr b, .rs-landing .rsl-mc-cr b{color:var(--t2);font-weight:500}
+  .rs-landing .rsl-mr-sp, .rs-landing .rsl-mc-sp{flex:1}
+  .rs-landing .rsl-mr-pill, .rs-landing .rsl-mc-pill{font-family:var(--disp);font-size:11px;color:var(--t2);border:1px solid var(--bd);border-radius:999px;padding:5px 11px;background:#fff;white-space:nowrap}
+  .rs-landing .rsl-mr-pill.rsl-cred, .rs-landing .rsl-mc-pill.rsl-cred{color:var(--b);font-weight:600}
+  /* body */
+  .rs-landing .rsl-mr-bd, .rs-landing .rsl-mc-bd{padding:16px 20px;overflow:hidden}
+  .rs-landing .rsl-mr-ey, .rs-landing .rsl-mc-ey{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--t3);margin-bottom:7px}
+  .rs-landing .rsl-mr-ey i, .rs-landing .rsl-mc-ey i{width:7px;height:7px;border-radius:50%;background:var(--b);display:block}
+  .rs-landing .rsl-mr-h, .rs-landing .rsl-mc-h{font-family:var(--disp);font-weight:700;font-size:27px;letter-spacing:-.02em;line-height:1;margin-bottom:7px;color:#15140f}
+  .rs-landing .rsl-mr-su, .rs-landing .mc-su{font-size:11.5px;color:var(--t2);line-height:1.45;max-width:430px;margin-bottom:14px}
+  .rs-landing .rsl-mr-su b{color:#15140f;font-weight:600}
+  /* chips de filtro (radar) */
+  .rs-landing .rsl-mr-ch{display:flex;gap:8px;margin-bottom:14px}
+  .rs-landing .rsl-mr-ch span{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;border:1px solid var(--bd);border-radius:999px;padding:5px 11px;background:#fff;color:var(--t2)}
+  .rs-landing .rsl-mr-ch span.rsl-on{background:#eceafe;border-color:#d7d2f7;color:#3a2fb0;font-weight:600}
+  .rs-landing .rsl-mr-ch i{width:6px;height:6px;border-radius:50%;display:block}
+  /* stats */
+  .rs-landing .rsl-mr-st{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:13px}
+  .rs-landing .rsl-mr-st .rsl-c{border:1px solid var(--bd);border-radius:11px;background:var(--card);padding:11px 12px}
+  .rs-landing .rsl-mr-st .rsl-l{font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin-bottom:7px}
+  .rs-landing .rsl-mr-st .rsl-v{font-family:var(--disp);font-weight:700;font-size:23px;line-height:1;color:#15140f}
+  .rs-landing .rsl-mr-st .rsl-s{font-size:9px;color:var(--t3);margin-top:5px}
+  .rs-landing .rsl-mr-st .rsl-s.rsl-up{color:var(--b)}
+  /* acordeón competidores */
+  .rs-landing .rsl-mr-cmp{display:flex;align-items:center;gap:8px;border:1px solid var(--bd);border-radius:11px;background:var(--card);padding:10px 13px;font-size:11px;color:var(--t2);margin-bottom:13px}
+  .rs-landing .rsl-mr-cmp .rsl-cv{color:var(--t3)}
+  /* oportunidad */
+  .rs-landing .rsl-mr-op{display:flex;gap:0;border:1px solid #d7d2f7;border-radius:14px;background:var(--card);overflow:hidden;box-shadow:0 10px 30px rgba(59,63,212,.07)}
+  .rs-landing .rsl-mr-op .rsl-th{width:96px;flex:none;position:relative;background:linear-gradient(150deg,#3a4a63,#1c2738);color:#fff}
+  .rs-landing .rsl-mr-op .rsl-th .rsl-pov{position:absolute;top:7px;left:7px;right:7px;font-size:8px;font-weight:700;line-height:1.2;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+  .rs-landing .rsl-mr-op .rsl-th .rsl-du{position:absolute;bottom:6px;right:7px;font-family:var(--mono);font-size:8px;background:rgba(0,0,0,.55);padding:1px 5px;border-radius:4px}
+  .rs-landing .rsl-mr-op .rsl-mn{flex:1;min-width:0;padding:13px 15px}
+  .rs-landing .rsl-mr-op .rsl-op-tag{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--b);margin-bottom:6px}
+  .rs-landing .rsl-mr-op .rsl-tt{font-family:var(--disp);font-weight:700;font-size:16px;line-height:1.2;color:#15140f;margin-bottom:9px}
+  .rs-landing .rsl-mr-op .rsl-hint{display:flex;gap:7px;font-size:10px;color:var(--t2);border:1px solid var(--bd);border-radius:9px;padding:8px 10px;background:#faf8f3;line-height:1.4;margin-bottom:11px}
+  .rs-landing .rsl-mr-op .rsl-hint b{color:var(--b)}
+  .rs-landing .rsl-mr-op .rsl-cta{display:flex;align-items:center;gap:8px}
+  .rs-landing .rsl-mr-op .rsl-steal{display:inline-flex;align-items:center;gap:7px;background:var(--b);color:#fff;font-family:var(--disp);font-weight:600;font-size:12px;padding:9px 18px;border-radius:10px;box-shadow:0 6px 16px rgba(59,63,212,.3)}
+  .rs-landing .rsl-mr-op .rsl-fav{width:30px;height:30px;border:1px solid var(--bd);border-radius:8px;display:grid;place-items:center;color:var(--t3);background:#fff}
+  .rs-landing .rsl-mr-op .rsl-sd{width:78px;flex:none;border-left:1px solid var(--bd);padding:13px 0 13px 14px}
+  .rs-landing .rsl-mr-op .rsl-sd .rsl-k{font-family:var(--mono);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
+  .rs-landing .rsl-mr-op .rsl-sd .rsl-x{font-family:var(--disp);font-weight:700;font-size:20px;color:var(--b);line-height:1;margin:3px 0 11px}
+  .rs-landing .rsl-mr-op .rsl-sd .rsl-x::after{content:"";display:block;width:34px;height:2px;background:var(--b);margin-top:5px;border-radius:2px}
+  .rs-landing .rsl-mr-op .rsl-sd .rsl-vv{font-family:var(--disp);font-weight:700;font-size:14px;color:#15140f;line-height:1;margin:2px 0 11px}
+
+  /* ── CEREBRO claro ── */
+  .rs-landing .rsl-mc-lv{display:flex;gap:13px;align-items:center;border:1px solid #d7d2f7;border-radius:14px;background:linear-gradient(120deg,#efedfd,#f6f4fc);padding:14px 16px;margin-bottom:15px}
+  .rs-landing .rsl-mc-lv .rsl-ic{width:44px;height:44px;flex:none;border-radius:12px;background:#fff;border:1px solid #ddd8f5;display:grid;place-items:center;font-size:18px}
+  .rs-landing .rsl-mc-lv .rsl-lk{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--b);margin-bottom:4px}
+  .rs-landing .rsl-mc-lv .rsl-bg{font-family:var(--disp);font-weight:700;font-size:21px;color:#15140f;line-height:1;margin-bottom:9px}
+  .rs-landing .rsl-mc-lv .rsl-bg em{font-style:normal;color:var(--b)}
+  .rs-landing .rsl-mc-lv .rsl-pr{height:8px;border-radius:5px;background:#e0dcf3;overflow:hidden;margin-bottom:8px}
+  .rs-landing .rsl-mc-lv .rsl-pr i{display:block;height:100%;width:40%;background:var(--b);border-radius:5px}
+  .rs-landing .rsl-mc-lv .rsl-cap{font-size:10px;color:var(--t2);line-height:1.4}
+  .rs-landing .rsl-mc-lv .rsl-cap b{color:#15140f;font-weight:600}
+  .rs-landing .rsl-mc-vl{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);margin-bottom:8px}
+  .rs-landing .rsl-mc-ta{border:1px solid var(--bd);border-radius:11px;background:var(--card);padding:11px 13px;font-size:10.5px;color:var(--t3);height:54px;margin-bottom:11px}
+  .rs-landing .rsl-mc-btn{display:inline-flex;align-items:center;gap:7px;background:var(--b);color:#fff;font-family:var(--disp);font-weight:600;font-size:11.5px;padding:9px 16px;border-radius:9px;margin-bottom:16px}
+  .rs-landing .rsl-mc-feed{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .rs-landing .rsl-mc-feed .rsl-c{border:1px solid var(--bd);border-left:2px solid var(--b);border-radius:10px;background:var(--card);padding:11px 12px}
+  .rs-landing .rsl-mc-feed .rsl-v{font-family:var(--disp);font-weight:700;font-size:21px;line-height:1;color:#15140f}
+  .rs-landing .rsl-mc-feed .rsl-l{font-size:9.5px;color:#15140f;font-weight:600;margin-top:6px}
+  .rs-landing .rsl-mc-feed .rsl-s{font-size:8.5px;color:var(--t3);margin-top:3px;line-height:1.35}
+
+  /* ── TELEPROMPTER oscuro (dentro del .rsl-phone) ── */
+  .rs-landing .rsl-mt{position:absolute;inset:0;background:#070810;color:#eef1f8;display:flex;flex-direction:column;text-align:left;overflow:hidden;font-family:var(--body)}
+  .rs-landing .rsl-mt-hd{display:flex;align-items:center;gap:8px;justify-content:center;padding:13px 10px 11px;flex:none;position:relative}
+  .rs-landing .rsl-mt-hd .rsl-bk{position:absolute;left:12px;width:24px;height:24px;border-radius:50%;border:1px solid rgba(168,176,194,.3);display:grid;place-items:center;font-size:12px;color:var(--text2)}
+  .rs-landing .rsl-mt-hd b{font-family:var(--disp);font-weight:600;font-size:13px}
+  .rs-landing .rsl-mt-hd span{font-family:var(--mono);font-size:9px;color:var(--text3)}
+  .rs-landing .rsl-mt-bd{flex:1;position:relative;padding:14px 20px 0;overflow:hidden}
+  .rs-landing .rsl-mt-bd .rsl-rail{position:absolute;top:6px;bottom:64px;right:9px;width:3px;border-radius:3px;background:rgba(168,176,194,.16)}
+  .rs-landing .rsl-mt-bd .rsl-rail i{position:absolute;top:0;left:0;right:0;height:30%;border-radius:3px;background:var(--brand2)}
+  .rs-landing .rsl-mt-hk{font-family:var(--serif);font-weight:400;font-size:23px;line-height:1.12;color:#7e9bff;margin-bottom:16px}
+  .rs-landing .rsl-mt-ln{font-family:var(--serif);font-size:20px;line-height:1.22;margin-bottom:15px;color:#f3f5fb}
+  .rs-landing .rsl-mt-ft{flex:none;display:flex;gap:9px;padding:11px 12px 13px}
+  .rs-landing .rsl-mt-ft .rsl-no{font-family:var(--disp);font-size:11px;color:var(--text2);background:#14161f;border:1px solid var(--border);border-radius:10px;padding:0 14px;display:grid;place-items:center}
+  .rs-landing .rsl-mt-ft .rsl-yes{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;background:var(--grad-btn);color:#fff;font-family:var(--disp);font-weight:600;font-size:13px;padding:12px;border-radius:11px}
+
+  /* responsive: en móvil el mini-UI se queda igual (escala con el .rsl-shot) */
+  @media(max-width:640px){
+    .rs-landing .rsl-mr-h, .rs-landing .rsl-mc-h{font-size:22px}.rs-landing .rsl-mr-st .rsl-v, .rs-landing .rsl-mc-feed .rsl-v{font-size:18px}
+    .rs-landing .rsl-mr-op .rsl-tt{font-size:13px}.rs-landing .rsl-mr-op .rsl-sd{width:66px}
+  }
+
+
+  /* ── motion graphics de los frames (combina capturas reales + movimiento) ── */
+  .rs-landing .rsl-mt-roll{will-change:transform}
+  @media (prefers-reduced-motion: no-preference){
+    .rs-landing .rsl-mt-roll{animation:rslTpRoll 7.5s var(--ease) infinite alternate}
+    .rs-landing .rsl-mt .rsl-rail i{animation:rslTpRail 7.5s var(--ease) infinite alternate}
+    .rs-landing .rsl-mc-lv .rsl-pr i{width:40%;animation:rslMcFill 5s var(--ease) infinite alternate}
+    .rs-landing .rsl-mr-op .rsl-sd .rsl-x::after{animation:rslMrUnder 4.5s var(--ease) infinite alternate}
+    .rs-landing .rsl-mr-ey i, .rs-landing .rsl-mc-ey i{animation:rslMrDot 2.3s infinite}
+    .rs-landing .rsl-mr-op .rsl-steal{animation:rslMrGlow 3.2s ease-in-out infinite}
+  }
+  @keyframes rslTpRoll{from{transform:translateY(0)}to{transform:translateY(-42%)}}
+  @keyframes rslTpRail{from{top:2%}to{top:70%}}
+  @keyframes rslMcFill{from{width:30%}to{width:40%}}
+  @keyframes rslMrUnder{from{width:10px}to{width:34px}}
+  @keyframes rslMrDot{0%,100%{box-shadow:0 0 0 0 rgba(59,63,212,.5)}55%{box-shadow:0 0 0 5px rgba(59,63,212,0)}}
+  @keyframes rslMrGlow{0%,100%{box-shadow:0 6px 16px rgba(59,63,212,.3)}50%{box-shadow:0 7px 24px rgba(59,63,212,.55)}}
+
+
+  /* ── RADAR SONAR del hero (motion graphic: gira y encuentra señales) ── */
+  .rs-landing .rsl-video-fallback{display:flex;align-items:center;gap:30px}
+  .rs-landing .rsl-radar-scope{position:relative;width:min(232px,40%);aspect-ratio:1;flex:none;border-radius:50%;
+    background:radial-gradient(circle,rgba(79,124,255,.12),rgba(10,11,15,.35) 72%);
+    border:1px solid rgba(79,124,255,.32);overflow:hidden;box-shadow:inset 0 0 44px rgba(79,124,255,.14),0 0 40px rgba(79,124,255,.08)}
+  .rs-landing .rsl-radar-scope .rsl-rr{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border:1px solid rgba(111,147,255,.18);border-radius:50%}
+  .rs-landing .rsl-radar-scope .rsl-rr1{width:34%;height:34%}.rs-landing .rsl-radar-scope .rsl-rr2{width:67%;height:67%}.rs-landing .rsl-radar-scope .rsl-rr3{width:99%;height:99%}
+  .rs-landing .rsl-radar-scope .rsl-rx, .rs-landing .rsl-radar-scope .rsl-ry{position:absolute;top:50%;left:50%;background:rgba(111,147,255,.15)}
+  .rs-landing .rsl-radar-scope .rsl-rx{width:99%;height:1px;transform:translate(-50%,-50%)}
+  .rs-landing .rsl-radar-scope .rsl-ry{height:99%;width:1px;transform:translate(-50%,-50%)}
+  .rs-landing .rsl-radar-scope .rsl-sweep{position:absolute;inset:0;border-radius:50%;transform-origin:50% 50%;
+    background:conic-gradient(from 0deg,rgba(79,124,255,.55),rgba(79,124,255,.04) 52deg,transparent 120deg,transparent 360deg)}
+  .rs-landing .rsl-radar-scope .rsl-ping{position:absolute;top:50%;left:50%;width:6px;height:6px;border-radius:50%;background:var(--brand2);transform:translate(-50%,-50%)}
+  .rs-landing .rsl-radar-scope .rsl-blip{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--teal);
+    box-shadow:0 0 11px var(--teal),0 0 4px var(--teal);opacity:0;transform:translate(-50%,-50%) scale(.4)}
+  .rs-landing .rsl-radar-scope .rsl-bp1{top:30%;left:64%}.rs-landing .rsl-radar-scope .rsl-bp2{top:58%;left:39%}.rs-landing .rsl-radar-scope .rsl-bp3{top:43%;left:27%}
+  .rs-landing .rsl-radar-scope .rsl-bp4{top:71%;left:65%}.rs-landing .rsl-radar-scope .rsl-bp5{top:23%;left:47%}
+  .rs-landing .rsl-radar-side{flex:1;min-width:0}
+  @media (prefers-reduced-motion: no-preference){
+    .rs-landing .rsl-radar-scope .rsl-sweep{animation:rslRadarSpin 3.8s linear infinite}
+    .rs-landing .rsl-radar-scope .rsl-ping{animation:rslPingOut 3.8s ease-out infinite}
+    .rs-landing .rsl-radar-scope .rsl-blip{animation:rslBlipOn 3.8s linear infinite}
+    .rs-landing .rsl-radar-scope .rsl-bp1{animation-delay:.25s}.rs-landing .rsl-radar-scope .rsl-bp2{animation-delay:1.0s}.rs-landing .rsl-radar-scope .rsl-bp3{animation-delay:1.7s}
+    .rs-landing .rsl-radar-scope .rsl-bp4{animation-delay:2.4s}.rs-landing .rsl-radar-scope .rsl-bp5{animation-delay:3.1s}
+  }
+  @keyframes rslRadarSpin{to{transform:rotate(360deg)}}
+  @keyframes rslPingOut{0%{box-shadow:0 0 0 0 rgba(111,147,255,.5)}70%{box-shadow:0 0 0 20px rgba(111,147,255,0)}100%{box-shadow:0 0 0 0 rgba(111,147,255,0)}}
+  @keyframes rslBlipOn{0%,2%{opacity:0;transform:translate(-50%,-50%) scale(.4)}8%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}38%{opacity:.95}68%{opacity:0;transform:translate(-50%,-50%) scale(.7)}100%{opacity:0}}
+  @media(max-width:640px){.rs-landing .rsl-video-fallback{flex-direction:column;gap:16px;text-align:center}.rs-landing .rsl-radar-scope{width:150px}.rs-landing .rsl-radar-side{width:100%}}
+
+
+  /* ── PORTE: reglas del contenedor (sustituyen a html/body/main del mockup) ── */
+  /* contenido sobre el aurora global (canvas fixed z0): igual que el main{z-index:1} del mockup */
+  .rs-landing .rsl-main{position:relative;z-index:1}
+  /* el hero viejo se queda en DOM (su #urlInput lo usa JS sin guard) pero no se ve en la landing */
+  body:not(.workspace) main > section.hero.hero-v2,
+  body:not(.workspace) main > section.hero.hero-v2 + div{display:none !important}
+
+</style>
+<div class="rs-landing" id="rsLanding">
+<div class="rsl-main">
+
+  <!-- ═══ HERO ═══ -->
+  <section class="rsl-hero">
+    <div class="rsl-wrap">
+      <span class="rsl-hero-badge"><i class="rsl-pulse" aria-hidden="true"></i>El sistema operativo del creador</span>
+      <h1 id="rslHeroH1">Copia lo que <em>ya funciona.</em></h1>
+      <p class="rsl-hero-sub">Mientras no miras, en tu nicho hay reels explotando. Reelscript los detecta, te dice <strong>cuál merece tu próximo guion</strong> y lo reescribe <strong>en tu voz</strong> — no copias el reel, copias la jugada. Lo que hoy te lleva <strong>2–3 horas</strong>, aquí es un clic.</p>
+      <div class="rsl-hero-ctas">
+        <button type="button" class="rsl-btn rsl-btn-primary" onclick="openAuth('register','landing_hero')">Roba tu primer guion gratis</button>
+        <a class="rsl-hero-link" href="#rslLoop">Ver cómo funciona <span aria-hidden="true">→</span></a>
       </div>
-      <div class="try-form" id="tryForm">
-        <div class="try-form-row">
-          <input type="url" id="tryUrlInput" class="try-input ph-no-capture" data-clarity-mask="true"
-            placeholder="🔗 https://www.instagram.com/reel/…"
-            autocomplete="off" spellcheck="false" />
+      <p class="rsl-hero-micro">12 guiones gratis para siempre · sin tarjeta</p>
+
+      <!-- VÍDEO explicativo en marco de navegador.
+           TODO VÍDEO REAL (45–60 s, captura del loop: radar → «Hazlo mío» → guion en tu voz):
+             1. exportar a docs//static/img/landing/demo.mp4 + póster demo-poster.png (1280×720)
+             2. descomentar <source>, añadir controls al <video> y cablear .play-btn → video.play()
+             3. al portar a templates/index.html: assets en static/img/landing/ y static/video/
+           Mientras no exista, debajo queda la composición de respaldo (señales + Hazlo mío). -->
+      <div class="rsl-hero-media">
+        <div class="rsl-frame">
+          <div class="rsl-frame-bar"><i></i><i></i><i></i><span>reelscript.net — radar en vivo</span></div>
+          <div class="rsl-hero-video">
+            <video muted playsinline preload="none" poster="/static/img/landing/demo-poster.png" aria-label="Vídeo: el radar detecta un reel que explota en tu nicho, pulsas «Hazlo mío» y aparece tu guion escrito en tu voz" onerror="this.style.display='none'">
+              <!-- <source src="/static/img/landing/demo.mp4" type="video/mp4"> -->
+            </video>
+            <div class="rsl-video-fallback" aria-hidden="true">
+              <div class="rsl-radar-scope">
+                <span class="rsl-rr rsl-rr1"></span><span class="rsl-rr rsl-rr2"></span><span class="rsl-rr rsl-rr3"></span>
+                <span class="rsl-rx"></span><span class="rsl-ry"></span>
+                <span class="rsl-sweep"></span>
+                <span class="rsl-ping"></span>
+                <span class="rsl-blip rsl-bp1"></span><span class="rsl-blip rsl-bp2"></span><span class="rsl-blip rsl-bp3"></span><span class="rsl-blip rsl-bp4"></span><span class="rsl-blip rsl-bp5"></span>
+              </div>
+              <div class="rsl-radar-side">
+                <span class="rsl-tag">Radar · detectando señales</span>
+                <div class="rsl-sig rsl-hot"><div class="rsl-thumb"></div><div class="rsl-meta"><b>«Nadie te cuenta esto de las hipotecas»</b><span>@rival_inmo · ahora</span></div><div class="rsl-x">×14,2</div></div>
+                <div class="rsl-sig"><div class="rsl-thumb"></div><div class="rsl-meta"><b>«3 errores al vender tu piso»</b><span>@otro_rival · hace 1 d</span></div><div class="rsl-x">×6,1</div></div>
+                <button class="rsl-steal-btn" tabindex="-1">⚡ Hazlo mío</button>
+              </div>
+            </div>
+            </div>
         </div>
-        <div class="try-form-actions">
-          <select id="tryLanguage" class="try-lang-select">
-            <option value="" data-i18n-es="✨ Detectar idioma automáticamente" data-i18n-en="✨ Auto-detect language">✨ Detectar idioma automáticamente</option>
-            <option value="es" data-i18n-es="Español" data-i18n-en="Spanish">Español</option>
-            <option value="en" data-i18n-es="Inglés" data-i18n-en="English">English</option>
-            <option value="fr" data-i18n-es="Francés" data-i18n-en="French">French</option>
-            <option value="pt" data-i18n-es="Portugués" data-i18n-en="Portuguese">Portuguese</option>
-            <option value="de" data-i18n-es="Alemán" data-i18n-en="German">German</option>
-            <option value="it" data-i18n-es="Italiano" data-i18n-en="Italian">Italian</option>
-          </select>
-          <button id="tryBtn" class="try-btn" onclick="doPreviewTranscribe()" data-i18n-es="✦ Sacar el guion" data-i18n-en="✦ Get the script">✦ Sacar el guion</button>
-        </div>
-        <div class="try-output" id="tryOutput" aria-live="polite"></div>
+        <!-- chips flotantes (profundidad) — desaparecen en móvil -->
+        <div class="rsl-float-chip rsl-fc1" aria-hidden="true"><span>⚡</span><span>señal detectada <b>×14,2</b></span></div>
+        <div class="rsl-float-chip rsl-fc2" aria-hidden="true"><span>✓</span><span>escrito con <b>tu voz al 82%</b></span></div>
       </div>
     </div>
+  </section>
 
-    <div class="try-free-right" aria-hidden="true">
-      <div class="phone-frame">
-        <div class="phone-screen">
-          <div class="phone-screen-header">
-            <span class="ph-dot"></span>
-            <span>Reelscript</span>
-          </div>
-          <div class="phone-url-bar">instagram.com/reel/abc123…</div>
-          <div class="phone-reel-card">
-            <div class="phone-reel-meta">
-              <div class="av"></div>
-              <div class="h">davidayalac</div>
-              <div class="t">0:42</div>
+  <!-- ═══ TICKER DE SEÑALES (FOMO con calma) ═══ -->
+  <!-- PLACEHOLDER: handles y multiplicadores de muestra. En prod puede alimentarse
+       de señales reales anonimizadas del radar. -->
+  <div class="rsl-ticker" aria-label="Señales detectadas recientemente (muestra)">
+    <div class="rsl-ticker-track">
+      <span class="rsl-tk rsl-tk-label">Detectado por el radar</span>
+      <span class="rsl-tk"><i class="rsl-dot"></i>@fitness_nicho <b>×8,3</b> su media · hace 2 h</span>
+      <span class="rsl-tk"><i class="rsl-dot"></i>@finanzas_claras <b>×12,1</b> · hace 4 h</span>
+      <span class="rsl-tk"><i class="rsl-dot"></i>@inmo_madrid <b>×14,2</b> · hace 9 h</span>
+      <span class="rsl-tk"><i class="rsl-dot"></i>@coach_ventas <b>×5,7</b> · hace 11 h</span>
+      <span class="rsl-tk"><i class="rsl-dot"></i>@nutri_real <b>×9,4</b> · hace 13 h</span>
+      <span class="rsl-tk"><i class="rsl-dot"></i>@abogado_tiktok <b>×7,8</b> · hace 1 d</span>
+      <span class="rsl-tk rsl-tk-label" aria-hidden="true">Detectado por el radar</span>
+      <span class="rsl-tk" aria-hidden="true"><i class="rsl-dot"></i>@fitness_nicho <b>×8,3</b> su media · hace 2 h</span>
+      <span class="rsl-tk" aria-hidden="true"><i class="rsl-dot"></i>@finanzas_claras <b>×12,1</b> · hace 4 h</span>
+      <span class="rsl-tk" aria-hidden="true"><i class="rsl-dot"></i>@inmo_madrid <b>×14,2</b> · hace 9 h</span>
+      <span class="rsl-tk" aria-hidden="true"><i class="rsl-dot"></i>@coach_ventas <b>×5,7</b> · hace 11 h</span>
+      <span class="rsl-tk" aria-hidden="true"><i class="rsl-dot"></i>@nutri_real <b>×9,4</b> · hace 13 h</span>
+      <span class="rsl-tk" aria-hidden="true"><i class="rsl-dot"></i>@abogado_tiktok <b>×7,8</b> · hace 1 d</span>
+    </div>
+  </div>
+
+  <!-- ═══ FRANJA PROMESAS con números ═══ -->
+  <!-- PLACEHOLDER: validar las 3 cifras con datos reales del producto antes de publicar -->
+  <div class="rsl-strip">
+    <div class="rsl-wrap rsl-strip-in">
+      <div class="rsl-rise"><span class="rsl-num" data-count="3200" data-suffix="+">0</span><b>señales analizadas cada semana</b><span>Sabemos qué está explotando, y por qué</span></div>
+      <div class="rsl-rise"><span class="rsl-num" data-count="60" data-suffix=" seg">0</span><b>de señal a guion en tu voz</b><span>Tu tono, tus frases, tu estructura</span></div>
+      <div class="rsl-rise"><span class="rsl-num" data-count="80" data-suffix="%">0</span><b>de tu voz, ya capturada</b><span>Con ~5 reels suena a ti — y sube con cada uno</span></div>
+    </div>
+  </div>
+
+  <!-- ═══ PRUEBA SOCIAL: hecho en público por creadores reales ═══
+       TODO fotos reales (cuadradas ≥160px) → docs//static/img/landing/david.jpg / bernat.jpg
+       TODO validar cifras de seguidores/handles antes de publicar.
+       Regla editorial: SOLO cuentas propias del equipo — nunca terceros sin permiso. -->
+  <div class="rsl-proof">
+    <div class="rsl-wrap rsl-proof-in">
+      <span class="rsl-proof-label">Hecho en público por creadores que publican</span>
+      <a class="rsl-creator-chip" href="https://instagram.com/__davidayala" target="_blank" rel="noopener">
+        <span class="rsl-ph">DA<img src="/static/img/landing/david.jpg" alt="" onerror="this.style.display='none'"></span>
+        <span><b>@__davidayala</b><span>construyendo Reelscript · TODO seguidores</span></span>
+      </a>
+      <a class="rsl-creator-chip" href="https://instagram.com/bernatcasanasm" target="_blank" rel="noopener">
+        <span class="rsl-ph">BC<img src="/static/img/landing/bernat.jpg" alt="" onerror="this.style.display='none'"></span>
+        <span><b>@bernatcasanasm</b><span>construyendo Reelscript · TODO seguidores</span></span>
+      </a>
+    </div>
+  </div>
+
+  <!-- ═══ EL LOOP — zigzag con CAPTURAS REALES de la app ═══
+       ⚠️ TODO CAPTURAS (regla editorial): en TODAS las capturas usar SOLO
+       contenido propio (@__davidayala) o figuras públicas muy conocidas
+       (MrBeast, Ibai) como «competidor de ejemplo». NUNCA reels de
+       competidores reales de usuarios. Exportar PNG 2x a docs//static/img/landing/
+       (al portar a templates/index.html: static/img/landing/). -->
+  <section id="rslLoop">
+    <div class="rsl-wrap">
+      <span class="rsl-eyebrow">El loop</span>
+      <h2 class="rsl-rise">De la página en blanco<br>al reel publicado.</h2>
+      <p class="rsl-sub rsl-rise">No generas contenido a ciegas. Partes de lo que ya está funcionando en tu nicho — y el sistema lo convierte en tuyo. Así se ve por dentro:</p>
+
+      <div class="rsl-how-row rsl-rise">
+        <div class="rsl-how-media">
+          <div class="rsl-frame">
+            <div class="rsl-frame-bar"><i></i><i></i><i></i><span>Radar · señales de hoy</span></div>
+            <div class="rsl-shot" role="img" aria-label="El Radar de Reelscript: señales del día con un reel que explotó 89 veces su media, listo para robar con «Hazlo mío»">
+              <div class="rsl-mr">
+                <div class="rsl-mr-top">
+                  <span class="rsl-mr-mk"><i></i>IA ▾</span>
+                  <span class="rsl-mr-cr"><b>Todas las marcas</b> / Radar</span>
+                  <span class="rsl-mr-sp"></span>
+                  <span class="rsl-mr-pill">Apunta una idea</span>
+                  <span class="rsl-mr-pill rsl-cred">✦ 3541</span>
+                </div>
+                <div class="rsl-mr-bd">
+                  <div class="rsl-mr-ey"><i></i>Radar · @IA</div>
+                  <div class="rsl-mr-h">Señales de hoy</div>
+                  <div class="rsl-mr-su">Mientras no mirabas, <b>2 reels explotaron</b> en tu nicho. Esto es lo que merece tu próximo guion.</div>
+                  <div class="rsl-mr-ch">
+                    <span><i style="background:#9a968d"></i>Todas</span>
+                    <span class="rsl-on"><i style="background:#6d5ae6"></i>IA</span>
+                    <span><i style="background:#e8a33c"></i>Espiritualidad</span>
+                  </div>
+                  <div class="rsl-mr-st">
+                    <div class="rsl-c"><div class="rsl-l">Rivales activos</div><div class="rsl-v">6</div></div>
+                    <div class="rsl-c"><div class="rsl-l">Reels · 7 días</div><div class="rsl-v">2</div><div class="rsl-s rsl-up">2 explotaron</div></div>
+                    <div class="rsl-c"><div class="rsl-l">Explosivos</div><div class="rsl-v">2</div><div class="rsl-s rsl-up">sobre su media</div></div>
+                    <div class="rsl-c"><div class="rsl-l">Tu voz</div><div class="rsl-v">40%</div><div class="rsl-s">nivel 1</div></div>
+                  </div>
+                  <div class="rsl-mr-cmp">▸ Tus competidores <span class="rsl-cv">· 6</span></div>
+                  <div class="rsl-mr-op">
+                    <div class="rsl-th"><span class="rsl-pov">POV: tu empresa usa Claude Code</span><span class="rsl-du">0:34</span></div>
+                    <div class="rsl-mn">
+                      <div class="rsl-op-tag">Oportunidad #1 · @__davidayala · hace 3 días</div>
+                      <div class="rsl-tt">¿Qué opináis? 😂</div>
+                      <div class="rsl-hint"><b>✦</b><span>Está reventando: <b>89×</b> lo normal de @__davidayala. Si hay uno que robar hoy, es este.</span></div>
+                      <div class="rsl-cta"><span class="rsl-steal">⚡ Hazlo mío</span><span class="rsl-fav">☆</span></div>
+                    </div>
+                    <div class="rsl-sd">
+                      <div class="rsl-k">Explosión</div><div class="rsl-x">89×</div>
+                      <div class="rsl-k">Views</div><div class="rsl-vv">155 K</div>
+                      <div class="rsl-k">Likes</div><div class="rsl-vv">6 K</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="phone-transcript">
-            <div class="phone-transcript-label" data-i18n-es="EL GUION" data-i18n-en="THE SCRIPT">EL GUION</div>
-            <p class="phone-transcript-text" data-i18n-es="Lo que voy a contarte cambió mi forma de grabar reels. Antes me pasaba dos horas con cada guion. Ahora son diez minutos." data-i18n-en="What I'm about to share changed how I shoot reels. Before I'd spend two hours on every script. Now ten minutes.">Lo que voy a contarte cambió mi forma de grabar reels. Antes me pasaba dos horas con cada guion. Ahora son diez minutos.</p>
+        </div>
+        <div class="rsl-how-copy">
+          <span class="rsl-n">01 · DETECTA</span>
+          <h3>Tu radar capta lo que explota en tu nicho</h3>
+          <p>Cada mañana: los reels que están reventando entre tus competidores, ordenados por lo que merece tu próximo guion. Como el de la hipoteca que hizo ×14 su media — eso no se encuentra scrolleando.</p>
+          <p class="rsl-pt">Mirar el radar no gasta créditos: es gratis, siempre.</p>
+        </div>
+      </div>
+
+      <div class="rsl-how-row rsl-flip rsl-rise">
+        <div class="rsl-how-media">
+          <!-- contenido REAL renderizado (no placeholder): un guión tal y como lo entrega la app -->
+          <div class="rsl-script-card">
+            <span class="rsl-sc-from">Señal robada · reescrita con <b>tu voz al 82%</b></span>
+            <h4>«Te han vendido que la hipoteca fija es lo seguro. Mira esto antes de firmar.»</h4>
+            <div class="rsl-beat"><i>01</i><span>El banco gana más con tu miedo que con tu interés. Te explico por qué en 30 segundos.</span></div>
+            <div class="rsl-beat"><i>02</i><span>Fija, mixta o variable no es la pregunta. La pregunta es cuántos años vas a quedarte.</span></div>
+            <div class="rsl-beat"><i>03</i><span>Cierre con tu pregunta de siempre: ¿tú ya has firmado la tuya? Te leo.</span></div>
+            <span class="rsl-voice">✓ Hook, beats y cierre con tu estructura</span>
           </div>
         </div>
-        <img class="phone-mascot" src="/static/img/hooks/hooks-transcribir.svg" alt="" loading="lazy" width="96" height="96">
+        <div class="rsl-how-copy">
+          <span class="rsl-n">02 · RÓBALO</span>
+          <h3>«Hazlo mío»: un clic y es tuyo</h3>
+          <p>No copias el reel: copias la jugada. El sistema lo reescribe desde cero con tu tono, tus muletillas y tu cierre — la voz es tuya, no la del competidor.</p>
+          <p class="rsl-pt">De señal a guion listo en ~60 segundos.</p>
+        </div>
+      </div>
+
+      <div class="rsl-how-row rsl-rise">
+        <div class="rsl-how-media">
+          <div class="rsl-phone">
+            <div class="rsl-shot" role="img" aria-label="El teleprompter de Reelscript en el móvil: el guion avanza en tu voz mientras grabas, sin salir de la app">
+              <div class="rsl-mt">
+                <div class="rsl-mt-hd"><span class="rsl-bk">‹</span><b>Teleprompter</b><span>en tu voz</span></div>
+                <div class="rsl-mt-bd">
+                  <div class="rsl-rail"><i></i></div>
+                  <div class="rsl-mt-roll">
+                    <div class="rsl-mt-hk">La IA no te hace mejor programador.</div>
+                    <div class="rsl-mt-ln">Te convierte en un vago más rápido.</div>
+                    <div class="rsl-mt-ln">Copian y pegan bloques de código sin entenderlos.</div>
+                    <div class="rsl-mt-ln">El resultado es un desastre que aparenta funcionar.</div>
+                    <div class="rsl-mt-ln">Y cuando algo falla, no sabes ni por dónde empezar.</div>
+                  </div>
+                </div>
+                <div class="rsl-mt-ft"><span class="rsl-no">Aún no</span><span class="rsl-yes">✓ Ya lo grabé</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="rsl-how-copy">
+          <span class="rsl-n">03 · GRABA</span>
+          <h3>Teleprompter integrado</h3>
+          <p>Del guion al reel sin salir de Reelscript ni copiar nada a otra app. El texto avanza a tu ritmo mientras grabas con el móvil.</p>
+          <p class="rsl-pt">Grabar no gasta créditos — repite hasta que salga bordado.</p>
+        </div>
+      </div>
+
+      <div class="rsl-how-row rsl-flip rsl-rise">
+        <div class="rsl-how-media">
+          <div class="rsl-frame">
+            <div class="rsl-frame-bar"><i></i><i></i><i></i><span>Cerebro · @__davidayala</span></div>
+            <div class="rsl-shot" role="img" aria-label="El Cerebro de Reelscript: voz capturada al 40 por ciento y de qué se alimenta el sistema — reels, competidores, guiones y publicaciones">
+              <div class="rsl-mc">
+                <div class="rsl-mc-top">
+                  <span class="rsl-mc-mk"><i></i>IA ▾</span>
+                  <span class="rsl-mc-cr"><b>Todas las marcas</b> / Cerebro</span>
+                  <span class="rsl-mc-sp"></span>
+                  <span class="rsl-mc-pill">Apunta una idea</span>
+                  <span class="rsl-mc-pill rsl-cred">✦ 3541</span>
+                </div>
+                <div class="rsl-mc-bd">
+                  <div class="rsl-mc-ey"><i></i>Cerebro · @IA</div>
+                  <div class="rsl-mc-h">El cerebro de IA</div>
+                  <div class="rsl-mc-lv">
+                    <div class="rsl-ic">🧠</div>
+                    <div style="flex:1;min-width:0">
+                      <div class="rsl-lk">Nivel 1 · Calentando</div>
+                      <div class="rsl-bg">Te conozco al <em>40%</em></div>
+                      <div class="rsl-pr"><i></i></div>
+                      <div class="rsl-cap">Te faltan ~7 piezas para el <b>Nivel 2</b>, donde tus guiones salen casi sin retoques.</div>
+                    </div>
+                  </div>
+                  <div class="rsl-mc-vl">Enséñame tu voz</div>
+                  <div class="rsl-mc-ta">Pega aquí la transcripción de tus reels (lo que dices)…</div>
+                  <span class="rsl-mc-btn">✦ Aprender mi voz</span>
+                  <div class="rsl-mc-vl">De qué me alimento</div>
+                  <div class="rsl-mc-feed">
+                    <div class="rsl-c"><div class="rsl-v">0</div><div class="rsl-l">reels tuyos leídos</div><div class="rsl-s">de aquí modelo tu voz</div></div>
+                    <div class="rsl-c"><div class="rsl-v">5</div><div class="rsl-l">competidores vigilados</div><div class="rsl-s">qué funciona en tu nicho</div></div>
+                    <div class="rsl-c"><div class="rsl-v">6</div><div class="rsl-l">guiones creados</div><div class="rsl-s">cada uno refina tu estilo</div></div>
+                    <div class="rsl-c"><div class="rsl-v">27</div><div class="rsl-l">publicados con métricas</div><div class="rsl-s">cierran el círculo</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="rsl-how-copy">
+          <span class="rsl-n">04 · APRENDE</span>
+          <h3>Cada publicación afina tu voz</h3>
+          <p>Conecta Instagram y el sistema aprende qué hooks, temas y duraciones funcionan <strong>en tu cuenta</strong>. Lo siguiente que robes sale más tuyo todavía.</p>
+          <div class="rsl-viz-voice"><div class="rsl-vbar"><i></i></div><span class="rsl-vpct">voz al 82%</span></div>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);max-width:600px;margin:0 auto"></div>
+  <!-- ═══ LA CUENTA ES SIMPLE (ventas) ═══ -->
+  <section class="rsl-math">
+    <div class="rsl-wrap" style="text-align:center">
+      <span class="rsl-eyebrow">La cuenta es simple</span>
+      <h2 class="rsl-rise">¿Cuántas horas te cuesta hoy<br>cada guion que grabas?</h2>
+      <p class="rsl-sub rsl-rise" style="margin:0 auto">Suma lo que te cuesta cada guion en tiempo — de la idea a saber si funciona. Luego compara.</p>
+      <div class="rsl-math-grid" style="text-align:left">
+        <div class="rsl-math-card rsl-rise">
+          <span class="rsl-who">Encontrar la idea a mano</span>
+          <p class="rsl-big">~1 h<small> de feed</small></p>
+          <p>Scrollear sin saber qué está funcionando de verdad en tu nicho. La mitad de las veces, para nada.</p>
+        </div>
+        <div class="rsl-math-card rsl-rise">
+          <span class="rsl-who">Escribir, dudar, reescribir</span>
+          <p class="rsl-big">1–2 h<small> /guion</small></p>
+          <p>Y después de publicar, días hasta saber si la idea era buena. El ciclo entero: <span class="rsl-tach">2–3 h por guion</span>.</p>
+        </div>
+        <div class="rsl-math-card rsl-win rsl-rise">
+          <span class="rsl-who">Con Reelscript</span>
+          <p class="rsl-big">1 clic<small> · ~60 s</small></p>
+          <p>La señal ya viene elegida y validada por tu nicho. El guion ya suena a ti. Tú solo grabas.</p>
+        </div>
+      </div>
+      <div class="rsl-timebar rsl-rise" id="rslTimebar" style="text-align:left">
+        <div class="rsl-tb-row rsl-tb-old">
+          <label>Tu lunes sin Reelscript<small>buscar idea + escribir + dudar</small></label>
+          <div class="rsl-tb-track"><span class="rsl-tb-fill"></span></div>
+          <span class="rsl-tb-val">~2,5 h</span>
+        </div>
+        <div class="rsl-tb-row rsl-tb-new">
+          <label>Tu lunes con Reelscript<small>abrir radar + «Hazlo mío» + grabar</small></label>
+          <div class="rsl-tb-track"><span class="rsl-tb-fill"></span></div>
+          <span class="rsl-tb-val">~12 min</span>
+        </div>
+      </div>
+    </div>
+  </section>
 
-<!-- ── MULTI-BRAND (Spaces metaphor) ─────────────────────────────────── -->
-<section class="how-section fade-in" id="multiBrand">
-  <div class="how-head">
-    <div class="how-eyebrow"><span data-i18n-es="MULTI-MARCA" data-i18n-en="MULTI-BRAND">MULTI-MARCA</span></div>
-    <h2 class="how-h2">
-      <span data-i18n-es="Cada marca," data-i18n-en="Each brand,">Cada marca,</span>
-      <em data-i18n-es="un cerebro." data-i18n-en="its own brain.">un cerebro.</em>
-    </h2>
-    <p class="how-sub" data-i18n-es="Como los Spaces de tu Mac: cada marca tiene su voz, sus rivales, su historial y su nivel. Cambiar de marca cambia todo el contexto de golpe, sin recarga mental. Por eso Agencia cobra por marca: cada una es un cerebro vivo." data-i18n-en="Like Spaces on your Mac: each brand has its own voice, rivals, history and level. Switching brand swaps the whole context at once, zero mental reload. That's why Agency charges per brand: each is a living brain.">Como los Spaces de tu Mac: cada marca tiene su voz, sus rivales, su historial y su nivel. Cambiar de marca cambia todo el contexto de golpe, sin recarga mental. Por eso Agencia cobra por marca: cada una es un cerebro vivo.</p>
+  <!-- ═══ MOAT / CEREBRO ═══ -->
+  <section>
+    <div class="rsl-wrap rsl-moat-grid">
+      <div>
+        <span class="rsl-eyebrow">El Cerebro</span>
+        <h2 class="rsl-rise">Un sistema que te conoce más cada día.</h2>
+        <p class="rsl-sub rsl-rise">Las plantillas suenan a todos. Los GPT suenan a robot. Reelscript construye un modelo de <strong>tu</strong> voz que mejora con cada uso — como el teclado de tu móvil aprende cómo escribes.</p>
+        <div class="rsl-moat-list">
+          <div class="rsl-moat-item rsl-rise"><div class="rsl-ic">🎙</div><div><b>Tu tono y tus muletillas</b><span>Aprendidos de tus propios reels, no de un cuestionario.</span></div></div>
+          <div class="rsl-moat-item rsl-rise"><div class="rsl-ic">🏆</div><div><b>Tus ganadores como molde</b><span>Tus reels con más views guían cada nuevo guion.</span></div></div>
+          <div class="rsl-moat-item rsl-rise"><div class="rsl-ic">🚫</div><div><b>Lo que te hunde, fuera</b><span>También aprende qué patrones no funcionan en tu cuenta.</span></div></div>
+        </div>
+      </div>
+      <div class="rsl-brain" id="rslBrainCard">
+        <div class="rsl-bh"><b>Cerebro · @tu_marca</b><span><i class="rsl-live" aria-hidden="true"></i>aprendiendo ahora</span></div>
+        <div class="rsl-row"><label>Voz capturada <em data-w="82">82%</em></label><div class="rsl-bar"><i data-w="82"></i></div></div>
+        <div class="rsl-row"><label>Hooks que te funcionan <em data-w="74">74%</em></label><div class="rsl-bar"><i data-w="74"></i></div></div>
+        <div class="rsl-row"><label>Estructura dominada <em data-w="67">67%</em></label><div class="rsl-bar"><i data-w="67"></i></div></div>
+        <div>
+          <span class="rsl-chip">cierras con pregunta</span><span class="rsl-chip">hooks de contraste</span><span class="rsl-chip">45–60 s</span><span class="rsl-chip">sin tecnicismos</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ AGENCIAS ═══ -->
+  <section style="padding-top:40px">
+    <div class="rsl-wrap rsl-ag-grid">
+      <div class="rsl-spaces" aria-hidden="true">
+        <div class="rsl-space"><div class="rsl-dot" style="background:#4f7cff">IN</div><div><b>Inmo Pro</b><span>radar · 3 señales nuevas</span></div><span class="rsl-lvl">voz 81%</span></div>
+        <div class="rsl-space"><div class="rsl-dot" style="background:#8b5cf6">FT</div><div><b>FitCoach Marta</b><span>radar · 5 señales nuevas</span></div><span class="rsl-lvl">voz 76%</span></div>
+        <div class="rsl-space"><div class="rsl-dot" style="background:#ff7847">GS</div><div><b>Gastro Sur</b><span>radar · 2 señales nuevas</span></div><span class="rsl-lvl">voz 64%</span></div>
+      </div>
+      <div>
+        <span class="rsl-eyebrow">Para agencias</span>
+        <h2 class="rsl-rise">Cada marca, un cerebro. Todas, un portfolio.</h2>
+        <p class="rsl-sub rsl-rise">Cambia de cliente como cambias de escritorio: cada marca tiene su radar, su voz y sus competidores — aislados y completos. Tu equipo dentro, con roles y marcas asignadas.</p>
+        <div class="rsl-moat-list" style="margin-top:22px">
+          <div class="rsl-moat-item rsl-rise"><div class="rsl-ic">🗂</div><div><b>Vista portfolio</b><span>Todas tus marcas de un vistazo: qué explota y cuál pide atención.</span></div></div>
+          <div class="rsl-moat-item rsl-rise"><div class="rsl-ic">👥</div><div><b>Equipo con roles</b><span>3 asientos incluidos. Asigna marcas a cada miembro.</span></div></div>
+          <div class="rsl-moat-item rsl-rise"><div class="rsl-ic">⚡</div><div><b>Pool de créditos único</b><span>800 al mes para toda la cuenta. Sin cupos por marca.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ ASPIRACIONAL: vive de tu contenido + ejemplos concretos de nicho ═══
+       Handles de los ejemplos: INVENTADOS y genéricos a propósito (muestra).
+       No sustituir por cuentas reales de terceros. -->
+  <section class="rsl-aspire">
+    <div class="rsl-wrap">
+      <span class="rsl-eyebrow">Para qué es todo esto</span>
+      <h2 class="rsl-rise">De postear por postear<br>a <em>vivir de tu contenido.</em></h2>
+      <p class="rsl-sub rsl-rise" style="margin:0 auto">Los creadores que viven de esto no esperan a la inspiración: sistematizan lo que ya funciona. Eso es lo que Reelscript te monta debajo — cada semana sabes <strong>qué grabar, por qué, y con qué guion</strong>. Sea cual sea tu nicho:</p>
+      <div class="rsl-hooks-row">
+        <div class="rsl-hook-card rsl-rise">
+          <span class="rsl-niche">Inmobiliaria</span>
+          <p class="rsl-from">Señal: <b>«Nadie te cuenta esto de las hipotecas»</b> · ×14,2 su media</p>
+          <span class="rsl-arrow">→ TU GUION</span>
+          <p class="rsl-to">«Te han vendido que la hipoteca fija es lo seguro. Mira esto antes de firmar.»</p>
+        </div>
+        <div class="rsl-hook-card rsl-rise">
+          <span class="rsl-niche">Fitness</span>
+          <p class="rsl-from">Señal: <b>«Por qué tu cardio no quema grasa»</b> · ×8,3 su media</p>
+          <span class="rsl-arrow">→ TU GUION</span>
+          <p class="rsl-to">«30 minutos de cardio y cero resultados: el error está en el orden. Te lo enseño.»</p>
+        </div>
+        <div class="rsl-hook-card rsl-rise">
+          <span class="rsl-niche">Nutrición</span>
+          <p class="rsl-from">Señal: <b>«El desayuno que te hincha»</b> · ×9,4 su media</p>
+          <span class="rsl-arrow">→ TU GUION</span>
+          <p class="rsl-to">«Si te hinchas después de desayunar, no es el gluten. Es esto.»</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ TESTIMONIOS ═══ -->
+  <!-- ⚠️ PLACEHOLDER COMPLETO: testimonios de MUESTRA (personas no reales).
+       Sustituir por testimonios reales CON PERMISO + foto real antes de publicar
+       (TODO fotos → docs//static/img/landing/testi-1.jpg / testi-2.jpg / testi-3.jpg). -->
+  <section style="padding-top:30px">
+    <div class="rsl-wrap" style="text-align:center">
+      <span class="rsl-eyebrow">Lo que dicen</span>
+      <h2 class="rsl-rise">Creadores que ya no miran<br>la página en blanco.</h2>
+      <div class="rsl-testi-grid" style="text-align:left">
+        <figure class="rsl-testi rsl-rise">
+          <div class="rsl-stars" aria-label="5 estrellas">★★★★★</div>
+          <p>«Pasé de publicar <strong>cuando me venía la inspiración</strong> a publicar 4 veces por semana. El radar me da la idea hecha; yo solo grabo.»</p>
+          <figcaption class="rsl-who"><span class="rsl-av" style="background:#4f7cff">L<img src="/static/img/landing/testi-1.jpg" alt="" onerror="this.style.display='none'"></span><div><b>Laura · inmobiliaria</b><span>PLACEHOLDER · sustituir por real</span></div></figcaption>
+        </figure>
+        <figure class="rsl-testi rsl-rise">
+          <div class="rsl-stars" aria-label="5 estrellas">★★★★★</div>
+          <p>«Lo que más me sorprendió: los guiones <strong>suenan a mí</strong>. Mis clientes no notan que hay IA detrás — y eso era mi miedo.»</p>
+          <figcaption class="rsl-who"><span class="rsl-av" style="background:#8b5cf6">D<img src="/static/img/landing/testi-2.jpg" alt="" onerror="this.style.display='none'"></span><div><b>Dani · agencia de contenido</b><span>PLACEHOLDER · sustituir por real</span></div></figcaption>
+        </figure>
+        <figure class="rsl-testi rsl-rise">
+          <div class="rsl-stars" aria-label="5 estrellas">★★★★★</div>
+          <p>«Llevo 3 marcas a la vez y antes era un caos de notas. Ahora cada cliente tiene su cerebro y <strong>cambio de contexto en un clic</strong>.»</p>
+          <figcaption class="rsl-who"><span class="rsl-av" style="background:#ff7847">M<img src="/static/img/landing/testi-3.jpg" alt="" onerror="this.style.display='none'"></span><div><b>Marta · social media manager</b><span>PLACEHOLDER · sustituir por real</span></div></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ PRICING ═══ -->
+  <section id="pricingSection" style="text-align:center">
+    <div class="rsl-wrap">
+      <span class="rsl-eyebrow">Precios</span>
+      <h2 class="rsl-rise">Empieza gratis. Crece cuando publiques.</h2>
+      <p class="rsl-sub rsl-rise" style="margin:0 auto">Ver lo que explota en tu nicho no cuesta nada. Los créditos se gastan solo cuando dices «lo quiero mío».</p>
+      <div class="rsl-toggle" role="group" aria-label="Ciclo de facturación">
+        <button class="rsl-on" data-cycle="month" aria-pressed="true">Mensual</button>
+        <button data-cycle="year" aria-pressed="false">Anual <span class="rsl-save">2 meses gratis</span></button>
+      </div>
+      <div class="rsl-plans">
+        <div class="rsl-plan rsl-rise">
+          <h3>Free</h3>
+          <p class="rsl-for">Para probar el robo con tu nicho real.</p>
+          <p class="rsl-price">€0</p>
+          <p class="rsl-yr">&nbsp;</p>
+          <p class="rsl-day">&nbsp;</p>
+          <ul>
+            <li>Radar de tu nicho, gratis para siempre</li>
+            <li><strong>12 «Hazlo mío»</strong> gratis, tuyos para siempre</li>
+            <li>1 marca · teleprompter incluido</li>
+            <li class="rsl-zero">Sin tarjeta</li>
+          </ul>
+          <button type="button" class="rsl-btn rsl-btn-ghost" onclick="openAuth('register','landing_plan_free')">Empezar gratis</button>
+          <p class="rsl-risk">&nbsp;</p>
+        </div>
+        <div class="rsl-plan rsl-hot rsl-rise">
+          <span class="rsl-pop">El de los que publican</span>
+          <h3>Creator</h3>
+          <p class="rsl-for">Para el creador que publica cada semana y quiere sonar a él.</p>
+          <p class="rsl-price" data-m="€29" data-y="€23"><span class="rsl-amt">€29</span><small>/mes</small></p>
+          <p class="rsl-yr" data-m="" data-y="facturado €276/año">&nbsp;</p>
+          <p class="rsl-day" data-m="menos de €1 al día · €0,15 por reel robado" data-y="€0,76 al día · €0,12 por reel robado">menos de €1 al día · €0,15 por reel robado</p>
+          <ul>
+            <li><strong>200 créditos</strong> al mes (~200 reels robados a tu voz)</li>
+            <li>Cerebro: tu voz, entrenándose con cada reel</li>
+            <li>Métricas de tu cuenta → el sistema aprende</li>
+            <li>Explosión creativa (5 hooks × 5 ángulos × 5 ideas), series y formatos</li>
+            <li>Guiones e historial ilimitados</li>
+          </ul>
+          <button type="button" class="rsl-btn rsl-btn-primary" onclick="openAuth('register','landing_plan_creator')">Empezar con Creator</button>
+          <p class="rsl-risk">Cancela en 2 clics · tu Cerebro se queda guardado</p>
+        </div>
+        <div class="rsl-plan rsl-rise">
+          <h3>Agency</h3>
+          <p class="rsl-for">Para portfolios de marcas y equipos.</p>
+          <p class="rsl-price" data-m="€129" data-y="€107"><span class="rsl-amt">€129</span><small>/mes</small></p>
+          <p class="rsl-yr" data-m="" data-y="facturado €1.290/año">&nbsp;</p>
+          <p class="rsl-day" data-m="3 marcas · €43 por marca/mes" data-y="3 marcas · €36 por marca/mes">3 marcas · €43 por marca/mes</p>
+          <ul>
+            <li><strong>Pool de 800 créditos</strong> para toda la cuenta</li>
+            <li><strong>3 marcas</strong> con cerebro propio cada una</li>
+            <li><strong>3 asientos</strong> de equipo con roles</li>
+            <li>Vista portfolio: todo tu roster de un vistazo</li>
+            <li>Marca o asiento extra: €14,99/mes</li>
+          </ul>
+          <button type="button" class="rsl-btn rsl-btn-ghost" onclick="openAuth('register','landing_plan_agency')">Empezar con Agency</button>
+          <p class="rsl-risk">Cancela en 2 clics · sin permanencia</p>
+        </div>
+      </div>
+      <p class="rsl-pricing-foot">¿Un mes fuerte? Recarga sin cambiar de plan: 100 cr/€19 · 300 cr/€49 · 1.000 cr/€139</p>
+    </div>
+  </section>
+
+  <!-- ═══ FAQ ═══ -->
+  <section style="padding-top:0" id="faqSection">
+    <div class="rsl-wrap" style="text-align:center">
+      <span class="rsl-eyebrow">Dudas rápidas</span>
+      <h2 class="rsl-rise">Lo que preguntan antes de entrar</h2>
+      <div class="rsl-faq" style="text-align:left">
+        <details>
+          <summary>¿Esto no es copiar a otros creadores?</summary>
+          <p class="rsl-a">Copias la <strong>jugada</strong>, no el contenido. Reelscript detecta qué temas y estructuras están explotando en tu nicho y los reescribe desde cero con tu voz, tu ángulo y tus ejemplos. Es lo que los grandes creadores ya hacen a mano cada día — aquí tarda un clic.</p>
+        </details>
+        <details>
+          <summary>¿En qué se diferencia de ChatGPT?</summary>
+          <p class="rsl-a">ChatGPT no sabe qué está funcionando en tu nicho hoy, ni cómo suenas tú. Reelscript parte de señales reales de tus competidores y escribe con un modelo de tu voz que mejora con cada reel que publicas. Cuanto más lo usas, menos genérico suena — justo lo contrario que una plantilla.</p>
+        </details>
+        <details>
+          <summary>¿Qué es un crédito?</summary>
+          <p class="rsl-a">La unidad de trabajo del sistema. Robar un reel a tu voz = 1 crédito. Cinco guiones desde una idea = 5. Ver el radar, tus métricas o grabar con el teleprompter = 0. Solo pagas cuando dices «lo quiero mío».</p>
+        </details>
+        <details>
+          <summary>¿Y si se me acaban los créditos?</summary>
+          <p class="rsl-a">El radar, tus métricas y el teleprompter siguen gratis — no te quedas bloqueado a mitad de mes. Para más reescrituras, recargas desde €19 (100 créditos) sin cambiar de plan, o subes de tier cuando te compense. Tú decides.</p>
+        </details>
+        <details>
+          <summary>¿Funciona en mi nicho / mi idioma?</summary>
+          <p class="rsl-a">Tú eliges a quién vigilar: añade los competidores de tu nicho y el radar trabaja sobre ellos, en español o en inglés. Si en tu nicho se publican reels, hay señales.</p>
+        </details>
+        <details>
+          <summary>¿Puedo cancelar cuando quiera?</summary>
+          <p class="rsl-a">Sí, desde tu cuenta, en dos clics. Sin permanencia. Tus guiones y tu Cerebro se quedan guardados por si vuelves.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CTA FINAL ═══ -->
+  <section class="rsl-final">
+    <div class="rsl-halo" aria-hidden="true"></div>
+    <div class="rsl-wrap">
+      <h2>Tu nicho ya te está diciendo<br><em>qué grabar.</em></h2>
+      <p class="rsl-sub" style="max-width:480px">Entra, mira tu radar y roba tu primer guion. Los 12 primeros corren de nuestra cuenta — y son tuyos para siempre.</p>
+      <button type="button" class="rsl-btn rsl-btn-primary" style="padding:17px 34px;font-size:1.08rem" onclick="openAuth('register','landing_final')">Roba tu primer guion gratis</button>
+      <p class="rsl-hero-micro" style="margin-top:14px">Sin tarjeta · listo en 2 minutos</p>
+    </div>
+  </section>
+
+
+<!-- ═══ STICKY CTA (aparece al pasar el hero) ═══ -->
+<div class="rsl-sticky-cta" id="rslStickyCta" role="complementary" aria-label="Empezar gratis">
+  <div class="rsl-sticky-in">
+    <p class="rsl-msg"><span class="rsl-dot" aria-hidden="true"></span>Tu nicho está publicando ahora mismo.<small>12 guiones gratis · sin tarjeta</small></p>
+    <a class="rsl-btn rsl-btn-primary" href="#pricingSection">Empieza gratis</a>
   </div>
-</section>
+</div>
+</div>
+</div>
+<script>
+
+(function(){
+  // Landing v2 (porte del mockup v2.4) — TODO scoped a #rsLanding; si no existe (workspace), no hace nada.
+  var root=document.getElementById("rsLanding"); if(!root) return;
+  root.classList.add("rsl-js");
+  var reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // H1: palabras que nacen una a una (el <em> gradiente entra como unidad atómica)
+  (function(){
+    if(reduced) return;
+    var h1=document.getElementById("rslHeroH1"); if(!h1) return;
+    var i=0; function delay(){ return (0.12 + (i++)*0.05)+"s"; }
+    function wrapEl(el){ var s=document.createElement("span"); s.className="rsl-w"; s.style.animationDelay=delay(); el.parentNode.replaceChild(s,el); s.appendChild(el); }
+    function walk(node){
+      Array.prototype.slice.call(node.childNodes).forEach(function(ch){
+        if(ch.nodeType===3){
+          var frag=document.createDocumentFragment();
+          ch.textContent.split(/(\s+)/).forEach(function(p){
+            if(!p.trim()){ frag.appendChild(document.createTextNode(p)); return; }
+            var s=document.createElement("span"); s.className="rsl-w"; s.textContent=p; s.style.animationDelay=delay(); frag.appendChild(s);
+          });
+          node.replaceChild(frag,ch);
+        } else if(ch.nodeType===1) wrapEl(ch);
+      });
+    }
+    walk(h1);
+  })();
+
+  // Reveal on scroll + count-ups + barras del Cerebro
+  var io=new IntersectionObserver(function(es){ es.forEach(function(e){
+    if(!e.isIntersecting) return;
+    var el=e.target;
+    el.classList.add("rsl-vis");
+    if(el.id==="rslBrainCard") el.querySelectorAll(".rsl-bar i").forEach(function(b){ b.style.width=b.dataset.w+"%"; });
+    if(el.classList.contains("rsl-num") && !el.dataset.done){
+      el.dataset.done=1;
+      var target=+el.dataset.count, suf=el.dataset.suffix||"";
+      if(reduced){ el.textContent=target.toLocaleString("es")+suf; }
+      else{
+        var t0=performance.now(), dur=1600;
+        (function tick(now){
+          var k=Math.min((now-t0)/dur,1), v=Math.round(target*(1-Math.pow(1-k,3)));
+          el.textContent=v.toLocaleString("es")+suf;
+          if(k<1) requestAnimationFrame(tick);
+        })(t0);
+      }
+    }
+    io.unobserve(el);
+  }); },{threshold:.25});
+  root.querySelectorAll("#rslBrainCard,.rsl-rise,.rsl-num,#rslTimebar").forEach(function(el){ io.observe(el); });
+
+  // Toggle mensual/anual (scoped: no toca otros .toggle del app)
+  root.querySelectorAll(".rsl-toggle button").forEach(function(btn){ btn.addEventListener("click",function(){
+    root.querySelectorAll(".rsl-toggle button").forEach(function(b){ b.classList.toggle("rsl-on",b===btn); b.setAttribute("aria-pressed",b===btn); });
+    var y=btn.dataset.cycle==="year";
+    root.querySelectorAll(".rsl-plan .rsl-price[data-m]").forEach(function(p){ var a=p.querySelector(".rsl-amt"); if(a) a.textContent=y?p.dataset.y:p.dataset.m; });
+    root.querySelectorAll(".rsl-plan .rsl-yr[data-m]").forEach(function(p){ p.textContent=y?p.dataset.y:p.dataset.m; });
+    root.querySelectorAll(".rsl-plan .rsl-day[data-m]").forEach(function(p){ p.textContent=y?p.dataset.y:p.dataset.m; });
+  }); });
+
+  // Sticky CTA: aparece tras el hero, se esconde en pricing
+  (function(){
+    var bar=document.getElementById("rslStickyCta");
+    var hero=root.querySelector(".rsl-hero");
+    var stop1=document.getElementById("pricingSection");
+    if(!bar||!hero||!stop1) return;
+    function onScroll(){
+      var past=window.scrollY>hero.offsetHeight*.9;
+      var r=stop1.getBoundingClientRect();
+      var inPricing=r.top<window.innerHeight&&r.bottom>0;
+      bar.classList.toggle("rsl-show",past&&!inPricing);
+    }
+    window.addEventListener("scroll",onScroll,{passive:true}); onScroll();
+  })();
+})();
+
+</script>
 {% endif %}
 
 <!-- profPanelAdapt moved into #profMain (v0.14.19) -->
@@ -10826,116 +11889,6 @@
 </style>
 {% endif %}
 
-{% if not workspace %}
-<!-- ── SOCIAL PROOF (counter real) ─────────────────────────────────────── -->
-<!-- Sección oculta por defecto: animateCounter() la muestra solo si hay números reales (>=25) -->
-<section class="social-proof-section fade-in" id="socialProof" style="display:none">
-  <div class="social-proof-counter" id="socialCounterMain">0</div>
-  <div class="social-proof-label" id="socialCounterLabel" data-i18n-es="reels analizados hoy" data-i18n-en="reels analyzed today">reels analizados hoy</div>
-  <div class="social-proof-secondary" id="socialCreatorsRow" style="display:none">
-    <span data-i18n-es="Creadores activos esta semana:" data-i18n-en="Active creators this week:">Creadores activos esta semana:</span>
-    <b id="socialCreatorsNum">0</b>
-  </div>
-</section>
-
-<div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);max-width:600px;margin:0 auto"></div>
-
-<!-- ── PRICING ────────────────────────────────────────────────────────── -->
-<!-- TODO(econ): precios/créditos hardcodeados en 2 sitios (estas tarjetas y el
-     objeto PLAN_META en JS, ~L21950). Lo ideal sería renderizarlas desde las
-     tablas `plans`/`topups` de la DB para tener una sola fuente de verdad y no
-     tocar texto a mano en cada cambio de economía. -->
-<div class="section-sm fade-in" id="pricingSection">
-  <div style="text-align:center;margin-bottom:8px;position:relative;z-index:1">
-    <div class="s-label" data-i18n="pricing.tag">PLANS</div>
-    <h2 class="s-title" data-i18n="pricing.h2">Choose your altitude.<br><span class="grad-txt" style="font-style:italic">One brand or a portfolio.</span></h2>
-    <p style="color:var(--text3);font-size:.85rem;margin-top:8px" data-i18n="pricing.all_included">Radar, Brain, Teleprompter and Ideas in every plan.</p>
-  </div>
-  <div class="billing-toggle" data-host="pricingSection">
-    <button type="button" class="billing-toggle-opt" data-cycle="month" onclick="setBillingCycle('month','pricingSection')" data-i18n-es="Mensual" data-i18n-en="Monthly">Mensual</button>
-    <button type="button" class="billing-toggle-opt on" data-cycle="year" onclick="setBillingCycle('year','pricingSection')">
-      <span data-i18n-es="Anual" data-i18n-en="Annual">Anual</span>
-      <span class="billing-toggle-save" data-i18n-es="2 meses gratis" data-i18n-en="2 months free">2 meses gratis</span>
-    </button>
-  </div>
-  <div class="pricing-cards" style="grid-template-columns:repeat(3,1fr)">
-    <!-- FREE -->
-    <div class="price-card" id="planCard-free">
-      <div class="price-icon">✅</div>
-      <div class="price-title">Free</div>
-      <div class="price-amount"
-           data-price-month-eur="0" data-price-month-usd="0"
-           data-price-year-eur="0"  data-price-year-usd="0"></div>
-      <div class="price-billed" data-billed-eur="0" data-billed-usd="0"></div>
-      <div class="price-ideal" data-i18n-es="Mira tu nicho y crea tus primeros 5 guiones." data-i18n-en="Watch your niche and create your first 5 scripts.">Mira tu nicho y crea tus primeros 5 guiones.</div>
-      <ul class="price-features">
-        <li data-i18n-es="Radar de tu nicho" data-i18n-en="Your niche radar">Radar de tu nicho</li>
-        <li data-i18n-es="12 «Hazlo mío» de por vida" data-i18n-en="12 «Make it mine» lifetime">12 «Hazlo mío» de por vida</li>
-        <li data-i18n-es="Guiones guardados" data-i18n-en="Saved scripts">Guiones guardados</li>
-        <li data-i18n-es="Teleprompter + grabación" data-i18n-en="Teleprompter + recording">Teleprompter + grabación</li>
-        <li data-i18n-es="Historial persistente" data-i18n-en="Persistent history">Historial persistente</li>
-      </ul>
-      <button class="btn-plan" id="btnPlanFree" disabled style="opacity:.5" data-i18n-es="Plan actual" data-i18n-en="Current plan">Plan actual</button>
-    </div>
-    <!-- CREADOR -->
-    <div class="price-card featured" id="planCard-creator">
-      <div class="price-badge" data-i18n="pricing.popular">Most popular</div>
-      <div class="price-icon">🚀</div>
-      <div class="price-title">Creador</div>
-      <div class="price-amount"
-           data-price-month-eur="2900" data-price-month-usd="3200"
-           data-price-year-eur="2300"  data-price-year-usd="2500"></div>
-      <div class="price-billed" data-billed-eur="27600" data-billed-usd="30000"></div>
-      <div class="price-ideal" data-i18n-es="Para creadores que viven del contenido." data-i18n-en="For creators who live off their content.">Para creadores que viven del contenido.</div>
-      <ul class="price-features">
-        <li data-i18n-es="200 créditos/mes" data-i18n-en="200 credits/mo">200 créditos/mes</li>
-        <li data-i18n-es="1 marca" data-i18n-en="1 brand">1 marca</li>
-        <li data-i18n-es="Cerebro: aprende tu voz" data-i18n-en="Brain: learns your voice">Cerebro: aprende tu voz</li>
-        <li data-i18n-es="Ideas, hooks y formatos" data-i18n-en="Ideas, hooks & formats">Ideas, hooks y formatos</li>
-        <li data-i18n-es="Métricas de Instagram" data-i18n-en="Instagram metrics">Métricas de Instagram</li>
-        <li data-i18n-es="Teleprompter + grabación" data-i18n-en="Teleprompter + recording">Teleprompter + grabación</li>
-        <li data-i18n-es="Soporte por email" data-i18n-en="Email support">Soporte por email</li>
-      </ul>
-      <button class="btn-plan" onclick="subscribePlanFromCard('creator')" data-i18n-es="Elegir Creador" data-i18n-en="Get Creator">Elegir Creador</button>
-    </div>
-    <!-- AGENCIA -->
-    <div class="price-card" id="planCard-agency">
-      <div class="price-icon">🏢</div>
-      <div class="price-title">Agencia</div>
-      <div class="price-amount"
-           data-price-month-eur="12900" data-price-month-usd="13900"
-           data-price-year-eur="10750"  data-price-year-usd="11600"></div>
-      <div class="price-billed" data-billed-eur="129000" data-billed-usd="139000"></div>
-      <div class="price-ideal" data-i18n-es="Para agencias con varias marcas." data-i18n-en="For agencies running multiple brands.">Para agencias con varias marcas.</div>
-      <ul class="price-features">
-        <li data-i18n-es="800 créditos/mes (pool)" data-i18n-en="800 credits/mo (pool)">800 créditos/mes (pool)</li>
-        <li data-i18n-es="3 marcas incluidas" data-i18n-en="3 brands included">3 marcas incluidas</li>
-        <li data-i18n-es="3 asientos de equipo" data-i18n-en="3 team seats">3 asientos de equipo</li>
-        <li data-i18n-es="Marca extra €14,99/mes · asiento €14,99/mes" data-i18n-en="Extra brand €14.99/mo · seat €14.99/mo">Marca extra €14,99/mes · asiento €14,99/mes</li>
-        <li data-i18n-es="Cerebro por marca" data-i18n-en="Brain per brand">Cerebro por marca</li>
-        <li data-i18n-es="Portfolio multi-marca" data-i18n-en="Multi-brand portfolio">Portfolio multi-marca</li>
-        <li data-i18n-es="Soporte email + chat" data-i18n-en="Email + chat support">Soporte email + chat</li>
-      </ul>
-      <button class="btn-plan" onclick="subscribePlanFromCard('agency')" data-i18n-es="Elegir Agencia" data-i18n-en="Get Agency">Elegir Agencia</button>
-    </div>
-  </div>
-  <p style="text-align:center;margin-top:20px;color:var(--text3);font-size:.82rem" id="topupCta"></p>
-</div>
-
-
-<div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);max-width:600px;margin:0 auto"></div>
-
-<!-- ── CTA FINAL ──────────────────────────────────────────────────────── -->
-<div class="cta-section fade-in">
-  <img class="cta-mascot" src="/static/img/hooks/hooks-transcribir.svg" alt="" loading="lazy" width="120" height="120">
-  <h2 class="cta-h2">
-    <span data-i18n-es="Deja de mirar la página en blanco." data-i18n-en="Stop staring at the blank page.">Deja de mirar la página en blanco.</span>
-    <em data-i18n-es="Empieza gratis." data-i18n-en="Start free.">Empieza gratis.</em>
-  </h2>
-  <p class="cta-sub" data-i18n-es="Radar completo y 12 «Hazlo mío» gratis. Sin tarjeta." data-i18n-en="Full Radar and 12 free «Make it mine». No card.">Radar completo y 12 «Hazlo mío» gratis. Sin tarjeta.</p>
-  <button class="cta-btn-final" onclick="openAuth('register','cta_final')" data-i18n-es="Empieza gratis →" data-i18n-en="Start free →">Empieza gratis →</button>
-</div>
-{% endif %}
 
 <!-- ── PROFILE DRAWER ─────────────────────────────────────────────────── -->
 <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
@@ -23681,43 +24634,6 @@ async function removeCompetitor(trackingId, username) {
   </div>
 </div>
 
-{% if not workspace %}
-<!-- ── FAQ ──────────────────────────────────────────────────────────── -->
-<section class="faq-section-v2 fade-in" id="faqSection">
-  <div class="s-label" data-i18n-es="DUDAS" data-i18n-en="QUESTIONS">DUDAS</div>
-  <h2 class="faq-h2" data-i18n-es="Preguntas frecuentes" data-i18n-en="Frequently asked questions">Preguntas frecuentes</h2>
-
-  <details class="faq-item">
-    <summary data-i18n-es="¿Qué es Reelscript exactamente?" data-i18n-en="What exactly is Reelscript?">¿Qué es Reelscript exactamente?</summary>
-    <p data-i18n-es="No es un transcriptor: es el sistema operativo de tu contenido. Cada día te muestra lo que ya explota en tu nicho, lo convierte en guiones con tu voz listos para grabar, y aprende de lo que publicas para sonar cada vez más a ti." data-i18n-en="It's not a transcriber: it's the operating system for your content. Every day it shows what's already exploding in your niche, turns it into scripts in your voice ready to record, and learns from what you publish to sound more like you.">No es un transcriptor: es el sistema operativo de tu contenido. Cada día te muestra lo que ya explota en tu nicho, lo convierte en guiones con tu voz listos para grabar, y aprende de lo que publicas para sonar cada vez más a ti.</p>
-  </details>
-
-  <details class="faq-item">
-    <summary data-i18n-es="¿En qué se diferencia de pedírselo a ChatGPT?" data-i18n-en="How is it different from just asking ChatGPT?">¿En qué se diferencia de pedírselo a ChatGPT?</summary>
-    <p data-i18n-es="Reelscript no escribe «texto de IA»: escribe lo que dirías tú. Aprende tu tono, tu estructura y tus muletillas de tus propios reels, y se afina con cada guión que grabas. «Tu voz al N%» mide cuánto te conoce — y solo sube." data-i18n-en="Reelscript doesn't write &quot;AI text&quot;: it writes what you'd say. It learns your tone, structure and tics from your own reels, and sharpens with every script you record. &quot;Your voice at N%&quot; measures how well it knows you — and it only climbs.">Reelscript no escribe «texto de IA»: escribe lo que dirías tú. Aprende tu tono, tu estructura y tus muletillas de tus propios reels, y se afina con cada guión que grabas. «Tu voz al N%» mide cuánto te conoce — y solo sube.</p>
-  </details>
-
-  <details class="faq-item">
-    <summary data-i18n-es="¿De dónde salen las ideas?" data-i18n-en="Where do the ideas come from?">¿De dónde salen las ideas?</summary>
-    <p data-i18n-es="Del Radar: vigila a tus competidores y ordena sus reels por lo que más está explotando frente a su media. No partes de una página en blanco, partes de lo que ya funciona en tu nicho." data-i18n-en="From the Radar: it watches your competitors and ranks their reels by what's exploding most versus their average. You don't start from a blank page, you start from what already works in your niche.">Del Radar: vigila a tus competidores y ordena sus reels por lo que más está explotando frente a su media. No partes de una página en blanco, partes de lo que ya funciona en tu nicho.</p>
-  </details>
-
-  <details class="faq-item">
-    <summary data-i18n-es="¿Hay plan gratis?" data-i18n-en="Is there a free plan?">¿Hay plan gratis?</summary>
-    <p data-i18n-es="Sí. El Radar completo y 12 «Hazlo mío» de por vida, sin tarjeta. Creador (29€/mes) trae 200 créditos al mes, Cerebro y métricas; Agencia (129€/mes) añade multi-marca y equipo." data-i18n-en="Yes. The full Radar and 12 lifetime «Make it mine», no card. Creator (€29/mo) brings 200 credits a month, Brain and metrics; Agency (€129/mo) adds multi-brand and team.">Sí. El Radar completo y 12 «Hazlo mío» de por vida, sin tarjeta. Creador (29€/mes) trae 200 créditos al mes, Cerebro y métricas; Agencia (129€/mes) añade multi-marca y equipo.</p>
-  </details>
-
-  <details class="faq-item">
-    <summary data-i18n-es="¿Puedo cancelar cuando quiera?" data-i18n-en="Can I cancel anytime?">¿Puedo cancelar cuando quiera?</summary>
-    <p data-i18n-es="Sí. Cancelas desde el portal de Stripe en un click y mantienes el acceso hasta el final del periodo facturado. Sin permanencias ni preguntas." data-i18n-en="Yes. Cancel from the Stripe portal in one click and keep access until the end of the billing period. No commitments, no questions.">Sí. Cancelas desde el portal de Stripe en un click y mantienes el acceso hasta el final del periodo facturado. Sin permanencias ni preguntas.</p>
-  </details>
-
-  <details class="faq-item">
-    <summary data-i18n-es="¿Mis datos y mis guiones están seguros?" data-i18n-en="Are my data and scripts safe?">¿Mis datos y mis guiones están seguros?</summary>
-    <p data-i18n-es="Tus transcripciones, ideas y guiones viven en Supabase con row-level security: solo tú accedes a lo tuyo. Los pagos los procesa Stripe — nunca vemos ni guardamos datos de tarjeta. Puedes exportar o borrar todos tus datos cuando quieras." data-i18n-en="Your transcriptions, ideas and scripts live on Supabase with row-level security: only you can access your own. Payments are processed by Stripe — we never see or store card data. You can export or delete everything whenever you want.">Tus transcripciones, ideas y guiones viven en Supabase con row-level security: solo tú accedes a lo tuyo. Los pagos los procesa Stripe — nunca vemos ni guardamos datos de tarjeta. Puedes exportar o borrar todos tus datos cuando quieras.</p>
-  </details>
-</section>
-{% endif %}
 </main>
 
 {% if pillar %}
