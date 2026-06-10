@@ -5908,7 +5908,7 @@ TRACKED_CREATORS_LIMITS = {
     "free":    {"enabled": False, "base_slots_global": 0,  "per_project_slots": None, "requires_project": False},
     "pro":     {"enabled": True,  "base_slots_global": 1,  "per_project_slots": None, "requires_project": False},
     "creator": {"enabled": True,  "base_slots_global": 5,  "per_project_slots": None, "requires_project": False},
-    "agency":  {"enabled": True,  "base_slots_global": 20, "per_project_slots": 5,    "requires_project": True},
+    "agency":  {"enabled": True,  "base_slots_global": 20, "per_project_slots": 10,    "requires_project": True},
 }
 
 
