@@ -5663,6 +5663,15 @@ def robots():
     return Response(txt, mimetype="text/plain")
 
 
+@app.route("/llms.txt")
+def llms_txt():
+    path = os.path.join(app.root_path, "llms.txt")
+    if not os.path.exists(path):
+        abort(404)
+    with open(path, "r", encoding="utf-8") as f:
+        return Response(f.read(), mimetype="text/plain")
+
+
 @app.route("/affiliate")
 def affiliate_page():
     return render_template("affiliate.html")

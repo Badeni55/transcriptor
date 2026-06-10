@@ -40,6 +40,15 @@
 
 ## 2. Lo que te toca a ti, Bernat
 
+### 2.0 BRANDING / COPY (el norte de todo el contenido y la landing)
+El mensaje central de ReelScript, y lo que debe respirar TODO el copy (landing, modales, vacíos, onboarding):
+
+> **"Copia lo que ya funciona."**
+
+La promesa: **sabemos lo que es viral, sabemos lo que funciona en tu nicho → te decimos qué grabar.** No es "genera contenido con IA" genérico; es "esto es lo que ya está explotando en tu nicho, hazlo tuyo". El branding gira en torno a eso: certeza basada en lo que ya triunfa, no en adivinar.
+- Aplícalo en los CTAs, los hooks de la landing, los empty states ("aún no hay señales… aquí verás lo que explota en tu nicho"), y el tono general.
+- IDI: una promesa clara y repetida (memoria/consistencia); copy escaneable; el valor visible en 3 segundos.
+
 ### 2.1 LANDING nueva (el bloque grande)
 La landing actual está desfasada y los **vídeos son de hace ~2 meses** (la primera versión). Rehacerla.
 - **Mantener las waves** (el elemento visual de olas del hero) — David quiere conservarlas como seña de identidad.
@@ -56,7 +65,12 @@ La landing actual está desfasada y los **vídeos son de hace ~2 meses** (la pri
 - Add-on **marca extra**: cablear los **+150 cr/marca** (hoy solo precio, hay un TODO en código).
 - Asistentes: si quieres, fundirlos del todo en Cerebro (hoy reusan el panel legacy).
 
-### 2.3 Decisión de comportamiento (confirmar)
+### 2.3 Visión: interoperabilidad / agentes (apuesta futura, no urgente)
+Norte: que ReelScript sea **lo más interoperable posible, sin barreras de entrada**.
+- **`llms.txt`** (HECHO, pendiente de servir en `/llms.txt`): describe el producto para agentes/LLMs. Hay que añadir una ruta Flask que lo sirva en `reelscript.net/llms.txt`.
+- **API pública + MCP (futuro):** exponer el núcleo (generar ideas/guiones/hooks, analizar reel, señales del Radar) como API autenticada con API keys, cobrada **contra el mismo sistema de créditos**. Encima, un **MCP server** para que agentes (Claude, plugins) la usen. Decisión de negocio antes de construir: ¿pricing por uso separado de la suscripción? Validar demanda con un MVP mínimo (una API + un MCP en el registro) antes de escalar a 10 integraciones. **No es para ahora** — bloque estratégico tras cerrar lo actual.
+
+### 2.4 Decisión de comportamiento (confirmar)
 - Para Agency, `/profile/radar` y `/profile/overview` ahora abren **Radar (dashboard)**, no el Portfolio macro (el Portfolio queda a un clic en el rail). Si prefieres que esos slugs abran Portfolio, dilo.
 
 ---

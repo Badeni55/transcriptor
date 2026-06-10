@@ -1,0 +1,30 @@
+# ReelScript
+
+> ReelScript is a content operating system for short-form video creators and marketing agencies. It detects what is already going viral in your niche, turns ideas into ready-to-record scripts in your own voice, and tells you exactly what to record next. Core idea: copy what already works.
+
+ReelScript works per brand/client — one creator with one or several accounts, or an agency managing multiple clients. It learns each brand's voice over time so the output sounds like you, not generic.
+
+## Core promise
+"Copy what already works." We know what is viral and what works in your niche — we tell you what to record.
+
+## What it does
+- **Radar**: surfaces the competitor reels exploding right now in your niche, ranked by how much they outperform their author's own average.
+- **Analizar**: paste an Instagram or TikTok reel URL → transcript + metrics + angle; add the author as a competitor in one click.
+- **Ideas → Guiones → Hooks**: capture a raw idea for free, then develop it into full 30–45s scripts and alternative hooks, written in your voice.
+- **Cerebro**: learns your voice from your own reels so every generation sounds like you.
+- **Teleprompter + recording**: read your script while you record.
+
+## Who it is for
+Creators and entrepreneurs who post short-form video (Instagram Reels, TikTok), and marketing agencies managing content for several brands/clients.
+
+## Plans
+- Free: 12 lifetime credits, full Radar, no card.
+- Creator (€29/mo): 200 credits/month, 1 brand, voice learning, metrics.
+- Agency (€129/mo): 800 credits/month (shared pool), multiple brands, team seats.
+
+## For agents and developers
+ReelScript is designed to be interoperable, with the goal of zero barriers to entry. A public API and an MCP server are planned so that AI agents and external tools can generate scripts, analyze reels, and surface niche signals programmatically — billed against the same credit system. Interested in early access or integration? Contact contacto@reelscript.net.
+
+## Links
+- Site: https://reelscript.net
+- Contact: contacto@reelscript.net
