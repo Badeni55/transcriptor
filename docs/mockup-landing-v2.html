@@ -421,6 +421,122 @@
     /* el sticky-CTA es conversión, no decoración: se queda visible, solo sin animación de entrada */
     .sticky-cta{transition:none}
   }
+
+  /* ════════ CAPTURAS REALES reconstruidas en HTML/CSS (super pro, sin PNG) ════════
+     Replican 1:1 las vistas de la app. Radar y Cerebro en CLARO (como la app),
+     Teleprompter en OSCURO (como la app). Llenan el .shot (inset:0). */
+  .mr,.mc{position:absolute;inset:0;overflow:hidden;background:#f4f1ec;color:#1b1a18;
+    font-family:var(--body);text-align:left;display:flex;flex-direction:column;
+    --b:#3b3fd4;--bd:#e7e2d9;--t2:#6c6a64;--t3:#9a968d;--card:#fffdf9}
+  .mr *,.mc *{box-sizing:border-box}
+  /* top bar */
+  .mr-top,.mc-top{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--bd);background:#faf8f3;flex:none}
+  .mr-mk,.mc-mk{display:inline-flex;align-items:center;gap:6px;font-family:var(--disp);font-weight:600;font-size:11px;border:1px solid var(--bd);border-radius:8px;padding:4px 9px;background:#fff}
+  .mr-mk i,.mc-mk i{width:7px;height:7px;border-radius:50%;background:#6d5ae6;display:block}
+  .mr-cr,.mc-cr{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--t3);text-transform:uppercase}
+  .mr-cr b,.mc-cr b{color:var(--t2);font-weight:500}
+  .mr-sp,.mc-sp{flex:1}
+  .mr-pill,.mc-pill{font-family:var(--disp);font-size:11px;color:var(--t2);border:1px solid var(--bd);border-radius:999px;padding:5px 11px;background:#fff;white-space:nowrap}
+  .mr-pill.cred,.mc-pill.cred{color:var(--b);font-weight:600}
+  /* body */
+  .mr-bd,.mc-bd{padding:16px 20px;overflow:hidden}
+  .mr-ey,.mc-ey{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--t3);margin-bottom:7px}
+  .mr-ey i,.mc-ey i{width:7px;height:7px;border-radius:50%;background:var(--b);display:block}
+  .mr-h,.mc-h{font-family:var(--disp);font-weight:700;font-size:27px;letter-spacing:-.02em;line-height:1;margin-bottom:7px;color:#15140f}
+  .mr-su,.mc-su{font-size:11.5px;color:var(--t2);line-height:1.45;max-width:430px;margin-bottom:14px}
+  .mr-su b{color:#15140f;font-weight:600}
+  /* chips de filtro (radar) */
+  .mr-ch{display:flex;gap:8px;margin-bottom:14px}
+  .mr-ch span{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;border:1px solid var(--bd);border-radius:999px;padding:5px 11px;background:#fff;color:var(--t2)}
+  .mr-ch span.on{background:#eceafe;border-color:#d7d2f7;color:#3a2fb0;font-weight:600}
+  .mr-ch i{width:6px;height:6px;border-radius:50%;display:block}
+  /* stats */
+  .mr-st{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:13px}
+  .mr-st .c{border:1px solid var(--bd);border-radius:11px;background:var(--card);padding:11px 12px}
+  .mr-st .l{font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin-bottom:7px}
+  .mr-st .v{font-family:var(--disp);font-weight:700;font-size:23px;line-height:1;color:#15140f}
+  .mr-st .s{font-size:9px;color:var(--t3);margin-top:5px}
+  .mr-st .s.up{color:var(--b)}
+  /* acordeón competidores */
+  .mr-cmp{display:flex;align-items:center;gap:8px;border:1px solid var(--bd);border-radius:11px;background:var(--card);padding:10px 13px;font-size:11px;color:var(--t2);margin-bottom:13px}
+  .mr-cmp .cv{color:var(--t3)}
+  /* oportunidad */
+  .mr-op{display:flex;gap:0;border:1px solid #d7d2f7;border-radius:14px;background:var(--card);overflow:hidden;box-shadow:0 10px 30px rgba(59,63,212,.07)}
+  .mr-op .th{width:96px;flex:none;position:relative;background:linear-gradient(150deg,#3a4a63,#1c2738);color:#fff}
+  .mr-op .th .pov{position:absolute;top:7px;left:7px;right:7px;font-size:8px;font-weight:700;line-height:1.2;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+  .mr-op .th .du{position:absolute;bottom:6px;right:7px;font-family:var(--mono);font-size:8px;background:rgba(0,0,0,.55);padding:1px 5px;border-radius:4px}
+  .mr-op .mn{flex:1;min-width:0;padding:13px 15px}
+  .mr-op .mt{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--b);margin-bottom:6px}
+  .mr-op .tt{font-family:var(--disp);font-weight:700;font-size:16px;line-height:1.2;color:#15140f;margin-bottom:9px}
+  .mr-op .hint{display:flex;gap:7px;font-size:10px;color:var(--t2);border:1px solid var(--bd);border-radius:9px;padding:8px 10px;background:#faf8f3;line-height:1.4;margin-bottom:11px}
+  .mr-op .hint b{color:var(--b)}
+  .mr-op .cta{display:flex;align-items:center;gap:8px}
+  .mr-op .steal{display:inline-flex;align-items:center;gap:7px;background:var(--b);color:#fff;font-family:var(--disp);font-weight:600;font-size:12px;padding:9px 18px;border-radius:10px;box-shadow:0 6px 16px rgba(59,63,212,.3)}
+  .mr-op .fav{width:30px;height:30px;border:1px solid var(--bd);border-radius:8px;display:grid;place-items:center;color:var(--t3);background:#fff}
+  .mr-op .sd{width:78px;flex:none;border-left:1px solid var(--bd);padding:13px 0 13px 14px}
+  .mr-op .sd .k{font-family:var(--mono);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
+  .mr-op .sd .x{font-family:var(--disp);font-weight:700;font-size:20px;color:var(--b);line-height:1;margin:3px 0 11px}
+  .mr-op .sd .x::after{content:"";display:block;width:34px;height:2px;background:var(--b);margin-top:5px;border-radius:2px}
+  .mr-op .sd .vv{font-family:var(--disp);font-weight:700;font-size:14px;color:#15140f;line-height:1;margin:2px 0 11px}
+
+  /* ── CEREBRO claro ── */
+  .mc-lv{display:flex;gap:13px;align-items:center;border:1px solid #d7d2f7;border-radius:14px;background:linear-gradient(120deg,#efedfd,#f6f4fc);padding:14px 16px;margin-bottom:15px}
+  .mc-lv .ic{width:44px;height:44px;flex:none;border-radius:12px;background:#fff;border:1px solid #ddd8f5;display:grid;place-items:center;font-size:18px}
+  .mc-lv .lk{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--b);margin-bottom:4px}
+  .mc-lv .bg{font-family:var(--disp);font-weight:700;font-size:21px;color:#15140f;line-height:1;margin-bottom:9px}
+  .mc-lv .bg em{font-style:normal;color:var(--b)}
+  .mc-lv .pr{height:8px;border-radius:5px;background:#e0dcf3;overflow:hidden;margin-bottom:8px}
+  .mc-lv .pr i{display:block;height:100%;width:40%;background:var(--b);border-radius:5px}
+  .mc-lv .cap{font-size:10px;color:var(--t2);line-height:1.4}
+  .mc-lv .cap b{color:#15140f;font-weight:600}
+  .mc-vl{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);margin-bottom:8px}
+  .mc-ta{border:1px solid var(--bd);border-radius:11px;background:var(--card);padding:11px 13px;font-size:10.5px;color:var(--t3);height:54px;margin-bottom:11px}
+  .mc-btn{display:inline-flex;align-items:center;gap:7px;background:var(--b);color:#fff;font-family:var(--disp);font-weight:600;font-size:11.5px;padding:9px 16px;border-radius:9px;margin-bottom:16px}
+  .mc-feed{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .mc-feed .c{border:1px solid var(--bd);border-left:2px solid var(--b);border-radius:10px;background:var(--card);padding:11px 12px}
+  .mc-feed .v{font-family:var(--disp);font-weight:700;font-size:21px;line-height:1;color:#15140f}
+  .mc-feed .l{font-size:9.5px;color:#15140f;font-weight:600;margin-top:6px}
+  .mc-feed .s{font-size:8.5px;color:var(--t3);margin-top:3px;line-height:1.35}
+
+  /* ── TELEPROMPTER oscuro (dentro del .phone) ── */
+  .mt{position:absolute;inset:0;background:#070810;color:#eef1f8;display:flex;flex-direction:column;text-align:left;overflow:hidden;font-family:var(--body)}
+  .mt-hd{display:flex;align-items:center;gap:8px;justify-content:center;padding:13px 10px 11px;flex:none;position:relative}
+  .mt-hd .bk{position:absolute;left:12px;width:24px;height:24px;border-radius:50%;border:1px solid rgba(168,176,194,.3);display:grid;place-items:center;font-size:12px;color:var(--text2)}
+  .mt-hd b{font-family:var(--disp);font-weight:600;font-size:13px}
+  .mt-hd span{font-family:var(--mono);font-size:9px;color:var(--text3)}
+  .mt-bd{flex:1;position:relative;padding:14px 20px 0;overflow:hidden}
+  .mt-bd .rail{position:absolute;top:6px;bottom:64px;right:9px;width:3px;border-radius:3px;background:rgba(168,176,194,.16)}
+  .mt-bd .rail i{position:absolute;top:0;left:0;right:0;height:30%;border-radius:3px;background:var(--brand2)}
+  .mt-hk{font-family:var(--serif);font-weight:400;font-size:23px;line-height:1.12;color:#7e9bff;margin-bottom:16px}
+  .mt-ln{font-family:var(--serif);font-size:20px;line-height:1.22;margin-bottom:15px;color:#f3f5fb}
+  .mt-ft{flex:none;display:flex;gap:9px;padding:11px 12px 13px}
+  .mt-ft .no{font-family:var(--disp);font-size:11px;color:var(--text2);background:#14161f;border:1px solid var(--border);border-radius:10px;padding:0 14px;display:grid;place-items:center}
+  .mt-ft .yes{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;background:var(--grad-btn);color:#fff;font-family:var(--disp);font-weight:600;font-size:13px;padding:12px;border-radius:11px}
+
+  /* responsive: en móvil el mini-UI se queda igual (escala con el .shot) */
+  @media(max-width:640px){
+    .mr-h,.mc-h{font-size:22px}.mr-st .v,.mc-feed .v{font-size:18px}
+    .mr-op .tt{font-size:13px}.mr-op .sd{width:66px}
+  }
+
+
+  /* ── motion graphics de los frames (combina capturas reales + movimiento) ── */
+  .mt-roll{will-change:transform}
+  @media (prefers-reduced-motion: no-preference){
+    .mt-roll{animation:tpRoll 7.5s var(--ease) infinite alternate}
+    .mt .rail i{animation:tpRail 7.5s var(--ease) infinite alternate}
+    .mc-lv .pr i{width:40%;animation:mcFill 5s var(--ease) infinite alternate}
+    .mr-op .sd .x::after{animation:mrUnder 4.5s var(--ease) infinite alternate}
+    .mr-ey i,.mc-ey i{animation:mrDot 2.3s infinite}
+    .mr-op .steal{animation:mrGlow 3.2s ease-in-out infinite}
+  }
+  @keyframes tpRoll{from{transform:translateY(0)}to{transform:translateY(-42%)}}
+  @keyframes tpRail{from{top:2%}to{top:70%}}
+  @keyframes mcFill{from{width:30%}to{width:40%}}
+  @keyframes mrUnder{from{width:10px}to{width:34px}}
+  @keyframes mrDot{0%,100%{box-shadow:0 0 0 0 rgba(59,63,212,.5)}55%{box-shadow:0 0 0 5px rgba(59,63,212,0)}}
+  @keyframes mrGlow{0%,100%{box-shadow:0 6px 16px rgba(59,63,212,.3)}50%{box-shadow:0 7px 24px rgba(59,63,212,.55)}}
+
 </style>
 </head>
 <body>
@@ -558,9 +674,47 @@
         <div class="how-media">
           <div class="frame">
             <div class="frame-bar"><i></i><i></i><i></i><span>Radar · señales de hoy</span></div>
-            <div class="shot">
-              <div class="shot-todo"><span>TODO captura real: Radar con señales del día<br>· solo cuenta propia @__davidayala o figuras públicas (MrBeast, Ibai) como competidor de ejemplo<br>· docs/img/landing-v2/radar.png</span></div>
-              <img src="img/landing-v2/radar.png" alt="El Radar de Reelscript: lista de reels que están explotando en tu nicho, ordenados por explosión sobre su media" loading="lazy" onerror="this.style.display='none'">
+            <div class="shot" role="img" aria-label="El Radar de Reelscript: señales del día con un reel que explotó 89 veces su media, listo para robar con «Hazlo mío»">
+              <div class="mr">
+                <div class="mr-top">
+                  <span class="mr-mk"><i></i>IA ▾</span>
+                  <span class="mr-cr"><b>Todas las marcas</b> / Radar</span>
+                  <span class="mr-sp"></span>
+                  <span class="mr-pill">Apunta una idea</span>
+                  <span class="mr-pill cred">✦ 3541</span>
+                </div>
+                <div class="mr-bd">
+                  <div class="mr-ey"><i></i>Radar · @IA</div>
+                  <div class="mr-h">Señales de hoy</div>
+                  <div class="mr-su">Mientras no mirabas, <b>2 reels explotaron</b> en tu nicho. Esto es lo que merece tu próximo guion.</div>
+                  <div class="mr-ch">
+                    <span><i style="background:#9a968d"></i>Todas</span>
+                    <span class="on"><i style="background:#6d5ae6"></i>IA</span>
+                    <span><i style="background:#e8a33c"></i>Espiritualidad</span>
+                  </div>
+                  <div class="mr-st">
+                    <div class="c"><div class="l">Rivales activos</div><div class="v">6</div></div>
+                    <div class="c"><div class="l">Reels · 7 días</div><div class="v">2</div><div class="s up">2 explotaron</div></div>
+                    <div class="c"><div class="l">Explosivos</div><div class="v">2</div><div class="s up">sobre su media</div></div>
+                    <div class="c"><div class="l">Tu voz</div><div class="v">40%</div><div class="s">nivel 1</div></div>
+                  </div>
+                  <div class="mr-cmp">▸ Tus competidores <span class="cv">· 6</span></div>
+                  <div class="mr-op">
+                    <div class="th"><span class="pov">POV: tu empresa usa Claude Code</span><span class="du">0:34</span></div>
+                    <div class="mn">
+                      <div class="mt">Oportunidad #1 · @__davidayala · hace 3 días</div>
+                      <div class="tt">¿Qué opináis? 😂</div>
+                      <div class="hint"><b>✦</b><span>Está reventando: <b>89×</b> lo normal de @__davidayala. Si hay uno que robar hoy, es este.</span></div>
+                      <div class="cta"><span class="steal">⚡ Hazlo mío</span><span class="fav">☆</span></div>
+                    </div>
+                    <div class="sd">
+                      <div class="k">Explosión</div><div class="x">89×</div>
+                      <div class="k">Views</div><div class="vv">155 K</div>
+                      <div class="k">Likes</div><div class="vv">6 K</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -595,9 +749,21 @@
       <div class="how-row rise">
         <div class="how-media">
           <div class="phone">
-            <div class="shot">
-              <div class="shot-todo"><span>TODO captura real: teleprompter en móvil con un guion propio (@__davidayala)<br>· docs/img/landing-v2/teleprompter.png</span></div>
-              <img src="img/landing-v2/teleprompter.png" alt="El teleprompter de Reelscript en el móvil: el guion avanza mientras grabas, sin salir de la app" loading="lazy" onerror="this.style.display='none'">
+            <div class="shot" role="img" aria-label="El teleprompter de Reelscript en el móvil: el guion avanza en tu voz mientras grabas, sin salir de la app">
+              <div class="mt">
+                <div class="mt-hd"><span class="bk">‹</span><b>Teleprompter</b><span>en tu voz</span></div>
+                <div class="mt-bd">
+                  <div class="rail"><i></i></div>
+                  <div class="mt-roll">
+                    <div class="mt-hk">La IA no te hace mejor programador.</div>
+                    <div class="mt-ln">Te convierte en un vago más rápido.</div>
+                    <div class="mt-ln">Copian y pegan bloques de código sin entenderlos.</div>
+                    <div class="mt-ln">El resultado es un desastre que aparenta funcionar.</div>
+                    <div class="mt-ln">Y cuando algo falla, no sabes ni por dónde empezar.</div>
+                  </div>
+                </div>
+                <div class="mt-ft"><span class="no">Aún no</span><span class="yes">✓ Ya lo grabé</span></div>
+              </div>
             </div>
           </div>
         </div>
@@ -613,9 +779,39 @@
         <div class="how-media">
           <div class="frame">
             <div class="frame-bar"><i></i><i></i><i></i><span>Cerebro · @__davidayala</span></div>
-            <div class="shot">
-              <div class="shot-todo"><span>TODO captura real: Cerebro/Métricas de la cuenta propia @__davidayala<br>(voz capturada, qué hooks funcionan, qué aprendió)<br>· docs/img/landing-v2/cerebro.png</span></div>
-              <img src="img/landing-v2/cerebro.png" alt="El Cerebro de Reelscript: porcentaje de voz capturada y qué hooks, temas y duraciones funcionan en tu cuenta" loading="lazy" onerror="this.style.display='none'">
+            <div class="shot" role="img" aria-label="El Cerebro de Reelscript: voz capturada al 40 por ciento y de qué se alimenta el sistema — reels, competidores, guiones y publicaciones">
+              <div class="mc">
+                <div class="mc-top">
+                  <span class="mc-mk"><i></i>IA ▾</span>
+                  <span class="mc-cr"><b>Todas las marcas</b> / Cerebro</span>
+                  <span class="mc-sp"></span>
+                  <span class="mc-pill">Apunta una idea</span>
+                  <span class="mc-pill cred">✦ 3541</span>
+                </div>
+                <div class="mc-bd">
+                  <div class="mc-ey"><i></i>Cerebro · @IA</div>
+                  <div class="mc-h">El cerebro de IA</div>
+                  <div class="mc-lv">
+                    <div class="ic">🧠</div>
+                    <div style="flex:1;min-width:0">
+                      <div class="lk">Nivel 1 · Calentando</div>
+                      <div class="bg">Te conozco al <em>40%</em></div>
+                      <div class="pr"><i></i></div>
+                      <div class="cap">Te faltan ~7 piezas para el <b>Nivel 2</b>, donde tus guiones salen casi sin retoques.</div>
+                    </div>
+                  </div>
+                  <div class="mc-vl">Enséñame tu voz</div>
+                  <div class="mc-ta">Pega aquí la transcripción de tus reels (lo que dices)…</div>
+                  <span class="mc-btn">✦ Aprender mi voz</span>
+                  <div class="mc-vl">De qué me alimento</div>
+                  <div class="mc-feed">
+                    <div class="c"><div class="v">0</div><div class="l">reels tuyos leídos</div><div class="s">de aquí modelo tu voz</div></div>
+                    <div class="c"><div class="v">5</div><div class="l">competidores vigilados</div><div class="s">qué funciona en tu nicho</div></div>
+                    <div class="c"><div class="v">6</div><div class="l">guiones creados</div><div class="s">cada uno refina tu estilo</div></div>
+                    <div class="c"><div class="v">27</div><div class="l">publicados con métricas</div><div class="s">cierran el círculo</div></div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
