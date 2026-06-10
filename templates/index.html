@@ -10040,6 +10040,13 @@
     .rs .brain-comp-x { flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:8px; border:1px solid transparent; background:transparent; color:var(--text-tertiary); cursor:pointer; transition:color .15s, border-color .15s, background .15s; }
     .rs .brain-comp-x:hover { color:#e0556b; border-color:color-mix(in srgb, #e0556b 45%, transparent); background:color-mix(in srgb, #e0556b 8%, transparent); }
     .rs .brain-comp-x svg { width:15px; height:15px; }
+    /* Gestión de competidores plegada en el Radar (borrar reusa untrack). */
+    .rs .comp-manage { margin:4px 0 14px; border:1px solid var(--border-default); border-radius:12px; background:var(--surface-raised); overflow:hidden; }
+    .rs .comp-manage > summary { list-style:none; cursor:pointer; padding:11px 14px; font-size:13px; font-weight:600; color:var(--text-secondary); display:flex; align-items:center; gap:8px; user-select:none; }
+    .rs .comp-manage > summary::-webkit-details-marker { display:none; }
+    .rs .comp-manage > summary::before { content:"\203A"; display:inline-block; transition:transform .15s ease; color:var(--text-tertiary); font-size:15px; }
+    .rs .comp-manage[open] > summary::before { transform:rotate(90deg); }
+    .rs .comp-manage-list { display:flex; flex-direction:column; gap:8px; padding:2px 12px 12px; }
     .rs--mobile .brain-comp-x { width:44px; height:44px; }
     /* T2: lista inline de asistentes en Cerebro. */
     .rs .brain-asst-list { display:flex; flex-direction:column; gap:10px; }

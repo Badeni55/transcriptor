@@ -267,7 +267,6 @@
       (isAgency()?brandSwitchHTML():brandStaticHTML())+
       crumb+
       '<span class="grow"></span>'+
-      '<div class="searchbox">'+IC.eye+'<span>Buscar señal o creador</span></div>'+   // T3 (IDI): sin pista ⌘K — no prometemos un atajo que no existe
       // T1 (IDI): captura de ideas siempre a mano, en cualquier vista de la isla.
       '<button class="cmd-idea" data-act="idea-capture" title="Apunta una idea — se desarrolla en Guiones" aria-label="Apunta una idea"><span class="cmd-idea-bulb">'+IC.bulb+'</span><span class="cmd-idea-t">Apunta una idea</span></button>'+
       demoToggle+
@@ -326,6 +325,23 @@
       (nx.message?'<p class="ns-msg">'+ESC(nx.message)+'</p>':'')+
       '<div class="ns-actions"><button class="btn btn-md '+btnCls+'" data-act="next-series-go" data-title="'+ESC(nx.title||"")+'">'+IC.bolt+' Desarrollar esta serie</button></div>'+
     '</article>';
+  }
+
+  // Gestión de competidores seguidos desde el Radar (acordeón plegado): borrar
+  // reusa data-act="untrack" (mismo handler + confirm que en Cerebro).
+  function trackedManageHTML(){
+    var t=Array.isArray(S.tracked)?S.tracked:[];
+    if(!t.length) return "";
+    var rows=t.map(function(tt){
+      var h=(tt.creator&&tt.creator.ig_username)||tt.ig_username||"";
+      var n=(tt.reels_count!=null)?(tt.reels_count+' reel'+(tt.reels_count===1?'':'es')):'';
+      return '<div class="brain-comp"><div class="ava bava">'+ESC(initialsOf(h))+'</div>'+
+        '<span class="brain-comp-h">@'+ESC(h)+'</span>'+
+        '<span class="brain-comp-n">'+ESC(n)+'</span>'+
+        '<button class="brain-comp-x" data-act="untrack" data-id="'+ESC(String(tt.id))+'" data-handle="'+ESC(h)+'" title="Dejar de seguir a @'+ESC(h)+'" aria-label="Dejar de seguir a @'+ESC(h)+'">'+IC.x+'</button>'+
+      '</div>';
+    }).join("");
+    return '<details class="comp-manage"><summary>Tus competidores · '+t.length+'</summary><div class="comp-manage-list">'+rows+'</div></details>';
   }
 
   function whaleHTML(count){
@@ -470,6 +486,7 @@
 
     if(sorted.length===0){
       return '<div class="scroll"><div class="canvas">'+head+(isAgency()?brandTabsHTML():"")+statbarHTML()+
+        trackedManageHTML()+
         voiceOnboardCardHTML()+   // B6: en first-run sin reels, el banner de voz es lo primero que aporta
         nextSeriesHTML("dash")+   // B1+T1: CTA secundario en el Dashboard
         '<div class="rs-empty">'+(S.filter==="fav"?"Sin favoritos aún. Toca la estrella en una señal.":"Sin reels todavía. Añade un competidor o pega un reel para empezar.")+'</div>'+
@@ -488,6 +505,7 @@
       head+
       (isAgency()?brandTabsHTML():"")+
       statbarHTML()+
+      trackedManageHTML()+
       opportunityHTML(hero)+
       voiceOnboardCardHTML()+   // B6+T1: banner de voz BAJO la oportunidad — no empuja el hero bajo el fold
       nextSeriesHTML("dash")+   // B1+T1: "tu próxima serie" con CTA secundario en el Dashboard
@@ -891,10 +909,11 @@
     return Object.keys(by).map(function(h){ return {handle:h, n:by[h]}; }).sort(function(a,b){return b.n-a.n;});
   }
   // T3: lista REAL de competidores seguidos (con id de tracking → permite dejar de
-  // seguir). Se carga aparte del feed; al resolver, repinta Cerebro si está abierto.
+  // seguir). Se carga aparte del feed; al resolver, repinta las vistas que la
+  // muestran (Cerebro y Radar — trackedManageHTML) si están abiertas.
   function loadTracked(){
     apiGet("/api/tracked-creators").then(function(r){
-      if(r.ok && r.d && Array.isArray(r.d.tracked)){ S.tracked=r.d.tracked; if(S.tab==="brain") render(); }
+      if(r.ok && r.d && Array.isArray(r.d.tracked)){ S.tracked=r.d.tracked; if(S.tab==="brain"||S.tab==="dashboard") render(); }
     });
   }
   function brainHTML(){
