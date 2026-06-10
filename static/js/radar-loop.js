@@ -1093,10 +1093,25 @@
     '</div></div>';
   }
   function conveyorHTML(){
-    var items=[["record",IC.mic,"Grábalo ahora","Teleprompter listo · gratis",true],["hooks",IC.hook,"5 hooks alternativos","El hook es el 80% del reel",false],["carousel",IC.layers,"Conviértelo en carrusel","La misma idea, en post",false],["linkedin",'<span style="font-weight:800;font-size:13px">in</span>',"Versión LinkedIn","Llega a otro público",false],["x",'<span style="font-weight:800;font-size:15px">𝕏</span>',"Hilo para X","Exprime el mismo ángulo",false],["serie",IC.repeat,"Genérame una serie de 3","Contenido para toda la semana",false]];
-    var rows=items.map(function(it){ var k=it[0],d=!!S.done[k]; var lbl=d?(k==="record"?"Grabado ✓":"Hecho ✓"):it[2];
-      return '<button class="chain'+(it[4]?" feature":"")+(d?" done":"")+'" '+(d?"":'data-act="chain" data-k="'+k+'"')+'><div class="cic">'+(d?IC.check:it[1])+'</div><div class="ctext"><div class="ct">'+ESC(lbl)+'</div><div class="cd">'+ESC(it[3])+'</div></div>'+(d?"":'<span class="arr">'+IC.arr+'</span>')+'</button>'; }).join("");
-    return '<div class="belt"><div class="belt-h"><h4>¿Y ahora?</h4></div><p class="belt-sub">Ya tienes el guión. Multiplícalo en un toque — cada formato es una pieza más sin volver a pensar.</p><div class="belt-grid">'+rows+'</div></div>';
+    // real:true = el formato existe de verdad en prod (endpoint + contenido real).
+    // hooks/carousel/linkedin/x/serie hoy son TEATRO (contenido hardcodeado +
+    // descuento local de créditos) → solo se enseñan en demo. Al implementar un
+    // formato de verdad, basta marcarlo real:true.
+    var items=[
+      {k:"record",  ic:IC.mic,    t:"Grábalo ahora",          d:"Teleprompter listo · gratis",     feature:true,  real:true },
+      {k:"hooks",   ic:IC.hook,   t:"5 hooks alternativos",   d:"El hook es el 80% del reel",      feature:false, real:false},
+      {k:"carousel",ic:IC.layers, t:"Conviértelo en carrusel",d:"La misma idea, en post",          feature:false, real:false},
+      {k:"linkedin",ic:'<span style="font-weight:800;font-size:13px">in</span>', t:"Versión LinkedIn", d:"Llega a otro público", feature:false, real:false},
+      {k:"x",       ic:'<span style="font-weight:800;font-size:15px">𝕏</span>',  t:"Hilo para X",      d:"Exprime el mismo ángulo", feature:false, real:false},
+      {k:"serie",   ic:IC.repeat, t:"Genérame una serie de 3",d:"Contenido para toda la semana",   feature:false, real:false}
+    ];
+    if(!isDemo()) items=items.filter(function(it){ return it.real; });
+    var rows=items.map(function(it){ var k=it.k,d=!!S.done[k]; var lbl=d?(k==="record"?"Grabado ✓":"Hecho ✓"):it.t;
+      return '<button class="chain'+(it.feature?" feature":"")+(d?" done":"")+'" '+(d?"":'data-act="chain" data-k="'+k+'"')+'><div class="cic">'+(d?IC.check:it.ic)+'</div><div class="ctext"><div class="ct">'+ESC(lbl)+'</div><div class="cd">'+ESC(it.d)+'</div></div>'+(d?"":'<span class="arr">'+IC.arr+'</span>')+'</button>'; }).join("");
+    var sub=items.length>1
+      ? 'Ya tienes el guión. Multiplícalo en un toque — cada formato es una pieza más sin volver a pensar.'
+      : 'Ya tienes el guión, guardado en Guiones. Pásalo al teleprompter y grábalo — grabar no gasta créditos.';
+    return '<div class="belt"><div class="belt-h"><h4>¿Y ahora?</h4></div><p class="belt-sub">'+sub+'</p><div class="belt-grid'+(items.length===1?' solo':'')+'">'+rows+'</div></div>';
   }
   function scriptRevealHTML(){
     var r=S.reel,s=r.script||{hook:"",beats:[],close:""};
@@ -1484,7 +1499,10 @@
     }).catch(function(){ r.script=r.script||{hook:r.cap,beats:[],close:""}; cb(); });
   }
   function parseScript(sc,r){ if(sc&&typeof sc==="object"&&sc.hook) return sc; if(typeof sc==="string"){ var l=sc.split(/\n+/).map(function(s){return s.replace(/^▸\s*/,"").trim();}).filter(Boolean); return {hook:l[0]||r.cap,beats:l.slice(1,-1),close:l.length>1?l[l.length-1]:""}; } return {hook:r.cap,beats:[],close:""}; }
-  function chain(kind){ if(kind==="record"){ S.view="prompter"; render(); return; } S.genKind=kind; S.resultKind=kind; S.view="gen"; render(); setTimeout(function(){ spend(COST[kind]||1); S.done[kind]=true; S.view="result"; render(); flashSpark(-(COST[kind]||1)); },1500); }
+  // record = real (teleprompter, gratis). El resto es TEATRO demo (contenido
+  // hardcodeado + spend local): en prod ni se renderizan (conveyorHTML filtra
+  // por real) ni pueden ejecutarse — este guard cubre cualquier disparo residual.
+  function chain(kind){ if(kind==="record"){ S.view="prompter"; render(); return; } if(!isDemo()) return; S.genKind=kind; S.resultKind=kind; S.view="gen"; render(); setTimeout(function(){ spend(COST[kind]||1); S.done[kind]=true; S.view="result"; render(); flashSpark(-(COST[kind]||1)); },1500); }
   function recorded(){
     // Cierra el loop (momento 4): marca el guión activo como grabado en Guiones.
     if(S.activeGuionId){ var g=guionById(S.activeGuionId); if(g){ g.status="recorded"; persistRecStatus(g); } }

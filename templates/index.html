@@ -9635,6 +9635,8 @@
     .rs .belt .belt-h h4 { margin:0; font-size:17px; font-weight:700; }
     .rs .belt .belt-sub { font-size:13px; color:var(--text-secondary); margin:0 0 16px; }
     .rs .belt-grid { display:grid; gap:10px; grid-template-columns:1fr 1fr; }
+    /* prod: con un solo formato real (Grábalo ahora) la parrilla pasa a 1 columna */
+    .rs .belt-grid.solo { grid-template-columns:1fr; }
     .rs--mobile .belt-grid { grid-template-columns:1fr; }
     .rs .chain { text-align:left; display:flex; align-items:center; gap:13px; padding:14px; border-radius:14px; border:1px solid var(--border-default); background:var(--surface-raised); cursor:pointer; transition: border-color .15s var(--ease), transform .12s var(--ease), background .15s var(--ease); }
     .rs .chain:hover { border-color:var(--border-strong); transform:translateY(-1px); }
