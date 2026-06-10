@@ -23398,6 +23398,8 @@ async function submitAddCompetitor() {
     else if (typeof showToast === "function") showToast(msg);
     // Recargar tab (chips + feed).
     loadCompetitors();
+    // isla-v2: si la isla está montada, recarga también su Radar (puente de radar-loop.js).
+    try{ if(window.RS_reloadRadar) window.RS_reloadRadar(); }catch(e){}
   } catch (e) {
     err.textContent = "Error";
     btn.disabled = false;
