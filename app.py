@@ -1908,8 +1908,13 @@ def _parse_ai_json(raw: str, style: str) -> dict:
             data = None
 
     if data is None:
+        # P0-1: antes degradábamos a {"hook":"","body":[raw]} y el JSON crudo
+        # acababa GUARDADO como guion. Mejor fallar: todos los callers de
+        # adapt_with_ai capturan la excepción con refund + error limpio
+        # (verificado: /adapt, idea_to_script, transcription_to_script,
+        # generate_script, batch, steal-batch, explosion, tasks.gen_script).
         app.logger.warning("[adapt] JSON parse failed for style=%s, raw=%s", style, raw[:200])
-        return {"hook": "", "body": [raw], "closing": ""}
+        raise ValueError("unparseable LLM JSON")
 
     # Validate structure
     if style == "hooks":
@@ -1920,8 +1925,10 @@ def _parse_ai_json(raw: str, style: str) -> dict:
         if "body" in data and isinstance(data["body"], str):
             data["body"] = [data["body"]]
         if "hook" not in data or "body" not in data:
+            # P0-1: ídem — JSON válido pero sin la estructura pedida → error
+            # limpio en vez de guardar el raw como guion.
             app.logger.warning("[adapt] Missing keys for style=%s, keys=%s", style, list(data.keys()))
-            return {"hook": "", "body": [raw], "closing": ""}
+            raise ValueError("unparseable LLM JSON")
         if not isinstance(data["body"], list):
             data["body"] = [str(data["body"])]
         data.setdefault("closing", "")
@@ -1949,15 +1956,35 @@ def _call_llm(system: str, user_content: str, temperature: float = 0.8, max_toke
         "temperature": temperature,
         "max_tokens": max_tokens,
     }
-    resp = requests.post(url, headers=headers, json=payload, timeout=60)
-    resp.raise_for_status()
+    # P0-1: json-mode para Gemini (mismo patrón que _call_llm_json). Todos los
+    # callers de _call_llm esperan JSON (adapt_with_ai, derive_voice_profile,
+    # hook-regen ×3) → evita la prosa/JSON-con-texto que rompía _parse_ai_json.
+    if "gemini" in model.lower():
+        payload["response_format"] = {"type": "json_object"}
+
+    def _do_request(pl):
+        resp = requests.post(url, headers=headers, json=pl, timeout=60)
+        resp.raise_for_status()
+        return resp.json()
+
+    data = _do_request(payload)
+    # P0-1: si el modelo cortó por longitud, 1 reintento con el doble de
+    # max_tokens — un JSON truncado por length no parsea nunca.
+    try:
+        finish = data["choices"][0].get("finish_reason")
+    except (KeyError, IndexError, TypeError):
+        finish = None
+    if finish == "length":
+        app.logger.warning("LLM finish_reason=length model=%s — 1 reintento con max_tokens=%s", model, max_tokens * 2)
+        data = _do_request(dict(payload, max_tokens=max_tokens * 2))
+
     # v0.15.7.a: OpenRouter/Gemini puede devolver content=null cuando el modelo
     # emite refusal o cuando system+user no producen salida válida (ej. style
     # 'hooks' + user_content pidiendo guion 30-45s — bug observado en prod).
     # Sin este guard, .strip() reventaba con AttributeError tras 3m52s de
     # retries internos del provider y la UX quedaba 'congelada'.
     try:
-        content = resp.json()["choices"][0]["message"]["content"]
+        content = data["choices"][0]["message"]["content"]
     except (KeyError, IndexError, TypeError) as e:
         app.logger.warning("LLM response missing expected structure for model=%s: %s", model, e)
         raise ValueError("LLM returned malformed response")
@@ -6419,6 +6446,12 @@ def generate_script_from_competitor_reel(reel_id: str):
             except Exception:
                 pass
 
+        # P0-3: "hooks" produce 5 one-liners sueltos, no un guion — «Hazlo mío»
+        # los guardaba como guion. Degradar a viral (mismo patrón que
+        # idea_scripts_generate_batch).
+        if style_arg == "hooks":
+            style_arg = style_label = "viral"
+
         # v0.15.7.b: cortar pre-LLM si custom prompt demasiado corto (sin cobrar).
         if _custom_too_short(style_arg, custom_prompt):
             return _assistant_too_short_response(style_label)
@@ -8341,6 +8374,10 @@ def ideas_explosion():
                 style_label = asst_r.data[0].get("name") or "custom"
         except Exception:
             pass
+    # P0-3: "hooks" produce 5 one-liners sueltos, no guiones — degradar a viral
+    # (mismo patrón que idea_scripts_generate_batch).
+    if style_arg == "hooks":
+        style_arg = style_label = "viral"
     if _custom_too_short(style_arg, custom_prompt):
         return _assistant_too_short_response(style_label)
 
