@@ -267,7 +267,6 @@
       (isAgency()?brandSwitchHTML():brandStaticHTML())+
       crumb+
       '<span class="grow"></span>'+
-      '<div class="searchbox">'+IC.eye+'<span>Buscar señal o creador</span></div>'+   // T3 (IDI): sin pista ⌘K — no prometemos un atajo que no existe
       // T1 (IDI): captura de ideas siempre a mano, en cualquier vista de la isla.
       '<button class="cmd-idea" data-act="idea-capture" title="Apunta una idea — se desarrolla en Guiones" aria-label="Apunta una idea"><span class="cmd-idea-bulb">'+IC.bulb+'</span><span class="cmd-idea-t">Apunta una idea</span></button>'+
       demoToggle+
@@ -328,12 +327,30 @@
     '</article>';
   }
 
+  // Gestión de competidores seguidos desde el Radar (acordeón plegado): borrar
+  // reusa data-act="untrack" (mismo handler + confirm que en Cerebro).
+  function trackedManageHTML(){
+    var t=Array.isArray(S.tracked)?S.tracked:[];
+    if(!t.length) return "";
+    var rows=t.map(function(tt){
+      var h=(tt.creator&&tt.creator.ig_username)||tt.ig_username||"";
+      var n=(tt.reels_count!=null)?(tt.reels_count+' reel'+(tt.reels_count===1?'':'es')):'';
+      return '<div class="brain-comp"><div class="ava bava">'+ESC(initialsOf(h))+'</div>'+
+        '<span class="brain-comp-h">@'+ESC(h)+'</span>'+
+        '<span class="brain-comp-n">'+ESC(n)+'</span>'+
+        '<button class="brain-comp-x" data-act="untrack" data-id="'+ESC(String(tt.id))+'" data-handle="'+ESC(h)+'" title="Dejar de seguir a @'+ESC(h)+'" aria-label="Dejar de seguir a @'+ESC(h)+'">'+IC.x+'</button>'+
+      '</div>';
+    }).join("");
+    return '<details class="comp-manage"><summary>Tus competidores · '+t.length+'</summary><div class="comp-manage-list">'+rows+'</div></details>';
+  }
+
   function whaleHTML(count){
     return '<div class="whale"><div class="wicon">⚡</div><div class="wtext"><h4>Llena mi semana</h4><p>Convierte los '+count+' reels más explosivos en '+count+' guiones con tu voz, listos para grabar. De golpe.</p></div><button class="btn btn-md btn-secondary" data-act="fillweek">Hazlo</button></div>';
   }
   function filtersHTML(){
     var base=[["explosion","🔥 Explotando"],["recent","Recientes"],["fav","★ Favoritos"]];
     return '<div class="filters">'+base.map(function(f){return '<button class="fchip'+(S.filter===f[0]?" on":"")+'" data-act="filter" data-k="'+f[0]+'">'+f[1]+'</button>';}).join("")+
+      '<button class="fchip ghost" data-act="add-comp" title="Sigue a un creador para ver sus reels en el Radar">'+IC.plus+' Añadir competidor</button>'+
       '<button class="fchip ghost" data-act="add-reel" title="Pega la URL de un reel para meterlo al ecosistema">'+IC.plus+' Añadir reel</button>'+
     '</div>';
   }
@@ -469,6 +486,7 @@
 
     if(sorted.length===0){
       return '<div class="scroll"><div class="canvas">'+head+(isAgency()?brandTabsHTML():"")+statbarHTML()+
+        trackedManageHTML()+
         voiceOnboardCardHTML()+   // B6: en first-run sin reels, el banner de voz es lo primero que aporta
         nextSeriesHTML("dash")+   // B1+T1: CTA secundario en el Dashboard
         '<div class="rs-empty">'+(S.filter==="fav"?"Sin favoritos aún. Toca la estrella en una señal.":"Sin reels todavía. Añade un competidor o pega un reel para empezar.")+'</div>'+
@@ -487,6 +505,7 @@
       head+
       (isAgency()?brandTabsHTML():"")+
       statbarHTML()+
+      trackedManageHTML()+
       opportunityHTML(hero)+
       voiceOnboardCardHTML()+   // B6+T1: banner de voz BAJO la oportunidad — no empuja el hero bajo el fold
       nextSeriesHTML("dash")+   // B1+T1: "tu próxima serie" con CTA secundario en el Dashboard
@@ -890,10 +909,11 @@
     return Object.keys(by).map(function(h){ return {handle:h, n:by[h]}; }).sort(function(a,b){return b.n-a.n;});
   }
   // T3: lista REAL de competidores seguidos (con id de tracking → permite dejar de
-  // seguir). Se carga aparte del feed; al resolver, repinta Cerebro si está abierto.
+  // seguir). Se carga aparte del feed; al resolver, repinta las vistas que la
+  // muestran (Cerebro y Radar — trackedManageHTML) si están abiertas.
   function loadTracked(){
     apiGet("/api/tracked-creators").then(function(r){
-      if(r.ok && r.d && Array.isArray(r.d.tracked)){ S.tracked=r.d.tracked; if(S.tab==="brain") render(); }
+      if(r.ok && r.d && Array.isArray(r.d.tracked)){ S.tracked=r.d.tracked; if(S.tab==="brain"||S.tab==="dashboard") render(); }
     });
   }
   function brainHTML(){
@@ -2049,6 +2069,9 @@
     if(act==="filter"){ S.filter=k; return render(); }
     if(act==="expand-feed"){ S.feedExpanded=true; return render(); }
     if(act==="add-reel") return addReelManual();
+    // Reusa el modal legacy global (index.html); al añadir, submitAddCompetitor
+    // recarga el Radar vía window.RS_reloadRadar (puente en loadBrandData).
+    if(act==="add-comp"){ if(typeof window.openAddCompetitorModal==="function") window.openAddCompetitorModal(); return; }
     if(act==="voice-onboard") return onboardVoice();
     if(act==="voice-refine") return refineVoice();
     if(act==="next-series-go"){ var nt=btn.getAttribute("data-title")||(nextSeries()&&nextSeries().title)||""; S.tab="ideas"; S.view="feed";
@@ -2159,6 +2182,7 @@
 
   function loadBrandData(){
     var el=root(); if(!el) return;
+    try{ window.RS_reloadRadar=loadBrandData; }catch(e){}   // puente: el chrome legacy recarga el Radar tras añadir competidor
     el.innerHTML=skeletonHTML();
     var q=S.brandId?("?brand="+encodeURIComponent(S.brandId)):"";
     var _pq=(S.brandId&&S.brandId!=="default")?("?project_id="+encodeURIComponent(S.brandId)):"";
