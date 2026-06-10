@@ -935,6 +935,12 @@ def generate_script_competitor_task(self, reel_id, user_id, assistant_id):
             except Exception:
                 pass
 
+        # P0-3: "hooks" produce 5 one-liners sueltos, no un guion — el camino
+        # async guardaba esos hooks como guion. Degradar a viral (mismo patrón
+        # que idea_scripts_generate_batch en app.py).
+        if style_arg == "hooks":
+            style_arg = style_label = "viral"
+
         # v0.15.7.b: cortar pre-LLM si custom prompt corto (sin cobrar). El
         # endpoint pre-valida también; este check es defense in depth — si la
         # task se encola con assistant_id válido y luego el user edita el
