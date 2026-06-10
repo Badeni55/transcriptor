@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reelscript — Copia lo que ya funciona · MOCKUP landing v2.1</title>
+<!-- ════════════════════════════════════════════════════════════════════
+     MOCKUP LANDING V2.1 — 2026-06-10 (iteración: +motion graphics +ventas)
+     Espec para Claude Code: replicar en templates/index.html (bloque landing).
+     Decisiones: «Copia lo que ya funciona» · waves se mantienen · SIN vídeo
+     (animaciones CSS) · pricing v0.21.6 · IDI · FOMO con calma.
+     ⚠️ PLACEHOLDERS DE VENTAS (buscar "PLACEHOLDER"): cifras de prueba social
+     y testimonios son de muestra — VALIDAR con datos reales antes de publicar.
+     ════════════════════════════════════════════════════════════════════ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;700&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0b0f; --surf:#11131a; --surf2:#171a23;
+    --text:#eef1f8; --text2:#a8b0c2; --text3:#828a9e;
+    --border:rgba(168,176,194,.14);
+    --brand:#4f7cff; --brand2:#6f93ff; --orange:#ff7847; --teal:#5eead4;
+    --grad:linear-gradient(135deg,#4f7cff 0%,#6f93ff 100%);
+    /* superficie de botón: mismas tintas de marca, ~12% más oscuras → texto blanco legible (AA) */
+    --grad-btn:linear-gradient(135deg,#3a5fd9 0%,#5a82f0 100%);
+    /* sistema de elevación (R29): reposo · hover · flotante */
+    --sh-1:0 8px 24px rgba(0,0,0,.30);
+    --sh-2:0 18px 50px rgba(0,0,0,.40);
+    --sh-3:0 30px 80px rgba(0,0,0,.50);
+    --serif:'Instrument Serif',Georgia,serif;
+    --disp:'Space Grotesk',system-ui,sans-serif;
+    --body:'Hanken Grotesk',system-ui,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --ease:cubic-bezier(.4,0,.2,1);
+    --bounce:cubic-bezier(.34,1.56,.64,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  ::selection{background:rgba(79,124,255,.35)}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  :focus-visible{outline:2px solid var(--brand2);outline-offset:3px;border-radius:4px}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  section{position:relative;padding:96px 0}
+  .eyebrow{font-family:var(--mono);font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--brand2);display:block;margin-bottom:14px}
+  h2{font-family:var(--serif);font-size:clamp(1.95rem,4vw,2.8rem);font-weight:400;letter-spacing:-.005em;line-height:1.12;margin-bottom:14px}
+  .sub{color:var(--text2);font-size:1.06rem;max-width:560px}
+  /* solo se ocultan si hay JS (la clase .js la pone el script): sin JS o si el script peta, el contenido se ve igual */
+  .js .rise{opacity:0;transform:translateY(22px)}
+  .rise.vis{opacity:1;transform:none;transition:opacity .6s var(--ease),transform .6s var(--ease)}
+
+  /* ── WAVES (aurora del producto — seña de identidad, NO tocar) ── */
+  #globalAurora{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+  main,header.nav,footer,.sticky-cta{position:relative;z-index:1}
+
+  /* ── NAV ── */
+  .nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);background:rgba(10,11,15,.72);border-bottom:1px solid var(--border)}
+  .nav-in{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .logo{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:700;font-size:1.15rem}
+  .logo-dot{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--orange),#ff9a6b);display:grid;place-items:center;font-size:.8rem;color:#fff;font-family:var(--mono)}
+  .nav-cta{display:flex;align-items:center;gap:18px}
+  .nav-login{color:var(--text2);font-size:.95rem;padding:10px 6px;min-height:44px;display:inline-flex;align-items:center}
+  .nav-login:hover{color:var(--text)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--disp);font-weight:500;border-radius:12px;transition:transform .15s var(--ease),box-shadow .15s var(--ease);min-height:44px;position:relative;overflow:hidden}
+  .btn:hover{transform:translateY(-1px)}
+  .btn-primary{background:var(--grad-btn);color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.35);padding:12px 22px;box-shadow:0 6px 24px rgba(79,124,255,.35)}
+  .btn-primary:hover{box-shadow:0 10px 32px rgba(79,124,255,.5)}
+  /* shine que barre el CTA */
+  .btn-primary::after{content:"";position:absolute;top:0;bottom:0;left:-80%;width:50%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);animation:shine 4.5s infinite}
+  @keyframes shine{0%,72%{left:-80%}88%,100%{left:130%}}
+  /* el barrido solo en los CTA grandes (hero/final): con varios a la vez se lee «barato» */
+  .nav .btn-primary::after,.sticky-cta .btn-primary::after,.plan .btn-primary::after{display:none}
+  .btn-ghost{border:1px solid var(--border);color:var(--text2);padding:12px 22px}
+  .btn-ghost:hover{color:var(--text);border-color:var(--text3)}
+
+  /* ── HERO ── */
+  .hero{padding:84px 0 48px;text-align:center}
+  .hero-badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--brand2);border:1px solid rgba(79,124,255,.35);background:rgba(79,124,255,.08);padding:7px 14px;border-radius:999px;margin-bottom:26px;animation:fadeDown .7s var(--ease) both}
+  @keyframes fadeDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+  .hero-badge .pulse{width:7px;height:7px;border-radius:50%;background:var(--brand2);animation:pulse 2.2s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(111,147,255,.6)}55%{box-shadow:0 0 0 7px rgba(111,147,255,0)}}
+  .hero h1{font-family:var(--serif);font-weight:400;font-size:clamp(2.9rem,7.2vw,5.4rem);line-height:1.04;letter-spacing:-.01em;max-width:820px;margin:0 auto 22px}
+  .hero h1 .w{display:inline-block;opacity:0;transform:translateY(.45em) rotate(2deg);filter:blur(6px);animation:wordIn .7s var(--ease) forwards}
+  @keyframes wordIn{to{opacity:1;transform:none;filter:blur(0)}}
+  .hero h1 em{font-style:italic;background:linear-gradient(120deg,#4f7cff,#8b5cf6,#6f93ff,#4f7cff);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:#7e9bff;-webkit-text-fill-color:transparent;animation:gradShift 6s ease infinite}
+  @keyframes gradShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+  .hero-sub{color:var(--text2);font-size:clamp(1.05rem,1.6vw,1.25rem);max-width:640px;margin:0 auto 34px;animation:fadeDown .7s var(--ease) .55s both}
+  .hero-sub strong{color:var(--text)}
+  .hero-ctas{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:14px;animation:fadeDown .7s var(--ease) .7s both}
+  .hero-ctas .btn-primary{padding:16px 30px;font-size:1.05rem}
+  /* CTA secundario: enlace de texto, claramente subordinado al primario (IDI: una acción primaria) */
+  .hero-link{display:inline-flex;align-items:center;gap:7px;font-family:var(--disp);font-size:1rem;color:var(--text2);min-height:44px;padding:0 10px;transition:color .15s var(--ease)}
+  .hero-link:hover{color:var(--text)}
+  .hero-link span{transition:transform .2s var(--ease)}
+  .hero-link:hover span{transform:translateX(3px)}
+  .hero-micro{font-family:var(--mono);font-size:.78rem;color:var(--text3);animation:fadeDown .7s var(--ease) .8s both}
+
+  /* ── TICKER de señales (FOMO con calma) ── */
+  .ticker{margin-top:58px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:rgba(17,19,26,.32);overflow:hidden;position:relative;padding:11px 0}
+  .ticker::before,.ticker::after{content:"";position:absolute;top:0;bottom:0;width:120px;z-index:2;pointer-events:none}
+  .ticker::before{left:0;background:linear-gradient(90deg,var(--bg),transparent)}
+  .ticker::after{right:0;background:linear-gradient(-90deg,var(--bg),transparent)}
+  .ticker-track{display:flex;gap:42px;width:max-content;animation:tick 36s linear infinite}
+  .ticker:hover .ticker-track{animation-play-state:paused}
+  @keyframes tick{to{transform:translateX(-50%)}}
+  .tk{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:.76rem;color:var(--text2);white-space:nowrap}
+  .tk b{color:var(--teal);font-weight:500}
+  .tk .dot{width:6px;height:6px;border-radius:50%;background:var(--brand2);flex:none;animation:pulse 2.4s infinite}
+  .tk-label{font-family:var(--mono);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--brand2);padding-right:42px;border-right:1px solid var(--border)}
+
+  /* ── DEMO ANIMADA del loop ── */
+  .demo{margin:56px auto 0;max-width:760px;position:relative;height:470px;animation:demoFloat 9s ease-in-out infinite}
+  @keyframes demoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+  .demo-stage{position:absolute;inset:0;border-radius:20px;border:1px solid var(--border);background:rgba(17,19,26,.85);backdrop-filter:blur(8px);box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 60px rgba(79,124,255,.07);overflow:hidden}
+  .demo-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border)}
+  .demo-bar i{width:10px;height:10px;border-radius:50%;background:var(--surf2);display:block}
+  .demo-bar span{font-family:var(--mono);font-size:.7rem;color:var(--text3);margin-left:8px}
+  .demo-body{position:relative;height:calc(100% - 47px)}
+  .scene{position:absolute;inset:0;padding:22px 30px;opacity:0;animation:sceneCycle 12s infinite}
+  .scene-2{animation-delay:4s}
+  .scene-3{animation-delay:8s}
+  @keyframes sceneCycle{0%{opacity:0;transform:translateY(10px)}3%,30%{opacity:1;transform:none}36%,100%{opacity:0;transform:translateY(-8px)}}
+  .scene .tag{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--brand2);margin-bottom:14px;display:block}
+  /* escena 1: radar */
+  .sig{display:flex;align-items:center;gap:14px;padding:13px 16px;border:1px solid var(--border);border-radius:12px;margin-bottom:10px;background:rgba(23,26,35,.6)}
+  .sig .thumb{width:44px;height:58px;border-radius:8px;background:linear-gradient(160deg,#26304d,#11131a);flex:none;position:relative;overflow:hidden}
+  .sig .thumb::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.07) 50%,transparent 60%);animation:thumbShine 3s infinite}
+  @keyframes thumbShine{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
+  .sig .meta{flex:1;min-width:0}
+  .sig .meta b{font-family:var(--disp);font-size:.92rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sig .meta span{font-family:var(--mono);font-size:.72rem;color:var(--text3)}
+  .sig .x{font-family:var(--mono);color:var(--teal);font-size:.8rem;flex:none}
+  .sig.hot{border-color:rgba(79,124,255,.5);box-shadow:0 0 24px rgba(79,124,255,.12)}
+  .sig.hot .x{animation:xPulse 1.6s ease-in-out infinite}
+  @keyframes xPulse{0%,100%{text-shadow:0 0 0 rgba(94,234,212,0)}50%{text-shadow:0 0 14px rgba(94,234,212,.8)}}
+  .steal-btn{margin-top:6px;display:inline-flex;align-items:center;gap:8px;background:var(--grad-btn);color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.35);font-family:var(--disp);font-size:.9rem;font-weight:500;padding:11px 20px;border-radius:10px;position:relative;animation:stealPress 12s infinite}
+  @keyframes stealPress{0%,26%{transform:none;box-shadow:0 6px 20px rgba(79,124,255,.3)}28%{transform:scale(.93)}30%,100%{transform:none}}
+  .cursor{position:absolute;font-size:1.2rem;right:-26px;bottom:-22px;animation:cursorIn 12s infinite}
+  @keyframes cursorIn{0%,18%{transform:translate(28px,24px);opacity:0}24%{transform:none;opacity:1}27%{transform:scale(.85)}30%,100%{transform:none;opacity:0}}
+  /* escena 2: orbe con órbita */
+  .orb-wrap{display:grid;place-items:center;height:82%}
+  .orb-sys{position:relative;width:150px;height:150px;display:grid;place-items:center}
+  .orb{width:108px;height:108px;border-radius:50%;background:radial-gradient(circle at 32% 30%,#6f93ff,#4f7cff 45%,#2c4ddb);box-shadow:0 0 70px rgba(79,124,255,.55);animation:orbBreathe 2.2s ease-in-out infinite}
+  @keyframes orbBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.09)}}
+  .orbit{position:absolute;inset:0;animation:orbitSpin 3.2s linear infinite}
+  .orbit i{position:absolute;top:0;left:50%;width:9px;height:9px;margin-left:-4px;border-radius:50%;background:var(--teal);box-shadow:0 0 12px rgba(94,234,212,.9)}
+  .orbit.o2{animation-duration:5.1s;animation-direction:reverse;transform:rotate(120deg)}
+  .orbit.o2 i{width:6px;height:6px;background:var(--brand2);box-shadow:0 0 10px rgba(111,147,255,.9)}
+  @keyframes orbitSpin{to{transform:rotate(360deg)}}
+  .orb-txt{text-align:center;font-family:var(--mono);font-size:.78rem;color:var(--text2);margin-top:18px}
+  .orb-txt b{color:var(--text)}
+  .orb-txt .dots::after{content:"";animation:dotsTyping 1.5s steps(4) infinite}
+  @keyframes dotsTyping{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
+  /* escena 3: reveal con palabras que nacen */
+  .reveal{max-width:540px}
+  .reveal h3{font-family:var(--serif);font-weight:400;font-size:1.7rem;line-height:1.25;margin-bottom:12px}
+  .reveal h3 .w{display:inline-block;opacity:0;transform:translateY(.4em);filter:blur(4px);animation:revealWord 12s infinite}
+  @keyframes revealWord{0%,66%{opacity:0;transform:translateY(.4em);filter:blur(4px)}70%,96%{opacity:1;transform:none;filter:blur(0)}100%{opacity:0}}
+  .reveal p{color:var(--text2);font-size:.95rem;line-height:1.7}
+  .reveal .voice{display:inline-flex;align-items:center;gap:8px;margin-top:16px;font-family:var(--mono);font-size:.72rem;color:var(--teal);border:1px solid rgba(94,234,212,.3);padding:6px 12px;border-radius:999px;animation:voiceBadge 12s infinite}
+  @keyframes voiceBadge{0%,78%{opacity:0;transform:scale(.9)}82%,96%{opacity:1;transform:none}100%{opacity:0}}
+  .demo-dots{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:7px}
+  .demo-dots i{width:6px;height:6px;border-radius:50%;background:var(--text3);opacity:.4;animation:dotCycle 12s infinite}
+  .demo-dots i:nth-child(2){animation-delay:4s}
+  .demo-dots i:nth-child(3){animation-delay:8s}
+  @keyframes dotCycle{0%,3%{opacity:.4}6%,30%{opacity:1;background:var(--brand2)}36%,100%{opacity:.4}}
+
+  /* ── FRANJA PROMESAS con count-up ── */
+  .strip{border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:rgba(17,19,26,.5);padding:34px 0}
+  .strip-in{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;text-align:center}
+  .strip b{font-family:var(--disp);font-size:.98rem;color:var(--text2);display:block;margin-bottom:4px}
+  .strip .num{font-family:var(--mono);color:var(--brand2);font-size:clamp(2rem,3.4vw,2.6rem);line-height:1;display:block;margin-bottom:8px;font-weight:500}
+  .strip span{color:var(--text3);font-size:.88rem}
+
+  /* ── LOOP 4 PASOS ── */
+  .steps{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;margin-top:54px}
+  .step{border:1px solid var(--border);border-radius:18px;background:rgba(17,19,26,.66);padding:30px;transition:border-color .2s,transform .2s,box-shadow .2s}
+  .step:hover{border-color:rgba(79,124,255,.45);transform:translateY(-4px);box-shadow:0 18px 50px rgba(0,0,0,.35)}
+  .step .n{font-family:var(--mono);font-size:.72rem;color:var(--brand2);letter-spacing:.16em;display:block;margin-bottom:12px}
+  .step h3{font-family:var(--disp);font-size:1.3rem;margin-bottom:8px}
+  .step p{color:var(--text2);font-size:.95rem}
+  .step .viz{height:120px;margin-top:20px;border-radius:12px;background:var(--surf2);border:1px solid var(--border);position:relative;overflow:hidden}
+  .viz-radar::before{content:"";position:absolute;inset:-40%;background:conic-gradient(from 0deg,transparent 0 78%,rgba(79,124,255,.35) 92%,transparent);animation:sweep 3.4s linear infinite}
+  @keyframes sweep{to{transform:rotate(360deg)}}
+  .viz-radar i{position:absolute;width:8px;height:8px;border-radius:50%;background:var(--brand2)}
+  .viz-radar i:nth-child(1){top:30%;left:62%;animation:blip 3.4s infinite .4s}
+  .viz-radar i:nth-child(2){top:58%;left:28%;animation:blip 3.4s infinite 1.6s}
+  .viz-radar i:nth-child(3){top:44%;left:80%;animation:blip 3.4s infinite 2.5s}
+  @keyframes blip{0%,8%{opacity:0;transform:scale(.4)}14%,42%{opacity:1;transform:scale(1)}60%,100%{opacity:.25}}
+  .viz-lines{padding:18px}
+  .viz-lines i{display:block;height:9px;border-radius:5px;background:var(--text3);opacity:.3;margin-bottom:10px}
+  .viz-lines i:nth-child(1){width:82%}.viz-lines i:nth-child(2){width:64%}.viz-lines i:nth-child(3){width:74%}
+  .viz-lines i.bl{background:var(--grad);opacity:0;animation:lineIn 4s infinite}
+  .viz-lines i.bl:nth-child(2){animation-delay:.5s}.viz-lines i.bl:nth-child(3){animation-delay:1s}
+  @keyframes lineIn{0%{opacity:0;width:0}25%,80%{opacity:1}100%{opacity:0}}
+  .viz-tele{display:grid;place-items:center}
+  .viz-tele .roll{width:70%;height:200%;animation:roll 5s linear infinite}
+  .viz-tele .roll i{display:block;height:8px;border-radius:4px;background:var(--text2);opacity:.5;margin:12px 0}
+  .viz-tele .roll i:nth-child(odd){width:88%}.viz-tele .roll i:nth-child(even){width:66%}
+  @keyframes roll{from{transform:translateY(18%)}to{transform:translateY(-58%)}}
+  .viz-tele::after{content:"";position:absolute;left:10%;right:10%;top:50%;height:14px;transform:translateY(-50%);border-radius:7px;background:rgba(79,124,255,.18);border:1px solid rgba(79,124,255,.4)}
+  .viz-voice{display:flex;align-items:center;justify-content:center;gap:14px;padding:0 22px}
+  .vbar{flex:1;height:10px;border-radius:6px;background:var(--surf);border:1px solid var(--border);overflow:hidden}
+  .vbar i{display:block;height:100%;width:0;background:var(--grad);border-radius:6px}
+  .step.vis .vbar i{animation:voiceUp 2.4s var(--ease) forwards .3s}
+  @keyframes voiceUp{to{width:82%}}
+  .vpct{font-family:var(--mono);font-size:.85rem;color:var(--brand2)}
+
+  /* ── LA CUENTA ES SIMPLE (ventas) ── */
+  .math{background:rgba(17,19,26,.45)}
+  .math-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:50px}
+  .math-card{border:1px solid var(--border);border-radius:18px;padding:30px;background:rgba(10,11,15,.6);position:relative;box-shadow:var(--sh-1)}
+  .math-card .who{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:16px}
+  .math-card .big{font-family:var(--disp);font-size:2.1rem;font-weight:700;letter-spacing:-.02em}
+  .math-card .big small{font-size:.95rem;color:var(--text3);font-weight:400}
+  .math-card p{color:var(--text2);font-size:.9rem;margin-top:10px}
+  .math-card.win{border-color:rgba(79,124,255,.55);background:rgba(79,124,255,.06);box-shadow:0 0 44px rgba(79,124,255,.1)}
+  .math-card.win .big{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .math-card .tach{text-decoration:line-through;text-decoration-color:rgba(255,120,71,.7);text-decoration-thickness:3px}
+  .timebar{margin-top:54px;border:1px solid var(--border);border-radius:18px;padding:28px 30px;background:rgba(10,11,15,.6)}
+  .timebar .tb-row{display:grid;grid-template-columns:190px 1fr 86px;align-items:center;gap:18px;margin-bottom:18px}
+  .timebar .tb-row:last-child{margin-bottom:0}
+  .timebar label{font-family:var(--disp);font-size:.95rem}
+  .timebar label small{display:block;font-family:var(--mono);font-size:.68rem;color:var(--text3);font-weight:400}
+  .tb-track{height:14px;border-radius:8px;background:var(--surf2);border:1px solid var(--border);overflow:hidden}
+  .tb-fill{display:block;height:100%;width:0;border-radius:8px}
+  .tb-old .tb-fill{background:linear-gradient(90deg,#3c4257,#565e78)}
+  .tb-new .tb-fill{background:var(--grad);box-shadow:0 0 18px rgba(79,124,255,.5)}
+  .timebar.vis .tb-old .tb-fill{animation:fillOld 1.8s var(--ease) forwards .2s}
+  .timebar.vis .tb-new .tb-fill{animation:fillNew 1.4s var(--ease) forwards 1s}
+  @keyframes fillOld{to{width:96%}}
+  @keyframes fillNew{to{width:9%}}
+  .tb-val{font-family:var(--mono);font-size:.85rem;color:var(--text2);text-align:right}
+  .tb-new .tb-val{color:var(--teal)}
+
+  /* ── MOAT / CEREBRO ── */
+  .moat-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:60px;align-items:center}
+  .moat-list{display:grid;gap:16px;margin-top:26px}
+  .moat-item{display:flex;gap:14px;align-items:flex-start}
+  .moat-item .ic{width:34px;height:34px;flex:none;border-radius:10px;background:rgba(79,124,255,.12);border:1px solid rgba(79,124,255,.3);display:grid;place-items:center;font-size:.9rem}
+  .moat-item b{font-family:var(--disp);display:block;font-size:1rem}
+  .moat-item span{color:var(--text2);font-size:.92rem}
+  .brain{border:1px solid var(--border);border-radius:20px;background:rgba(17,19,26,.8);padding:28px;box-shadow:0 24px 70px rgba(0,0,0,.45);position:relative;overflow:hidden}
+  .brain::before{content:"";position:absolute;top:-60%;right:-40%;width:80%;height:120%;background:radial-gradient(circle,rgba(79,124,255,.08),transparent 65%);animation:brainGlow 5s ease-in-out infinite}
+  @keyframes brainGlow{0%,100%{opacity:.5}50%{opacity:1}}
+  .brain .bh{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+  .brain .bh b{font-family:var(--disp)}
+  .brain .bh span{font-family:var(--mono);font-size:.72rem;color:var(--text3)}
+  .brain .bh .live{width:7px;height:7px;border-radius:50%;background:var(--teal);display:inline-block;margin-right:6px;animation:pulse 2s infinite}
+  .brain .row{margin-bottom:16px}
+  .brain .row label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.74rem;color:var(--text2);margin-bottom:7px}
+  .brain .row label em{color:var(--brand2);font-style:normal}
+  .brain .bar{height:8px;border-radius:5px;background:var(--surf2);overflow:hidden}
+  .brain .bar i{display:block;height:100%;width:0;background:var(--grad);border-radius:5px;transition:width 1.6s var(--ease) .2s}
+  .brain .chip{display:inline-block;font-family:var(--mono);font-size:.7rem;color:var(--text2);border:1px solid var(--border);border-radius:999px;padding:5px 11px;margin:4px 4px 0 0;opacity:0;transform:translateY(8px) scale(.92)}
+  .brain.vis .chip{opacity:1;transform:none;transition:opacity .45s var(--bounce),transform .45s var(--bounce)}
+  .brain.vis .chip:nth-child(1){transition-delay:.9s}.brain.vis .chip:nth-child(2){transition-delay:1.05s}
+  .brain.vis .chip:nth-child(3){transition-delay:1.2s}.brain.vis .chip:nth-child(4){transition-delay:1.35s}
+
+  /* ── AGENCIAS (spaces auto-shuffle) ── */
+  .ag-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:60px;align-items:center}
+  .spaces{position:relative;height:300px}
+  .space{position:absolute;left:0;right:0;top:0;border:1px solid var(--border);border-radius:16px;background:var(--surf);padding:18px 22px;display:flex;align-items:center;gap:14px;box-shadow:0 18px 50px rgba(0,0,0,.4);animation:9s var(--ease) infinite}
+  .space:nth-child(1){animation-name:shuf1}
+  .space:nth-child(2){animation-name:shuf2}
+  .space:nth-child(3){animation-name:shuf3}
+  @keyframes shuf1{0%,28%{transform:translateY(0);z-index:3}33%,61%{transform:translateY(96px)}66%,94%{transform:translateY(192px)}100%{transform:translateY(0)}}
+  @keyframes shuf2{0%,28%{transform:translateY(96px)}33%,61%{transform:translateY(192px)}66%,94%{transform:translateY(0)}100%{transform:translateY(96px)}}
+  @keyframes shuf3{0%,28%{transform:translateY(192px)}33%,61%{transform:translateY(0)}66%,94%{transform:translateY(96px)}100%{transform:translateY(192px)}}
+  .space .dot{width:34px;height:34px;border-radius:10px;flex:none;font-family:var(--disp);font-weight:700;display:grid;place-items:center;font-size:.85rem;color:#fff}
+  .space b{font-family:var(--disp);font-size:.95rem;display:block}
+  .space span{font-family:var(--mono);font-size:.7rem;color:var(--text3)}
+  .space .lvl{margin-left:auto;font-family:var(--mono);font-size:.72rem;color:var(--teal)}
+
+  /* ── TESTIMONIOS (PLACEHOLDER — sustituir por reales) ── */
+  .testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:50px}
+  .testi{border:1px solid var(--border);border-radius:18px;background:rgba(17,19,26,.7);padding:28px;display:flex;flex-direction:column;gap:16px;box-shadow:var(--sh-1);transition:transform .2s,border-color .2s,box-shadow .2s}
+  .testi:hover{transform:translateY(-4px);border-color:rgba(79,124,255,.4);box-shadow:var(--sh-2)}
+  .testi .stars{color:#ffc24b;font-size:.9rem;letter-spacing:2px}
+  .testi p{color:var(--text2);font-size:.95rem;font-style:italic}
+  .testi p strong{color:var(--text);font-style:normal}
+  .testi .who{display:flex;align-items:center;gap:12px;margin-top:auto}
+  .testi .av{width:38px;height:38px;border-radius:50%;flex:none;display:grid;place-items:center;font-family:var(--disp);font-weight:700;font-size:.8rem;color:#fff}
+  .testi .who b{font-family:var(--disp);font-size:.9rem;display:block}
+  .testi .who span{font-family:var(--mono);font-size:.7rem;color:var(--text3)}
+
+  /* ── PRICING ── */
+  .toggle{display:inline-flex;border:1px solid var(--border);border-radius:12px;padding:4px;margin:26px 0 44px;background:rgba(17,19,26,.7)}
+  .toggle button{font-family:var(--disp);font-size:.9rem;padding:10px 20px;border-radius:9px;color:var(--text2);min-height:44px}
+  .toggle button.on{background:var(--grad-btn);color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.3)}
+  .toggle .save{font-family:var(--mono);font-size:.68rem;color:var(--teal);margin-left:6px}
+  .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;text-align:left}
+  .plan{border:1px solid var(--border);border-radius:20px;background:rgba(17,19,26,.72);padding:32px 28px;display:flex;flex-direction:column;position:relative;transition:transform .2s}
+  .plan:hover{transform:translateY(-4px)}
+  /* borde gradiente animado del plan destacado */
+  .plan.hot{transform:scale(1.03);border:1px solid transparent;background:linear-gradient(rgba(17,19,26,.96),rgba(17,19,26,.96)) padding-box,linear-gradient(var(--ang,135deg),#4f7cff,#8b5cf6,#4f7cff) border-box;box-shadow:0 0 50px rgba(79,124,255,.16);animation:hotSpin 5s linear infinite}
+  @property --ang{syntax:"<angle>";initial-value:135deg;inherits:false}
+  @keyframes hotSpin{to{--ang:495deg}}
+  .plan.hot:hover{transform:scale(1.04)}
+  .plan .pop{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--grad-btn);color:#fff;font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;padding:6px 14px;border-radius:999px;white-space:nowrap}
+  .plan h3{font-family:var(--disp);font-size:1.15rem;margin-bottom:4px}
+  .plan .for{color:var(--text3);font-size:.85rem;min-height:42px}
+  .plan .price{font-family:var(--disp);font-size:2.6rem;font-weight:700;letter-spacing:-.03em;margin:14px 0 2px}
+  .plan .price small{font-size:.95rem;color:var(--text3);font-weight:400;font-family:var(--body)}
+  .plan .yr{font-family:var(--mono);font-size:.72rem;color:var(--text3);min-height:18px}
+  .plan .day{font-family:var(--mono);font-size:.72rem;color:var(--teal);min-height:18px;margin-bottom:14px}
+  .plan ul{list-style:none;display:grid;gap:11px;margin-bottom:26px;flex:1}
+  .plan li{display:flex;gap:10px;font-size:.92rem;color:var(--text2)}
+  .plan li::before{content:"✓";color:var(--brand2);font-weight:700;flex:none}
+  .plan li.zero::before{content:"→";color:var(--text3)}
+  .plan .btn{width:100%}
+  .plan .risk{font-family:var(--mono);font-size:.68rem;color:var(--text3);text-align:center;margin-top:10px}
+  .pricing-foot{margin-top:30px;font-family:var(--mono);font-size:.74rem;color:var(--text3);text-align:center}
+
+  /* ── FAQ ── */
+  .faq{max-width:720px;margin:48px auto 0}
+  .faq details{border:1px solid var(--border);border-radius:14px;background:rgba(17,19,26,.6);margin-bottom:12px;overflow:hidden}
+  .faq summary{font-family:var(--disp);font-size:1rem;padding:19px 22px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:14px;min-height:44px}
+  .faq summary::after{content:"+";font-size:1.3rem;color:var(--brand2);transition:transform .2s}
+  .faq details[open] summary::after{transform:rotate(45deg)}
+  .faq .a{padding:0 22px 20px;color:var(--text2);font-size:.95rem}
+
+  /* ── CTA FINAL ── */
+  .final{text-align:center;padding:130px 0;overflow:hidden}
+  .final .halo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:680px;height:680px;border-radius:50%;background:radial-gradient(circle,rgba(79,124,255,.13),transparent 60%);animation:haloBreathe 6s ease-in-out infinite;pointer-events:none}
+  @keyframes haloBreathe{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.12)}}
+  .final h2{font-family:var(--serif);font-weight:400;font-size:clamp(2.2rem,5vw,3.6rem)}
+  .final h2 em{font-style:italic;background:linear-gradient(120deg,#4f7cff,#8b5cf6,#6f93ff,#4f7cff);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:#7e9bff;-webkit-text-fill-color:transparent;animation:gradShift 6s ease infinite}
+  .final .sub{margin:16px auto 34px}
+  footer{border-top:1px solid var(--border);padding:34px 0;color:var(--text3);font-size:.85rem}
+  .foot-in{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px}
+  .foot-in nav{display:flex;gap:22px}
+  .foot-in nav a:hover{color:var(--text)}
+
+  /* ── STICKY CTA BAR (ventas) ── */
+  .sticky-cta{position:fixed;left:0;right:0;bottom:0;z-index:60;transform:translateY(110%);transition:transform .45s var(--ease);background:rgba(10,11,15,.88);backdrop-filter:blur(16px);border-top:1px solid rgba(79,124,255,.3);box-shadow:0 -14px 50px rgba(0,0,0,.45)}
+  .sticky-cta.show{transform:none}
+  .sticky-in{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:13px 24px;max-width:1120px;margin:0 auto}
+  .sticky-in .msg{font-family:var(--disp);font-size:.95rem}
+  .sticky-in .msg .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--teal);margin-right:9px;animation:pulse 2s infinite}
+  .sticky-in .msg small{display:block;font-family:var(--mono);font-size:.7rem;color:var(--text3);font-weight:400;margin-top:2px}
+  .sticky-in .btn-primary{flex:none;padding:11px 22px}
+
+  @media (max-width:880px){
+    section{padding:64px 0}
+    .steps,.plans,.strip-in,.math-grid,.testi-grid{grid-template-columns:1fr}
+    .moat-grid,.ag-grid{grid-template-columns:1fr;gap:40px}
+    .plan.hot{transform:none}
+    .demo{height:460px}
+    /* tarjetas de señal más compactas: el multiplicador no envuelve y «Hazlo mío» no se recorta */
+    .scene{padding:20px 22px}
+    .sig{padding:10px 12px;margin-bottom:8px}
+    .sig .thumb{width:38px;height:50px}
+    .sig .meta b{font-size:.86rem}
+    .sig .x{white-space:nowrap;font-size:.72rem}
+    .hero{padding:52px 0 36px}
+    /* nav: el CTA no se parte en dos líneas */
+    .nav .btn-primary{white-space:nowrap;padding:10px 15px;font-size:.9rem}
+    .nav-cta{gap:12px}
+    .timebar .tb-row{grid-template-columns:1fr;gap:8px}
+    .tb-val{text-align:left}
+    .sticky-in .msg small{display:none}
+  }
+  /* tablet: usa el ancho intermedio en vez de saltar a 1 columna */
+  @media (min-width:620px) and (max-width:880px){
+    .steps,.math-grid,.testi-grid{grid-template-columns:repeat(2,1fr)}
+    .strip-in{grid-template-columns:repeat(3,1fr)}
+  }
+  /* móvil estrecho: red de seguridad <400px */
+  @media (max-width:400px){
+    .wrap{padding:0 16px}
+    .hero h1{font-size:clamp(2.3rem,9.5vw,2.9rem)}
+    section{padding:52px 0}
+    .nav-login{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+    #globalAurora{display:none}
+    .scene{opacity:1;position:static;padding:18px 30px}
+    .scene-2,.scene-3{display:none}
+    .hero h1 .w,.reveal h3 .w,.brain .chip{opacity:1;transform:none;filter:none}
+    .rise{opacity:1;transform:none}
+    /* tracks cuyo keyframe acaba en un transform distinto al inicial: forzar reposo para no dejarlos a medio frame */
+    .ticker-track,.viz-radar::before,.viz-tele .roll,.demo,.orbit,.orbit.o2{animation:none!important;transform:none!important}
+    /* el sticky-CTA es conversión, no decoración: se queda visible, solo sin animación de entrada */
+    .sticky-cta{transition:none}
+  }
+</style>
+</head>
+<body>
+<canvas id="globalAurora" aria-hidden="true"></canvas>
+
+<!-- Placeholders de enlace: #signup / #login / #top son anclas de MAQUETA.
+     Al portar a templates/index.html, cablear: #signup→/signup, #login→entrada, #top→/es/, legal→páginas reales.
+     NO publicar con href="#" suelto (salta arriba, rompe foco y mata la conversión). -->
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="logo" href="#top"><span class="logo-dot">R</span>Reelscript</a>
+    <div class="nav-cta">
+      <a class="nav-login" href="#login">Entrar</a>
+      <a class="btn btn-primary" href="#pricing">Empieza gratis</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ═══ HERO ═══ -->
+  <section class="hero" id="top">
+    <div class="wrap">
+      <span class="hero-badge"><i class="pulse" aria-hidden="true"></i>El sistema operativo del creador</span>
+      <h1 id="heroH1">Copia lo que <em>ya funciona.</em></h1>
+      <p class="hero-sub">Mientras no miras, en tu nicho hay reels explotando. Reelscript los detecta, te dice <strong>cuál merece tu próximo guion</strong> y lo reescribe <strong>en tu voz</strong> — no copias el reel, copias la jugada. Listo para grabar, sin pasarte dos horas mirando el feed.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary" href="#signup">Roba tu primer guion gratis</a>
+        <a class="hero-link" href="#loop">Ver cómo funciona <span aria-hidden="true">→</span></a>
+      </div>
+      <p class="hero-micro">12 guiones gratis para siempre · sin tarjeta</p>
+
+      <!-- Demo animada: radar → robo → reveal (sustituye al vídeo) -->
+      <div class="demo" role="img" aria-label="Demostración animada: el radar detecta un reel que explota, lo robas y aparece tu guion en tu voz">
+        <div class="demo-stage">
+          <div class="demo-bar"><i></i><i></i><i></i><span>reelscript.net — tu radar</span></div>
+          <div class="demo-body">
+            <div class="scene scene-1">
+              <span class="tag">Radar · señales de hoy</span>
+              <div class="sig hot">
+                <div class="thumb"></div>
+                <div class="meta"><b>«Nadie te cuenta esto de las hipotecas»</b><span>@rival_inmo · hace 9 h</span></div>
+                <div class="x">×14,2 su media</div>
+              </div>
+              <div class="sig">
+                <div class="thumb"></div>
+                <div class="meta"><b>«3 errores al vender tu piso»</b><span>@otro_rival · hace 1 d</span></div>
+                <div class="x">×6,1</div>
+              </div>
+              <button class="steal-btn" tabindex="-1">⚡ Hazlo mío<span class="cursor" aria-hidden="true">👆</span></button>
+            </div>
+            <div class="scene scene-2">
+              <span class="tag">Reescribiendo en tu voz<span class="dots"></span></span>
+              <div class="orb-wrap"><div>
+                <div class="orb-sys">
+                  <div class="orb" aria-hidden="true"></div>
+                  <div class="orbit" aria-hidden="true"><i></i></div>
+                  <div class="orbit o2" aria-hidden="true"><i></i></div>
+                </div>
+                <p class="orb-txt">Leyendo tu <b>Cerebro</b>: tu tono, tus muletillas, tus ganadores</p>
+              </div></div>
+            </div>
+            <div class="scene scene-3">
+              <span class="tag">Tu guion · listo para grabar</span>
+              <div class="reveal">
+                <h3 id="revealH3">«Te han vendido que la hipoteca fija es lo seguro. Mira esto antes de firmar.»</h3>
+                <p>Hook directo, como los tuyos. Tres beats con tu estructura de siempre y el cierre con pregunta que usas en tus mejores reels…</p>
+                <span class="voice">✓ Escrito con tu voz al 82%</span>
+              </div>
+            </div>
+            <div class="demo-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ TICKER DE SEÑALES (FOMO con calma) ═══ -->
+  <!-- PLACEHOLDER: handles y multiplicadores de muestra. En prod puede alimentarse
+       de señales reales anonimizadas del radar. -->
+  <div class="ticker" aria-label="Señales detectadas recientemente (muestra)">
+    <div class="ticker-track">
+      <span class="tk tk-label">Detectado por el radar</span>
+      <span class="tk"><i class="dot"></i>@fitness_nicho <b>×8,3</b> su media · hace 2 h</span>
+      <span class="tk"><i class="dot"></i>@finanzas_claras <b>×12,1</b> · hace 4 h</span>
+      <span class="tk"><i class="dot"></i>@inmo_madrid <b>×14,2</b> · hace 9 h</span>
+      <span class="tk"><i class="dot"></i>@coach_ventas <b>×5,7</b> · hace 11 h</span>
+      <span class="tk"><i class="dot"></i>@nutri_real <b>×9,4</b> · hace 13 h</span>
+      <span class="tk"><i class="dot"></i>@abogado_tiktok <b>×7,8</b> · hace 1 d</span>
+      <span class="tk tk-label" aria-hidden="true">Detectado por el radar</span>
+      <span class="tk" aria-hidden="true"><i class="dot"></i>@fitness_nicho <b>×8,3</b> su media · hace 2 h</span>
+      <span class="tk" aria-hidden="true"><i class="dot"></i>@finanzas_claras <b>×12,1</b> · hace 4 h</span>
+      <span class="tk" aria-hidden="true"><i class="dot"></i>@inmo_madrid <b>×14,2</b> · hace 9 h</span>
+      <span class="tk" aria-hidden="true"><i class="dot"></i>@coach_ventas <b>×5,7</b> · hace 11 h</span>
+      <span class="tk" aria-hidden="true"><i class="dot"></i>@nutri_real <b>×9,4</b> · hace 13 h</span>
+      <span class="tk" aria-hidden="true"><i class="dot"></i>@abogado_tiktok <b>×7,8</b> · hace 1 d</span>
+    </div>
+  </div>
+
+  <!-- ═══ FRANJA PROMESAS con números ═══ -->
+  <!-- PLACEHOLDER: validar las 3 cifras con datos reales del producto antes de publicar -->
+  <div class="strip">
+    <div class="wrap strip-in">
+      <div class="rise"><span class="num" data-count="3200" data-suffix="+">0</span><b>señales analizadas cada semana</b><span>Sabemos qué está explotando, y por qué</span></div>
+      <div class="rise"><span class="num" data-count="60" data-suffix=" seg">0</span><b>de señal a guion en tu voz</b><span>Tu tono, tus frases, tu estructura</span></div>
+      <div class="rise"><span class="num" data-count="80" data-suffix="%">0</span><b>de tu voz, ya capturada</b><span>Con ~5 reels suena a ti — y sube con cada uno</span></div>
+    </div>
+  </div>
+
+  <!-- ═══ EL LOOP ═══ -->
+  <section id="loop">
+    <div class="wrap">
+      <span class="eyebrow">El loop</span>
+      <h2 class="rise">De la página en blanco<br>al reel publicado.</h2>
+      <p class="sub rise">No generas contenido a ciegas. Partes de lo que ya está funcionando en tu nicho — y el sistema lo convierte en tuyo.</p>
+      <div class="steps">
+        <article class="step rise">
+          <span class="n">01 · DETECTA</span>
+          <h3>Tu radar capta lo que explota en tu nicho</h3>
+          <p>Cada día: los reels que están explotando en tu nicho, ordenados por lo que merece tu próximo guion. Tú solo eliges.</p>
+          <div class="viz viz-radar" aria-hidden="true"><i></i><i></i><i></i></div>
+        </article>
+        <article class="step rise">
+          <span class="n">02 · RÓBALO</span>
+          <h3>«Hazlo mío»: un clic y es tuyo</h3>
+          <p>Lo reescribimos con tu voz, no con la del competidor. Hook, beats y cierre con tu estructura.</p>
+          <div class="viz viz-lines" aria-hidden="true"><i class="bl"></i><i class="bl"></i><i class="bl"></i></div>
+        </article>
+        <article class="step rise">
+          <span class="n">03 · GRABA</span>
+          <h3>Teleprompter integrado</h3>
+          <p>Del guion al reel sin salir de Reelscript. Grabar no gasta créditos — repite hasta que salga bordado.</p>
+          <div class="viz viz-tele" aria-hidden="true"><div class="roll"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+        </article>
+        <article class="step rise">
+          <span class="n">04 · APRENDE</span>
+          <h3>Cada publicación afina tu voz</h3>
+          <p>Conecta Instagram y el sistema aprende qué hooks, temas y duraciones funcionan <strong>en tu cuenta</strong>. Lo siguiente sale más tuyo.</p>
+          <div class="viz viz-voice"><div class="vbar"><i></i></div><span class="vpct">voz al 82%</span></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ LA CUENTA ES SIMPLE (ventas) ═══ -->
+  <section class="math">
+    <div class="wrap" style="text-align:center">
+      <span class="eyebrow">La cuenta es simple</span>
+      <h2 class="rise">¿Cuánto te cuesta hoy<br>cada guion que grabas?</h2>
+      <p class="sub rise" style="margin:0 auto">Pon número a lo que hoy te cuesta cada guion. Luego compara.</p>
+      <div class="math-grid" style="text-align:left">
+        <div class="math-card rise">
+          <span class="who">Un copywriter freelance</span>
+          <p class="big">€40–80<small> /guion</small></p>
+          <p>Por encargo, con días de espera — y sin saber qué está explotando en tu nicho ahora mismo.</p>
+        </div>
+        <div class="math-card rise">
+          <span class="who">Hacerlo tú a mano</span>
+          <p class="big">2–3 h<small> /guion</small></p>
+          <p>Scrollear el feed, apuntar ideas, redactar, dudar, reescribir. Tu hora vale más que esto.</p>
+        </div>
+        <div class="math-card win rise">
+          <span class="who">Con Reelscript · plan Creator</span>
+          <p class="big">€0,15<small> /reel robado</small></p>
+          <p>200 créditos por €29/mes. La señal ya viene elegida, el guion ya suena a ti. <span class="tach">€40–80</span> → €0,15.</p>
+        </div>
+      </div>
+      <div class="timebar rise" id="timebar" style="text-align:left">
+        <div class="tb-row tb-old">
+          <label>Tu lunes sin Reelscript<small>buscar idea + escribir + dudar</small></label>
+          <div class="tb-track"><span class="tb-fill"></span></div>
+          <span class="tb-val">~2,5 h</span>
+        </div>
+        <div class="tb-row tb-new">
+          <label>Tu lunes con Reelscript<small>abrir radar + «Hazlo mío» + grabar</small></label>
+          <div class="tb-track"><span class="tb-fill"></span></div>
+          <span class="tb-val">~12 min</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ MOAT / CEREBRO ═══ -->
+  <section>
+    <div class="wrap moat-grid">
+      <div>
+        <span class="eyebrow">El Cerebro</span>
+        <h2 class="rise">Un sistema que te conoce más cada día.</h2>
+        <p class="sub rise">Las plantillas suenan a todos. Los GPT suenan a robot. Reelscript construye un modelo de <strong>tu</strong> voz que mejora con cada uso — como el teclado de tu móvil aprende cómo escribes.</p>
+        <div class="moat-list">
+          <div class="moat-item rise"><div class="ic">🎙</div><div><b>Tu tono y tus muletillas</b><span>Aprendidos de tus propios reels, no de un cuestionario.</span></div></div>
+          <div class="moat-item rise"><div class="ic">🏆</div><div><b>Tus ganadores como molde</b><span>Tus reels con más views guían cada nuevo guion.</span></div></div>
+          <div class="moat-item rise"><div class="ic">🚫</div><div><b>Lo que te hunde, fuera</b><span>También aprende qué patrones no funcionan en tu cuenta.</span></div></div>
+        </div>
+      </div>
+      <div class="brain" id="brainCard">
+        <div class="bh"><b>Cerebro · @tu_marca</b><span><i class="live" aria-hidden="true"></i>aprendiendo ahora</span></div>
+        <div class="row"><label>Voz capturada <em data-w="82">82%</em></label><div class="bar"><i data-w="82"></i></div></div>
+        <div class="row"><label>Hooks que te funcionan <em data-w="74">74%</em></label><div class="bar"><i data-w="74"></i></div></div>
+        <div class="row"><label>Estructura dominada <em data-w="67">67%</em></label><div class="bar"><i data-w="67"></i></div></div>
+        <div>
+          <span class="chip">cierras con pregunta</span><span class="chip">hooks de contraste</span><span class="chip">45–60 s</span><span class="chip">sin tecnicismos</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ AGENCIAS ═══ -->
+  <section style="padding-top:40px">
+    <div class="wrap ag-grid">
+      <div class="spaces" aria-hidden="true">
+        <div class="space"><div class="dot" style="background:#4f7cff">IN</div><div><b>Inmo Pro</b><span>radar · 3 señales nuevas</span></div><span class="lvl">voz 81%</span></div>
+        <div class="space"><div class="dot" style="background:#8b5cf6">FT</div><div><b>FitCoach Marta</b><span>radar · 5 señales nuevas</span></div><span class="lvl">voz 76%</span></div>
+        <div class="space"><div class="dot" style="background:#ff7847">GS</div><div><b>Gastro Sur</b><span>radar · 2 señales nuevas</span></div><span class="lvl">voz 64%</span></div>
+      </div>
+      <div>
+        <span class="eyebrow">Para agencias</span>
+        <h2 class="rise">Cada marca, un cerebro. Todas, un portfolio.</h2>
+        <p class="sub rise">Cambia de cliente como cambias de escritorio: cada marca tiene su radar, su voz y sus competidores — aislados y completos. Tu equipo dentro, con roles y marcas asignadas.</p>
+        <div class="moat-list" style="margin-top:22px">
+          <div class="moat-item rise"><div class="ic">🗂</div><div><b>Vista portfolio</b><span>Todas tus marcas de un vistazo: qué explota y cuál pide atención.</span></div></div>
+          <div class="moat-item rise"><div class="ic">👥</div><div><b>Equipo con roles</b><span>3 asientos incluidos. Asigna marcas a cada miembro.</span></div></div>
+          <div class="moat-item rise"><div class="ic">⚡</div><div><b>Pool de créditos único</b><span>800 al mes para toda la cuenta. Sin cupos por marca.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ TESTIMONIOS ═══ -->
+  <!-- ⚠️ PLACEHOLDER COMPLETO: testimonios de MUESTRA (personas no reales).
+       Sustituir por testimonios reales con permiso antes de publicar. -->
+  <section style="padding-top:30px">
+    <div class="wrap" style="text-align:center">
+      <span class="eyebrow">Lo que dicen</span>
+      <h2 class="rise">Creadores que ya no miran<br>la página en blanco.</h2>
+      <div class="testi-grid" style="text-align:left">
+        <figure class="testi rise">
+          <div class="stars" aria-label="5 estrellas">★★★★★</div>
+          <p>«Pasé de publicar <strong>cuando me venía la inspiración</strong> a publicar 4 veces por semana. El radar me da la idea hecha; yo solo grabo.»</p>
+          <figcaption class="who"><span class="av" style="background:#4f7cff">L</span><div><b>Laura · inmobiliaria</b><span>PLACEHOLDER · sustituir por real</span></div></figcaption>
+        </figure>
+        <figure class="testi rise">
+          <div class="stars" aria-label="5 estrellas">★★★★★</div>
+          <p>«Lo que más me sorprendió: los guiones <strong>suenan a mí</strong>. Mis clientes no notan que hay IA detrás — y eso era mi miedo.»</p>
+          <figcaption class="who"><span class="av" style="background:#8b5cf6">D</span><div><b>Dani · agencia de contenido</b><span>PLACEHOLDER · sustituir por real</span></div></figcaption>
+        </figure>
+        <figure class="testi rise">
+          <div class="stars" aria-label="5 estrellas">★★★★★</div>
+          <p>«Llevo 3 marcas a la vez y antes era un caos de notas. Ahora cada cliente tiene su cerebro y <strong>cambio de contexto en un clic</strong>.»</p>
+          <figcaption class="who"><span class="av" style="background:#ff7847">M</span><div><b>Marta · social media manager</b><span>PLACEHOLDER · sustituir por real</span></div></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ PRICING ═══ -->
+  <section id="pricing" style="text-align:center">
+    <div class="wrap">
+      <span class="eyebrow">Precios</span>
+      <h2 class="rise">Empieza gratis. Crece cuando publiques.</h2>
+      <p class="sub rise" style="margin:0 auto">Ver lo que explota en tu nicho no cuesta nada. Los créditos se gastan solo cuando dices «lo quiero mío».</p>
+      <div class="toggle" role="group" aria-label="Ciclo de facturación">
+        <button class="on" data-cycle="month" aria-pressed="true">Mensual</button>
+        <button data-cycle="year" aria-pressed="false">Anual <span class="save">2 meses gratis</span></button>
+      </div>
+      <div class="plans">
+        <div class="plan rise">
+          <h3>Free</h3>
+          <p class="for">Para probar el robo con tu nicho real.</p>
+          <p class="price">€0</p>
+          <p class="yr">&nbsp;</p>
+          <p class="day">&nbsp;</p>
+          <ul>
+            <li>Radar de tu nicho, gratis para siempre</li>
+            <li><strong>12 «Hazlo mío»</strong> gratis, tuyos para siempre</li>
+            <li>1 marca · teleprompter incluido</li>
+            <li class="zero">Sin tarjeta</li>
+          </ul>
+          <a class="btn btn-ghost" href="#signup">Empezar gratis</a>
+          <p class="risk">&nbsp;</p>
+        </div>
+        <div class="plan hot rise">
+          <span class="pop">El de los que publican</span>
+          <h3>Creator</h3>
+          <p class="for">Para el creador que publica cada semana y quiere sonar a él.</p>
+          <p class="price" data-m="€29" data-y="€23"><span class="amt">€29</span><small>/mes</small></p>
+          <p class="yr" data-m="" data-y="facturado €276/año">&nbsp;</p>
+          <p class="day" data-m="menos de €1 al día · €0,15 por reel robado" data-y="€0,76 al día · €0,12 por reel robado">menos de €1 al día · €0,15 por reel robado</p>
+          <ul>
+            <li><strong>200 créditos</strong> al mes (~200 reels robados a tu voz)</li>
+            <li>Cerebro: tu voz, entrenándose con cada reel</li>
+            <li>Métricas de tu cuenta → el sistema aprende</li>
+            <li>Explosión creativa (5 hooks × 5 ángulos × 5 ideas), series y formatos</li>
+            <li>Guiones e historial ilimitados</li>
+          </ul>
+          <a class="btn btn-primary" href="#signup-creator">Empezar con Creator</a>
+          <p class="risk">Cancela en 2 clics · tu Cerebro se queda guardado</p>
+        </div>
+        <div class="plan rise">
+          <h3>Agency</h3>
+          <p class="for">Para portfolios de marcas y equipos.</p>
+          <p class="price" data-m="€129" data-y="€107"><span class="amt">€129</span><small>/mes</small></p>
+          <p class="yr" data-m="" data-y="facturado €1.290/año">&nbsp;</p>
+          <p class="day" data-m="3 marcas · €43 por marca/mes" data-y="3 marcas · €36 por marca/mes">3 marcas · €43 por marca/mes</p>
+          <ul>
+            <li><strong>Pool de 800 créditos</strong> para toda la cuenta</li>
+            <li><strong>3 marcas</strong> con cerebro propio cada una</li>
+            <li><strong>3 asientos</strong> de equipo con roles</li>
+            <li>Vista portfolio: todo tu roster de un vistazo</li>
+            <li>Marca o asiento extra: €14,99/mes</li>
+          </ul>
+          <a class="btn btn-ghost" href="#signup-agency">Empezar con Agency</a>
+          <p class="risk">Cancela en 2 clics · sin permanencia</p>
+        </div>
+      </div>
+      <p class="pricing-foot">¿Un mes fuerte? Recarga sin cambiar de plan: 100 cr/€19 · 300 cr/€49 · 1.000 cr/€139</p>
+    </div>
+  </section>
+
+  <!-- ═══ FAQ ═══ -->
+  <section style="padding-top:0">
+    <div class="wrap" style="text-align:center">
+      <span class="eyebrow">Dudas rápidas</span>
+      <h2 class="rise">Lo que preguntan antes de entrar</h2>
+      <div class="faq" style="text-align:left">
+        <details>
+          <summary>¿Esto no es copiar a otros creadores?</summary>
+          <p class="a">Copias la <strong>jugada</strong>, no el contenido. Reelscript detecta qué temas y estructuras están explotando en tu nicho y los reescribe desde cero con tu voz, tu ángulo y tus ejemplos. Es lo que los grandes creadores ya hacen a mano cada día — aquí tarda un clic.</p>
+        </details>
+        <details>
+          <summary>¿En qué se diferencia de ChatGPT?</summary>
+          <p class="a">ChatGPT no sabe qué está funcionando en tu nicho hoy, ni cómo suenas tú. Reelscript parte de señales reales de tus competidores y escribe con un modelo de tu voz que mejora con cada reel que publicas. Cuanto más lo usas, menos genérico suena — justo lo contrario que una plantilla.</p>
+        </details>
+        <details>
+          <summary>¿Qué es un crédito?</summary>
+          <p class="a">La unidad de trabajo del sistema. Robar un reel a tu voz = 1 crédito. Cinco guiones desde una idea = 5. Ver el radar, tus métricas o grabar con el teleprompter = 0. Solo pagas cuando dices «lo quiero mío».</p>
+        </details>
+        <details>
+          <summary>¿Y si se me acaban los créditos?</summary>
+          <p class="a">El radar, tus métricas y el teleprompter siguen gratis — no te quedas bloqueado a mitad de mes. Para más reescrituras, recargas desde €19 (100 créditos) sin cambiar de plan, o subes de tier cuando te compense. Tú decides.</p>
+        </details>
+        <details>
+          <summary>¿Funciona en mi nicho / mi idioma?</summary>
+          <p class="a">Tú eliges a quién vigilar: añade los competidores de tu nicho y el radar trabaja sobre ellos, en español o en inglés. Si en tu nicho se publican reels, hay señales.</p>
+        </details>
+        <details>
+          <summary>¿Puedo cancelar cuando quiera?</summary>
+          <p class="a">Sí, desde tu cuenta, en dos clics. Sin permanencia. Tus guiones y tu Cerebro se quedan guardados por si vuelves.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CTA FINAL ═══ -->
+  <section class="final">
+    <div class="halo" aria-hidden="true"></div>
+    <div class="wrap">
+      <h2>Tu nicho ya te está diciendo<br><em>qué grabar.</em></h2>
+      <p class="sub" style="max-width:480px">Entra, mira tu radar y roba tu primer guion. Los 12 primeros corren de nuestra cuenta — y son tuyos para siempre.</p>
+      <a class="btn btn-primary" style="padding:17px 34px;font-size:1.08rem" href="#signup">Roba tu primer guion gratis</a>
+      <p class="hero-micro" style="margin-top:14px">Sin tarjeta · listo en 2 minutos</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot-in">
+    <span>© 2026 Reelscript · reelscript.net</span>
+    <!-- TODO porte: cablear a /privacidad, /terminos, /contacto y /en/ (hoy anclas de maqueta) -->
+    <nav aria-label="Legal">
+      <a href="#privacidad">Privacidad</a><a href="#terminos">Términos</a><a href="#contacto">Contacto</a><a href="#en">EN</a>
+    </nav>
+  </div>
+</footer>
+
+<!-- ═══ STICKY CTA (aparece al pasar el hero) ═══ -->
+<div class="sticky-cta" id="stickyCta" role="complementary" aria-label="Empezar gratis">
+  <div class="sticky-in">
+    <p class="msg"><span class="dot" aria-hidden="true"></span>Tu nicho está publicando ahora mismo.<small>12 guiones gratis · sin tarjeta</small></p>
+    <a class="btn btn-primary" href="#pricing">Empieza gratis</a>
+  </div>
+</div>
+
+<script>
+// Marca que hay JS: solo entonces se ocultan los .rise (si el script peta o no hay JS, el contenido se ve igual).
+document.documentElement.classList.add("js");
+// ── Waves aurora — código del producto (seña de identidad, mantener tal cual) ──
+(function initGlobalAurora(){
+  const canvas=document.getElementById("globalAurora");if(!canvas)return;
+  const ctx=canvas.getContext("2d");if(!ctx)return;
+  if(window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  let t=0;
+  const resize=()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight};
+  resize();window.addEventListener("resize",resize);
+  const isMobile=window.innerWidth<640;
+  const darkWaves=[
+    {yRatio:.18,color:"rgba(79,124,255,0.15)",amp:65,freq:.014,speed:.0005,blur:14},
+    {yRatio:.38,color:"rgba(139,92,246,0.12)",amp:50,freq:.018,speed:.0007,blur:11},
+    {yRatio:.58,color:"rgba(79,124,255,0.13)",amp:75,freq:.011,speed:.0004,blur:15},
+    {yRatio:.76,color:"rgba(180,60,220,0.11)",amp:45,freq:.016,speed:.0006,blur:10},
+    {yRatio:.91,color:"rgba(139,92,246,0.09)",amp:55,freq:.013,speed:.0005,blur:12},
+  ];
+  const step=isMobile?10:5;
+  function draw(){
+    const w=canvas.width,h=canvas.height;
+    const waves=isMobile?darkWaves.slice(0,3):darkWaves;
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle="#0a0b0f";ctx.fillRect(0,0,w,h);
+    const topGlow=ctx.createRadialGradient(w*.5,0,0,w*.5,0,w*.65);
+    topGlow.addColorStop(0,"rgba(79,124,255,0.12)");topGlow.addColorStop(1,"transparent");
+    ctx.fillStyle=topGlow;ctx.fillRect(0,0,w,h);
+    waves.forEach((wave,i)=>{
+      const baseY=h*wave.yRatio;
+      const grad=ctx.createLinearGradient(0,baseY-100,0,baseY+100);
+      grad.addColorStop(0,"transparent");grad.addColorStop(.5,wave.color);grad.addColorStop(1,"transparent");
+      ctx.save();ctx.shadowBlur=wave.blur;ctx.shadowColor=wave.color;
+      ctx.beginPath();ctx.moveTo(0,h);
+      for(let x=0;x<=w;x+=step){
+        const y=baseY+Math.sin(x*wave.freq+t*wave.speed*60+i*1.2)*wave.amp
+          +Math.sin(x*wave.freq*.5+t*wave.speed*35+i)*(wave.amp*.4);
+        ctx.lineTo(x,y);
+      }
+      ctx.lineTo(w,h);ctx.closePath();ctx.fillStyle=grad;ctx.fill();ctx.restore();
+    });
+    t++;requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// ── H1: palabras que nacen una a una ──
+// El <em> con gradiente entra como UNA unidad (no se desciende dentro): si se partiera en
+// spans inline-block, el background-clip:text del em se rompe y «ya funciona.» queda invisible.
+(function staggerH1(){
+  if(reduced)return;
+  const h1=document.getElementById("heroH1");if(!h1)return;
+  let i=0;
+  const delay=()=>(0.12+i++*0.05)+"s";
+  const wrap=el=>{const s=document.createElement("span");s.className="w";s.style.animationDelay=delay();el.parentNode.replaceChild(s,el);s.appendChild(el);};
+  const walk=node=>{
+    [...node.childNodes].forEach(ch=>{
+      if(ch.nodeType===3){
+        const frag=document.createDocumentFragment();
+        ch.textContent.split(/(\s+)/).forEach(p=>{
+          if(!p.trim()){frag.appendChild(document.createTextNode(p));return}
+          const s=document.createElement("span");s.className="w";s.textContent=p;
+          s.style.animationDelay=delay();frag.appendChild(s);
+        });
+        node.replaceChild(frag,ch);
+      } else if(ch.nodeType===1) wrap(ch);   // elemento (p.ej. <em> con gradiente): unidad atómica
+    });
+  };
+  walk(h1);
+})();
+
+// ── Reveal de la escena 3: palabras del hook sincronizadas con el ciclo de 12s ──
+(function staggerReveal(){
+  if(reduced)return;
+  const el=document.getElementById("revealH3");if(!el)return;
+  const words=el.textContent.split(/(\s+)/);el.textContent="";
+  let i=0;
+  words.forEach(p=>{
+    if(!p.trim()){el.appendChild(document.createTextNode(p));return}
+    const s=document.createElement("span");s.className="w";s.textContent=p;
+    s.style.animationDelay=(i*0.055)+"s";i++;el.appendChild(s);
+  });
+})();
+
+// ── Reveal on scroll + count-ups + barras ──
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(!e.isIntersecting)return;
+  const el=e.target;
+  el.classList.add("vis");
+  if(el.id==="brainCard")el.querySelectorAll(".bar i").forEach(b=>b.style.width=b.dataset.w+"%");
+  if(el.classList.contains("num")&&!el.dataset.done){
+    el.dataset.done=1;
+    const target=+el.dataset.count,suf=el.dataset.suffix||"";
+    if(reduced){el.textContent=target.toLocaleString("es")+suf}
+    else{
+      const t0=performance.now(),dur=1600;
+      (function tick(now){
+        const k=Math.min((now-t0)/dur,1),v=Math.round(target*(1-Math.pow(1-k,3)));
+        el.textContent=v.toLocaleString("es")+suf;
+        if(k<1)requestAnimationFrame(tick);
+      })(t0);
+    }
+  }
+  io.unobserve(el);
+}),{threshold:.25});
+document.querySelectorAll(".step,#brainCard,.rise,.num,#timebar").forEach(el=>io.observe(el));
+
+// ── Toggle mensual/anual ──
+document.querySelectorAll(".toggle button").forEach(btn=>btn.addEventListener("click",()=>{
+  document.querySelectorAll(".toggle button").forEach(b=>{b.classList.toggle("on",b===btn);b.setAttribute("aria-pressed",b===btn);});
+  const y=btn.dataset.cycle==="year";
+  document.querySelectorAll(".plan .price[data-m]").forEach(p=>{const a=p.querySelector(".amt");if(a)a.textContent=y?p.dataset.y:p.dataset.m;});
+  document.querySelectorAll(".plan .yr[data-m]").forEach(p=>{p.textContent=y?p.dataset.y:p.dataset.m;});
+  document.querySelectorAll(".plan .day[data-m]").forEach(p=>{p.textContent=y?p.dataset.y:p.dataset.m;});
+}));
+
+// ── Sticky CTA: aparece tras el hero, se esconde en pricing/final ──
+// (es conversión, no decoración → también con reduced-motion, solo sin animación de entrada)
+(function stickyCta(){
+  const bar=document.getElementById("stickyCta");
+  const hero=document.querySelector(".hero");
+  const stop1=document.getElementById("pricing");
+  if(!bar||!hero||!stop1)return;
+  const onScroll=()=>{
+    const past=window.scrollY>hero.offsetHeight*.9;
+    const r=stop1.getBoundingClientRect();
+    const inPricing=r.top<window.innerHeight&&r.bottom>0;
+    bar.classList.toggle("show",past&&!inPricing);
+  };
+  window.addEventListener("scroll",onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>
