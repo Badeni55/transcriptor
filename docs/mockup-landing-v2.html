@@ -537,6 +537,37 @@
   @keyframes mrDot{0%,100%{box-shadow:0 0 0 0 rgba(59,63,212,.5)}55%{box-shadow:0 0 0 5px rgba(59,63,212,0)}}
   @keyframes mrGlow{0%,100%{box-shadow:0 6px 16px rgba(59,63,212,.3)}50%{box-shadow:0 7px 24px rgba(59,63,212,.55)}}
 
+
+  /* ── RADAR SONAR del hero (motion graphic: gira y encuentra señales) ── */
+  .video-fallback{display:flex;align-items:center;gap:30px}
+  .radar-scope{position:relative;width:min(232px,40%);aspect-ratio:1;flex:none;border-radius:50%;
+    background:radial-gradient(circle,rgba(79,124,255,.12),rgba(10,11,15,.35) 72%);
+    border:1px solid rgba(79,124,255,.32);overflow:hidden;box-shadow:inset 0 0 44px rgba(79,124,255,.14),0 0 40px rgba(79,124,255,.08)}
+  .radar-scope .rr{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border:1px solid rgba(111,147,255,.18);border-radius:50%}
+  .radar-scope .rr1{width:34%;height:34%}.radar-scope .rr2{width:67%;height:67%}.radar-scope .rr3{width:99%;height:99%}
+  .radar-scope .rx,.radar-scope .ry{position:absolute;top:50%;left:50%;background:rgba(111,147,255,.15)}
+  .radar-scope .rx{width:99%;height:1px;transform:translate(-50%,-50%)}
+  .radar-scope .ry{height:99%;width:1px;transform:translate(-50%,-50%)}
+  .radar-scope .sweep{position:absolute;inset:0;border-radius:50%;transform-origin:50% 50%;
+    background:conic-gradient(from 0deg,rgba(79,124,255,.55),rgba(79,124,255,.04) 52deg,transparent 120deg,transparent 360deg)}
+  .radar-scope .ping{position:absolute;top:50%;left:50%;width:6px;height:6px;border-radius:50%;background:var(--brand2);transform:translate(-50%,-50%)}
+  .radar-scope .blip{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--teal);
+    box-shadow:0 0 11px var(--teal),0 0 4px var(--teal);opacity:0;transform:translate(-50%,-50%) scale(.4)}
+  .radar-scope .bp1{top:30%;left:64%}.radar-scope .bp2{top:58%;left:39%}.radar-scope .bp3{top:43%;left:27%}
+  .radar-scope .bp4{top:71%;left:65%}.radar-scope .bp5{top:23%;left:47%}
+  .radar-side{flex:1;min-width:0}
+  @media (prefers-reduced-motion: no-preference){
+    .radar-scope .sweep{animation:radarSpin 3.8s linear infinite}
+    .radar-scope .ping{animation:pingOut 3.8s ease-out infinite}
+    .radar-scope .blip{animation:blipOn 3.8s linear infinite}
+    .radar-scope .bp1{animation-delay:.25s}.radar-scope .bp2{animation-delay:1.0s}.radar-scope .bp3{animation-delay:1.7s}
+    .radar-scope .bp4{animation-delay:2.4s}.radar-scope .bp5{animation-delay:3.1s}
+  }
+  @keyframes radarSpin{to{transform:rotate(360deg)}}
+  @keyframes pingOut{0%{box-shadow:0 0 0 0 rgba(111,147,255,.5)}70%{box-shadow:0 0 0 20px rgba(111,147,255,0)}100%{box-shadow:0 0 0 0 rgba(111,147,255,0)}}
+  @keyframes blipOn{0%,2%{opacity:0;transform:translate(-50%,-50%) scale(.4)}8%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}38%{opacity:.95}68%{opacity:0;transform:translate(-50%,-50%) scale(.7)}100%{opacity:0}}
+  @media(max-width:640px){.video-fallback{flex-direction:column;gap:16px;text-align:center}.radar-scope{width:150px}.radar-side{width:100%}}
+
 </style>
 </head>
 <body>
@@ -576,30 +607,27 @@
            Mientras no exista, debajo queda la composición de respaldo (señales + Hazlo mío). -->
       <div class="hero-media">
         <div class="frame">
-          <div class="frame-bar"><i></i><i></i><i></i><span>reelscript.net — el loop en 60 segundos</span></div>
+          <div class="frame-bar"><i></i><i></i><i></i><span>reelscript.net — radar en vivo</span></div>
           <div class="hero-video">
             <video muted playsinline preload="none" poster="img/landing-v2/demo-poster.png" aria-label="Vídeo: el radar detecta un reel que explota en tu nicho, pulsas «Hazlo mío» y aparece tu guion escrito en tu voz" onerror="this.style.display='none'">
               <!-- <source src="img/landing-v2/demo.mp4" type="video/mp4"> -->
             </video>
             <div class="video-fallback" aria-hidden="true">
-              <span class="tag">Radar · señales de hoy</span>
-              <div class="sig hot">
-                <div class="thumb"></div>
-                <div class="meta"><b>«Nadie te cuenta esto de las hipotecas»</b><span>@rival_inmo · hace 9 h</span></div>
-                <div class="x">×14,2 su media</div>
+              <div class="radar-scope">
+                <span class="rr rr1"></span><span class="rr rr2"></span><span class="rr rr3"></span>
+                <span class="rx"></span><span class="ry"></span>
+                <span class="sweep"></span>
+                <span class="ping"></span>
+                <span class="blip bp1"></span><span class="blip bp2"></span><span class="blip bp3"></span><span class="blip bp4"></span><span class="blip bp5"></span>
               </div>
-              <div class="sig">
-                <div class="thumb"></div>
-                <div class="meta"><b>«3 errores al vender tu piso»</b><span>@otro_rival · hace 1 d</span></div>
-                <div class="x">×6,1</div>
+              <div class="radar-side">
+                <span class="tag">Radar · detectando señales</span>
+                <div class="sig hot"><div class="thumb"></div><div class="meta"><b>«Nadie te cuenta esto de las hipotecas»</b><span>@rival_inmo · ahora</span></div><div class="x">×14,2</div></div>
+                <div class="sig"><div class="thumb"></div><div class="meta"><b>«3 errores al vender tu piso»</b><span>@otro_rival · hace 1 d</span></div><div class="x">×6,1</div></div>
+                <button class="steal-btn" tabindex="-1">⚡ Hazlo mío</button>
               </div>
-              <button class="steal-btn" tabindex="-1">⚡ Hazlo mío</button>
             </div>
-            <button class="play-btn" type="button" aria-label="Reproducir el vídeo de demostración (60 segundos)" onclick="try{var v=this.parentNode.querySelector('video');if(v&&v.querySelector('source'))v.play()}catch(e){}">
-              <svg width="26" height="30" viewBox="0 0 26 30" fill="none" aria-hidden="true"><path d="M2 2.5v25L24 15 2 2.5z" fill="#fff"/></svg>
-            </button>
-            <span class="video-todo">TODO vídeo real · 45–60 s · radar → «Hazlo mío» → tu guion</span>
-          </div>
+            </div>
         </div>
         <!-- chips flotantes (profundidad) — desaparecen en móvil -->
         <div class="float-chip fc1" aria-hidden="true"><span>⚡</span><span>señal detectada <b>×14,2</b></span></div>
