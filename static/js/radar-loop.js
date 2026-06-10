@@ -267,7 +267,6 @@
       (isAgency()?brandSwitchHTML():brandStaticHTML())+
       crumb+
       '<span class="grow"></span>'+
-      '<div class="searchbox">'+IC.eye+'<span>Buscar señal o creador</span></div>'+   // T3 (IDI): sin pista ⌘K — no prometemos un atajo que no existe
       // T1 (IDI): captura de ideas siempre a mano, en cualquier vista de la isla.
       '<button class="cmd-idea" data-act="idea-capture" title="Apunta una idea — se desarrolla en Guiones" aria-label="Apunta una idea"><span class="cmd-idea-bulb">'+IC.bulb+'</span><span class="cmd-idea-t">Apunta una idea</span></button>'+
       demoToggle+
