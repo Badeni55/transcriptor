@@ -11301,6 +11301,35 @@
   @keyframes rslBlipOn{0%,2%{opacity:0;transform:translate(-50%,-50%) scale(.4)}8%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}38%{opacity:.95}68%{opacity:0;transform:translate(-50%,-50%) scale(.7)}100%{opacity:0}}
   @media(max-width:640px){.rs-landing .rsl-video-fallback{flex-direction:column;gap:16px;text-align:center}.rs-landing .rsl-radar-scope{width:150px}.rs-landing .rsl-radar-side{width:100%}}
 
+  /* ── clips de vídeo reales (demos de la app) ── */
+  .rs-landing .rsl-vidframe .rsl-frame video{display:block;width:100%;height:auto;background:#0a0b0f}
+  .rs-landing .rsl-vid-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:44px;text-align:left}
+  .rs-landing .rsl-vid-cap{color:var(--text2);font-size:.95rem;margin-top:14px;max-width:440px}
+  @media(max-width:760px){.rs-landing .rsl-vid-grid{grid-template-columns:1fr;gap:34px}}
+
+  /* CTA intermedio reutilizable */
+  .rs-landing .rsl-cta-mid{text-align:center;padding:6px 0 2px}
+  .rs-landing .rsl-cta-mid .rsl-btn-primary{padding:16px 34px;font-size:1.08rem}
+
+  /* ── RADAR en panel claro limpio (sin marco de navegador) ── */
+  .rs-landing .rsl-radar-panel{display:flex;align-items:center;gap:32px;max-width:720px;margin:0 auto;text-align:left;
+    background:#f5f2ec;border:1px solid #e7e2d9;border-radius:24px;padding:30px 34px;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+  .rs-landing .rsl-radar-panel .rsl-radar-scope{width:min(220px,42%);background:radial-gradient(circle,rgba(59,63,212,.08),#ffffff 72%);border-color:rgba(59,63,212,.22);box-shadow:inset 0 0 40px rgba(59,63,212,.07)}
+  .rs-landing .rsl-radar-panel .rsl-radar-scope .rsl-rr{border-color:rgba(59,63,212,.16)}
+  .rs-landing .rsl-radar-panel .rsl-radar-scope .rsl-rx, .rs-landing .rsl-radar-panel .rsl-radar-scope .rsl-ry{background:rgba(59,63,212,.13)}
+  .rs-landing .rsl-radar-panel .rsl-radar-scope .rsl-sweep{background:conic-gradient(from 0deg,rgba(59,63,212,.40),rgba(59,63,212,.03) 52deg,transparent 120deg,transparent 360deg)}
+  .rs-landing .rsl-radar-panel .rsl-radar-scope .rsl-ping{background:#3b3fd4}
+  .rs-landing .rsl-radar-panel .rsl-radar-scope .rsl-blip{background:#10b981;box-shadow:0 0 11px #10b981,0 0 4px #10b981}
+  .rs-landing .rsl-radar-panel .rsl-radar-side{flex:1;min-width:0}
+  .rs-landing .rsl-radar-panel .rsl-tag{color:#3b3fd4}
+  .rs-landing .rsl-radar-panel .rsl-sig{background:#fff;border-color:#e7e2d9}
+  .rs-landing .rsl-radar-panel .rsl-sig .rsl-thumb{background:linear-gradient(160deg,#c7cdf0,#9aa3d8)}
+  .rs-landing .rsl-radar-panel .rsl-sig .rsl-meta b{color:#15140f}
+  .rs-landing .rsl-radar-panel .rsl-sig .rsl-meta span{color:#9a968d}
+  .rs-landing .rsl-radar-panel .rsl-sig .rsl-x{color:#0f9b73}
+  .rs-landing .rsl-radar-panel .rsl-sig.rsl-hot{border-color:rgba(59,63,212,.4);box-shadow:0 0 24px rgba(59,63,212,.10)}
+  .rs-landing .rsl-radar-panel .rsl-steal-btn{background:#3b3fd4;box-shadow:0 6px 20px rgba(59,63,212,.3)}
+  @media(max-width:640px){.rs-landing .rsl-radar-panel{flex-direction:column;gap:18px;padding:24px;text-align:center}.rs-landing .rsl-radar-panel .rsl-radar-scope{width:160px}}
 
   /* ── PORTE: reglas del contenedor (sustituyen a html/body/main del mockup) ── */
   /* contenido sobre el aurora global (canvas fixed z0): igual que el main{z-index:1} del mockup */
@@ -11325,35 +11354,13 @@
       </div>
       <p class="rsl-hero-micro">12 guiones gratis para siempre · sin tarjeta</p>
 
-      <!-- VÍDEO explicativo en marco de navegador.
-           TODO VÍDEO REAL (45–60 s, captura del loop: radar → «Hazlo mío» → guion en tu voz):
-             1. exportar a docs//static/img/landing/demo.mp4 + póster demo-poster.png (1280×720)
-             2. descomentar <source>, añadir controls al <video> y cablear .play-btn → video.play()
-             3. al portar a templates/index.html: assets en static/img/landing/ y static/video/
-           Mientras no exista, debajo queda la composición de respaldo (señales + Hazlo mío). -->
+      <!-- VÍDEO real de «Hazlo mío» en marco de navegador (autoplay muted loop). -->
       <div class="rsl-hero-media">
         <div class="rsl-frame">
-          <div class="rsl-frame-bar"><i></i><i></i><i></i><span>reelscript.net — radar en vivo</span></div>
+          <div class="rsl-frame-bar"><i></i><i></i><i></i><span>reelscript.net — «Hazlo mío» en vivo</span></div>
           <div class="rsl-hero-video">
-            <video muted playsinline preload="none" poster="/static/img/landing/demo-poster.png" aria-label="Vídeo: el radar detecta un reel que explota en tu nicho, pulsas «Hazlo mío» y aparece tu guion escrito en tu voz" onerror="this.style.display='none'">
-              <!-- <source src="/static/img/landing/demo.mp4" type="video/mp4"> -->
-            </video>
-            <div class="rsl-video-fallback" aria-hidden="true">
-              <div class="rsl-radar-scope">
-                <span class="rsl-rr rsl-rr1"></span><span class="rsl-rr rsl-rr2"></span><span class="rsl-rr rsl-rr3"></span>
-                <span class="rsl-rx"></span><span class="rsl-ry"></span>
-                <span class="rsl-sweep"></span>
-                <span class="rsl-ping"></span>
-                <span class="rsl-blip rsl-bp1"></span><span class="rsl-blip rsl-bp2"></span><span class="rsl-blip rsl-bp3"></span><span class="rsl-blip rsl-bp4"></span><span class="rsl-blip rsl-bp5"></span>
-              </div>
-              <div class="rsl-radar-side">
-                <span class="rsl-tag">Radar · detectando señales</span>
-                <div class="rsl-sig rsl-hot"><div class="rsl-thumb"></div><div class="rsl-meta"><b>«Nadie te cuenta esto de las hipotecas»</b><span>@rival_inmo · ahora</span></div><div class="rsl-x">×14,2</div></div>
-                <div class="rsl-sig"><div class="rsl-thumb"></div><div class="rsl-meta"><b>«3 errores al vender tu piso»</b><span>@otro_rival · hace 1 d</span></div><div class="rsl-x">×6,1</div></div>
-                <button class="rsl-steal-btn" tabindex="-1">⚡ Hazlo mío</button>
-              </div>
-            </div>
-            </div>
+            <video src="{{ url_for('static', filename='video/hazlo-mio.mp4') }}" autoplay muted loop playsinline preload="metadata" aria-label="Demo real: el radar detecta un reel que explota, pulsas «Hazlo mío» y aparece tu guion escrito en tu voz"></video>
+          </div>
         </div>
         <!-- chips flotantes (profundidad) — desaparecen en móvil -->
         <div class="rsl-float-chip rsl-fc1" aria-hidden="true"><span>⚡</span><span>señal detectada <b>×14,2</b></span></div>
@@ -11361,6 +11368,81 @@
       </div>
     </div>
   </section>
+
+  <!-- ═══ POR DENTRO (clips reales de la app) ═══ -->
+  <section style="padding-top:40px">
+    <div class="rsl-wrap" style="text-align:center">
+      <span class="rsl-eyebrow">Por dentro</span>
+      <h2 class="rsl-rise">Cada parte, funcionando de verdad.</h2>
+      <div class="rsl-vid-grid rsl-rise">
+        <div class="rsl-vidframe">
+          <div class="rsl-frame">
+            <div class="rsl-frame-bar"><i></i><i></i><i></i><span>De idea a guion</span></div>
+            <video src="{{ url_for('static', filename='video/idea-funcion.mp4') }}" autoplay muted loop playsinline preload="metadata" aria-label="Demo real: apuntas una idea suelta y el sistema la desarrolla en un guion"></video>
+          </div>
+          <p class="rsl-vid-cap">Apuntas una idea suelta y el sistema la desarrolla en un guion listo para grabar.</p>
+        </div>
+        <div class="rsl-vidframe">
+          <div class="rsl-frame">
+            <div class="rsl-frame-bar"><i></i><i></i><i></i><span>Tus métricas</span></div>
+            <video src="{{ url_for('static', filename='video/pagina-metricas.mp4') }}" autoplay muted loop playsinline preload="metadata" aria-label="Demo real: la página de métricas donde el Cerebro aprende de tu cuenta"></video>
+          </div>
+          <p class="rsl-vid-cap">El Cerebro aprende qué hooks, temas y duraciones funcionan en tu cuenta.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ EL RADAR (motion: detecta señales) — panel claro, sin marco ═══ -->
+  <section style="padding-top:52px;padding-bottom:16px">
+    <div class="rsl-wrap" style="text-align:center">
+      <span class="rsl-eyebrow">El radar</span>
+      <h2 class="rsl-rise">Mientras no mirabas,<br>tu nicho ya estaba petando.</h2>
+      <p class="rsl-sub rsl-rise" style="margin:0 auto 30px">El radar vigila a tus competidores y te trae lo que explota — ordenado por lo que merece tu próximo guion.</p>
+      <div class="rsl-radar-panel rsl-rise">
+        <div class="rsl-radar-scope">
+          <span class="rsl-rr rsl-rr1"></span><span class="rsl-rr rsl-rr2"></span><span class="rsl-rr rsl-rr3"></span>
+          <span class="rsl-rx"></span><span class="rsl-ry"></span>
+          <span class="rsl-sweep"></span>
+          <span class="rsl-ping"></span>
+          <span class="rsl-blip rsl-bp1"></span><span class="rsl-blip rsl-bp2"></span><span class="rsl-blip rsl-bp3"></span><span class="rsl-blip rsl-bp4"></span><span class="rsl-blip rsl-bp5"></span>
+        </div>
+        <div class="rsl-radar-side">
+          <span class="rsl-tag">Radar · detectando señales</span>
+          <div class="rsl-sig rsl-hot"><div class="rsl-thumb"></div><div class="rsl-meta"><b>«Nadie te cuenta esto de las hipotecas»</b><span>@rival_inmo · ahora</span></div><div class="rsl-x">×14,2</div></div>
+          <div class="rsl-sig"><div class="rsl-thumb"></div><div class="rsl-meta"><b>«3 errores al vender tu piso»</b><span>@otro_rival · hace 1 d</span></div><div class="rsl-x">×6,1</div></div>
+          <button class="rsl-steal-btn" tabindex="-1">⚡ Hazlo mío</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ MOAT / CEREBRO (subido: justo tras el radar) ═══ -->
+  <section>
+    <div class="rsl-wrap rsl-moat-grid">
+      <div>
+        <span class="rsl-eyebrow">El Cerebro</span>
+        <h2 class="rsl-rise">Un sistema que te conoce más cada día.</h2>
+        <p class="rsl-sub rsl-rise">Las plantillas suenan a todos. Los GPT suenan a robot. Reelscript construye un modelo de <strong>tu</strong> voz que mejora con cada uso — como el teclado de tu móvil aprende cómo escribes.</p>
+        <div class="rsl-moat-list">
+          <div class="rsl-moat-item rsl-rise"><div class="rsl-ic">🎙</div><div><b>Tu tono y tus muletillas</b><span>Aprendidos de tus propios reels, no de un cuestionario.</span></div></div>
+          <div class="rsl-moat-item rsl-rise"><div class="rsl-ic">🏆</div><div><b>Tus ganadores como molde</b><span>Tus reels con más views guían cada nuevo guion.</span></div></div>
+          <div class="rsl-moat-item rsl-rise"><div class="rsl-ic">🚫</div><div><b>Lo que te hunde, fuera</b><span>También aprende qué patrones no funcionan en tu cuenta.</span></div></div>
+        </div>
+      </div>
+      <div class="rsl-brain" id="rslBrainCard">
+        <div class="rsl-bh"><b>Cerebro · @tu_marca</b><span><i class="rsl-live" aria-hidden="true"></i>aprendiendo ahora</span></div>
+        <div class="rsl-row"><label>Voz capturada <em data-w="82">82%</em></label><div class="rsl-bar"><i data-w="82"></i></div></div>
+        <div class="rsl-row"><label>Hooks que te funcionan <em data-w="74">74%</em></label><div class="rsl-bar"><i data-w="74"></i></div></div>
+        <div class="rsl-row"><label>Estructura dominada <em data-w="67">67%</em></label><div class="rsl-bar"><i data-w="67"></i></div></div>
+        <div>
+          <span class="rsl-chip">cierras con pregunta</span><span class="rsl-chip">hooks de contraste</span><span class="rsl-chip">45–60 s</span><span class="rsl-chip">sin tecnicismos</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="rsl-cta-mid"><div class="rsl-wrap"><button type="button" class="rsl-btn rsl-btn-primary" onclick="openAuth('register','landing_mid')">Empezar gratis →</button></div></div>
 
   <!-- ═══ TICKER DE SEÑALES (FOMO con calma) ═══ -->
   <!-- PLACEHOLDER: handles y multiplicadores de muestra. En prod puede alimentarse
@@ -11579,6 +11661,8 @@
     </div>
   </section>
 
+  <div class="rsl-cta-mid"><div class="rsl-wrap"><button type="button" class="rsl-btn rsl-btn-primary" onclick="openAuth('register','landing_mid')">Empezar gratis →</button></div></div>
+
   <!-- ═══ LA CUENTA ES SIMPLE (ventas) ═══ -->
   <section class="rsl-math">
     <div class="rsl-wrap" style="text-align:center">
@@ -11612,31 +11696,6 @@
           <label>Tu lunes con Reelscript<small>abrir radar + «Hazlo mío» + grabar</small></label>
           <div class="rsl-tb-track"><span class="rsl-tb-fill"></span></div>
           <span class="rsl-tb-val">~12 min</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ MOAT / CEREBRO ═══ -->
-  <section>
-    <div class="rsl-wrap rsl-moat-grid">
-      <div>
-        <span class="rsl-eyebrow">El Cerebro</span>
-        <h2 class="rsl-rise">Un sistema que te conoce más cada día.</h2>
-        <p class="rsl-sub rsl-rise">Las plantillas suenan a todos. Los GPT suenan a robot. Reelscript construye un modelo de <strong>tu</strong> voz que mejora con cada uso — como el teclado de tu móvil aprende cómo escribes.</p>
-        <div class="rsl-moat-list">
-          <div class="rsl-moat-item rsl-rise"><div class="rsl-ic">🎙</div><div><b>Tu tono y tus muletillas</b><span>Aprendidos de tus propios reels, no de un cuestionario.</span></div></div>
-          <div class="rsl-moat-item rsl-rise"><div class="rsl-ic">🏆</div><div><b>Tus ganadores como molde</b><span>Tus reels con más views guían cada nuevo guion.</span></div></div>
-          <div class="rsl-moat-item rsl-rise"><div class="rsl-ic">🚫</div><div><b>Lo que te hunde, fuera</b><span>También aprende qué patrones no funcionan en tu cuenta.</span></div></div>
-        </div>
-      </div>
-      <div class="rsl-brain" id="rslBrainCard">
-        <div class="rsl-bh"><b>Cerebro · @tu_marca</b><span><i class="rsl-live" aria-hidden="true"></i>aprendiendo ahora</span></div>
-        <div class="rsl-row"><label>Voz capturada <em data-w="82">82%</em></label><div class="rsl-bar"><i data-w="82"></i></div></div>
-        <div class="rsl-row"><label>Hooks que te funcionan <em data-w="74">74%</em></label><div class="rsl-bar"><i data-w="74"></i></div></div>
-        <div class="rsl-row"><label>Estructura dominada <em data-w="67">67%</em></label><div class="rsl-bar"><i data-w="67"></i></div></div>
-        <div>
-          <span class="rsl-chip">cierras con pregunta</span><span class="rsl-chip">hooks de contraste</span><span class="rsl-chip">45–60 s</span><span class="rsl-chip">sin tecnicismos</span>
         </div>
       </div>
     </div>
