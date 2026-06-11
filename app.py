@@ -1750,7 +1750,11 @@ def cancel_subscription():
 
 _JSON_SCRIPT_SCHEMA = (
     'Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura exacta: '
-    '{"title": "string corto 3-7 palabras describiendo el guion (sin comillas, sin emojis)", '
+    # B: el título sale del HOOK (lo específico del guion), no de un resumen —
+    # los resúmenes de 3-7 palabras degeneraban en genérico ("Éxito no se persigue").
+    '{"title": "título sacado del hook: su dato o ángulo específico en 3-8 palabras '
+    '(p.ej. si el hook habla de 10 millones de tokens, el título menciona los tokens; '
+    'nada de resúmenes temáticos genéricos; sin comillas, sin emojis)", '
     '"hook": "las primeras 1-3 líneas que paran el scroll", '
     '"body": ["línea 1 del desarrollo", "línea 2", "..."], '
     '"closing": "la línea final que ancla"}. '
@@ -1779,6 +1783,9 @@ STYLE_PROMPTS = {
         "'es fundamental entender que', 'descubre cómo', 'cree en ti'. "
         "El resultado tiene que poder leerse frase por frase con viñetas (▸). "
         "Si lo lees en voz alta y no para el scroll en los primeros 3 segundos, reescríbelo. "
+        # B: anti-genérico — la especificidad del material fuente es el valor.
+        "Regla de especificidad: conserva los datos, cifras, nombres y el ángulo concreto "
+        "del material fuente; un guion que podría valer para cualquier nicho es un guion fallido. "
         "Output mínimo: 6-8 frases en body, 100+ palabras totales en el guion. "
         + _JSON_SCRIPT_SCHEMA
     ),
@@ -6680,8 +6687,18 @@ def _build_competitor_script_user_content(ig_username: str, caption: str,
         f"el competidor está en la EJECUCIÓN, no en el tema. Respeta "
         f"exactamente los nombres, versiones y herramientas que aparecen en "
         f"el reel.\n\n"
-        f"Total: 100-140 palabras, mínimo 8 frases en body. Incluye al menos "
-        f"1 ejemplo concreto o anécdota dentro del desarrollo."
+        # B: «copia lo que funciona» = preservar lo que hace funcionar al original.
+        f"PRESERVA lo que hace funcionar al original — regla NO negociable: "
+        f"(a) las cifras, nombres, comparaciones y el ángulo CONCRETO del reel "
+        f"se mantienen (traducidos a otras palabras, no sustituidos por "
+        f"generalidades); (b) el REGISTRO también se mantiene: si el original "
+        f"es humor/sátira/diálogo, el guion resultante es humor/sátira/diálogo "
+        f"— no lo conviertas en consejo serio ni motivacional; (c) prohibido "
+        f"inventar anécdotas o logros propios del usuario ('mi equipo hizo X') "
+        f"— los ejemplos salen del reel o son claramente hipotéticos. Si el "
+        f"guion final pierde la especificidad del original y podría valer para "
+        f"cualquier nicho, está mal: reescríbelo.\n\n"
+        f"Total: 100-140 palabras, mínimo 8 frases en body."
     )
 
 
@@ -6747,6 +6764,54 @@ def _user_owns_reel(uid: str, reel_id: str) -> bool:
                .limit(1)
                .execute())
     return bool(own_r.data)
+
+
+@app.route("/api/competitors/reels/<reel_id>/transcript", methods=["GET"])
+@require_auth
+@limiter.limit("30 per minute")
+def get_competitor_reel_transcript(reel_id: str):
+    """Detalle del reel (isla) — «Ver transcripción», SIN generar guion ni cobrar.
+    Reusa la misma caché que «Hazlo mío» (creator_reels_global.transcript):
+      - status ok    → {transcript} (2ª vez gratis: cache hit).
+      - transcribing → {pending:true} (el front pollea este mismo endpoint).
+      - falta/failed → encola tasks.transcribe_reel y {pending:true}.
+    GET semántico para el hit de caché; el encolado es idempotente (lock por
+    transcript_status + sweeper de stale)."""
+    user = current_user()
+    uid = user["id"]
+    if not _user_owns_reel(uid, reel_id):
+        return jsonify({"error": "reel_not_found"}), 404
+    try:
+        rr = (db.table("creator_reels_global")
+                .select("transcript, transcript_status, transcript_started_at")
+                .eq("id", reel_id).single().execute())
+    except Exception as e:
+        logger.error("reel_transcript load failed user=%s reel=%s err=%s", uid, reel_id, e)
+        return jsonify({"error": "internal"}), 500
+    reel = rr.data or {}
+    status = reel.get("transcript_status")
+    cached = (reel.get("transcript") or "").strip()
+    if status == "ok" and cached:
+        return jsonify({"transcript": cached})
+
+    # transcribing FRESCO → pending sin re-encolar; stale → re-encolar.
+    if status == "transcribing":
+        started_at = reel.get("transcript_started_at")
+        try:
+            started_dt = datetime.fromisoformat(str(started_at).replace("Z", "+00:00"))
+            fresh = (datetime.now(timezone.utc) - started_dt).total_seconds() / 60.0 <= 15
+        except Exception:
+            fresh = False
+        if fresh:
+            return jsonify({"pending": True})
+
+    try:
+        from tasks import transcribe_reel_task  # lazy (rompe circular tasks↔app)
+        transcribe_reel_task.delay(reel_id)
+    except Exception as e:
+        logger.error("reel_transcript enqueue failed user=%s reel=%s err=%s", uid, reel_id, e)
+        return jsonify({"error": "queue_error"}), 503
+    return jsonify({"pending": True})
 
 
 @app.route("/api/competitors/reels/<reel_id>/favorite", methods=["POST"])

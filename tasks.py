@@ -910,8 +910,19 @@ def generate_script_competitor_task(self, reel_id, user_id, assistant_id):
             "el competidor está en la EJECUCIÓN, no en el tema. Respeta "
             "exactamente los nombres, versiones y herramientas que aparecen en "
             "el reel.\n\n"
-            "Total: 100-140 palabras, mínimo 8 frases en body. Incluye al menos "
-            "1 ejemplo concreto o anécdota dentro del desarrollo."
+            # B: «copia lo que funciona» = preservar lo que hace funcionar al
+            # original (espejo del builder sync en app.py).
+            "PRESERVA lo que hace funcionar al original — regla NO negociable: "
+            "(a) las cifras, nombres, comparaciones y el ángulo CONCRETO del reel "
+            "se mantienen (traducidos a otras palabras, no sustituidos por "
+            "generalidades); (b) el REGISTRO también se mantiene: si el original "
+            "es humor/sátira/diálogo, el guion resultante es humor/sátira/diálogo "
+            "— no lo conviertas en consejo serio ni motivacional; (c) prohibido "
+            "inventar anécdotas o logros propios del usuario ('mi equipo hizo X') "
+            "— los ejemplos salen del reel o son claramente hipotéticos. Si el "
+            "guion final pierde la especificidad del original y podría valer para "
+            "cualquier nicho, está mal: reescríbelo.\n\n"
+            "Total: 100-140 palabras, mínimo 8 frases en body."
         )
 
         # Resolver style + custom_prompt.
@@ -1064,6 +1075,90 @@ def generate_script_competitor_task(self, reel_id, user_id, assistant_id):
 
 
 # ── v0.15.8: sweeper periódico de recursos stale ─────────────────────────────
+@celery_app.task(bind=True, name="tasks.transcribe_reel")
+def transcribe_reel_task(self, reel_id):
+    """Transcribe-only de un reel de competidor (detalle del reel en la isla):
+    misma caché y lock que generate_script_competitor_task
+    (creator_reels_global.transcript/_status), pero SIN generar guion ni
+    cobrar. Idempotente: si ya está 'ok' devuelve el cacheado; si otra task
+    fresca lo está transcribiendo, no relanza (el front pollea el endpoint).
+    El sweeper de stale (>15min) ya cubre los 'transcribing' huérfanos."""
+    SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+    SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
+    GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+    GROQ_URL_L = "https://api.groq.com/openai/v1/audio/transcriptions"
+    db = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+    try:
+        reel_r = (db.table("creator_reels_global")
+                    .select("id, ig_reel_id, transcript, transcript_status, transcript_started_at")
+                    .eq("id", reel_id).single().execute())
+    except Exception as e:
+        logger.exception("transcribe_reel load failed reel=%s: %s", reel_id, e)
+        return {"ok": False, "error": "db_error"}
+    reel = reel_r.data if reel_r else None
+    if not reel:
+        return {"ok": False, "error": "reel_not_found"}
+
+    status = reel.get("transcript_status")
+    cached = (reel.get("transcript") or "").strip()
+    if status == "ok" and cached:
+        return {"ok": True, "transcript": cached, "cached": True}
+
+    # Lock fresco de otra task → no relanzar (el front pollea la BD vía endpoint).
+    if status == "transcribing":
+        started_at = reel.get("transcript_started_at")
+        try:
+            started_dt = datetime.fromisoformat(str(started_at).replace("Z", "+00:00"))
+            if (datetime.now(timezone.utc) - started_dt).total_seconds() / 60.0 <= _TRANSCRIBE_STALE_MIN:
+                return {"ok": True, "pending": True}
+        except Exception:
+            pass  # started_at ilegible → tratar como stale y retranscribir
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    try:
+        db.table("creator_reels_global").update({
+            "transcript_status": "transcribing",
+            "transcript_started_at": now_iso,
+            "transcript_error": None,
+        }).eq("id", reel_id).execute()
+    except Exception as e:
+        logger.exception("transcribe_reel lock failed reel=%s: %s", reel_id, e)
+        return {"ok": False, "error": "db_error"}
+
+    url = "https://www.instagram.com/reel/{}/".format(reel["ig_reel_id"])
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            audio_path, _thumb, _apify_item = download_audio(url, tmpdir, "instagram")
+            headers = {"Authorization": "Bearer " + GROQ_API_KEY}
+            with open(audio_path, "rb") as f:
+                files = {"file": ("audio.mp3", f, "audio/mpeg")}
+                data = {"model": "whisper-large-v3", "response_format": "json"}
+                resp = requests.post(GROQ_URL_L, headers=headers, files=files, data=data, timeout=120)
+                resp.raise_for_status()
+                transcript_text = (resp.json().get("text") or "").strip()
+    except Exception as e:
+        logger.exception("transcribe_reel transcribe failed reel=%s: %s", reel_id, e)
+        try:
+            db.table("creator_reels_global").update({
+                "transcript_status": "failed",
+                "transcript_error": str(e)[:300],
+            }).eq("id", reel_id).execute()
+        except Exception:
+            pass
+        return {"ok": False, "error": "transcribe_error"}
+
+    try:
+        db.table("creator_reels_global").update({
+            "transcript": transcript_text,
+            "transcript_status": "ok",
+            "transcript_error": None,
+        }).eq("id", reel_id).execute()
+    except Exception as e:
+        logger.exception("transcribe_reel save failed reel=%s: %s", reel_id, e)
+    return {"ok": True, "transcript": transcript_text}
+
+
 # Limpia 2 estados huérfanos cada 5min vía Celery beat:
 #   1. creator_reels_global.transcript_status='transcribing' >15min → 'failed'
 #      con transcript_error='stale_timeout'. El próximo intento del user

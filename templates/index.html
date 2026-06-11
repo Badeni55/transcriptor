@@ -10173,6 +10173,26 @@
     .rs .feed { display:block; }
     .rs .row { display:grid; grid-template-columns:64px 56px 1fr auto auto; align-items:center; gap:18px; padding:15px 8px; border-bottom:1px solid var(--border-default); transition:background .12s var(--ease); }
     .rs .row:hover { background:var(--surface-raised); }
+    /* A: la card abre el detalle del reel */
+    .rs .row-clickable { cursor:pointer; }
+    .rs .row-clickable:focus-visible { outline:2px solid var(--brand-500); outline-offset:-2px; border-radius:10px; }
+    /* A: overlay de detalle del reel */
+    .rs .reel-detail { max-width:640px; }
+    .rs .reel-d-top { display:flex; gap:18px; align-items:flex-start; }
+    .rs .reel-d-thumb .thumb { width:110px; height:150px; border-radius:12px; overflow:hidden; position:relative; background:var(--surface-raised); border:1px solid var(--border-default); flex-shrink:0; }
+    .rs .reel-d-thumb .thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+    .rs .reel-d-thumb .dur { position:absolute; bottom:6px; right:6px; font-family:var(--font-mono); font-size:11px; background:rgba(0,0,0,.6); color:#fff; padding:1px 6px; border-radius:5px; }
+    .rs .reel-d-main { flex:1; min-width:0; }
+    .rs .reel-d-who { display:flex; align-items:center; gap:9px; margin-bottom:8px; font-size:14px; }
+    .rs .reel-d-when { color:var(--text-tertiary); font-size:12.5px; }
+    .rs .reel-d-cap { font-size:16px; font-weight:700; line-height:1.35; margin:0 0 6px; }
+    .rs .reel-d-sum { font-size:13.5px; color:var(--text-secondary); margin:0 0 12px; line-height:1.5; }
+    .rs .reel-d-mets { display:flex; gap:22px; flex-wrap:wrap; }
+    .rs .reel-d-acts { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:16px; }
+    .rs .reel-tx-text { font-size:14.5px; line-height:1.65; color:var(--text-secondary); background:var(--surface-raised); border:1px solid var(--border-default); border-radius:12px; padding:14px 16px; white-space:pre-wrap; }
+    .rs .reel-tx-wait { display:flex; align-items:center; gap:10px; font-size:13.5px; color:var(--text-secondary); }
+    .rs--mobile .reel-d-top { flex-direction:column; }
+    .rs--mobile .reel-d-thumb .thumb { width:90px; height:124px; }
     .rs .row-score { display:flex; flex-direction:column; gap:3px; }
     .rs .row-score .sv { font-family:var(--font-mono); font-size:17px; font-weight:500; color:var(--text-primary); letter-spacing:-.02em; }
     .rs .row-score.hi .sv { color:var(--brand-500); }
