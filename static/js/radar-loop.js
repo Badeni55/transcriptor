@@ -365,7 +365,10 @@
   function reelCardHTML(r){
     var hi=(r.explosion||0)>=3, isFav=!!S.favs[r.id];
     var thumbInner=r.thumb?'<img src="'+ESC(r.thumb)+'" alt="">':'<div class="play"></div>';
-    return '<div class="row">'+
+    // A: la card entera abre el detalle (data-act en el contenedor; los botones
+    // internos ganan porque closest() resuelve el data-act más interno). Enter
+    // también lo abre (onKeydown) — la card es un objeto con el que se trabaja.
+    return '<div class="row row-clickable" data-act="reel-detail" data-id="'+ESC(r.id)+'" role="button" tabindex="0" aria-label="Abrir detalle del reel de @'+ESC(r.creator.handle)+'">'+
       '<div class="row-score'+(hi?" hi":"")+'"><span class="sv">'+(r.explosionTxt!=null?ESC(r.explosionTxt):"–")+'×</span><span class="sx">'+(hi?"🔥 explota":"media")+'</span></div>'+   // T8 (IDI): el "explosivo" se lee por etiqueta, no solo por color
       '<div class="row-thumb"><div class="thumb">'+thumbInner+'<span class="dur">'+ESC(r.dur)+'</span></div></div>'+
       '<div class="row-mid"><div class="row-crow"><span class="ava">'+ESC(r.creator.initials)+'</span><span class="row-who">@'+ESC(r.creator.handle)+'</span><span class="row-when">'+ESC(r.when)+'</span></div><p class="row-cap">'+ESC(r.cap)+'</p></div>'+
@@ -1270,6 +1273,7 @@
     else if(S.view==="script") html+=overlayShellHTML(scriptRevealHTML(),"Tu guión, en tu voz","close-feed",true);
     else if(S.view==="result") html+=overlayShellHTML(formatResultHTML(S.resultKind),"Listo","back-script",false);
     else if(S.view==="perf") html+=overlayShellHTML(guiPerfHTML(),"Rendimiento del guion","close-feed",true);
+    else if(S.view==="reel") html+=overlayShellHTML(reelDetailHTML(),"Detalle del reel","close-feed",true);
     else if(S.view==="prompter") html+=teleprompterHTML();
     else if(S.view==="fillweek") html+='<div class="overlay" role="dialog" aria-modal="true" aria-label="Llena mi semana"><div class="obar"><button class="back" data-act="close-feed" aria-label="Cerrar">'+IC.x+'</button><span class="otitle">Llena mi semana</span></div><div class="oscroll" id="rsFillHost">'+fillWeekHTML(fillReels(),S._fillPhase==null?0:S._fillPhase)+'</div></div>';
     if(S.sheet) html+=sheetHTML();   // T2: el sheet de entrada va SOBRE cualquier overlay
@@ -1419,6 +1423,73 @@
     if(k==="agencia"){ S.brands=demoBrands(); S.brandId=S.brands[0].id; S.tab="portfolio"; }   // macro
     else { S.brands=[demoBrands()[0]]; S.brandId=S.brands[0].id; S.tab="dashboard"; applyDemoBrand(); }
     render();
+  }
+  /* ── A: DETALLE DEL REEL — la card es un objeto con el que se trabaja ──
+     Overlay con thumb + autor + métricas + caption + transcripción on-demand
+     (misma caché que «Hazlo mío»: 2ª vez gratis) + acciones (robar / fav /
+     seguir autor). S._tx = {id, status: idle|loading|ok|error, text}. */
+  function openReelDetail(id){
+    var r=S.reels.filter(function(x){return x.id===id;})[0]; if(!r) return;
+    S.detailReel=r;
+    if(!S._tx || S._tx.id!==id) S._tx={id:id, status:"idle", text:""};
+    S.view="reel"; render();
+  }
+  function reelDetailHTML(){
+    var r=S.detailReel; if(!r) return '<div class="pad">—</div>';
+    var thumbInner=r.thumb?'<img src="'+ESC(r.thumb)+'" alt="">':'<div class="play"></div>';
+    var isFav=!!S.favs[r.id];
+    var mets=[["Views",r.views],["Likes",r.likes],["Explosión",(r.explosionTxt!=null?r.explosionTxt+"×":"–")],["Duración",r.dur]];
+    var tx=S._tx&&S._tx.id===r.id?S._tx:{status:"idle"};
+    var txBody;
+    if(tx.status==="ok"){ txBody='<div class="reel-tx-text">'+ESC(tx.text)+'</div>'; }
+    else if(tx.status==="loading"){ txBody='<div class="reel-tx-wait"><span class="rs-ldr"></span>Transcribiendo el audio… (~30-60s la primera vez; queda cacheada)</div>'; }
+    else if(tx.status==="error"){ txBody='<div class="reel-tx-wait">No se pudo transcribir este reel. <button class="btn btn-sm btn-secondary" data-act="reel-tx" data-id="'+ESC(r.id)+'">Reintentar</button></div>'; }
+    else { txBody='<button class="btn btn-md btn-secondary" data-act="reel-tx" data-id="'+ESC(r.id)+'">'+IC.doc+' Ver transcripción</button>'; }
+    return '<div class="reel-detail fade-in">'+
+      '<div class="reel-d-top">'+
+        '<div class="reel-d-thumb"><div class="thumb">'+thumbInner+'<span class="dur">'+ESC(r.dur)+'</span></div></div>'+
+        '<div class="reel-d-main">'+
+          '<div class="reel-d-who"><span class="ava bava">'+ESC(r.creator.initials)+'</span><b>@'+ESC(r.creator.handle)+'</b><span class="reel-d-when">'+ESC(r.when)+'</span></div>'+
+          '<p class="reel-d-cap">'+ESC(r.cap)+'</p>'+
+          (r.sum?'<p class="reel-d-sum">'+ESC(r.sum)+'</p>':'')+
+          '<div class="reel-d-mets">'+mets.map(function(m){return '<div class="pm"><div class="pm-k">'+ESC(m[0].toUpperCase())+'</div><div class="pm-v">'+ESC(String(m[1]))+'</div></div>';}).join("")+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="reel-d-acts">'+
+        '<button class="btn btn-md btn-primary" data-act="steal" data-id="'+ESC(r.id)+'">'+IC.bolt+' Hazlo mío</button>'+
+        '<button class="iconbtn'+(isFav?" on":"")+'" data-act="fav" data-id="'+ESC(r.id)+'" title="Guardar" aria-label="'+(isFav?"Quitar de favoritos":"Guardar en favoritos")+'">'+(isFav?IC.star:IC.starO)+'</button>'+
+        '<button class="btn btn-md btn-ghost" data-act="reel-follow" data-handle="'+ESC(r.creator.handle)+'">'+IC.plus+' Seguir a @'+ESC(r.creator.handle)+'</button>'+
+      '</div>'+
+      '<div class="brain-section-t" style="margin-top:18px">Transcripción <span class="brain-tag">lo que dice el creador</span></div>'+
+      txBody+
+    '</div>';
+  }
+  function loadReelTranscript(id){
+    var r=S.detailReel; if(!r||r.id!==id) return;
+    S._tx={id:id, status:"loading", text:""}; render();
+    if(isDemo()){
+      // Demo: la "transcripción" sale del guion de muestra del reel (es lo que dice).
+      setTimeout(function(){
+        if(!S._tx||S._tx.id!==id) return;
+        var s=r.script||{}; var txt=[s.hook].concat(s.beats||[],[s.close]).filter(Boolean).join(" ");
+        S._tx={id:id, status:"ok", text:txt||"Transcripción de muestra del reel (demo)."};
+        if(S.view==="reel") render();
+      },900);
+      return;
+    }
+    var tries=0;
+    (function poll(){
+      if(!S._tx||S._tx.id!==id) return;            // cerró/abrió otro reel
+      apiGet("/api/competitors/reels/"+encodeURIComponent(id)+"/transcript").then(function(res){
+        if(!S._tx||S._tx.id!==id) return;
+        if(res.ok && res.d && res.d.transcript){ S._tx={id:id,status:"ok",text:res.d.transcript}; if(S.view==="reel") render(); return; }
+        if(res.ok && res.d && res.d.pending){
+          if(++tries>24){ S._tx={id:id,status:"error",text:""}; if(S.view==="reel") render(); return; }   // ~60s
+          setTimeout(poll, 2500); return;
+        }
+        S._tx={id:id,status:"error",text:""}; if(S.view==="reel") render();
+      });
+    })();
   }
   function steal(id){
     var r=S.reels.filter(function(x){return x.id===id;})[0]; if(!r) return;
@@ -2060,6 +2131,8 @@
       if(S.sheet && e.target.id==="rsSheetInput"){ e.preventDefault(); return submitSheet(); }
       if(e.target.id==="rsIdeaSeed"){ e.preventDefault(); return seedIdea("rsIdeaSeed", true); }
       if(e.target.id==="rsIdeaSeed2"){ e.preventDefault(); return addSeedIdea(); }
+      // A: la card del reel es role=button — Enter abre el detalle (a11y teclado).
+      if(e.target.getAttribute && e.target.getAttribute("data-act")==="reel-detail"){ e.preventDefault(); return openReelDetail(e.target.getAttribute("data-id")); }
     }
     // T5: trap de foco — con un diálogo abierto, Tab circula dentro y no escapa al fondo.
     if(e.key==="Tab" && (S.sheet || (S.view && S.view!=="feed"))){
@@ -2104,6 +2177,9 @@
     if(act==="team-edit") return showToast("Gestión de roles y marcas por miembro: próximamente.");
     if(act==="brand-add"){ S.brandMenu=false; render(); return showToast("Nueva marca: disponible en plan Agencia."); }
     if(act==="steal") return steal(id);
+    if(act==="reel-detail") return openReelDetail(id);
+    if(act==="reel-tx") return loadReelTranscript(id);
+    if(act==="reel-follow"){ closeOverlay(); if(typeof window.openAddCompetitorModal==="function") window.openAddCompetitorModal(btn.getAttribute("data-handle")||""); return; }
     if(act==="fav") return toggleFav(id);
     if(act==="filter"){ S.filter=k; return render(); }
     if(act==="expand-feed"){ S.feedExpanded=true; return render(); }
