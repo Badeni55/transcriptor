@@ -152,12 +152,14 @@
   function initialsOf(h){ h=(h||"").replace(/[^a-zA-Z0-9]/g,""); return (h.slice(0,2)||"··").toUpperCase(); }
   function fmtNum(n){ n=Number(n||0); if(n>=1e6) return (n/1e6).toFixed(n>=1e7?0:1).replace(".",",")+" M"; if(n>=1e3) return Math.round(n/1e3)+" K"; return String(n); }
   function relTime(iso){ if(window.ovRelTime) return window.ovRelTime(iso); if(!iso) return ""; var d=(Date.now()-new Date(iso).getTime())/3600000; if(d<1) return "hace "+Math.max(1,Math.round(d*60))+" min"; if(d<24) return "hace "+Math.round(d)+" h"; return "hace "+Math.round(d/24)+" días"; }
-  function durFmt(sec){ sec=Number(sec||0); if(!sec) return "0:30"; var m=Math.floor(sec/60),s=sec%60; return m+":"+String(s).padStart(2,"0"); }
+  // (C) Math.round ANTES de partir en m:s — con duraciones float (68.5999…s)
+  // salía "1:8.599999999999994" en el detalle. 68.6 → "1:09".
+  function durFmt(sec){ sec=Math.round(Number(sec||0)); if(!sec) return "0:30"; var m=Math.floor(sec/60),s=sec%60; return m+":"+String(s).padStart(2,"0"); }
 
   function normReel(r){
     var handle=(r.creator&&r.creator.ig_username)||r.username||"creador";
     var exp=r.explosion_score!=null?r.explosion_score:(r.explosion!=null?r.explosion:null);
-    return { id:r.id, creator:{handle:handle, initials:r.initials||initialsOf(handle)},
+    return { id:r.id, creator_id:r.creator_id||null, creator:{handle:handle, initials:r.initials||initialsOf(handle)},
       when:r.when||relTime(r.posted_at), explosion:exp,
       explosionTxt: exp!=null?(exp>=10?Math.round(exp):(Math.round(exp*10)/10)):null,
       views: typeof r.views==="string"?r.views:fmtNum(r.views),
@@ -335,9 +337,11 @@
     var rows=t.map(function(tt){
       var h=(tt.creator&&tt.creator.ig_username)||tt.ig_username||"";
       var n=(tt.reels_count!=null)?(tt.reels_count+' reel'+(tt.reels_count===1?'':'es')):'';
-      return '<div class="brain-comp"><div class="ava bava">'+ESC(initialsOf(h))+'</div>'+
+      var cid=(tt.creator&&tt.creator.id)||tt.creator_id||"";
+      // B: la fila abre TODOS los reels del competidor (la × interna gana por closest()).
+      return '<div class="brain-comp brain-comp-link" data-act="creator-reels" data-id="'+ESC(String(cid))+'" data-handle="'+ESC(h)+'" role="button" tabindex="0" aria-label="Ver todos los reels de @'+ESC(h)+'"><div class="ava bava">'+ESC(initialsOf(h))+'</div>'+
         '<span class="brain-comp-h">@'+ESC(h)+'</span>'+
-        '<span class="brain-comp-n">'+ESC(n)+'</span>'+
+        '<span class="brain-comp-n">'+ESC(n)+' ›</span>'+
         '<button class="brain-comp-x" data-act="untrack" data-id="'+ESC(String(tt.id))+'" data-handle="'+ESC(h)+'" title="Dejar de seguir a @'+ESC(h)+'" aria-label="Dejar de seguir a @'+ESC(h)+'">'+IC.x+'</button>'+
       '</div>';
     }).join("");
@@ -487,6 +491,11 @@
       '<div class="phead-right">'+(S.user.streak>0?'<span class="streak">'+IC.spark+' Racha '+S.user.streak+' días</span>':'')+'</div>'+
     '</header>';
 
+    // B: vista «Reels de @X» — todos los reels del competidor, sin recorte.
+    if(S.creatorFilter){
+      return '<div class="scroll"><div class="canvas">'+head+(isAgency()?brandTabsHTML():"")+creatorReelsHTML()+'</div></div>';
+    }
+
     if(sorted.length===0){
       return '<div class="scroll"><div class="canvas">'+head+(isAgency()?brandTabsHTML():"")+statbarHTML()+
         trackedManageHTML()+
@@ -499,7 +508,7 @@
     var hero=sorted[0], rest=sorted.slice(1);
     var fillCount=Math.min(5,S.reels.length)||5;
     var shown = S.feedExpanded ? rest : rest.slice(0,5);
-    var rows = shown.map(reelCardHTML).join("");
+    var rows = shown.map(reelRowHTML).join("");   // A: card + detalle inline si está abierto
     var moreToggle = (!S.feedExpanded && rest.length>5)
       ? '<button class="see-all" data-act="expand-feed">'+IC.repeat+' Ver las '+rest.length+' oportunidades</button>'
       : '';
@@ -1273,7 +1282,6 @@
     else if(S.view==="script") html+=overlayShellHTML(scriptRevealHTML(),"Tu guión, en tu voz","close-feed",true);
     else if(S.view==="result") html+=overlayShellHTML(formatResultHTML(S.resultKind),"Listo","back-script",false);
     else if(S.view==="perf") html+=overlayShellHTML(guiPerfHTML(),"Rendimiento del guion","close-feed",true);
-    else if(S.view==="reel") html+=overlayShellHTML(reelDetailHTML(),"Detalle del reel","close-feed",true);
     else if(S.view==="prompter") html+=teleprompterHTML();
     else if(S.view==="fillweek") html+='<div class="overlay" role="dialog" aria-modal="true" aria-label="Llena mi semana"><div class="obar"><button class="back" data-act="close-feed" aria-label="Cerrar">'+IC.x+'</button><span class="otitle">Llena mi semana</span></div><div class="oscroll" id="rsFillHost">'+fillWeekHTML(fillReels(),S._fillPhase==null?0:S._fillPhase)+'</div></div>';
     if(S.sheet) html+=sheetHTML();   // T2: el sheet de entrada va SOBRE cualquier overlay
@@ -1352,6 +1360,7 @@
   function switchTab(t){
     if(S.legacy) _exitLegacy();   // salir de Analizar/Configuración al cambiar de tab
     S.tab=t; S.brandMenu=false; S.view="feed";
+    S.creatorFilter=null; S.creatorReels=null; S.detailReelId=null;   // A+B: estados de la feed no sobreviven al cambio de tab
     // Vistas de marca (no macro/equipo) refrescan stats+feed de la marca activa.
     if(isDemo() && t!=="portfolio" && t!=="team") applyDemoBrand();
     // T2: al entrar en Cerebro, asegura la lista de asistentes fresca (loadAssistants
@@ -1424,18 +1433,26 @@
     else { S.brands=[demoBrands()[0]]; S.brandId=S.brands[0].id; S.tab="dashboard"; applyDemoBrand(); }
     render();
   }
-  /* ── A: DETALLE DEL REEL — la card es un objeto con el que se trabaja ──
-     Overlay con thumb + autor + métricas + caption + transcripción on-demand
-     (misma caché que «Hazlo mío»: 2ª vez gratis) + acciones (robar / fav /
-     seguir autor). S._tx = {id, status: idle|loading|ok|error, text}. */
+  /* ── A: DETALLE DEL REEL — desplegable INLINE bajo la card (mismo patrón que
+     «Ver guión completo»: estado propio, sin modal). Solo un reel abierto a la
+     vez (S.detailReelId). Contenido: thumb + autor + métricas + transcripción
+     on-demand (misma caché que «Hazlo mío»: 2ª vez gratis) + acciones (robar /
+     fav / seguir autor / ver todos sus reels). S._tx = {id,status,text}. */
   function openReelDetail(id){
-    var r=S.reels.filter(function(x){return x.id===id;})[0]; if(!r) return;
-    S.detailReel=r;
+    if(S.detailReelId===id){ S.detailReelId=null; return render(); }   // toggle
+    var r=reelById(id); if(!r) return;
+    S.detailReelId=id;
     if(!S._tx || S._tx.id!==id) S._tx={id:id, status:"idle", text:""};
-    S.view="reel"; render();
+    render();
   }
-  function reelDetailHTML(){
-    var r=S.detailReel; if(!r) return '<div class="pad">—</div>';
+  // Busca el reel en la feed normal y en la lista del competidor (vista B).
+  function reelById(id){
+    var r=S.reels.filter(function(x){return x.id===id;})[0];
+    if(!r && Array.isArray(S.creatorReels)) r=S.creatorReels.filter(function(x){return x.id===id;})[0];
+    return r;
+  }
+  function reelDetailHTML(r){
+    if(!r) return '';
     var thumbInner=r.thumb?'<img src="'+ESC(r.thumb)+'" alt="">':'<div class="play"></div>';
     var isFav=!!S.favs[r.id];
     var mets=[["Views",r.views],["Likes",r.likes],["Explosión",(r.explosionTxt!=null?r.explosionTxt+"×":"–")],["Duración",r.dur]];
@@ -1445,11 +1462,15 @@
     else if(tx.status==="loading"){ txBody='<div class="reel-tx-wait"><span class="rs-ldr"></span>Transcribiendo el audio… (~30-60s la primera vez; queda cacheada)</div>'; }
     else if(tx.status==="error"){ txBody='<div class="reel-tx-wait">No se pudo transcribir este reel. <button class="btn btn-sm btn-secondary" data-act="reel-tx" data-id="'+ESC(r.id)+'">Reintentar</button></div>'; }
     else { txBody='<button class="btn btn-md btn-secondary" data-act="reel-tx" data-id="'+ESC(r.id)+'">'+IC.doc+' Ver transcripción</button>'; }
-    return '<div class="reel-detail fade-in">'+
+    // @autor clicable → todos sus reels (B). Solo si conocemos su creator_id.
+    var who=r.creator_id
+      ? '<button class="reel-d-author" data-act="creator-reels" data-id="'+ESC(r.creator_id)+'" data-handle="'+ESC(r.creator.handle)+'" title="Ver todos los reels de @'+ESC(r.creator.handle)+'">@'+ESC(r.creator.handle)+'</button>'
+      : '<b>@'+ESC(r.creator.handle)+'</b>';
+    return '<div class="reel-inline reel-detail fade-in">'+
       '<div class="reel-d-top">'+
         '<div class="reel-d-thumb"><div class="thumb">'+thumbInner+'<span class="dur">'+ESC(r.dur)+'</span></div></div>'+
         '<div class="reel-d-main">'+
-          '<div class="reel-d-who"><span class="ava bava">'+ESC(r.creator.initials)+'</span><b>@'+ESC(r.creator.handle)+'</b><span class="reel-d-when">'+ESC(r.when)+'</span></div>'+
+          '<div class="reel-d-who"><span class="ava bava">'+ESC(r.creator.initials)+'</span>'+who+'<span class="reel-d-when">'+ESC(r.when)+'</span></div>'+
           '<p class="reel-d-cap">'+ESC(r.cap)+'</p>'+
           (r.sum?'<p class="reel-d-sum">'+ESC(r.sum)+'</p>':'')+
           '<div class="reel-d-mets">'+mets.map(function(m){return '<div class="pm"><div class="pm-k">'+ESC(m[0].toUpperCase())+'</div><div class="pm-v">'+ESC(String(m[1]))+'</div></div>';}).join("")+'</div>'+
@@ -1464,8 +1485,12 @@
       txBody+
     '</div>';
   }
+  // Una card + su detalle inline si está abierto (se usa en feed y en vista de competidor).
+  function reelRowHTML(r){
+    return reelCardHTML(r)+(S.detailReelId===r.id?reelDetailHTML(r):'');
+  }
   function loadReelTranscript(id){
-    var r=S.detailReel; if(!r||r.id!==id) return;
+    var r=reelById(id); if(!r) return;
     S._tx={id:id, status:"loading", text:""}; render();
     if(isDemo()){
       // Demo: la "transcripción" sale del guion de muestra del reel (es lo que dice).
@@ -1473,7 +1498,7 @@
         if(!S._tx||S._tx.id!==id) return;
         var s=r.script||{}; var txt=[s.hook].concat(s.beats||[],[s.close]).filter(Boolean).join(" ");
         S._tx={id:id, status:"ok", text:txt||"Transcripción de muestra del reel (demo)."};
-        if(S.view==="reel") render();
+        if(S.detailReelId===id) render();
       },900);
       return;
     }
@@ -1482,14 +1507,40 @@
       if(!S._tx||S._tx.id!==id) return;            // cerró/abrió otro reel
       apiGet("/api/competitors/reels/"+encodeURIComponent(id)+"/transcript").then(function(res){
         if(!S._tx||S._tx.id!==id) return;
-        if(res.ok && res.d && res.d.transcript){ S._tx={id:id,status:"ok",text:res.d.transcript}; if(S.view==="reel") render(); return; }
+        if(res.ok && res.d && res.d.transcript){ S._tx={id:id,status:"ok",text:res.d.transcript}; if(S.detailReelId===id) render(); return; }
         if(res.ok && res.d && res.d.pending){
-          if(++tries>24){ S._tx={id:id,status:"error",text:""}; if(S.view==="reel") render(); return; }   // ~60s
+          if(++tries>24){ S._tx={id:id,status:"error",text:""}; if(S.detailReelId===id) render(); return; }   // ~60s
           setTimeout(poll, 2500); return;
         }
-        S._tx={id:id,status:"error",text:""}; if(S.view==="reel") render();
+        S._tx={id:id,status:"error",text:""}; if(S.detailReelId===id) render();
       });
     })();
+  }
+  /* ── B: TODOS los reels de un competidor (sin recorte por explosión) ──
+     Entradas: fila del acordeón «Tus competidores» y @autor del detalle.
+     El backend /api/tracked-creators/reels ya filtra por ?creator_id=. */
+  function openCreatorReels(creatorId, handle){
+    if(!creatorId) return;
+    S.creatorFilter={id:creatorId, handle:handle||""};
+    S.creatorReels=null;   // null = cargando
+    S.detailReelId=null;
+    S.tab="dashboard"; S.view="feed"; render();
+    apiGet("/api/tracked-creators/reels?creator_id="+encodeURIComponent(creatorId)+"&sort=recent&limit=50").then(function(res){
+      if(!S.creatorFilter || S.creatorFilter.id!==creatorId) return;   // salió de la vista
+      S.creatorReels=(res.ok && res.d && Array.isArray(res.d.reels))?res.d.reels.map(normReel):[];
+      render();
+    });
+  }
+  function closeCreatorReels(){ S.creatorFilter=null; S.creatorReels=null; S.detailReelId=null; render(); }
+  function creatorReelsHTML(){
+    var cf=S.creatorFilter;
+    var head='<div class="feed-head"><span class="feed-title">Reels de @'+ESC(cf.handle)+(Array.isArray(S.creatorReels)?' <span class="ct">· '+S.creatorReels.length+'</span>':'')+'</span>'+
+      '<button class="fchip ghost" data-act="creator-reels-back">← Todas las señales</button></div>';
+    var body;
+    if(!Array.isArray(S.creatorReels)) body='<div class="rs-empty" style="margin-top:18px"><span class="rs-ldr"></span> Cargando los reels de @'+ESC(cf.handle)+'…</div>';
+    else if(!S.creatorReels.length) body='<div class="rs-empty" style="margin-top:18px">Aún no hay reels guardados de @'+ESC(cf.handle)+'. Se irán acumulando con cada refresco del radar.</div>';
+    else body='<div class="feed">'+S.creatorReels.map(reelRowHTML).join("")+'</div>';
+    return head+body;
   }
   function steal(id){
     var r=S.reels.filter(function(x){return x.id===id;})[0]; if(!r) return;
@@ -2125,6 +2176,8 @@
         if(S.view==="prompter") return tpBack();
         return closeOverlay();
       }
+      // A: Esc pliega el detalle inline del reel (no hay overlay que cerrar).
+      if(S.detailReelId){ e.preventDefault(); S.detailReelId=null; return render(); }
       return;   // nada que cerrar → que lo gestione la chrome legacy
     }
     if(e.key==="Enter" && !e.shiftKey && (e.target.tagName||"").toLowerCase()!=="textarea"){
@@ -2179,7 +2232,9 @@
     if(act==="steal") return steal(id);
     if(act==="reel-detail") return openReelDetail(id);
     if(act==="reel-tx") return loadReelTranscript(id);
-    if(act==="reel-follow"){ closeOverlay(); if(typeof window.openAddCompetitorModal==="function") window.openAddCompetitorModal(btn.getAttribute("data-handle")||""); return; }
+    if(act==="reel-follow"){ if(typeof window.openAddCompetitorModal==="function") window.openAddCompetitorModal(btn.getAttribute("data-handle")||""); return; }
+    if(act==="creator-reels") return openCreatorReels(id, btn.getAttribute("data-handle")||"");
+    if(act==="creator-reels-back") return closeCreatorReels();
     if(act==="fav") return toggleFav(id);
     if(act==="filter"){ S.filter=k; return render(); }
     if(act==="expand-feed"){ S.feedExpanded=true; return render(); }
@@ -2299,6 +2354,7 @@
   function loadBrandData(){
     var el=root(); if(!el) return;
     try{ window.RS_reloadRadar=loadBrandData; }catch(e){}   // puente: el chrome legacy recarga el Radar tras añadir competidor
+    S.creatorFilter=null; S.creatorReels=null; S.detailReelId=null;   // A+B: al cambiar de marca no arrastres la vista de otro competidor
     el.innerHTML=skeletonHTML();
     var q=S.brandId?("?brand="+encodeURIComponent(S.brandId)):"";
     // P0 aislamiento: el backend filtra por project_id ("brand" lo ignoraba) —

@@ -10173,11 +10173,19 @@
     .rs .feed { display:block; }
     .rs .row { display:grid; grid-template-columns:64px 56px 1fr auto auto; align-items:center; gap:18px; padding:15px 8px; border-bottom:1px solid var(--border-default); transition:background .12s var(--ease); }
     .rs .row:hover { background:var(--surface-raised); }
-    /* A: la card abre el detalle del reel */
+    /* A: la card abre/pliega el detalle del reel */
     .rs .row-clickable { cursor:pointer; }
     .rs .row-clickable:focus-visible { outline:2px solid var(--brand-500); outline-offset:-2px; border-radius:10px; }
-    /* A: overlay de detalle del reel */
+    /* A: detalle del reel — DESPLEGABLE inline bajo la card (sin modal).
+       En la feed 2-col de desktop ocupa el ancho completo. */
+    .rs .reel-inline { grid-column:1 / -1; margin:-1px 0 10px; padding:18px; border:1px solid var(--border-default); border-top:none; border-radius:0 0 14px 14px; background:var(--surface-base); }
     .rs .reel-detail { max-width:640px; }
+    /* B: @autor del detalle y fila de competidor → todos sus reels */
+    .rs .reel-d-author { background:none; border:none; padding:0; font:inherit; font-weight:700; color:var(--text-primary); cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px; }
+    .rs .reel-d-author:hover { color:var(--brand-400); }
+    .rs .brain-comp-link { cursor:pointer; transition:border-color .15s var(--ease); }
+    .rs .brain-comp-link:hover { border-color:var(--brand-500); }
+    .rs .brain-comp-link:focus-visible { outline:2px solid var(--brand-500); outline-offset:-2px; }
     .rs .reel-d-top { display:flex; gap:18px; align-items:flex-start; }
     .rs .reel-d-thumb .thumb { width:110px; height:150px; border-radius:12px; overflow:hidden; position:relative; background:var(--surface-raised); border:1px solid var(--border-default); flex-shrink:0; }
     .rs .reel-d-thumb .thumb img { width:100%; height:100%; object-fit:cover; display:block; }
