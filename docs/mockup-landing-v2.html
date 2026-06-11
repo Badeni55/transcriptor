@@ -568,6 +568,62 @@
   @keyframes blipOn{0%,2%{opacity:0;transform:translate(-50%,-50%) scale(.4)}8%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}38%{opacity:.95}68%{opacity:0;transform:translate(-50%,-50%) scale(.7)}100%{opacity:0}}
   @media(max-width:640px){.video-fallback{flex-direction:column;gap:16px;text-align:center}.radar-scope{width:150px}.radar-side{width:100%}}
 
+
+  /* ── clips de vídeo reales (demos de la app) ── */
+  .vidframe .frame video{display:block;width:100%;height:auto;background:#0a0b0f}
+  .vid-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:44px;text-align:left}
+  .vid-cap{color:var(--text2);font-size:.95rem;margin-top:14px;max-width:440px}
+  @media(max-width:760px){.vid-grid{grid-template-columns:1fr;gap:34px}}
+
+
+  /* ── BANDA CLARA (contraste con el dark; rompe monotonía) ── */
+  .section-light{background:#f4f1ec;color:#1b1a18}
+  .section-light .eyebrow{color:#3b3fd4}
+  .section-light h2{color:#15140f}
+  .section-light .sub{color:#5c5a54}
+  .section-light .frame{background:#fffdf9;border-color:#e7e2d9;box-shadow:0 26px 70px rgba(40,40,60,.14)}
+  .section-light .frame-bar{background:#faf8f3;border-color:#e7e2d9}
+  .section-light .frame-bar i{background:#dad6cd}
+  .section-light .frame-bar span{color:#9a968d}
+  .section-light .radar-scope{background:radial-gradient(circle,rgba(59,63,212,.09),rgba(244,241,236,.3) 72%);border-color:rgba(59,63,212,.25);box-shadow:inset 0 0 44px rgba(59,63,212,.08)}
+  .section-light .radar-scope .rr{border-color:rgba(59,63,212,.16)}
+  .section-light .radar-scope .rx,.section-light .radar-scope .ry{background:rgba(59,63,212,.14)}
+  .section-light .radar-scope .sweep{background:conic-gradient(from 0deg,rgba(59,63,212,.42),rgba(59,63,212,.03) 52deg,transparent 120deg,transparent 360deg)}
+  .section-light .radar-scope .ping{background:#3b3fd4}
+  .section-light .radar-scope .blip{background:#10b981;box-shadow:0 0 11px #10b981,0 0 4px #10b981}
+  .section-light .sig{background:#fff;border-color:#e7e2d9}
+  .section-light .sig .thumb{background:linear-gradient(160deg,#c7cdf0,#9aa3d8)}
+  .section-light .sig .meta b{color:#15140f}
+  .section-light .sig .meta span{color:#9a968d}
+  .section-light .sig .x{color:#0f9b73}
+  .section-light .sig.hot{border-color:rgba(59,63,212,.4);box-shadow:0 0 24px rgba(59,63,212,.10)}
+  .section-light .tag{color:#3b3fd4}
+  .section-light .steal-btn{background:#3b3fd4;box-shadow:0 6px 20px rgba(59,63,212,.3)}
+  /* CTA intermedio reutilizable */
+  .cta-mid{text-align:center;padding:6px 0 2px}
+  .cta-mid .btn-primary{padding:16px 34px;font-size:1.08rem}
+
+
+  /* ── RADAR en panel claro limpio (sin marco de navegador) ── */
+  .radar-panel{display:flex;align-items:center;gap:32px;max-width:720px;margin:0 auto;text-align:left;
+    background:#f5f2ec;border:1px solid #e7e2d9;border-radius:24px;padding:30px 34px;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+  .radar-panel .radar-scope{width:min(220px,42%);background:radial-gradient(circle,rgba(59,63,212,.08),#ffffff 72%);border-color:rgba(59,63,212,.22);box-shadow:inset 0 0 40px rgba(59,63,212,.07)}
+  .radar-panel .radar-scope .rr{border-color:rgba(59,63,212,.16)}
+  .radar-panel .radar-scope .rx,.radar-panel .radar-scope .ry{background:rgba(59,63,212,.13)}
+  .radar-panel .radar-scope .sweep{background:conic-gradient(from 0deg,rgba(59,63,212,.40),rgba(59,63,212,.03) 52deg,transparent 120deg,transparent 360deg)}
+  .radar-panel .radar-scope .ping{background:#3b3fd4}
+  .radar-panel .radar-scope .blip{background:#10b981;box-shadow:0 0 11px #10b981,0 0 4px #10b981}
+  .radar-panel .radar-side{flex:1;min-width:0}
+  .radar-panel .tag{color:#3b3fd4}
+  .radar-panel .sig{background:#fff;border-color:#e7e2d9}
+  .radar-panel .sig .thumb{background:linear-gradient(160deg,#c7cdf0,#9aa3d8)}
+  .radar-panel .sig .meta b{color:#15140f}
+  .radar-panel .sig .meta span{color:#9a968d}
+  .radar-panel .sig .x{color:#0f9b73}
+  .radar-panel .sig.hot{border-color:rgba(59,63,212,.4);box-shadow:0 0 24px rgba(59,63,212,.10)}
+  .radar-panel .steal-btn{background:#3b3fd4;box-shadow:0 6px 20px rgba(59,63,212,.3)}
+  @media(max-width:640px){.radar-panel{flex-direction:column;gap:18px;padding:24px;text-align:center}.radar-panel .radar-scope{width:160px}}
+
 </style>
 </head>
 <body>
@@ -607,12 +663,49 @@
            Mientras no exista, debajo queda la composición de respaldo (señales + Hazlo mío). -->
       <div class="hero-media">
         <div class="frame">
-          <div class="frame-bar"><i></i><i></i><i></i><span>reelscript.net — radar en vivo</span></div>
+          <div class="frame-bar"><i></i><i></i><i></i><span>reelscript.net — «Hazlo mío» en vivo</span></div>
           <div class="hero-video">
-            <video muted playsinline preload="none" poster="img/landing-v2/demo-poster.png" aria-label="Vídeo: el radar detecta un reel que explota en tu nicho, pulsas «Hazlo mío» y aparece tu guion escrito en tu voz" onerror="this.style.display='none'">
-              <!-- <source src="img/landing-v2/demo.mp4" type="video/mp4"> -->
-            </video>
-            <div class="video-fallback" aria-hidden="true">
+            <video src="HAZLO%20MIO%20COMPETIDORES.mp4" autoplay muted loop playsinline preload="metadata"></video>
+          </div>
+        </div>
+        <!-- chips flotantes (profundidad) — desaparecen en móvil -->
+        <div class="float-chip fc1" aria-hidden="true"><span>⚡</span><span>señal detectada <b>×14,2</b></span></div>
+        <div class="float-chip fc2" aria-hidden="true"><span>✓</span><span>escrito con <b>tu voz al 82%</b></span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ MÍRALO EN ACCIÓN (clips reales) ═══ -->
+  <section style="padding-top:40px">
+    <div class="wrap" style="text-align:center">
+      <span class="eyebrow">Por dentro</span>
+      <h2 class="rise">Cada parte, funcionando de verdad.</h2>
+      <div class="vid-grid rise">
+        <div class="vidframe">
+          <div class="frame">
+            <div class="frame-bar"><i></i><i></i><i></i><span>De idea a guion</span></div>
+            <video src="IDEA%20FUNCION.mp4" autoplay muted loop playsinline preload="metadata"></video>
+          </div>
+          <p class="vid-cap">Apuntas una idea suelta y el sistema la desarrolla en un guion listo para grabar.</p>
+        </div>
+        <div class="vidframe">
+          <div class="frame">
+            <div class="frame-bar"><i></i><i></i><i></i><span>Tus métricas</span></div>
+            <video src="PAGINA%20METRICAS.mp4" autoplay muted loop playsinline preload="metadata"></video>
+          </div>
+          <p class="vid-cap">El Cerebro aprende qué hooks, temas y duraciones funcionan en tu cuenta.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ EL RADAR (motion: detecta señales) — BANDA CLARA ═══ -->
+  <section style="padding-top:52px;padding-bottom:16px">
+    <div class="wrap" style="text-align:center">
+      <span class="eyebrow">El radar</span>
+      <h2 class="rise">Mientras no mirabas,<br>tu nicho ya estaba petando.</h2>
+      <p class="sub rise" style="margin:0 auto 30px">El radar vigila a tus competidores y te trae lo que explota — ordenado por lo que merece tu próximo guion.</p>
+      <div class="radar-panel rise">
               <div class="radar-scope">
                 <span class="rr rr1"></span><span class="rr rr2"></span><span class="rr rr3"></span>
                 <span class="rx"></span><span class="ry"></span>
@@ -626,15 +719,36 @@
                 <div class="sig"><div class="thumb"></div><div class="meta"><b>«3 errores al vender tu piso»</b><span>@otro_rival · hace 1 d</span></div><div class="x">×6,1</div></div>
                 <button class="steal-btn" tabindex="-1">⚡ Hazlo mío</button>
               </div>
-            </div>
-            </div>
-        </div>
-        <!-- chips flotantes (profundidad) — desaparecen en móvil -->
-        <div class="float-chip fc1" aria-hidden="true"><span>⚡</span><span>señal detectada <b>×14,2</b></span></div>
-        <div class="float-chip fc2" aria-hidden="true"><span>✓</span><span>escrito con <b>tu voz al 82%</b></span></div>
       </div>
     </div>
   </section>
+
+  <!-- ═══ MOAT / CEREBRO ═══ -->
+  <section>
+    <div class="wrap moat-grid">
+      <div>
+        <span class="eyebrow">El Cerebro</span>
+        <h2 class="rise">Un sistema que te conoce más cada día.</h2>
+        <p class="sub rise">Las plantillas suenan a todos. Los GPT suenan a robot. Reelscript construye un modelo de <strong>tu</strong> voz que mejora con cada uso — como el teclado de tu móvil aprende cómo escribes.</p>
+        <div class="moat-list">
+          <div class="moat-item rise"><div class="ic">🎙</div><div><b>Tu tono y tus muletillas</b><span>Aprendidos de tus propios reels, no de un cuestionario.</span></div></div>
+          <div class="moat-item rise"><div class="ic">🏆</div><div><b>Tus ganadores como molde</b><span>Tus reels con más views guían cada nuevo guion.</span></div></div>
+          <div class="moat-item rise"><div class="ic">🚫</div><div><b>Lo que te hunde, fuera</b><span>También aprende qué patrones no funcionan en tu cuenta.</span></div></div>
+        </div>
+      </div>
+      <div class="brain" id="brainCard">
+        <div class="bh"><b>Cerebro · @tu_marca</b><span><i class="live" aria-hidden="true"></i>aprendiendo ahora</span></div>
+        <div class="row"><label>Voz capturada <em data-w="82">82%</em></label><div class="bar"><i data-w="82"></i></div></div>
+        <div class="row"><label>Hooks que te funcionan <em data-w="74">74%</em></label><div class="bar"><i data-w="74"></i></div></div>
+        <div class="row"><label>Estructura dominada <em data-w="67">67%</em></label><div class="bar"><i data-w="67"></i></div></div>
+        <div>
+          <span class="chip">cierras con pregunta</span><span class="chip">hooks de contraste</span><span class="chip">45–60 s</span><span class="chip">sin tecnicismos</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="cta-mid"><div class="wrap"><a class="btn btn-primary" href="#signup">Empezar gratis →</a></div></div>
 
   <!-- ═══ TICKER DE SEÑALES (FOMO con calma) ═══ -->
   <!-- PLACEHOLDER: handles y multiplicadores de muestra. En prod puede alimentarse
@@ -853,6 +967,8 @@
     </div>
   </section>
 
+  <div class="cta-mid"><div class="wrap"><a class="btn btn-primary" href="#signup">Empezar gratis →</a></div></div>
+
   <!-- ═══ LA CUENTA ES SIMPLE (ventas) ═══ -->
   <section class="math">
     <div class="wrap" style="text-align:center">
@@ -886,31 +1002,6 @@
           <label>Tu lunes con Reelscript<small>abrir radar + «Hazlo mío» + grabar</small></label>
           <div class="tb-track"><span class="tb-fill"></span></div>
           <span class="tb-val">~12 min</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ MOAT / CEREBRO ═══ -->
-  <section>
-    <div class="wrap moat-grid">
-      <div>
-        <span class="eyebrow">El Cerebro</span>
-        <h2 class="rise">Un sistema que te conoce más cada día.</h2>
-        <p class="sub rise">Las plantillas suenan a todos. Los GPT suenan a robot. Reelscript construye un modelo de <strong>tu</strong> voz que mejora con cada uso — como el teclado de tu móvil aprende cómo escribes.</p>
-        <div class="moat-list">
-          <div class="moat-item rise"><div class="ic">🎙</div><div><b>Tu tono y tus muletillas</b><span>Aprendidos de tus propios reels, no de un cuestionario.</span></div></div>
-          <div class="moat-item rise"><div class="ic">🏆</div><div><b>Tus ganadores como molde</b><span>Tus reels con más views guían cada nuevo guion.</span></div></div>
-          <div class="moat-item rise"><div class="ic">🚫</div><div><b>Lo que te hunde, fuera</b><span>También aprende qué patrones no funcionan en tu cuenta.</span></div></div>
-        </div>
-      </div>
-      <div class="brain" id="brainCard">
-        <div class="bh"><b>Cerebro · @tu_marca</b><span><i class="live" aria-hidden="true"></i>aprendiendo ahora</span></div>
-        <div class="row"><label>Voz capturada <em data-w="82">82%</em></label><div class="bar"><i data-w="82"></i></div></div>
-        <div class="row"><label>Hooks que te funcionan <em data-w="74">74%</em></label><div class="bar"><i data-w="74"></i></div></div>
-        <div class="row"><label>Estructura dominada <em data-w="67">67%</em></label><div class="bar"><i data-w="67"></i></div></div>
-        <div>
-          <span class="chip">cierras con pregunta</span><span class="chip">hooks de contraste</span><span class="chip">45–60 s</span><span class="chip">sin tecnicismos</span>
         </div>
       </div>
     </div>
