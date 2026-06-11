@@ -4067,6 +4067,8 @@ def idea_to_script(idea_id):
         script_title = llm_title
     else:
         script_title = f"Guión adaptado · {style_label} · {today}"
+    # (6) regenerar desde la misma idea repetía el título del LLM → parecían duplicados.
+    script_title = _uniquify_title(script_title, _existing_idea_titles(uid, idea_id))
     script_id = None
     try:
         script_row = db.table("scripts").insert({
@@ -7108,11 +7110,16 @@ def get_tracked_creators_reels():
         return jsonify({"reels": [], "total": 0, "has_more": False})
 
     # 2. Set de creator_ids activos del user (deduplicado).
-    tracked = (db.table("user_tracked_creators")
-                 .select("creator_id")
-                 .eq("user_id", uid)
-                 .is_("archived_at", "null")
-                 .execute())
+    # P0 aislamiento por marca: filtrar por project_id (mismo patrón que
+    # GET /api/tracked-creators). Sin parámetro → todas (marca "default").
+    project_id = request.args.get("project_id")
+    tq = (db.table("user_tracked_creators")
+            .select("creator_id")
+            .eq("user_id", uid)
+            .is_("archived_at", "null"))
+    if project_id:
+        tq = tq.eq("project_id", project_id)
+    tracked = tq.execute()
     creator_ids = list({t["creator_id"] for t in (tracked.data or [])})
     if not creator_ids and not favorites_only:
         return jsonify({"reels": [], "total": 0, "has_more": False})
@@ -7202,11 +7209,16 @@ def radar_stats():
     user = current_user()
     uid = user["id"]
 
-    tracked = (db.table("user_tracked_creators")
-                 .select("creator_id")
-                 .eq("user_id", uid)
-                 .is_("archived_at", "null")
-                 .execute())
+    # P0 aislamiento por marca: filtrar por project_id (mismo patrón que
+    # GET /api/tracked-creators). Sin parámetro → todas (marca "default").
+    project_id = request.args.get("project_id")
+    tq = (db.table("user_tracked_creators")
+            .select("creator_id")
+            .eq("user_id", uid)
+            .is_("archived_at", "null"))
+    if project_id:
+        tq = tq.eq("project_id", project_id)
+    tracked = tq.execute()
     creator_ids = list({t["creator_id"] for t in (tracked.data or [])})
     competitors = len(creator_ids)
 
@@ -7882,6 +7894,33 @@ def _flatten_script_result(result):
     return result, llm_title
 
 
+def _uniquify_title(title, seen):
+    """(6) Anti 'guiones duplicados': el LLM repite título entre variaciones de
+    la MISMA idea (5 ángulos del batch → 2× «Éxito no se persigue» con contenido
+    distinto) y en la lista de Guiones parecen duplicados. 'X' → 'X · v2' → 'X · v3'.
+    `seen` es un set lowercase que se muta (sembrar con los títulos ya en DB)."""
+    base = (title or "").strip()
+    if not base:
+        return title
+    if base.lower() not in seen:
+        seen.add(base.lower())
+        return base
+    n = 2
+    while f"{base.lower()} · v{n}" in seen:
+        n += 1
+    seen.add(f"{base.lower()} · v{n}")
+    return f"{base} · v{n}"
+
+
+def _existing_idea_titles(uid, idea_id):
+    """Títulos ya persistidos para una idea (siembra de _uniquify_title)."""
+    try:
+        ex = db.table("scripts").select("title").eq("user_id", uid).eq("idea_id", idea_id).execute()
+        return {(r.get("title") or "").strip().lower() for r in (ex.data or []) if r.get("title")}
+    except Exception:
+        return set()
+
+
 @app.route("/ideas/generate-batch", methods=["POST"])
 @require_auth
 @limiter.limit("5 per minute;30 per hour")
@@ -8059,6 +8098,7 @@ def idea_scripts_generate_batch(idea_id):
     gevent.joinall(_jobs, timeout=120)
 
     scripts_out = []
+    _seen_titles = _existing_idea_titles(uid, idea_id)
     for i in range(count):
         result = _jobs[i].value
         if not result:
@@ -8067,7 +8107,7 @@ def idea_scripts_generate_batch(idea_id):
         if not flat:
             continue
         today = datetime.now(timezone.utc).strftime("%d %b %Y").lower()
-        script_title = llm_title or f"Guión {i+1} · {style_label} · {today}"
+        script_title = _uniquify_title(llm_title or f"Guión {i+1} · {style_label} · {today}", _seen_titles)
         asst_name = _resolve_assistant_name(
             {"assistant_id": assistant_id, "style": style_label}, uid, db)
         try:
@@ -8550,8 +8590,9 @@ def ideas_explosion():
     asst_name = _resolve_assistant_name(
         {"assistant_id": assistant_id, "style": style_label}, uid, db)
 
+    _seen_titles = set()   # (6) ideas recién creadas → basta dedupe intra-run
     for k, (idea, j, flat, llm_title) in enumerate(_pending):
-        script_title = llm_title or f"Guión · {style_label} · {today}"
+        script_title = _uniquify_title(llm_title or f"Guión · {style_label} · {today}", _seen_titles)
         alt = _hooks_by_script.get(k, [])
         hooks_out.extend(alt)
         sid = None

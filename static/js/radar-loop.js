@@ -707,6 +707,18 @@
       pub='<button class="gui-link" data-act="gui-link-reel" data-id="'+g.id+'" title="Pega el link del reel publicado en Instagram para analizarlo y entrenar tu Cerebro">'+IC.repeat+' Vincular reel publicado</button>';
     } else { pub=''; }
     var toggle=nh?'<button class="gui-hooks-toggle'+(g.expanded?" open":"")+'" data-act="gui-hooks" data-id="'+g.id+'">'+IC.hook+' '+nh+' hook'+(nh===1?"":"s")+' alternativo'+(nh===1?"":"s")+' '+IC.chev+'</button>':'';
+    // P0 (4): leer el guión entero sin salir de la lista. Mismo patrón que
+    // scriptBlockHTML (.sc-full/.script-body); estado propio g.bodyOpen — no
+    // pisa el toggle de hooks (g.expanded).
+    var hasBody=!!((g.beats&&g.beats.length)||g.close||g.hook);
+    var bodyOpen=!!g.bodyOpen;
+    var bodyToggle=hasBody?'<button class="gui-hooks-toggle gui-body-toggle'+(bodyOpen?" open":"")+'" data-act="gui-body-toggle" data-id="'+g.id+'" aria-expanded="'+(bodyOpen?"true":"false")+'">'+IC.doc+' '+(bodyOpen?"Plegar guión":"Ver guión completo")+' '+IC.chev+'</button>':'';
+    var beatsHtml=(g.beats||[]).map(function(b,i){return '<div class="beat"><span class="n">'+String(i+1).padStart(2,"0")+'</span><span>'+ESC(b)+'</span></div>';}).join("");
+    var bodyFull=(hasBody&&bodyOpen)?('<div class="sc-full gui-body">'+
+        (g.hook?'<div class="gui-body-hook">'+ESC(g.hook)+'</div>':'')+
+        (beatsHtml?'<div class="script-body">'+beatsHtml+'</div>':'')+
+        (g.close?'<div class="script-close">'+ESC(g.close)+'</div>':'')+
+      '</div>'):'';
     var hooksList=(nh&&g.expanded)?'<div class="gui-hooks">'+g.hooks.map(function(h,i){
       return '<div class="gui-hook"><span class="hn">'+String(i+1).padStart(2,"0")+'</span><span class="gui-hook-t">'+ESC(h)+'</span>'+
         '<button class="gui-hook-use" data-act="gui-use-hook" data-id="'+g.id+'" data-i="'+i+'" title="Usar como apertura">Usar</button>'+
@@ -716,7 +728,7 @@
     return '<div class="gui-card-wrap">'+
       '<div class="gui-card'+(rec?" is-rec":"")+'">'+
         '<div class="ava bava">'+ESC(initialsOf(g.from||g.brand))+'</div>'+
-        '<div class="gui-main"><div class="gui-title">'+ESC(g.title)+'</div><div class="gui-meta">'+meta+'</div>'+pub+toggle+'</div>'+
+        '<div class="gui-main"><div class="gui-title">'+ESC(g.title)+'</div><div class="gui-meta">'+meta+'</div>'+pub+bodyToggle+toggle+'</div>'+
         pill+
         '<div class="gui-acts">'+
           '<button class="iconbtn" data-act="gui-record" data-id="'+g.id+'" title="Grabar (teleprompter)">'+IC.mic+'</button>'+
@@ -724,6 +736,7 @@
           '<button class="iconbtn danger" data-act="gui-discard" data-id="'+g.id+'" title="Descartar">'+IC.x+'</button>'+
         '</div>'+
       '</div>'+
+      bodyFull+
       hooksList+
     '</div>';
   }
@@ -791,13 +804,18 @@
     var v=metricVideos(), metric=S.metricChart||"views";
     var vals=v.map(function(x){return x[metric]||0;}); var max=Math.max.apply(null,vals.concat([1]));
     var md=_mean(vals), mdn=_median(vals);
+    // (5) Escala LOGARÍTMICA: lineal, un reel de 136k aplastaba a los de 1-3k
+    // (barras invisibles). log(val+1)/log(max+1) preserva el orden y deja
+    // legibles los pequeños. Los marcadores de media/mediana usan la MISMA
+    // escala (si no, mentirían respecto a las barras).
+    function logPct(val){ return Math.max(2, Math.round(Math.log(val+1)/Math.log(max+1)*100)); }
     var tabs=[["views","Views"],["likes","Likes"],["comments","Comments"]].map(function(t){ return '<button class="chip-sm'+(metric===t[0]?" on":"")+'" data-act="metric-chart" data-k="'+t[0]+'">'+t[1]+'</button>'; }).join("");
     var rows=v.slice(0,10).map(function(x){
-      var val=x[metric]||0, pct=Math.max(2,Math.round(val/max*100));
+      var val=x[metric]||0, pct=logPct(val);
       var lbl=((x.date||"")+" "+(x.cap||"")).slice(0,22);
       return '<div class="bar-row"><div class="bar-lbl">'+ESC(lbl)+'</div><div class="bar-track"><div class="bar-fill'+(x.top?" is-top":"")+'" style="width:'+pct+'%"></div></div><div class="bar-val">'+fmtK(val)+'</div></div>';
     }).join("");
-    var medPct=Math.round(md/max*100), mdnPct=Math.round(mdn/max*100);
+    var medPct=logPct(md), mdnPct=logPct(mdn);
     // Alinear el marcador con el ÁREA de barras (track empieza tras el label 180px y deja 60px de valor a la derecha).
     function lpos(p){ return 'calc(180px + (100% - 240px) * '+(p/100)+')'; }
     var lines='<div class="bar-line media" style="left:'+lpos(medPct)+'"><span>Media '+fmtK(md)+'</span></div><div class="bar-line mediana" style="left:'+lpos(mdnPct)+'"><span>Mediana '+fmtK(mdn)+'</span></div>';
@@ -912,7 +930,10 @@
   // seguir). Se carga aparte del feed; al resolver, repinta las vistas que la
   // muestran (Cerebro y Radar — trackedManageHTML) si están abiertas.
   function loadTracked(){
-    apiGet("/api/tracked-creators").then(function(r){
+    // P0 aislamiento: el backend YA filtra por project_id — sin el parámetro
+    // traía los competidores de TODAS las marcas. Marca "default" → sin filtro.
+    var _pid=_pidOf(S.brandId);
+    apiGet("/api/tracked-creators"+(_pid?("?project_id="+encodeURIComponent(_pid)):"")).then(function(r){
       if(r.ok && r.d && Array.isArray(r.d.tracked)){ S.tracked=r.d.tracked; if(S.tab==="brain"||S.tab==="dashboard") render(); }
     });
   }
@@ -2113,6 +2134,7 @@
     if(act==="idea-toggle"){ var idt=findIdea(id); if(idt){ idt.expanded=(idt.expanded===false); } return render(); }
     if(act==="sc-toggle"){ var sct=findScript(id); if(sct){ sct.expanded=!sct.expanded; } return render(); }
     if(act==="gui-hooks"){ var gh=guionById(id); if(gh){ gh.expanded=!gh.expanded; } return render(); }
+    if(act==="gui-body-toggle"){ var gb=guionById(id); if(gb){ gb.bodyOpen=!gb.bodyOpen; } return render(); }
     if(act==="gui-use-hook"){ var gu=guionById(id); if(gu&&gu.hooks){ var ix=parseInt(btn.getAttribute("data-i"),10); var nv=gu.hooks[ix]; if(nv!=null){ gu.hooks[ix]=gu.hook; gu.hook=nv; gu.title=nv; } } render(); return showToast("Apertura actualizada."); }
     if(act==="gui-del-hook"){ var gd=guionById(id); if(gd&&gd.hooks){ gd.hooks.splice(parseInt(btn.getAttribute("data-i"),10),1); if(!gd.hooks.length) gd.expanded=false; } return render(); }
     if(act==="gen-background") return closeOverlay();   // T6: seguir navegando (el robo sigue detrás)
@@ -2203,10 +2225,12 @@
     try{ window.RS_reloadRadar=loadBrandData; }catch(e){}   // puente: el chrome legacy recarga el Radar tras añadir competidor
     el.innerHTML=skeletonHTML();
     var q=S.brandId?("?brand="+encodeURIComponent(S.brandId)):"";
+    // P0 aislamiento: el backend filtra por project_id ("brand" lo ignoraba) —
+    // stats y feed de señales salían mezclados entre marcas. "default" → sin filtro.
     var _pq=(S.brandId&&S.brandId!=="default")?("?project_id="+encodeURIComponent(S.brandId)):"";
     Promise.all([
-      fetch("/api/radar/stats"+q,{credentials:"same-origin"}).then(function(r){return r.json();}).catch(function(){return{};}),
-      fetch("/api/tracked-creators/reels"+(q?q+"&":"?")+"sort=explosion&limit=24",{credentials:"same-origin"}).then(function(r){return r.json();}).catch(function(){return{reels:[]};}),
+      fetch("/api/radar/stats"+_pq,{credentials:"same-origin"}).then(function(r){return r.json();}).catch(function(){return{};}),
+      fetch("/api/tracked-creators/reels"+(_pq?_pq+"&":"?")+"sort=explosion&limit=24",{credentials:"same-origin"}).then(function(r){return r.json();}).catch(function(){return{reels:[]};}),
       fetch("/metrics/summary"+q,{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
       fetch("/api/voice",{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
       fetch("/api/metrics/insights",{credentials:"same-origin"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
