@@ -904,11 +904,21 @@
   }
   // Tarjeta de CAPTURA del moat: el creador pega 1-2 reels suyos → aprendemos su voz.
   function voiceCaptureHTML(){
+    // Voz AUTO: si el user tiene reels publicados (métricas), la vía destacada
+    // es derivarla de ellos — sin pegar nada. El coste (transcripciones que
+    // falten) se enseña ANTES de lanzar (preflight en voiceAutoDerive). El
+    // pegado manual queda como alternativa secundaria.
+    var nPub=(S.metrics&&S.metrics.videos)?S.metrics.videos.length:0;
+    var auto = nPub>0
+      ? '<div class="voice-auto"><div class="va-text"><b>Tienes '+nPub+' reels publicados.</b> Puedo leerlos y derivar tu voz de ahí — sin pegar nada.</div>'+
+          '<button class="btn btn-md btn-primary" data-act="voice-auto">'+IC.brain+' Derivar mi voz de mis reels</button></div>'
+      : '<button class="btn btn-sm btn-ghost" data-act="voice-auto" style="margin-bottom:12px">'+IC.brain+' Derivar de mis reels publicados</button>';
     return '<div class="brain-section-t">Enséñame tu voz</div>'+
       '<div class="voice-capture">'+
-        '<p class="vc-lead">Pega lo que dices en <b>1-2 reels TUYOS</b>. Aprendo a sonar como tú — y tu próximo «Hazlo mío» ya saldrá con tu voz, no genérico.</p>'+
+        auto+
+        '<p class="vc-lead">'+(nPub>0?'O pega':'Pega')+' lo que dices en <b>1-2 reels TUYOS</b>. Aprendo a sonar como tú — y tu próximo «Hazlo mío» ya saldrá con tu voz, no genérico.</p>'+
         '<textarea class="vc-ta" id="rsVoiceText" rows="5" placeholder="Pega aquí la transcripción de tus reels (lo que dices)…"></textarea>'+
-        '<button class="btn btn-md btn-primary" data-act="voice-onboard">'+IC.spark+' Aprender mi voz</button>'+
+        '<button class="btn btn-md '+(nPub>0?'btn-secondary':'btn-primary')+'" data-act="voice-onboard">'+IC.spark+' Aprender mi voz</button>'+
       '</div>';
   }
   /* B6 + T1 (IDI): onboarding de voz como 2º punto de entrada — en el Dashboard
@@ -963,7 +973,8 @@
     var nAsst=0; try{ if(typeof userAssistants!=="undefined" && Array.isArray(userAssistants)) nAsst=userAssistants.length; }catch(e){}
 
     var sources=[
-      [b.reelsAnalyzed||0,"reels tuyos leídos","de aquí modelo tu voz","var(--brand-500)"],
+      // Voz real derivada → «reels tuyos leídos» refleja la muestra usada (source_count).
+      [hasRealVoice()?(S.voice.source_count||0):(b.reelsAnalyzed||0),"reels tuyos leídos","de aquí modelo tu voz","var(--brand-500)"],
       [comps.length,"competidores vigilados","de aquí saco qué funciona en tu nicho","#3b82f6"],
       [nGuiones,"guiones creados","cada uno refina tu estilo","#22c55e"],
       [nPublished,"publicados con métricas","cierran el círculo de aprendizaje","#ff2d55"]
@@ -1990,6 +2001,44 @@
       .catch(function(){ showError("Error de red. Inténtalo de nuevo."); });
   }
 
+  // Voz AUTO: deriva la voz de los reels PUBLICADOS del user (ig_videos).
+  // Preflight (GET, sin coste) → confirmación con el coste real → POST.
+  // NUNCA cobra sin avisar: las transcripciones pendientes se enseñan antes.
+  function voiceAutoDerive(){
+    if(isDemo()){
+      S.voice={ has_profile:true, tone:"Directo, sin postureo — como un audio a un colega.",
+        phrases:["te lo cuento porque","paso uno… paso dos","guárdate esto"], structure:"hook directo → 3 pasos → CTA",
+        avg_duration:40, avoid:"tecnicismos y motivacional vacío", confidence:78, source_count:5,
+        evidence:["abres con una afirmación tajante","frases cortas (<12 palabras)","cierras pidiendo guardar/comentar"] };
+      var b=brand(); b.voice=78; b.reelsAnalyzed=5; render(); showToast("Voz derivada de tus 5 reels — te conozco al 78%."); return;
+    }
+    showToast("Comprobando tus reels publicados…");
+    apiGet("/api/voice/auto-derive").then(function(pre){
+      if(!pre.ok || !pre.d){ return showError("No pude comprobar tus reels. Inténtalo de nuevo."); }
+      var d=pre.d;
+      if(!d.available){ return showToast("No encuentro reels publicados tuyos. Conecta tu Instagram en Métricas."); }
+      var cost = d.need_transcribe>0
+        ? d.need_transcribe+" de ellos necesita"+(d.need_transcribe===1?"":"n")+" transcripción ("+d.need_transcribe+" uso"+(d.need_transcribe===1?"":"s")+"/crédito"+(d.need_transcribe===1?"":"s")+")."
+        : "Todos ya están transcritos — derivar es gratis.";
+      var go=function(){
+        showToast("Derivando tu voz de tus reels… (~1 min si hay que transcribir)");
+        apiPost("/api/voice/auto-derive",{project_id:_pidOf(S.brandId)}).then(function(r){
+          if(r.ok && r.d && r.d.ok){
+            return fetch("/api/voice",{credentials:"same-origin"}).then(function(x){return x.json();}).then(function(v){
+              S.voice=v; render();
+              showToast("Voz derivada de "+(r.d.source_count||0)+" reels — te conozco al "+(r.d.confidence||v.confidence||0)+"%.");
+            });
+          }
+          showError((r.d&&r.d.message)||(r.d&&r.d.error)||"No pude derivar tu voz. Inténtalo de nuevo.");
+        });
+      };
+      if(typeof window.confirmModal==="function"){
+        window.confirmModal({ title:"Derivar mi voz", body:"Usaré tus "+d.will_use+" reels con más views. "+cost, confirmText:"Derivar mi voz", cancelText:"Ahora no" })
+          .then(function(ok){ if(ok) go(); });
+      } else { go(); }
+    });
+  }
+
   // Refinar el moat: acumula reels NUEVOS sobre la voz ya aprendida.
   // El backend (POST /api/voice/refine) suma source_count y sube confidence.
   // Mirror de onboardVoice: mismo auth (credentials same-origin), mismo refresh
@@ -2243,6 +2292,7 @@
     // recarga el Radar vía window.RS_reloadRadar (puente en loadBrandData).
     if(act==="add-comp"){ if(typeof window.openAddCompetitorModal==="function") window.openAddCompetitorModal(); return; }
     if(act==="voice-onboard") return onboardVoice();
+    if(act==="voice-auto") return voiceAutoDerive();
     if(act==="voice-refine") return refineVoice();
     if(act==="next-series-go"){ var nt=btn.getAttribute("data-title")||(nextSeries()&&nextSeries().title)||""; S.tab="ideas"; S.view="feed";
       if(nt && !isDemo()){ var tmpNs=makeIdea(nt, nt.length+S.ideas.length); tmpNs._saving=true; S.ideas.unshift(tmpNs); render();
