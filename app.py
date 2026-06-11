@@ -2497,6 +2497,149 @@ def api_voice_refine():
     })
 
 
+# ── Voz AUTOMÁTICA desde los reels publicados del propio usuario ─────────────
+# Hoy voice_profiles solo se llena si el user pega texto a mano → en prod está
+# vacía y el moat apagado. Esto la deriva de sus ig_videos (métricas).
+_VOICE_AUTO_SAMPLE = 5   # reels representativos (top views) — mismo cap que onboard/refine
+
+
+def _voice_auto_candidates(uid):
+    """Top ig_videos del user por views (muestra representativa para la voz)."""
+    try:
+        r = (db.table("ig_videos")
+               .select("ig_video_id, ig_url, caption, views, transcription")
+               .eq("user_id", uid)
+               .order("views", desc=True)
+               .limit(_VOICE_AUTO_SAMPLE)
+               .execute())
+        return r.data or []
+    except Exception as e:
+        logger.warning("voice_auto candidates failed user=%s err=%s", uid, e)
+        return []
+
+
+@app.route("/api/voice/auto-derive", methods=["GET"])
+@require_auth
+def api_voice_auto_preview():
+    """Preflight SIN coste: cuántos reels propios hay, cuántos ya están
+    transcritos y cuántos habría que transcribir (1 uso/crédito cada uno).
+    El front lo enseña ANTES de lanzar — no se cobra sin avisar."""
+    user = current_user()
+    vids = _voice_auto_candidates(user["id"])
+    ready = [v for v in vids if (v.get("transcription") or "").strip()]
+    need = [v for v in vids if not (v.get("transcription") or "").strip() and v.get("ig_url")]
+    return jsonify({
+        "available": len(vids) > 0,
+        "will_use": len(ready) + len(need),
+        "ready": len(ready),
+        "need_transcribe": len(need),
+        "cost_units": len(need),   # misma unidad que metrics/transcribe-video (1 por reel)
+    })
+
+
+@app.route("/api/voice/auto-derive", methods=["POST"])
+@limiter.limit("2 per minute;6 per hour")
+@require_auth
+def api_voice_auto_derive():
+    """Deriva la voz AUTOMÁTICAMENTE de los reels publicados del user:
+    1. coge los ~5 con más views (ig_videos),
+    2. transcribe los que falten (mismo flujo y cobro que /metrics/transcribe-video),
+    3. derive_voice_profile() + save_voice_profile() (por marca via project_id).
+    Si la marca por defecto aún no tiene voz, también la guarda ahí (la
+    generación lee brand_id='' — así el moat se enciende de inmediato)."""
+    if not (OPENROUTER_API_KEY or GROQ_API_KEY):
+        return jsonify({"error": "Servicio no disponible"}), 503
+    user = current_user()
+    uid = user["id"]
+    body = request.get_json(silent=True) or {}
+    project_id = body.get("project_id") or None
+
+    vids = _voice_auto_candidates(uid)
+    if not vids:
+        return jsonify({"error": "no_videos",
+                        "message": "No encuentro reels publicados tuyos. Conecta tu Instagram en Métricas."}), 404
+
+    texts, transcribed_now = [], 0
+    for v in vids:
+        txt = (v.get("transcription") or "").strip()
+        if txt:
+            texts.append(txt)
+            continue
+        if not v.get("ig_url"):
+            continue
+        # Cobro por transcripción — mismo patrón que metrics_transcribe_video
+        # (paid: límite mensual; si no: créditos; si no: cupo free del día).
+        profile = get_profile(uid)
+        is_unlimited = user.get("email", "").lower() in UNLIMITED_EMAILS
+        if not is_unlimited:
+            user_plan = profile.get("plan", "free")
+            if user_plan in ("pro", "creator", "agency"):
+                ok, err_msg = check_monthly_limit(profile)
+                if not ok:
+                    break   # sin presupuesto → deriva con lo que haya
+            elif profile["credits_cents"] >= COST_CENTS:
+                pass
+            elif profile["free_used_today"] < FREE_DAILY_USER:
+                pass
+            else:
+                break
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                audio_path = download_audio(v["ig_url"], tmp, "instagram")
+                txt = transcribe_with_groq(audio_path, None)
+        except Exception as e:
+            logger.warning("voice_auto transcribe failed user=%s vid=%s err=%s", uid, v.get("ig_video_id"), e)
+            continue
+        if not (txt or "").strip():
+            continue
+        try:
+            db.table("ig_videos").update({
+                "transcription": txt,
+                "transcribed_at": datetime.now(timezone.utc).isoformat(),
+            }).eq("ig_video_id", v["ig_video_id"]).eq("user_id", uid).execute()
+        except Exception:
+            pass
+        if not is_unlimited:
+            user_plan = profile.get("plan", "free")
+            if user_plan in ("pro", "creator", "agency"):
+                db.table("profiles").update({"monthly_usage": profile.get("monthly_usage", 0) + 1}).eq("id", uid).execute()
+            elif profile["credits_cents"] >= COST_CENTS:
+                db.table("profiles").update({"credits_cents": profile["credits_cents"] - COST_CENTS}).eq("id", uid).execute()
+            else:
+                db.table("profiles").update({"free_used_today": profile["free_used_today"] + 1}).eq("id", uid).execute()
+        transcribed_now += 1
+        texts.append(txt)
+
+    if not texts:
+        return jsonify({"error": "no_transcripts",
+                        "message": "No pude transcribir ninguno de tus reels. Inténtalo de nuevo."}), 502
+
+    vp = derive_voice_profile(texts[:_VOICE_AUTO_SAMPLE])
+    if not vp:
+        return jsonify({"error": "derive_failed",
+                        "message": "No pude derivar tu voz con esta muestra. Inténtalo de nuevo."}), 502
+    raw = vp.get("raw") if isinstance(vp.get("raw"), dict) else dict(vp)
+    raw["samples"] = texts[:_VOICE_AUTO_SAMPLE]
+    raw["auto_derived"] = True
+    vp["raw"] = raw
+
+    save_voice_profile(uid, vp, brand_id=project_id)
+    # La generación (adapt_with_ai) lee la voz de la marca por defecto (brand_id="").
+    # Si esa aún no existe, guárdala también ahí para encender el moat ya.
+    if project_id and not get_voice_profile(uid):
+        save_voice_profile(uid, vp)
+
+    return jsonify({
+        "ok": True,
+        "confidence": vp.get("confidence"),
+        "source_count": len(texts[:_VOICE_AUTO_SAMPLE]),
+        "transcribed_now": transcribed_now,
+        "tone": vp.get("tone"),
+        "phrases": vp.get("phrases") or [],
+        "evidence": vp.get("evidence") or [],
+    })
+
+
 @app.route("/adapt", methods=["POST"])
 @limiter.limit("20 per minute;100 per hour")
 def adapt():
