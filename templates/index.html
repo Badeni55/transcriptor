@@ -11390,6 +11390,12 @@
   @keyframes rslDotB{0%,28%{background:#d3cdc0}33%,61%{background:#3b3fd4}66%,100%{background:#d3cdc0}}
   @keyframes rslDotC{0%,61%{background:#d3cdc0}66%,94%{background:#3b3fd4}100%{background:#d3cdc0}}
 
+  /* FIX tema en la landing: la landing es OSCURA por diseño (.rs-landing fija su
+     paleta) — el toggle solo cambiaba nav/footer y parecía roto. En la superficie
+     pública se oculta; en el workspace el tema sigue en Configuración/avatar.
+     (Selector .nav-r #themeBtn para ganar a la regla mobile que lo forzaba visible.) */
+  body:not(.workspace) .nav-r #themeBtn { display: none !important; }
+
   /* ── PORTE: reglas del contenedor (sustituyen a html/body/main del mockup) ── */
   /* contenido sobre el aurora global (canvas fixed z0): igual que el main{z-index:1} del mockup */
   .rs-landing .rsl-main{position:relative;z-index:1}
@@ -11404,26 +11410,26 @@
   <!-- ═══ HERO ═══ -->
   <section class="rsl-hero">
     <div class="rsl-wrap">
-      <span class="rsl-hero-badge"><i class="rsl-pulse" aria-hidden="true"></i>El sistema operativo del creador</span>
-      <h1 id="rslHeroH1">Copia lo que <em>ya funciona.</em></h1>
-      <p class="rsl-hero-sub">Mientras no miras, en tu nicho hay reels explotando. Reelscript los detecta, te dice <strong>cuál merece tu próximo guion</strong> y lo reescribe <strong>en tu voz</strong> — no copias el reel, copias la jugada. Lo que hoy te lleva <strong>2–3 horas</strong>, aquí es un clic.</p>
+      <span class="rsl-hero-badge" data-i18n-html-en="<i class=&quot;rsl-pulse&quot; aria-hidden=&quot;true&quot;></i>The creator&#39;s operating system"><i class="rsl-pulse" aria-hidden="true"></i>El sistema operativo del creador</span>
+      <h1 id="rslHeroH1" data-i18n-html-en="Copy what <em>already works.</em>">Copia lo que <em>ya funciona.</em></h1>
+      <p class="rsl-hero-sub" data-i18n-html-en="While you're not looking, reels are exploding in your niche. Reelscript detects them, tells you <strong>which one deserves your next script</strong> and rewrites it <strong>in your voice</strong> — you don't copy the reel, you copy the play. What takes you <strong>2–3 hours</strong> today is one click here.">Mientras no miras, en tu nicho hay reels explotando. Reelscript los detecta, te dice <strong>cuál merece tu próximo guion</strong> y lo reescribe <strong>en tu voz</strong> — no copias el reel, copias la jugada. Lo que hoy te lleva <strong>2–3 horas</strong>, aquí es un clic.</p>
       <div class="rsl-hero-ctas">
-        <button type="button" class="rsl-btn rsl-btn-primary" onclick="openAuth('register','landing_hero')">Roba tu primer guion gratis</button>
-        <a class="rsl-hero-link" href="#rslLoop">Ver cómo funciona <span aria-hidden="true">→</span></a>
+        <button type="button" class="rsl-btn rsl-btn-primary" onclick="openAuth('register','landing_hero')" data-i18n-en="Steal your first script free">Roba tu primer guion gratis</button>
+        <a class="rsl-hero-link" href="#rslLoop" data-i18n-html-en="See how it works <span aria-hidden=&quot;true&quot;>→</span>">Ver cómo funciona <span aria-hidden="true">→</span></a>
       </div>
-      <p class="rsl-hero-micro">12 guiones gratis para siempre · sin tarjeta</p>
+      <p class="rsl-hero-micro" data-i18n-en="12 free scripts forever · no card">12 guiones gratis para siempre · sin tarjeta</p>
 
       <!-- VÍDEO real de «Hazlo mío» en marco de navegador (autoplay muted loop). -->
       <div class="rsl-hero-media">
         <div class="rsl-frame">
-          <div class="rsl-frame-bar"><i></i><i></i><i></i><span>reelscript.net — «Hazlo mío» en vivo</span></div>
+          <div class="rsl-frame-bar"><i></i><i></i><i></i><span data-i18n-en="reelscript.net — «Make it mine» live">reelscript.net — «Hazlo mío» en vivo</span></div>
           <div class="rsl-hero-video">
-            <video src="{{ url_for('static', filename='video/hazlo-mio.mp4') }}" autoplay muted loop playsinline preload="metadata" aria-label="Demo real: el radar detecta un reel que explota, pulsas «Hazlo mío» y aparece tu guion escrito en tu voz"></video>
+            <video src="{{ url_for('static', filename='video/hazlo-mio.mp4') }}" poster="{{ url_for('static', filename='img/landing/hazlo-mio-poster.jpg') }}" autoplay muted loop playsinline preload="metadata" aria-label="Demo real: el radar detecta un reel que explota, pulsas «Hazlo mío» y aparece tu guion escrito en tu voz"></video>
           </div>
         </div>
         <!-- chips flotantes (profundidad) — desaparecen en móvil -->
-        <div class="rsl-float-chip rsl-fc1" aria-hidden="true"><span>⚡</span><span>señal detectada <b>×14,2</b></span></div>
-        <div class="rsl-float-chip rsl-fc2" aria-hidden="true"><span>✓</span><span>escrito con <b>tu voz al 82%</b></span></div>
+        <div class="rsl-float-chip rsl-fc1" aria-hidden="true"><span>⚡</span><span data-i18n-html-en="signal detected <b>×14.2</b>">señal detectada <b>×14,2</b></span></div>
+        <div class="rsl-float-chip rsl-fc2" aria-hidden="true"><span>✓</span><span data-i18n-html-en="written with <b>your voice at 82%</b>">escrito con <b>tu voz al 82%</b></span></div>
       </div>
     </div>
   </section>
@@ -11431,9 +11437,9 @@
   <!-- ═══ EL RADAR (motion: detecta señales) — panel claro, sin marco ═══ -->
   <section style="padding-top:52px;padding-bottom:16px">
     <div class="rsl-wrap" style="text-align:center">
-      <span class="rsl-eyebrow">El radar</span>
-      <h2 class="rsl-rise">Mientras no mirabas,<br>tu nicho ya estaba petando.</h2>
-      <p class="rsl-sub rsl-rise" style="margin:0 auto 30px">El radar vigila a tus competidores y te trae lo que explota — ordenado por lo que merece tu próximo guion.</p>
+      <span class="rsl-eyebrow" data-i18n-en="The radar">El radar</span>
+      <h2 class="rsl-rise" data-i18n-html-en="While you weren&#39;t looking,<br>your niche was already blowing up.">Mientras no mirabas,<br>tu nicho ya estaba petando.</h2>
+      <p class="rsl-sub rsl-rise" style="margin:0 auto 30px" data-i18n-en="The radar watches your competitors and brings you what explodes — ranked by what deserves your next script.">El radar vigila a tus competidores y te trae lo que explota — ordenado por lo que merece tu próximo guion.</p>
       <div class="rsl-radar-panel rsl-rise">
         <div class="rsl-radar-scope">
           <span class="rsl-rr rsl-rr1"></span><span class="rsl-rr rsl-rr2"></span><span class="rsl-rr rsl-rr3"></span>
@@ -11443,10 +11449,10 @@
           <span class="rsl-blip rsl-bp1"></span><span class="rsl-blip rsl-bp2"></span><span class="rsl-blip rsl-bp3"></span><span class="rsl-blip rsl-bp4"></span><span class="rsl-blip rsl-bp5"></span>
         </div>
         <div class="rsl-radar-side">
-          <span class="rsl-tag">Radar · detectando señales</span>
-          <div class="rsl-sig rsl-hot"><div class="rsl-thumb"></div><div class="rsl-meta"><b>«Nadie te cuenta esto de las hipotecas»</b><span>@rival_inmo · ahora</span></div><div class="rsl-x">×14,2</div></div>
-          <div class="rsl-sig"><div class="rsl-thumb"></div><div class="rsl-meta"><b>«3 errores al vender tu piso»</b><span>@otro_rival · hace 1 d</span></div><div class="rsl-x">×6,1</div></div>
-          <button class="rsl-steal-btn" tabindex="-1">⚡ Hazlo mío</button>
+          <span class="rsl-tag" data-i18n-en="Radar · detecting signals">Radar · detectando señales</span>
+          <div class="rsl-sig rsl-hot"><div class="rsl-thumb"></div><div class="rsl-meta"><b data-i18n-en="«Nobody tells you this about mortgages»">«Nadie te cuenta esto de las hipotecas»</b><span data-i18n-en="@rival_realtor · now">@rival_inmo · ahora</span></div><div class="rsl-x">×14,2</div></div>
+          <div class="rsl-sig"><div class="rsl-thumb"></div><div class="rsl-meta"><b data-i18n-en="«3 mistakes when selling your home»">«3 errores al vender tu piso»</b><span data-i18n-en="@other_rival · 1d ago">@otro_rival · hace 1 d</span></div><div class="rsl-x">×6,1</div></div>
+          <button class="rsl-steal-btn" tabindex="-1" data-i18n-en="⚡ Make it mine">⚡ Hazlo mío</button>
         </div>
       </div>
     </div>
@@ -11456,98 +11462,98 @@
   <!-- PLACEHOLDER: validar las 3 cifras con datos reales del producto antes de publicar -->
   <div class="rsl-strip">
     <div class="rsl-wrap rsl-strip-in">
-      <div class="rsl-rise"><span class="rsl-num" data-count="3200" data-suffix="+">0</span><b>señales analizadas cada semana</b><span>Sabemos qué está explotando, y por qué</span></div>
-      <div class="rsl-rise"><span class="rsl-num" data-count="60" data-suffix=" seg">0</span><b>de señal a guion en tu voz</b><span>Tu tono, tus frases, tu estructura</span></div>
-      <div class="rsl-rise"><span class="rsl-num" data-count="80" data-suffix="%">0</span><b>de tu voz, ya capturada</b><span>Con ~5 reels suena a ti — y sube con cada uno</span></div>
+      <div class="rsl-rise"><span class="rsl-num" data-count="3200" data-suffix="+">0</span><b data-i18n-en="signals analyzed every week">señales analizadas cada semana</b><span data-i18n-en="We know what&#39;s exploding, and why">Sabemos qué está explotando, y por qué</span></div>
+      <div class="rsl-rise"><span class="rsl-num" data-count="60" data-suffix="{% if lang == 'en' %} sec{% else %} seg{% endif %}">0</span><b data-i18n-en="from signal to script in your voice">de señal a guion en tu voz</b><span data-i18n-en="Your tone, your phrases, your structure">Tu tono, tus frases, tu estructura</span></div>
+      <div class="rsl-rise"><span class="rsl-num" data-count="80" data-suffix="%">0</span><b data-i18n-en="of your voice, already captured">de tu voz, ya capturada</b><span data-i18n-en="With ~5 reels it sounds like you — and climbs with each one">Con ~5 reels suena a ti — y sube con cada uno</span></div>
     </div>
   </div>
 
   <!-- ═══ POR DENTRO (clips reales de la app) ═══ -->
   <section style="padding-top:40px">
     <div class="rsl-wrap" style="text-align:center">
-      <span class="rsl-eyebrow">Por dentro</span>
-      <h2 class="rsl-rise">Cada parte, funcionando de verdad.</h2>
+      <span class="rsl-eyebrow" data-i18n-en="Inside">Por dentro</span>
+      <h2 class="rsl-rise" data-i18n-en="Every part, actually working.">Cada parte, funcionando de verdad.</h2>
       <div class="rsl-vid-grid rsl-rise">
         <div class="rsl-vidframe">
           <div class="rsl-frame">
-            <div class="rsl-frame-bar"><i></i><i></i><i></i><span>De idea a guion</span></div>
-            <video src="{{ url_for('static', filename='video/idea-funcion.mp4') }}" autoplay muted loop playsinline preload="metadata" aria-label="Demo real: apuntas una idea suelta y el sistema la desarrolla en un guion"></video>
+            <div class="rsl-frame-bar"><i></i><i></i><i></i><span data-i18n-en="From idea to script">De idea a guion</span></div>
+            <video class="rsl-lazy-vid" src="{{ url_for('static', filename='video/idea-funcion.mp4') }}" muted loop playsinline preload="none" aria-label="Demo real: apuntas una idea suelta y el sistema la desarrolla en un guion"></video>
           </div>
-          <p class="rsl-vid-cap">Apuntas una idea suelta y el sistema la desarrolla en un guion listo para grabar.</p>
+          <p class="rsl-vid-cap" data-i18n-en="You jot down a loose idea and the system develops it into a ready-to-record script.">Apuntas una idea suelta y el sistema la desarrolla en un guion listo para grabar.</p>
         </div>
         <div class="rsl-vidframe">
           <div class="rsl-frame">
-            <div class="rsl-frame-bar"><i></i><i></i><i></i><span>Tus métricas</span></div>
-            <video src="{{ url_for('static', filename='video/pagina-metricas.mp4') }}" autoplay muted loop playsinline preload="metadata" aria-label="Demo real: la página de métricas donde el Cerebro aprende de tu cuenta"></video>
+            <div class="rsl-frame-bar"><i></i><i></i><i></i><span data-i18n-en="Your metrics">Tus métricas</span></div>
+            <video class="rsl-lazy-vid" src="{{ url_for('static', filename='video/pagina-metricas.mp4') }}" muted loop playsinline preload="none" aria-label="Demo real: la página de métricas donde el Cerebro aprende de tu cuenta"></video>
           </div>
-          <p class="rsl-vid-cap">El Cerebro aprende qué hooks, temas y duraciones funcionan en tu cuenta.</p>
+          <p class="rsl-vid-cap" data-i18n-en="The Brain learns which hooks, topics and durations work on your account.">El Cerebro aprende qué hooks, temas y duraciones funcionan en tu cuenta.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <div class="rsl-cta-mid"><div class="rsl-wrap"><button type="button" class="rsl-btn rsl-btn-primary" onclick="openAuth('register','landing_mid')">Empezar gratis →</button></div></div>
+  <div class="rsl-cta-mid"><div class="rsl-wrap"><button type="button" class="rsl-btn rsl-btn-primary" onclick="openAuth('register','landing_mid')" data-i18n-en="Start free →">Empezar gratis →</button></div></div>
 
   <!-- ═══ TICKER DE SEÑALES (FOMO con calma) ═══ -->
   <!-- PLACEHOLDER: handles y multiplicadores de muestra. En prod puede alimentarse
        de señales reales anonimizadas del radar. -->
   <div class="rsl-ticker" aria-label="Señales detectadas recientemente (muestra)">
     <div class="rsl-ticker-track">
-      <span class="rsl-tk rsl-tk-label">Detectado por el radar</span>
-      <span class="rsl-tk"><i class="rsl-dot"></i>@fitness_nicho <b>×8,3</b> su media · hace 2 h</span>
-      <span class="rsl-tk"><i class="rsl-dot"></i>@finanzas_claras <b>×12,1</b> · hace 4 h</span>
-      <span class="rsl-tk"><i class="rsl-dot"></i>@inmo_madrid <b>×14,2</b> · hace 9 h</span>
-      <span class="rsl-tk"><i class="rsl-dot"></i>@coach_ventas <b>×5,7</b> · hace 11 h</span>
-      <span class="rsl-tk"><i class="rsl-dot"></i>@nutri_real <b>×9,4</b> · hace 13 h</span>
-      <span class="rsl-tk"><i class="rsl-dot"></i>@abogado_tiktok <b>×7,8</b> · hace 1 d</span>
-      <span class="rsl-tk rsl-tk-label" aria-hidden="true">Detectado por el radar</span>
-      <span class="rsl-tk" aria-hidden="true"><i class="rsl-dot"></i>@fitness_nicho <b>×8,3</b> su media · hace 2 h</span>
-      <span class="rsl-tk" aria-hidden="true"><i class="rsl-dot"></i>@finanzas_claras <b>×12,1</b> · hace 4 h</span>
-      <span class="rsl-tk" aria-hidden="true"><i class="rsl-dot"></i>@inmo_madrid <b>×14,2</b> · hace 9 h</span>
-      <span class="rsl-tk" aria-hidden="true"><i class="rsl-dot"></i>@coach_ventas <b>×5,7</b> · hace 11 h</span>
-      <span class="rsl-tk" aria-hidden="true"><i class="rsl-dot"></i>@nutri_real <b>×9,4</b> · hace 13 h</span>
-      <span class="rsl-tk" aria-hidden="true"><i class="rsl-dot"></i>@abogado_tiktok <b>×7,8</b> · hace 1 d</span>
+      <span class="rsl-tk rsl-tk-label" data-i18n-en="Detected by the radar">Detectado por el radar</span>
+      <span class="rsl-tk" data-i18n-html-en="<i class=&quot;rsl-dot&quot;></i>@fitness_nicho <b>×8,3</b> their avg · 2h ago"><i class="rsl-dot"></i>@fitness_nicho <b>×8,3</b> su media · hace 2 h</span>
+      <span class="rsl-tk" data-i18n-html-en="<i class=&quot;rsl-dot&quot;></i>@finanzas_claras <b>×12,1</b> · 4h ago"><i class="rsl-dot"></i>@finanzas_claras <b>×12,1</b> · hace 4 h</span>
+      <span class="rsl-tk" data-i18n-html-en="<i class=&quot;rsl-dot&quot;></i>@inmo_madrid <b>×14,2</b> · 9h ago"><i class="rsl-dot"></i>@inmo_madrid <b>×14,2</b> · hace 9 h</span>
+      <span class="rsl-tk" data-i18n-html-en="<i class=&quot;rsl-dot&quot;></i>@coach_ventas <b>×5,7</b> · 11h ago"><i class="rsl-dot"></i>@coach_ventas <b>×5,7</b> · hace 11 h</span>
+      <span class="rsl-tk" data-i18n-html-en="<i class=&quot;rsl-dot&quot;></i>@nutri_real <b>×9,4</b> · 13h ago"><i class="rsl-dot"></i>@nutri_real <b>×9,4</b> · hace 13 h</span>
+      <span class="rsl-tk" data-i18n-html-en="<i class=&quot;rsl-dot&quot;></i>@abogado_tiktok <b>×7,8</b> · 1d ago"><i class="rsl-dot"></i>@abogado_tiktok <b>×7,8</b> · hace 1 d</span>
+      <span class="rsl-tk rsl-tk-label" aria-hidden="true" data-i18n-en="Detected by the radar">Detectado por el radar</span>
+      <span class="rsl-tk" aria-hidden="true" data-i18n-html-en="<i class=&quot;rsl-dot&quot;></i>@fitness_nicho <b>×8,3</b> their avg · 2h ago"><i class="rsl-dot"></i>@fitness_nicho <b>×8,3</b> su media · hace 2 h</span>
+      <span class="rsl-tk" aria-hidden="true" data-i18n-html-en="<i class=&quot;rsl-dot&quot;></i>@finanzas_claras <b>×12,1</b> · 4h ago"><i class="rsl-dot"></i>@finanzas_claras <b>×12,1</b> · hace 4 h</span>
+      <span class="rsl-tk" aria-hidden="true" data-i18n-html-en="<i class=&quot;rsl-dot&quot;></i>@inmo_madrid <b>×14,2</b> · 9h ago"><i class="rsl-dot"></i>@inmo_madrid <b>×14,2</b> · hace 9 h</span>
+      <span class="rsl-tk" aria-hidden="true" data-i18n-html-en="<i class=&quot;rsl-dot&quot;></i>@coach_ventas <b>×5,7</b> · 11h ago"><i class="rsl-dot"></i>@coach_ventas <b>×5,7</b> · hace 11 h</span>
+      <span class="rsl-tk" aria-hidden="true" data-i18n-html-en="<i class=&quot;rsl-dot&quot;></i>@nutri_real <b>×9,4</b> · 13h ago"><i class="rsl-dot"></i>@nutri_real <b>×9,4</b> · hace 13 h</span>
+      <span class="rsl-tk" aria-hidden="true" data-i18n-html-en="<i class=&quot;rsl-dot&quot;></i>@abogado_tiktok <b>×7,8</b> · 1d ago"><i class="rsl-dot"></i>@abogado_tiktok <b>×7,8</b> · hace 1 d</span>
     </div>
   </div>
 
   <!-- ═══ MOAT / CEREBRO — secuencia aprende→guion con slider de nichos ═══ -->
   <section>
     <div class="rsl-wrap" style="text-align:center">
-      <span class="rsl-eyebrow">El Cerebro</span>
-      <h2 class="rsl-rise">Aprende de tu nicho y de ti.<br>Y te saca el guion.</h2>
-      <p class="rsl-sub rsl-rise" style="margin:0 auto 34px">Las plantillas suenan a todos. Los GPT, a robot. Reelscript construye un modelo de <strong>tu</strong> voz que mejora con cada uso — y lo convierte en guiones listos.</p>
+      <span class="rsl-eyebrow" data-i18n-en="The Brain">El Cerebro</span>
+      <h2 class="rsl-rise" data-i18n-html-en="It learns from your niche and from you.<br>And hands you the script.">Aprende de tu nicho y de ti.<br>Y te saca el guion.</h2>
+      <p class="rsl-sub rsl-rise" style="margin:0 auto 34px" data-i18n-html-en="Templates sound like everyone. GPTs sound like a robot. Reelscript builds a model of <strong>your</strong> voice that improves with every use — and turns it into ready scripts.">Las plantillas suenan a todos. Los GPT, a robot. Reelscript construye un modelo de <strong>tu</strong> voz que mejora con cada uso — y lo convierte en guiones listos.</p>
       <div class="rsl-cerebro-seq rsl-rise">
         <div class="rsl-cerebro-viz">
           <div class="rsl-cv-feed">
-            <span class="rsl-cv-label">Aprende de tu competencia</span>
+            <span class="rsl-cv-label" data-i18n-en="Learns from your competitors">Aprende de tu competencia</span>
             <div class="rsl-cv-chips"><span class="rsl-cv-chip">@rival_inmo <b>×14</b></span><span class="rsl-cv-chip">@coach_ventas <b>×6</b></span><span class="rsl-cv-chip">@nutri_real <b>×9</b></span></div>
           </div>
           <div class="rsl-cv-flow rsl-cv-flow-top"><i></i><i></i><i></i></div>
-          <div class="rsl-cv-core"><div class="rsl-cv-core-ring"></div><div class="rsl-cv-core-inner"><span class="rsl-cv-brain">🧠</span><span class="rsl-cv-pct">82%</span><span class="rsl-cv-cap">tu voz</span></div></div>
+          <div class="rsl-cv-core"><div class="rsl-cv-core-ring"></div><div class="rsl-cv-core-inner"><span class="rsl-cv-brain">🧠</span><span class="rsl-cv-pct">82%</span><span class="rsl-cv-cap" data-i18n-en="your voice">tu voz</span></div></div>
           <div class="rsl-cv-flow rsl-cv-flow-bot"><i></i><i></i><i></i></div>
           <div class="rsl-cv-feed">
-            <span class="rsl-cv-label">y de tus propios reels</span>
-            <div class="rsl-cv-chips"><span class="rsl-cv-chip">tu reel · <b>136k</b></span><span class="rsl-cv-chip">tu reel · <b>22k</b></span><span class="rsl-cv-chip">tu reel · <b>9k</b></span></div>
+            <span class="rsl-cv-label" data-i18n-en="and from your own reels">y de tus propios reels</span>
+            <div class="rsl-cv-chips"><span class="rsl-cv-chip" data-i18n-html-en="your reel · <b>136k</b>">tu reel · <b>136k</b></span><span class="rsl-cv-chip" data-i18n-html-en="your reel · <b>22k</b>">tu reel · <b>22k</b></span><span class="rsl-cv-chip" data-i18n-html-en="your reel · <b>9k</b>">tu reel · <b>9k</b></span></div>
           </div>
-          <div class="rsl-cv-learned"><span class="rsl-cv-tag">tu tono</span><span class="rsl-cv-tag">tus hooks</span><span class="rsl-cv-tag">tu estructura</span><span class="rsl-cv-tag">tus cierres</span></div>
+          <div class="rsl-cv-learned"><span class="rsl-cv-tag" data-i18n-en="your tone">tu tono</span><span class="rsl-cv-tag" data-i18n-en="your hooks">tus hooks</span><span class="rsl-cv-tag" data-i18n-en="your structure">tu estructura</span><span class="rsl-cv-tag" data-i18n-en="your closings">tus cierres</span></div>
         </div>
         <div class="rsl-cseq-arrow"><span></span></div>
         <div class="rsl-cseq-out">
           <div class="rsl-cseq-track">
             <div class="rsl-cseq-slide">
-              <div class="rsl-cseq-out-h">⚡ Inmobiliaria · en tu voz</div>
-              <h4>«Te han vendido que la hipoteca fija es lo seguro. Mira esto antes de firmar.»</h4>
-              <p>El banco gana más con tu miedo que con tu interés. La pregunta real: ¿cuántos años te quedas?</p>
+              <div class="rsl-cseq-out-h" data-i18n-en="⚡ Real estate · in your voice">⚡ Inmobiliaria · en tu voz</div>
+              <h4 data-i18n-en="«They sold you the fixed mortgage as the safe bet. Watch this before you sign.»">«Te han vendido que la hipoteca fija es lo seguro. Mira esto antes de firmar.»</h4>
+              <p data-i18n-en="The bank earns more from your fear than your interest. The real question: how many years are you staying?">El banco gana más con tu miedo que con tu interés. La pregunta real: ¿cuántos años te quedas?</p>
             </div>
             <div class="rsl-cseq-slide">
-              <div class="rsl-cseq-out-h">⚡ Nutrición · en tu voz</div>
-              <h4>«Llevas años contando calorías. Por eso justo no te funciona.»</h4>
-              <p>No comes de más, comes mal repartido. Te enseño a darle la vuelta sin pasar hambre.</p>
+              <div class="rsl-cseq-out-h" data-i18n-en="⚡ Nutrition · in your voice">⚡ Nutrición · en tu voz</div>
+              <h4 data-i18n-en="«You&#39;ve been counting calories for years. That&#39;s exactly why it isn&#39;t working.»">«Llevas años contando calorías. Por eso justo no te funciona.»</h4>
+              <p data-i18n-en="You don&#39;t overeat — your meals are badly split. I&#39;ll show you how to flip it without going hungry.">No comes de más, comes mal repartido. Te enseño a darle la vuelta sin pasar hambre.</p>
             </div>
             <div class="rsl-cseq-slide">
-              <div class="rsl-cseq-out-h">⚡ Fitness · en tu voz</div>
-              <h4>«Entrenas 5 días y no creces. El gimnasio no es el problema.»</h4>
-              <p>Es lo que haces las otras 23 horas. Descanso, proteína y progresión — te lo ordeno en 30 segundos.</p>
+              <div class="rsl-cseq-out-h" data-i18n-en="⚡ Fitness · in your voice">⚡ Fitness · en tu voz</div>
+              <h4 data-i18n-en="«You train 5 days and don&#39;t grow. The gym isn&#39;t the problem.»">«Entrenas 5 días y no creces. El gimnasio no es el problema.»</h4>
+              <p data-i18n-en="It&#39;s what you do the other 23 hours. Rest, protein and progression — I&#39;ll sort it for you in 30 seconds.">Es lo que haces las otras 23 horas. Descanso, proteína y progresión — te lo ordeno en 30 segundos.</p>
             </div>
           </div>
           <div class="rsl-cseq-dots"><span></span><span></span><span></span></div>
@@ -11559,61 +11565,43 @@
   <!-- ═══ DIFERENCIACIÓN ═══ -->
   <div class="rsl-diff-band">
     <div class="rsl-wrap">
-      <p>No es ChatGPT. No son plantillas. Es <em>lo que ya está explotando en tu nicho</em> — reescrito en <em>tu voz</em>.</p>
-    </div>
-  </div>
-
-  <!-- ═══ PRUEBA SOCIAL: hecho en público por creadores reales ═══
-       TODO fotos reales (cuadradas ≥160px) → docs//static/img/landing/david.jpg / bernat.jpg
-       TODO validar cifras de seguidores/handles antes de publicar.
-       Regla editorial: SOLO cuentas propias del equipo — nunca terceros sin permiso. -->
-  <div class="rsl-proof">
-    <div class="rsl-wrap rsl-proof-in">
-      <span class="rsl-proof-label">Hecho en público por creadores que publican</span>
-      <a class="rsl-creator-chip" href="https://instagram.com/__davidayala" target="_blank" rel="noopener">
-        <span class="rsl-ph">DA<img src="{{ url_for('static', filename='img/landing/david.jpg') }}" alt="" onerror="this.style.display='none'"></span>
-        <span><b>@__davidayala</b><span>construyendo Reelscript en público</span></span>
-      </a>
-      <a class="rsl-creator-chip" href="https://instagram.com/bernatcasanasm" target="_blank" rel="noopener">
-        <span class="rsl-ph">BC<img src="{{ url_for('static', filename='img/landing/bernat.jpg') }}" alt="" onerror="this.style.display='none'"></span>
-        <span><b>@bernatcasanasm</b><span>construyendo Reelscript en público</span></span>
-      </a>
+      <p data-i18n-html-en="It&#39;s not ChatGPT. It&#39;s not templates. It&#39;s <em>what&#39;s already exploding in your niche</em> — rewritten in <em>your voice</em>.">No es ChatGPT. No son plantillas. Es <em>lo que ya está explotando en tu nicho</em> — reescrito en <em>tu voz</em>.</p>
     </div>
   </div>
 
   <!-- ═══ LA CUENTA ES SIMPLE (ventas) ═══ -->
   <section class="rsl-math">
     <div class="rsl-wrap" style="text-align:center">
-      <span class="rsl-eyebrow">La cuenta es simple</span>
-      <h2 class="rsl-rise">¿Cuántas horas te cuesta hoy<br>cada guion que grabas?</h2>
-      <p class="rsl-sub rsl-rise" style="margin:0 auto">Suma lo que te cuesta cada guion en tiempo — de la idea a saber si funciona. Luego compara.</p>
+      <span class="rsl-eyebrow" data-i18n-en="The math is simple">La cuenta es simple</span>
+      <h2 class="rsl-rise" data-i18n-html-en="How many hours does every script<br>you record cost you today?">¿Cuántas horas te cuesta hoy<br>cada guion que grabas?</h2>
+      <p class="rsl-sub rsl-rise" style="margin:0 auto" data-i18n-en="Add up what each script costs you in time — from the idea to knowing if it works. Then compare.">Suma lo que te cuesta cada guion en tiempo — de la idea a saber si funciona. Luego compara.</p>
       <div class="rsl-math-grid" style="text-align:left">
         <div class="rsl-math-card rsl-rise">
-          <span class="rsl-who">Encontrar la idea a mano</span>
-          <p class="rsl-big">~1 h<small> de feed</small></p>
-          <p>Scrollear sin saber qué está funcionando de verdad en tu nicho. La mitad de las veces, para nada.</p>
+          <span class="rsl-who" data-i18n-en="Finding the idea by hand">Encontrar la idea a mano</span>
+          <p class="rsl-big" data-i18n-html-en="~1 h<small> of feed</small>">~1 h<small> de feed</small></p>
+          <p data-i18n-en="Scrolling without knowing what&#39;s actually working in your niche. Half the time, for nothing.">Scrollear sin saber qué está funcionando de verdad en tu nicho. La mitad de las veces, para nada.</p>
         </div>
         <div class="rsl-math-card rsl-rise">
-          <span class="rsl-who">Escribir, dudar, reescribir</span>
-          <p class="rsl-big">1–2 h<small> /guion</small></p>
-          <p>Y después de publicar, días hasta saber si la idea era buena. El ciclo entero: <span class="rsl-tach">2–3 h por guion</span>.</p>
+          <span class="rsl-who" data-i18n-en="Writing, doubting, rewriting">Escribir, dudar, reescribir</span>
+          <p class="rsl-big" data-i18n-html-en="1–2 h<small> /script</small>">1–2 h<small> /guion</small></p>
+          <p data-i18n-html-en="And after posting, days until you know if the idea was good. The whole cycle: <span class=&quot;rsl-tach&quot;>2–3 h per script</span>.">Y después de publicar, días hasta saber si la idea era buena. El ciclo entero: <span class="rsl-tach">2–3 h por guion</span>.</p>
         </div>
         <div class="rsl-math-card rsl-win rsl-rise">
-          <span class="rsl-who">Con Reelscript</span>
-          <p class="rsl-big">1 clic<small> · ~60 s</small></p>
-          <p>La señal ya viene elegida y validada por tu nicho. El guion ya suena a ti. Tú solo grabas.</p>
+          <span class="rsl-who" data-i18n-en="With Reelscript">Con Reelscript</span>
+          <p class="rsl-big" data-i18n-html-en="1 click<small> · ~60 s</small>">1 clic<small> · ~60 s</small></p>
+          <p data-i18n-en="The signal comes pre-picked and validated by your niche. The script already sounds like you. You just record.">La señal ya viene elegida y validada por tu nicho. El guion ya suena a ti. Tú solo grabas.</p>
         </div>
       </div>
       <div class="rsl-timebar rsl-rise" id="rslTimebar" style="text-align:left">
         <div class="rsl-tb-row rsl-tb-old">
-          <label>Tu lunes sin Reelscript<small>buscar idea + escribir + dudar</small></label>
+          <label data-i18n-html-en="Your Monday without Reelscript<small>find idea + write + doubt</small>">Tu lunes sin Reelscript<small>buscar idea + escribir + dudar</small></label>
           <div class="rsl-tb-track"><span class="rsl-tb-fill"></span></div>
-          <span class="rsl-tb-val">~2,5 h</span>
+          <span class="rsl-tb-val" data-i18n-en="~2.5 h">~2,5 h</span>
         </div>
         <div class="rsl-tb-row rsl-tb-new">
-          <label>Tu lunes con Reelscript<small>abrir radar + «Hazlo mío» + grabar</small></label>
+          <label data-i18n-html-en="Your Monday with Reelscript<small>open radar + «Make it mine» + record</small>">Tu lunes con Reelscript<small>abrir radar + «Hazlo mío» + grabar</small></label>
           <div class="rsl-tb-track"><span class="rsl-tb-fill"></span></div>
-          <span class="rsl-tb-val">~12 min</span>
+          <span class="rsl-tb-val" data-i18n-en="~12 min">~12 min</span>
         </div>
       </div>
     </div>
@@ -11623,18 +11611,18 @@
   <section style="padding-top:40px">
     <div class="rsl-wrap rsl-ag-grid">
       <div class="rsl-spaces" aria-hidden="true">
-        <div class="rsl-space"><div class="rsl-dot" style="background:#4f7cff">IN</div><div><b>Inmo Pro</b><span>radar · 3 señales nuevas</span></div><span class="rsl-lvl">voz 81%</span></div>
-        <div class="rsl-space"><div class="rsl-dot" style="background:#8b5cf6">FT</div><div><b>FitCoach Marta</b><span>radar · 5 señales nuevas</span></div><span class="rsl-lvl">voz 76%</span></div>
-        <div class="rsl-space"><div class="rsl-dot" style="background:#ff7847">GS</div><div><b>Gastro Sur</b><span>radar · 2 señales nuevas</span></div><span class="rsl-lvl">voz 64%</span></div>
+        <div class="rsl-space"><div class="rsl-dot" style="background:#4f7cff">IN</div><div><b>Inmo Pro</b><span data-i18n-en="radar · 3 new signals">radar · 3 señales nuevas</span></div><span class="rsl-lvl" data-i18n-en="voice 81%">voz 81%</span></div>
+        <div class="rsl-space"><div class="rsl-dot" style="background:#8b5cf6">FT</div><div><b>FitCoach Marta</b><span data-i18n-en="radar · 5 new signals">radar · 5 señales nuevas</span></div><span class="rsl-lvl" data-i18n-en="voice 76%">voz 76%</span></div>
+        <div class="rsl-space"><div class="rsl-dot" style="background:#ff7847">GS</div><div><b>Gastro Sur</b><span data-i18n-en="radar · 2 new signals">radar · 2 señales nuevas</span></div><span class="rsl-lvl" data-i18n-en="voice 64%">voz 64%</span></div>
       </div>
       <div>
-        <span class="rsl-eyebrow">Para agencias</span>
-        <h2 class="rsl-rise">Cada marca, un cerebro. Todas, un portfolio.</h2>
-        <p class="rsl-sub rsl-rise">Cambia de cliente como cambias de escritorio: cada marca tiene su radar, su voz y sus competidores — aislados y completos. Tu equipo dentro, con roles y marcas asignadas.</p>
+        <span class="rsl-eyebrow" data-i18n-en="For agencies">Para agencias</span>
+        <h2 class="rsl-rise" data-i18n-en="Each brand, a brain. All of them, one portfolio.">Cada marca, un cerebro. Todas, un portfolio.</h2>
+        <p class="rsl-sub rsl-rise" data-i18n-en="Switch clients like you switch desktops: each brand has its own radar, voice and competitors — isolated and complete. Your team inside, with roles and assigned brands.">Cambia de cliente como cambias de escritorio: cada marca tiene su radar, su voz y sus competidores — aislados y completos. Tu equipo dentro, con roles y marcas asignadas.</p>
         <div class="rsl-moat-list" style="margin-top:22px">
-          <div class="rsl-moat-item rsl-rise"><div class="rsl-ic">🗂</div><div><b>Vista portfolio</b><span>Todas tus marcas de un vistazo: qué explota y cuál pide atención.</span></div></div>
-          <div class="rsl-moat-item rsl-rise"><div class="rsl-ic">👥</div><div><b>Equipo con roles</b><span>3 asientos incluidos. Asigna marcas a cada miembro.</span></div></div>
-          <div class="rsl-moat-item rsl-rise"><div class="rsl-ic">⚡</div><div><b>Pool de créditos único</b><span>800 al mes para toda la cuenta. Sin cupos por marca.</span></div></div>
+          <div class="rsl-moat-item rsl-rise"><div class="rsl-ic">🗂</div><div><b data-i18n-en="Portfolio view">Vista portfolio</b><span data-i18n-en="All your brands at a glance: what&#39;s exploding and which needs attention.">Todas tus marcas de un vistazo: qué explota y cuál pide atención.</span></div></div>
+          <div class="rsl-moat-item rsl-rise"><div class="rsl-ic">👥</div><div><b data-i18n-en="Team with roles">Equipo con roles</b><span data-i18n-en="3 seats included. Assign brands to each member.">3 asientos incluidos. Asigna marcas a cada miembro.</span></div></div>
+          <div class="rsl-moat-item rsl-rise"><div class="rsl-ic">⚡</div><div><b data-i18n-en="Single credit pool">Pool de créditos único</b><span data-i18n-en="800 a month for the whole account. No per-brand quotas.">800 al mes para toda la cuenta. Sin cupos por marca.</span></div></div>
         </div>
       </div>
     </div>
@@ -11643,96 +11631,96 @@
   <!-- ═══ PRICING ═══ -->
   <section id="pricingSection" style="text-align:center">
     <div class="rsl-wrap">
-      <span class="rsl-eyebrow">Precios</span>
-      <h2 class="rsl-rise">Empieza gratis. Crece cuando publiques.</h2>
-      <p class="rsl-sub rsl-rise" style="margin:0 auto">Ver lo que explota en tu nicho no cuesta nada. Los créditos se gastan solo cuando dices «lo quiero mío».</p>
-      <div class="rsl-toggle" role="group" aria-label="Ciclo de facturación">
-        <button class="rsl-on" data-cycle="month" aria-pressed="true">Mensual</button>
-        <button data-cycle="year" aria-pressed="false">Anual <span class="rsl-save">2 meses gratis</span></button>
+      <span class="rsl-eyebrow" data-i18n-en="Pricing">Precios</span>
+      <h2 class="rsl-rise" data-i18n-en="Start free. Grow when you publish.">Empieza gratis. Crece cuando publiques.</h2>
+      <p class="rsl-sub rsl-rise" style="margin:0 auto" data-i18n-en="Seeing what explodes in your niche costs nothing. Credits are only spent when you say «make it mine».">Ver lo que explota en tu nicho no cuesta nada. Los créditos se gastan solo cuando dices «lo quiero mío».</p>
+      <div class="rsl-toggle" role="group" aria-label="{% if lang == 'en' %}Billing cycle{% else %}Ciclo de facturación{% endif %}">
+        <button class="rsl-on" data-cycle="month" aria-pressed="true" data-i18n-en="Monthly">Mensual</button>
+        <button data-cycle="year" aria-pressed="false" data-i18n-html-en="Annual <span class=&quot;rsl-save&quot;>2 months free</span>">Anual <span class="rsl-save">2 meses gratis</span></button>
       </div>
       <div class="rsl-plans">
         <div class="rsl-plan rsl-rise">
           <h3>Free</h3>
-          <p class="rsl-for">Para probar el robo con tu nicho real.</p>
+          <p class="rsl-for" data-i18n-en="To try the steal with your real niche.">Para probar el robo con tu nicho real.</p>
           <p class="rsl-price">€0</p>
           <p class="rsl-yr">&nbsp;</p>
           <p class="rsl-day">&nbsp;</p>
           <ul>
-            <li>Radar de tu nicho, gratis para siempre</li>
-            <li><strong>12 «Hazlo mío»</strong> gratis, tuyos para siempre</li>
-            <li>1 marca · teleprompter incluido</li>
-            <li class="rsl-zero">Sin tarjeta</li>
+            <li data-i18n-en="Your niche&#39;s radar, free forever">Radar de tu nicho, gratis para siempre</li>
+            <li data-i18n-html-en="<strong>12 «Make it mine»</strong> free, yours forever"><strong>12 «Hazlo mío»</strong> gratis, tuyos para siempre</li>
+            <li data-i18n-en="1 brand · teleprompter included">1 marca · teleprompter incluido</li>
+            <li class="rsl-zero" data-i18n-en="No card">Sin tarjeta</li>
           </ul>
-          <button type="button" class="rsl-btn rsl-btn-ghost" onclick="openAuth('register','landing_plan_free')">Empezar gratis</button>
+          <button type="button" class="rsl-btn rsl-btn-ghost" onclick="openAuth('register','landing_plan_free')" data-i18n-en="Start free">Empezar gratis</button>
           <p class="rsl-risk">&nbsp;</p>
         </div>
         <div class="rsl-plan rsl-hot rsl-rise">
-          <span class="rsl-pop">El de los que publican</span>
+          <span class="rsl-pop" data-i18n-en="The one publishers pick">El de los que publican</span>
           <h3>Creator</h3>
-          <p class="rsl-for">Para el creador que publica cada semana y quiere sonar a él.</p>
-          <p class="rsl-price" data-m="€29" data-y="€23"><span class="rsl-amt">€29</span><small>/mes</small></p>
-          <p class="rsl-yr" data-m="" data-y="facturado €276/año">&nbsp;</p>
-          <p class="rsl-day" data-m="menos de €1 al día · €0,15 por reel robado" data-y="€0,76 al día · €0,12 por reel robado">menos de €1 al día · €0,15 por reel robado</p>
+          <p class="rsl-for" data-i18n-en="For the creator who publishes weekly and wants to sound like themselves.">Para el creador que publica cada semana y quiere sonar a él.</p>
+          <p class="rsl-price" data-m="€29" data-y="€23"><span class="rsl-amt">€29</span><small data-i18n-en="/mo">/mes</small></p>
+          <p class="rsl-yr" data-m="" data-y="{% if lang == 'en' %}billed €276/yr{% else %}facturado €276/año{% endif %}">&nbsp;</p>
+          <p class="rsl-day" data-m="{% if lang == 'en' %}under €1 a day · €0.15 per stolen reel{% else %}menos de €1 al día · €0,15 por reel robado{% endif %}" data-y="{% if lang == 'en' %}€0.76 a day · €0.12 per stolen reel{% else %}€0,76 al día · €0,12 por reel robado{% endif %}">{% if lang == 'en' %}under €1 a day · €0.15 per stolen reel{% else %}menos de €1 al día · €0,15 por reel robado{% endif %}</p>
           <ul>
-            <li><strong>200 créditos</strong> al mes (~200 reels robados a tu voz)</li>
-            <li>Cerebro: tu voz, entrenándose con cada reel</li>
-            <li>Métricas de tu cuenta → el sistema aprende</li>
-            <li>Explosión creativa (5 hooks × 5 ángulos × 5 ideas), series y formatos</li>
-            <li>Guiones e historial ilimitados</li>
+            <li data-i18n-html-en="<strong>200 credits</strong> a month (~200 reels stolen into your voice)"><strong>200 créditos</strong> al mes (~200 reels robados a tu voz)</li>
+            <li data-i18n-en="Brain: your voice, training with every reel">Cerebro: tu voz, entrenándose con cada reel</li>
+            <li data-i18n-en="Your account&#39;s metrics → the system learns">Métricas de tu cuenta → el sistema aprende</li>
+            <li data-i18n-en="Creative explosion (5 hooks × 5 angles × 5 ideas), series and formats">Explosión creativa (5 hooks × 5 ángulos × 5 ideas), series y formatos</li>
+            <li data-i18n-en="Unlimited scripts and history">Guiones e historial ilimitados</li>
           </ul>
-          <button type="button" class="rsl-btn rsl-btn-primary" onclick="openAuth('register','landing_plan_creator')">Empezar con Creator</button>
-          <p class="rsl-risk">Cancela en 2 clics · tu Cerebro se queda guardado</p>
+          <button type="button" class="rsl-btn rsl-btn-primary" onclick="openAuth('register','landing_plan_creator')" data-i18n-en="Start with Creator">Empezar con Creator</button>
+          <p class="rsl-risk" data-i18n-en="Cancel in 2 clicks · your Brain stays saved">Cancela en 2 clics · tu Cerebro se queda guardado</p>
         </div>
         <div class="rsl-plan rsl-rise">
           <h3>Agency</h3>
-          <p class="rsl-for">Para portfolios de marcas y equipos.</p>
+          <p class="rsl-for" data-i18n-en="For brand portfolios and teams.">Para portfolios de marcas y equipos.</p>
           <p class="rsl-price" data-m="€129" data-y="€107"><span class="rsl-amt">€129</span><small>/mes</small></p>
-          <p class="rsl-yr" data-m="" data-y="facturado €1.290/año">&nbsp;</p>
-          <p class="rsl-day" data-m="3 marcas · €43 por marca/mes" data-y="3 marcas · €36 por marca/mes">3 marcas · €43 por marca/mes</p>
+          <p class="rsl-yr" data-m="" data-y="{% if lang == 'en' %}billed €1,290/yr{% else %}facturado €1.290/año{% endif %}">&nbsp;</p>
+          <p class="rsl-day" data-m="{% if lang == 'en' %}3 brands · €43 per brand/mo{% else %}3 marcas · €43 por marca/mes{% endif %}" data-y="{% if lang == 'en' %}3 brands · €36 per brand/mo{% else %}3 marcas · €36 por marca/mes{% endif %}">{% if lang == 'en' %}3 brands · €43 per brand/mo{% else %}3 marcas · €43 por marca/mes{% endif %}</p>
           <ul>
-            <li><strong>Pool de 800 créditos</strong> para toda la cuenta</li>
-            <li><strong>3 marcas</strong> con cerebro propio cada una</li>
-            <li><strong>3 asientos</strong> de equipo con roles</li>
-            <li>Vista portfolio: todo tu roster de un vistazo</li>
-            <li>Marca o asiento extra: €14,99/mes</li>
+            <li data-i18n-html-en="<strong>Pool of 800 credits</strong> for the whole account"><strong>Pool de 800 créditos</strong> para toda la cuenta</li>
+            <li data-i18n-html-en="<strong>3 brands</strong>, each with its own brain"><strong>3 marcas</strong> con cerebro propio cada una</li>
+            <li data-i18n-html-en="<strong>3 team seats</strong> with roles"><strong>3 asientos</strong> de equipo con roles</li>
+            <li data-i18n-en="Portfolio view: your whole roster at a glance">Vista portfolio: todo tu roster de un vistazo</li>
+            <li data-i18n-en="Extra brand or seat: €14.99/mo">Marca o asiento extra: €14,99/mes</li>
           </ul>
-          <button type="button" class="rsl-btn rsl-btn-ghost" onclick="openAuth('register','landing_plan_agency')">Empezar con Agency</button>
-          <p class="rsl-risk">Cancela en 2 clics · sin permanencia</p>
+          <button type="button" class="rsl-btn rsl-btn-ghost" onclick="openAuth('register','landing_plan_agency')" data-i18n-en="Start with Agency">Empezar con Agency</button>
+          <p class="rsl-risk" data-i18n-en="Cancel in 2 clicks · no lock-in">Cancela en 2 clics · sin permanencia</p>
         </div>
       </div>
-      <p class="rsl-pricing-foot">¿Un mes fuerte? Recarga sin cambiar de plan: 100 cr/€19 · 300 cr/€49 · 1.000 cr/€139</p>
+      <p class="rsl-pricing-foot" data-i18n-en="Big month? Top up without changing plans: 100 cr/€19 · 300 cr/€49 · 1,000 cr/€139">¿Un mes fuerte? Recarga sin cambiar de plan: 100 cr/€19 · 300 cr/€49 · 1.000 cr/€139</p>
     </div>
   </section>
 
   <!-- ═══ FAQ ═══ -->
   <section style="padding-top:0" id="faqSection">
     <div class="rsl-wrap" style="text-align:center">
-      <span class="rsl-eyebrow">Dudas rápidas</span>
-      <h2 class="rsl-rise">Lo que preguntan antes de entrar</h2>
+      <span class="rsl-eyebrow" data-i18n-en="Quick questions">Dudas rápidas</span>
+      <h2 class="rsl-rise" data-i18n-en="What people ask before joining">Lo que preguntan antes de entrar</h2>
       <div class="rsl-faq" style="text-align:left">
         <details>
-          <summary>¿Esto no es copiar a otros creadores?</summary>
-          <p class="rsl-a">Copias la <strong>jugada</strong>, no el contenido. Reelscript detecta qué temas y estructuras están explotando en tu nicho y los reescribe desde cero con tu voz, tu ángulo y tus ejemplos. Es lo que los grandes creadores ya hacen a mano cada día — aquí tarda un clic.</p>
+          <summary data-i18n-en="Isn&#39;t this copying other creators?">¿Esto no es copiar a otros creadores?</summary>
+          <p class="rsl-a" data-i18n-html-en="You copy the <strong>play</strong>, not the content. Reelscript detects which topics and structures are exploding in your niche and rewrites them from scratch with your voice, your angle and your examples. It&#39;s what big creators already do by hand every day — here it takes one click.">Copias la <strong>jugada</strong>, no el contenido. Reelscript detecta qué temas y estructuras están explotando en tu nicho y los reescribe desde cero con tu voz, tu ángulo y tus ejemplos. Es lo que los grandes creadores ya hacen a mano cada día — aquí tarda un clic.</p>
         </details>
         <details>
-          <summary>¿En qué se diferencia de ChatGPT?</summary>
-          <p class="rsl-a">ChatGPT no sabe qué está funcionando en tu nicho hoy, ni cómo suenas tú. Reelscript parte de señales reales de tus competidores y escribe con un modelo de tu voz que mejora con cada reel que publicas. Cuanto más lo usas, menos genérico suena — justo lo contrario que una plantilla.</p>
+          <summary data-i18n-en="How is it different from ChatGPT?">¿En qué se diferencia de ChatGPT?</summary>
+          <p class="rsl-a" data-i18n-en="ChatGPT doesn&#39;t know what&#39;s working in your niche today, or how you sound. Reelscript starts from real signals from your competitors and writes with a model of your voice that improves with every reel you publish. The more you use it, the less generic it sounds — the exact opposite of a template.">ChatGPT no sabe qué está funcionando en tu nicho hoy, ni cómo suenas tú. Reelscript parte de señales reales de tus competidores y escribe con un modelo de tu voz que mejora con cada reel que publicas. Cuanto más lo usas, menos genérico suena — justo lo contrario que una plantilla.</p>
         </details>
         <details>
-          <summary>¿Qué es un crédito?</summary>
-          <p class="rsl-a">La unidad de trabajo del sistema. Robar un reel a tu voz = 1 crédito. Cinco guiones desde una idea = 5. Ver el radar, tus métricas o grabar con el teleprompter = 0. Solo pagas cuando dices «lo quiero mío».</p>
+          <summary data-i18n-en="What is a credit?">¿Qué es un crédito?</summary>
+          <p class="rsl-a" data-i18n-en="The system&#39;s unit of work. Stealing a reel into your voice = 1 credit. Five scripts from an idea = 5. Viewing the radar, your metrics or recording with the teleprompter = 0. You only pay when you say «make it mine».">La unidad de trabajo del sistema. Robar un reel a tu voz = 1 crédito. Cinco guiones desde una idea = 5. Ver el radar, tus métricas o grabar con el teleprompter = 0. Solo pagas cuando dices «lo quiero mío».</p>
         </details>
         <details>
-          <summary>¿Y si se me acaban los créditos?</summary>
-          <p class="rsl-a">El radar, tus métricas y el teleprompter siguen gratis — no te quedas bloqueado a mitad de mes. Para más reescrituras, recargas desde €19 (100 créditos) sin cambiar de plan, o subes de tier cuando te compense. Tú decides.</p>
+          <summary data-i18n-en="What if I run out of credits?">¿Y si se me acaban los créditos?</summary>
+          <p class="rsl-a" data-i18n-en="The radar, your metrics and the teleprompter stay free — you don&#39;t get locked out mid-month. For more rewrites, top up from €19 (100 credits) without changing plans, or move up a tier when it pays off. You decide.">El radar, tus métricas y el teleprompter siguen gratis — no te quedas bloqueado a mitad de mes. Para más reescrituras, recargas desde €19 (100 créditos) sin cambiar de plan, o subes de tier cuando te compense. Tú decides.</p>
         </details>
         <details>
-          <summary>¿Funciona en mi nicho / mi idioma?</summary>
-          <p class="rsl-a">Tú eliges a quién vigilar: añade los competidores de tu nicho y el radar trabaja sobre ellos, en español o en inglés. Si en tu nicho se publican reels, hay señales.</p>
+          <summary data-i18n-en="Does it work in my niche / my language?">¿Funciona en mi nicho / mi idioma?</summary>
+          <p class="rsl-a" data-i18n-en="You choose who to watch: add your niche&#39;s competitors and the radar works on them, in Spanish or English. If reels get published in your niche, there are signals.">Tú eliges a quién vigilar: añade los competidores de tu nicho y el radar trabaja sobre ellos, en español o en inglés. Si en tu nicho se publican reels, hay señales.</p>
         </details>
         <details>
-          <summary>¿Puedo cancelar cuando quiera?</summary>
-          <p class="rsl-a">Sí, desde tu cuenta, en dos clics. Sin permanencia. Tus guiones y tu Cerebro se quedan guardados por si vuelves.</p>
+          <summary data-i18n-en="Can I cancel anytime?">¿Puedo cancelar cuando quiera?</summary>
+          <p class="rsl-a" data-i18n-en="Yes, from your account, in two clicks. No lock-in. Your scripts and your Brain stay saved in case you come back.">Sí, desde tu cuenta, en dos clics. Sin permanencia. Tus guiones y tu Cerebro se quedan guardados por si vuelves.</p>
         </details>
       </div>
     </div>
@@ -11742,19 +11730,19 @@
   <section class="rsl-final">
     <div class="rsl-halo" aria-hidden="true"></div>
     <div class="rsl-wrap">
-      <h2>Tu nicho ya te está diciendo<br><em>qué grabar.</em></h2>
-      <p class="rsl-sub" style="max-width:480px">Entra, mira tu radar y roba tu primer guion. Los 12 primeros corren de nuestra cuenta — y son tuyos para siempre.</p>
-      <button type="button" class="rsl-btn rsl-btn-primary" style="padding:17px 34px;font-size:1.08rem" onclick="openAuth('register','landing_final')">Roba tu primer guion gratis</button>
-      <p class="rsl-hero-micro" style="margin-top:14px">Sin tarjeta · listo en 2 minutos</p>
+      <h2 data-i18n-html-en="Your niche is already telling you<br><em>what to record.</em>">Tu nicho ya te está diciendo<br><em>qué grabar.</em></h2>
+      <p class="rsl-sub" style="max-width:480px" data-i18n-en="Come in, check your radar and steal your first script. The first 12 are on us — and they&#39;re yours forever.">Entra, mira tu radar y roba tu primer guion. Los 12 primeros corren de nuestra cuenta — y son tuyos para siempre.</p>
+      <button type="button" class="rsl-btn rsl-btn-primary" style="padding:17px 34px;font-size:1.08rem" onclick="openAuth('register','landing_final')" data-i18n-en="Steal your first script free">Roba tu primer guion gratis</button>
+      <p class="rsl-hero-micro" style="margin-top:14px" data-i18n-en="No card · ready in 2 minutes">Sin tarjeta · listo en 2 minutos</p>
     </div>
   </section>
 
 
 <!-- ═══ STICKY CTA (aparece al pasar el hero) ═══ -->
-<div class="rsl-sticky-cta" id="rslStickyCta" role="complementary" aria-label="Empezar gratis">
+<div class="rsl-sticky-cta" id="rslStickyCta" role="complementary" aria-label="{% if lang == 'en' %}Start free{% else %}Empezar gratis{% endif %}">
   <div class="rsl-sticky-in">
-    <p class="rsl-msg"><span class="rsl-dot" aria-hidden="true"></span>Tu nicho está publicando ahora mismo.<small>12 guiones gratis · sin tarjeta</small></p>
-    <a class="rsl-btn rsl-btn-primary" href="#pricingSection">Empieza gratis</a>
+    <p class="rsl-msg" data-i18n-html-en="<span class=&quot;rsl-dot&quot; aria-hidden=&quot;true&quot;></span>Your niche is posting right now.<small>12 free scripts · no card</small>"><span class="rsl-dot" aria-hidden="true"></span>Tu nicho está publicando ahora mismo.<small>12 guiones gratis · sin tarjeta</small></p>
+    <a class="rsl-btn rsl-btn-primary" href="#pricingSection" data-i18n-en="Start free">Empieza gratis</a>
   </div>
 </div>
 </div>
@@ -11833,6 +11821,19 @@
       bar.classList.toggle("rsl-show",past&&!inPricing);
     }
     window.addEventListener("scroll",onScroll,{passive:true}); onScroll();
+  })();
+
+  // Vídeos «Por dentro»: preload=none — no descargan ni reproducen hasta entrar
+  // en viewport (IO). Al salir, pausa (ahorra CPU/batería en móvil).
+  (function(){
+    var vids=root.querySelectorAll("video.rsl-lazy-vid");
+    if(!vids.length) return;
+    var vio=new IntersectionObserver(function(es){ es.forEach(function(e){
+      var v=e.target;
+      if(e.isIntersecting){ try{ v.play().catch(function(){}); }catch(_){} }
+      else { try{ v.pause(); }catch(_){} }
+    }); },{threshold:.25});
+    vids.forEach(function(v){ vio.observe(v); });
   })();
 })();
 
@@ -14369,6 +14370,11 @@ function setLang(lang) {
   document.querySelectorAll("[data-i18n-" + lang + "]").forEach(el => {
     el.textContent = el.getAttribute("data-i18n-" + lang);
   });
+  // Variante con MARKUP (em/strong/br) — data-i18n-html-{lang} aplica innerHTML.
+  // Para textos ricos de la landing donde textContent destrozaría el énfasis.
+  document.querySelectorAll("[data-i18n-html-" + lang + "]").forEach(el => {
+    el.innerHTML = el.getAttribute("data-i18n-html-" + lang);
+  });
   document.querySelectorAll("[data-i18n-placeholder-" + lang + "]").forEach(el => {
     el.placeholder = el.getAttribute("data-i18n-placeholder-" + lang);
   });
@@ -14393,6 +14399,10 @@ function resolveTheme(pref) {
 function applyTheme(pref) {
   const t = resolveTheme(pref);
   document.documentElement.setAttribute("data-theme", t);
+  // FIX tema en la app: la isla Signal copia data-theme a su raíz SOLO en cada
+  // render() — cambiar el tema (Configuración/avatar) no la repintaba hasta la
+  // siguiente interacción. RadarLoop.refresh() re-renderiza si está montada.
+  try { if (window.RadarLoop && typeof window.RadarLoop.refresh === "function") window.RadarLoop.refresh(); } catch(_){}
   if (themeBtn) {
     // System pref shows the resolved icon so user sees what's active
     themeBtn.textContent = themeIcons[pref] || themeIcons[t];
