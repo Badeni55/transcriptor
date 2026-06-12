@@ -10008,6 +10008,21 @@
     .rs .brain-voiceline b { color:var(--brand-500); }
     .rs .brain-next { font-size:13px; color:var(--text-secondary); }
     .rs .brain-next b { color:var(--text-primary); }
+    /* B2 (cerebro-addreel): checklist visible del siguiente nivel + por qué importa */
+    .rs .brain-reqs { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .rs .brain-req { display:inline-flex; align-items:center; gap:6px; font-size:12.5px; padding:5px 11px; border-radius:99px; border:1px solid var(--border-default); color:var(--text-secondary); background:var(--surface-raised); }
+    .rs .brain-req svg { width:13px; height:13px; }
+    .rs .brain-req.ok { border-color:color-mix(in srgb, var(--success-fg) 38%, transparent); color:var(--success-fg); background:color-mix(in srgb, var(--success-fg) 9%, transparent); }
+    .rs .brain-req-o { font-size:11px; opacity:.7; }
+    .rs .brain-why { font-size:12px; color:var(--text-tertiary); margin-top:10px; }
+    /* B3: pulso del orbe al subir de nivel (recompensa que SE SIENTE) */
+    .rs .brain-orb.lvlup { animation:rsLvlUp 1.4s var(--ease-out); }
+    @keyframes rsLvlUp {
+      0% { transform:scale(1); box-shadow:0 8px 26px rgba(79,124,255,.32); }
+      35% { transform:scale(1.18); box-shadow:0 0 0 14px rgba(79,124,255,.18), 0 8px 32px rgba(79,124,255,.5); }
+      100% { transform:scale(1); box-shadow:0 8px 26px rgba(79,124,255,.32); }
+    }
+    @media (prefers-reduced-motion: reduce){ .rs .brain-orb.lvlup { animation:none; } }
     .rs .brain-sources { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
     .rs--mobile .brain-sources { grid-template-columns:repeat(2,1fr); }
     .rs .brain-src { position:relative; padding:16px 14px; border:1px solid var(--border-default); border-radius:14px; background:var(--surface-raised); overflow:hidden; }
@@ -10152,6 +10167,11 @@
     .rs .stat-v { font-family:var(--font-mono); font-size:30px; font-weight:500; letter-spacing:-.02em; color:var(--text-primary); margin-top:8px; line-height:1; font-variant-numeric:tabular-nums; }
     .rs .stat-d { font-size:11.5px; margin-top:7px; color:var(--text-tertiary); }
     .rs .stat-d.up { color:var(--success-fg); } .rs .stat-d.acc { color:var(--brand-500); }
+    /* B2: celda Cerebro del statbar — clicable (lleva al Cerebro), affordance clara */
+    .rs .stat-link { cursor:pointer; transition:background .15s ease; }
+    .rs .stat-link:hover, .rs .stat-link:focus-visible { background:color-mix(in srgb, var(--brand-500) 7%, transparent); outline:none; }
+    .rs .stat-link:focus-visible { box-shadow:inset 0 0 0 2px var(--brand-500); }
+    .rs .stat-link .stat-v { font-size:24px; color:var(--brand-400); }
     /* ── FEATURE (señal destacada) ── */
     .rs .feature { display:grid; grid-template-columns:184px 1fr 132px; border:1px solid var(--border-strong); border-radius:16px; background:var(--surface-raised); box-shadow:var(--shadow-lg); overflow:hidden; margin-bottom:14px; }
     .rs .feature-thumb { position:relative; } .rs .feature-thumb .thumb { width:100%; height:100%; min-height:230px; border:none; border-radius:0; border-right:1px solid var(--border-default); }
