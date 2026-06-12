@@ -11390,11 +11390,46 @@
   @keyframes rslDotB{0%,28%{background:#d3cdc0}33%,61%{background:#3b3fd4}66%,100%{background:#d3cdc0}}
   @keyframes rslDotC{0%,61%{background:#d3cdc0}66%,94%{background:#3b3fd4}100%{background:#d3cdc0}}
 
-  /* FIX tema en la landing: la landing es OSCURA por diseño (.rs-landing fija su
-     paleta) — el toggle solo cambiaba nav/footer y parecía roto. En la superficie
-     pública se oculta; en el workspace el tema sigue en Configuración/avatar.
-     (Selector .nav-r #themeBtn para ganar a la regla mobile que lo forzaba visible.) */
-  body:not(.workspace) .nav-r #themeBtn { display: none !important; }
+  /* ══════ TEMA CLARO de la landing ══════
+     Dark sigue siendo el default (.rs-landing fija sus vars); con
+     [data-theme="light"] en <html> (el mismo toggle de la app) la landing
+     entera responde, y el toggle vuelve a verse en la superficie pública.
+     Nota AA: --brand2 y --teal se oscurecen en claro (los originales no dan
+     contraste sobre fondo claro en texto pequeño: eyebrows, cifras, ticker). */
+  [data-theme="light"] .rs-landing{
+    --bg:#faf7f2; --surf:#ffffff; --surf2:#f0ece4;
+    --text:#1b1a18; --text2:#55524b; --text3:#6f6b61;
+    --border:rgba(27,26,24,.14);
+    --brand2:#3a55c8; --teal:#0f7e60;
+    --sh-1:0 8px 24px rgba(50,45,35,.10);
+    --sh-2:0 18px 50px rgba(50,45,35,.14);
+    --sh-3:0 30px 80px rgba(50,45,35,.18);
+  }
+  /* superficies con oscuro hardcodeado → variante clara */
+  [data-theme="light"] .rs-landing .rsl-ticker{background:rgba(240,236,228,.55)}
+  [data-theme="light"] .rs-landing .rsl-strip{background:rgba(240,236,228,.6)}
+  [data-theme="light"] .rs-landing .rsl-float-chip{background:rgba(255,255,255,.94);color:var(--text2)}
+  [data-theme="light"] .rs-landing .rsl-math{background:rgba(240,236,228,.5)}
+  [data-theme="light"] .rs-landing .rsl-math-card{background:#fff}
+  [data-theme="light"] .rs-landing .rsl-math-card.rsl-win{background:rgba(79,124,255,.07);box-shadow:0 0 44px rgba(79,124,255,.10)}
+  [data-theme="light"] .rs-landing .rsl-timebar{background:#fff}
+  [data-theme="light"] .rs-landing .rsl-tb-old .rsl-tb-fill{background:linear-gradient(90deg,#beb8aa,#9d9787)}
+  [data-theme="light"] .rs-landing .rsl-toggle{background:#fff}
+  [data-theme="light"] .rs-landing .rsl-plan{background:#fff}
+  [data-theme="light"] .rs-landing .rsl-plan.rsl-hot{background:linear-gradient(#ffffff,#ffffff) padding-box,linear-gradient(var(--ang,135deg),#4f7cff,#8b5cf6,#4f7cff) border-box;box-shadow:0 0 50px rgba(79,124,255,.14)}
+  [data-theme="light"] .rs-landing .rsl-faq details{background:#fff}
+  [data-theme="light"] .rs-landing .rsl-sticky-cta{background:rgba(255,251,244,.94);border-top-color:rgba(79,124,255,.35);box-shadow:0 -14px 50px rgba(50,45,35,.16)}
+  [data-theme="light"] .rs-landing .rsl-diff-band{background:linear-gradient(180deg,rgba(79,124,255,.08),transparent)}
+  /* marcos de vídeo: chrome claro (navegador en modo claro) — el vídeo interior sigue siendo la app */
+  [data-theme="light"] .rs-landing .rsl-frame{background:#fffdf9;border-color:#e7e2d9;box-shadow:var(--sh-3),0 0 60px rgba(79,124,255,.05)}
+  [data-theme="light"] .rs-landing .rsl-frame-bar{background:#f6f2ea;border-color:#e7e2d9}
+  [data-theme="light"] .rs-landing .rsl-frame-bar i{background:#ddd8cc}
+  /* paneles que YA eran claros: que sigan destacando sobre fondo claro
+     (borde más firme + sombra cálida en vez de la sombra negra del dark) */
+  [data-theme="light"] .rs-landing .rsl-radar-panel{border-color:#e0dacc;box-shadow:0 22px 60px rgba(50,45,35,.16)}
+  [data-theme="light"] .rs-landing .rsl-cerebro-viz{border-color:#e0dacc;box-shadow:0 22px 60px rgba(50,45,35,.14)}
+  [data-theme="light"] .rs-landing .rsl-cseq-out{border-color:#e0dacc;box-shadow:0 16px 44px rgba(50,45,35,.14)}
+  [data-theme="light"] .rs-landing .rsl-space{box-shadow:0 14px 40px rgba(50,45,35,.14)}
 
   /* ── PORTE: reglas del contenedor (sustituyen a html/body/main del mockup) ── */
   /* contenido sobre el aurora global (canvas fixed z0): igual que el main{z-index:1} del mockup */
@@ -11417,7 +11452,7 @@
         <button type="button" class="rsl-btn rsl-btn-primary" onclick="openAuth('register','landing_hero')" data-i18n-en="Steal your first script free">Roba tu primer guion gratis</button>
         <a class="rsl-hero-link" href="#rslLoop" data-i18n-html-en="See how it works <span aria-hidden=&quot;true&quot;>→</span>">Ver cómo funciona <span aria-hidden="true">→</span></a>
       </div>
-      <p class="rsl-hero-micro" data-i18n-en="12 free scripts forever · no card">12 guiones gratis para siempre · sin tarjeta</p>
+      <p class="rsl-hero-micro" data-i18n-en="Free to start · no card">Gratis para empezar · sin tarjeta</p>
 
       <!-- VÍDEO real de «Hazlo mío» en marco de navegador (autoplay muted loop). -->
       <div class="rsl-hero-media">
@@ -11647,7 +11682,7 @@
           <p class="rsl-day">&nbsp;</p>
           <ul>
             <li data-i18n-en="Your niche&#39;s radar, free forever">Radar de tu nicho, gratis para siempre</li>
-            <li data-i18n-html-en="<strong>12 «Make it mine»</strong> free, yours forever"><strong>12 «Hazlo mío»</strong> gratis, tuyos para siempre</li>
+            <li data-i18n-html-en="Your first <strong>«Make it mine»</strong> free — yours forever">Tus primeros <strong>«Hazlo mío»</strong> gratis — tuyos para siempre</li>
             <li data-i18n-en="1 brand · teleprompter included">1 marca · teleprompter incluido</li>
             <li class="rsl-zero" data-i18n-en="No card">Sin tarjeta</li>
           </ul>
@@ -11731,7 +11766,7 @@
     <div class="rsl-halo" aria-hidden="true"></div>
     <div class="rsl-wrap">
       <h2 data-i18n-html-en="Your niche is already telling you<br><em>what to record.</em>">Tu nicho ya te está diciendo<br><em>qué grabar.</em></h2>
-      <p class="rsl-sub" style="max-width:480px" data-i18n-en="Come in, check your radar and steal your first script. The first 12 are on us — and they&#39;re yours forever.">Entra, mira tu radar y roba tu primer guion. Los 12 primeros corren de nuestra cuenta — y son tuyos para siempre.</p>
+      <p class="rsl-sub" style="max-width:480px" data-i18n-en="Come in, check your radar and steal your first script. The first ones are on us — and they&#39;re yours forever.">Entra, mira tu radar y roba tu primer guion. Los primeros corren de nuestra cuenta — y son tuyos para siempre.</p>
       <button type="button" class="rsl-btn rsl-btn-primary" style="padding:17px 34px;font-size:1.08rem" onclick="openAuth('register','landing_final')" data-i18n-en="Steal your first script free">Roba tu primer guion gratis</button>
       <p class="rsl-hero-micro" style="margin-top:14px" data-i18n-en="No card · ready in 2 minutes">Sin tarjeta · listo en 2 minutos</p>
     </div>
@@ -11741,7 +11776,7 @@
 <!-- ═══ STICKY CTA (aparece al pasar el hero) ═══ -->
 <div class="rsl-sticky-cta" id="rslStickyCta" role="complementary" aria-label="{% if lang == 'en' %}Start free{% else %}Empezar gratis{% endif %}">
   <div class="rsl-sticky-in">
-    <p class="rsl-msg" data-i18n-html-en="<span class=&quot;rsl-dot&quot; aria-hidden=&quot;true&quot;></span>Your niche is posting right now.<small>12 free scripts · no card</small>"><span class="rsl-dot" aria-hidden="true"></span>Tu nicho está publicando ahora mismo.<small>12 guiones gratis · sin tarjeta</small></p>
+    <p class="rsl-msg" data-i18n-html-en="<span class=&quot;rsl-dot&quot; aria-hidden=&quot;true&quot;></span>Your niche is posting right now.<small>Free to start · no card</small>"><span class="rsl-dot" aria-hidden="true"></span>Tu nicho está publicando ahora mismo.<small>Gratis para empezar · sin tarjeta</small></p>
     <a class="rsl-btn rsl-btn-primary" href="#pricingSection" data-i18n-en="Start free">Empieza gratis</a>
   </div>
 </div>
