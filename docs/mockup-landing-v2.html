@@ -624,6 +624,76 @@
   .radar-panel .steal-btn{background:#3b3fd4;box-shadow:0 6px 20px rgba(59,63,212,.3)}
   @media(max-width:640px){.radar-panel{flex-direction:column;gap:18px;padding:24px;text-align:center}.radar-panel .radar-scope{width:160px}}
 
+
+  /* ── banda de diferenciación ── */
+  .diff-band{border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(79,124,255,.07),transparent);padding:34px 0;text-align:center}
+  .diff-band p{font-family:var(--serif);font-size:clamp(1.35rem,2.7vw,2rem);line-height:1.3;max-width:780px;margin:0 auto;color:var(--text)}
+  .diff-band em{font-style:italic;color:var(--brand2)}
+
+
+  /* ── CEREBRO motion graphic (blanco+azul: aprende de competencia + tus reels) ── */
+  .cerebro-viz{background:#f5f2ec;border:1px solid #e7e2d9;border-radius:24px;padding:28px 24px;box-shadow:0 30px 80px rgba(0,0,0,.45);display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;color:#1b1a18}
+  .cerebro-viz .cv-label{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:#3b3fd4;display:block;margin-bottom:10px}
+  .cv-feed{width:100%}
+  .cv-chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .cv-chip{background:#fff;border:1px solid #e7e2d9;border-radius:999px;padding:6px 12px;font-size:.78rem;color:#3c3a36;font-family:var(--disp)}
+  .cv-chip b{color:#0f9b73;font-weight:600}
+  .cv-flow{position:relative;width:2px;height:32px;background:linear-gradient(#3b3fd4,rgba(59,63,212,.12))}
+  .cv-flow i{position:absolute;left:50%;width:7px;height:7px;border-radius:50%;background:#3b3fd4;transform:translateX(-50%);box-shadow:0 0 8px #3b3fd4;top:-7px;opacity:0}
+  .cv-core{position:relative;width:130px;height:130px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 50% 35%,#5a82f0,#3b3fd4);box-shadow:0 14px 40px rgba(59,63,212,.45),inset 0 2px 12px rgba(255,255,255,.35)}
+  .cv-core-ring{position:absolute;inset:-6px;border-radius:50%;border:2px solid rgba(59,63,212,.4)}
+  .cv-core-inner{display:flex;flex-direction:column;align-items:center;color:#fff;line-height:1}
+  .cv-brain{font-size:22px;margin-bottom:3px}
+  .cv-pct{font-family:var(--disp);font-weight:700;font-size:30px}
+  .cv-cap{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;opacity:.85;margin-top:4px}
+  .cv-learned{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+  .cv-tag{font-family:var(--mono);font-size:.7rem;color:#3b3fd4;background:rgba(59,63,212,.08);border:1px solid rgba(59,63,212,.2);border-radius:999px;padding:5px 11px}
+  @media (prefers-reduced-motion: no-preference){
+    .cv-flow-top i{animation:cvDown 1.9s linear infinite}
+    .cv-flow-bot i{animation:cvUp 1.9s linear infinite}
+    .cv-flow i:nth-child(2){animation-delay:.63s}.cv-flow i:nth-child(3){animation-delay:1.26s}
+    .cv-core-ring{animation:cvPulse 2.6s ease-out infinite}
+    .cv-brain{animation:cvFloat 3s ease-in-out infinite}
+  }
+  @keyframes cvDown{0%{top:-7px;opacity:0}12%{opacity:1}88%{opacity:1}100%{top:32px;opacity:0}}
+  @keyframes cvUp{0%{top:32px;opacity:0}12%{opacity:1}88%{opacity:1}100%{top:-7px;opacity:0}}
+  @keyframes cvPulse{0%{transform:scale(1);opacity:.7}70%{transform:scale(1.28);opacity:0}100%{opacity:0}}
+  @keyframes cvFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+
+
+  /* ── secuencia Cerebro: aprende → guion (revela al scrollear) ── */
+  .cerebro-seq{max-width:560px;margin:0 auto}
+  .cseq-arrow{display:flex;justify-content:center;padding:4px 0}
+  .cseq-arrow span{position:relative;width:2px;height:30px;background:linear-gradient(rgba(59,63,212,.35),#3b3fd4)}
+  .cseq-arrow span::after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#3b3fd4}
+  .cseq-out{background:#fff;border:1px solid #e7e2d9;border-radius:18px;padding:22px 24px;text-align:left;box-shadow:0 22px 56px rgba(0,0,0,.42)}
+  .cseq-out-h{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:#3b3fd4;margin-bottom:12px}
+  .cseq-out h4{font-family:var(--serif);font-weight:400;font-size:1.28rem;line-height:1.32;color:#15140f;margin:0 0 12px}
+  .cseq-out p{font-size:.92rem;color:#5c5a54;margin:0 0 8px;line-height:1.45}
+  .cseq-out p:last-child{margin-bottom:0}
+  .js .cseq-out .cv-out-line{opacity:0}
+  @media (prefers-reduced-motion: no-preference){ .cerebro-seq.vis .cv-out-line{animation:cvLineIn .55s var(--ease) both} }
+  @media (prefers-reduced-motion: reduce){ .cseq-out .cv-out-line{opacity:1} }
+  @keyframes cvLineIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+
+  /* ── slider rotatorio del guion (nichos) ── */
+  .cseq-out{overflow:hidden;position:relative}
+  .cseq-track{display:flex;width:300%}
+  .cseq-slide{width:33.3333%;flex:none}
+  .cseq-dots{display:flex;gap:7px;justify-content:center;margin-top:16px}
+  .cseq-dots span{width:6px;height:6px;border-radius:50%;background:#d3cdc0}
+  @media (prefers-reduced-motion: no-preference){
+    .cseq-track{animation:cseqRotate 13.5s ease-in-out infinite}
+    .cseq-dots span:nth-child(1){animation:dotA 13.5s infinite}
+    .cseq-dots span:nth-child(2){animation:dotB 13.5s infinite}
+    .cseq-dots span:nth-child(3){animation:dotC 13.5s infinite}
+  }
+  @keyframes cseqRotate{0%,28%{transform:translateX(0)}33%,61%{transform:translateX(-33.3333%)}66%,94%{transform:translateX(-66.6666%)}100%{transform:translateX(0)}}
+  @keyframes dotA{0%,28%,100%{background:#3b3fd4}33%,94%{background:#d3cdc0}}
+  @keyframes dotB{0%,28%{background:#d3cdc0}33%,61%{background:#3b3fd4}66%,100%{background:#d3cdc0}}
+  @keyframes dotC{0%,61%{background:#d3cdc0}66%,94%{background:#3b3fd4}100%{background:#d3cdc0}}
+
 </style>
 </head>
 <body>
@@ -699,6 +769,16 @@
     </div>
   </section>
 
+  <!-- ═══ FRANJA PROMESAS con números ═══ -->
+  <!-- PLACEHOLDER: validar las 3 cifras con datos reales del producto antes de publicar -->
+  <div class="strip">
+    <div class="wrap strip-in">
+      <div class="rise"><span class="num" data-count="3200" data-suffix="+">0</span><b>señales analizadas cada semana</b><span>Sabemos qué está explotando, y por qué</span></div>
+      <div class="rise"><span class="num" data-count="60" data-suffix=" seg">0</span><b>de señal a guion en tu voz</b><span>Tu tono, tus frases, tu estructura</span></div>
+      <div class="rise"><span class="num" data-count="80" data-suffix="%">0</span><b>de tu voz, ya capturada</b><span>Con ~5 reels suena a ti — y sube con cada uno</span></div>
+    </div>
+  </div>
+
   <!-- ═══ MÍRALO EN ACCIÓN (clips reales) ═══ -->
   <section style="padding-top:40px">
     <div class="wrap" style="text-align:center">
@@ -747,40 +827,58 @@
     </div>
   </div>
 
-  <!-- ═══ FRANJA PROMESAS con números ═══ -->
-  <!-- PLACEHOLDER: validar las 3 cifras con datos reales del producto antes de publicar -->
-  <div class="strip">
-    <div class="wrap strip-in">
-      <div class="rise"><span class="num" data-count="3200" data-suffix="+">0</span><b>señales analizadas cada semana</b><span>Sabemos qué está explotando, y por qué</span></div>
-      <div class="rise"><span class="num" data-count="60" data-suffix=" seg">0</span><b>de señal a guion en tu voz</b><span>Tu tono, tus frases, tu estructura</span></div>
-      <div class="rise"><span class="num" data-count="80" data-suffix="%">0</span><b>de tu voz, ya capturada</b><span>Con ~5 reels suena a ti — y sube con cada uno</span></div>
-    </div>
-  </div>
-
   <!-- ═══ MOAT / CEREBRO ═══ -->
   <section>
-    <div class="wrap moat-grid">
-      <div>
-        <span class="eyebrow">El Cerebro</span>
-        <h2 class="rise">Un sistema que te conoce más cada día.</h2>
-        <p class="sub rise">Las plantillas suenan a todos. Los GPT suenan a robot. Reelscript construye un modelo de <strong>tu</strong> voz que mejora con cada uso — como el teclado de tu móvil aprende cómo escribes.</p>
-        <div class="moat-list">
-          <div class="moat-item rise"><div class="ic">🎙</div><div><b>Tu tono y tus muletillas</b><span>Aprendidos de tus propios reels, no de un cuestionario.</span></div></div>
-          <div class="moat-item rise"><div class="ic">🏆</div><div><b>Tus ganadores como molde</b><span>Tus reels con más views guían cada nuevo guion.</span></div></div>
-          <div class="moat-item rise"><div class="ic">🚫</div><div><b>Lo que te hunde, fuera</b><span>También aprende qué patrones no funcionan en tu cuenta.</span></div></div>
+    <div class="wrap" style="text-align:center">
+      <span class="eyebrow">El Cerebro</span>
+      <h2 class="rise">Aprende de tu nicho y de ti.<br>Y te saca el guion.</h2>
+      <p class="sub rise" style="margin:0 auto 34px">Las plantillas suenan a todos. Los GPT, a robot. Reelscript construye un modelo de <strong>tu</strong> voz que mejora con cada uso — y lo convierte en guiones listos.</p>
+      <div class="cerebro-seq rise">
+        <div class="cerebro-viz">
+          <div class="cv-feed">
+            <span class="cv-label">Aprende de tu competencia</span>
+            <div class="cv-chips"><span class="cv-chip">@rival_inmo <b>×14</b></span><span class="cv-chip">@coach_ventas <b>×6</b></span><span class="cv-chip">@nutri_real <b>×9</b></span></div>
+          </div>
+          <div class="cv-flow cv-flow-top"><i></i><i></i><i></i></div>
+          <div class="cv-core"><div class="cv-core-ring"></div><div class="cv-core-inner"><span class="cv-brain">🧠</span><span class="cv-pct">82%</span><span class="cv-cap">tu voz</span></div></div>
+          <div class="cv-flow cv-flow-bot"><i></i><i></i><i></i></div>
+          <div class="cv-feed">
+            <span class="cv-label">y de tus propios reels</span>
+            <div class="cv-chips"><span class="cv-chip">tu reel · <b>136k</b></span><span class="cv-chip">tu reel · <b>22k</b></span><span class="cv-chip">tu reel · <b>9k</b></span></div>
+          </div>
+          <div class="cv-learned"><span class="cv-tag">tu tono</span><span class="cv-tag">tus hooks</span><span class="cv-tag">tu estructura</span><span class="cv-tag">tus cierres</span></div>
         </div>
-      </div>
-      <div class="brain" id="brainCard">
-        <div class="bh"><b>Cerebro · @tu_marca</b><span><i class="live" aria-hidden="true"></i>aprendiendo ahora</span></div>
-        <div class="row"><label>Voz capturada <em data-w="82">82%</em></label><div class="bar"><i data-w="82"></i></div></div>
-        <div class="row"><label>Hooks que te funcionan <em data-w="74">74%</em></label><div class="bar"><i data-w="74"></i></div></div>
-        <div class="row"><label>Estructura dominada <em data-w="67">67%</em></label><div class="bar"><i data-w="67"></i></div></div>
-        <div>
-          <span class="chip">cierras con pregunta</span><span class="chip">hooks de contraste</span><span class="chip">45–60 s</span><span class="chip">sin tecnicismos</span>
+        <div class="cseq-arrow"><span></span></div>
+        <div class="cseq-out">
+          <div class="cseq-track">
+            <div class="cseq-slide">
+              <div class="cseq-out-h">⚡ Inmobiliaria · en tu voz</div>
+              <h4>«Te han vendido que la hipoteca fija es lo seguro. Mira esto antes de firmar.»</h4>
+              <p>El banco gana más con tu miedo que con tu interés. La pregunta real: ¿cuántos años te quedas?</p>
+            </div>
+            <div class="cseq-slide">
+              <div class="cseq-out-h">⚡ Nutrición · en tu voz</div>
+              <h4>«Llevas años contando calorías. Por eso justo no te funciona.»</h4>
+              <p>No comes de más, comes mal repartido. Te enseño a darle la vuelta sin pasar hambre.</p>
+            </div>
+            <div class="cseq-slide">
+              <div class="cseq-out-h">⚡ Fitness · en tu voz</div>
+              <h4>«Entrenas 5 días y no creces. El gimnasio no es el problema.»</h4>
+              <p>Es lo que haces las otras 23 horas. Descanso, proteína y progresión — te lo ordeno en 30 segundos.</p>
+            </div>
+          </div>
+          <div class="cseq-dots"><span></span><span></span><span></span></div>
         </div>
       </div>
     </div>
   </section>
+
+  <!-- ═══ DIFERENCIACIÓN ═══ -->
+  <div class="diff-band">
+    <div class="wrap">
+      <p>No es ChatGPT. No son plantillas. Es <em>lo que ya está explotando en tu nicho</em> — reescrito en <em>tu voz</em>.</p>
+    </div>
+  </div>
 
   <!-- ═══ PRUEBA SOCIAL: hecho en público por creadores reales ═══
        TODO fotos reales (cuadradas ≥160px) → docs/img/landing-v2/david.jpg / bernat.jpg
@@ -790,184 +888,15 @@
     <div class="wrap proof-in">
       <span class="proof-label">Hecho en público por creadores que publican</span>
       <a class="creator-chip" href="https://instagram.com/__davidayala" target="_blank" rel="noopener">
-        <span class="ph">DA<img src="img/landing-v2/david.jpg" alt="" onerror="this.style.display='none'"></span>
-        <span><b>@__davidayala</b><span>construyendo Reelscript · TODO seguidores</span></span>
+        <span class="ph">DA<img src="david.jpg" alt="" onerror="this.style.display='none'"></span>
+        <span><b>@__davidayala</b><span>construyendo Reelscript en público</span></span>
       </a>
       <a class="creator-chip" href="https://instagram.com/bernatcasanasm" target="_blank" rel="noopener">
-        <span class="ph">BC<img src="img/landing-v2/bernat.jpg" alt="" onerror="this.style.display='none'"></span>
-        <span><b>@bernatcasanasm</b><span>construyendo Reelscript · TODO seguidores</span></span>
+        <span class="ph">BC<img src="bernat.jpg" alt="" onerror="this.style.display='none'"></span>
+        <span><b>@bernatcasanasm</b><span>construyendo Reelscript en público</span></span>
       </a>
     </div>
   </div>
-
-  <!-- ═══ EL LOOP — zigzag con CAPTURAS REALES de la app ═══
-       ⚠️ TODO CAPTURAS (regla editorial): en TODAS las capturas usar SOLO
-       contenido propio (@__davidayala) o figuras públicas muy conocidas
-       (MrBeast, Ibai) como «competidor de ejemplo». NUNCA reels de
-       competidores reales de usuarios. Exportar PNG 2x a docs/img/landing-v2/
-       (al portar a templates/index.html: static/img/landing/). -->
-  <section id="loop">
-    <div class="wrap">
-      <span class="eyebrow">El loop</span>
-      <h2 class="rise">De la página en blanco<br>al reel publicado.</h2>
-      <p class="sub rise">No generas contenido a ciegas. Partes de lo que ya está funcionando en tu nicho — y el sistema lo convierte en tuyo. Así se ve por dentro:</p>
-
-      <div class="how-row rise">
-        <div class="how-media">
-          <div class="frame">
-            <div class="frame-bar"><i></i><i></i><i></i><span>Radar · señales de hoy</span></div>
-            <div class="shot" role="img" aria-label="El Radar de Reelscript: señales del día con un reel que explotó 89 veces su media, listo para robar con «Hazlo mío»">
-              <div class="mr">
-                <div class="mr-top">
-                  <span class="mr-mk"><i></i>IA ▾</span>
-                  <span class="mr-cr"><b>Todas las marcas</b> / Radar</span>
-                  <span class="mr-sp"></span>
-                  <span class="mr-pill">Apunta una idea</span>
-                  <span class="mr-pill cred">✦ 3541</span>
-                </div>
-                <div class="mr-bd">
-                  <div class="mr-ey"><i></i>Radar · @IA</div>
-                  <div class="mr-h">Señales de hoy</div>
-                  <div class="mr-su">Mientras no mirabas, <b>2 reels explotaron</b> en tu nicho. Esto es lo que merece tu próximo guion.</div>
-                  <div class="mr-ch">
-                    <span><i style="background:#9a968d"></i>Todas</span>
-                    <span class="on"><i style="background:#6d5ae6"></i>IA</span>
-                    <span><i style="background:#e8a33c"></i>Espiritualidad</span>
-                  </div>
-                  <div class="mr-st">
-                    <div class="c"><div class="l">Rivales activos</div><div class="v">6</div></div>
-                    <div class="c"><div class="l">Reels · 7 días</div><div class="v">2</div><div class="s up">2 explotaron</div></div>
-                    <div class="c"><div class="l">Explosivos</div><div class="v">2</div><div class="s up">sobre su media</div></div>
-                    <div class="c"><div class="l">Tu voz</div><div class="v">40%</div><div class="s">nivel 1</div></div>
-                  </div>
-                  <div class="mr-cmp">▸ Tus competidores <span class="cv">· 6</span></div>
-                  <div class="mr-op">
-                    <div class="th"><span class="pov">POV: tu empresa usa Claude Code</span><span class="du">0:34</span></div>
-                    <div class="mn">
-                      <div class="op-tag">Oportunidad #1 · @__davidayala · hace 3 días</div>
-                      <div class="tt">¿Qué opináis? 😂</div>
-                      <div class="hint"><b>✦</b><span>Está reventando: <b>89×</b> lo normal de @__davidayala. Si hay uno que robar hoy, es este.</span></div>
-                      <div class="cta"><span class="steal">⚡ Hazlo mío</span><span class="fav">☆</span></div>
-                    </div>
-                    <div class="sd">
-                      <div class="k">Explosión</div><div class="x">89×</div>
-                      <div class="k">Views</div><div class="vv">155 K</div>
-                      <div class="k">Likes</div><div class="vv">6 K</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="how-copy">
-          <span class="n">01 · DETECTA</span>
-          <h3>Tu radar capta lo que explota en tu nicho</h3>
-          <p>Cada mañana: los reels que están reventando entre tus competidores, ordenados por lo que merece tu próximo guion. Como el de la hipoteca que hizo ×14 su media — eso no se encuentra scrolleando.</p>
-          <p class="pt">Mirar el radar no gasta créditos: es gratis, siempre.</p>
-        </div>
-      </div>
-
-      <div class="how-row flip rise">
-        <div class="how-media">
-          <!-- contenido REAL renderizado (no placeholder): un guión tal y como lo entrega la app -->
-          <div class="script-card">
-            <span class="sc-from">Señal robada · reescrita con <b>tu voz al 82%</b></span>
-            <h4>«Te han vendido que la hipoteca fija es lo seguro. Mira esto antes de firmar.»</h4>
-            <div class="beat"><i>01</i><span>El banco gana más con tu miedo que con tu interés. Te explico por qué en 30 segundos.</span></div>
-            <div class="beat"><i>02</i><span>Fija, mixta o variable no es la pregunta. La pregunta es cuántos años vas a quedarte.</span></div>
-            <div class="beat"><i>03</i><span>Cierre con tu pregunta de siempre: ¿tú ya has firmado la tuya? Te leo.</span></div>
-            <span class="voice">✓ Hook, beats y cierre con tu estructura</span>
-          </div>
-        </div>
-        <div class="how-copy">
-          <span class="n">02 · RÓBALO</span>
-          <h3>«Hazlo mío»: un clic y es tuyo</h3>
-          <p>No copias el reel: copias la jugada. El sistema lo reescribe desde cero con tu tono, tus muletillas y tu cierre — la voz es tuya, no la del competidor.</p>
-          <p class="pt">De señal a guion listo en ~60 segundos.</p>
-        </div>
-      </div>
-
-      <div class="how-row rise">
-        <div class="how-media">
-          <div class="phone">
-            <div class="shot" role="img" aria-label="El teleprompter de Reelscript en el móvil: el guion avanza en tu voz mientras grabas, sin salir de la app">
-              <div class="mt">
-                <div class="mt-hd"><span class="bk">‹</span><b>Teleprompter</b><span>en tu voz</span></div>
-                <div class="mt-bd">
-                  <div class="rail"><i></i></div>
-                  <div class="mt-roll">
-                    <div class="mt-hk">La IA no te hace mejor programador.</div>
-                    <div class="mt-ln">Te convierte en un vago más rápido.</div>
-                    <div class="mt-ln">Copian y pegan bloques de código sin entenderlos.</div>
-                    <div class="mt-ln">El resultado es un desastre que aparenta funcionar.</div>
-                    <div class="mt-ln">Y cuando algo falla, no sabes ni por dónde empezar.</div>
-                  </div>
-                </div>
-                <div class="mt-ft"><span class="no">Aún no</span><span class="yes">✓ Ya lo grabé</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="how-copy">
-          <span class="n">03 · GRABA</span>
-          <h3>Teleprompter integrado</h3>
-          <p>Del guion al reel sin salir de Reelscript ni copiar nada a otra app. El texto avanza a tu ritmo mientras grabas con el móvil.</p>
-          <p class="pt">Grabar no gasta créditos — repite hasta que salga bordado.</p>
-        </div>
-      </div>
-
-      <div class="how-row flip rise">
-        <div class="how-media">
-          <div class="frame">
-            <div class="frame-bar"><i></i><i></i><i></i><span>Cerebro · @__davidayala</span></div>
-            <div class="shot" role="img" aria-label="El Cerebro de Reelscript: voz capturada al 40 por ciento y de qué se alimenta el sistema — reels, competidores, guiones y publicaciones">
-              <div class="mc">
-                <div class="mc-top">
-                  <span class="mc-mk"><i></i>IA ▾</span>
-                  <span class="mc-cr"><b>Todas las marcas</b> / Cerebro</span>
-                  <span class="mc-sp"></span>
-                  <span class="mc-pill">Apunta una idea</span>
-                  <span class="mc-pill cred">✦ 3541</span>
-                </div>
-                <div class="mc-bd">
-                  <div class="mc-ey"><i></i>Cerebro · @IA</div>
-                  <div class="mc-h">El cerebro de IA</div>
-                  <div class="mc-lv">
-                    <div class="ic">🧠</div>
-                    <div style="flex:1;min-width:0">
-                      <div class="lk">Nivel 1 · Calentando</div>
-                      <div class="bg">Te conozco al <em>40%</em></div>
-                      <div class="pr"><i></i></div>
-                      <div class="cap">Te faltan ~7 piezas para el <b>Nivel 2</b>, donde tus guiones salen casi sin retoques.</div>
-                    </div>
-                  </div>
-                  <div class="mc-vl">Enséñame tu voz</div>
-                  <div class="mc-ta">Pega aquí la transcripción de tus reels (lo que dices)…</div>
-                  <span class="mc-btn">✦ Aprender mi voz</span>
-                  <div class="mc-vl">De qué me alimento</div>
-                  <div class="mc-feed">
-                    <div class="c"><div class="v">0</div><div class="l">reels tuyos leídos</div><div class="s">de aquí modelo tu voz</div></div>
-                    <div class="c"><div class="v">5</div><div class="l">competidores vigilados</div><div class="s">qué funciona en tu nicho</div></div>
-                    <div class="c"><div class="v">6</div><div class="l">guiones creados</div><div class="s">cada uno refina tu estilo</div></div>
-                    <div class="c"><div class="v">27</div><div class="l">publicados con métricas</div><div class="s">cierran el círculo</div></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="how-copy">
-          <span class="n">04 · APRENDE</span>
-          <h3>Cada publicación afina tu voz</h3>
-          <p>Conecta Instagram y el sistema aprende qué hooks, temas y duraciones funcionan <strong>en tu cuenta</strong>. Lo siguiente que robes sale más tuyo todavía.</p>
-          <div class="viz-voice"><div class="vbar"><i></i></div><span class="vpct">voz al 82%</span></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <div class="cta-mid"><div class="wrap"><a class="btn btn-primary" href="#signup">Empezar gratis →</a></div></div>
 
   <!-- ═══ LA CUENTA ES SIMPLE (ventas) ═══ -->
   <section class="math">
@@ -1024,65 +953,6 @@
           <div class="moat-item rise"><div class="ic">👥</div><div><b>Equipo con roles</b><span>3 asientos incluidos. Asigna marcas a cada miembro.</span></div></div>
           <div class="moat-item rise"><div class="ic">⚡</div><div><b>Pool de créditos único</b><span>800 al mes para toda la cuenta. Sin cupos por marca.</span></div></div>
         </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ ASPIRACIONAL: vive de tu contenido + ejemplos concretos de nicho ═══
-       Handles de los ejemplos: INVENTADOS y genéricos a propósito (muestra).
-       No sustituir por cuentas reales de terceros. -->
-  <section class="aspire">
-    <div class="wrap">
-      <span class="eyebrow">Para qué es todo esto</span>
-      <h2 class="rise">De postear por postear<br>a <em>vivir de tu contenido.</em></h2>
-      <p class="sub rise" style="margin:0 auto">Los creadores que viven de esto no esperan a la inspiración: sistematizan lo que ya funciona. Eso es lo que Reelscript te monta debajo — cada semana sabes <strong>qué grabar, por qué, y con qué guion</strong>. Sea cual sea tu nicho:</p>
-      <div class="hooks-row">
-        <div class="hook-card rise">
-          <span class="niche">Inmobiliaria</span>
-          <p class="from">Señal: <b>«Nadie te cuenta esto de las hipotecas»</b> · ×14,2 su media</p>
-          <span class="arrow">→ TU GUION</span>
-          <p class="to">«Te han vendido que la hipoteca fija es lo seguro. Mira esto antes de firmar.»</p>
-        </div>
-        <div class="hook-card rise">
-          <span class="niche">Fitness</span>
-          <p class="from">Señal: <b>«Por qué tu cardio no quema grasa»</b> · ×8,3 su media</p>
-          <span class="arrow">→ TU GUION</span>
-          <p class="to">«30 minutos de cardio y cero resultados: el error está en el orden. Te lo enseño.»</p>
-        </div>
-        <div class="hook-card rise">
-          <span class="niche">Nutrición</span>
-          <p class="from">Señal: <b>«El desayuno que te hincha»</b> · ×9,4 su media</p>
-          <span class="arrow">→ TU GUION</span>
-          <p class="to">«Si te hinchas después de desayunar, no es el gluten. Es esto.»</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ TESTIMONIOS ═══ -->
-  <!-- ⚠️ PLACEHOLDER COMPLETO: testimonios de MUESTRA (personas no reales).
-       Sustituir por testimonios reales CON PERMISO + foto real antes de publicar
-       (TODO fotos → docs/img/landing-v2/testi-1.jpg / testi-2.jpg / testi-3.jpg). -->
-  <section style="padding-top:30px">
-    <div class="wrap" style="text-align:center">
-      <span class="eyebrow">Lo que dicen</span>
-      <h2 class="rise">Creadores que ya no miran<br>la página en blanco.</h2>
-      <div class="testi-grid" style="text-align:left">
-        <figure class="testi rise">
-          <div class="stars" aria-label="5 estrellas">★★★★★</div>
-          <p>«Pasé de publicar <strong>cuando me venía la inspiración</strong> a publicar 4 veces por semana. El radar me da la idea hecha; yo solo grabo.»</p>
-          <figcaption class="who"><span class="av" style="background:#4f7cff">L<img src="img/landing-v2/testi-1.jpg" alt="" onerror="this.style.display='none'"></span><div><b>Laura · inmobiliaria</b><span>PLACEHOLDER · sustituir por real</span></div></figcaption>
-        </figure>
-        <figure class="testi rise">
-          <div class="stars" aria-label="5 estrellas">★★★★★</div>
-          <p>«Lo que más me sorprendió: los guiones <strong>suenan a mí</strong>. Mis clientes no notan que hay IA detrás — y eso era mi miedo.»</p>
-          <figcaption class="who"><span class="av" style="background:#8b5cf6">D<img src="img/landing-v2/testi-2.jpg" alt="" onerror="this.style.display='none'"></span><div><b>Dani · agencia de contenido</b><span>PLACEHOLDER · sustituir por real</span></div></figcaption>
-        </figure>
-        <figure class="testi rise">
-          <div class="stars" aria-label="5 estrellas">★★★★★</div>
-          <p>«Llevo 3 marcas a la vez y antes era un caos de notas. Ahora cada cliente tiene su cerebro y <strong>cambio de contexto en un clic</strong>.»</p>
-          <figcaption class="who"><span class="av" style="background:#ff7847">M<img src="img/landing-v2/testi-3.jpg" alt="" onerror="this.style.display='none'"></span><div><b>Marta · social media manager</b><span>PLACEHOLDER · sustituir por real</span></div></figcaption>
-        </figure>
       </div>
     </div>
   </section>
