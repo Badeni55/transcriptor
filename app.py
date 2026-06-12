@@ -2652,7 +2652,10 @@ def adapt():
     err = validate_adapt(body)
     if err:
         return jsonify({"error": err}), 400
-    if not GROQ_API_KEY:
+    # P0-5: /adapt es texto-LLM (OpenRouter O Groq sirven) — exigir GROQ_API_KEY
+    # tumbaba el endpoint en despliegues solo-OpenRouter. (Los endpoints de
+    # transcripción SÍ requieren GROQ: Whisper vive ahí.)
+    if not (OPENROUTER_API_KEY or GROQ_API_KEY):
         return jsonify({"error": "Service unavailable"}), 500
     if not style and not custom_prompt and not assistant_id:
         return jsonify({"error": "Select a style"}), 400
@@ -3795,9 +3798,22 @@ def resolve_assistant_prompt(assistant_id, user_id=None):
 def develop_idea(raw_text, assistant_id=None, user_id=None, language="es"):
     """Call AI to develop a raw idea into structured script draft."""
     style_block = resolve_assistant_prompt(assistant_id, user_id)
+    # P0-4: los STYLE_PROMPTS terminan en _JSON_SCRIPT_SCHEMA ({"hook","body",
+    # "closing"}), que CONTRADICE el contrato de idea ({"title","category",
+    # "script_draft"}). Con asistente, el modelo obedecía el último schema →
+    # script_draft=None → ideas "developed" sin borrador. Recortamos cualquier
+    # schema del bloque de estilo y re-afirmamos el contrato de idea al final.
+    if style_block:
+        style_block = style_block.split("Devuelve ÚNICAMENTE")[0].strip()
     system = IDEA_BASE_PROMPT
     if style_block:
-        system += f"\n\nESTILO ESPECÍFICO PARA ESTE GUIÓN:\n{style_block}"
+        system += (
+            f"\n\nESTILO ESPECÍFICO PARA ESTE GUIÓN (aplica su TONO y estructura; "
+            f"NO cambia el formato de salida):\n{style_block}"
+            "\n\nRECUERDA: la salida es EXCLUSIVAMENTE el JSON del contrato de arriba — "
+            '{"title","category","script_draft":{"intro","desarrollo","cierre"}}. '
+            "Ningún otro formato."
+        )
 
     api_key = OPENROUTER_API_KEY or GROQ_API_KEY
     url = OPENROUTER_URL if OPENROUTER_API_KEY else "https://api.groq.com/openai/v1/chat/completions"
