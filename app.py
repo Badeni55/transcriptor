@@ -1118,11 +1118,15 @@ def transcribe():
     # ── Actualizar contador antes de encolar ──────────────────────────────
     is_unlimited = user and user.get("email", "").lower() in UNLIMITED_EMAILS
     cost_cents = 0
+    # addreel: qué se cobró → viaja a la task para REEMBOLSAR si falla la
+    # descarga/transcripción. Antes una URL rota quemaba 1 de los 3 análisis free.
+    charge = None
 
     if user is None:
         db.table("ip_usage").update(
             {"used_today": ip_usage["used_today"] + 1}
         ).eq("ip", ip).execute()
+        charge = {"kind": "ip"}
     elif not is_unlimited:
         # BAJO LOCK por-usuario (Redis) + re-lectura: evita doble-gasto multi-worker.
         _tclock = acquire_credit_lock(user["id"])
@@ -1132,16 +1136,19 @@ def transcribe():
                 db.table("profiles").update({
                     "monthly_usage": (fresh.get("monthly_usage") or 0) + 1
                 }).eq("id", user["id"]).execute()
+                charge = {"kind": "monthly"}
             elif free_analysis_left(fresh) > 0:
                 # FREE cata: consumir 1 análisis de por vida (re-check bajo lock).
                 db.table("profiles").update({
                     "free_analysis_uses": (fresh.get("free_analysis_uses") or 0) + 1
                 }).eq("id", user["id"]).execute()
+                charge = {"kind": "free_analysis"}
             elif (fresh.get("credits_cents") or 0) >= 2 * COST_CENTS:
                 cost_cents = 2 * COST_CENTS
                 db.table("profiles").update(
                     {"credits_cents": (fresh.get("credits_cents") or 0) - cost_cents}
                 ).eq("id", user["id"]).execute()
+                charge = {"kind": "credits", "cents": cost_cents}
             else:
                 # Carrera: cupo/saldo agotado entre el check y el lock.
                 return jsonify({
@@ -1163,6 +1170,7 @@ def transcribe():
         user["id"] if user else None,
         get_client_ip() if not user else None,
         is_paid,
+        charge,
     )
 
     return jsonify({"task_id": task.id, "cost_cents": cost_cents})

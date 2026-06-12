@@ -320,7 +320,9 @@
   function nextSeriesHTML(ctx){
     var nx=nextSeries(); if(!nx || !(nx.title||nx.message)) return '';
     var views=nx.views!=null?(typeof nx.views==="string"?nx.views:fmtNum(nx.views)):"";
-    var btnCls=(ctx==="brain")?"btn-primary":"btn-secondary";
+    // IDI una-primaria: en Cerebro la primaria es la CTA de nivel del hero mientras
+    // quede escalera; solo al nivel máximo (sin CTA de nivel) hereda la primaria.
+    var btnCls=(ctx==="brain" && !brainLevel().nextAction)?"btn-primary":"btn-secondary";
     return '<article class="next-series">'+
       '<div class="ns-eyebrow">'+IC.brain+'<span>Tu próxima serie</span>'+(views?'<span class="ns-views" title="Lo que hizo el reel que la inspira">'+IC.eye+' '+ESC(views)+'</span>':'')+'</div>'+
       '<h3 class="ns-title">'+ESC(nx.title||"")+'</h3>'+
@@ -467,16 +469,25 @@
     '</div>';
   }
   function statbarHTML(){
-    var st=S.stats||{competitors:0,reels_week:0,exploded_week:0,stolen_today:0}; var b=brand();
+    var st=S.stats||{competitors:0,reels_week:0,exploded_week:0,stolen_today:0};
     var stats=[
       ["Rivales activos", st.competitors, "", ""],
       ["Reels · 7 días", st.reels_week, (st.exploded_week>0?st.exploded_week+" explotaron":""), "up"],
-      ["Explosivos", st.exploded_week, "sobre su media", "acc"],
-      ["Tu voz", (b.voice||40)+"%", "nivel "+(b.level||1), ""]
+      ["Explosivos", st.exploded_week, "sobre su media", "acc"]
     ];
+    // B2: el nivel del Cerebro, visible en el Radar y clicable (lleva al Cerebro,
+    // donde está la checklist completa). Derivado de señales reales (brainLevel).
+    var lv=brainLevel();
+    var lvDetail=lv.next
+      ? ('falta'+(lv.missing.length>1?'n':'')+' '+lv.missing.length+' para N'+lv.next)
+      : 'al máximo';
+    var brainCell='<div class="stat stat-link" data-act="tab" data-k="brain" role="button" tabindex="0" '+
+      'title="Abrir el Cerebro" aria-label="Cerebro: nivel '+lv.level+', '+ESC(lvDetail)+'">'+
+      '<div class="stat-k">Cerebro</div><div class="stat-v">Nivel '+lv.level+'</div>'+
+      '<div class="stat-d acc">'+ESC(lvDetail)+'</div></div>';
     return '<div class="statbar">'+stats.map(function(s){
       return '<div class="stat"><div class="stat-k">'+ESC(s[0])+'</div><div class="stat-v">'+ESC(s[1])+'</div>'+(s[2]?'<div class="stat-d '+s[3]+'">'+ESC(s[2])+'</div>':'')+'</div>';
-    }).join("")+'</div>';
+    }).join("")+brainCell+'</div>';
   }
   function dashboardHTML(){
     var st=S.stats||{competitors:0,reels_week:0,exploded_week:0,stolen_today:0}; var b=brand();
@@ -877,6 +888,52 @@
      Es el moat hecho visible (principio II del manifiesto).
      ════════════════════════════════════════════════════════════════ */
   function hasRealVoice(){ return !!(S.voice && S.voice.has_profile); }
+  /* B · NIVEL del Cerebro — derivado SOLO de señales reales (nada cosmético):
+     voz entrenada (S.voice del backend), competidores seguidos, guiones creados,
+     reels publicados con métricas. Cada nivel es una checklist VISIBLE; el nivel
+     es el más alto con todo cumplido (escalera estricta — sin saltos mágicos).
+     El beneficio es real, no marketing: la voz y los top-scripts entran en el
+     prompt de cada generación (voice_prompt_block / top_scripts en backend). */
+  function brainSignals(){
+    var voicePct=hasRealVoice()?Math.min(100,S.voice.confidence||0):0;
+    var nComps=Array.isArray(S.tracked)?S.tracked.length:((S.stats&&S.stats.competitors)||brainCompetitors().length);
+    var nGuiones=(S.guiones||[]).filter(function(g){return g.status!=="discarded";}).length;
+    var nPub=metricVideos().length;
+    return {voice:voicePct, comps:nComps, guiones:nGuiones, pub:nPub};
+  }
+  function brainLevel(){
+    var s=brainSignals();
+    var REQS={
+      2:[ {ok:s.voice>0,    label:"Entrena tu voz",                                   cta:{t:"Entrenar mi voz", act:"voice-focus"}},
+          {ok:s.comps>=1,   label:"Sigue a 1 competidor",                             cta:{t:"Añadir competidor", act:"add-comp"}} ],
+      3:[ {ok:s.guiones>=3, label:"Crea 3 guiones ("+Math.min(3,s.guiones)+"/3)",     cta:{t:"Robar un guion del radar", act:"tab", k:"dashboard"}},
+          {ok:s.voice>=50,  label:"Voz al 50% (vas al "+s.voice+"%)",                 cta:{t:"Refinar mi voz", act:"voice-refine"}} ],
+      4:[ {ok:s.pub>=1,     label:"Publica 1 reel y vincúlalo",                       cta:{t:"Conectar Instagram", act:"tab", k:"metrics"}} ],
+      5:[ {ok:s.pub>=5,     label:"5 publicados con métricas ("+Math.min(5,s.pub)+"/5)", cta:{t:"Vincular mis reels", act:"tab", k:"metrics"}},
+          {ok:s.voice>=75,  label:"Voz al 75% (vas al "+s.voice+"%)",                 cta:{t:"Refinar mi voz", act:"voice-refine"}} ]
+    };
+    var level=1;
+    for(var n=2;n<=5;n++){ if(REQS[n].every(function(r){return r.ok;})) level=n; else break; }
+    var next=level<5?level+1:null;
+    var reqs=next?REQS[next]:[];
+    var missing=reqs.filter(function(r){return !r.ok;});
+    var pct=next?Math.round(reqs.filter(function(r){return r.ok;}).length/Math.max(1,reqs.length)*100):100;
+    return {level:level, next:next, reqs:reqs, missing:missing, nextAction:missing[0]||null, pct:pct, signals:s};
+  }
+  /* B3 · momento de recompensa: si el nivel SUBIÓ desde la última foto (entrenar voz,
+     seguir competidor, crear guion, vincular publicados…), toast + orbe en pulso +
+     la barra del hero se re-anima de 0 → pct. Llamar tras cada recarga de señales. */
+  function brainLevelPulse(){
+    var lv=brainLevel().level;
+    if(S._lvlSeen==null){ S._lvlSeen=lv; return; }
+    if(lv===S._lvlSeen) return;
+    if(lv<S._lvlSeen){ S._lvlSeen=lv; return; }   // bajó (p.ej. descartó guiones): sin fanfarria
+    S._lvlSeen=lv;
+    showToast("🧠 Nivel "+lv+" · "+ecoLevelName(lv)+" — el sistema te conoce mejor: guiones con menos retoques.");
+    var orb=document.querySelector(".brain-orb"); if(orb){ orb.classList.add("lvlup"); setTimeout(function(){ orb.classList.remove("lvlup"); },1600); }
+    var fill=document.querySelector(".brain-hero .eco-fill");
+    if(fill){ var w=fill.style.width; fill.style.width="0%"; void fill.offsetWidth; fill.style.width=w; }
+  }
   function brainVoice(b){
     // v0.19: perfil de voz REAL (GET /api/voice) si existe; si no, demo del nicho.
     var vp=S.voice;
@@ -911,7 +968,9 @@
     var nPub=(S.metrics&&S.metrics.videos)?S.metrics.videos.length:0;
     var auto = nPub>0
       ? '<div class="voice-auto"><div class="va-text"><b>Tienes '+nPub+' reels publicados.</b> Puedo leerlos y derivar tu voz de ahí — sin pegar nada.</div>'+
-          '<button class="btn btn-md btn-primary" data-act="voice-auto">'+IC.brain+' Derivar mi voz de mis reels</button></div>'
+          // IDI una-primaria: la primaria del Cerebro es la CTA de nivel del hero;
+          // esta queda secundaria (sigue destacada por su caja .voice-auto).
+          '<button class="btn btn-md btn-secondary" data-act="voice-auto">'+IC.brain+' Derivar mi voz de mis reels</button></div>'
       : '<button class="btn btn-sm btn-ghost" data-act="voice-auto" style="margin-bottom:12px">'+IC.brain+' Derivar de mis reels publicados</button>';
     return '<div class="brain-section-t">Enséñame tu voz</div>'+
       '<div class="voice-capture">'+
@@ -927,11 +986,27 @@
      Cerebro, donde vive el formulario completo (voiceCaptureHTML). Si ya hay
      perfil de voz, no renderiza nada. */
   function voiceOnboardCardHTML(){
-    if(hasRealVoice()) return '';
+    // Sin voz aún → el banner clásico de voz (copy probado: es siempre el primer paso).
+    if(!hasRealVoice()){
+      return '<div class="voice-banner">'+
+        '<span class="vb-ic">'+IC.mic+'</span>'+
+        '<span class="vb-text"><b>Enséñame tu voz</b> — pega 1-2 reels tuyos y tu próximo «Hazlo mío» saldrá sonando a ti, no genérico.</span>'+
+        '<button class="btn btn-sm btn-secondary" data-act="voice-focus">Enseñar mi voz</button>'+
+      '</div>';
+    }
+    // B2: con voz entrenada, el banner se generaliza a la SIGUIENTE acción de nivel
+    // (una sola, la de más impacto). Al nivel máximo desaparece — nada que empujar.
+    var lv=brainLevel(); var na=lv.nextAction;
+    if(!na) return '';
+    // Si la CTA lleva a la pestaña en la que ya estás (p.ej. «roba un guion» en el
+    // Radar), el botón sobra: la acción está en pantalla. Solo texto.
+    var btn=(na.cta.act==="tab" && na.cta.k===S.tab)
+      ? ''
+      : '<button class="btn btn-sm btn-secondary" data-act="'+ESC(na.cta.act)+'"'+(na.cta.k?' data-k="'+ESC(na.cta.k)+'"':'')+'>'+ESC(na.cta.t)+'</button>';
     return '<div class="voice-banner">'+
-      '<span class="vb-ic">'+IC.mic+'</span>'+
-      '<span class="vb-text"><b>Enséñame tu voz</b> — pega 1-2 reels tuyos y tu próximo «Hazlo mío» saldrá sonando a ti, no genérico.</span>'+
-      '<button class="btn btn-sm btn-secondary" data-act="tab" data-k="brain">Enseñar mi voz</button>'+
+      '<span class="vb-ic">'+IC.brain+'</span>'+
+      '<span class="vb-text"><b>Nivel '+lv.level+'</b> — '+(lv.missing.length===1?'te falta 1 paso':'te faltan '+lv.missing.length+' pasos')+' para el Nivel '+lv.next+': '+ESC(na.label)+'.</span>'+
+      btn+
     '</div>';
   }
   function voiceEvidenceHTML(){
@@ -956,15 +1031,15 @@
     // traía los competidores de TODAS las marcas. Marca "default" → sin filtro.
     var _pid=_pidOf(S.brandId);
     apiGet("/api/tracked-creators"+(_pid?("?project_id="+encodeURIComponent(_pid)):"")).then(function(r){
-      if(r.ok && r.d && Array.isArray(r.d.tracked)){ S.tracked=r.d.tracked; if(S.tab==="brain"||S.tab==="dashboard") render(); }
+      if(r.ok && r.d && Array.isArray(r.d.tracked)){ S.tracked=r.d.tracked; if(S.tab==="brain"||S.tab==="dashboard") render(); brainLevelPulse(); }
     });
   }
   function brainHTML(){
     var b=brand();
     var v=brainVoice(b);
-    var voicePct = hasRealVoice() ? Math.max(6,Math.min(100,S.voice.confidence||0)) : Math.max(6,Math.min(100,b.voice||40));
-    var nextLevel=Math.min(5,(b.level||1)+1);
-    var toNext=Math.max(2,Math.round((20*(b.level||1)+30 - voicePct)/1.5));
+    // B1: nivel REAL derivado de señales (brainLevel), no del contador cosmético b.level.
+    var lv=brainLevel();
+    var voicePct = hasRealVoice() ? Math.max(0,Math.min(100,S.voice.confidence||0)) : (isDemo()?Math.max(6,Math.min(100,b.voice||40)):0);
     var comps=brainCompetitors();
     var nGuiones=S.guiones.filter(function(g){return g.status!=="discarded";}).length;
     var nPublished=(S.metrics&&S.metrics.videos)?S.metrics.videos.length:0;
@@ -1012,10 +1087,21 @@
       '<div class="brain-hero">'+
         '<div class="brain-orb">'+IC.brain+'</div>'+
         '<div class="brain-hero-body">'+
-          '<div class="brain-lvl">Nivel '+(b.level||1)+' · '+ESC(ecoLevelName(b.level))+'</div>'+
+          '<div class="brain-lvl">Nivel '+lv.level+' · '+ESC(ecoLevelName(lv.level))+'</div>'+
           '<div class="brain-voiceline">Te conozco al <b>'+voicePct+'%</b></div>'+
-          '<div class="eco-bar" style="margin:10px 0 8px"><div class="eco-fill" style="width:'+voicePct+'%"></div></div>'+
-          '<div class="brain-next">Te faltan ~'+toNext+' piezas para el <b>Nivel '+nextLevel+'</b>, donde tus guiones salen casi sin retoques.</div>'+
+          '<div class="eco-bar" style="margin:10px 0 8px"><div class="eco-fill" style="width:'+Math.max(4,lv.pct)+'%"></div></div>'+
+          // B2: umbrales VISIBLES del siguiente nivel (checklist ✓/○) + UNA acción primaria
+          // (la primera carencia). B4: el beneficio es real — voz y ganadores entran en el prompt.
+          (lv.next
+            ? '<div class="brain-next">'+(lv.missing.length===1?'Te falta <b>1 paso</b>':'Te faltan <b>'+lv.missing.length+' pasos</b>')+' para el <b>Nivel '+lv.next+' · '+ESC(ecoLevelName(lv.next))+'</b>.</div>'+
+              '<div class="brain-reqs">'+lv.reqs.map(function(r){
+                return '<span class="brain-req'+(r.ok?' ok':'')+'">'+(r.ok?IC.check:'<span class="brain-req-o">○</span>')+' '+ESC(r.label)+'</span>';
+              }).join('')+'</div>'+
+              (lv.nextAction
+                ? '<button class="btn btn-md btn-primary" style="margin-top:12px" data-act="'+ESC(lv.nextAction.cta.act)+'"'+(lv.nextAction.cta.k?' data-k="'+ESC(lv.nextAction.cta.k)+'"':'')+'>'+ESC(lv.nextAction.cta.t)+'</button>'
+                : '')
+            : '<div class="brain-next">Nivel máximo: creo con tu voz, tus rivales y tus datos. Guiones casi sin retoques.</div>')+
+          '<div class="brain-why">A más nivel, menos retoques: tu voz y tus reels ganadores entran en el prompt de cada «Hazlo mío».</div>'+
         '</div>'+
       '</div>'+
       // CAPTURA del moat (si aún no hay voz) o EVIDENCIA real (si ya aprendió)
@@ -1415,7 +1501,10 @@
     render();                                // el rail marca el botón activo
     mountLegacy(k);                          // #rsLegacy es estable → sobrevive al render
   }
-  function switchBrand(id){ if(S.brandId===id){ S.brandMenu=false; return render(); } S.brandId=id; S.brandMenu=false; loadBrandData(); }
+  // Cambiar de marca reinicia la foto de nivel (S._lvlSeen): otra marca = otras
+  // señales — sin esto el toast de level-up dispararía en falso al saltar a una
+  // marca más avanzada.
+  function switchBrand(id){ if(S.brandId===id){ S.brandMenu=false; return render(); } S.brandId=id; S.brandMenu=false; S._lvlSeen=null; loadBrandData(); }
   // Zoom de portfolio → radar de una marca. En demo no recarga (reusa el feed),
   // solo ajusta stats de la marca; en prod recarga sus datos reales.
   // En demo: ajusta stats + feed a la marca activa (cada marca ve cosas distintas).
@@ -1439,7 +1528,7 @@
   }
   // Toggle de plan SOLO en demo, para ver las dos experiencias.
   function setDemoPlan(k){
-    if(S.plan===k){ return; } S.plan=k; S.brandMenu=false; S.view="feed"; S.feedExpanded=false;
+    if(S.plan===k){ return; } S.plan=k; S.brandMenu=false; S.view="feed"; S.feedExpanded=false; S._lvlSeen=null;
     if(k==="agencia"){ S.brands=demoBrands(); S.brandId=S.brands[0].id; S.tab="portfolio"; }   // macro
     else { S.brands=[demoBrands()[0]]; S.brandId=S.brands[0].id; S.tab="dashboard"; applyDemoBrand(); }
     render();
@@ -1959,14 +2048,78 @@
     }
   }
   // T2 (IDI): sheet con validación en vez de window.prompt.
+  // A (cerebro-addreel): en prod el flujo es REAL — analiza el reel y sigue a su autor.
   function addReelManual(){
     promptSheet({
       title:"Añadir reel", label:"URL del reel",
       placeholder:"https://www.instagram.com/reel/…",
-      helper:"Pega la URL de un reel (Instagram/TikTok) para meterlo a tu ecosistema.",
-      submitLabel:"Añadir al ecosistema",
+      helper:isDemo()
+        ? "Pega la URL de un reel (Instagram/TikTok) para meterlo a tu ecosistema."
+        : "Analizo el reel (transcripción incluida) y meto a su autor en tu radar. Cuenta como 1 análisis.",
+      submitLabel:isDemo()?"Añadir al ecosistema":"Analizar y seguir al autor",
       validate:function(v){ if(!/^https?:\/\/\S+\.\S+/i.test(v.trim())) return "Pega una URL válida (empieza por http)."; },
-      onSubmit:function(){ showToast("Reel en cola. Lo añadimos a tu ecosistema en unos segundos."); bumpEco(0,1); }
+      onSubmit:function(v){
+        if(isDemo()){ showToast("Reel en cola. Lo añadimos a tu ecosistema en unos segundos."); bumpEco(0,1); return; }
+        analyzeAndFollow(v.trim());
+      }
+    });
+  }
+  /* A · «Añadir reel» REAL — encadena flujos que ya existen (cero endpoints nuevos):
+       1. POST /transcribe — cobra 1 análisis free / crédito (backend = verdad; 402 = muro).
+       2. poll GET /task/<id> — la task devuelve `username` (autor del reel).
+       3. POST /api/tracked-creators — usa el slot de competidor; el backend auto-encola
+          el scrape de sus reels → aparecen en el Radar con transcripción on-demand
+          (detalle de reel ya existente). 409 already_tracking = no duplicar, todo bien.
+     Si la task falla, el backend REEMBOLSA el análisis (charge→refund en transcribe_task). */
+  function analyzeAndFollow(url){
+    showToast("Analizando el reel…");
+    apiPost("/transcribe",{url:url}).then(function(res){
+      if(!res.ok){ return showError((res.d&&res.d.error)||"No pude analizar el reel. Revisa el link."); }
+      var taskId=res.d&&res.d.task_id;
+      if(!taskId) return showError("No pude encolar el análisis. Inténtalo de nuevo.");
+      var tries=0;
+      (function poll(){
+        apiGet("/task/"+encodeURIComponent(taskId)).then(function(r){
+          var d=r.d||{};
+          if(d.state==="success"){ bumpEco(0,1); return _followAuthor(d.username); }
+          if(d.state==="error") return showError(d.error||"El análisis falló. No se ha gastado tu análisis.");
+          if(++tries>48) return showError("El análisis está tardando demasiado. Lo encontrarás en Analizar en un rato.");
+          setTimeout(poll, 2500);
+        });
+      })();
+    });
+  }
+  // Refresh LIGERO tras seguir al autor: tracked + stats, repintando con render()
+  // (que conserva #rsToast). loadBrandData no vale aquí — su skeleton hace
+  // innerHTML del root y se llevaría por delante el toast de confirmación.
+  function _refreshRadarLight(){
+    loadTracked();
+    var _pq=(S.brandId&&S.brandId!=="default")?("?project_id="+encodeURIComponent(S.brandId)):"";
+    apiGet("/api/radar/stats"+_pq).then(function(r){
+      if(r.ok&&r.d){
+        S.stats={ competitors:r.d.competitors||0, reels_week:r.d.reels_week||0, exploded_week:r.d.exploded_week||0,
+          stolen_today:r.d.stolen_today!=null?r.d.stolen_today:(r.d.stolen_total||0) };
+        render();
+      }
+    });
+  }
+  function _followAuthor(handle){
+    if(!handle) return showToast("Reel analizado — lo tienes en Analizar. No pude identificar a su autor para seguirlo.");
+    var already=Array.isArray(S.tracked)&&S.tracked.some(function(t){
+      var h=(t.creator&&t.creator.ig_username)||t.ig_username||"";
+      return h.toLowerCase()===String(handle).toLowerCase();
+    });
+    if(already){ _refreshRadarLight(); return showToast("Reel analizado · ya sigues a @"+handle+" — su radar se actualiza solo."); }
+    var body={ig_username:handle};
+    var _pid=_pidOf(S.brandId); if(isAgency()&&_pid) body.project_id=_pid;
+    apiPost("/api/tracked-creators",body).then(function(r){
+      if(r.ok){ _refreshRadarLight(); return showToast("Reel analizado · @"+handle+" ahora en tu radar — sus reels llegan en ~1 min."); }
+      var err=(r.d&&r.d.error)||"";
+      if(err==="tc.error.already_tracking"){ _refreshRadarLight(); return showToast("Reel analizado · ya seguías a @"+handle+"."); }
+      if(err==="tc.error.plan_limit_reached") return showError("Reel analizado y guardado. Tu plan ya usa todos sus huecos de competidor — sube de plan para seguir también a @"+handle+".");
+      if(err==="tc.error.upgrade_required") return showError("Reel analizado y guardado. Seguir competidores no entra en tu plan actual.");
+      if(err==="tc.error.project_required") return showError("Reel analizado. Entra en una marca concreta para meter a @"+handle+" en su radar.");
+      showError("Reel analizado, pero no pude seguir a @"+handle+". Añádelo desde el Radar.");
     });
   }
 
@@ -1985,7 +2138,7 @@
         phrases:["te lo cuento porque","paso uno… paso dos","guárdate esto"], structure:"hook directo → 3 pasos → CTA",
         avg_duration:40, avoid:"tecnicismos y motivacional vacío", confidence:62, source_count:1,
         evidence:["abres con una afirmación tajante","frases cortas (<12 palabras)","cierras pidiendo guardar/comentar"] };
-      var b=brand(); b.voice=62; render(); showToast("Voz aprendida — te conozco al 62%."); return;
+      var b=brand(); b.voice=62; render(); showToast("Voz aprendida — te conozco al 62%."); setTimeout(brainLevelPulse,1600); return;
     }
     showToast("Aprendiendo tu voz…");
     fetch("/api/voice/onboard",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({texts:[txt]})})
@@ -1993,7 +2146,7 @@
       .then(function(d){
         if(d&&d.ok){
           return fetch("/api/voice",{credentials:"same-origin"}).then(function(r){return r.json();}).then(function(v){
-            S.voice=v; render(); showToast("Voz aprendida — te conozco al "+(v.confidence||0)+"%.");
+            S.voice=v; render(); showToast("Voz aprendida — te conozco al "+(v.confidence||0)+"%."); setTimeout(brainLevelPulse,1600);
           });
         }
         showError((d&&d.error)||"No pude aprender tu voz. Prueba con otro reel.");
@@ -2027,6 +2180,7 @@
             return fetch("/api/voice",{credentials:"same-origin"}).then(function(x){return x.json();}).then(function(v){
               S.voice=v; render();
               showToast("Voz derivada de "+(r.d.source_count||0)+" reels — te conozco al "+(r.d.confidence||v.confidence||0)+"%.");
+              setTimeout(brainLevelPulse,1600);
             });
           }
           showError((r.d&&r.d.message)||(r.d&&r.d.error)||"No pude derivar tu voz. Inténtalo de nuevo.");
@@ -2065,7 +2219,7 @@
       S.voice.source_count=(S.voice.source_count||1)+1;
       S.voice.confidence=Math.min(100,(S.voice.confidence||62)+11);
       brand().voice=S.voice.confidence; render();
-      showToast("Voz refinada — ahora te conozco al "+S.voice.confidence+"%."); return;
+      showToast("Voz refinada — ahora te conozco al "+S.voice.confidence+"%."); setTimeout(brainLevelPulse,1600); return;
     }
     showToast("Refinando tu voz…");
     fetch("/api/voice/refine",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({texts:[txt]})})
@@ -2073,7 +2227,7 @@
       .then(function(d){
         if(d&&d.ok){
           return fetch("/api/voice",{credentials:"same-origin"}).then(function(r){return r.json();}).then(function(v){
-            S.voice=v; render(); showToast("Voz refinada — ahora te conozco al "+(v.confidence||0)+"%.");
+            S.voice=v; render(); showToast("Voz refinada — ahora te conozco al "+(v.confidence||0)+"%."); setTimeout(brainLevelPulse,1600);
           });
         }
         showError((d&&d.error)||"No pude refinar tu voz. Prueba con otro reel.");
@@ -2235,6 +2389,9 @@
       if(e.target.id==="rsIdeaSeed2"){ e.preventDefault(); return addSeedIdea(); }
       // A: la card del reel es role=button — Enter abre el detalle (a11y teclado).
       if(e.target.getAttribute && e.target.getAttribute("data-act")==="reel-detail"){ e.preventDefault(); return openReelDetail(e.target.getAttribute("data-id")); }
+      // B2 (a11y): cualquier role=button con data-act (celda Cerebro del statbar,
+      // fila de competidor…) responde a Enter como al click.
+      if(e.target.getAttribute && e.target.getAttribute("role")==="button" && e.target.getAttribute("data-act")){ e.preventDefault(); return e.target.click(); }
     }
     // T5: trap de foco — con un diálogo abierto, Tab circula dentro y no escapa al fondo.
     if(e.key==="Tab" && (S.sheet || (S.view && S.view!=="feed"))){
@@ -2291,6 +2448,13 @@
     // Reusa el modal legacy global (index.html); al añadir, submitAddCompetitor
     // recarga el Radar vía window.RS_reloadRadar (puente en loadBrandData).
     if(act==="add-comp"){ if(typeof window.openAddCompetitorModal==="function") window.openAddCompetitorModal(); return; }
+    // B2: CTA «Entrenar mi voz» — lleva al Cerebro y deja el cursor en el textarea
+    // de captura (la acción de verdad), no en la pestaña a secas.
+    if(act==="voice-focus"){
+      if(S.tab!=="brain") switchTab("brain");
+      setTimeout(function(){ var ta=document.getElementById("rsVoiceText"); if(ta){ ta.focus(); if(ta.scrollIntoView) ta.scrollIntoView({block:"center",behavior:"smooth"}); } },80);
+      return;
+    }
     if(act==="voice-onboard") return onboardVoice();
     if(act==="voice-auto") return voiceAutoDerive();
     if(act==="voice-refine") return refineVoice();
@@ -2463,6 +2627,7 @@
       if(isDemo() && !(isAgency() && S.tab==="portfolio")) applyDemoBrand();
       if(!isDemo() && isAgency()){ S.team=[]; loadTeam(); }   // S.team=[] antes de render: evita que teamHTML caiga al pool demo mientras loadTeam (async) resuelve; loadTeam re-renderiza al volver
       render();
+      brainLevelPulse();   // B3: ¿subió el nivel con las señales recién cargadas? → recompensa
     });
   }
 

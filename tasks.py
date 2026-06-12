@@ -412,10 +412,47 @@ def _extract_metrics(apify_item):
         "metrics_updated_at": datetime.utcnow().isoformat() + "Z",
     }
 
+def _refund_transcribe_charge(db, user_id, ip, charge):
+    """Devuelve lo que /transcribe cobró por adelantado cuando la task falla.
+    Read-modify-write sin lock: el refund es raro y el peor caso de carrera es
+    un crédito de cortesía — preferible a quemar análisis free por URLs rotas."""
+    if not charge or not charge.get("kind"):
+        return
+    kind = charge["kind"]
+    try:
+        if kind == "monthly" and user_id:
+            prof = db.table("profiles").select("monthly_usage").eq("id", user_id).single().execute().data or {}
+            db.table("profiles").update(
+                {"monthly_usage": max(0, (prof.get("monthly_usage") or 0) - 1)}
+            ).eq("id", user_id).execute()
+        elif kind == "free_analysis" and user_id:
+            prof = db.table("profiles").select("free_analysis_uses").eq("id", user_id).single().execute().data or {}
+            db.table("profiles").update(
+                {"free_analysis_uses": max(0, (prof.get("free_analysis_uses") or 0) - 1)}
+            ).eq("id", user_id).execute()
+        elif kind == "credits" and user_id:
+            prof = db.table("profiles").select("credits_cents").eq("id", user_id).single().execute().data or {}
+            db.table("profiles").update(
+                {"credits_cents": (prof.get("credits_cents") or 0) + (charge.get("cents") or 0)}
+            ).eq("id", user_id).execute()
+        elif kind == "ip" and ip:
+            row = db.table("ip_usage").select("used_today").eq("ip", ip).single().execute().data or {}
+            db.table("ip_usage").update(
+                {"used_today": max(0, (row.get("used_today") or 0) - 1)}
+            ).eq("ip", ip).execute()
+        logger.info("transcribe refund ok kind=%s user=%s ip=%s", kind, user_id, ip)
+    except Exception as e:
+        logger.error("transcribe refund FAILED kind=%s user=%s ip=%s err=%s", kind, user_id, ip, e)
+
+
 @celery_app.task(bind=True)
-def transcribe_task(self, url, language, user_id, ip, is_paid=False):
+def transcribe_task(self, url, language, user_id, ip, is_paid=False, charge=None):
     """v0.14.7: is_paid=True (plan pro/creator/agency) → guarda métricas
-    Apify (views/likes/comments/shares/published_at) en la fila."""
+    Apify (views/likes/comments/shares/published_at) en la fila.
+    addreel: `charge` = lo que /transcribe cobró por adelantado
+    ({kind: monthly|free_analysis|credits|ip, cents}) — si la descarga o la
+    transcripción fallan, se REEMBOLSA aquí (antes una URL rota quemaba 1 de
+    los 3 análisis free de por vida). Default None → compat con tasks en vuelo."""
     GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
     GROQ_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
     SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
@@ -446,6 +483,7 @@ def transcribe_task(self, url, language, user_id, ip, is_paid=False):
                 text = resp.json()["text"]
 
     except Exception as e:
+        _refund_transcribe_charge(db, user_id, ip, charge)
         return {"ok": False, "error": str(e)}
 
     thumb_b64 = None
