@@ -126,11 +126,13 @@ def admin_required(f):
 # v0.19 pricing: 3 planes (Free · Creador · Agencia). "pro" queda solo como
 # legacy (grandfathering) — no se ofrece. Modelo de créditos: 1 crédito = COST_CENTS
 # de saldo. La asignación mensual se enforce vía monthly_uses (= credits_month);
-# los topups suman a credits_cents. Free no tiene mensuales: 5 "Hazlo mío" de por vida.
+# los topups suman a credits_cents. Free no tiene mensuales: es una CATA de por vida
+# (1 «Hazlo mío» · 3 análisis · 1 competidor — nada resetea).
 PLANS = {
     "free": {
         "credits_month": 0,
-        "free_lifetime": 12,           # 12 "Hazlo mío" de por vida (NO resetean)
+        "free_lifetime": 1,            # 1 "Hazlo mío" de por vida (cata, NO resetea)
+        "free_analysis_lifetime": 3,   # 3 análisis (transcripciones) de por vida
         "monthly_uses": 0,             # → PLAN_LIMITS None (sin límite mensual; usa lifetime)
         "daily_free": 0,
         "scripts_max": 5,
@@ -672,6 +674,13 @@ def free_lifetime_left(profile: dict) -> int:
     return max(0, cap - (profile.get("free_lifetime_uses", 0) or 0))
 
 
+def free_analysis_left(profile: dict) -> int:
+    """Análisis (transcripciones) gratis de POR VIDA restantes del plan free.
+    Mismo patrón que free_lifetime_left (Hazlo mío). NO resetea."""
+    cap = PLANS["free"]["free_analysis_lifetime"]
+    return max(0, cap - (profile.get("free_analysis_uses", 0) or 0))
+
+
 # ── Download / transcription helpers ─────────────────────────────────────────
 
 def detect_platform(url: str) -> str:
@@ -985,6 +994,9 @@ def auth_me():
         "free_lifetime_limit": PLANS["free"]["free_lifetime"],
         "free_lifetime_used": profile.get("free_lifetime_uses", 0),
         "free_lifetime_left": free_lifetime_left(profile),
+        "free_analysis_limit": PLANS["free"]["free_analysis_lifetime"],
+        "free_analysis_used": profile.get("free_analysis_uses", 0) or 0,
+        "free_analysis_left": free_analysis_left(profile),
         "avatar_seed": profile.get("avatar_seed", "default"),
         "has_stripe_sub": bool(profile.get("stripe_subscription_id")),
     })
@@ -1091,13 +1103,16 @@ def transcribe():
             ok, err_msg = check_monthly_limit(profile)
             if not ok:
                 return jsonify({"error": err_msg}), 429
+        elif free_analysis_left(profile) > 0:
+            # FREE = cata: 3 análisis de POR VIDA (no diario, no resetea).
+            pass
         elif profile["credits_cents"] >= 2 * COST_CENTS:
             pass
         else:
-            # Sin cupo gratis diario para logueados: pagan siempre con créditos
-            # (2 créditos/análisis). Sin saldo → 402.
+            # Cata agotada y sin créditos → muro claro.
             return jsonify({
-                "error": "Te has quedado sin créditos. Recarga saldo para seguir analizando."
+                "error": "Has usado tus 3 análisis gratis. Sube a Creador para seguir "
+                         "analizando — o recarga créditos sin cambiar de plan."
             }), 402
 
     # ── Actualizar contador antes de encolar ──────────────────────────────
@@ -1117,16 +1132,21 @@ def transcribe():
                 db.table("profiles").update({
                     "monthly_usage": (fresh.get("monthly_usage") or 0) + 1
                 }).eq("id", user["id"]).execute()
+            elif free_analysis_left(fresh) > 0:
+                # FREE cata: consumir 1 análisis de por vida (re-check bajo lock).
+                db.table("profiles").update({
+                    "free_analysis_uses": (fresh.get("free_analysis_uses") or 0) + 1
+                }).eq("id", user["id"]).execute()
             elif (fresh.get("credits_cents") or 0) >= 2 * COST_CENTS:
                 cost_cents = 2 * COST_CENTS
                 db.table("profiles").update(
                     {"credits_cents": (fresh.get("credits_cents") or 0) - cost_cents}
                 ).eq("id", user["id"]).execute()
             else:
-                # Carrera: el saldo cayó por debajo de 2×COST_CENTS entre el check y
-                # el lock. No cobramos ni encolamos. El lock se libera en finally.
+                # Carrera: cupo/saldo agotado entre el check y el lock.
                 return jsonify({
-                    "error": "Te has quedado sin créditos. Recarga saldo para seguir analizando."
+                    "error": "Has usado tus 3 análisis gratis. Sube a Creador para seguir "
+                             "analizando — o recarga créditos sin cambiar de plan."
                 }), 402
         finally:
             release_credit_lock(user["id"], _tclock)
@@ -6100,7 +6120,7 @@ def resend_webhook():
 # privado por user; project_id solo lo usa Agency.
 
 TRACKED_CREATORS_LIMITS = {
-    "free":    {"enabled": False, "base_slots_global": 0,  "per_project_slots": None, "requires_project": False},
+    "free":    {"enabled": True,  "base_slots_global": 1,  "per_project_slots": None, "requires_project": False},
     "pro":     {"enabled": True,  "base_slots_global": 1,  "per_project_slots": None, "requires_project": False},
     "creator": {"enabled": True,  "base_slots_global": 5,  "per_project_slots": None, "requires_project": False},
     "agency":  {"enabled": True,  "base_slots_global": 20, "per_project_slots": 10,    "requires_project": True},
