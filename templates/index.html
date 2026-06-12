@@ -350,7 +350,7 @@
       {"@type": "Question", "name": "¿Qué es Reelscript exactamente?", "acceptedAnswer": {"@type": "Answer", "text": "No es un transcriptor: es el sistema operativo de tu contenido. Cada día te muestra lo que ya explota en tu nicho, lo convierte en guiones con tu voz listos para grabar, y aprende de lo que publicas para sonar cada vez más a ti."}},
       {"@type": "Question", "name": "¿En qué se diferencia de pedírselo a ChatGPT?", "acceptedAnswer": {"@type": "Answer", "text": "Reelscript no escribe \"texto de IA\": escribe lo que dirías tú. Aprende tu tono, tu estructura y tus muletillas de tus propios reels, y se afina con cada guión que grabas. \"Tu voz al N%\" mide cuánto te conoce — y solo sube."}},
       {"@type": "Question", "name": "¿De dónde salen las ideas?", "acceptedAnswer": {"@type": "Answer", "text": "Del Radar: vigila a tus competidores y ordena sus reels por lo que más está explotando frente a su media. No partes de una página en blanco, partes de lo que ya funciona en tu nicho."}},
-      {"@type": "Question", "name": "¿Hay plan gratis?", "acceptedAnswer": {"@type": "Answer", "text": "Sí. El Radar completo y 12 «Hazlo mío» de por vida, sin tarjeta. Creador (29€/mes) trae 200 créditos al mes, Cerebro y métricas; Agencia (129€/mes) añade multi-marca y equipo."}},
+      {"@type": "Question", "name": "¿Hay plan gratis?", "acceptedAnswer": {"@type": "Answer", "text": "Sí, para probar: 1 «Hazlo mío», 3 análisis y 1 competidor en el radar — gratis, sin tarjeta. Creador (29€/mes) trae 200 créditos al mes, Cerebro y métricas; Agencia (129€/mes) añade multi-marca y equipo."}},
       {"@type": "Question", "name": "¿Puedo cancelar cuando quiera?", "acceptedAnswer": {"@type": "Answer", "text": "Sí. Cancelas desde el portal de Stripe en un click y mantienes el acceso hasta el final del periodo facturado. Sin permanencias."}},
       {"@type": "Question", "name": "¿Mis datos y mis guiones están seguros?", "acceptedAnswer": {"@type": "Answer", "text": "Tus transcripciones, ideas y guiones viven en Supabase con row-level security: solo tú accedes a lo tuyo. Los pagos los procesa Stripe — nunca vemos ni guardamos datos de tarjeta. Puedes exportar o borrar todos tus datos cuando quieras."}}
       {% endif %}
@@ -11676,15 +11676,15 @@
       <div class="rsl-plans">
         <div class="rsl-plan rsl-rise">
           <h3>Free</h3>
-          <p class="rsl-for" data-i18n-en="To try the steal with your real niche.">Para probar el robo con tu nicho real.</p>
+          <p class="rsl-for" data-i18n-en="A taste of the steal with your real niche.">Una cata del robo con tu nicho real.</p>
           <p class="rsl-price">€0</p>
           <p class="rsl-yr">&nbsp;</p>
           <p class="rsl-day">&nbsp;</p>
           <ul>
-            <li data-i18n-en="Your niche&#39;s radar, free forever">Radar de tu nicho, gratis para siempre</li>
-            <li data-i18n-html-en="Your first <strong>«Make it mine»</strong> free — yours forever">Tus primeros <strong>«Hazlo mío»</strong> gratis — tuyos para siempre</li>
-            <li data-i18n-en="1 brand · teleprompter included">1 marca · teleprompter incluido</li>
-            <li class="rsl-zero" data-i18n-en="No card">Sin tarjeta</li>
+            <li data-i18n-html-en="<strong>1 «Make it mine»</strong> to try the steal"><strong>1 «Hazlo mío»</strong> para probar el robo</li>
+            <li data-i18n-html-en="<strong>3 analyses</strong> of any reel"><strong>3 análisis</strong> de cualquier reel</li>
+            <li data-i18n-html-en="<strong>1 competitor</strong> on your radar"><strong>1 competidor</strong> en tu radar</li>
+            <li class="rsl-zero" data-i18n-en="Free, no card">Gratis, sin tarjeta</li>
           </ul>
           <button type="button" class="rsl-btn rsl-btn-ghost" onclick="openAuth('register','landing_plan_free')" data-i18n-en="Start free">Empezar gratis</button>
           <p class="rsl-risk">&nbsp;</p>
@@ -23077,8 +23077,8 @@ const PLAN_META = {
     icon: "✅", label: "Free",
     price:    { monthEur: 0,    monthUsd: 0,    yearEur: 0,    yearUsd: 0,    billedEur: 0,     billedUsd: 0 },
     ideal:    { es: "Prueba el radar y crea tus primeros 5 guiones.", en: "Try the radar and create your first 5 scripts." },
-    features: { es: ["Radar de tu nicho","12 «Hazlo mío» de por vida","Guiones guardados","Teleprompter + grabación","Historial persistente"],
-                en: ["Your niche radar","12 «Make it mine» lifetime","Saved scripts","Teleprompter + recording","Persistent history"] },
+    features: { es: ["1 «Hazlo mío» para probar","3 análisis de reels","1 competidor en tu radar","Gratis, sin tarjeta"],
+                en: ["1 «Make it mine» to try it","3 reel analyses","1 competitor on your radar","Free, no card"] },
   },
   pro: {
     icon: "⚡", label: "Pro",
