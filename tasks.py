@@ -80,6 +80,11 @@ celery_app.conf.beat_schedule = {
         "task": "tasks.send_trial_lifecycle_emails",
         "schedule": 3600.0,
     },
+    # Ola Agencia B5: informe mensual white-label (1º de mes, 08:00 UTC).
+    "send-monthly-brand-reports": {
+        "task": "tasks.send_monthly_brand_reports",
+        "schedule": crontab(day_of_month=1, hour=8, minute=0),
+    },
     "sweep-stale-resources": {
         "task": "tasks.sweep_stale_resources",
         "schedule": 300.0,
@@ -112,6 +117,53 @@ def send_email_now(user_id, template_key):
     except Exception as e:
         logger.warning("send_email_now failed user=%s template=%s err=%s",
                        user_id, template_key, e)
+
+
+@celery_app.task(name="tasks.send_monthly_brand_reports")
+def send_monthly_brand_reports():
+    """Ola Agencia B5: el 1º de mes, avisa a cada owner de Agencia de que el
+    informe white-label de cada una de sus marcas está listo (enlace al generador
+    in-app). Idempotente por (owner, marca, mes) vía email_log."""
+    SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+    SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return {"error": "supabase_not_configured"}
+    db = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+    try:
+        from app import _build_brand_report
+        from emails import send_brand_report_ready
+    except Exception as e:
+        logger.error("send_monthly_brand_reports: import failed: %s", e)
+        return {"error": "import"}
+
+    now = datetime.now(timezone.utc)
+    month_label = f"{now.year}-{now.month:02d}"
+    try:
+        agencies = (db.table("profiles").select("id").eq("plan", "agency").execute()).data or []
+    except Exception as e:
+        logger.error("send_monthly_brand_reports: agencies query failed: %s", e)
+        return {"error": "query"}
+
+    sent = 0
+    for ag in agencies:
+        owner_id = ag["id"]
+        try:
+            projs = (db.table("projects").select("id, name").eq("user_id", owner_id).execute()).data or []
+        except Exception:
+            projs = []
+        for p in projs:
+            try:
+                data = _build_brand_report(owner_id, p["id"])
+                if not data["reels"] and not data["scripts"]:
+                    continue   # nada que reportar este mes
+                res = send_brand_report_ready(owner_id, p.get("name") or "Tu marca",
+                                              p["id"], len(data["reels"]), len(data["scripts"]), month_label)
+                if res.get("sent"):
+                    sent += 1
+            except Exception as e:
+                logger.warning("monthly_brand_report failed owner=%s proj=%s err=%s", owner_id, p.get("id"), e)
+    logger.info("send_monthly_brand_reports done agencies=%s sent=%s", len(agencies), sent)
+    return {"agencies": len(agencies), "sent": sent}
 
 
 @celery_app.task(name="tasks.send_agency_invite_email")
