@@ -114,6 +114,17 @@ def send_email_now(user_id, template_key):
                        user_id, template_key, e)
 
 
+@celery_app.task(name="tasks.send_agency_invite_email")
+def send_agency_invite_email(owner_id, invited_email, invite_url, owner_name=None):
+    """Ola Agencia B2: envía la invitación de equipo fuera del request."""
+    try:
+        from emails import send_agency_invite
+        return send_agency_invite(owner_id, invited_email, invite_url, owner_name)
+    except Exception as e:
+        logger.warning("send_agency_invite_email failed owner=%s err=%s", owner_id, e)
+        return {"error": str(e)[:200]}
+
+
 @celery_app.task(name="tasks.send_payment_failed_email")
 def send_payment_failed_email(user_id, invoice_id, attempt=None):
     """growth-5: dunning — dispara el email de fallo de cobro fuera del webhook

@@ -1342,11 +1342,11 @@
   function teamHTML(){
     // En prod pinta los miembros reales (S.team, cargado por loadTeam); en demo, el pool demo.
     var members=(!isDemo() && Array.isArray(S.team)) ? S.team : teamMembers();
-    var roleCls={"Owner":"owner","Editor":"editor","Solo lectura":"viewer"};
+    var roleCls={"Owner":"owner","Miembro":"editor","Editor":"editor","Invitado · pendiente":"viewer","Solo lectura":"viewer"};
     var stats=[
       ["Miembros", members.length, "", ""],
       ["Marcas", S.brands.length, "", ""],
-      ["Editores", members.filter(function(m){return m.role==="Editor";}).length, "", ""],
+      ["Asientos", "∞", "ilimitados", "acc"],
       ["Créditos", "pool", "compartido de cuenta", "acc"]
     ];
     var statbar='<div class="statbar">'+stats.map(function(s){
@@ -2626,7 +2626,7 @@
         if(d&&d.invite_url){
           try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(d.invite_url); }catch(e){}
           loadTeam();
-          showToast("Invitación creada · enlace copiado");
+          showToast(d.emailed?"Invitación enviada por email · enlace copiado":"Invitación creada · enlace copiado");
           return;
         }
         showError((d&&d.error)||"No pude crear la invitación.");
@@ -2639,17 +2639,22 @@
       .then(function(r){ return r.json().catch(function(){return[];}); })
       .then(function(rows){
         if(!Array.isArray(rows)) rows=[];
-        S.team=rows.map(function(m){
+        // Owner implícito (el usuario actual) primero; luego los miembros con su rol.
+        var owner={ name:(S.user.email||"Owner"), role:"Owner",
+          initials:(S.user.email||"O").slice(0,2).toUpperCase(), color:"#f59e0b", brands:[] };
+        var members=rows.map(function(m){
           var email=m.invited_email||"miembro";
           var active=m.status==="active";
+          var roleName = (m.role==="owner") ? "Owner" : (active?"Miembro":"Invitado · pendiente");
           return {
             name: email,
-            role: active?"Miembro":"Invitado · pendiente",
+            role: roleName,
             initials: (m.invited_email||"M").slice(0,2).toUpperCase(),
             color: active?"#12a37c":"#6d6bf6",
             brands: []
           };
         });
+        S.team=[owner].concat(members);
         if(S.tab==="team") render();
       })
       .catch(function(){});

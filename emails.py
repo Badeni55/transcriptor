@@ -761,6 +761,41 @@ def send_radar_digest(user_id, reels, day_key, next_suggestion=None):
     return {"sent": True}
 
 
+# ── Ola Agencia B2 · invitación de equipo por email ─────────────────────────
+
+def send_agency_invite(owner_id, invited_email, invite_url, owner_name=None):
+    """Invitación al workspace por email (Resend). Transaccional (no marketing):
+    ignora opt-out/rate-limit. No idempotente por email_log (reinvitar es válido).
+    Devuelve {sent|error}."""
+    if not invited_email or not invite_url:
+        return {"error": "missing_args"}
+    who = owner_name or "Un equipo"
+    subject_es = f"{who} te invita a su workspace en ReelScript"
+    subject_en = f"{who} invited you to their ReelScript workspace"
+    # idioma: no sabemos el del invitado (puede no tener cuenta) → bilingüe corto ES.
+    inner_html = (
+        f"<p>hola.</p>"
+        f"<p><b>{who}</b> te ha invitado a su equipo en ReelScript para crear guiones "
+        f"sobre sus marcas.</p>"
+        f"<p>entra con el enlace, inicia sesión (o crea tu cuenta gratis) y quedarás "
+        f"dentro del workspace.</p>"
+        + _btn(invite_url, "unirme al equipo →")
+        + f'<p style="color:#9A9A9F;font-size:13px">o copia este enlace: {invite_url}</p>'
+    )
+    inner_text = (f"hola.\n\n{who} te ha invitado a su equipo en ReelScript.\n\n"
+                  f"únete: {invite_url}")
+    html = _wrap_html(inner_html, invite_url, "es")
+    text = _wrap_text(inner_text, invite_url, "es")
+    resend_id, err = _send_via_resend(invited_email, subject_es, html, text)
+    if err:
+        track("email_failed", owner_id, {"template_key": "agency_invite", "error": err})
+        return {"error": err}
+    track("email_sent", owner_id, {"template_key": "agency_invite", "resend_id": resend_id,
+                                   "invited": invited_email})
+    logger.info("agency_invite sent owner=%s to=%s", owner_id, invited_email)
+    return {"sent": True}
+
+
 # ── growth-6 · RETENCIÓN: digest SEMANAL (gancho de vuelta para FREE) ───────
 
 def send_weekly_digest(user_id, reels, week_key, next_suggestion=None):

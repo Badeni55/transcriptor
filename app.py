@@ -3278,6 +3278,20 @@ def _slugify_handle(name):
     return re.sub(r"[^a-z0-9]", "", name.lower())
 
 
+def workspace_owner_id(user_id: str) -> str:
+    """Ola Agencia B2: si el usuario es MIEMBRO activo de una agencia, su
+    'workspace' es el del owner (ve y opera sobre las marcas del owner). Si no,
+    su propio id. Best-effort: ante cualquier fallo, devuelve su propio id."""
+    try:
+        r = (db.table("agency_members").select("agency_owner_id")
+               .eq("member_id", user_id).eq("status", "active").limit(1).execute())
+        if r.data and r.data[0].get("agency_owner_id"):
+            return r.data[0]["agency_owner_id"]
+    except Exception:
+        pass
+    return user_id
+
+
 @app.route("/api/brands", methods=["GET"])
 @require_auth
 def api_brands():
@@ -3288,27 +3302,31 @@ def api_brands():
     Sin projects → una marca derivada del profile (id:'default')."""
     user = current_user()
     uid = user["id"]
-    profile = get_profile(uid)
+    # B2: si es MIEMBRO de una agencia, opera en el workspace del owner.
+    owner_uid = workspace_owner_id(uid)
+    is_member = owner_uid != uid
+    eff_uid = owner_uid
+    profile = get_profile(eff_uid)
     plan = (profile or {}).get("plan", "free")
 
     projects = []
     try:
         if plan == "agency":
-            owned = db.table("projects").select("*").eq("user_id", uid).execute().data or []
-            managed = db.table("projects").select("*").eq("agency_owner_id", uid).execute().data or []
+            owned = db.table("projects").select("*").eq("user_id", eff_uid).execute().data or []
+            managed = db.table("projects").select("*").eq("agency_owner_id", eff_uid).execute().data or []
             seen = set()
             for p in owned + managed:
                 if p.get("id") and p["id"] not in seen:
                     seen.add(p["id"])
                     projects.append(p)
         else:
-            projects = db.table("projects").select("*").eq("user_id", uid).execute().data or []
+            projects = db.table("projects").select("*").eq("user_id", eff_uid).execute().data or []
     except Exception as e:
         logger.warning("api_brands query failed user=%s err=%s", uid, e)
         projects = []
 
-    # Voz del usuario: confidence del VoiceProfile (marca por defecto) si existe, si no 40.
-    vp = get_voice_profile(uid)
+    # Voz del workspace: confidence del VoiceProfile (marca por defecto) si existe, si no 40.
+    vp = get_voice_profile(eff_uid)
     voice = int(vp.get("confidence") or 0) if vp else 40
     if voice <= 0:
         voice = 40
@@ -3578,15 +3596,30 @@ def invite_member():
     if not email:
         return jsonify({"error": "Email required"}), 400
 
-    result = db.table("agency_members").insert({
-        "agency_owner_id": user["id"],
-        "invited_email": email,
-        "status": "pending",
-    }).execute()
+    body_role = (body.get("role") or "member").strip().lower()
+    if body_role not in ("member", "owner"):
+        body_role = "member"
+    # role: por defecto 'member' (crea/edita guiones). El owner es implícito (el
+    # dueño de la agencia), no una fila aquí. Resiliente si la columna `role`
+    # aún no existe (migración del bloque) → reintenta sin ella.
+    _payload = {"agency_owner_id": user["id"], "invited_email": email,
+                "status": "pending", "role": body_role}
+    try:
+        result = db.table("agency_members").insert(_payload).execute()
+    except Exception:
+        _payload.pop("role", None)
+        result = db.table("agency_members").insert(_payload).execute()
 
     token = result.data[0]["invite_token"] if result.data else None
     invite_url = f"{request.host_url}join?token={token}"
-    return jsonify({"invite_url": invite_url, "token": token})
+    # B2: enviar la invitación por EMAIL (Resend), además de devolver el enlace.
+    try:
+        from tasks import send_agency_invite_email
+        _owner_name = (user.get("email") or "").split("@")[0] or None
+        send_agency_invite_email.delay(user["id"], email, invite_url, _owner_name)
+    except Exception as e:
+        logger.warning("agency invite email dispatch failed owner=%s err=%s", user["id"], e)
+    return jsonify({"invite_url": invite_url, "token": token, "emailed": True})
 
 
 @app.route("/agency/join", methods=["POST"])
