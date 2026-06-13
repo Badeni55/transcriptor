@@ -6245,6 +6245,73 @@ def count_active_tracked(user_id: str, project_id: str | None = None,
         return 0
 
 
+@app.route("/api/onboarding/suggest-competitors", methods=["POST"])
+@require_auth
+@limiter.limit("12 per hour;40 per day")
+def suggest_competitors():
+    """Bloque growth-2 — ACTIVACIÓN sesión 1.
+
+    Entrada: el handle de IG/TikTok del usuario (+ nicho opcional). Devuelve
+    3-5 creadores del MISMO nicho que el LLM (Gemini/OpenRouter, ya integrado)
+    propone como competencia/referencia. NO los sigue ni los scrapea: la
+    validación es al seguir (POST /api/tracked-creators ya scrapea y degrada
+    limpio si el handle no existe). Así el «aha» es inmediato y barato.
+
+    Decisión de David: LLM sugiere + valida al seguir (sin auto-scrape upfront)."""
+    user = current_user()
+    uid = user["id"]
+    body = request.get_json() or {}
+    handle = (body.get("handle") or "").strip().lstrip("@").lower()
+    platform = (body.get("platform") or "instagram").strip().lower()
+    niche = (body.get("niche") or "").strip()[:160]
+
+    if not re.match(r"^[a-zA-Z0-9._]{1,30}$", handle):
+        return jsonify({"error": "invalid_handle",
+                        "message": "Escribe tu usuario sin @ (solo letras, números, punto y guion bajo)."}), 400
+
+    track_event("onboarding_suggest_requested", uid, {"platform": platform, "has_niche": bool(niche)})
+
+    system = (
+        "Eres un estratega de contenido para creadores de Instagram/TikTok. "
+        "Dado el usuario de un creador, identificas otros creadores REALES y "
+        "conocidos del MISMO nicho, idioma y país probable, con los que compite "
+        "o de los que aprendería. Devuelves SOLO JSON válido."
+    )
+    user_content = (
+        f"Creador: @{handle} (plataforma: {platform})."
+        + (f" Nicho declarado: {niche}." if niche else "")
+        + " Devuelve un objeto JSON con esta forma EXACTA:\n"
+        '{"creators": [{"handle": "usuario_sin_arroba", "reason": "por qué es '
+        'referencia/competencia en 6-10 palabras"}]}\n'
+        "Reglas: 5 creadores; handles REALES de cuentas públicas conocidas "
+        "(no inventes usuarios); mismo idioma/nicho que @" + handle + "; "
+        "NO incluyas a @" + handle + "; handle sin @, en minúsculas."
+    )
+    try:
+        data = _call_llm_json(system, user_content, max_tokens=700, temperature=0.6)
+    except Exception as e:
+        logger.warning("suggest_competitors LLM failed user=%s handle=%s err=%s", uid, handle, e)
+        return jsonify({"error": "llm_unavailable",
+                        "message": "No pude buscar tu competencia ahora. Añade un competidor a mano para empezar."}), 502
+
+    raw = (data or {}).get("creators") or []
+    seen, creators = set(), []
+    for c in raw:
+        h = (c.get("handle") or "").strip().lstrip("@").lower() if isinstance(c, dict) else ""
+        if not re.match(r"^[a-zA-Z0-9._]{1,30}$", h) or h == handle or h in seen:
+            continue
+        seen.add(h)
+        creators.append({"handle": h, "reason": (c.get("reason") or "").strip()[:120]})
+        if len(creators) >= 5:
+            break
+
+    if not creators:
+        return jsonify({"error": "no_suggestions",
+                        "message": "No encontré sugerencias claras. Añade un competidor a mano para empezar."}), 200
+
+    return jsonify({"creators": creators, "handle": handle, "platform": platform}), 200
+
+
 @app.route("/api/tracked-creators", methods=["POST"])
 @require_auth
 @limiter.limit("10 per minute")
@@ -6344,6 +6411,18 @@ def post_tracked_creator():
     except Exception as e:
         logger.exception("insert user_tracked_creators failed: %s", e)
         return jsonify({"error": "tc.error.internal"}), 500
+
+    # growth-2: si este es el 1er competidor del usuario (0→1), el onboarding de
+    # activación quedó completado (handle → competencia en el radar). Señal de
+    # funnel server-side fiable; `source` distingue el onboarding del alta suelta.
+    try:
+        if count_active_tracked(user["id"], scope="global") == 1:
+            track_event("onboarding_completed", user["id"], {
+                "source": (body.get("source") or "manual"),
+                "first_creator": ig_username,
+            })
+    except Exception:
+        pass
 
     # 8. v0.15.3: auto-encolar scrape si data nueva o stale (>24h).
     #    Reusa cache si data fresca (<24h, diseñado en Fase 0 para ahorrar Apify).
