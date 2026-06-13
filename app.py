@@ -70,6 +70,18 @@ STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 CLARITY_PROJECT_ID    = os.environ.get("CLARITY_PROJECT_ID", "")
 POSTHOG_API_KEY       = os.environ.get("POSTHOG_API_KEY", "")
 
+
+def track_event(event, distinct_id, properties=None):
+    """Bloque growth-1 — wrapper server-side de PostHog (vía emails.track).
+    Centraliza la captura de eventos de funnel desde el backend (registro,
+    primer guion, muros, upgrade, cancelación) que el cliente NO puede ver.
+    Best-effort total: jamás lanza, jamás bloquea el request."""
+    try:
+        from emails import track as _t
+        _t(event, distinct_id, properties or {})
+    except Exception:
+        pass
+
 FREE_DAILY_ANON  = 5   # transcripciones gratis para anónimos
 FREE_DAILY_USER  = 5   # transcripciones gratis para registrados
 FREE_DAILY_ADAPT = 0   # v0.19: "Hazlo tuyo" (adapt) es de compromiso → cuesta créditos/plan
@@ -794,6 +806,8 @@ def _on_signup_complete(user_id, lang):
             send_email_now.delay(user_id, "welcome")
         except Exception as e:
             logger.warning("send_email_now dispatch failed user=%s err=%s", user_id, e)
+        # 4) growth-1: evento de funnel «registro» (server-side, fiable)
+        track_event("user_registered", user_id, {"lang": lang or "es"})
     except Exception as e:
         # NUNCA romper el signup por errores en el flujo de email.
         logger.warning("_on_signup_complete failed user=%s err=%s", user_id, e)
@@ -1110,6 +1124,12 @@ def transcribe():
             pass
         else:
             # Cata agotada y sin créditos → muro claro.
+            # growth-1: paywall_shown. after_first_value=True (el free ya hizo
+            # sus 3 análisis → el muro llega DESPUÉS del valor, como pide el research).
+            track_event("paywall_shown", user["id"], {
+                "wall": "analysis", "plan": profile.get("plan", "free"),
+                "after_first_value": True,
+            })
             return jsonify({
                 "error": "Has usado tus 3 análisis gratis. Sube a Creador para seguir "
                          "analizando — o recarga créditos sin cambiar de plan."
@@ -1569,6 +1589,10 @@ def stripe_webhook():
             }).eq("id", user_id).execute()
             # Acreditar créditos mensuales del plan (reset del contador + próximo reset).
             grant_monthly_allowance(user_id, plan)
+            # growth-1: evento de funnel «upgrade» (conversión free→pago).
+            track_event("subscription_upgraded", user_id, {
+                "plan": plan, "price_id": price_id,
+            })
         else:
             # ── Recarga de créditos (topup) ──────────────────────────
             # Nuevo: por price de topup (→ nº de créditos). Legacy: metadata amount_cents.
@@ -1637,10 +1661,26 @@ def stripe_webhook():
 
     elif event["type"] == "customer.subscription.deleted":
         sub = event["data"]["object"]
+        # growth-1: capturar el uid ANTES del update (luego el sub_id se borra).
+        _cuid = None
+        try:
+            _cp = (db.table("profiles").select("id, plan")
+                     .eq("stripe_subscription_id", sub["id"]).limit(1).execute())
+            if _cp.data:
+                _cuid = _cp.data[0]["id"]
+                _cplan = _cp.data[0].get("plan")
+        except Exception:
+            pass
         db.table("profiles").update({
             "plan": "free",
             "stripe_subscription_id": None,
         }).eq("stripe_subscription_id", sub["id"]).execute()
+        # growth-1: cancelación efectiva (fin de periodo). El cancel-flow in-app
+        # (bloque 4) emitirá su propio evento al solicitar la baja/pausa.
+        if _cuid:
+            track_event("subscription_cancelled", _cuid, {
+                "from_plan": _cplan, "reason": "period_end",
+            })
 
     return "", 200
 
@@ -1768,6 +1808,12 @@ def cancel_subscription():
 
     try:
         stripe_lib.Subscription.modify(sub_id, cancel_at_period_end=True)
+        # growth-1: solicitud de baja (a fin de periodo). Distinto de la
+        # cancelación efectiva (webhook subscription.deleted). El bloque 4 (cancel-flow
+        # con pausa/retención) se engancha aquí.
+        track_event("subscription_cancel_requested", user["id"], {
+            "from_plan": profile.get("plan"),
+        })
         return jsonify({"ok": True})
     except Exception as e:
         logger.error(f"Error: {e}", exc_info=True)
@@ -2723,6 +2769,14 @@ def adapt():
             cost_cents = COST_CENTS
         else:
             # A3: «Hazlo tuyo» es de pago. Free sin créditos → muro de planes.
+            # growth-1: paywall_shown. after_first_value=False — este muro bloquea
+            # ANTES de cualquier prueba (no hay cata de adapt). Lo marcamos para
+            # poder medir si conviene dar 1 adapt gratis (research: el paywall
+            # convierte mejor DESPUÉS del primer éxito).
+            track_event("paywall_shown", user["id"], {
+                "wall": "adapt", "plan": profile.get("plan", "free"),
+                "after_first_value": False,
+            })
             return jsonify({
                 "error": "free_limit_reached",
                 "message": "«Hazlo tuyo» es una función de pago. Sube a Creador o recarga créditos."
@@ -6233,6 +6287,12 @@ def post_tracked_creator():
     cap_global = limits["base_slots_global"] + extra_slots
 
     if count_active_tracked(user["id"], scope="global") >= cap_global:
+        # growth-1: paywall_shown. El free llega aquí al intentar el 2º competidor
+        # (slot=1). after_first_value=True: ya tiene 1 competidor dándole señales.
+        track_event("paywall_shown", user["id"], {
+            "wall": "tracked_creators", "plan": plan, "limit": cap_global,
+            "after_first_value": cap_global >= 1,
+        })
         return jsonify({"error": "tc.error.plan_limit_reached", "limit": cap_global}), 403
 
     if plan == "agency":
@@ -6476,9 +6536,18 @@ def generate_script_from_competitor_reel(reel_id: str):
         if free_lifetime_left(profile) > 0:
             use_free_lifetime = True
         elif (profile.get("credits_cents") or 0) < SCRIPT_COST:
+            # growth-1: paywall_shown. after_first_value=True — el free ya gastó su
+            # «Hazlo mío» de cata (1 de por vida) → el muro llega tras el primer éxito.
+            # Fix: el copy decía "5" pero la cata real es 1 (PLANS.free.free_lifetime=1).
+            _free_n = PLANS["free"].get("free_lifetime", 1)
+            track_event("paywall_shown", uid, {
+                "wall": "hazlo_mio", "plan": plan, "after_first_value": True,
+            })
             return jsonify({
                 "error": "free_limit_reached",
-                "message": "Has usado tus 5 «Hazlo mío» gratis. Sube a Creador para seguir creando."
+                "message": (f"Has usado tu «Hazlo mío» gratis. Sube a Creador para seguir creando."
+                            if _free_n == 1 else
+                            f"Has usado tus {_free_n} «Hazlo mío» gratis. Sube a Creador para seguir creando.")
             }), 402
 
     # 3. Cargar reel + ownership.
@@ -6792,12 +6861,14 @@ def generate_script_from_competitor_reel(reel_id: str):
             # No refundamos: el LLM funcionó, el user tiene el script en la response.
 
         try:
-            from emails import track as _ph_track
+            from emails import track as _ph_track, track_script_generated as _ph_first
             _ph_track("script_generated_from_competitor", uid, {
                 "creator_username": ig_username,
                 "reel_id": reel["id"],
                 "mode": "sync_cached",
             })
+            # growth-1: activación — dispara first_script_generated si es el 1º.
+            _ph_first(uid, {"source": "competitor_reel", "mode": "sync_cached"})
         except Exception:
             pass
 

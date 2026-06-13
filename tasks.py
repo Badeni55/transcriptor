@@ -1102,6 +1102,13 @@ def generate_script_competitor_task(self, reel_id, user_id, assistant_id):
         logger.info("gen_script_task ok reel=%s user=%s script=%s style=%s",
                     reel_id, user_id, script_id, style_label)
 
+        # growth-1: activación — first_script_generated si es el 1º (path async).
+        try:
+            from emails import track_script_generated
+            track_script_generated(user_id, {"source": "competitor_reel", "mode": "async", "style": style_label})
+        except Exception:
+            pass
+
         return {
             "ok": True,
             "script_id": script_id,

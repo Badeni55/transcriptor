@@ -68,6 +68,46 @@ def track(event, distinct_id, properties=None):
         logger.warning("PostHog capture failed: %s", e)
 
 
+def track_script_generated(user_id, props=None):
+    """Bloque growth-1 — instrumentación de ACTIVACIÓN.
+
+    Llamar tras insertar con éxito un guion (sync en app.py o async en tasks.py).
+    Cuenta los guiones del usuario y dispara:
+      - `script_generated`   (siempre).
+      - `first_script_generated`  SOLO la primera vez (0→1). Esta es la métrica
+        de activación del research («primer guion en sesión 1»): añade
+        `hours_since_signup` para que el funnel active = first_script <24h sea
+        trivial en PostHog. Best-effort: cualquier fallo es no-op silencioso.
+    Idempotente de facto: depende del count real en DB, no de un flag local."""
+    props = dict(props or {})
+    try:
+        db = _db()
+        cnt = (db.table("scripts").select("id", count="exact")
+                 .eq("user_id", user_id).execute())
+        total = cnt.count if cnt.count is not None else len(cnt.data or [])
+    except Exception as e:
+        logger.warning("track_script_generated count failed user=%s err=%s", user_id, e)
+        total = None
+
+    props["script_count"] = total
+    track("script_generated", user_id, props)
+
+    if total == 1:
+        hours = None
+        try:
+            prof = (db.table("profiles")
+                      .select("created_at, terms_accepted_at")
+                      .eq("id", user_id).single().execute())
+            stamp = (prof.data or {}).get("created_at") or (prof.data or {}).get("terms_accepted_at")
+            if stamp:
+                from datetime import datetime, timezone
+                signed = datetime.fromisoformat(str(stamp).replace("Z", "+00:00"))
+                hours = round((datetime.now(timezone.utc) - signed).total_seconds() / 3600.0, 2)
+        except Exception:
+            pass
+        track("first_script_generated", user_id, {**props, "hours_since_signup": hours})
+
+
 # ── Templates ─────────────────────────────────────────────────────────────
 
 def _btn(href, label):
