@@ -1737,7 +1737,17 @@ def stripe_webhook():
         stripe_session_id = obj["id"]
         user_id           = obj["metadata"]["user_id"]
 
-        if obj["metadata"].get("type") == "subscription":
+        if obj["metadata"].get("type") == "addon_brand":
+            # ── Ola Agencia B4: marca extra comprada → +1 slot ───────────
+            try:
+                prof = (db.table("profiles").select("extra_brand_slots")
+                          .eq("id", user_id).single().execute())
+                cur = int((prof.data or {}).get("extra_brand_slots") or 0)
+                db.table("profiles").update({"extra_brand_slots": cur + 1}).eq("id", user_id).execute()
+                track_event("brand_addon_purchased", user_id, {"slots": cur + 1})
+            except Exception as e:
+                logger.error("addon_brand webhook failed user=%s err=%s", user_id, e)
+        elif obj["metadata"].get("type") == "subscription":
             # ── Suscripción ──────────────────────────────────────────
             line_items = stripe_lib.checkout.Session.list_line_items(stripe_session_id)
             price_id = line_items.data[0].price.id if line_items.data else None
@@ -1952,6 +1962,38 @@ def create_subscription_checkout():
     except Exception as e:
         logger.error(f"Error: {e}", exc_info=True)
         return jsonify({"error": "Internal server error. Please try again."}), 500
+
+
+@app.route("/billing/add-brand", methods=["POST"])
+@require_auth
+def add_brand_addon():
+    """Ola Agencia B4: comprar una MARCA EXTRA (add-on +€10/mes) para Agencia
+    (base 10). FLAG: David crea el price en Stripe (STRIPE_PRICE_ADDON_BRAND).
+    Sin price → degrada limpio ('no configurado'), no rompe. Al completar el pago,
+    el webhook incrementa profiles.extra_brand_slots → brands_cap sube +1."""
+    if not STRIPE_OK:
+        return jsonify({"error": "Pagos no disponibles"}), 503
+    user = current_user()
+    profile = get_profile(user["id"])
+    if profile.get("plan") != "agency":
+        return jsonify({"error": "Las marcas extra son del plan Agencia."}), 403
+    if not STRIPE_PRICE_ADDON_BRAND:
+        # FLAG: price del add-on aún no configurado por David.
+        return jsonify({"error": "Las marcas extra aún no están disponibles. Vuelve pronto.",
+                        "code": "addon_not_configured"}), 400
+    try:
+        checkout_session = stripe_lib.checkout.Session.create(
+            payment_method_types=["card"],
+            mode="subscription",
+            line_items=[{"price": STRIPE_PRICE_ADDON_BRAND, "quantity": 1}],
+            success_url=request.host_url + "profile/settings?addon=brand_ok",
+            cancel_url=request.host_url + "profile/settings?addon=cancel",
+            metadata={"user_id": user["id"], "type": "addon_brand"},
+        )
+        return jsonify({"url": checkout_session.url})
+    except Exception as e:
+        logger.error("add_brand_addon failed user=%s err=%s", user["id"], e, exc_info=True)
+        return jsonify({"error": "No se pudo iniciar la compra."}), 500
 
 
 @app.route("/manage-subscription", methods=["POST"])

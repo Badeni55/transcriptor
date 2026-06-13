@@ -2749,7 +2749,26 @@
     if(act==="team-invite") return teamInvite();
     if(act==="team-edit") return showToast("Gestión de roles y marcas por miembro: próximamente.");
     if(act==="brand-add") return brandCreate();
-    if(act==="brand-cap"){ S.brandMenu=false; render(); showToast("Has llegado al tope de marcas de tu plan."); if(typeof window.openUpgradeModal==="function"){ try{ window.openUpgradeModal("brand_limit"); }catch(e){} } return; }
+    if(act==="brand-cap"){
+      S.brandMenu=false; render();
+      // Agencia al tope → ofrecer marca EXTRA (+€10/mes, add-on Stripe). Resto → upgrade.
+      if(isAgency() && !isDemo()){
+        var doBuy=function(){
+          apiPost("/billing/add-brand",{}).then(function(r){
+            if(r.ok && r.d && r.d.url){ try{ window.location.href=r.d.url; }catch(e){} return; }
+            if(r.d && r.d.code==="addon_not_configured"){ return showError("Las marcas extra aún no están disponibles. Vuelve pronto."); }
+            showError((r.d&&r.d.error)||"No pude iniciar la compra.");
+          });
+        };
+        if(typeof window.confirmModal==="function"){
+          window.confirmModal({ title:"Añadir marca extra", body:"Suma una marca más a tu Agencia por +10€/mes. Se factura junto a tu plan.", confirmText:"Añadir por 10€/mes", cancelText:"Ahora no" }).then(function(ok){ if(ok) doBuy(); });
+        } else doBuy();
+        return;
+      }
+      showToast("Has llegado al tope de marcas de tu plan.");
+      if(typeof window.openUpgradeModal==="function"){ try{ window.openUpgradeModal("brand_limit"); }catch(e){} }
+      return;
+    }
     if(act==="brand-rename") return brandRename(id, btn.getAttribute("data-name"));
     if(act==="brand-del") return brandDelete(id, btn.getAttribute("data-name"));
     if(act==="brand-report"){
