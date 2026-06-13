@@ -284,7 +284,8 @@
   function pillStatHTML(){
     if(!isDemo() && S.user.trialActive){
       var d=S.user.trialDaysLeft||0;
-      return '<div class="spark pill-stat trial" id="rsSpark" title="Prueba Pro — '+d+' día'+(d===1?'':'s')+' restantes" data-act="tab" data-k="brain" role="button" tabindex="0">'+IC.spark+'<span class="num">Pro</span> · '+d+'d</div>';
+      var cr=S.user.trialCreditsLeft||0;
+      return '<div class="spark pill-stat trial" id="rsSpark" title="Prueba Pro — '+cr+' crédito'+(cr===1?'':'s')+' · '+d+' día'+(d===1?'':'s')+' restantes" data-act="tab" data-k="brain" role="button" tabindex="0">'+IC.spark+'<span class="num">Pro</span> · '+cr+' cr</div>';
     }
     if(S.user.plan==="free" && !S.user.credits){
       return '<div class="spark pill-stat credits" id="rsSpark" title="Guiones gratis este mes">'+IC.spark+'<span class="num"><b id="rsSparkN">'+S.user.freeLeft+'</b></span> este mes</div>';
@@ -2863,9 +2864,10 @@
       // Plan crudo de /auth/me (puede ser "free") + guiones gratis del mes restantes.
       S.user.plan=(me.plan||(me.user&&me.user.plan))||"";
       if(me.free_lifetime_left!=null) S.user.freeLeft=me.free_lifetime_left;
-      // reverse-trial: estado del trial (Pro sin tarjeta) + watermark en exports (free post-trial).
+      // reverse-trial: estado del trial (Pro capado sin tarjeta) + watermark en exports (free post-trial).
       S.user.trialActive=!!me.trial_active;
       S.user.trialDaysLeft=me.trial_days_left||0;
+      S.user.trialCreditsLeft=(me.trial_credits_left!=null)?me.trial_credits_left:0;
       S.user.watermark=!!me.watermark;
       // Plan: en demo arranca en Agencia para ver el portfolio (toggle lo cambia);
       // en prod sale de /auth/me (profiles.plan).

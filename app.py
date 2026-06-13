@@ -226,12 +226,15 @@ TOPUPS = {
 PLAN_LIMITS = {p: v["monthly_uses"] or None for p, v in PLANS.items()}
 
 # ── Reverse-trial ────────────────────────────────────────────────────────────
-# Al registrarse: 7 días de Pro COMPLETO sin tarjeta (trial_ends_at). Durante el
-# trial, el plan EFECTIVO es TRIAL_PLAN (límites de pago). Al expirar → FREE
-# mensual ligero (3 análisis + 2 guiones + 1 competidor, resetea cada mes) +
-# watermark en exports. NO toca los planes de pago.
-TRIAL_DAYS = 7
-TRIAL_PLAN = "creator"   # experiencia de pago completa durante el trial
+# Al registrarse: 3 días de Pro CAPADO sin tarjeta (trial_ends_at). Features de
+# pago desbloqueadas pero con TOPE de TRIAL_CREDIT_CAP créditos. El trial deja de
+# ser usable cuando se agota el tope O pasan los 3 días → cae a FREE mensual
+# ligero (3 análisis + 2 guiones + 1 competidor, resetea cada mes) + watermark.
+# El contador del tope = monthly_usage (lo que ya incrementan transcribe/genscript
+# durante el trial; 1 unidad = 1 crédito). NO toca los planes de pago.
+TRIAL_DAYS = 3
+TRIAL_CREDIT_CAP = 10        # tope de créditos (= acciones de pago) durante el trial
+TRIAL_PLAN = "creator"       # tier cuyos límites/feature-set ve el trial (Pro completo)
 
 
 def _parse_ts(ts):
@@ -244,12 +247,27 @@ def _parse_ts(ts):
 
 
 def in_trial(profile: dict) -> bool:
-    """True si el usuario está dentro de su ventana de trial (Pro sin tarjeta).
-    Un plan de pago real NO está 'en trial' (ya paga)."""
+    """True si el usuario está dentro de la VENTANA temporal del trial (3 días).
+    Un plan de pago real NO está 'en trial' (ya paga). No mira el tope (eso lo
+    hace trial_usable)."""
     if profile.get("plan", "free") != "free":
         return False
     dt = _parse_ts(profile.get("trial_ends_at"))
     return bool(dt and datetime.now(timezone.utc) < dt)
+
+
+def trial_credits_used(profile: dict) -> int:
+    return profile.get("monthly_usage", 0) or 0
+
+
+def trial_credits_left(profile: dict) -> int:
+    return max(0, TRIAL_CREDIT_CAP - trial_credits_used(profile))
+
+
+def trial_usable(profile: dict) -> bool:
+    """Trial efectivamente activo: dentro de la ventana Y por debajo del tope.
+    En cuanto se agota el tope (o pasan los días) deja de ser usable → muro."""
+    return in_trial(profile) and trial_credits_used(profile) < TRIAL_CREDIT_CAP
 
 
 def trial_days_left(profile: dict) -> int:
@@ -263,8 +281,8 @@ def trial_days_left(profile: dict) -> int:
 
 
 def effective_plan(profile: dict) -> str:
-    """Plan a efectos de LÍMITES: durante el trial, TRIAL_PLAN; si no, el real."""
-    if profile.get("plan", "free") == "free" and in_trial(profile):
+    """Plan a efectos de LÍMITES: durante el trial usable, TRIAL_PLAN; si no, el real."""
+    if profile.get("plan", "free") == "free" and trial_usable(profile):
         return TRIAL_PLAN
     return profile.get("plan", "free")
 ASSISTANT_LIMITS = {p: v["assistants_max"] for p, v in PLANS.items()}
@@ -502,10 +520,10 @@ def release_credit_lock(uid: str, token) -> None:
 def paid_features_active(profile: dict, user: dict | None = None) -> bool:
     """Funciones de pago activas. Bloquea 'fantasmas' (plan seteado sin pagar).
     Activo si:
-      - trial en curso (reverse-trial: 7 días de Pro sin tarjeta), o
+      - trial usable (reverse-trial: 3 días de Pro, mientras quede tope), o
       - plan de pago Y (stripe_subscription_id [el webhook baja a free al cancelar]
         O email en la allowlist de cortesía UNLIMITED_EMAILS)."""
-    if in_trial(profile):
+    if trial_usable(profile):
         return True
     plan = profile.get("plan", "free")
     if plan == "free":
@@ -1103,10 +1121,14 @@ def auth_me():
         "monthly_limit": PLAN_LIMITS.get(plan),
         # v0.19: créditos unificados (mensual restante + topups) para la pill del radar.
         "credits": credits_available(profile),
-        # reverse-trial: estado del trial (Pro sin tarjeta) + free MENSUAL.
-        "trial_active": in_trial(profile),
+        # reverse-trial: estado del trial (Pro capado sin tarjeta) + free MENSUAL.
+        # trial_active = usable (dentro de ventana Y con tope disponible).
+        "trial_active": trial_usable(profile),
+        "trial_in_window": in_trial(profile),
         "trial_ends_at": profile.get("trial_ends_at"),
         "trial_days_left": trial_days_left(profile),
+        "trial_credit_cap": TRIAL_CREDIT_CAP,
+        "trial_credits_left": trial_credits_left(profile) if in_trial(profile) else 0,
         "effective_plan": effective_plan(profile),
         # watermark en exports: solo free post-trial (ni pago ni trial).
         "watermark": not paid_features_active(profile, user),
