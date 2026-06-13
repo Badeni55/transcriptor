@@ -988,10 +988,12 @@ def generate_script_competitor_task(self, reel_id, user_id, assistant_id, langua
             return _fail("reel_not_found", "Reel no encontrado.")
         ig_username = (reel.get("creator") or {}).get("ig_username") or ""
 
-        # 2. Cargar profile del user.
+        # 2. Cargar profile del user. Incluye los campos que necesita la MISMA
+        # contabilidad que el endpoint sync (trial + free mensual), no solo plan.
         try:
             pr = (db.table("profiles")
-                    .select("plan, monthly_usage, credits_cents, default_idea_assistant")
+                    .select("plan, monthly_usage, credits_cents, default_idea_assistant, "
+                            "stripe_subscription_id, trial_ends_at, free_lifetime_uses, free_month_reset_at")
                     .eq("id", user_id)
                     .single()
                     .execute())
@@ -999,7 +1001,17 @@ def generate_script_competitor_task(self, reel_id, user_id, assistant_id, langua
         except Exception:
             profile = {}
         plan = profile.get("plan", "free")
-        is_paid_unlimited = plan in ("pro", "creator", "agency")
+        # FIX free-counter: alinear el cobro async con el sync. Antes la task
+        # gateaba por plan in (pro/creator/agency) y cobraba créditos a los free
+        # → NO tocaba free_lifetime_uses (la pill no bajaba) y dejaba créditos en
+        # negativo; el trial tampoco contaba contra su tope. Ahora usa los mismos
+        # helpers que el endpoint.
+        try:
+            from app import (paid_features_active as _pfa, free_lifetime_left as _fll,
+                             _next_month_boundary as _nmb, _parse_ts as _pts)  # lazy (circular)
+        except Exception:
+            _pfa = _fll = _nmb = _pts = None
+        is_paid_unlimited = _pfa(profile) if _pfa else (plan in ("pro", "creator", "agency"))
 
         self.update_state(state="PROGRESS", meta={"step": "preparing"})
 
@@ -1267,12 +1279,29 @@ def generate_script_competitor_task(self, reel_id, user_id, assistant_id, langua
             logger.exception("gen_script_task scripts insert failed reel=%s: %s", reel_id, e)
             return _fail("insert_error", "Error guardando el guion.")
 
-        # Cobrar SOLO tras insert OK.
+        # Cobrar SOLO tras insert OK. Mismo orden que el endpoint sync:
+        #   pago/trial → monthly_usage · free con cuota del mes → free_lifetime_uses
+        #   (reset mensual) · resto → créditos.
         try:
             if is_paid_unlimited:
                 db.table("profiles").update({
                     "monthly_usage": (profile.get("monthly_usage") or 0) + 1
                 }).eq("id", user_id).execute()
+            elif _fll and _fll(profile) > 0:
+                # Consumo del free MENSUAL (espejo de app._free_month_consume) con
+                # la db de la task: reset si el boundary pasó, luego +1.
+                now = datetime.now(timezone.utc)
+                reset_dt = _pts(profile.get("free_month_reset_at")) if _pts else None
+                rolled = reset_dt is None or now >= reset_dt
+                if rolled and _nmb:
+                    db.table("profiles").update({
+                        "free_analysis_uses": 0, "free_lifetime_uses": 1,
+                        "free_month_reset_at": _nmb(now).isoformat(),
+                    }).eq("id", user_id).execute()
+                else:
+                    db.table("profiles").update({
+                        "free_lifetime_uses": (profile.get("free_lifetime_uses") or 0) + 1
+                    }).eq("id", user_id).execute()
             else:
                 db.table("profiles").update({
                     "credits_cents": (profile.get("credits_cents") or 0) - SCRIPT_COST

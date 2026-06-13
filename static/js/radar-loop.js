@@ -1842,12 +1842,15 @@
       if(me.free_lifetime_left!=null) S.user.freeLeft=me.free_lifetime_left;
     });
   }
-  // Muro: free agotó sus 5 «Hazlo mío» (o sin créditos). Abre el modal de planes.
+  // Muro: free agotó sus guiones del mes (o sin créditos). Abre el modal de planes.
   function showPaywall(err){
     var msg = (err==="free_limit_reached")
-      ? "Has usado tus 5 «Hazlo mío» gratis. Sube a Creador para seguir creando."
+      ? "Has usado tus guiones gratis de este mes. Sube a Creador para seguir creando."
       : "Necesitas créditos para generar este guion.";
     showToast(msg);
+    // FIX free-counter: refresca el contador real tras el muro (la pill no debe
+    // quedarse en "1 este mes" cuando el restante real es 0).
+    if(!isDemo()){ refreshCredits().then(function(){ render(); }); }
     if(typeof window.openUpgradeModal==="function"){ try{ window.openUpgradeModal("hazlo_mio_free_limit"); }catch(e){} }
   }
   function ensureScript(r,cb){
