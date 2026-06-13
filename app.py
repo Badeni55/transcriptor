@@ -844,9 +844,16 @@ def auth_register():
         _on_signup_complete(str(user.id), _resolve_lang())
         return jsonify({"ok": True, "email": user.email})
     except Exception as e:
+        # Supabase 422 al registrar un email ya existente llega como
+        # "email_exists" / "User already been registered" / "already registered"
+        # → mapear a 409 (antes caía al 500 genérico). logger.exception para no
+        # quedarnos ciegos ante otros fallos.
         msg = str(e).lower()
-        if "already registered" in msg or "already exists" in msg or "duplicate" in msg:
+        if ("already registered" in msg or "already exists" in msg or "duplicate" in msg
+                or "email_exists" in msg or "already been registered" in msg
+                or "user already" in msg):
             return jsonify({"error": "Este email ya está registrado"}), 409
+        logger.exception("auth_register failed email=%s", email)
         return jsonify({"error": "Error al crear la cuenta"}), 500
 
 
@@ -6396,27 +6403,42 @@ def suggest_competitors():
         "(no inventes usuarios); mismo idioma/nicho que @" + handle + "; "
         "NO incluyas a @" + handle + "; handle sin @, en minúsculas."
     )
+    # P0: usar _call_llm (NO _call_llm_json) → hereda el json-mode de Gemini Y el
+    # retry-on-length que ya vive ahí. El JSON TRUNCADO ("Unterminated string")
+    # reventaba el parse de _call_llm_json y devolvía 502 → bloqueaba la activación.
+    # Blindaje total: cualquier fallo (red, parse, modelo) → 200 con creators:[] +
+    # fallback, y el front cae a "añade a mano". NUNCA un 502 al usuario.
+    creators = []
     try:
-        data = _call_llm_json(system, user_content, max_tokens=700, temperature=0.6)
-    except Exception as e:
-        logger.warning("suggest_competitors LLM failed user=%s handle=%s err=%s", uid, handle, e)
-        return jsonify({"error": "llm_unavailable",
-                        "message": "No pude buscar tu competencia ahora. Añade un competidor a mano para empezar."}), 502
-
-    raw = (data or {}).get("creators") or []
-    seen, creators = set(), []
-    for c in raw:
-        h = (c.get("handle") or "").strip().lstrip("@").lower() if isinstance(c, dict) else ""
-        if not re.match(r"^[a-zA-Z0-9._]{1,30}$", h) or h == handle or h in seen:
-            continue
-        seen.add(h)
-        creators.append({"handle": h, "reason": (c.get("reason") or "").strip()[:120]})
-        if len(creators) >= 5:
-            break
+        raw_text = _call_llm(system, user_content, temperature=0.6, max_tokens=1500)
+        # Parse tolerante (sin raise): fences markdown + extracción del objeto.
+        t = (raw_text or "").strip()
+        if t.startswith("```"):
+            t = re.sub(r"^```(?:json)?\s*", "", t)
+            t = re.sub(r"\s*```$", "", t)
+        try:
+            data = json.loads(t)
+        except json.JSONDecodeError:
+            m = re.search(r"\{[\s\S]*\}", t)
+            data = json.loads(m.group()) if m else {}
+        raw = (data or {}).get("creators") or []
+        seen = set()
+        for c in raw:
+            h = (c.get("handle") or "").strip().lstrip("@").lower() if isinstance(c, dict) else ""
+            if not re.match(r"^[a-zA-Z0-9._]{1,30}$", h) or h == handle or h in seen:
+                continue
+            seen.add(h)
+            creators.append({"handle": h, "reason": (c.get("reason") or "").strip()[:120]})
+            if len(creators) >= 5:
+                break
+    except Exception:
+        logger.exception("suggest_competitors failed user=%s handle=%s", uid, handle)
+        creators = []
 
     if not creators:
-        return jsonify({"error": "no_suggestions",
-                        "message": "No encontré sugerencias claras. Añade un competidor a mano para empezar."}), 200
+        # Nunca 502: 200 con lista vacía → el front ofrece "añade a mano".
+        return jsonify({"creators": [], "fallback": True,
+                        "message": "No pude buscar tu competencia ahora. Añade un competidor a mano para empezar."}), 200
 
     return jsonify({"creators": creators, "handle": handle, "platform": platform}), 200
 
