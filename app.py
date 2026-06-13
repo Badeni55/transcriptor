@@ -174,6 +174,24 @@ PLANS = {
         "priority": True,
         "support": "email",
     },
+    # Estudio (nuevo): puente 29→129. "creador pro" para quien factura: 3 marcas
+    # y más créditos. Precio anual por defecto (~20% off → 47€/mes).
+    "estudio": {
+        "credits_month": 200,
+        "price_month_eur": 59,
+        "price_year_eur": 564,         # 47€/mes facturado anual (~20% off)
+        "monthly_uses": 400,           # 400 créditos/mes (el doble que Creator)
+        "daily_free": 0,
+        "scripts_max": None,
+        "projects_max": 3,             # 3 marcas
+        "brands": 3,
+        "assistants_max": None,
+        "history_days": None,
+        "seats": 1,
+        "priority": True,
+        "support": "email",
+        "name": "Estudio",
+    },
     "agency": {
         "credits_month": 500,
         "price_month_eur": 129,
@@ -181,15 +199,15 @@ PLANS = {
         "monthly_uses": 800,           # pool 800 créditos/mes (cuenta, no por marca)
         "daily_free": 0,
         "scripts_max": None,
+        # base 10 marcas; +10€/marca extra. NOTA: la compra per-marca (Stripe)
+        # está FLAGUEADA, no implementada → no hard-cap aún (projects_max=None
+        # para no romper agencias existentes). Display = "10 + €10/marca".
         "projects_max": None,
-        "brands": 3,                   # 3 marcas incluidas
+        "brands": 10,                  # 10 marcas incluidas (base)
         "assistants_max": None,
         "history_days": None,
-        "seats": 3,                    # 3 asientos incluidos
-        "addon_brand_eur": 14.99,      # marca extra €14,99/mes
-        # TODO(econ): cada marca extra debe conceder +150 créditos al pool. No hay
-        # lógica que lo aplique todavía (estos campos solo definen precio).
-        "addon_seat_eur": 14.99,       # asiento extra €14,99/mes
+        "seats": None,                 # asientos ILIMITADOS (decisión cerrada)
+        "addon_brand_eur": 10,         # marca extra €10/mes (billing pendiente David)
         "priority": True,
         "support": "email+chat",
     },
@@ -295,6 +313,12 @@ STRIPE_PRICES = {
     "creator": {
         "month": os.environ.get("STRIPE_PRICE_CREATOR_MONTH", ""),
         "year":  os.environ.get("STRIPE_PRICE_CREATOR_YEAR", ""),
+    },
+    # Estudio €59 — FLAG: David crea los price IDs en Stripe y los pone en estas
+    # env. Sin ellas, el botón de Estudio devuelve "plan no configurado" (no rompe).
+    "estudio": {
+        "month": os.environ.get("STRIPE_PRICE_ESTUDIO_MONTH", ""),
+        "year":  os.environ.get("STRIPE_PRICE_ESTUDIO_YEAR", ""),
     },
     "agency": {
         "month": os.environ.get("STRIPE_PRICE_AGENCY_MONTH", ""),
@@ -6420,6 +6444,7 @@ TRACKED_CREATORS_LIMITS = {
     "free":    {"enabled": True,  "base_slots_global": 1,  "per_project_slots": None, "requires_project": False},
     "pro":     {"enabled": True,  "base_slots_global": 1,  "per_project_slots": None, "requires_project": False},
     "creator": {"enabled": True,  "base_slots_global": 5,  "per_project_slots": None, "requires_project": False},
+    "estudio": {"enabled": True,  "base_slots_global": 15, "per_project_slots": None, "requires_project": False},
     "agency":  {"enabled": True,  "base_slots_global": 20, "per_project_slots": 10,    "requires_project": True},
 }
 

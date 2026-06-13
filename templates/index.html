@@ -11103,7 +11103,8 @@
   .rs-landing .rsl-toggle button{font-family:var(--disp);font-size:.9rem;padding:10px 20px;border-radius:9px;color:var(--text2);min-height:44px}
   .rs-landing .rsl-toggle button.rsl-on{background:var(--grad-btn);color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.3)}
   .rs-landing .rsl-toggle .rsl-save{font-family:var(--mono);font-size:.68rem;color:var(--teal);margin-left:6px}
-  .rs-landing .rsl-plans{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;text-align:left}
+  .rs-landing .rsl-plans{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;text-align:left}
+  @media(max-width:1080px){.rs-landing .rsl-plans{grid-template-columns:repeat(2,1fr)}}
   .rs-landing .rsl-plan{border:1px solid var(--border);border-radius:20px;background:rgba(17,19,26,.72);padding:32px 28px;display:flex;flex-direction:column;position:relative;transition:transform .2s}
   .rs-landing .rsl-plan:hover{transform:translateY(-4px)}
   /* borde gradiente animado del plan destacado */
@@ -11732,17 +11733,32 @@
           <p class="rsl-risk" data-i18n-en="Cancel in 2 clicks · your Brain stays saved">Cancela en 2 clics · tu Cerebro se queda guardado</p>
         </div>
         <div class="rsl-plan rsl-rise">
+          <h3>Estudio</h3>
+          <p class="rsl-for" data-i18n-en="For the creator who already bills and runs a few brands.">Para el creador que ya factura y lleva varias marcas.</p>
+          <p class="rsl-price" data-m="€59" data-y="€47"><span class="rsl-amt">€59</span><small data-i18n-en="/mo">/mes</small></p>
+          <p class="rsl-yr" data-m="" data-y="{% if lang == 'en' %}billed €564/yr{% else %}facturado €564/año{% endif %}">&nbsp;</p>
+          <p class="rsl-day" data-m="{% if lang == 'en' %}3 brands · €20 per brand/mo{% else %}3 marcas · €20 por marca/mes{% endif %}" data-y="{% if lang == 'en' %}3 brands · €16 per brand/mo{% else %}3 marcas · €16 por marca/mes{% endif %}">{% if lang == 'en' %}3 brands · €20 per brand/mo{% else %}3 marcas · €20 por marca/mes{% endif %}</p>
+          <ul>
+            <li data-i18n-html-en="<strong>400 credits</strong> a month (double Creator)"><strong>400 créditos</strong> al mes (el doble que Creator)</li>
+            <li data-i18n-html-en="<strong>3 brands</strong>, each with its own brain"><strong>3 marcas</strong> con cerebro propio cada una</li>
+            <li data-i18n-en="Everything in Creator + priority">Todo lo de Creator + prioridad</li>
+            <li data-i18n-en="The bridge between solo and agency">El puente entre creador y agencia</li>
+          </ul>
+          <button type="button" class="rsl-btn rsl-btn-ghost" onclick="openAuth('register','landing_plan_estudio')" data-i18n-en="Start with Studio">Empezar con Estudio</button>
+          <p class="rsl-risk" data-i18n-en="Cancel in 2 clicks · your Brain stays saved">Cancela en 2 clics · tu Cerebro se queda guardado</p>
+        </div>
+        <div class="rsl-plan rsl-rise">
           <h3>Agency</h3>
           <p class="rsl-for" data-i18n-en="For brand portfolios and teams.">Para portfolios de marcas y equipos.</p>
           <p class="rsl-price" data-m="€129" data-y="€107"><span class="rsl-amt">€129</span><small>/mes</small></p>
           <p class="rsl-yr" data-m="" data-y="{% if lang == 'en' %}billed €1,290/yr{% else %}facturado €1.290/año{% endif %}">&nbsp;</p>
-          <p class="rsl-day" data-m="{% if lang == 'en' %}3 brands · €43 per brand/mo{% else %}3 marcas · €43 por marca/mes{% endif %}" data-y="{% if lang == 'en' %}3 brands · €36 per brand/mo{% else %}3 marcas · €36 por marca/mes{% endif %}">{% if lang == 'en' %}3 brands · €43 per brand/mo{% else %}3 marcas · €43 por marca/mes{% endif %}</p>
+          <p class="rsl-day" data-m="{% if lang == 'en' %}10 brands · €13 per brand/mo{% else %}10 marcas · €13 por marca/mes{% endif %}" data-y="{% if lang == 'en' %}10 brands · €11 per brand/mo{% else %}10 marcas · €11 por marca/mes{% endif %}">{% if lang == 'en' %}10 brands · €13 per brand/mo{% else %}10 marcas · €13 por marca/mes{% endif %}</p>
           <ul>
             <li data-i18n-html-en="<strong>Pool of 800 credits</strong> for the whole account"><strong>Pool de 800 créditos</strong> para toda la cuenta</li>
-            <li data-i18n-html-en="<strong>3 brands</strong>, each with its own brain"><strong>3 marcas</strong> con cerebro propio cada una</li>
-            <li data-i18n-html-en="<strong>3 team seats</strong> with roles"><strong>3 asientos</strong> de equipo con roles</li>
-            <li data-i18n-en="Portfolio view: your whole roster at a glance">Vista portfolio: todo tu roster de un vistazo</li>
-            <li data-i18n-en="Extra brand or seat: €14.99/mo">Marca o asiento extra: €14,99/mes</li>
+            <li data-i18n-html-en="<strong>10 brands</strong>, each with its own brain"><strong>10 marcas</strong> con cerebro propio cada una</li>
+            <li data-i18n-html-en="<strong>Unlimited team seats</strong> with roles"><strong>Asientos de equipo ilimitados</strong> con roles</li>
+            <li data-i18n-html-en="<strong>White-label PDF report</strong> per brand"><strong>Informe white-label en PDF</strong> por marca</li>
+            <li data-i18n-en="Extra brand: €10/mo">Marca extra: €10/mes</li>
           </ul>
           <button type="button" class="rsl-btn rsl-btn-ghost" onclick="openAuth('register','landing_plan_agency')" data-i18n-en="Start with Agency">Empezar con Agency</button>
           <p class="rsl-risk" data-i18n-en="Cancel in 2 clicks · no lock-in">Cancela en 2 clics · sin permanencia</p>
@@ -11859,14 +11875,17 @@
   }); },{threshold:.25});
   root.querySelectorAll("#rslBrainCard,.rsl-rise,.rsl-num,#rslTimebar").forEach(function(el){ io.observe(el); });
 
-  // Toggle mensual/anual (scoped: no toca otros .toggle del app)
-  root.querySelectorAll(".rsl-toggle button").forEach(function(btn){ btn.addEventListener("click",function(){
-    root.querySelectorAll(".rsl-toggle button").forEach(function(b){ b.classList.toggle("rsl-on",b===btn); b.setAttribute("aria-pressed",b===btn); });
-    var y=btn.dataset.cycle==="year";
+  // Toggle mensual/anual (scoped: no toca otros .toggle del app). ANUAL POR DEFECTO.
+  function rslApplyCycle(y){
+    root.querySelectorAll(".rsl-toggle button").forEach(function(b){ var on=(b.dataset.cycle==="year")===y; b.classList.toggle("rsl-on",on); b.setAttribute("aria-pressed",on?"true":"false"); });
     root.querySelectorAll(".rsl-plan .rsl-price[data-m]").forEach(function(p){ var a=p.querySelector(".rsl-amt"); if(a) a.textContent=y?p.dataset.y:p.dataset.m; });
     root.querySelectorAll(".rsl-plan .rsl-yr[data-m]").forEach(function(p){ p.textContent=y?p.dataset.y:p.dataset.m; });
     root.querySelectorAll(".rsl-plan .rsl-day[data-m]").forEach(function(p){ p.textContent=y?p.dataset.y:p.dataset.m; });
+  }
+  root.querySelectorAll(".rsl-toggle button").forEach(function(btn){ btn.addEventListener("click",function(){
+    rslApplyCycle(btn.dataset.cycle==="year");
   }); });
+  rslApplyCycle(true);   // anual por defecto (ancla el precio mensual equivalente bajo)
 
   // Sticky CTA: aparece tras el hero, se esconde en pricing
   (function(){
@@ -15423,7 +15442,7 @@ function renderLoggedIn() {
     setEmail.textContent = st.user.email;
     const setBadge = document.getElementById("setPlanBadge");
     if (setBadge) {
-      const planLabels = { free: "Free", pro: "Pro", creator: "Creator", agency: "Agency" };
+      const planLabels = { free: "Free", pro: "Pro", creator: "Creator", estudio: "Estudio", agency: "Agency" };
       const plan = st.plan || "free";
       setBadge.textContent = planLabels[plan] || plan;
       setBadge.className = `plan-badge ${plan}`;
@@ -15542,7 +15561,7 @@ function renderProfileHub() {
 
   // Plan badge
   const plan = st.plan || "free";
-  const planLabels = { free: "Free", pro: "Pro", creator: "Creator", agency: "Agency" };
+  const planLabels = { free: "Free", pro: "Pro", creator: "Creator", estudio: "Estudio", agency: "Agency" };
   const badge = document.getElementById("profPlanBadge");
   badge.textContent = planLabels[plan] || plan;
   badge.className = `plan-badge ${plan}`;
@@ -22970,8 +22989,8 @@ async function manageSub() {
 
 // v0.14.16 — Subscription panel (Settings)
 const PLAN_LABELS = {
-  es: { free: "Gratis", pro: "Pro", creator: "Creador", agency: "Agencia" },
-  en: { free: "Free",   pro: "Pro", creator: "Creator", agency: "Agency" },
+  es: { free: "Gratis", pro: "Pro", creator: "Creador", estudio: "Estudio", agency: "Agencia" },
+  en: { free: "Free",   pro: "Pro", creator: "Creator", estudio: "Studio",  agency: "Agency" },
 };
 
 function planLabel(plan) {
@@ -23152,17 +23171,26 @@ const PLAN_META = {
     stripeKeys: { month: "", year: "" },
     featured: true,
   },
+  estudio: {
+    icon: "🎬", label: "Estudio",
+    price:    { monthEur: 5900, monthUsd: 6500, yearEur: 4700, yearUsd: 5200, billedEur: 56400, billedUsd: 62400 },
+    ideal:    { es: "Para el creador que ya factura y lleva varias marcas.", en: "For the creator who already bills and runs a few brands." },
+    features: { es: ["400 créditos/mes (el doble)","3 marcas con cerebro propio","Todo lo de Creador + prioridad","El puente entre creador y agencia"],
+                en: ["400 credits/mo (double)","3 brands, each with its own brain","Everything in Creator + priority","The bridge between solo and agency"] },
+    // FLAG: David crea los price IDs de Estudio en Stripe (STRIPE_PRICE_ESTUDIO_*).
+    stripeKeys: { month: "", year: "" },
+  },
   agency: {
     icon: "🏢", label: "Agencia",
     price:    { monthEur: 12900, monthUsd: 13900, yearEur: 10750, yearUsd: 11600, billedEur: 129000, billedUsd: 139000 },
     ideal:    { es: "Para agencias que gestionan varias marcas.", en: "For agencies managing multiple brands." },
-    features: { es: ["800 créditos/mes (pool)","3 marcas incluidas","3 asientos de equipo","Marca extra €14,99/mes · asiento €14,99/mes","Cerebro por marca","Portfolio multi-marca","Soporte email + chat"],
-                en: ["800 credits/mo (pool)","3 brands included","3 team seats","Extra brand €14.99/mo · seat €14.99/mo","Brain per brand","Multi-brand portfolio","Email + chat support"] },
+    features: { es: ["800 créditos/mes (pool)","10 marcas con cerebro propio","Asientos de equipo ilimitados","Informe white-label en PDF por marca","Marca extra €10/mes","Portfolio multi-marca"],
+                en: ["800 credits/mo (pool)","10 brands, each with its own brain","Unlimited team seats","White-label PDF report per brand","Extra brand €10/mo","Multi-brand portfolio"] },
     stripeKeys: { month: "", year: "" },
   },
 };
 
-const PLAN_RANK = { free: 0, pro: 1, creator: 2, agency: 3 };
+const PLAN_RANK = { free: 0, pro: 1, creator: 2, estudio: 3, agency: 4 };
 
 function openUpgradeModal(source) {
   if (!st.user) { openAuth("register"); return; }
@@ -23183,7 +23211,7 @@ function renderUpgradeCards() {
   const lang = currentLang;
 
   // Show only plans strictly above the user's current tier
-  const plans = ["creator","agency"].filter(p => PLAN_RANK[p] > PLAN_RANK[plan]);
+  const plans = ["creator","estudio","agency"].filter(p => PLAN_RANK[p] > PLAN_RANK[plan]);
 
   grid.innerHTML = plans.map(p => {
     const m = PLAN_META[p];
