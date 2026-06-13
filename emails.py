@@ -722,13 +722,22 @@ def send_radar_digest(user_id, reels, day_key, next_suggestion=None):
     token = profile.get("unsubscribe_token") or ""
     unsub_url = f"{APP_URL}/unsubscribe?token={token}"
 
+    # Subject CONCRETO: nombra al top competidor + ×N su media (más clic que
+    # "N reels petaron"). reels[0] es el de mayor explosión (ya viene ordenado).
     n = len(reels)
+    top = reels[0] if reels else {}
+    top_user = "@" + str(top.get("username") or "").lstrip("@")
+    try:
+        _e = top.get("explosion") or 0
+        top_x = str(int(round(_e))) if _e >= 10 else f"{float(_e):.1f}"
+    except Exception:
+        top_x = "2"
     if lang == "es":
-        subject = (f"🔥 {n} reels petaron en tu nicho"
-                   if n > 1 else "🔥 un reel acaba de petar en tu nicho")
+        subject = (f"🔥 {top_user} petó · ×{top_x} su media"
+                   + (f" (+{n-1} más en tu nicho)" if n > 1 else ""))
     else:
-        subject = (f"🔥 {n} reels just blew up in your niche"
-                   if n > 1 else "🔥 a reel just blew up in your niche")
+        subject = (f"🔥 {top_user} blew up · ×{top_x} their avg"
+                   + (f" (+{n-1} more in your niche)" if n > 1 else ""))
 
     inner_html, inner_text = _radar_digest_body(reels, lang, next_suggestion)
     html = _wrap_html(inner_html, unsub_url, lang)
