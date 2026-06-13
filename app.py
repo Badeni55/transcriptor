@@ -1049,6 +1049,8 @@ def api_me_subscription():
         "amount_cents": None,
         "currency": None,
         "cancel_at_period_end": False,
+        "paused": False,            # growth-4: pausa activa (pause_collection)
+        "paused_until": None,       # ISO de resumes_at
         "has_stripe_sub": bool(sub_id),
         "is_complimentary": is_complimentary,
     }
@@ -1067,6 +1069,13 @@ def api_me_subscription():
             payload["amount_cents"] = price.get("unit_amount")
             payload["currency"] = price.get("currency")
             payload["cancel_at_period_end"] = bool(sub.get("cancel_at_period_end"))
+            # growth-4: estado de pausa leído de Stripe (sin columnas nuevas).
+            pc = sub.get("pause_collection") or None
+            if pc:
+                payload["paused"] = True
+                ra = pc.get("resumes_at") if isinstance(pc, dict) else None
+                if ra:
+                    payload["paused_until"] = datetime.fromtimestamp(ra, tz=timezone.utc).isoformat()
         except Exception as e:
             logger.warning("subscription fetch failed for %s: %s", uid, e)
 
@@ -1659,6 +1668,32 @@ def stripe_webhook():
                     db.table("profiles").update({"plan": plan2}).eq("id", uid2).execute()
                     grant_monthly_allowance(uid2, plan2)
 
+    elif event["type"] == "invoice.payment_failed":
+        # growth-5: DUNNING. Stripe Smart Retries (dashboard) reintenta el cobro;
+        # nosotros avisamos al usuario para que actualice su tarjeta antes de
+        # caer a Free. Idempotente por invoice (no spamea en cada reintento).
+        inv = event["data"]["object"]
+        sub_id = inv.get("subscription")
+        if sub_id:
+            try:
+                prof = (db.table("profiles").select("id, plan")
+                          .eq("stripe_subscription_id", sub_id).limit(1).execute())
+                if prof.data:
+                    duid = prof.data[0]["id"]
+                    attempt = inv.get("attempt_count")
+                    track_event("payment_failed", duid, {
+                        "plan": prof.data[0].get("plan"),
+                        "attempt": attempt,
+                        "amount_due": inv.get("amount_due"),
+                    })
+                    try:
+                        from tasks import send_payment_failed_email
+                        send_payment_failed_email.delay(duid, inv.get("id"), attempt)
+                    except Exception as e:
+                        logger.warning("dunning email dispatch failed user=%s err=%s", duid, e)
+            except Exception as e:
+                logger.warning("invoice.payment_failed handling failed sub=%s err=%s", sub_id, e)
+
     elif event["type"] == "customer.subscription.deleted":
         sub = event["data"]["object"]
         # growth-1: capturar el uid ANTES del update (luego el sub_id se borra).
@@ -1809,8 +1844,7 @@ def cancel_subscription():
     try:
         stripe_lib.Subscription.modify(sub_id, cancel_at_period_end=True)
         # growth-1: solicitud de baja (a fin de periodo). Distinto de la
-        # cancelación efectiva (webhook subscription.deleted). El bloque 4 (cancel-flow
-        # con pausa/retención) se engancha aquí.
+        # cancelación efectiva (webhook subscription.deleted).
         track_event("subscription_cancel_requested", user["id"], {
             "from_plan": profile.get("plan"),
         })
@@ -1818,6 +1852,81 @@ def cancel_subscription():
     except Exception as e:
         logger.error(f"Error: {e}", exc_info=True)
         return jsonify({"error": "Internal server error. Please try again."}), 500
+
+
+@app.route("/pause-subscription", methods=["POST"])
+@require_auth
+def pause_subscription():
+    """growth-4: cancel-flow con RETENCIÓN. En vez de cancelar, PAUSA el plan
+    ~2 meses (Stripe pause_collection): no se cobra, la cuenta baja a Free pero
+    CONSERVA todo (voz entrenada, competidores, guiones — el lock-in real) y
+    Stripe reanuda el cobro solo (invoice.paid → el webhook restaura el plan).
+    El usuario puede reactivar antes con /resume-subscription. El research da
+    ~20-25% de churn salvado con la pausa."""
+    if not STRIPE_OK:
+        return jsonify({"error": "Pagos no disponibles"}), 503
+    user = current_user()
+    profile = get_profile(user["id"])
+    sub_id = profile.get("stripe_subscription_id")
+    if not sub_id:
+        return jsonify({"error": "No tienes suscripción activa"}), 400
+
+    body = request.get_json() or {}
+    try:
+        months = int(body.get("months", 2))
+    except Exception:
+        months = 2
+    months = 1 if months < 1 else (3 if months > 3 else months)
+    resumes_at = int((datetime.now(timezone.utc) + timedelta(days=30 * months)).timestamp())
+
+    try:
+        stripe_lib.Subscription.modify(sub_id, pause_collection={
+            "behavior": "void", "resumes_at": resumes_at,
+        })
+        # Baja a Free durante la pausa (acceso), datos intactos. Al reanudar,
+        # invoice.paid restaura el plan vía PRICE_TO_PLAN.
+        db.table("profiles").update({"plan": "free"}).eq("id", user["id"]).execute()
+        track_event("subscription_paused", user["id"], {
+            "from_plan": profile.get("plan"), "months": months,
+        })
+        _subscription_cache.pop(user["id"], None)   # invalida la caché del estado de sub
+        return jsonify({"ok": True, "resumes_at": resumes_at, "months": months})
+    except Exception as e:
+        logger.error("pause_subscription failed user=%s err=%s", user["id"], e, exc_info=True)
+        return jsonify({"error": "No se pudo pausar la suscripción."}), 500
+
+
+@app.route("/resume-subscription", methods=["POST"])
+@require_auth
+def resume_subscription():
+    """growth-4: reactivar una suscripción pausada antes de tiempo. Quita la
+    pausa de Stripe y restaura el plan al instante (sin esperar al próximo cobro)."""
+    if not STRIPE_OK:
+        return jsonify({"error": "Pagos no disponibles"}), 503
+    user = current_user()
+    profile = get_profile(user["id"])
+    sub_id = profile.get("stripe_subscription_id")
+    if not sub_id:
+        return jsonify({"error": "No tienes suscripción"}), 400
+
+    try:
+        sub = stripe_lib.Subscription.modify(sub_id, pause_collection="",
+                                             expand=["items.data.price"])
+        # Restaura el plan desde el price de la sub (idéntico a checkout/renovación).
+        item = (sub.get("items") or {}).get("data") or []
+        price_id = (item[0].get("price") if item else {}).get("id") if item else None
+        plan = PRICE_TO_PLAN.get(price_id) or "creator"
+        db.table("profiles").update({"plan": plan}).eq("id", user["id"]).execute()
+        try:
+            grant_monthly_allowance(user["id"], plan)
+        except Exception:
+            pass
+        track_event("subscription_resumed", user["id"], {"plan": plan})
+        _subscription_cache.pop(user["id"], None)
+        return jsonify({"ok": True, "plan": plan})
+    except Exception as e:
+        logger.error("resume_subscription failed user=%s err=%s", user["id"], e, exc_info=True)
+        return jsonify({"error": "No se pudo reactivar la suscripción."}), 500
 
 
 # ── Adapt route ───────────────────────────────────────────────────────────────

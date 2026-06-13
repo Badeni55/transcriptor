@@ -752,6 +752,163 @@ def send_radar_digest(user_id, reels, day_key, next_suggestion=None):
     return {"sent": True}
 
 
+# ── growth-6 · RETENCIÓN: digest SEMANAL (gancho de vuelta para FREE) ───────
+
+def send_weekly_digest(user_id, reels, week_key, next_suggestion=None):
+    """Digest SEMANAL "lo que petó en tu nicho esta semana". A diferencia del
+    diario (send_radar_digest, solo planes de pago), este es el gancho de vuelta
+    para usuarios FREE/lapsed: el hook visible + CTA a su Radar, donde robar el
+    guion es el paywall natural (tras agotar su cata). Idempotente por semana ISO.
+    Marketing → respeta opt-out, rate-limit y email confirmado."""
+    if not reels:
+        return {"skipped": "no_reels"}
+    key = f"weekly_digest_{week_key}"
+    db = _db()
+    now = datetime.now(timezone.utc).isoformat()
+    try:
+        db.table("email_log").insert({
+            "user_id": user_id, "template_key": key,
+            "status": "queued", "scheduled_for": now,
+        }).execute()
+    except Exception:
+        return {"skipped": "already_this_week"}
+
+    def _skip(reason):
+        db.table("email_log").update({"status": "skipped", "error": reason, "sent_at": now}) \
+          .eq("user_id", user_id).eq("template_key", key).execute()
+        return {"skipped": reason}
+
+    profile = _profile(user_id)
+    email, confirmed_at = _user_email(user_id)
+    if not email:
+        return _skip("no_email")
+    if not confirmed_at:
+        return _skip("email_not_confirmed")
+    if not profile.get("email_marketing", True):
+        return _skip("marketing_opted_out")
+    if _rate_limited(user_id):
+        return _skip("rate_limited")
+
+    lang = profile.get("lang") or "es"
+    if lang not in ("es", "en"):
+        lang = "es"
+    token = profile.get("unsubscribe_token") or ""
+    unsub_url = f"{APP_URL}/unsubscribe?token={token}"
+
+    n = len(reels)
+    if lang == "es":
+        subject = (f"🔥 esta semana petaron {n} reels en tu nicho"
+                   if n > 1 else "🔥 esta semana petó un reel en tu nicho")
+    else:
+        subject = (f"🔥 {n} reels blew up in your niche this week"
+                   if n > 1 else "🔥 a reel blew up in your niche this week")
+
+    inner_html, inner_text = _radar_digest_body(reels, lang, next_suggestion)
+    html = _wrap_html(inner_html, unsub_url, lang)
+    text = _wrap_text(inner_text, unsub_url, lang)
+
+    resend_id, err = _send_via_resend(email, subject, html, text)
+    now2 = datetime.now(timezone.utc).isoformat()
+    if err:
+        db.table("email_log").update({"status": "failed", "error": err, "sent_at": now2}) \
+          .eq("user_id", user_id).eq("template_key", key).execute()
+        track("email_failed", user_id, {"template_key": "weekly_digest", "error": err})
+        return {"error": err}
+    db.table("email_log").update({"status": "sent", "sent_at": now2, "resend_id": resend_id}) \
+      .eq("user_id", user_id).eq("template_key", key).execute()
+    track("email_sent", user_id, {"template_key": "weekly_digest",
+                                  "resend_id": resend_id, "reels": n})
+    logger.info("weekly_digest sent user=%s reels=%s", user_id, n)
+    return {"sent": True}
+
+
+# ── growth-5 · DUNNING: email de fallo de cobro ────────────────────────────
+
+def send_payment_failed(user_id, invoice_id, attempt=None):
+    """Email TRANSACCIONAL de fallo de cobro (dunning). Acompaña a los Smart
+    Retries de Stripe: le decimos al usuario que actualice su tarjeta antes de
+    perder el plan. Por ser billing-crítico IGNORA el opt-out de marketing y el
+    rate-limit (pero respeta el unsubscribe link legal). Idempotente por
+    (user_id, invoice) → un email por invoice fallida, no por reintento.
+    Devuelve {sent|skipped|error}."""
+    key = f"payment_failed_{invoice_id}" if invoice_id else "payment_failed"
+    db = _db()
+    now = datetime.now(timezone.utc).isoformat()
+    try:
+        db.table("email_log").insert({
+            "user_id": user_id, "template_key": key,
+            "status": "queued", "scheduled_for": now,
+        }).execute()
+    except Exception:
+        return {"skipped": "already_sent"}   # UNIQUE(user_id, template_key) → ya enviado
+
+    def _skip(reason):
+        db.table("email_log").update({"status": "skipped", "error": reason, "sent_at": now}) \
+          .eq("user_id", user_id).eq("template_key", key).execute()
+        return {"skipped": reason}
+
+    email, confirmed_at = _user_email(user_id)
+    if not email:
+        return _skip("no_email")
+    profile = _profile(user_id)
+    lang = profile.get("lang") or "es"
+    if lang not in ("es", "en"):
+        lang = "es"
+    token = profile.get("unsubscribe_token") or ""
+    unsub_url = f"{APP_URL}/unsubscribe?token={token}"
+    cta = f"{APP_URL}/profile/settings"
+
+    if lang == "es":
+        subject = "⚠️ no pudimos cobrar tu plan"
+        inner_html = (
+            "<p>hola creador.</p>"
+            "<p>intentamos renovar tu plan pero el pago no pasó. suele ser una tarjeta "
+            "caducada o sin saldo — nada grave.</p>"
+            "<p>actualiza tu método de pago y seguimos donde lo dejaste. lo reintentamos "
+            "estos días; si no, tu cuenta baja a Free (no pierdes nada: tu voz, tus "
+            "competidores y tus guiones se quedan).</p>"
+            + _btn(cta, "actualizar mi tarjeta →")
+        )
+        inner_text = (
+            "hola creador.\n\nintentamos renovar tu plan pero el pago no pasó. suele ser "
+            "una tarjeta caducada o sin saldo.\n\nactualiza tu método de pago y seguimos: "
+            f"{cta}\n\nlo reintentamos estos días; si no, tu cuenta baja a Free (tu voz, "
+            "competidores y guiones se quedan)."
+        )
+    else:
+        subject = "⚠️ we couldn't charge your plan"
+        inner_html = (
+            "<p>hey creator.</p>"
+            "<p>we tried to renew your plan but the payment didn't go through — usually an "
+            "expired card or low balance, nothing serious.</p>"
+            "<p>update your payment method and we pick up right where we left off. we'll "
+            "retry over the next few days; otherwise your account drops to Free (you lose "
+            "nothing: your voice, competitors and scripts stay).</p>"
+            + _btn(cta, "update my card →")
+        )
+        inner_text = (
+            "hey creator.\n\nwe tried to renew your plan but the payment didn't go through "
+            "— usually an expired card or low balance.\n\nupdate your payment method: "
+            f"{cta}\n\nwe'll retry over the next few days; otherwise your account drops to Free."
+        )
+
+    html = _wrap_html(inner_html, unsub_url, lang)
+    text = _wrap_text(inner_text, unsub_url, lang)
+    resend_id, err = _send_via_resend(email, subject, html, text)
+    now2 = datetime.now(timezone.utc).isoformat()
+    if err:
+        db.table("email_log").update({"status": "failed", "error": err, "sent_at": now2}) \
+          .eq("user_id", user_id).eq("template_key", key).execute()
+        track("email_failed", user_id, {"template_key": "payment_failed", "error": err})
+        return {"error": err}
+    db.table("email_log").update({"status": "sent", "sent_at": now2, "resend_id": resend_id}) \
+      .eq("user_id", user_id).eq("template_key", key).execute()
+    track("email_sent", user_id, {"template_key": "payment_failed", "resend_id": resend_id,
+                                  "attempt": attempt})
+    logger.info("payment_failed email sent user=%s invoice=%s", user_id, invoice_id)
+    return {"sent": True}
+
+
 # ── Signup hook ───────────────────────────────────────────────────────────
 
 def gen_unsubscribe_token():

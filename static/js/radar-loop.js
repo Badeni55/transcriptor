@@ -1889,7 +1889,26 @@
     if(S.activeGuionId){ var g=guionById(S.activeGuionId); if(g){ g.status="recorded"; persistRecStatus(g); } }
     S.done.record=true; if(S.stats) S.stats.stolen_today+=1; S.activeGuionId=null;
     S.view="feed"; S.tab="dashboard"; render();
-    showToast("Grabado y marcado en Guiones. Te esperan más oportunidades hoy →");
+    if(!maybeUpgradeNudge("recorded"))   // growth-3: nudge tras éxito (no pisa el toast propio si no aplica)
+      showToast("Grabado y marcado en Guiones. Te esperan más oportunidades hoy →");
+  }
+  /* growth-3 · PAYWALL CONTEXTUAL — el research dice que el paywall convierte
+     MEJOR después del primer éxito, nunca antes. Este nudge SOLO se dispara
+     tras una acción de éxito real (copiar el guion / marcarlo grabado) de un
+     usuario FREE, una sola vez (localStorage). No bloquea, no castiga: es un
+     toast con acción que abre el modal de planes. Nunca aparece antes del valor.
+     Devuelve true si mostró el nudge (para no pisar otros toasts). */
+  function maybeUpgradeNudge(trigger){
+    try{
+      if(isDemo()) return false;
+      if((S.user&&S.user.plan)!=="free") return false;
+      if(localStorage.getItem("rs_upsell_shown")==="1") return false;
+      localStorage.setItem("rs_upsell_shown","1");
+      try{ if(window.track&&window.track.featureUsed) window.track.featureUsed({feature:"upgrade_nudge",action:"shown"}); }catch(e){}
+      try{ if(window.posthog) window.posthog.capture("upgrade_nudge_shown",{trigger:trigger}); }catch(e){}
+      showToast("Tu primer guion en tu voz, listo. Con Creador creas sin límite →","Ver Creador","upsell-nudge");
+      return true;
+    }catch(e){ return false; }
   }
   // Prod: persiste el estado de grabación del guion (PATCH /scripts/<id>). La isla
   // usa draft|recorded|discarded; el backend pending|recorded|discarded (draft→pending).
@@ -2675,7 +2694,8 @@
         onSubmit:function(u){ u=u.trim(); gl.published={pending:true, url:u}; gl.status="recorded"; render(); if(isDemo()){ showToast("Reel vinculado. Se analizará en el próximo refresco y entrenará tu Cerebro."); } else { linkReelPublished(gl, u); } }
       });
     } return; }
-    if(act==="copy"){ var txt=btn.getAttribute("data-txt"); if(navigator.clipboard) navigator.clipboard.writeText(txt); btn.textContent="✓"; setTimeout(function(){ btn.textContent="Copiar"; },1200); return; }
+    if(act==="copy"){ var txt=btn.getAttribute("data-txt"); if(navigator.clipboard) navigator.clipboard.writeText(txt); btn.textContent="✓"; setTimeout(function(){ btn.textContent="Copiar"; },1200); maybeUpgradeNudge("copy"); return; }   // growth-3: copiar = éxito → nudge
+    if(act==="upsell-nudge"){ if(typeof window.openUpgradeModal==="function") window.openUpgradeModal("post_first_success"); return; }
   }
 
   /* ════════════════════════════════════════════════════════════════
