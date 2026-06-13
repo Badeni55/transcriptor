@@ -127,7 +127,8 @@
     view:"feed",                        // feed(overlay off) | gen | script | result | prompter | fillweek
     reel:null, genKind:"script", resultKind:"hooks", done:{},
     _fillPhase:null, brandMenu:false, acctMenu:false,
-    genStepTimer:null, fillTimer:null, toastTimer:null
+    genStepTimer:null, fillTimer:null, toastTimer:null,
+    onb:{ step:"ask", handle:"", platform:"instagram", suggestions:[], busy:false, error:null, skipped:false }   // growth-2: onboarding de activación
   };
   function root(){ return document.getElementById("radarRoot"); }
   function brand(){ return S.brands.filter(function(b){return b.id===S.brandId;})[0] || S.brands[0] || {name:"Mi marca",level:1,voice:40,reelsAnalyzed:0,scripts:0,color:"#f97316"}; }
@@ -308,6 +309,129 @@
     '</div>';
   }
   function ecoLevelName(l){ return ({1:"Calentando",2:"Cogiendo forma",3:"En racha",4:"Afinado",5:"Imparable"})[l||1]||"Calentando"; }
+
+  /* ════════════════════════════════════════════════════════════════
+     growth-2 · ONBOARDING DE ACTIVACIÓN (sesión 1) — empty-state del Radar.
+     Camino al «aha» en <5 min, una sola acción primaria por paso (IDI):
+       1. ask   → handle de IG/TikTok            [Buscar mi competencia]
+       2. pick  → 3-5 competidores que sugiere el LLM (preseleccionados)
+                                                  [Seguir y empezar]
+       3. done  → los sigue (valida al scrapear) → sus reels caen al Radar
+                  y el propio empty-state desaparece; guiamos al «Hazlo mío».
+     Solo en prod, usuario sin competidores. Saltarlo cae al empty-state clásico.
+     ════════════════════════════════════════════════════════════════ */
+  function showOnboarding(){
+    return !isDemo() && S.filter!=="fav" && !S.onb.skipped
+      && Array.isArray(S.tracked) && S.tracked.length===0
+      && (S.reels||[]).length===0 && !S.creatorFilter;
+  }
+  function onbStepAskHTML(){
+    var err=S.onb.error?'<div class="onb-err" role="alert">'+ESC(S.onb.error)+'</div>':'';
+    return '<div class="onb-step">'+
+      '<div class="onb-eyebrow">'+IC.spark+' Paso 1 de 2</div>'+
+      '<h2 class="onb-h">¿Cuál es tu cuenta?</h2>'+
+      '<p class="onb-sub">Dime tu usuario de Instagram o TikTok y te encuentro a quién deberías estar vigilando — en segundos.</p>'+
+      '<div class="onb-pform">'+
+        '<div class="onb-handle"><span class="onb-at">@</span>'+
+          '<input id="rsOnbHandle" class="onb-input" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" '+
+            'placeholder="tu_usuario" value="'+ESC(S.onb.handle||"")+'" aria-label="Tu usuario de Instagram o TikTok">'+
+        '</div>'+
+        '<button class="btn btn-lg btn-primary onb-go" data-act="onb-suggest"'+(S.onb.busy?' disabled':'')+'>'+
+          (S.onb.busy?'<span class="mini-spin"></span> Buscando…':IC.bolt+' Buscar mi competencia')+'</button>'+
+      '</div>'+
+      err+
+      '<button class="onb-skip" data-act="onb-manual">Prefiero añadir un competidor a mano</button>'+
+    '</div>';
+  }
+  function onbStepPickHTML(){
+    var list=(S.onb.suggestions||[]).map(function(c){
+      return '<button class="onb-card'+(c.picked?' on':'')+'" data-act="onb-toggle" data-h="'+ESC(c.handle)+'" role="checkbox" aria-checked="'+(c.picked?'true':'false')+'">'+
+        '<span class="onb-card-check">'+(c.picked?IC.check:'')+'</span>'+
+        '<span class="ava bava">'+ESC(initialsOf(c.handle))+'</span>'+
+        '<span class="onb-card-body"><span class="onb-card-h">@'+ESC(c.handle)+'</span>'+
+          (c.reason?'<span class="onb-card-r">'+ESC(c.reason)+'</span>':'')+'</span>'+
+      '</button>';
+    }).join("");
+    var nPick=(S.onb.suggestions||[]).filter(function(c){return c.picked;}).length;
+    var err=S.onb.error?'<div class="onb-err" role="alert">'+ESC(S.onb.error)+'</div>':'';
+    return '<div class="onb-step">'+
+      '<div class="onb-eyebrow">'+IC.spark+' Paso 2 de 2</div>'+
+      '<h2 class="onb-h">Esta es tu competencia</h2>'+
+      '<p class="onb-sub">Creadores de tu nicho. Quita los que no encajen — los seguiré y traeré sus reels que petaron para que robes el primero.</p>'+
+      '<div class="onb-cards">'+list+'</div>'+
+      err+
+      '<button class="btn btn-lg btn-primary" data-act="onb-follow"'+(S.onb.busy||nPick===0?' disabled':'')+'>'+
+        (S.onb.busy?'<span class="mini-spin"></span> Activando tu radar…':IC.bolt+' Seguir a '+nPick+' y empezar')+'</button>'+
+      '<button class="onb-skip" data-act="onb-back">← Cambiar mi cuenta</button>'+
+    '</div>';
+  }
+  function onbStepDoneHTML(){
+    return '<div class="onb-step onb-done">'+
+      '<div class="onb-eyebrow">'+IC.check+' Radar activado</div>'+
+      '<h2 class="onb-h">Buscando los reels que petaron…</h2>'+
+      '<p class="onb-sub">Estoy leyendo a tus competidores. En cuanto lleguen sus reels más explosivos aparecerán aquí — y podrás robar el primero en tu voz.</p>'+
+      '<div class="onb-spin"><span class="mini-spin" style="width:26px;height:26px;border-width:3px"></span></div>'+
+    '</div>';
+  }
+  function onboardingHTML(){
+    var inner = S.onb.step==="pick" ? onbStepPickHTML()
+              : S.onb.step==="done" ? onbStepDoneHTML()
+              : onbStepAskHTML();
+    return '<section class="onb">'+inner+'</section>';
+  }
+  function onbSuggest(){
+    var inp=document.getElementById("rsOnbHandle");
+    var h=(inp?inp.value:S.onb.handle||"").trim().replace(/^@+/,"").toLowerCase();
+    if(!/^[a-z0-9._]{1,30}$/.test(h)){ S.onb.error="Escribe tu usuario sin @ (letras, números, punto y guion bajo)."; S.onb.handle=h; return render(); }
+    S.onb.handle=h; S.onb.error=null; S.onb.busy=true; render();
+    apiPost("/api/onboarding/suggest-competitors",{handle:h, platform:S.onb.platform}).then(function(r){
+      S.onb.busy=false;
+      if(r.ok && r.d && Array.isArray(r.d.creators) && r.d.creators.length){
+        S.onb.suggestions=r.d.creators.map(function(c){ return {handle:c.handle, reason:c.reason||"", picked:true}; });
+        S.onb.step="pick"; S.onb.error=null; return render();
+      }
+      // sin sugerencias o error → mensaje claro + caída a manual (no castigar)
+      S.onb.error=(r.d&&r.d.message)||"No pude buscar tu competencia ahora. Añade un competidor a mano para empezar.";
+      render();
+    });
+  }
+  function onbToggle(h){
+    (S.onb.suggestions||[]).forEach(function(c){ if(c.handle===h) c.picked=!c.picked; });
+    render();
+  }
+  function onbFollow(){
+    var picked=(S.onb.suggestions||[]).filter(function(c){return c.picked;});
+    if(!picked.length) return;
+    S.onb.busy=true; S.onb.error=null; render();
+    var _pid=_pidOf(S.brandId);
+    var jobs=picked.map(function(c){
+      var body={ig_username:c.handle, source:"onboarding"};
+      if(isAgency()&&_pid) body.project_id=_pid;
+      return apiPost("/api/tracked-creators",body).then(function(r){
+        // 201 nuevo · 409 ya seguido → ambos cuentan como "seguido". Otros = fallo.
+        return (r.ok || (r.d&&r.d.error==="tc.error.already_tracking"));
+      });
+    });
+    Promise.all(jobs).then(function(res){
+      var ok=res.filter(Boolean).length;
+      S.onb.busy=false;
+      if(!ok){ S.onb.error="No pude seguir a esos competidores. Prueba a añadir uno a mano."; return render(); }
+      S.onb.step="done"; render();
+      showToast("Radar activado con "+ok+" competidor"+(ok===1?"":"es")+". Trayendo sus reels…");
+      // El scrape es async (~1 min). Refrescamos en LIGERO (sin el skeleton de
+      // loadBrandData, que reescribe el root y se llevaría el toast + el paso
+      // «done» por delante). Cuando lleguen reels el empty-state desaparece solo.
+      var tries=0;
+      (function poll(){
+        if(S.onb.step!=="done") return;             // el user navegó a otro sitio
+        _refreshReelsLight(function(){
+          if((S.reels||[]).length>0){ S.onb.skipped=true; render(); return; }   // reels → fin del onboarding
+          if(++tries>20) return;                     // ~100s techo; el digest/refresco lo cubrirá
+          setTimeout(poll, 5000);
+        });
+      })();
+    });
+  }
 
   /* B1: "tu próxima serie" — sugerencia del Cerebro a partir de lo que petó en TU
      cuenta (S.metrics.insights.next = {title, views, message}). Surface como CARD
@@ -508,6 +632,12 @@
     }
 
     if(sorted.length===0){
+      // growth-2: usuario nuevo REAL (no demo, sin competidores cargados, sin
+      // filtro fav) → onboarding de activación en el propio empty-state (decisión
+      // de David). Si lo salta, cae al mensaje clásico de abajo.
+      if(showOnboarding()){
+        return '<div class="scroll"><div class="canvas">'+head+onboardingHTML()+'</div></div>';
+      }
       return '<div class="scroll"><div class="canvas">'+head+(isAgency()?brandTabsHTML():"")+statbarHTML()+
         trackedManageHTML()+
         voiceOnboardCardHTML()+   // B6: en first-run sin reels, el banner de voz es lo primero que aporta
@@ -1348,6 +1478,8 @@
     // Fix review (T2/T6): si hay un sheet abierto con texto sin enviar, consérvalo —
     // un render de fondo (p.ej. robo en background al resolver) no debe borrarlo.
     if(S.sheet){ var _si=document.getElementById("rsSheetInput"); if(_si) S.sheet.initial=_si.value; }
+    // growth-2: conserva el handle a medio teclear ante un render de fondo.
+    if(S.onb && S.onb.step==="ask"){ var _oi=document.getElementById("rsOnbHandle"); if(_oi) S.onb.handle=_oi.value; }
     // Fix review (T4/a11y): #rsToast/#rsErr deben ser nodos PERSISTENTES — una región
     // aria-live solo se anuncia cuando su contenido MUTA estando ya en el DOM. Si se
     // recrean en cada innerHTML, el patrón render()+showToast() no se anuncia. La vista
@@ -1391,6 +1523,12 @@
     // una vez que #rsLegacy ya existe (primer render). openLegacy consume el flag.
     if(S._pendingLegacy && document.getElementById("rsLegacy")){ var _pl=S._pendingLegacy; S._pendingLegacy=null; openLegacy(_pl); }
     manageOverlayFocus(el);
+    // growth-2: en el onboarding (paso handle), enfoca el input al montarlo —
+    // sin robar el foco si el usuario ya está escribiendo en él.
+    if(showOnboarding() && S.onb.step==="ask" && !S.sheet && (!S.view || S.view==="feed")){
+      var _oh=document.getElementById("rsOnbHandle");
+      if(_oh && document.activeElement!==_oh){ try{ _oh.focus(); var _v=_oh.value; _oh.value=""; _oh.value=_v; }catch(e){} }
+    }
   }
 
   /* T5 (IDI): gestión de foco de los diálogos. Al ABRIR un overlay/sheet, el foco
@@ -1751,7 +1889,26 @@
     if(S.activeGuionId){ var g=guionById(S.activeGuionId); if(g){ g.status="recorded"; persistRecStatus(g); } }
     S.done.record=true; if(S.stats) S.stats.stolen_today+=1; S.activeGuionId=null;
     S.view="feed"; S.tab="dashboard"; render();
-    showToast("Grabado y marcado en Guiones. Te esperan más oportunidades hoy →");
+    if(!maybeUpgradeNudge("recorded"))   // growth-3: nudge tras éxito (no pisa el toast propio si no aplica)
+      showToast("Grabado y marcado en Guiones. Te esperan más oportunidades hoy →");
+  }
+  /* growth-3 · PAYWALL CONTEXTUAL — el research dice que el paywall convierte
+     MEJOR después del primer éxito, nunca antes. Este nudge SOLO se dispara
+     tras una acción de éxito real (copiar el guion / marcarlo grabado) de un
+     usuario FREE, una sola vez (localStorage). No bloquea, no castiga: es un
+     toast con acción que abre el modal de planes. Nunca aparece antes del valor.
+     Devuelve true si mostró el nudge (para no pisar otros toasts). */
+  function maybeUpgradeNudge(trigger){
+    try{
+      if(isDemo()) return false;
+      if((S.user&&S.user.plan)!=="free") return false;
+      if(localStorage.getItem("rs_upsell_shown")==="1") return false;
+      localStorage.setItem("rs_upsell_shown","1");
+      try{ if(window.track&&window.track.featureUsed) window.track.featureUsed({feature:"upgrade_nudge",action:"shown"}); }catch(e){}
+      try{ if(window.posthog) window.posthog.capture("upgrade_nudge_shown",{trigger:trigger}); }catch(e){}
+      showToast("Tu primer guion en tu voz, listo. Con Creador creas sin límite →","Ver Creador","upsell-nudge");
+      return true;
+    }catch(e){ return false; }
   }
   // Prod: persiste el estado de grabación del guion (PATCH /scripts/<id>). La isla
   // usa draft|recorded|discarded; el backend pending|recorded|discarded (draft→pending).
@@ -2103,6 +2260,23 @@
       }
     });
   }
+  // growth-2: refresco LIGERO de señales (stats + tracked + reels) SIN el skeleton
+  // de loadBrandData (que reescribe el root y mata toast/overlay). render() conserva
+  // los nodos estables. `cb` se llama al terminar.
+  function _refreshReelsLight(cb){
+    var _pq=(S.brandId&&S.brandId!=="default")?("?project_id="+encodeURIComponent(S.brandId)):"";
+    Promise.all([
+      apiGet("/api/radar/stats"+_pq),
+      apiGet("/api/tracked-creators/reels"+(_pq?_pq+"&":"?")+"sort=explosion&limit=24")
+    ]).then(function(res){
+      var st=res[0], fd=res[1];
+      if(st&&st.ok&&st.d){ S.stats={ competitors:st.d.competitors||0, reels_week:st.d.reels_week||0, exploded_week:st.d.exploded_week||0, stolen_today:st.d.stolen_today!=null?st.d.stolen_today:(st.d.stolen_total||0) }; }
+      if(fd&&fd.ok&&fd.d&&Array.isArray(fd.d.reels)){ S.reels=fd.d.reels.map(normReel); S.favs={}; S.reels.forEach(function(r){ if(r.fav) S.favs[r.id]=true; }); }
+      loadTracked();
+      render();
+      if(cb) cb();
+    });
+  }
   function _followAuthor(handle){
     if(!handle) return showToast("Reel analizado — lo tienes en Analizar. No pude identificar a su autor para seguirlo.");
     var already=Array.isArray(S.tracked)&&S.tracked.some(function(t){
@@ -2386,6 +2560,7 @@
     if(e.key==="Enter" && !e.shiftKey && (e.target.tagName||"").toLowerCase()!=="textarea"){
       if(S.sheet && e.target.id==="rsSheetInput"){ e.preventDefault(); return submitSheet(); }
       if(e.target.id==="rsIdeaSeed"){ e.preventDefault(); return seedIdea("rsIdeaSeed", true); }
+      if(e.target.id==="rsOnbHandle"){ e.preventDefault(); return onbSuggest(); }   // growth-2: Enter en el handle
       if(e.target.id==="rsIdeaSeed2"){ e.preventDefault(); return addSeedIdea(); }
       // A: la card del reel es role=button — Enter abre el detalle (a11y teclado).
       if(e.target.getAttribute && e.target.getAttribute("data-act")==="reel-detail"){ e.preventDefault(); return openReelDetail(e.target.getAttribute("data-id")); }
@@ -2445,6 +2620,12 @@
     if(act==="filter"){ S.filter=k; return render(); }
     if(act==="expand-feed"){ S.feedExpanded=true; return render(); }
     if(act==="add-reel") return addReelManual();
+    // growth-2: onboarding de activación
+    if(act==="onb-suggest") return onbSuggest();
+    if(act==="onb-toggle") return onbToggle(btn.getAttribute("data-h"));
+    if(act==="onb-follow") return onbFollow();
+    if(act==="onb-back"){ S.onb.step="ask"; S.onb.error=null; return render(); }
+    if(act==="onb-manual"){ S.onb.skipped=true; render(); if(typeof window.openAddCompetitorModal==="function") window.openAddCompetitorModal(); return; }
     // Reusa el modal legacy global (index.html); al añadir, submitAddCompetitor
     // recarga el Radar vía window.RS_reloadRadar (puente en loadBrandData).
     if(act==="add-comp"){ if(typeof window.openAddCompetitorModal==="function") window.openAddCompetitorModal(); return; }
@@ -2513,7 +2694,8 @@
         onSubmit:function(u){ u=u.trim(); gl.published={pending:true, url:u}; gl.status="recorded"; render(); if(isDemo()){ showToast("Reel vinculado. Se analizará en el próximo refresco y entrenará tu Cerebro."); } else { linkReelPublished(gl, u); } }
       });
     } return; }
-    if(act==="copy"){ var txt=btn.getAttribute("data-txt"); if(navigator.clipboard) navigator.clipboard.writeText(txt); btn.textContent="✓"; setTimeout(function(){ btn.textContent="Copiar"; },1200); return; }
+    if(act==="copy"){ var txt=btn.getAttribute("data-txt"); if(navigator.clipboard) navigator.clipboard.writeText(txt); btn.textContent="✓"; setTimeout(function(){ btn.textContent="Copiar"; },1200); maybeUpgradeNudge("copy"); return; }   // growth-3: copiar = éxito → nudge
+    if(act==="upsell-nudge"){ if(typeof window.openUpgradeModal==="function") window.openUpgradeModal("post_first_success"); return; }
   }
 
   /* ════════════════════════════════════════════════════════════════

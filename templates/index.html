@@ -9730,6 +9730,40 @@
     .rs .stagger > *:nth-child(6){ animation-delay:.34s; }
     /* empty / loading states de la isla */
     .rs .rs-empty { grid-column:1/-1; padding:48px 24px; text-align:center; color:var(--text-tertiary); }
+    /* ══════ growth-2 · ONBOARDING DE ACTIVACIÓN (empty-state del Radar) ══════ */
+    .rs .onb { max-width:620px; margin:8px auto 40px; }
+    .rs .onb-step { border:1px solid var(--border-strong); border-radius:22px; background:linear-gradient(160deg, color-mix(in srgb, var(--brand-500) 8%, var(--surface-raised)), var(--surface-raised)); padding:34px 32px; box-shadow:var(--shadow-lg); }
+    .rs--mobile .onb-step { padding:26px 20px; border-radius:18px; }
+    .rs .onb-eyebrow { display:inline-flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--brand-400); margin-bottom:14px; }
+    .rs .onb-eyebrow svg { width:14px; height:14px; }
+    .rs .onb-h { font-family:var(--font-display); font-size:30px; line-height:1.05; letter-spacing:-.02em; margin:0 0 8px; color:var(--text-primary); }
+    .rs--mobile .onb-h { font-size:25px; }
+    .rs .onb-sub { font-size:14.5px; color:var(--text-secondary); margin:0 0 22px; line-height:1.5; }
+    .rs .onb-pform { display:flex; gap:10px; align-items:stretch; }
+    .rs--mobile .onb-pform { flex-direction:column; }
+    .rs .onb-handle { flex:1; display:flex; align-items:center; gap:4px; background:var(--surface-base); border:1.5px solid var(--border-strong); border-radius:13px; padding:0 14px; transition:border-color .15s ease; }
+    .rs .onb-handle:focus-within { border-color:var(--brand-500); }
+    .rs .onb-at { color:var(--text-tertiary); font-size:18px; font-weight:600; }
+    .rs .onb-input { flex:1; border:none; background:transparent; outline:none; color:var(--text-primary); font-size:17px; padding:15px 4px; min-width:0; }
+    .rs .onb-go { flex:0 0 auto; white-space:nowrap; }
+    .rs--mobile .onb-go { width:100%; justify-content:center; }
+    .rs .onb-skip { display:block; margin:18px auto 0; background:none; border:none; color:var(--text-tertiary); font-size:13px; cursor:pointer; text-decoration:underline; text-underline-offset:3px; padding:8px; min-height:44px; }
+    .rs .onb-skip:hover { color:var(--text-secondary); }
+    .rs .onb-err { margin-top:14px; padding:11px 14px; border-radius:11px; background:color-mix(in srgb, var(--danger-fg, #ef4444) 12%, transparent); border:1px solid color-mix(in srgb, var(--danger-fg, #ef4444) 35%, transparent); color:var(--danger-fg, #ef4444); font-size:13.5px; }
+    .rs .onb-cards { display:flex; flex-direction:column; gap:10px; margin-bottom:22px; }
+    .rs .onb-card { display:flex; align-items:center; gap:13px; width:100%; text-align:left; padding:13px 15px; border:1.5px solid var(--border-default); border-radius:14px; background:var(--surface-base); cursor:pointer; transition:border-color .15s ease, background .15s ease; }
+    .rs .onb-card:hover { border-color:var(--border-strong); }
+    .rs .onb-card.on { border-color:var(--brand-500); background:color-mix(in srgb, var(--brand-500) 8%, var(--surface-base)); }
+    .rs .onb-card-check { flex:0 0 22px; width:22px; height:22px; border-radius:7px; border:1.5px solid var(--border-strong); display:flex; align-items:center; justify-content:center; color:#fff; }
+    .rs .onb-card.on .onb-card-check { background:var(--brand-500); border-color:var(--brand-500); }
+    .rs .onb-card-check svg { width:14px; height:14px; }
+    .rs .onb-card .ava { flex:0 0 auto; }
+    .rs .onb-card-body { display:flex; flex-direction:column; min-width:0; }
+    .rs .onb-card-h { font-weight:600; font-size:15px; color:var(--text-primary); }
+    .rs .onb-card-r { font-size:12.5px; color:var(--text-tertiary); overflow:hidden; text-overflow:ellipsis; }
+    .rs .onb-step .btn-primary { width:100%; justify-content:center; }
+    .rs .onb-done { text-align:center; }
+    .rs .onb-spin { margin-top:20px; display:flex; justify-content:center; }
     .rs .rs-skel { background:var(--surface-raised); border:1px solid var(--border-default); border-radius:18px; height:160px; animation: rsPulse 1.3s ease-in-out infinite; }
     @keyframes rsPulse { 0%,100%{opacity:.5;} 50%{opacity:.8;} }
 
@@ -12916,6 +12950,9 @@
             <button class="btn-3d btn-3d-primary" id="settingsChangePlanBtn" onclick="openUpgradeModal('settings')" style="display:none;padding:8px 14px;border-radius:8px;font-size:.82rem" data-i18n-es="Cambiar plan" data-i18n-en="Change plan">Cambiar plan</button>
             <button class="btn-3d btn-3d-primary" id="settingsViewPlansBtn" onclick="settingsViewPlans()" style="display:none;padding:8px 14px;border-radius:8px;font-size:.82rem" data-i18n-es="Ver planes →" data-i18n-en="View plans →">Ver planes →</button>
             <button class="btn-3d btn-3d-secondary" id="settingsManageSubBtn" onclick="settingsManageSub()" style="display:none;padding:8px 14px;border-radius:8px;font-size:.82rem;background:transparent;border:1px solid var(--border);color:var(--text2)" data-i18n-es="Gestionar suscripción" data-i18n-en="Manage subscription">Gestionar suscripción</button>
+            <!-- growth-4: cancel-flow in-app con retención (pausa) -->
+            <button class="btn-3d btn-3d-secondary" id="settingsPauseCancelBtn" onclick="openCancelFlow()" style="display:none;padding:8px 14px;border-radius:8px;font-size:.82rem;background:transparent;border:1px solid var(--border);color:var(--text3)" data-i18n-es="Pausar o cancelar" data-i18n-en="Pause or cancel">Pausar o cancelar</button>
+            <button class="btn-3d btn-3d-primary" id="settingsResumeBtn" onclick="resumeSubscription()" style="display:none;padding:8px 14px;border-radius:8px;font-size:.82rem" data-i18n-es="Reactivar plan" data-i18n-en="Resume plan">Reactivar plan</button>
           </div>
           <div class="sub-detail-foot" data-i18n-es="Cambiar plan, cancelar o actualizar tu método de pago." data-i18n-en="Change plan, cancel or update payment method.">Cambiar plan, cancelar o actualizar tu método de pago.</div>
         </div>
@@ -22970,6 +23007,8 @@ async function loadSubscriptionInfo() {
   const changeBtn = document.getElementById("settingsChangePlanBtn");
   const viewBtn = document.getElementById("settingsViewPlansBtn");
   const manageBtn = document.getElementById("settingsManageSubBtn");
+  const pauseCancelBtn = document.getElementById("settingsPauseCancelBtn");   // growth-4
+  const resumeBtn = document.getElementById("settingsResumeBtn");             // growth-4
   if (!grid || !free) return;
 
   let d;
@@ -23000,6 +23039,26 @@ async function loadSubscriptionInfo() {
     return;
   }
 
+  // growth-4: PAUSA activa — acceso Free pero la sub sigue viva. Banner + Reactivar.
+  if (d.paused) {
+    grid.style.display = "none";
+    free.style.display = "";
+    if (comp) comp.style.display = "none";
+    banner.style.display = "";
+    if (bannerText) {
+      const dateStr = d.paused_until ? fmtRenewalDate(d.paused_until, lng) : "";
+      bannerText.textContent = lng === "es"
+        ? `Tu plan está en pausa${dateStr ? " hasta el " + dateStr : ""}. Conservas tu voz, tus competidores y tus guiones. Reactiva cuando quieras.`
+        : `Your plan is paused${dateStr ? " until " + dateStr : ""}. Your voice, competitors and scripts are kept. Resume anytime.`;
+    }
+    if (changeBtn) changeBtn.style.display = "none";
+    if (manageBtn) manageBtn.style.display = "none";
+    if (viewBtn) viewBtn.style.display = "none";
+    if (pauseCancelBtn) pauseCancelBtn.style.display = "none";
+    if (resumeBtn) resumeBtn.style.display = "";
+    return;
+  }
+
   if (plan === "free" || !d.has_stripe_sub) {
     grid.style.display = "none";
     banner.style.display = "none";
@@ -23008,6 +23067,8 @@ async function loadSubscriptionInfo() {
     if (changeBtn) changeBtn.style.display = "none";
     if (manageBtn) manageBtn.style.display = "none";
     if (viewBtn) viewBtn.style.display = "";
+    if (pauseCancelBtn) pauseCancelBtn.style.display = "none";
+    if (resumeBtn) resumeBtn.style.display = "none";
     return;
   }
 
@@ -23042,6 +23103,9 @@ async function loadSubscriptionInfo() {
   if (changeBtn) changeBtn.style.display = "";
   if (manageBtn) manageBtn.style.display = "";
   if (viewBtn) viewBtn.style.display = "none";
+  // growth-4: en plan de pago activo se puede pausar/cancelar in-app; ocultar reactivar.
+  if (pauseCancelBtn) pauseCancelBtn.style.display = d.cancel_at_period_end ? "none" : "";
+  if (resumeBtn) resumeBtn.style.display = "none";
 }
 
 function settingsManageSub() {
@@ -23146,14 +23210,67 @@ function renderUpgradeCards() {
   }).join("");
 }
 
-async function cancelSubscription() {
-  if (!(await window.confirmModal({ title: t("sub.cancel_confirm_title"), body: t("sub.cancel_confirm_body"), danger: true }))) return;
-  const res = await fetch("/cancel-subscription", {
+// growth-4: cancel-flow con RETENCIÓN. En vez de un confirm seco, ofrecemos
+// PRIMERO pausar 2 meses (research: salva ~20-25% del churn). Si aun así quiere
+// irse, confirmamos la baja a fin de periodo. Una decisión por paso (IDI).
+async function openCancelFlow() {
+  const es = (document.documentElement.lang || "es") === "es";
+  try { window.posthog && window.posthog.capture("cancel_flow_opened", {}); } catch (e) {}
+  // Paso 1: oferta de pausa (acción primaria = quedarse pausando).
+  const pause = await window.confirmModal({
+    title: es ? "Antes de irte…" : "Before you go…",
+    html: true,
+    body: es
+      ? "¿Y si solo te tomas un respiro? <b>Pausa tu plan 2 meses</b>: no te cobramos, conservas tu voz, tus competidores y tus guiones, y vuelves cuando quieras."
+      : "How about a break instead? <b>Pause your plan for 2 months</b>: we won't charge you, you keep your voice, competitors and scripts, and you come back whenever.",
+    confirmText: es ? "Pausar 2 meses" : "Pause 2 months",
+    cancelText: es ? "Cancelar de todas formas" : "Cancel anyway",
+  });
+  if (pause) return pauseSubscription(2);
+  // Paso 2: confirmar baja (destructivo).
+  try { window.posthog && window.posthog.capture("cancel_flow_pause_declined", {}); } catch (e) {}
+  const sure = await window.confirmModal({
+    title: es ? "Cancelar suscripción" : "Cancel subscription",
+    body: es
+      ? "Tu plan sigue activo hasta el fin del periodo; después bajas a Free. Conservas todos tus datos."
+      : "Your plan stays active until the period ends; then you drop to Free. You keep all your data.",
+    confirmText: es ? "Sí, cancelar" : "Yes, cancel",
+    cancelText: es ? "No, quedarme" : "No, stay",
+    danger: true,
+  });
+  if (!sure) return;
+  const res = await fetch("/cancel-subscription", { method: "POST", headers: { "Content-Type": "application/json" } });
+  const d = await res.json().catch(() => ({}));
+  if (!res.ok) { showToast(d.error || "Error"); return; }
+  showToast(es ? "Suscripción cancelada. Sigues con acceso hasta el fin del periodo." : "Subscription canceled. You keep access until the period ends.");
+  if (typeof loadSubscriptionInfo === "function") loadSubscriptionInfo();
+}
+
+async function pauseSubscription(months) {
+  const es = (document.documentElement.lang || "es") === "es";
+  const res = await fetch("/pause-subscription", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ months: months || 2 }),
+  });
+  const d = await res.json().catch(() => ({}));
+  if (!res.ok) { showToast(d.error || "Error"); return; }
+  showToast(es ? "Plan en pausa. Vuelves automáticamente y con todo intacto." : "Plan paused. You'll be back automatically with everything intact.");
+  if (typeof refreshMe === "function") refreshMe();
+  if (typeof loadSubscriptionInfo === "function") loadSubscriptionInfo();
+  try { window.RadarLoop && window.RadarLoop.refresh && window.RadarLoop.refresh(); } catch (e) {}
+}
+
+async function resumeSubscription() {
+  const es = (document.documentElement.lang || "es") === "es";
+  const res = await fetch("/resume-subscription", {
     method: "POST", headers: { "Content-Type": "application/json" },
   });
-  const d = await res.json();
+  const d = await res.json().catch(() => ({}));
   if (!res.ok) { showToast(d.error || "Error"); return; }
-  showToast(t("sub.cancelled"));
+  showToast(es ? "¡Plan reactivado! Bienvenido de vuelta." : "Plan resumed! Welcome back.");
+  if (typeof refreshMe === "function") refreshMe();
+  if (typeof loadSubscriptionInfo === "function") loadSubscriptionInfo();
+  try { window.RadarLoop && window.RadarLoop.refresh && window.RadarLoop.refresh(); } catch (e) {}
 }
 
 function renderPlanCards() {

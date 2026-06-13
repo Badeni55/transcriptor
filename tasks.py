@@ -83,6 +83,12 @@ celery_app.conf.beat_schedule = {
         "task": "tasks.send_radar_digests",
         "schedule": crontab(hour=8, minute=0),
     },
+    # growth-6: digest SEMANAL para FREE/lapsed (lunes 09:00 UTC). El diario es
+    # solo de pago → este no duplica, es el gancho de vuelta de los gratis.
+    "send-weekly-digests": {
+        "task": "tasks.send_weekly_digests",
+        "schedule": crontab(day_of_week=1, hour=9, minute=0),
+    },
 }
 celery_app.conf.timezone = "UTC"
 
@@ -101,6 +107,19 @@ def send_email_now(user_id, template_key):
     except Exception as e:
         logger.warning("send_email_now failed user=%s template=%s err=%s",
                        user_id, template_key, e)
+
+
+@celery_app.task(name="tasks.send_payment_failed_email")
+def send_payment_failed_email(user_id, invoice_id, attempt=None):
+    """growth-5: dunning — dispara el email de fallo de cobro fuera del webhook
+    (no bloquea la respuesta a Stripe)."""
+    try:
+        from emails import send_payment_failed
+        return send_payment_failed(user_id, invoice_id, attempt)
+    except Exception as e:
+        logger.warning("send_payment_failed_email failed user=%s invoice=%s err=%s",
+                       user_id, invoice_id, e)
+        return {"error": str(e)[:200]}
 
 
 @celery_app.task(name="tasks.process_pending_emails")
@@ -284,6 +303,107 @@ def send_radar_digests():
             skipped += 1
 
     logger.info("send_radar_digests done users=%s sent=%s skipped=%s",
+                len(by_user), sent, skipped)
+    return {"users": len(by_user), "sent": sent, "skipped": skipped}
+
+
+@celery_app.task(name="tasks.send_weekly_digests")
+def send_weekly_digests():
+    """Beat semanal (lunes): "lo que petó en tu nicho esta semana" a usuarios
+    FREE (y lapsed) con competidores — los que el digest diario NO toca
+    (RADAR_ENABLED_PLANS = solo pago). Es el gancho de vuelta + paywall.
+
+    Por usuario: reels de sus competidores en los últimos 7 días con explosión
+    >= 2x (máx 3). Idempotente por semana ISO vía email_log.
+    """
+    SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+    SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return {"error": "supabase_not_configured"}
+    db = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+    try:
+        from emails import send_weekly_digest
+    except Exception as e:
+        logger.error("send_weekly_digests: import emails failed: %s", e)
+        return {"error": "import_emails"}
+
+    now = datetime.now(timezone.utc)
+    iso = now.isocalendar()
+    week_key = f"{iso[0]}-W{iso[1]:02d}"
+    since = (now - timedelta(days=7)).isoformat()
+
+    try:
+        tracked = (db.table("user_tracked_creators")
+                     .select("user_id, creator_id")
+                     .is_("archived_at", "null")
+                     .execute()).data or []
+    except Exception as e:
+        logger.error("send_weekly_digests: tracked query failed: %s", e)
+        return {"error": "tracked_query"}
+    by_user = {}
+    for t in tracked:
+        by_user.setdefault(t["user_id"], set()).add(t["creator_id"])
+    if not by_user:
+        return {"users": 0, "sent": 0}
+
+    uids = list(by_user.keys())
+    try:
+        profs = (db.table("profiles").select("id, plan").in_("id", uids).execute()).data or []
+        plan_by_uid = {p["id"]: (p.get("plan") or "free") for p in profs}
+    except Exception as e:
+        logger.warning("send_weekly_digests: profiles query failed: %s", e)
+        plan_by_uid = {}
+
+    sent = skipped = 0
+    for uid, cid_set in by_user.items():
+        # SOLO FREE/lapsed: a los de pago ya les llega el diario (no duplicar).
+        if plan_by_uid.get(uid, "free") in RADAR_ENABLED_PLANS:
+            skipped += 1
+            continue
+        cids = list(cid_set)
+        baselines = _radar_baselines(db, cids)
+        try:
+            rows = (db.table("creator_reels_global")
+                      .select("id, ig_reel_id, creator_id, caption, views, likes, "
+                              "posted_at, creator:creators_global(ig_username)")
+                      .in_("creator_id", cids)
+                      .eq("is_archived", False)
+                      .gte("posted_at", since)
+                      .limit(200)
+                      .execute()).data or []
+        except Exception as e:
+            logger.warning("send_weekly_digests: reels query failed user=%s err=%s", uid, e)
+            skipped += 1
+            continue
+
+        scored = []
+        for r in rows:
+            sc = _radar_explosion(r.get("views"), baselines.get(r.get("creator_id")))
+            if sc is not None and sc >= 2.0:
+                scored.append({
+                    "username": ((r.get("creator") or {}).get("ig_username") or ""),
+                    "caption": r.get("caption") or "",
+                    "views": r.get("views") or 0,
+                    "explosion": sc,
+                })
+        if not scored:
+            skipped += 1
+            continue
+        scored.sort(key=lambda x: x["explosion"], reverse=True)
+        top = scored[:3]
+
+        try:
+            res = send_weekly_digest(uid, top, week_key)
+            if res.get("sent"):
+                sent += 1
+            else:
+                skipped += 1
+        except Exception as e:
+            logger.warning("send_weekly_digests: send failed user=%s err=%s", uid, e)
+            skipped += 1
+
+    logger.info("send_weekly_digests done users=%s sent=%s skipped=%s",
                 len(by_user), sent, skipped)
     return {"users": len(by_user), "sent": sent, "skipped": skipped}
 
@@ -1101,6 +1221,13 @@ def generate_script_competitor_task(self, reel_id, user_id, assistant_id):
 
         logger.info("gen_script_task ok reel=%s user=%s script=%s style=%s",
                     reel_id, user_id, script_id, style_label)
+
+        # growth-1: activación — first_script_generated si es el 1º (path async).
+        try:
+            from emails import track_script_generated
+            track_script_generated(user_id, {"source": "competitor_reel", "mode": "async", "style": style_label})
+        except Exception:
+            pass
 
         return {
             "ok": True,
