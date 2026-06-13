@@ -75,6 +75,11 @@ celery_app.conf.beat_schedule = {
         "task": "tasks.process_pending_emails",
         "schedule": 3600.0,
     },
+    # reverse-trial: barrido horario del ciclo de trial (acaba mañana / expirado).
+    "send-trial-lifecycle-emails": {
+        "task": "tasks.send_trial_lifecycle_emails",
+        "schedule": 3600.0,
+    },
     "sweep-stale-resources": {
         "task": "tasks.sweep_stale_resources",
         "schedule": 300.0,
@@ -120,6 +125,56 @@ def send_payment_failed_email(user_id, invoice_id, attempt=None):
         logger.warning("send_payment_failed_email failed user=%s invoice=%s err=%s",
                        user_id, invoice_id, e)
         return {"error": str(e)[:200]}
+
+
+@celery_app.task(name="tasks.send_trial_lifecycle_emails")
+def send_trial_lifecycle_emails():
+    """reverse-trial: barrido horario del ciclo de trial.
+      - trial_ends_at en las próximas 24h (y futuro) → 'acaba mañana' (día 2).
+      - trial_ends_at ya pasado (últimas 48h) y aún en Free → 'ha expirado'.
+    Idempotente por (user_id, template_key) en email_log. Solo free con trial."""
+    SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+    SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return {"error": "supabase_not_configured"}
+    db = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+    try:
+        from emails import send_trial_ending, send_trial_expired
+    except Exception as e:
+        logger.error("send_trial_lifecycle_emails: import emails failed: %s", e)
+        return {"error": "import_emails"}
+
+    now = datetime.now(timezone.utc)
+    try:
+        rows = (db.table("profiles")
+                  .select("id, trial_ends_at, plan")
+                  .eq("plan", "free")
+                  .not_.is_("trial_ends_at", "null")
+                  .execute()).data or []
+    except Exception as e:
+        logger.error("send_trial_lifecycle_emails: query failed: %s", e)
+        return {"error": "query"}
+
+    ending = expired = 0
+    for r in rows:
+        ends = r.get("trial_ends_at")
+        try:
+            dt = datetime.fromisoformat(str(ends).replace("Z", "+00:00"))
+        except Exception:
+            continue
+        delta_h = (dt - now).total_seconds() / 3600.0
+        try:
+            if 0 < delta_h <= 24:                      # acaba en <24h → 'mañana'
+                if send_trial_ending(r["id"]).get("sent"):
+                    ending += 1
+            elif -48 <= delta_h <= 0:                  # expiró en las últimas 48h
+                if send_trial_expired(r["id"]).get("sent"):
+                    expired += 1
+        except Exception as e:
+            logger.warning("send_trial_lifecycle_emails: send failed user=%s err=%s", r.get("id"), e)
+
+    logger.info("send_trial_lifecycle_emails done ending=%s expired=%s", ending, expired)
+    return {"ending": ending, "expired": expired}
 
 
 @celery_app.task(name="tasks.process_pending_emails")
