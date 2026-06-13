@@ -143,9 +143,12 @@ def admin_required(f):
 PLANS = {
     "free": {
         "credits_month": 0,
-        "free_lifetime": 1,            # 1 "Hazlo mío" de por vida (cata, NO resetea)
-        "free_analysis_lifetime": 3,   # 3 análisis (transcripciones) de por vida
-        "monthly_uses": 0,             # → PLAN_LIMITS None (sin límite mensual; usa lifetime)
+        # reverse-trial: tras los 7 días de Pro, el FREE es MENSUAL (resetea cada mes),
+        # ya no una cata de por vida. Contadores: free_lifetime_uses=guiones del mes,
+        # free_analysis_uses=análisis del mes (reset por free_month_reset_at).
+        "free_scripts_monthly": 2,     # 2 "Hazlo mío"/mes
+        "free_analysis_monthly": 3,    # 3 análisis (transcripciones)/mes
+        "monthly_uses": 0,             # → PLAN_LIMITS None (sin límite mensual; usa los free_*_monthly)
         "daily_free": 0,
         "scripts_max": 5,
         "projects_max": 1,
@@ -221,6 +224,49 @@ TOPUPS = {
 
 # Derivados para compatibilidad con código existente
 PLAN_LIMITS = {p: v["monthly_uses"] or None for p, v in PLANS.items()}
+
+# ── Reverse-trial ────────────────────────────────────────────────────────────
+# Al registrarse: 7 días de Pro COMPLETO sin tarjeta (trial_ends_at). Durante el
+# trial, el plan EFECTIVO es TRIAL_PLAN (límites de pago). Al expirar → FREE
+# mensual ligero (3 análisis + 2 guiones + 1 competidor, resetea cada mes) +
+# watermark en exports. NO toca los planes de pago.
+TRIAL_DAYS = 7
+TRIAL_PLAN = "creator"   # experiencia de pago completa durante el trial
+
+
+def _parse_ts(ts):
+    if not ts:
+        return None
+    try:
+        return datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+    except Exception:
+        return None
+
+
+def in_trial(profile: dict) -> bool:
+    """True si el usuario está dentro de su ventana de trial (Pro sin tarjeta).
+    Un plan de pago real NO está 'en trial' (ya paga)."""
+    if profile.get("plan", "free") != "free":
+        return False
+    dt = _parse_ts(profile.get("trial_ends_at"))
+    return bool(dt and datetime.now(timezone.utc) < dt)
+
+
+def trial_days_left(profile: dict) -> int:
+    dt = _parse_ts(profile.get("trial_ends_at"))
+    if not dt:
+        return 0
+    secs = (dt - datetime.now(timezone.utc)).total_seconds()
+    if secs <= 0:
+        return 0
+    return int(secs // 86400) + (1 if secs % 86400 else 0)
+
+
+def effective_plan(profile: dict) -> str:
+    """Plan a efectos de LÍMITES: durante el trial, TRIAL_PLAN; si no, el real."""
+    if profile.get("plan", "free") == "free" and in_trial(profile):
+        return TRIAL_PLAN
+    return profile.get("plan", "free")
 ASSISTANT_LIMITS = {p: v["assistants_max"] for p, v in PLANS.items()}
 
 # ── Stripe price IDs (v0.19) — TODOS por env, nunca hardcodeados ──────────────
@@ -454,9 +500,13 @@ def release_credit_lock(uid: str, token) -> None:
 
 
 def paid_features_active(profile: dict, user: dict | None = None) -> bool:
-    """Plan de pago REAL: bloquea 'fantasmas' (plan seteado sin pagar). Activo si
-    el plan es de pago Y (tiene stripe_subscription_id [el webhook lo baja a free al
-    cancelar] O el email está en la allowlist de cortesía UNLIMITED_EMAILS)."""
+    """Funciones de pago activas. Bloquea 'fantasmas' (plan seteado sin pagar).
+    Activo si:
+      - trial en curso (reverse-trial: 7 días de Pro sin tarjeta), o
+      - plan de pago Y (stripe_subscription_id [el webhook baja a free al cancelar]
+        O email en la allowlist de cortesía UNLIMITED_EMAILS)."""
+    if in_trial(profile):
+        return True
     plan = profile.get("plan", "free")
     if plan == "free":
         return False
@@ -680,17 +730,53 @@ def credits_available(profile: dict) -> int:
     return monthly_rem + topup
 
 
+# ── Free MENSUAL (reverse-trial) ─────────────────────────────────────────────
+# Tras el trial, el free resetea cada mes. Reusamos free_lifetime_uses (guiones)
+# y free_analysis_uses (análisis) como contadores del mes en curso; el boundary
+# es free_month_reset_at. _free_month_used cuenta el rollover en lectura (si ya
+# pasó el boundary, el mes rodó → 0 usado) sin escribir; el reset+incremento real
+# ocurre bajo lock en _free_month_consume.
+def _free_month_used(profile: dict, field: str) -> int:
+    reset_dt = _parse_ts(profile.get("free_month_reset_at"))
+    if reset_dt is None:
+        return 0                                   # nunca inicializado → mes nuevo
+    if datetime.now(timezone.utc) >= reset_dt:
+        return 0                                   # boundary pasado → mes rodó
+    return profile.get(field, 0) or 0
+
+
+def _next_month_boundary(now: datetime) -> datetime:
+    return (now.replace(day=1) + timedelta(days=32)).replace(
+        day=1, hour=0, minute=0, second=0, microsecond=0)
+
+
+def _free_month_consume(user_id: str, fresh: dict, field: str) -> int:
+    """Bajo lock: aplica el reset mensual si toca y suma 1 al contador `field`.
+    Devuelve el nuevo valor del contador."""
+    now = datetime.now(timezone.utc)
+    reset_dt = _parse_ts(fresh.get("free_month_reset_at"))
+    rolled = reset_dt is None or now >= reset_dt
+    if rolled:
+        updates = {"free_analysis_uses": 0, "free_lifetime_uses": 0,
+                   "free_month_reset_at": _next_month_boundary(now).isoformat()}
+        updates[field] = 1
+        db.table("profiles").update(updates).eq("id", user_id).execute()
+        return 1
+    newv = (fresh.get(field, 0) or 0) + 1
+    db.table("profiles").update({field: newv}).eq("id", user_id).execute()
+    return newv
+
+
 def free_lifetime_left(profile: dict) -> int:
-    """'Hazlo mío' gratis que le quedan a un free (5 de por vida)."""
-    cap = PLANS["free"]["free_lifetime"]
-    return max(0, cap - (profile.get("free_lifetime_uses", 0) or 0))
+    """Guiones «Hazlo mío» gratis que le quedan ESTE MES a un free (post-trial)."""
+    cap = PLANS["free"]["free_scripts_monthly"]
+    return max(0, cap - _free_month_used(profile, "free_lifetime_uses"))
 
 
 def free_analysis_left(profile: dict) -> int:
-    """Análisis (transcripciones) gratis de POR VIDA restantes del plan free.
-    Mismo patrón que free_lifetime_left (Hazlo mío). NO resetea."""
-    cap = PLANS["free"]["free_analysis_lifetime"]
-    return max(0, cap - (profile.get("free_analysis_uses", 0) or 0))
+    """Análisis (transcripciones) gratis que le quedan ESTE MES a un free (post-trial)."""
+    cap = PLANS["free"]["free_analysis_monthly"]
+    return max(0, cap - _free_month_used(profile, "free_analysis_uses"))
 
 
 # ── Download / transcription helpers ─────────────────────────────────────────
@@ -788,14 +874,20 @@ def _on_signup_complete(user_id, lang):
     """
     try:
         import emails as _emails
-        # 1) ensure unsubscribe_token exists + lang persisted
-        prof = db.table("profiles").select("unsubscribe_token, lang").eq("id", user_id).execute()
+        # 1) ensure unsubscribe_token exists + lang persisted + trial iniciado
+        prof = db.table("profiles").select("unsubscribe_token, lang, trial_ends_at").eq("id", user_id).execute()
         existing = (prof.data or [{}])[0]
         updates = {}
         if not existing.get("unsubscribe_token"):
             updates["unsubscribe_token"] = _emails.gen_unsubscribe_token()
         if not existing.get("lang"):
             updates["lang"] = lang or "es"
+        # reverse-trial: 7 días de Pro al registrarse (solo si no se fijó ya —
+        # idempotente, no se extiende en re-llamadas).
+        if not existing.get("trial_ends_at"):
+            updates["trial_ends_at"] = (
+                datetime.now(timezone.utc) + timedelta(days=TRIAL_DAYS)
+            ).isoformat()
         if updates:
             db.table("profiles").update(updates).eq("id", user_id).execute()
         # 2) enqueue email_log rows (idempotente vía UNIQUE)
@@ -1011,12 +1103,19 @@ def auth_me():
         "monthly_limit": PLAN_LIMITS.get(plan),
         # v0.19: créditos unificados (mensual restante + topups) para la pill del radar.
         "credits": credits_available(profile),
-        # Free: 5 "Hazlo mío" de por vida (no resetean).
-        "free_lifetime_limit": PLANS["free"]["free_lifetime"],
-        "free_lifetime_used": profile.get("free_lifetime_uses", 0),
+        # reverse-trial: estado del trial (Pro sin tarjeta) + free MENSUAL.
+        "trial_active": in_trial(profile),
+        "trial_ends_at": profile.get("trial_ends_at"),
+        "trial_days_left": trial_days_left(profile),
+        "effective_plan": effective_plan(profile),
+        # watermark en exports: solo free post-trial (ni pago ni trial).
+        "watermark": not paid_features_active(profile, user),
+        # Free MENSUAL: guiones «Hazlo mío» (free_scripts_monthly) + análisis.
+        "free_lifetime_limit": PLANS["free"]["free_scripts_monthly"],
+        "free_lifetime_used": _free_month_used(profile, "free_lifetime_uses"),
         "free_lifetime_left": free_lifetime_left(profile),
-        "free_analysis_limit": PLANS["free"]["free_analysis_lifetime"],
-        "free_analysis_used": profile.get("free_analysis_uses", 0) or 0,
+        "free_analysis_limit": PLANS["free"]["free_analysis_monthly"],
+        "free_analysis_used": _free_month_used(profile, "free_analysis_uses"),
         "free_analysis_left": free_analysis_left(profile),
         "avatar_seed": profile.get("avatar_seed", "default"),
         "has_stripe_sub": bool(profile.get("stripe_subscription_id")),
@@ -1134,7 +1233,7 @@ def transcribe():
             if not ok:
                 return jsonify({"error": err_msg}), 429
         elif free_analysis_left(profile) > 0:
-            # FREE = cata: 3 análisis de POR VIDA (no diario, no resetea).
+            # FREE mensual (reverse-trial): 3 análisis/mes (reset por free_month_reset_at).
             pass
         elif profile["credits_cents"] >= 2 * COST_CENTS:
             pass
@@ -1147,7 +1246,7 @@ def transcribe():
                 "after_first_value": True,
             })
             return jsonify({
-                "error": "Has usado tus 3 análisis gratis. Sube a Creador para seguir "
+                "error": "Has usado tus 3 análisis gratis de este mes. Sube a Creador para seguir "
                          "analizando — o recarga créditos sin cambiar de plan."
             }), 402
 
@@ -1174,10 +1273,8 @@ def transcribe():
                 }).eq("id", user["id"]).execute()
                 charge = {"kind": "monthly"}
             elif free_analysis_left(fresh) > 0:
-                # FREE cata: consumir 1 análisis de por vida (re-check bajo lock).
-                db.table("profiles").update({
-                    "free_analysis_uses": (fresh.get("free_analysis_uses") or 0) + 1
-                }).eq("id", user["id"]).execute()
+                # FREE mensual: consumir 1 análisis del mes (reset+incremento bajo lock).
+                _free_month_consume(user["id"], fresh, "free_analysis_uses")
                 charge = {"kind": "free_analysis"}
             elif (fresh.get("credits_cents") or 0) >= 2 * COST_CENTS:
                 cost_cents = 2 * COST_CENTS
@@ -1188,7 +1285,7 @@ def transcribe():
             else:
                 # Carrera: cupo/saldo agotado entre el check y el lock.
                 return jsonify({
-                    "error": "Has usado tus 3 análisis gratis. Sube a Creador para seguir "
+                    "error": "Has usado tus 3 análisis gratis de este mes. Sube a Creador para seguir "
                              "analizando — o recarga créditos sin cambiar de plan."
                 }), 402
         finally:
@@ -6449,7 +6546,9 @@ def suggest_competitors():
 def post_tracked_creator():
     user = current_user()
     profile = get_profile(user["id"])
-    plan = profile.get("plan", "free")
+    # reverse-trial: durante el trial, límites de competidores del plan EFECTIVO
+    # (creator → 5 slots). Al expirar → free (1 slot).
+    plan = effective_plan(profile)
     body = request.get_json() or {}
 
     # 1. Validar input
@@ -6612,7 +6711,7 @@ def post_tracked_creator():
 def get_tracked_creators():
     user = current_user()
     profile = get_profile(user["id"])
-    plan = profile.get("plan", "free")
+    plan = effective_plan(profile)   # reverse-trial: límites del plan efectivo
     project_id = request.args.get("project_id")
 
     limits = get_tracked_creators_limit(plan)
@@ -6737,7 +6836,7 @@ def generate_script_from_competitor_reel(reel_id: str):
 
     # 1-2. Quién puede generar y cómo se paga este guion (sin cobrar todavía).
     #   paid  → cuenta contra su asignación mensual (monthly_usage).
-    #   free  → 5 "Hazlo mío" de por vida → luego topups (credits_cents) → muro.
+    #   free  → 2 guiones/mes (reverse-trial) → luego topups (credits_cents) → muro.
     SCRIPT_COST = COST_CENTS  # 18 cents
     SCRIPT_USAGE_UNITS = 1
     is_paid_unlimited = paid_features_active(profile, user)  # plan de pago REAL (no fantasma)
@@ -6746,18 +6845,15 @@ def generate_script_from_competitor_reel(reel_id: str):
         if free_lifetime_left(profile) > 0:
             use_free_lifetime = True
         elif (profile.get("credits_cents") or 0) < SCRIPT_COST:
-            # growth-1: paywall_shown. after_first_value=True — el free ya gastó su
-            # «Hazlo mío» de cata (1 de por vida) → el muro llega tras el primer éxito.
-            # Fix: el copy decía "5" pero la cata real es 1 (PLANS.free.free_lifetime=1).
-            _free_n = PLANS["free"].get("free_lifetime", 1)
+            # growth-1: paywall_shown. after_first_value=True — el free ya gastó sus
+            # guiones del mes (reverse-trial: 2/mes) → el muro llega tras el éxito.
+            _free_n = PLANS["free"].get("free_scripts_monthly", 2)
             track_event("paywall_shown", uid, {
                 "wall": "hazlo_mio", "plan": plan, "after_first_value": True,
             })
             return jsonify({
                 "error": "free_limit_reached",
-                "message": (f"Has usado tu «Hazlo mío» gratis. Sube a Creador para seguir creando."
-                            if _free_n == 1 else
-                            f"Has usado tus {_free_n} «Hazlo mío» gratis. Sube a Creador para seguir creando.")
+                "message": f"Has usado tus {_free_n} guiones gratis de este mes. Sube a Creador para seguir creando."
             }), 402
 
     # 3. Cargar reel + ownership.
@@ -6948,10 +7044,8 @@ def generate_script_from_competitor_reel(reel_id: str):
                 if free_lifetime_left(fresh) <= 0:   # re-check bajo lock
                     _release_lock()
                     return jsonify({"error": "free_limit_reached",
-                                    "message": "Has usado tus 5 «Hazlo mío» gratis. Sube a Creador para seguir creando."}), 402
-                db.table("profiles").update({
-                    "free_lifetime_uses": (fresh.get("free_lifetime_uses") or 0) + 1
-                }).eq("id", uid).execute()
+                                    "message": "Has usado tus guiones gratis de este mes. Sube a Creador para seguir creando."}), 402
+                _free_month_consume(uid, fresh, "free_lifetime_uses")   # reset+incremento mensual
             else:
                 if (fresh.get("credits_cents") or 0) < SCRIPT_COST:   # re-check bajo lock
                     _release_lock()
@@ -6975,8 +7069,11 @@ def generate_script_from_competitor_reel(reel_id: str):
                         "monthly_usage": max(0, (profile.get("monthly_usage") or 0))
                     }).eq("id", uid).execute()
                 elif use_free_lifetime:
+                    # Decrementa el contador del mes (robusto ante el reset mensual:
+                    # restaurar el valor absoluto previo podía borrar la cuota del mes nuevo).
+                    cur = (get_profile(uid).get("free_lifetime_uses") or 0)
                     db.table("profiles").update({
-                        "free_lifetime_uses": (profile.get("free_lifetime_uses") or 0)
+                        "free_lifetime_uses": max(0, cur - 1)
                     }).eq("id", uid).execute()
                 else:
                     db.table("profiles").update({
@@ -8358,7 +8455,16 @@ def _charge_units_locked(uid, units, user):
                 }), 402), (lambda: None), {}
             updates = {}
             if free_used:
-                updates["free_lifetime_uses"] = (fresh.get("free_lifetime_uses") or 0) + free_used
+                # reverse-trial: reset mensual si el boundary ya pasó, antes de sumar.
+                now = datetime.now(timezone.utc)
+                reset_dt = _parse_ts(fresh.get("free_month_reset_at"))
+                if reset_dt is None or now >= reset_dt:
+                    updates["free_analysis_uses"] = 0
+                    updates["free_month_reset_at"] = _next_month_boundary(now).isoformat()
+                    base = 0
+                else:
+                    base = fresh.get("free_lifetime_uses") or 0
+                updates["free_lifetime_uses"] = base + free_used
             if credits_needed:
                 updates["credits_cents"] = (fresh.get("credits_cents") or 0) - credits_needed
             if updates:

@@ -274,10 +274,22 @@
       '<button class="cmd-idea" data-act="idea-capture" title="Apunta una idea — se desarrolla en Guiones" aria-label="Apunta una idea"><span class="cmd-idea-bulb">'+IC.bulb+'</span><span class="cmd-idea-t">Apunta una idea</span></button>'+
       demoToggle+
       streak+
-      ((S.user.plan==="free" && !S.user.credits)
-        ? '<div class="spark pill-stat credits" id="rsSpark" title="«Hazlo mío» gratis restantes">'+IC.spark+'<span class="num"><b id="rsSparkN">'+S.user.freeLeft+'</b></span> «Hazlo mío»</div>'
-        : '<div class="spark pill-stat credits" id="rsSpark" title="Créditos disponibles">'+IC.spark+'<span class="num"><b id="rsSparkN">'+S.user.credits+'</b></span> créditos</div>')+
+      pillStatHTML()+
     '</div>';
+  }
+  // Pill de estado (derecha de la command bar):
+  //   · reverse-trial activo → "Pro · Nd" (badge con días restantes, CTA implícito).
+  //   · free post-trial sin créditos → guiones gratis del mes restantes.
+  //   · resto → créditos.
+  function pillStatHTML(){
+    if(!isDemo() && S.user.trialActive){
+      var d=S.user.trialDaysLeft||0;
+      return '<div class="spark pill-stat trial" id="rsSpark" title="Prueba Pro — '+d+' día'+(d===1?'':'s')+' restantes" data-act="tab" data-k="brain" role="button" tabindex="0">'+IC.spark+'<span class="num">Pro</span> · '+d+'d</div>';
+    }
+    if(S.user.plan==="free" && !S.user.credits){
+      return '<div class="spark pill-stat credits" id="rsSpark" title="Guiones gratis este mes">'+IC.spark+'<span class="num"><b id="rsSparkN">'+S.user.freeLeft+'</b></span> este mes</div>';
+    }
+    return '<div class="spark pill-stat credits" id="rsSpark" title="Créditos disponibles">'+IC.spark+'<span class="num"><b id="rsSparkN">'+S.user.credits+'</b></span> créditos</div>';
   }
 
   // Cabecera Signal reutilizable (eyebrow mono + h-title Space Grotesk + sub).
@@ -1898,6 +1910,14 @@
      usuario FREE, una sola vez (localStorage). No bloquea, no castiga: es un
      toast con acción que abre el modal de planes. Nunca aparece antes del valor.
      Devuelve true si mostró el nudge (para no pisar otros toasts). */
+  /* reverse-trial: watermark "Hecho con ReelScript" en exports SOLO para free
+     post-trial (S.user.watermark de /auth/me). Trial y pago exportan limpio.
+     En demo nunca (no rompe el harness). */
+  function withWatermark(txt){
+    txt = txt || "";
+    if(isDemo() || !S.user || !S.user.watermark) return txt;
+    return txt + "\n\n— Hecho con ReelScript · reelscript.net";
+  }
   function maybeUpgradeNudge(trigger){
     try{
       if(isDemo()) return false;
@@ -2694,7 +2714,7 @@
         onSubmit:function(u){ u=u.trim(); gl.published={pending:true, url:u}; gl.status="recorded"; render(); if(isDemo()){ showToast("Reel vinculado. Se analizará en el próximo refresco y entrenará tu Cerebro."); } else { linkReelPublished(gl, u); } }
       });
     } return; }
-    if(act==="copy"){ var txt=btn.getAttribute("data-txt"); if(navigator.clipboard) navigator.clipboard.writeText(txt); btn.textContent="✓"; setTimeout(function(){ btn.textContent="Copiar"; },1200); maybeUpgradeNudge("copy"); return; }   // growth-3: copiar = éxito → nudge
+    if(act==="copy"){ var txt=withWatermark(btn.getAttribute("data-txt")); if(navigator.clipboard) navigator.clipboard.writeText(txt); btn.textContent="✓"; setTimeout(function(){ btn.textContent="Copiar"; },1200); maybeUpgradeNudge("copy"); return; }   // growth-3: copiar = éxito → nudge
     if(act==="upsell-nudge"){ if(typeof window.openUpgradeModal==="function") window.openUpgradeModal("post_first_success"); return; }
   }
 
@@ -2840,9 +2860,13 @@
       if(me.user){ S.user.name=me.user.name||(me.user.email||"").split("@")[0]||""; S.user.handle=me.user.handle||(me.user.email||"").split("@")[0]||""; S.user.email=me.user.email||""; }
       if(me.credits!=null) S.user.credits=me.credits; else if(me.credits_cents!=null) S.user.credits=Math.round(me.credits_cents/18);
       if(me.streak!=null) S.user.streak=me.streak;
-      // Plan crudo de /auth/me (puede ser "free") + «Hazlo mío» de por vida restantes.
+      // Plan crudo de /auth/me (puede ser "free") + guiones gratis del mes restantes.
       S.user.plan=(me.plan||(me.user&&me.user.plan))||"";
       if(me.free_lifetime_left!=null) S.user.freeLeft=me.free_lifetime_left;
+      // reverse-trial: estado del trial (Pro sin tarjeta) + watermark en exports (free post-trial).
+      S.user.trialActive=!!me.trial_active;
+      S.user.trialDaysLeft=me.trial_days_left||0;
+      S.user.watermark=!!me.watermark;
       // Plan: en demo arranca en Agencia para ver el portfolio (toggle lo cambia);
       // en prod sale de /auth/me (profiles.plan).
       // Normaliza el plan crudo de /auth/me → modos de la isla. Prod guarda valores en
