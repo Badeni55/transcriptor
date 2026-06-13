@@ -3119,6 +3119,10 @@ def transform_hook():
 
     context = "\n".join(body) + ("\n" + closing if closing else "")
     user_msg = f"Guión actual:\n{context}\n\nTexto original del que salió:\n{original_text}"
+    # P1 idioma de salida: el hook regenerado sale en el idioma del usuario.
+    _u = current_user()
+    _out_lang = (data.get("language") or (get_profile(_u["id"]).get("lang") if _u else None) or "es")
+    user_msg += _out_lang_instruction(_out_lang)
 
     try:
         raw = _call_llm(_HOOK_REGEN_PROMPT, user_msg, temperature=0.9)
@@ -6855,6 +6859,10 @@ def generate_script_from_competitor_reel(reel_id: str):
     uid = user["id"]
     profile = get_profile(uid)
     plan = profile.get("plan", "free")
+    # P1 idioma de salida: el guion sale en el idioma del USUARIO (body.language →
+    # profiles.lang → es), no en el del competidor.
+    _body0 = request.get_json(silent=True) or {}
+    out_lang = (_body0.get("language") or profile.get("lang") or "es").lower()[:2]
 
     # 0. Guard anti doble-cobro: si ya hay un script de este (user, reel) en
     # los últimos 60s, redirigir al existente sin cobrar ni encolar. Cubre
@@ -7041,6 +7049,7 @@ def generate_script_from_competitor_reel(reel_id: str):
             caption=caption,
             transcript=transcript_text,
             today_str=today_str,
+            out_lang=out_lang,
         )
 
         # Resolver style/custom_prompt (mismo patrón que transcription_to_script).
@@ -7255,7 +7264,7 @@ def generate_script_from_competitor_reel(reel_id: str):
 
     # Encolar task (no cobramos aquí — la task cobra al final si todo OK).
     from tasks import generate_script_competitor_task  # noqa: E402
-    async_result = generate_script_competitor_task.delay(reel["id"], uid, assistant_id)
+    async_result = generate_script_competitor_task.delay(reel["id"], uid, assistant_id, out_lang)
     # v0.15.8: anotar task_id en el lock (la task lo libera al final vía try/finally).
     try:
         (db.table("script_generation_locks")
@@ -7272,8 +7281,25 @@ def generate_script_from_competitor_reel(reel_id: str):
     }), 202
 
 
+_LANG_NAMES = {"es": "español", "en": "English", "pt": "português", "fr": "français",
+               "it": "italiano", "de": "Deutsch"}
+
+
+def _out_lang_instruction(lang: str | None) -> str:
+    """P1 idioma de salida: instrucción para que el guion salga en el idioma del
+    USUARIO (no el del competidor). Vacío si lang desconocido → comportamiento
+    previo (espejo del original)."""
+    name = _LANG_NAMES.get((lang or "").lower()[:2])
+    if not name:
+        return ""
+    return (f"\n\nIDIOMA DE SALIDA (no negociable): escribe TODO el guion (hook, "
+            f"desarrollo y cierre) en {name}, aunque el reel original esté en otro "
+            f"idioma. Mantén nombres propios, marcas y términos técnicos tal cual.")
+
+
 def _build_competitor_script_user_content(ig_username: str, caption: str,
-                                          transcript: str, today_str: str) -> str:
+                                          transcript: str, today_str: str,
+                                          out_lang: str | None = None) -> str:
     """v0.15.5: user_content para adapt_with_ai en el contexto generar-guion
     desde reel de competidor. Consolida lecciones v0.15.4.a-e: respeto a
     versiones/hechos del reel, fecha inyectada, mismo tema/distinta ejecución."""
@@ -7311,6 +7337,7 @@ def _build_competitor_script_user_content(ig_username: str, caption: str,
         f"guion final pierde la especificidad del original y podría valer para "
         f"cualquier nicho, está mal: reescríbelo.\n\n"
         f"Total: 100-140 palabras, mínimo 8 frases en body."
+        + _out_lang_instruction(out_lang)
     )
 
 

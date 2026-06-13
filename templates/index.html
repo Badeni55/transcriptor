@@ -15363,7 +15363,7 @@ async function refreshMe() {
   if (d.user) {
     // Ensure avatar_seed is stored on the user object
     if (d.avatar_seed !== undefined) d.user.avatar_seed = d.avatar_seed;
-    st = { user: d.user, credits: d.credits_cents, freeUsed: d.free_used_today, freeLimit: d.free_daily_limit, freeDailyAnon: 3, plan: d.plan || "free", monthlyUsage: d.monthly_usage || 0, monthlyLimit: d.monthly_limit || null, hasStripeSub: !!d.has_stripe_sub };
+    st = { user: d.user, credits: d.credits_cents, creditsAvail: (d.credits != null ? d.credits : Math.floor((d.credits_cents||0)/18)), freeUsed: d.free_used_today, freeLimit: d.free_daily_limit, freeDailyAnon: 3, plan: d.plan || "free", monthlyUsage: d.monthly_usage || 0, monthlyLimit: d.monthly_limit || null, hasStripeSub: !!d.has_stripe_sub };
     renderLoggedIn();
     // Auto-open profile if URL is /profile/*
     if (location.pathname.startsWith("/profile")) {
@@ -15412,7 +15412,8 @@ function renderLoggedIn() {
     const rem = st.monthlyLimit - st.monthlyUsage;
     document.getElementById("balDisp").textContent = `${rem}/${st.monthlyLimit}`;
   } else {
-    document.getElementById("balDisp").textContent = usosNum(st.credits);
+    // P1: usar créditos disponibles autoritativos (me.credits), no credits_cents/18
+    document.getElementById("balDisp").textContent = (st.creditsAvail != null ? st.creditsAvail : usosNum(st.credits));
   }
   // Drawer
   document.getElementById("drawerEmail").textContent = st.user.email;
@@ -15602,7 +15603,7 @@ function renderProfileHub() {
   const _setIf = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
   _setIf("profStatTransc", histCache.length);
   _setIf("profStatScripts", scriptsCache.length);
-  _setIf("profStatUsos", Math.floor(st.credits / 18));
+  _setIf("profStatUsos", (st.creditsAvail != null ? st.creditsAvail : Math.floor(st.credits / 18)));
 
   // Show nav items — all features available to all plans.
   // v0.14.39.a: profNavProjects/Team/Privacy fueron eliminados del DOM en v0.14.39
@@ -22812,7 +22813,8 @@ function syncNavMob() {
     const used = st.monthlyUsage || 0;
     counterText = `${used}/${st.monthlyLimit}`;
   } else {
-    counterText = usos(st.credits || 0);
+    // P1: créditos disponibles autoritativos (me.credits), no credits_cents/18
+    counterText = (st.creditsAvail != null ? `${st.creditsAvail} usos` : usos(st.credits || 0));
   }
   if (planRow) {
     if (counterText) {

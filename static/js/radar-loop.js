@@ -1854,7 +1854,7 @@
     if(r.script&&r.script.hook){ setTimeout(function(){cb();},1700); return; }
     if(isDemo()){ setTimeout(function(){cb();},1700); return; }
     var t0=Date.now();
-    apiPost("/api/competitors/reels/"+encodeURIComponent(r.id)+"/generate-script",{}).then(function(rr){
+    apiPost("/api/competitors/reels/"+encodeURIComponent(r.id)+"/generate-script",{language:(document.documentElement.lang||"es")}).then(function(rr){
       // Duplicado reciente (409) → reusamos el guion existente (sin re-cobro). Traemos su texto.
       if(rr.status===409 && rr.d && rr.d.script_id){ return fetchScriptText(rr.d.script_id, r, t0, cb); }
       if(!rr.ok){ var ec=(rr.d&&rr.d.error)||"error"; return setTimeout(function(){ cb(ec); },300); }
@@ -2692,8 +2692,28 @@
     if(act==="sc-toggle"){ var sct=findScript(id); if(sct){ sct.expanded=!sct.expanded; } return render(); }
     if(act==="gui-hooks"){ var gh=guionById(id); if(gh){ gh.expanded=!gh.expanded; } return render(); }
     if(act==="gui-body-toggle"){ var gb=guionById(id); if(gb){ gb.bodyOpen=!gb.bodyOpen; } return render(); }
-    if(act==="gui-use-hook"){ var gu=guionById(id); if(gu&&gu.hooks){ var ix=parseInt(btn.getAttribute("data-i"),10); var nv=gu.hooks[ix]; if(nv!=null){ gu.hooks[ix]=gu.hook; gu.hook=nv; gu.title=nv; } } render(); return showToast("Apertura actualizada."); }
-    if(act==="gui-del-hook"){ var gd=guionById(id); if(gd&&gd.hooks){ gd.hooks.splice(parseInt(btn.getAttribute("data-i"),10),1); if(!gd.hooks.length) gd.expanded=false; } return render(); }
+    if(act==="gui-use-hook"){
+      var gu=guionById(id);
+      if(gu&&gu.hooks){
+        var ix=parseInt(btn.getAttribute("data-i"),10); var nv=gu.hooks[ix];
+        if(nv!=null){
+          gu.hooks[ix]=gu.hook; gu.hook=nv; gu.title=nv;   // swap optimista (espejo del backend)
+          // P1: persistir (POST /scripts/<sid>/hooks/use) y reconciliar el banco.
+          if(!isDemo() && gu._sid){ apiPost("/scripts/"+encodeURIComponent(gu._sid)+"/hooks/use",{index:ix}).then(function(r){ if(r.ok && r.d && Array.isArray(r.d.alt_hooks)){ gu.hooks=r.d.alt_hooks.slice(); render(); } }); }
+        }
+      }
+      render(); return showToast("Apertura actualizada.");
+    }
+    if(act==="gui-del-hook"){
+      var gd=guionById(id);
+      if(gd&&gd.hooks){
+        var dix=parseInt(btn.getAttribute("data-i"),10);
+        gd.hooks.splice(dix,1); if(!gd.hooks.length) gd.expanded=false;
+        // P1: persistir (DELETE /scripts/<sid>/hooks?index=N) y reconciliar.
+        if(!isDemo() && gd._sid){ apiDelete("/scripts/"+encodeURIComponent(gd._sid)+"/hooks?index="+dix).then(function(r){ if(r.ok && r.d && Array.isArray(r.d.alt_hooks)){ gd.hooks=r.d.alt_hooks.slice(); if(!gd.hooks.length) gd.expanded=false; render(); } }); }
+      }
+      return render();
+    }
     if(act==="gen-background") return closeOverlay();   // T6: seguir navegando (el robo sigue detrás)
     if(act==="chain") return chain(k);
     if(act==="record"){ S.view="prompter"; return render(); }

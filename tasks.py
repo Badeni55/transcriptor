@@ -948,7 +948,7 @@ _BUILTIN_SCRIPT_STYLES_LOCAL = {"viral", "divertido", "storytelling", "hooks"}
 
 
 @celery_app.task(bind=True, name="tasks.generate_script_competitor")
-def generate_script_competitor_task(self, reel_id, user_id, assistant_id):
+def generate_script_competitor_task(self, reel_id, user_id, assistant_id, language=None):
     SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
     SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
     GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
@@ -1137,6 +1137,12 @@ def generate_script_competitor_task(self, reel_id, user_id, assistant_id):
             "cualquier nicho, está mal: reescríbelo.\n\n"
             "Total: 100-140 palabras, mínimo 8 frases en body."
         )
+        # P1 idioma de salida: el guion sale en el idioma del usuario (espejo del builder sync).
+        try:
+            from app import _out_lang_instruction  # lazy (rompe circular)
+            user_content += _out_lang_instruction(language)
+        except Exception:
+            pass
 
         # Resolver style + custom_prompt.
         style_arg = "viral"
