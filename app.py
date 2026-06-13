@@ -7754,6 +7754,81 @@ def _explosion_score(views, baseline):
     return round(float(views or 0) / float(baseline), 2)
 
 
+def _fmt_views(n):
+    n = int(n or 0)
+    if n >= 1_000_000:
+        return f"{n/1_000_000:.1f}M".replace(".0M", "M")
+    if n >= 1_000:
+        return f"{n/1_000:.1f}K".replace(".0K", "K")
+    return str(n)
+
+
+def _build_brand_report(user_id, project_id):
+    """Datos del informe white-label de una marca: top reels que petaron en su
+    nicho este mes (de sus competidores) + guiones listos del mes. Reusa el
+    scoring de explosión del Radar (_creator_view_baselines/_explosion_score)."""
+    since = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+    pid = project_id if (project_id and project_id != "default") else None
+
+    # 1. Competidores activos de la marca.
+    tq = (db.table("user_tracked_creators")
+            .select("creator_id")
+            .eq("user_id", user_id)
+            .is_("archived_at", "null"))
+    tq = tq.eq("project_id", pid) if pid else tq.is_("project_id", "null")
+    try:
+        tracked = tq.execute().data or []
+    except Exception:
+        tracked = []
+    cids = list({t["creator_id"] for t in tracked if t.get("creator_id")})
+
+    reels = []
+    if cids:
+        baselines = _creator_view_baselines(cids)
+        try:
+            rows = (db.table("creator_reels_global")
+                      .select("caption, views, creator_id, posted_at, "
+                              "creator:creators_global(ig_username)")
+                      .in_("creator_id", cids)
+                      .eq("is_archived", False)
+                      .gte("posted_at", since)
+                      .limit(200).execute()).data or []
+        except Exception:
+            rows = []
+        scored = []
+        for r in rows:
+            sc = _explosion_score(r.get("views"), baselines.get(r.get("creator_id")))
+            if sc is not None and sc >= 1.5:
+                scored.append({
+                    "username": (r.get("creator") or {}).get("ig_username") or "",
+                    "caption": (r.get("caption") or "").strip()[:160] or "—",
+                    "views": r.get("views") or 0,
+                    "views_fmt": _fmt_views(r.get("views")),
+                    "_score": sc,
+                    "explosion": (f"{sc:.0f}" if sc == int(sc) else f"{sc:.1f}"),
+                })
+        scored.sort(key=lambda x: x["_score"], reverse=True)
+        reels = scored[:5]
+
+    # 2. Guiones listos del mes (de la marca).
+    sq = (db.table("scripts").select("title, script, created_at")
+            .eq("user_id", user_id).gte("created_at", since))
+    if pid:
+        sq = sq.eq("project_id", pid)
+    try:
+        srows = sq.order("created_at", desc=True).limit(8).execute().data or []
+    except Exception:
+        srows = []
+    scripts = []
+    for s in srows:
+        sc = s.get("script") or {}
+        hook = sc.get("hook") if isinstance(sc, dict) else ""
+        scripts.append({"title": (s.get("title") or "Guion").strip()[:100],
+                        "hook": (hook or "").strip()[:160]})
+
+    return {"reels": reels, "scripts": scripts, "competitors": len(cids)}
+
+
 @app.route("/api/tracked-creators/reels", methods=["GET"])
 @require_auth
 def get_tracked_creators_reels():
@@ -7872,6 +7947,81 @@ def get_tracked_creators_reels():
     has_more = (offset + len(reels)) < total
 
     return jsonify({"reels": reels, "total": total, "has_more": has_more})
+
+
+@app.route("/brands/<project_id>/report", methods=["GET"])
+@require_auth
+def brand_report(project_id):
+    """Informe white-label PDF (HTML print-ready) por marca — entregable estrella
+    de Agencia. 'Lo que funciona en tu nicho este mes + guiones listos'. Logo y
+    nombre configurables (agencia / cliente / sin marca ReelScript) vía query.
+    Agency-only. Billing per-brand NO implementado (el generador sí)."""
+    user = current_user()
+    profile = get_profile(user["id"])
+    plan = profile.get("plan", "free")
+    is_admin = user.get("email", "").lower() in UNLIMITED_EMAILS
+    if not (is_admin or (plan == "agency" and paid_features_active(profile, user))):
+        return jsonify({"error": "El informe white-label es una función de Agencia."}), 403
+
+    # Ownership de la marca (project) — salvo "default" (marca única).
+    if project_id and project_id != "default":
+        try:
+            proj = (db.table("projects").select("id, name")
+                      .eq("id", project_id).eq("user_id", user["id"]).single().execute())
+            if not proj.data:
+                return abort(404)
+            default_label = proj.data.get("name") or "Tu marca"
+        except Exception:
+            return abort(404)
+    else:
+        default_label = "Tu marca"
+
+    data = _build_brand_report(user["id"], project_id)
+
+    lang = (request.args.get("lang") or _resolve_lang() or "es")[:2]
+    if lang not in ("es", "en"):
+        lang = "es"
+    # Branding configurable: label (nombre cliente/agencia), logo (URL), white_label.
+    brand_label = (request.args.get("label") or default_label).strip()[:60]
+    logo_url = (request.args.get("logo") or "").strip()[:500] or None
+    if logo_url and not logo_url.startswith(("http://", "https://", "/")):
+        logo_url = None   # solo URLs (evita inyección)
+    white_label = request.args.get("white_label") in ("1", "true", "yes")
+
+    now = datetime.now(timezone.utc)
+    months_es = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto",
+                 "septiembre","octubre","noviembre","diciembre"]
+    months_en = ["January","February","March","April","May","June","July","August",
+                 "September","October","November","December"]
+    period = f"{(months_es if lang=='es' else months_en)[now.month-1]} {now.year}"
+    generated_on = now.strftime("%d/%m/%Y")
+
+    T = {
+        "es": {"report": "Informe de marca", "title": "Lo que funciona en tu nicho",
+               "subtitle": "Los reels que petaron entre tus competidores este mes y los guiones que ya tienes listos para grabar.",
+               "kpi_reels": "reels que petaron", "kpi_scripts": "guiones listos",
+               "kpi_competitors": "competidores vigilados",
+               "sec_reels": "Lo que petó en tu nicho", "sec_scripts": "Tus guiones listos",
+               "over_avg": "sobre su media", "views": "visitas",
+               "empty_reels": "Aún sin reels explosivos este mes. Vuelve cuando tus competidores publiquen.",
+               "empty_scripts": "Aún no hay guiones de este mes para esta marca.",
+               "made_with": "Hecho con ReelScript", "download": "Descargar PDF"},
+        "en": {"report": "Brand report", "title": "What's working in your niche",
+               "subtitle": "The reels that blew up among your competitors this month and the scripts you already have ready to record.",
+               "kpi_reels": "reels that blew up", "kpi_scripts": "scripts ready",
+               "kpi_competitors": "competitors watched",
+               "sec_reels": "What blew up in your niche", "sec_scripts": "Your ready scripts",
+               "over_avg": "over their avg", "views": "views",
+               "empty_reels": "No explosive reels this month yet. Check back when your competitors post.",
+               "empty_scripts": "No scripts for this brand this month yet.",
+               "made_with": "Made with ReelScript", "download": "Download PDF"},
+    }[lang]
+
+    return render_template("brand_report.html",
+                           lang=lang, t=T, brand_label=brand_label, logo_url=logo_url,
+                           white_label=white_label, period=period, generated_on=generated_on,
+                           reels=data["reels"], scripts=data["scripts"],
+                           competitors=data["competitors"])
 
 
 @app.route("/api/radar/stats", methods=["GET"])

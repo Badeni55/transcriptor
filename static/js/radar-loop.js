@@ -204,6 +204,8 @@
       var items="";
       if(isAgency()) items+='<button class="brand-opt'+(portfolio?" on":"")+'" data-act="all-brands"><span class="brand-dot multi"></span>Todas las marcas</button>';
       items+=S.brands.map(function(x){ var on=(!portfolio && x.id===S.brandId); return '<button class="brand-opt'+(on?" on":"")+'" data-act="brand" data-id="'+ESC(x.id)+'"><span class="brand-dot" style="background:'+ESC(x.color)+'"></span>'+ESC(x.name)+'<span class="brand-lvl">Nv '+x.level+'</span></button>';}).join("");
+      // Entregable de Agencia: informe white-label del mes de la marca activa.
+      if(isAgency() && !portfolio) items+='<button class="brand-opt" data-act="brand-report">'+IC.doc+' Generar informe del mes</button>';
       if(isAgency()) items+='<button class="brand-opt add" data-act="brand-add">'+IC.plus+' Añadir marca</button>';
       menu='<div class="brand-menu">'+items+'</div>';
     }
@@ -2631,6 +2633,14 @@
     if(act==="team-invite") return teamInvite();
     if(act==="team-edit") return showToast("Gestión de roles y marcas por miembro: próximamente.");
     if(act==="brand-add"){ S.brandMenu=false; render(); return showToast("Nueva marca: disponible en plan Agencia."); }
+    if(act==="brand-report"){
+      S.brandMenu=false; render();
+      if(isDemo()) return showToast("Informe white-label del mes — disponible en tu cuenta de Agencia.");
+      var pid=S.brandId||"default";
+      var url="/brands/"+encodeURIComponent(pid)+"/report?lang="+encodeURIComponent((document.documentElement.lang||"es"));
+      try{ window.open(url,"_blank","noopener"); }catch(e){ location.href=url; }
+      return showToast("Generando el informe del mes…");
+    }
     if(act==="steal") return steal(id);
     if(act==="reel-detail") return openReelDetail(id);
     if(act==="reel-tx") return loadReelTranscript(id);

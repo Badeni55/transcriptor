@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ brand_label }} · {{ t.report }} {{ period }}</title>
+<style>
+  /* Estilo "becama light corporate" (referencia de la skill becama-pdf-brand):
+     fondo blanco, tinta casi-negra, naranja quirúrgico, mucho aire. Print-ready. */
+  :root{
+    --ink:#1A1A1E; --ink-body:#3A3A3F; --ink-2:#6B6B70; --ink-3:#9A9A9F;
+    --accent:#C4501A; --accent-glow:#D4723E; --warm:#F8F6F3;
+    --border:#E0DDD8; --border-faint:#ECEAE6;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#fff;color:var(--ink-body);font-family:var(--sans);line-height:1.55;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .page{max-width:760px;margin:0 auto;padding:48px 40px 64px}
+
+  /* Cabecera / branding */
+  .rep-head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;border-bottom:1px solid var(--border);padding-bottom:22px;margin-bottom:34px}
+  .rep-brand{display:flex;align-items:center;gap:12px;min-width:0}
+  .rep-logo{height:38px;width:auto;max-width:180px;object-fit:contain}
+  .rep-brand-txt{font-family:var(--serif);font-size:1.45rem;color:var(--ink);letter-spacing:-.01em;font-weight:600}
+  .rep-meta{text-align:right;font-size:.74rem;color:var(--ink-2);font-family:var(--sans);letter-spacing:.02em;white-space:nowrap}
+  .rep-meta .rep-eyebrow{color:var(--accent);text-transform:uppercase;letter-spacing:.14em;font-size:.66rem;font-weight:700;margin-bottom:4px}
+
+  .rep-title{font-family:var(--serif);font-size:2.15rem;line-height:1.1;color:var(--ink);letter-spacing:-.02em;margin-bottom:8px}
+  .rep-sub{font-size:.98rem;color:var(--ink-2);margin-bottom:40px;max-width:560px}
+
+  /* KPIs: número grande + label, sin cajas */
+  .rep-kpis{display:flex;gap:48px;flex-wrap:wrap;margin-bottom:44px}
+  .rep-kpi .n{font-family:var(--serif);font-size:2.5rem;color:var(--accent-glow);line-height:1;letter-spacing:-.02em}
+  .rep-kpi .l{font-size:.72rem;color:var(--ink-2);text-transform:uppercase;letter-spacing:.1em;margin-top:8px}
+
+  /* Secciones: número naranja + título, separador faint */
+  .rep-sec{margin-bottom:40px}
+  .rep-sec-h{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--border-faint);padding-bottom:10px;margin-bottom:20px}
+  .rep-sec-n{font-family:var(--serif);font-size:1.15rem;color:var(--accent);font-weight:700;min-width:22px}
+  .rep-sec-t{font-family:var(--serif);font-size:1.3rem;color:var(--ink);letter-spacing:-.01em}
+
+  /* Reel que funciona */
+  .rep-reel{display:flex;gap:16px;padding:14px 0;border-bottom:1px solid var(--border-faint)}
+  .rep-reel:last-child{border-bottom:none}
+  .rep-reel-x{font-family:var(--serif);font-size:1.5rem;color:var(--accent-glow);min-width:64px;line-height:1.1}
+  .rep-reel-x small{display:block;font-family:var(--sans);font-size:.62rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+  .rep-reel-body{flex:1;min-width:0}
+  .rep-reel-who{font-size:.78rem;color:var(--ink-2);margin-bottom:3px}
+  .rep-reel-who b{color:var(--ink)}
+  .rep-reel-cap{font-size:.94rem;color:var(--ink-body)}
+  .rep-reel-views{font-size:.74rem;color:var(--ink-3);margin-top:3px;font-variant-numeric:tabular-nums}
+
+  /* Guion listo: barra naranja izquierda sobre fondo cálido */
+  .rep-script{background:var(--warm);border-left:3px solid var(--accent);padding:14px 18px;margin-bottom:12px;border-radius:0 8px 8px 0}
+  .rep-script-t{font-family:var(--serif);font-size:1.02rem;color:var(--ink);margin-bottom:4px}
+  .rep-script-hook{font-size:.9rem;color:var(--ink-body);font-style:italic}
+
+  .rep-empty{font-size:.9rem;color:var(--ink-3);padding:14px 0}
+
+  /* Footer */
+  .rep-foot{border-top:1px solid var(--border);margin-top:48px;padding-top:18px;display:flex;justify-content:space-between;align-items:center;font-size:.7rem;color:var(--ink-3)}
+  .rep-foot .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:6px;vertical-align:middle}
+
+  /* Botón imprimir/PDF — fuera del print */
+  .rep-actions{position:fixed;top:18px;right:18px;display:flex;gap:10px}
+  .rep-btn{font-family:var(--sans);font-size:.85rem;font-weight:600;padding:10px 18px;border-radius:9px;border:none;cursor:pointer;background:var(--accent);color:#fff}
+  .rep-btn.ghost{background:#fff;color:var(--ink-body);border:1px solid var(--border)}
+  @media print{
+    .rep-actions{display:none}
+    .page{max-width:none;padding:0 8mm}
+    @page{margin:14mm}
+    .rep-sec,.rep-reel,.rep-script{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+  <div class="rep-actions">
+    <button class="rep-btn" onclick="window.print()">{{ t.download }}</button>
+  </div>
+  <div class="page">
+    <div class="rep-head">
+      <div class="rep-brand">
+        {% if logo_url %}<img class="rep-logo" src="{{ logo_url }}" alt="{{ brand_label }}">{% else %}<span class="rep-brand-txt">{{ brand_label }}</span>{% endif %}
+      </div>
+      <div class="rep-meta">
+        <div class="rep-eyebrow">{{ t.report }}</div>
+        {{ period }}<br>{{ generated_on }}
+      </div>
+    </div>
+
+    <h1 class="rep-title">{{ t.title }}</h1>
+    <p class="rep-sub">{{ t.subtitle }}</p>
+
+    <div class="rep-kpis">
+      <div class="rep-kpi"><div class="n">{{ reels|length }}</div><div class="l">{{ t.kpi_reels }}</div></div>
+      <div class="rep-kpi"><div class="n">{{ scripts|length }}</div><div class="l">{{ t.kpi_scripts }}</div></div>
+      <div class="rep-kpi"><div class="n">{{ competitors }}</div><div class="l">{{ t.kpi_competitors }}</div></div>
+    </div>
+
+    <div class="rep-sec">
+      <div class="rep-sec-h"><span class="rep-sec-n">01</span><span class="rep-sec-t">{{ t.sec_reels }}</span></div>
+      {% if reels %}
+        {% for r in reels %}
+        <div class="rep-reel">
+          <div class="rep-reel-x">{{ r.explosion }}×<small>{{ t.over_avg }}</small></div>
+          <div class="rep-reel-body">
+            <div class="rep-reel-who"><b>@{{ r.username }}</b></div>
+            <div class="rep-reel-cap">{{ r.caption }}</div>
+            <div class="rep-reel-views">{{ r.views_fmt }} {{ t.views }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="rep-empty">{{ t.empty_reels }}</div>
+      {% endif %}
+    </div>
+
+    <div class="rep-sec">
+      <div class="rep-sec-h"><span class="rep-sec-n">02</span><span class="rep-sec-t">{{ t.sec_scripts }}</span></div>
+      {% if scripts %}
+        {% for s in scripts %}
+        <div class="rep-script">
+          <div class="rep-script-t">{{ s.title }}</div>
+          {% if s.hook %}<div class="rep-script-hook">“{{ s.hook }}”</div>{% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="rep-empty">{{ t.empty_scripts }}</div>
+      {% endif %}
+    </div>
+
+    <div class="rep-foot">
+      <div>{{ brand_label }} · {{ period }}</div>
+      {% if not white_label %}<div><span class="dot"></span>{{ t.made_with }}</div>{% endif %}
+    </div>
+  </div>
+</body>
+</html>
