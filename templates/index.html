@@ -9815,6 +9815,13 @@
     .rs .brand-opt:hover { background:var(--surface-raised); }
     .rs .brand-opt .brand-lvl { margin-left:auto; font-size:11px; font-weight:700; color:var(--text-tertiary); }
     .rs .brand-opt.add { color:var(--brand-500); border-top:1px solid var(--border-subtle); margin-top:4px; }
+    /* Ola Agencia B1: fila de marca con controles inline (renombrar/borrar) */
+    .rs .brand-opt-row { display:flex; align-items:center; }
+    .rs .brand-opt-row .brand-opt { flex:1; min-width:0; }
+    .rs .brand-opt-act { flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:8px; color:var(--text-tertiary); cursor:pointer; opacity:0; transition:opacity .12s ease, background .12s ease; }
+    .rs .brand-opt-act svg { width:15px; height:15px; }
+    .rs .brand-opt-row:hover .brand-opt-act { opacity:1; }
+    .rs .brand-opt-act:hover { background:var(--surface-raised); color:var(--text-primary); }
 
     /* ══ ecosistema (coste hundido / contexto creciente) ══ */
     .rs .eco { border:1px solid var(--border-default); border-radius:16px; padding:16px 18px; margin-bottom:16px; background:linear-gradient(135deg, color-mix(in srgb, var(--brand-500) 7%, var(--surface-raised)), var(--surface-raised)); }

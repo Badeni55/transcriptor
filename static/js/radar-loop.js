@@ -133,6 +133,10 @@
   function root(){ return document.getElementById("radarRoot"); }
   function brand(){ return S.brands.filter(function(b){return b.id===S.brandId;})[0] || S.brands[0] || {name:"Mi marca",level:1,voice:40,reelsAnalyzed:0,scripts:0,color:"#f97316"}; }
   function isAgency(){ return S.plan==="agencia"; }
+  // Ola Agencia B1: multi-marca = planes con >1 marca (Estudio/Agencia). El
+  // switcher y el CRUD de marcas se habilitan aquí (no solo en agencia). Portfolio
+  // y Equipo siguen siendo SOLO de agencia (isAgency).
+  function isMultiBrand(){ return isAgency() || S.realPlan==="estudio" || (S.brands&&S.brands.length>1); }
   // MACRO = portfolio de todas las marcas (solo agencia). MICRO = radar de una marca.
   function isMacro(){ return isAgency() && S.tab==="portfolio"; }
 
@@ -203,10 +207,26 @@
     if(S.brandMenu){
       var items="";
       if(isAgency()) items+='<button class="brand-opt'+(portfolio?" on":"")+'" data-act="all-brands"><span class="brand-dot multi"></span>Todas las marcas</button>';
-      items+=S.brands.map(function(x){ var on=(!portfolio && x.id===S.brandId); return '<button class="brand-opt'+(on?" on":"")+'" data-act="brand" data-id="'+ESC(x.id)+'"><span class="brand-dot" style="background:'+ESC(x.color)+'"></span>'+ESC(x.name)+'<span class="brand-lvl">Nv '+x.level+'</span></button>';}).join("");
+      // Cada marca: clic = cambiar de contexto (datos aislados por project_id).
+      // Renombrar / borrar inline (× con confirmación). 'default' (marca única
+      // sin project real) no se renombra/borra.
+      items+=S.brands.map(function(x){
+        var on=(!portfolio && x.id===S.brandId);
+        var manage=(x.id!=="default")
+          ? '<span class="brand-opt-act" data-act="brand-rename" data-id="'+ESC(x.id)+'" data-name="'+ESC(x.name)+'" title="Renombrar" aria-label="Renombrar '+ESC(x.name)+'">'+IC.gear+'</span>'+
+            (S.brands.length>1?'<span class="brand-opt-act" data-act="brand-del" data-id="'+ESC(x.id)+'" data-name="'+ESC(x.name)+'" title="Borrar marca" aria-label="Borrar '+ESC(x.name)+'">'+IC.x+'</span>':'')
+          : '';
+        return '<div class="brand-opt-row"><button class="brand-opt'+(on?" on":"")+'" data-act="brand" data-id="'+ESC(x.id)+'"><span class="brand-dot" style="background:'+ESC(x.color)+'"></span>'+ESC(x.name)+'<span class="brand-lvl">Nv '+x.level+'</span></button>'+manage+'</div>';
+      }).join("");
       // Entregable de Agencia: informe white-label del mes de la marca activa.
       if(isAgency() && !portfolio) items+='<button class="brand-opt" data-act="brand-report">'+IC.doc+' Generar informe del mes</button>';
-      if(isAgency()) items+='<button class="brand-opt add" data-act="brand-add">'+IC.plus+' Añadir marca</button>';
+      // + Nueva marca (Estudio/Agencia): cap-aware. Al tope → CTA de upgrade/extra.
+      var atCap = (S.brandsCap!=null) && (S.brands.length>=S.brandsCap);
+      if(isMultiBrand()){
+        items+= atCap
+          ? '<button class="brand-opt add" data-act="brand-cap">'+IC.plus+' Marca extra (tope '+S.brandsCap+')</button>'
+          : '<button class="brand-opt add" data-act="brand-add">'+IC.plus+' Nueva marca'+(S.brandsCap!=null?' ('+S.brands.length+'/'+S.brandsCap+')':'')+'</button>';
+      }
       menu='<div class="brand-menu">'+items+'</div>';
     }
     return '<button class="brand-switch" data-act="brand-toggle">'+dot+
@@ -269,7 +289,7 @@
     var streak=(S.user.streak>0)?'<span class="cmd-streak" title="Días seguidos creando">'+IC.spark+' Racha '+S.user.streak+'</span>':'';
     var demoToggle=isDemo()?'<div class="demo-plan" title="Solo demo: cambia de plan"><span class="dp-k">DEMO</span><button class="dp'+(S.plan==="creador"?" on":"")+'" data-act="demo-plan" data-k="creador">Creador</button><button class="dp'+(S.plan==="agencia"?" on":"")+'" data-act="demo-plan" data-k="agencia">Agencia</button></div>':'';
     return '<div class="cmd">'+
-      (isAgency()?brandSwitchHTML():brandStaticHTML())+
+      (isMultiBrand()?brandSwitchHTML():brandStaticHTML())+
       crumb+
       '<span class="grow"></span>'+
       // T1 (IDI): captura de ideas siempre a mano, en cualquier vista de la isla.
@@ -1679,6 +1699,80 @@
     if(isDemo()){ applyDemoBrand(); render(); }
     else { loadBrandData(); }
   }
+
+  /* ── Ola Agencia B1 · CRUD de marcas ─────────────────────────────────────
+     Crear / renombrar / borrar marca (= project). Datos aislados por project_id
+     (el switch ya recarga con el filtro). Cap por plan (gateado en el menú +
+     re-chequeado en el 403 del backend). En demo, mutación local. */
+  function reloadBrands(cb){
+    if(isDemo()){ if(cb) cb(); return; }
+    apiGet("/api/brands").then(function(r){
+      if(r.ok && r.d && Array.isArray(r.d.brands)){
+        S.brands=r.d.brands;
+        if(r.d.brands_cap!=null) S.brandsCap=r.d.brands_cap;
+      }
+      if(cb) cb();
+    });
+  }
+  function brandCreate(){
+    S.brandMenu=false;
+    promptSheet({
+      title:"Nueva marca", label:"Nombre de la marca o cliente",
+      placeholder:"Ej. Café Aurora",
+      helper:"Cada marca tiene su radar, su cerebro y sus guiones, aislados.",
+      submitLabel:"Crear marca",
+      validate:function(v){ if(!v.trim()) return "Ponle un nombre."; if(v.trim().length>60) return "Máximo 60 caracteres."; },
+      onSubmit:function(v){
+        var name=v.trim();
+        if(isDemo()){ var nb={id:"demo-"+Date.now(),name:name,handle:name.toLowerCase().replace(/[^a-z0-9]/g,""),color:"#4f7cff",level:1,voice:40,reelsAnalyzed:0,scripts:0}; S.brands.push(nb); S.brandId=nb.id; S.tab="dashboard"; S.view="feed"; applyDemoBrand(); render(); return showToast("Marca «"+name+"» creada."); }
+        showToast("Creando «"+name+"»…");
+        apiPost("/projects",{name:name}).then(function(r){
+          if(r.ok && r.d && r.d.id){
+            reloadBrands(function(){ S.brandId=r.d.id; S.tab="dashboard"; S.view="feed"; S._lvlSeen=null; loadBrandData(); showToast("Marca «"+name+"» creada."); });
+          } else if(r.status===403){
+            showError((r.d&&r.d.error)||"Has llegado al tope de marcas de tu plan.");
+            if(typeof window.openUpgradeModal==="function"){ try{ window.openUpgradeModal("brand_limit"); }catch(e){} }
+          } else { showError((r.d&&r.d.error)||"No pude crear la marca."); }
+        });
+      }
+    });
+  }
+  function brandRename(id, oldName){
+    S.brandMenu=false;
+    promptSheet({
+      title:"Renombrar marca", label:"Nuevo nombre", initial:oldName||"",
+      submitLabel:"Guardar",
+      validate:function(v){ if(!v.trim()) return "No puede estar vacío."; if(v.trim().length>60) return "Máximo 60 caracteres."; },
+      onSubmit:function(v){
+        var name=v.trim();
+        var b=S.brands.filter(function(x){return x.id===id;})[0]; if(b) b.name=name;   // optimista
+        render();
+        if(isDemo()){ showToast("Marca renombrada."); return; }
+        apiPatch("/projects/"+encodeURIComponent(id),{name:name}).then(function(r){
+          if(!r.ok){ showError("No pude renombrar la marca."); reloadBrands(render); }
+          else showToast("Marca renombrada.");
+        });
+      }
+    });
+  }
+  function brandDelete(id, name){
+    S.brandMenu=false; render();
+    var go=function(){
+      if(isDemo()){ S.brands=S.brands.filter(function(x){return x.id!==id;}); if(S.brandId===id){ S.brandId=S.brands[0].id; applyDemoBrand(); } render(); return showToast("Marca borrada."); }
+      apiDelete("/projects/"+encodeURIComponent(id)).then(function(r){
+        if(!r.ok){ return showError("No pude borrar la marca."); }
+        reloadBrands(function(){
+          if(S.brandId===id){ S.brandId=(S.brands[0]&&S.brands[0].id)||"default"; S._lvlSeen=null; loadBrandData(); }
+          else render();
+          showToast("Marca «"+(name||"")+"» borrada.");
+        });
+      });
+    };
+    if(typeof window.confirmModal==="function"){
+      window.confirmModal({ title:"Borrar «"+(name||"marca")+"»", body:"Se borrará la marca y se desvincularán sus datos. Esta acción no se puede deshacer.", confirmText:"Borrar", cancelText:"Cancelar", danger:true })
+        .then(function(ok){ if(ok) go(); });
+    } else { go(); }
+  }
   // Toggle de plan SOLO en demo, para ver las dos experiencias.
   function setDemoPlan(k){
     if(S.plan===k){ return; } S.plan=k; S.brandMenu=false; S.view="feed"; S.feedExpanded=false; S._lvlSeen=null;
@@ -2635,7 +2729,10 @@
     if(act==="demo-plan") return setDemoPlan(k);
     if(act==="team-invite") return teamInvite();
     if(act==="team-edit") return showToast("Gestión de roles y marcas por miembro: próximamente.");
-    if(act==="brand-add"){ S.brandMenu=false; render(); return showToast("Nueva marca: disponible en plan Agencia."); }
+    if(act==="brand-add") return brandCreate();
+    if(act==="brand-cap"){ S.brandMenu=false; render(); showToast("Has llegado al tope de marcas de tu plan."); if(typeof window.openUpgradeModal==="function"){ try{ window.openUpgradeModal("brand_limit"); }catch(e){} } return; }
+    if(act==="brand-rename") return brandRename(id, btn.getAttribute("data-name"));
+    if(act==="brand-del") return brandDelete(id, btn.getAttribute("data-name"));
     if(act==="brand-report"){
       S.brandMenu=false; render();
       if(isDemo()) return showToast("Informe white-label del mes — disponible en tu cuenta de Agencia.");
@@ -2908,7 +3005,10 @@
       // INGLÉS (verificado en DB: free, agency); la isla razona en creador|agencia. Sin esto
       // los Agency (plan="agency") fallaban isAgency() y perdían Portfolio/Equipo en prod.
       var _rawPlan = (me.plan||(me.user&&me.user.plan))||"free";
+      S.realPlan = isDemo() ? "agency" : _rawPlan;   // plan crudo (free/creator/estudio/agency)
       S.plan = isDemo() ? "agencia" : (_rawPlan === "agency" ? "agencia" : "creador");
+      // Ola Agencia B1: cap de marcas (de /api/brands) → gatea "+ Nueva marca".
+      S.brandsCap = (bd.brands_cap!=null) ? bd.brands_cap : (isDemo()?10:null);
       S.brands=(bd.brands&&bd.brands.length)?bd.brands:[{id:"default",name:(me.user&&me.user.name)?me.user.name:"Mi marca",handle:S.user.handle,color:"#f97316",level:1,voice:40,reelsAnalyzed:0,scripts:0}];
       if(isDemo()){ S.brands = isAgency() ? demoBrands() : [demoBrands()[0]]; }
       S.brandId=S.brands[0].id;

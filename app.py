@@ -3347,7 +3347,31 @@ def api_brands():
             "scripts": 0,
         }]
 
-    return jsonify({"brands": brands})
+    # cap de marcas + plan → la isla muestra "N/cap" y gatea "+ Nueva marca".
+    _cap = brands_cap(profile)
+    return jsonify({"brands": brands, "plan": plan, "brands_cap": _cap})
+
+
+def get_extra_brand_slots(user_id: str) -> int:
+    """Marcas extra compradas (add-on Agencia +10€/marca). Block-4 cablea la
+    compra en Stripe; por ahora 0 (sin price ID → degrada limpio)."""
+    try:
+        r = (db.table("profiles").select("extra_brand_slots")
+               .eq("id", user_id).single().execute())
+        return int((r.data or {}).get("extra_brand_slots") or 0)
+    except Exception:
+        return 0
+
+
+def brands_cap(profile: dict) -> int | None:
+    """Tope de marcas (projects) por plan. None = sin tope.
+    Estudio 3 · Agencia 10 (+ extras comprados) · free 1 · creator/pro sin tope (no se toca)."""
+    plan = profile.get("plan", "free")
+    if plan == "agency":
+        return 10 + get_extra_brand_slots(profile.get("id"))
+    if plan == "estudio":
+        return 3
+    return PLANS.get(plan, PLANS["free"]).get("projects_max")
 
 
 @app.route("/projects", methods=["POST"])
@@ -3355,13 +3379,13 @@ def api_brands():
 def create_project():
     user = current_user()
     profile = get_profile(user["id"])
-    plan = profile.get("plan", "free")
-    max_proj = PLANS.get(plan, PLANS["free"])["projects_max"]
+    max_proj = brands_cap(profile)
     if max_proj is not None:
         count = db.table("projects").select("id", count="exact").eq("user_id", user["id"]).execute()
         current = count.count if hasattr(count, "count") else len(count.data)
         if current >= max_proj:
-            return jsonify({"error": f"Has alcanzado el límite de {max_proj} proyecto(s) en tu plan. Sube de plan para tener ilimitados."}), 403
+            return jsonify({"error": f"Has alcanzado el límite de {max_proj} marca(s) de tu plan. Sube de plan o añade una marca extra.",
+                            "limit": max_proj, "code": "brand_limit"}), 403
     body = request.get_json() or {}
     ok_color, norm_color = _validate_project_color(body.get("color"))
     if not ok_color:
