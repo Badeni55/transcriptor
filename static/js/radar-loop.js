@@ -204,6 +204,8 @@
       var items="";
       if(isAgency()) items+='<button class="brand-opt'+(portfolio?" on":"")+'" data-act="all-brands"><span class="brand-dot multi"></span>Todas las marcas</button>';
       items+=S.brands.map(function(x){ var on=(!portfolio && x.id===S.brandId); return '<button class="brand-opt'+(on?" on":"")+'" data-act="brand" data-id="'+ESC(x.id)+'"><span class="brand-dot" style="background:'+ESC(x.color)+'"></span>'+ESC(x.name)+'<span class="brand-lvl">Nv '+x.level+'</span></button>';}).join("");
+      // Entregable de Agencia: informe white-label del mes de la marca activa.
+      if(isAgency() && !portfolio) items+='<button class="brand-opt" data-act="brand-report">'+IC.doc+' Generar informe del mes</button>';
       if(isAgency()) items+='<button class="brand-opt add" data-act="brand-add">'+IC.plus+' Añadir marca</button>';
       menu='<div class="brand-menu">'+items+'</div>';
     }
@@ -274,10 +276,23 @@
       '<button class="cmd-idea" data-act="idea-capture" title="Apunta una idea — se desarrolla en Guiones" aria-label="Apunta una idea"><span class="cmd-idea-bulb">'+IC.bulb+'</span><span class="cmd-idea-t">Apunta una idea</span></button>'+
       demoToggle+
       streak+
-      ((S.user.plan==="free" && !S.user.credits)
-        ? '<div class="spark pill-stat credits" id="rsSpark" title="«Hazlo mío» gratis restantes">'+IC.spark+'<span class="num"><b id="rsSparkN">'+S.user.freeLeft+'</b></span> «Hazlo mío»</div>'
-        : '<div class="spark pill-stat credits" id="rsSpark" title="Créditos disponibles">'+IC.spark+'<span class="num"><b id="rsSparkN">'+S.user.credits+'</b></span> créditos</div>')+
+      pillStatHTML()+
     '</div>';
+  }
+  // Pill de estado (derecha de la command bar):
+  //   · reverse-trial activo → "Pro · Nd" (badge con días restantes, CTA implícito).
+  //   · free post-trial sin créditos → guiones gratis del mes restantes.
+  //   · resto → créditos.
+  function pillStatHTML(){
+    if(!isDemo() && S.user.trialActive){
+      var d=S.user.trialDaysLeft||0;
+      var cr=S.user.trialCreditsLeft||0;
+      return '<div class="spark pill-stat trial" id="rsSpark" title="Prueba Pro — '+cr+' crédito'+(cr===1?'':'s')+' · '+d+' día'+(d===1?'':'s')+' restantes" data-act="tab" data-k="brain" role="button" tabindex="0">'+IC.spark+'<span class="num">Pro</span> · '+cr+' cr</div>';
+    }
+    if(S.user.plan==="free" && !S.user.credits){
+      return '<div class="spark pill-stat credits" id="rsSpark" title="Guiones gratis este mes">'+IC.spark+'<span class="num"><b id="rsSparkN">'+S.user.freeLeft+'</b></span> este mes</div>';
+    }
+    return '<div class="spark pill-stat credits" id="rsSpark" title="Créditos disponibles">'+IC.spark+'<span class="num"><b id="rsSparkN">'+S.user.credits+'</b></span> créditos</div>';
   }
 
   // Cabecera Signal reutilizable (eyebrow mono + h-title Space Grotesk + sub).
@@ -1839,7 +1854,7 @@
     if(r.script&&r.script.hook){ setTimeout(function(){cb();},1700); return; }
     if(isDemo()){ setTimeout(function(){cb();},1700); return; }
     var t0=Date.now();
-    apiPost("/api/competitors/reels/"+encodeURIComponent(r.id)+"/generate-script",{}).then(function(rr){
+    apiPost("/api/competitors/reels/"+encodeURIComponent(r.id)+"/generate-script",{language:(document.documentElement.lang||"es")}).then(function(rr){
       // Duplicado reciente (409) → reusamos el guion existente (sin re-cobro). Traemos su texto.
       if(rr.status===409 && rr.d && rr.d.script_id){ return fetchScriptText(rr.d.script_id, r, t0, cb); }
       if(!rr.ok){ var ec=(rr.d&&rr.d.error)||"error"; return setTimeout(function(){ cb(ec); },300); }
@@ -1898,6 +1913,14 @@
      usuario FREE, una sola vez (localStorage). No bloquea, no castiga: es un
      toast con acción que abre el modal de planes. Nunca aparece antes del valor.
      Devuelve true si mostró el nudge (para no pisar otros toasts). */
+  /* reverse-trial: watermark "Hecho con ReelScript" en exports SOLO para free
+     post-trial (S.user.watermark de /auth/me). Trial y pago exportan limpio.
+     En demo nunca (no rompe el harness). */
+  function withWatermark(txt){
+    txt = txt || "";
+    if(isDemo() || !S.user || !S.user.watermark) return txt;
+    return txt + "\n\n— Hecho con ReelScript · reelscript.net";
+  }
   function maybeUpgradeNudge(trigger){
     try{
       if(isDemo()) return false;
@@ -2610,6 +2633,14 @@
     if(act==="team-invite") return teamInvite();
     if(act==="team-edit") return showToast("Gestión de roles y marcas por miembro: próximamente.");
     if(act==="brand-add"){ S.brandMenu=false; render(); return showToast("Nueva marca: disponible en plan Agencia."); }
+    if(act==="brand-report"){
+      S.brandMenu=false; render();
+      if(isDemo()) return showToast("Informe white-label del mes — disponible en tu cuenta de Agencia.");
+      var pid=S.brandId||"default";
+      var url="/brands/"+encodeURIComponent(pid)+"/report?lang="+encodeURIComponent((document.documentElement.lang||"es"));
+      try{ window.open(url,"_blank","noopener"); }catch(e){ location.href=url; }
+      return showToast("Generando el informe del mes…");
+    }
     if(act==="steal") return steal(id);
     if(act==="reel-detail") return openReelDetail(id);
     if(act==="reel-tx") return loadReelTranscript(id);
@@ -2661,8 +2692,28 @@
     if(act==="sc-toggle"){ var sct=findScript(id); if(sct){ sct.expanded=!sct.expanded; } return render(); }
     if(act==="gui-hooks"){ var gh=guionById(id); if(gh){ gh.expanded=!gh.expanded; } return render(); }
     if(act==="gui-body-toggle"){ var gb=guionById(id); if(gb){ gb.bodyOpen=!gb.bodyOpen; } return render(); }
-    if(act==="gui-use-hook"){ var gu=guionById(id); if(gu&&gu.hooks){ var ix=parseInt(btn.getAttribute("data-i"),10); var nv=gu.hooks[ix]; if(nv!=null){ gu.hooks[ix]=gu.hook; gu.hook=nv; gu.title=nv; } } render(); return showToast("Apertura actualizada."); }
-    if(act==="gui-del-hook"){ var gd=guionById(id); if(gd&&gd.hooks){ gd.hooks.splice(parseInt(btn.getAttribute("data-i"),10),1); if(!gd.hooks.length) gd.expanded=false; } return render(); }
+    if(act==="gui-use-hook"){
+      var gu=guionById(id);
+      if(gu&&gu.hooks){
+        var ix=parseInt(btn.getAttribute("data-i"),10); var nv=gu.hooks[ix];
+        if(nv!=null){
+          gu.hooks[ix]=gu.hook; gu.hook=nv; gu.title=nv;   // swap optimista (espejo del backend)
+          // P1: persistir (POST /scripts/<sid>/hooks/use) y reconciliar el banco.
+          if(!isDemo() && gu._sid){ apiPost("/scripts/"+encodeURIComponent(gu._sid)+"/hooks/use",{index:ix}).then(function(r){ if(r.ok && r.d && Array.isArray(r.d.alt_hooks)){ gu.hooks=r.d.alt_hooks.slice(); render(); } }); }
+        }
+      }
+      render(); return showToast("Apertura actualizada.");
+    }
+    if(act==="gui-del-hook"){
+      var gd=guionById(id);
+      if(gd&&gd.hooks){
+        var dix=parseInt(btn.getAttribute("data-i"),10);
+        gd.hooks.splice(dix,1); if(!gd.hooks.length) gd.expanded=false;
+        // P1: persistir (DELETE /scripts/<sid>/hooks?index=N) y reconciliar.
+        if(!isDemo() && gd._sid){ apiDelete("/scripts/"+encodeURIComponent(gd._sid)+"/hooks?index="+dix).then(function(r){ if(r.ok && r.d && Array.isArray(r.d.alt_hooks)){ gd.hooks=r.d.alt_hooks.slice(); if(!gd.hooks.length) gd.expanded=false; render(); } }); }
+      }
+      return render();
+    }
     if(act==="gen-background") return closeOverlay();   // T6: seguir navegando (el robo sigue detrás)
     if(act==="chain") return chain(k);
     if(act==="record"){ S.view="prompter"; return render(); }
@@ -2694,7 +2745,7 @@
         onSubmit:function(u){ u=u.trim(); gl.published={pending:true, url:u}; gl.status="recorded"; render(); if(isDemo()){ showToast("Reel vinculado. Se analizará en el próximo refresco y entrenará tu Cerebro."); } else { linkReelPublished(gl, u); } }
       });
     } return; }
-    if(act==="copy"){ var txt=btn.getAttribute("data-txt"); if(navigator.clipboard) navigator.clipboard.writeText(txt); btn.textContent="✓"; setTimeout(function(){ btn.textContent="Copiar"; },1200); maybeUpgradeNudge("copy"); return; }   // growth-3: copiar = éxito → nudge
+    if(act==="copy"){ var txt=withWatermark(btn.getAttribute("data-txt")); if(navigator.clipboard) navigator.clipboard.writeText(txt); btn.textContent="✓"; setTimeout(function(){ btn.textContent="Copiar"; },1200); maybeUpgradeNudge("copy"); return; }   // growth-3: copiar = éxito → nudge
     if(act==="upsell-nudge"){ if(typeof window.openUpgradeModal==="function") window.openUpgradeModal("post_first_success"); return; }
   }
 
@@ -2840,9 +2891,14 @@
       if(me.user){ S.user.name=me.user.name||(me.user.email||"").split("@")[0]||""; S.user.handle=me.user.handle||(me.user.email||"").split("@")[0]||""; S.user.email=me.user.email||""; }
       if(me.credits!=null) S.user.credits=me.credits; else if(me.credits_cents!=null) S.user.credits=Math.round(me.credits_cents/18);
       if(me.streak!=null) S.user.streak=me.streak;
-      // Plan crudo de /auth/me (puede ser "free") + «Hazlo mío» de por vida restantes.
+      // Plan crudo de /auth/me (puede ser "free") + guiones gratis del mes restantes.
       S.user.plan=(me.plan||(me.user&&me.user.plan))||"";
       if(me.free_lifetime_left!=null) S.user.freeLeft=me.free_lifetime_left;
+      // reverse-trial: estado del trial (Pro capado sin tarjeta) + watermark en exports (free post-trial).
+      S.user.trialActive=!!me.trial_active;
+      S.user.trialDaysLeft=me.trial_days_left||0;
+      S.user.trialCreditsLeft=(me.trial_credits_left!=null)?me.trial_credits_left:0;
+      S.user.watermark=!!me.watermark;
       // Plan: en demo arranca en Agencia para ver el portfolio (toggle lo cambia);
       // en prod sale de /auth/me (profiles.plan).
       // Normaliza el plan crudo de /auth/me → modos de la isla. Prod guarda valores en

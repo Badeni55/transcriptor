@@ -722,13 +722,22 @@ def send_radar_digest(user_id, reels, day_key, next_suggestion=None):
     token = profile.get("unsubscribe_token") or ""
     unsub_url = f"{APP_URL}/unsubscribe?token={token}"
 
+    # Subject CONCRETO: nombra al top competidor + ×N su media (más clic que
+    # "N reels petaron"). reels[0] es el de mayor explosión (ya viene ordenado).
     n = len(reels)
+    top = reels[0] if reels else {}
+    top_user = "@" + str(top.get("username") or "").lstrip("@")
+    try:
+        _e = top.get("explosion") or 0
+        top_x = str(int(round(_e))) if _e >= 10 else f"{float(_e):.1f}"
+    except Exception:
+        top_x = "2"
     if lang == "es":
-        subject = (f"🔥 {n} reels petaron en tu nicho"
-                   if n > 1 else "🔥 un reel acaba de petar en tu nicho")
+        subject = (f"🔥 {top_user} petó · ×{top_x} su media"
+                   + (f" (+{n-1} más en tu nicho)" if n > 1 else ""))
     else:
-        subject = (f"🔥 {n} reels just blew up in your niche"
-                   if n > 1 else "🔥 a reel just blew up in your niche")
+        subject = (f"🔥 {top_user} blew up · ×{top_x} their avg"
+                   + (f" (+{n-1} more in your niche)" if n > 1 else ""))
 
     inner_html, inner_text = _radar_digest_body(reels, lang, next_suggestion)
     html = _wrap_html(inner_html, unsub_url, lang)
@@ -820,6 +829,113 @@ def send_weekly_digest(user_id, reels, week_key, next_suggestion=None):
                                   "resend_id": resend_id, "reels": n})
     logger.info("weekly_digest sent user=%s reels=%s", user_id, n)
     return {"sent": True}
+
+
+# ── reverse-trial · CICLO DE TRIAL: acaba mañana / ha expirado ──────────────
+
+def _trial_email(user_id, key, subject_es, subject_en, body_es_html, body_es_text,
+                 body_en_html, body_en_text):
+    """Núcleo común de los emails de trial. Idempotente por (user_id, key) vía
+    UNIQUE en email_log. Marketing → respeta opt-out, rate-limit y email confirmado."""
+    db = _db()
+    now = datetime.now(timezone.utc).isoformat()
+    try:
+        db.table("email_log").insert({
+            "user_id": user_id, "template_key": key,
+            "status": "queued", "scheduled_for": now,
+        }).execute()
+    except Exception:
+        return {"skipped": "already_sent"}
+
+    def _skip(reason):
+        db.table("email_log").update({"status": "skipped", "error": reason, "sent_at": now}) \
+          .eq("user_id", user_id).eq("template_key", key).execute()
+        return {"skipped": reason}
+
+    email, confirmed_at = _user_email(user_id)
+    if not email:
+        return _skip("no_email")
+    if not confirmed_at:
+        return _skip("email_not_confirmed")
+    profile = _profile(user_id)
+    if not profile.get("email_marketing", True):
+        return _skip("marketing_opted_out")
+    if _rate_limited(user_id):
+        return _skip("rate_limited")
+
+    lang = profile.get("lang") or "es"
+    if lang not in ("es", "en"):
+        lang = "es"
+    token = profile.get("unsubscribe_token") or ""
+    unsub_url = f"{APP_URL}/unsubscribe?token={token}"
+
+    subject = subject_es if lang == "es" else subject_en
+    inner_html = body_es_html if lang == "es" else body_en_html
+    inner_text = body_es_text if lang == "es" else body_en_text
+    html = _wrap_html(inner_html, unsub_url, lang)
+    text = _wrap_text(inner_text, unsub_url, lang)
+
+    resend_id, err = _send_via_resend(email, subject, html, text)
+    now2 = datetime.now(timezone.utc).isoformat()
+    if err:
+        db.table("email_log").update({"status": "failed", "error": err, "sent_at": now2}) \
+          .eq("user_id", user_id).eq("template_key", key).execute()
+        track("email_failed", user_id, {"template_key": key, "error": err})
+        return {"error": err}
+    db.table("email_log").update({"status": "sent", "sent_at": now2, "resend_id": resend_id}) \
+      .eq("user_id", user_id).eq("template_key", key).execute()
+    track("email_sent", user_id, {"template_key": key, "resend_id": resend_id})
+    logger.info("%s email sent user=%s", key, user_id)
+    return {"sent": True}
+
+
+def send_trial_ending(user_id):
+    """Día 2: «tu prueba de Pro acaba mañana» → empuja a suscribirse."""
+    cta = f"{APP_URL}/profile/overview"
+    return _trial_email(
+        user_id, "trial_ending",
+        "tu prueba de Pro acaba mañana ⏳",
+        "your Pro trial ends tomorrow ⏳",
+        ("<p>hola creador.</p>"
+         "<p>mañana se acaba tu prueba de Pro. después sigues en Free (3 análisis y "
+         "2 guiones al mes), pero pierdes el radar completo, el Cerebro y crear sin freno.</p>"
+         "<p>si te ha cundido, quédate en Pro y sigue robando lo que petó en tu nicho.</p>"
+         + _btn(cta, "seguir en Pro →")),
+        ("hola creador.\n\nmañana se acaba tu prueba de Pro. después sigues en Free "
+         "(3 análisis y 2 guiones al mes).\n\nsi te ha cundido, quédate en Pro: " + cta),
+        ("<p>hey creator.</p>"
+         "<p>your Pro trial ends tomorrow. after that you stay on Free (3 analyses and "
+         "2 scripts a month), but you lose the full radar, the Brain and unlimited creating.</p>"
+         "<p>if it clicked, keep Pro and keep stealing what blew up in your niche.</p>"
+         + _btn(cta, "keep Pro →")),
+        ("hey creator.\n\nyour Pro trial ends tomorrow. after that you stay on Free "
+         "(3 analyses and 2 scripts a month).\n\nif it clicked, keep Pro: " + cta),
+    )
+
+
+def send_trial_expired(user_id):
+    """Al expirar: «se acabó tu Pro → sube a Pro» (sigue en Free mientras tanto)."""
+    cta = f"{APP_URL}/profile/overview"
+    return _trial_email(
+        user_id, "trial_expired",
+        "se acabó tu Pro — pero sigues dentro",
+        "your Pro trial ended — but you're still in",
+        ("<p>hola creador.</p>"
+         "<p>tu prueba de Pro ha terminado. ahora estás en Free: 3 análisis y 2 guiones "
+         "al mes, 1 competidor en el radar. tu voz y tus datos siguen intactos.</p>"
+         "<p>cuando quieras volver a crear sin freno y ver TODO tu nicho, sube a Pro.</p>"
+         + _btn(cta, "volver a Pro →")),
+        ("hola creador.\n\ntu prueba de Pro ha terminado. ahora estás en Free (3 análisis "
+         "y 2 guiones al mes, 1 competidor). tu voz y tus datos siguen intactos.\n\n"
+         "vuelve a Pro cuando quieras: " + cta),
+        ("<p>hey creator.</p>"
+         "<p>your Pro trial ended. you're now on Free: 3 analyses and 2 scripts a month, "
+         "1 competitor on the radar. your voice and data are intact.</p>"
+         "<p>whenever you want to create without limits and see your WHOLE niche, go Pro.</p>"
+         + _btn(cta, "go back to Pro →")),
+        ("hey creator.\n\nyour Pro trial ended. you're now on Free (3 analyses and 2 scripts "
+         "a month, 1 competitor). your voice and data are intact.\n\ngo back to Pro: " + cta),
+    )
 
 
 # ── growth-5 · DUNNING: email de fallo de cobro ────────────────────────────

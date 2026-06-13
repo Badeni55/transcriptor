@@ -143,9 +143,12 @@ def admin_required(f):
 PLANS = {
     "free": {
         "credits_month": 0,
-        "free_lifetime": 1,            # 1 "Hazlo mío" de por vida (cata, NO resetea)
-        "free_analysis_lifetime": 3,   # 3 análisis (transcripciones) de por vida
-        "monthly_uses": 0,             # → PLAN_LIMITS None (sin límite mensual; usa lifetime)
+        # reverse-trial: tras los 7 días de Pro, el FREE es MENSUAL (resetea cada mes),
+        # ya no una cata de por vida. Contadores: free_lifetime_uses=guiones del mes,
+        # free_analysis_uses=análisis del mes (reset por free_month_reset_at).
+        "free_scripts_monthly": 2,     # 2 "Hazlo mío"/mes
+        "free_analysis_monthly": 3,    # 3 análisis (transcripciones)/mes
+        "monthly_uses": 0,             # → PLAN_LIMITS None (sin límite mensual; usa los free_*_monthly)
         "daily_free": 0,
         "scripts_max": 5,
         "projects_max": 1,
@@ -171,6 +174,24 @@ PLANS = {
         "priority": True,
         "support": "email",
     },
+    # Estudio (nuevo): puente 29→129. "creador pro" para quien factura: 3 marcas
+    # y más créditos. Precio anual por defecto (~20% off → 47€/mes).
+    "estudio": {
+        "credits_month": 200,
+        "price_month_eur": 59,
+        "price_year_eur": 564,         # 47€/mes facturado anual (~20% off)
+        "monthly_uses": 400,           # 400 créditos/mes (el doble que Creator)
+        "daily_free": 0,
+        "scripts_max": None,
+        "projects_max": 3,             # 3 marcas
+        "brands": 3,
+        "assistants_max": None,
+        "history_days": None,
+        "seats": 1,
+        "priority": True,
+        "support": "email",
+        "name": "Estudio",
+    },
     "agency": {
         "credits_month": 500,
         "price_month_eur": 129,
@@ -178,15 +199,15 @@ PLANS = {
         "monthly_uses": 800,           # pool 800 créditos/mes (cuenta, no por marca)
         "daily_free": 0,
         "scripts_max": None,
+        # base 10 marcas; +10€/marca extra. NOTA: la compra per-marca (Stripe)
+        # está FLAGUEADA, no implementada → no hard-cap aún (projects_max=None
+        # para no romper agencias existentes). Display = "10 + €10/marca".
         "projects_max": None,
-        "brands": 3,                   # 3 marcas incluidas
+        "brands": 10,                  # 10 marcas incluidas (base)
         "assistants_max": None,
         "history_days": None,
-        "seats": 3,                    # 3 asientos incluidos
-        "addon_brand_eur": 14.99,      # marca extra €14,99/mes
-        # TODO(econ): cada marca extra debe conceder +150 créditos al pool. No hay
-        # lógica que lo aplique todavía (estos campos solo definen precio).
-        "addon_seat_eur": 14.99,       # asiento extra €14,99/mes
+        "seats": None,                 # asientos ILIMITADOS (decisión cerrada)
+        "addon_brand_eur": 10,         # marca extra €10/mes (billing pendiente David)
         "priority": True,
         "support": "email+chat",
     },
@@ -221,6 +242,67 @@ TOPUPS = {
 
 # Derivados para compatibilidad con código existente
 PLAN_LIMITS = {p: v["monthly_uses"] or None for p, v in PLANS.items()}
+
+# ── Reverse-trial ────────────────────────────────────────────────────────────
+# Al registrarse: 3 días de Pro CAPADO sin tarjeta (trial_ends_at). Features de
+# pago desbloqueadas pero con TOPE de TRIAL_CREDIT_CAP créditos. El trial deja de
+# ser usable cuando se agota el tope O pasan los 3 días → cae a FREE mensual
+# ligero (3 análisis + 2 guiones + 1 competidor, resetea cada mes) + watermark.
+# El contador del tope = monthly_usage (lo que ya incrementan transcribe/genscript
+# durante el trial; 1 unidad = 1 crédito). NO toca los planes de pago.
+TRIAL_DAYS = 3
+TRIAL_CREDIT_CAP = 10        # tope de créditos (= acciones de pago) durante el trial
+TRIAL_PLAN = "creator"       # tier cuyos límites/feature-set ve el trial (Pro completo)
+
+
+def _parse_ts(ts):
+    if not ts:
+        return None
+    try:
+        return datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+    except Exception:
+        return None
+
+
+def in_trial(profile: dict) -> bool:
+    """True si el usuario está dentro de la VENTANA temporal del trial (3 días).
+    Un plan de pago real NO está 'en trial' (ya paga). No mira el tope (eso lo
+    hace trial_usable)."""
+    if profile.get("plan", "free") != "free":
+        return False
+    dt = _parse_ts(profile.get("trial_ends_at"))
+    return bool(dt and datetime.now(timezone.utc) < dt)
+
+
+def trial_credits_used(profile: dict) -> int:
+    return profile.get("monthly_usage", 0) or 0
+
+
+def trial_credits_left(profile: dict) -> int:
+    return max(0, TRIAL_CREDIT_CAP - trial_credits_used(profile))
+
+
+def trial_usable(profile: dict) -> bool:
+    """Trial efectivamente activo: dentro de la ventana Y por debajo del tope.
+    En cuanto se agota el tope (o pasan los días) deja de ser usable → muro."""
+    return in_trial(profile) and trial_credits_used(profile) < TRIAL_CREDIT_CAP
+
+
+def trial_days_left(profile: dict) -> int:
+    dt = _parse_ts(profile.get("trial_ends_at"))
+    if not dt:
+        return 0
+    secs = (dt - datetime.now(timezone.utc)).total_seconds()
+    if secs <= 0:
+        return 0
+    return int(secs // 86400) + (1 if secs % 86400 else 0)
+
+
+def effective_plan(profile: dict) -> str:
+    """Plan a efectos de LÍMITES: durante el trial usable, TRIAL_PLAN; si no, el real."""
+    if profile.get("plan", "free") == "free" and trial_usable(profile):
+        return TRIAL_PLAN
+    return profile.get("plan", "free")
 ASSISTANT_LIMITS = {p: v["assistants_max"] for p, v in PLANS.items()}
 
 # ── Stripe price IDs (v0.19) — TODOS por env, nunca hardcodeados ──────────────
@@ -231,6 +313,12 @@ STRIPE_PRICES = {
     "creator": {
         "month": os.environ.get("STRIPE_PRICE_CREATOR_MONTH", ""),
         "year":  os.environ.get("STRIPE_PRICE_CREATOR_YEAR", ""),
+    },
+    # Estudio €59 — FLAG: David crea los price IDs en Stripe y los pone en estas
+    # env. Sin ellas, el botón de Estudio devuelve "plan no configurado" (no rompe).
+    "estudio": {
+        "month": os.environ.get("STRIPE_PRICE_ESTUDIO_MONTH", ""),
+        "year":  os.environ.get("STRIPE_PRICE_ESTUDIO_YEAR", ""),
     },
     "agency": {
         "month": os.environ.get("STRIPE_PRICE_AGENCY_MONTH", ""),
@@ -454,9 +542,13 @@ def release_credit_lock(uid: str, token) -> None:
 
 
 def paid_features_active(profile: dict, user: dict | None = None) -> bool:
-    """Plan de pago REAL: bloquea 'fantasmas' (plan seteado sin pagar). Activo si
-    el plan es de pago Y (tiene stripe_subscription_id [el webhook lo baja a free al
-    cancelar] O el email está en la allowlist de cortesía UNLIMITED_EMAILS)."""
+    """Funciones de pago activas. Bloquea 'fantasmas' (plan seteado sin pagar).
+    Activo si:
+      - trial usable (reverse-trial: 3 días de Pro, mientras quede tope), o
+      - plan de pago Y (stripe_subscription_id [el webhook baja a free al cancelar]
+        O email en la allowlist de cortesía UNLIMITED_EMAILS)."""
+    if trial_usable(profile):
+        return True
     plan = profile.get("plan", "free")
     if plan == "free":
         return False
@@ -680,17 +772,53 @@ def credits_available(profile: dict) -> int:
     return monthly_rem + topup
 
 
+# ── Free MENSUAL (reverse-trial) ─────────────────────────────────────────────
+# Tras el trial, el free resetea cada mes. Reusamos free_lifetime_uses (guiones)
+# y free_analysis_uses (análisis) como contadores del mes en curso; el boundary
+# es free_month_reset_at. _free_month_used cuenta el rollover en lectura (si ya
+# pasó el boundary, el mes rodó → 0 usado) sin escribir; el reset+incremento real
+# ocurre bajo lock en _free_month_consume.
+def _free_month_used(profile: dict, field: str) -> int:
+    reset_dt = _parse_ts(profile.get("free_month_reset_at"))
+    if reset_dt is None:
+        return 0                                   # nunca inicializado → mes nuevo
+    if datetime.now(timezone.utc) >= reset_dt:
+        return 0                                   # boundary pasado → mes rodó
+    return profile.get(field, 0) or 0
+
+
+def _next_month_boundary(now: datetime) -> datetime:
+    return (now.replace(day=1) + timedelta(days=32)).replace(
+        day=1, hour=0, minute=0, second=0, microsecond=0)
+
+
+def _free_month_consume(user_id: str, fresh: dict, field: str) -> int:
+    """Bajo lock: aplica el reset mensual si toca y suma 1 al contador `field`.
+    Devuelve el nuevo valor del contador."""
+    now = datetime.now(timezone.utc)
+    reset_dt = _parse_ts(fresh.get("free_month_reset_at"))
+    rolled = reset_dt is None or now >= reset_dt
+    if rolled:
+        updates = {"free_analysis_uses": 0, "free_lifetime_uses": 0,
+                   "free_month_reset_at": _next_month_boundary(now).isoformat()}
+        updates[field] = 1
+        db.table("profiles").update(updates).eq("id", user_id).execute()
+        return 1
+    newv = (fresh.get(field, 0) or 0) + 1
+    db.table("profiles").update({field: newv}).eq("id", user_id).execute()
+    return newv
+
+
 def free_lifetime_left(profile: dict) -> int:
-    """'Hazlo mío' gratis que le quedan a un free (5 de por vida)."""
-    cap = PLANS["free"]["free_lifetime"]
-    return max(0, cap - (profile.get("free_lifetime_uses", 0) or 0))
+    """Guiones «Hazlo mío» gratis que le quedan ESTE MES a un free (post-trial)."""
+    cap = PLANS["free"]["free_scripts_monthly"]
+    return max(0, cap - _free_month_used(profile, "free_lifetime_uses"))
 
 
 def free_analysis_left(profile: dict) -> int:
-    """Análisis (transcripciones) gratis de POR VIDA restantes del plan free.
-    Mismo patrón que free_lifetime_left (Hazlo mío). NO resetea."""
-    cap = PLANS["free"]["free_analysis_lifetime"]
-    return max(0, cap - (profile.get("free_analysis_uses", 0) or 0))
+    """Análisis (transcripciones) gratis que le quedan ESTE MES a un free (post-trial)."""
+    cap = PLANS["free"]["free_analysis_monthly"]
+    return max(0, cap - _free_month_used(profile, "free_analysis_uses"))
 
 
 # ── Download / transcription helpers ─────────────────────────────────────────
@@ -788,14 +916,20 @@ def _on_signup_complete(user_id, lang):
     """
     try:
         import emails as _emails
-        # 1) ensure unsubscribe_token exists + lang persisted
-        prof = db.table("profiles").select("unsubscribe_token, lang").eq("id", user_id).execute()
+        # 1) ensure unsubscribe_token exists + lang persisted + trial iniciado
+        prof = db.table("profiles").select("unsubscribe_token, lang, trial_ends_at").eq("id", user_id).execute()
         existing = (prof.data or [{}])[0]
         updates = {}
         if not existing.get("unsubscribe_token"):
             updates["unsubscribe_token"] = _emails.gen_unsubscribe_token()
         if not existing.get("lang"):
             updates["lang"] = lang or "es"
+        # reverse-trial: 7 días de Pro al registrarse (solo si no se fijó ya —
+        # idempotente, no se extiende en re-llamadas).
+        if not existing.get("trial_ends_at"):
+            updates["trial_ends_at"] = (
+                datetime.now(timezone.utc) + timedelta(days=TRIAL_DAYS)
+            ).isoformat()
         if updates:
             db.table("profiles").update(updates).eq("id", user_id).execute()
         # 2) enqueue email_log rows (idempotente vía UNIQUE)
@@ -1011,12 +1145,23 @@ def auth_me():
         "monthly_limit": PLAN_LIMITS.get(plan),
         # v0.19: créditos unificados (mensual restante + topups) para la pill del radar.
         "credits": credits_available(profile),
-        # Free: 5 "Hazlo mío" de por vida (no resetean).
-        "free_lifetime_limit": PLANS["free"]["free_lifetime"],
-        "free_lifetime_used": profile.get("free_lifetime_uses", 0),
+        # reverse-trial: estado del trial (Pro capado sin tarjeta) + free MENSUAL.
+        # trial_active = usable (dentro de ventana Y con tope disponible).
+        "trial_active": trial_usable(profile),
+        "trial_in_window": in_trial(profile),
+        "trial_ends_at": profile.get("trial_ends_at"),
+        "trial_days_left": trial_days_left(profile),
+        "trial_credit_cap": TRIAL_CREDIT_CAP,
+        "trial_credits_left": trial_credits_left(profile) if in_trial(profile) else 0,
+        "effective_plan": effective_plan(profile),
+        # watermark en exports: solo free post-trial (ni pago ni trial).
+        "watermark": not paid_features_active(profile, user),
+        # Free MENSUAL: guiones «Hazlo mío» (free_scripts_monthly) + análisis.
+        "free_lifetime_limit": PLANS["free"]["free_scripts_monthly"],
+        "free_lifetime_used": _free_month_used(profile, "free_lifetime_uses"),
         "free_lifetime_left": free_lifetime_left(profile),
-        "free_analysis_limit": PLANS["free"]["free_analysis_lifetime"],
-        "free_analysis_used": profile.get("free_analysis_uses", 0) or 0,
+        "free_analysis_limit": PLANS["free"]["free_analysis_monthly"],
+        "free_analysis_used": _free_month_used(profile, "free_analysis_uses"),
         "free_analysis_left": free_analysis_left(profile),
         "avatar_seed": profile.get("avatar_seed", "default"),
         "has_stripe_sub": bool(profile.get("stripe_subscription_id")),
@@ -1134,7 +1279,7 @@ def transcribe():
             if not ok:
                 return jsonify({"error": err_msg}), 429
         elif free_analysis_left(profile) > 0:
-            # FREE = cata: 3 análisis de POR VIDA (no diario, no resetea).
+            # FREE mensual (reverse-trial): 3 análisis/mes (reset por free_month_reset_at).
             pass
         elif profile["credits_cents"] >= 2 * COST_CENTS:
             pass
@@ -1147,7 +1292,7 @@ def transcribe():
                 "after_first_value": True,
             })
             return jsonify({
-                "error": "Has usado tus 3 análisis gratis. Sube a Creador para seguir "
+                "error": "Has usado tus 3 análisis gratis de este mes. Sube a Creador para seguir "
                          "analizando — o recarga créditos sin cambiar de plan."
             }), 402
 
@@ -1174,10 +1319,8 @@ def transcribe():
                 }).eq("id", user["id"]).execute()
                 charge = {"kind": "monthly"}
             elif free_analysis_left(fresh) > 0:
-                # FREE cata: consumir 1 análisis de por vida (re-check bajo lock).
-                db.table("profiles").update({
-                    "free_analysis_uses": (fresh.get("free_analysis_uses") or 0) + 1
-                }).eq("id", user["id"]).execute()
+                # FREE mensual: consumir 1 análisis del mes (reset+incremento bajo lock).
+                _free_month_consume(user["id"], fresh, "free_analysis_uses")
                 charge = {"kind": "free_analysis"}
             elif (fresh.get("credits_cents") or 0) >= 2 * COST_CENTS:
                 cost_cents = 2 * COST_CENTS
@@ -1188,7 +1331,7 @@ def transcribe():
             else:
                 # Carrera: cupo/saldo agotado entre el check y el lock.
                 return jsonify({
-                    "error": "Has usado tus 3 análisis gratis. Sube a Creador para seguir "
+                    "error": "Has usado tus 3 análisis gratis de este mes. Sube a Creador para seguir "
                              "analizando — o recarga créditos sin cambiar de plan."
                 }), 402
         finally:
@@ -2976,6 +3119,10 @@ def transform_hook():
 
     context = "\n".join(body) + ("\n" + closing if closing else "")
     user_msg = f"Guión actual:\n{context}\n\nTexto original del que salió:\n{original_text}"
+    # P1 idioma de salida: el hook regenerado sale en el idioma del usuario.
+    _u = current_user()
+    _out_lang = (data.get("language") or (get_profile(_u["id"]).get("lang") if _u else None) or "es")
+    user_msg += _out_lang_instruction(_out_lang)
 
     try:
         raw = _call_llm(_HOOK_REGEN_PROMPT, user_msg, temperature=0.9)
@@ -6301,6 +6448,7 @@ TRACKED_CREATORS_LIMITS = {
     "free":    {"enabled": True,  "base_slots_global": 1,  "per_project_slots": None, "requires_project": False},
     "pro":     {"enabled": True,  "base_slots_global": 1,  "per_project_slots": None, "requires_project": False},
     "creator": {"enabled": True,  "base_slots_global": 5,  "per_project_slots": None, "requires_project": False},
+    "estudio": {"enabled": True,  "base_slots_global": 15, "per_project_slots": None, "requires_project": False},
     "agency":  {"enabled": True,  "base_slots_global": 20, "per_project_slots": 10,    "requires_project": True},
 }
 
@@ -6449,7 +6597,9 @@ def suggest_competitors():
 def post_tracked_creator():
     user = current_user()
     profile = get_profile(user["id"])
-    plan = profile.get("plan", "free")
+    # reverse-trial: durante el trial, límites de competidores del plan EFECTIVO
+    # (creator → 5 slots). Al expirar → free (1 slot).
+    plan = effective_plan(profile)
     body = request.get_json() or {}
 
     # 1. Validar input
@@ -6612,7 +6762,7 @@ def post_tracked_creator():
 def get_tracked_creators():
     user = current_user()
     profile = get_profile(user["id"])
-    plan = profile.get("plan", "free")
+    plan = effective_plan(profile)   # reverse-trial: límites del plan efectivo
     project_id = request.args.get("project_id")
 
     limits = get_tracked_creators_limit(plan)
@@ -6709,6 +6859,10 @@ def generate_script_from_competitor_reel(reel_id: str):
     uid = user["id"]
     profile = get_profile(uid)
     plan = profile.get("plan", "free")
+    # P1 idioma de salida: el guion sale en el idioma del USUARIO (body.language →
+    # profiles.lang → es), no en el del competidor.
+    _body0 = request.get_json(silent=True) or {}
+    out_lang = (_body0.get("language") or profile.get("lang") or "es").lower()[:2]
 
     # 0. Guard anti doble-cobro: si ya hay un script de este (user, reel) en
     # los últimos 60s, redirigir al existente sin cobrar ni encolar. Cubre
@@ -6737,7 +6891,7 @@ def generate_script_from_competitor_reel(reel_id: str):
 
     # 1-2. Quién puede generar y cómo se paga este guion (sin cobrar todavía).
     #   paid  → cuenta contra su asignación mensual (monthly_usage).
-    #   free  → 5 "Hazlo mío" de por vida → luego topups (credits_cents) → muro.
+    #   free  → 2 guiones/mes (reverse-trial) → luego topups (credits_cents) → muro.
     SCRIPT_COST = COST_CENTS  # 18 cents
     SCRIPT_USAGE_UNITS = 1
     is_paid_unlimited = paid_features_active(profile, user)  # plan de pago REAL (no fantasma)
@@ -6746,18 +6900,15 @@ def generate_script_from_competitor_reel(reel_id: str):
         if free_lifetime_left(profile) > 0:
             use_free_lifetime = True
         elif (profile.get("credits_cents") or 0) < SCRIPT_COST:
-            # growth-1: paywall_shown. after_first_value=True — el free ya gastó su
-            # «Hazlo mío» de cata (1 de por vida) → el muro llega tras el primer éxito.
-            # Fix: el copy decía "5" pero la cata real es 1 (PLANS.free.free_lifetime=1).
-            _free_n = PLANS["free"].get("free_lifetime", 1)
+            # growth-1: paywall_shown. after_first_value=True — el free ya gastó sus
+            # guiones del mes (reverse-trial: 2/mes) → el muro llega tras el éxito.
+            _free_n = PLANS["free"].get("free_scripts_monthly", 2)
             track_event("paywall_shown", uid, {
                 "wall": "hazlo_mio", "plan": plan, "after_first_value": True,
             })
             return jsonify({
                 "error": "free_limit_reached",
-                "message": (f"Has usado tu «Hazlo mío» gratis. Sube a Creador para seguir creando."
-                            if _free_n == 1 else
-                            f"Has usado tus {_free_n} «Hazlo mío» gratis. Sube a Creador para seguir creando.")
+                "message": f"Has usado tus {_free_n} guiones gratis de este mes. Sube a Creador para seguir creando."
             }), 402
 
     # 3. Cargar reel + ownership.
@@ -6898,6 +7049,7 @@ def generate_script_from_competitor_reel(reel_id: str):
             caption=caption,
             transcript=transcript_text,
             today_str=today_str,
+            out_lang=out_lang,
         )
 
         # Resolver style/custom_prompt (mismo patrón que transcription_to_script).
@@ -6948,10 +7100,8 @@ def generate_script_from_competitor_reel(reel_id: str):
                 if free_lifetime_left(fresh) <= 0:   # re-check bajo lock
                     _release_lock()
                     return jsonify({"error": "free_limit_reached",
-                                    "message": "Has usado tus 5 «Hazlo mío» gratis. Sube a Creador para seguir creando."}), 402
-                db.table("profiles").update({
-                    "free_lifetime_uses": (fresh.get("free_lifetime_uses") or 0) + 1
-                }).eq("id", uid).execute()
+                                    "message": "Has usado tus guiones gratis de este mes. Sube a Creador para seguir creando."}), 402
+                _free_month_consume(uid, fresh, "free_lifetime_uses")   # reset+incremento mensual
             else:
                 if (fresh.get("credits_cents") or 0) < SCRIPT_COST:   # re-check bajo lock
                     _release_lock()
@@ -6975,8 +7125,11 @@ def generate_script_from_competitor_reel(reel_id: str):
                         "monthly_usage": max(0, (profile.get("monthly_usage") or 0))
                     }).eq("id", uid).execute()
                 elif use_free_lifetime:
+                    # Decrementa el contador del mes (robusto ante el reset mensual:
+                    # restaurar el valor absoluto previo podía borrar la cuota del mes nuevo).
+                    cur = (get_profile(uid).get("free_lifetime_uses") or 0)
                     db.table("profiles").update({
-                        "free_lifetime_uses": (profile.get("free_lifetime_uses") or 0)
+                        "free_lifetime_uses": max(0, cur - 1)
                     }).eq("id", uid).execute()
                 else:
                     db.table("profiles").update({
@@ -7111,7 +7264,7 @@ def generate_script_from_competitor_reel(reel_id: str):
 
     # Encolar task (no cobramos aquí — la task cobra al final si todo OK).
     from tasks import generate_script_competitor_task  # noqa: E402
-    async_result = generate_script_competitor_task.delay(reel["id"], uid, assistant_id)
+    async_result = generate_script_competitor_task.delay(reel["id"], uid, assistant_id, out_lang)
     # v0.15.8: anotar task_id en el lock (la task lo libera al final vía try/finally).
     try:
         (db.table("script_generation_locks")
@@ -7128,8 +7281,25 @@ def generate_script_from_competitor_reel(reel_id: str):
     }), 202
 
 
+_LANG_NAMES = {"es": "español", "en": "English", "pt": "português", "fr": "français",
+               "it": "italiano", "de": "Deutsch"}
+
+
+def _out_lang_instruction(lang: str | None) -> str:
+    """P1 idioma de salida: instrucción para que el guion salga en el idioma del
+    USUARIO (no el del competidor). Vacío si lang desconocido → comportamiento
+    previo (espejo del original)."""
+    name = _LANG_NAMES.get((lang or "").lower()[:2])
+    if not name:
+        return ""
+    return (f"\n\nIDIOMA DE SALIDA (no negociable): escribe TODO el guion (hook, "
+            f"desarrollo y cierre) en {name}, aunque el reel original esté en otro "
+            f"idioma. Mantén nombres propios, marcas y términos técnicos tal cual.")
+
+
 def _build_competitor_script_user_content(ig_username: str, caption: str,
-                                          transcript: str, today_str: str) -> str:
+                                          transcript: str, today_str: str,
+                                          out_lang: str | None = None) -> str:
     """v0.15.5: user_content para adapt_with_ai en el contexto generar-guion
     desde reel de competidor. Consolida lecciones v0.15.4.a-e: respeto a
     versiones/hechos del reel, fecha inyectada, mismo tema/distinta ejecución."""
@@ -7167,6 +7337,7 @@ def _build_competitor_script_user_content(ig_username: str, caption: str,
         f"guion final pierde la especificidad del original y podría valer para "
         f"cualquier nicho, está mal: reescríbelo.\n\n"
         f"Total: 100-140 palabras, mínimo 8 frases en body."
+        + _out_lang_instruction(out_lang)
     )
 
 
@@ -7610,6 +7781,81 @@ def _explosion_score(views, baseline):
     return round(float(views or 0) / float(baseline), 2)
 
 
+def _fmt_views(n):
+    n = int(n or 0)
+    if n >= 1_000_000:
+        return f"{n/1_000_000:.1f}M".replace(".0M", "M")
+    if n >= 1_000:
+        return f"{n/1_000:.1f}K".replace(".0K", "K")
+    return str(n)
+
+
+def _build_brand_report(user_id, project_id):
+    """Datos del informe white-label de una marca: top reels que petaron en su
+    nicho este mes (de sus competidores) + guiones listos del mes. Reusa el
+    scoring de explosión del Radar (_creator_view_baselines/_explosion_score)."""
+    since = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+    pid = project_id if (project_id and project_id != "default") else None
+
+    # 1. Competidores activos de la marca.
+    tq = (db.table("user_tracked_creators")
+            .select("creator_id")
+            .eq("user_id", user_id)
+            .is_("archived_at", "null"))
+    tq = tq.eq("project_id", pid) if pid else tq.is_("project_id", "null")
+    try:
+        tracked = tq.execute().data or []
+    except Exception:
+        tracked = []
+    cids = list({t["creator_id"] for t in tracked if t.get("creator_id")})
+
+    reels = []
+    if cids:
+        baselines = _creator_view_baselines(cids)
+        try:
+            rows = (db.table("creator_reels_global")
+                      .select("caption, views, creator_id, posted_at, "
+                              "creator:creators_global(ig_username)")
+                      .in_("creator_id", cids)
+                      .eq("is_archived", False)
+                      .gte("posted_at", since)
+                      .limit(200).execute()).data or []
+        except Exception:
+            rows = []
+        scored = []
+        for r in rows:
+            sc = _explosion_score(r.get("views"), baselines.get(r.get("creator_id")))
+            if sc is not None and sc >= 1.5:
+                scored.append({
+                    "username": (r.get("creator") or {}).get("ig_username") or "",
+                    "caption": (r.get("caption") or "").strip()[:160] or "—",
+                    "views": r.get("views") or 0,
+                    "views_fmt": _fmt_views(r.get("views")),
+                    "_score": sc,
+                    "explosion": (f"{sc:.0f}" if sc == int(sc) else f"{sc:.1f}"),
+                })
+        scored.sort(key=lambda x: x["_score"], reverse=True)
+        reels = scored[:5]
+
+    # 2. Guiones listos del mes (de la marca).
+    sq = (db.table("scripts").select("title, script, created_at")
+            .eq("user_id", user_id).gte("created_at", since))
+    if pid:
+        sq = sq.eq("project_id", pid)
+    try:
+        srows = sq.order("created_at", desc=True).limit(8).execute().data or []
+    except Exception:
+        srows = []
+    scripts = []
+    for s in srows:
+        sc = s.get("script") or {}
+        hook = sc.get("hook") if isinstance(sc, dict) else ""
+        scripts.append({"title": (s.get("title") or "Guion").strip()[:100],
+                        "hook": (hook or "").strip()[:160]})
+
+    return {"reels": reels, "scripts": scripts, "competitors": len(cids)}
+
+
 @app.route("/api/tracked-creators/reels", methods=["GET"])
 @require_auth
 def get_tracked_creators_reels():
@@ -7728,6 +7974,81 @@ def get_tracked_creators_reels():
     has_more = (offset + len(reels)) < total
 
     return jsonify({"reels": reels, "total": total, "has_more": has_more})
+
+
+@app.route("/brands/<project_id>/report", methods=["GET"])
+@require_auth
+def brand_report(project_id):
+    """Informe white-label PDF (HTML print-ready) por marca — entregable estrella
+    de Agencia. 'Lo que funciona en tu nicho este mes + guiones listos'. Logo y
+    nombre configurables (agencia / cliente / sin marca ReelScript) vía query.
+    Agency-only. Billing per-brand NO implementado (el generador sí)."""
+    user = current_user()
+    profile = get_profile(user["id"])
+    plan = profile.get("plan", "free")
+    is_admin = user.get("email", "").lower() in UNLIMITED_EMAILS
+    if not (is_admin or (plan == "agency" and paid_features_active(profile, user))):
+        return jsonify({"error": "El informe white-label es una función de Agencia."}), 403
+
+    # Ownership de la marca (project) — salvo "default" (marca única).
+    if project_id and project_id != "default":
+        try:
+            proj = (db.table("projects").select("id, name")
+                      .eq("id", project_id).eq("user_id", user["id"]).single().execute())
+            if not proj.data:
+                return abort(404)
+            default_label = proj.data.get("name") or "Tu marca"
+        except Exception:
+            return abort(404)
+    else:
+        default_label = "Tu marca"
+
+    data = _build_brand_report(user["id"], project_id)
+
+    lang = (request.args.get("lang") or _resolve_lang() or "es")[:2]
+    if lang not in ("es", "en"):
+        lang = "es"
+    # Branding configurable: label (nombre cliente/agencia), logo (URL), white_label.
+    brand_label = (request.args.get("label") or default_label).strip()[:60]
+    logo_url = (request.args.get("logo") or "").strip()[:500] or None
+    if logo_url and not logo_url.startswith(("http://", "https://", "/")):
+        logo_url = None   # solo URLs (evita inyección)
+    white_label = request.args.get("white_label") in ("1", "true", "yes")
+
+    now = datetime.now(timezone.utc)
+    months_es = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto",
+                 "septiembre","octubre","noviembre","diciembre"]
+    months_en = ["January","February","March","April","May","June","July","August",
+                 "September","October","November","December"]
+    period = f"{(months_es if lang=='es' else months_en)[now.month-1]} {now.year}"
+    generated_on = now.strftime("%d/%m/%Y")
+
+    T = {
+        "es": {"report": "Informe de marca", "title": "Lo que funciona en tu nicho",
+               "subtitle": "Los reels que petaron entre tus competidores este mes y los guiones que ya tienes listos para grabar.",
+               "kpi_reels": "reels que petaron", "kpi_scripts": "guiones listos",
+               "kpi_competitors": "competidores vigilados",
+               "sec_reels": "Lo que petó en tu nicho", "sec_scripts": "Tus guiones listos",
+               "over_avg": "sobre su media", "views": "visitas",
+               "empty_reels": "Aún sin reels explosivos este mes. Vuelve cuando tus competidores publiquen.",
+               "empty_scripts": "Aún no hay guiones de este mes para esta marca.",
+               "made_with": "Hecho con ReelScript", "download": "Descargar PDF"},
+        "en": {"report": "Brand report", "title": "What's working in your niche",
+               "subtitle": "The reels that blew up among your competitors this month and the scripts you already have ready to record.",
+               "kpi_reels": "reels that blew up", "kpi_scripts": "scripts ready",
+               "kpi_competitors": "competitors watched",
+               "sec_reels": "What blew up in your niche", "sec_scripts": "Your ready scripts",
+               "over_avg": "over their avg", "views": "views",
+               "empty_reels": "No explosive reels this month yet. Check back when your competitors post.",
+               "empty_scripts": "No scripts for this brand this month yet.",
+               "made_with": "Made with ReelScript", "download": "Download PDF"},
+    }[lang]
+
+    return render_template("brand_report.html",
+                           lang=lang, t=T, brand_label=brand_label, logo_url=logo_url,
+                           white_label=white_label, period=period, generated_on=generated_on,
+                           reels=data["reels"], scripts=data["scripts"],
+                           competitors=data["competitors"])
 
 
 @app.route("/api/radar/stats", methods=["GET"])
@@ -8358,7 +8679,16 @@ def _charge_units_locked(uid, units, user):
                 }), 402), (lambda: None), {}
             updates = {}
             if free_used:
-                updates["free_lifetime_uses"] = (fresh.get("free_lifetime_uses") or 0) + free_used
+                # reverse-trial: reset mensual si el boundary ya pasó, antes de sumar.
+                now = datetime.now(timezone.utc)
+                reset_dt = _parse_ts(fresh.get("free_month_reset_at"))
+                if reset_dt is None or now >= reset_dt:
+                    updates["free_analysis_uses"] = 0
+                    updates["free_month_reset_at"] = _next_month_boundary(now).isoformat()
+                    base = 0
+                else:
+                    base = fresh.get("free_lifetime_uses") or 0
+                updates["free_lifetime_uses"] = base + free_used
             if credits_needed:
                 updates["credits_cents"] = (fresh.get("credits_cents") or 0) - credits_needed
             if updates:
