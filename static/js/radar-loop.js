@@ -413,11 +413,50 @@
       '<div class="onb-spin"><span class="mini-spin" style="width:26px;height:26px;border-width:3px"></span></div>'+
     '</div>';
   }
+  // A4: paso ligero de TONO tras seguir competidores. Una primaria: elegir un
+  // tono (1 clic) — así el primer «Hazlo mío» ya sale con carácter. Secundario:
+  // entrenar la voz con tus reels (más adelante, en Cerebro).
+  function onbStepToneHTML(){
+    var tones=(S.user.presetTones&&S.user.presetTones.length)?S.user.presetTones:[
+      {key:"viral",label:"Polémico/Viral"},{key:"educacional",label:"Educacional"},
+      {key:"divertido",label:"Cercano/Divertido"},{key:"informativo",label:"Informativo"},
+      {key:"storytelling",label:"Storytelling"}];
+    var cur=S.user.presetTone||"viral";
+    var chips=tones.map(function(t){
+      return '<button class="tone-chip'+(t.key===cur?" on":"")+'" data-act="onb-tone" data-k="'+ESC(t.key)+'">'+ESC(t.label)+'</button>';
+    }).join("");
+    return '<div class="onb-step">'+
+      '<div class="onb-eyebrow">'+IC.spark+' Último paso</div>'+
+      '<h2 class="onb-h">¿Con qué tono escribes?</h2>'+
+      '<p class="onb-sub">Elige una personalidad para tus guiones — tu primer «Hazlo mío» ya saldrá con carácter, no genérico. Lo cambias cuando quieras.</p>'+
+      '<div class="tone-chips" style="margin-bottom:20px">'+chips+'</div>'+
+      '<button class="btn btn-lg btn-primary" data-act="onb-tone-go" data-k="'+ESC(cur)+'">'+IC.bolt+' Empezar con este tono</button>'+
+      '<button class="onb-skip" data-act="onb-voice">O entrena tu voz con tus reels (en el Cerebro) →</button>'+
+    '</div>';
+  }
   function onboardingHTML(){
     var inner = S.onb.step==="pick" ? onbStepPickHTML()
+              : S.onb.step==="tone" ? onbStepToneHTML()
               : S.onb.step==="done" ? onbStepDoneHTML()
               : onbStepAskHTML();
     return '<section class="onb">'+inner+'</section>';
+  }
+  // A4: fija el tono elegido y cierra el onboarding (→ done + carga de reels).
+  function onbPickTone(k){
+    if(k){ var prev=S.user.presetTone; S.user.presetTone=k; if(!isDemo()) apiPost("/api/voice/tone",{tone:k}).then(function(r){ if(!r.ok) S.user.presetTone=prev; }); }
+    render();
+  }
+  function onbFinish(){
+    S.onb.step="done"; render();
+    var tries=0;
+    (function poll(){
+      if(S.onb.step!=="done") return;
+      _refreshReelsLight(function(){
+        if((S.reels||[]).length>0){ S.onb.skipped=true; render(); return; }
+        if(++tries>20) return;
+        setTimeout(poll, 5000);
+      });
+    })();
   }
   function onbSuggest(){
     var inp=document.getElementById("rsOnbHandle");
@@ -456,20 +495,10 @@
       var ok=res.filter(Boolean).length;
       S.onb.busy=false;
       if(!ok){ S.onb.error="No pude seguir a esos competidores. Prueba a añadir uno a mano."; return render(); }
-      S.onb.step="done"; render();
+      // A4: tras seguir competidores → paso ligero de TONO (el scrape sigue en
+      // background; los reels se cargan al cerrar el onboarding, onbFinish).
+      S.onb.step="tone"; render();
       showToast("Radar activado con "+ok+" competidor"+(ok===1?"":"es")+". Trayendo sus reels…");
-      // El scrape es async (~1 min). Refrescamos en LIGERO (sin el skeleton de
-      // loadBrandData, que reescribe el root y se llevaría el toast + el paso
-      // «done» por delante). Cuando lleguen reels el empty-state desaparece solo.
-      var tries=0;
-      (function poll(){
-        if(S.onb.step!=="done") return;             // el user navegó a otro sitio
-        _refreshReelsLight(function(){
-          if((S.reels||[]).length>0){ S.onb.skipped=true; render(); return; }   // reels → fin del onboarding
-          if(++tries>20) return;                     // ~100s techo; el digest/refresco lo cubrirá
-          setTimeout(poll, 5000);
-        });
-      })();
     });
   }
 
@@ -2850,6 +2879,9 @@
     if(act==="onb-suggest") return onbSuggest();
     if(act==="onb-toggle") return onbToggle(btn.getAttribute("data-h"));
     if(act==="onb-follow") return onbFollow();
+    if(act==="onb-tone") return onbPickTone(k);                 // A4: elige tono (resalta)
+    if(act==="onb-tone-go"){ onbPickTone(S.user.presetTone||k); onbFinish(); return showToast("Listo. Tu primer «Hazlo mío» saldrá con carácter."); }
+    if(act==="onb-voice"){ onbFinish(); switchTab("brain"); setTimeout(function(){ var ta=document.getElementById("rsVoiceUrls"); if(ta){ ta.focus(); if(ta.scrollIntoView) ta.scrollIntoView({block:"center",behavior:"smooth"}); } },120); return; }
     if(act==="onb-back"){ S.onb.step="ask"; S.onb.error=null; return render(); }
     if(act==="onb-manual"){ S.onb.skipped=true; render(); if(typeof window.openAddCompetitorModal==="function") window.openAddCompetitorModal(); return; }
     // Reusa el modal legacy global (index.html); al añadir, submitAddCompetitor
