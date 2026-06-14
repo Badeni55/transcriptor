@@ -10045,6 +10045,13 @@
 
     /* ══ v0.18.x CEREBRO — base de conocimiento de la marca ══ */
     .rs .brain-section-t { font-size:12px; text-transform:uppercase; letter-spacing:.1em; font-weight:700; color:var(--text-tertiary); margin:24px 0 12px; }
+    /* A1: selector de tono preset */
+    .rs .tone-pick { margin-bottom:6px; }
+    .rs .tone-chips { display:flex; flex-wrap:wrap; gap:8px; }
+    .rs .tone-chip { font-size:13px; font-weight:600; padding:8px 14px; border-radius:99px; border:1px solid var(--border-default); background:var(--surface-raised); color:var(--text-secondary); cursor:pointer; transition:all .15s ease; min-height:38px; }
+    .rs .tone-chip:hover { border-color:var(--brand-400); color:var(--text-primary); }
+    .rs .tone-chip.on { background:color-mix(in srgb, var(--brand-500) 16%, transparent); border-color:var(--brand-500); color:var(--brand-200); }
+    .rs .tone-note { font-size:12.5px; color:var(--text-tertiary); margin-top:10px; }
     .rs .brain-tag { font-size:10px; background:color-mix(in srgb, var(--brand-500) 16%, transparent); color:var(--brand-300); padding:2px 7px; border-radius:6px; letter-spacing:.04em; margin-left:6px; }
     .rs .brain-hero { display:flex; gap:18px; align-items:center; padding:22px; border:1px solid color-mix(in srgb, var(--brand-500) 28%, transparent); border-radius:20px; background:linear-gradient(135deg, color-mix(in srgb, var(--brand-500) 11%, var(--surface-raised)), var(--surface-raised)); }
     .rs--mobile .brain-hero { flex-direction:column; align-items:flex-start; }

@@ -610,7 +610,7 @@ def validate_adapt(data):
     if len(text) > 10000:
         return "Text too long (max 10,000 characters)"
     style = (data.get("style") or "").strip()
-    valid = {"viral", "divertido", "linkedin", "storytelling", "hooks", "custom"}
+    valid = {"viral", "divertido", "linkedin", "storytelling", "hooks", "custom", "educacional", "informativo"}
     if style and style not in valid and not data.get("assistant_id"):
         return f"Invalid style"
     if len(data.get("custom_prompt") or "") > 2000:
@@ -1165,6 +1165,10 @@ def auth_me():
         "free_analysis_left": free_analysis_left(profile),
         "avatar_seed": profile.get("avatar_seed", "default"),
         "has_stripe_sub": bool(profile.get("stripe_subscription_id")),
+        # A1: tono preset (personalidad del 1er guion sin voz) + opciones + si hay voz.
+        "preset_tone": (profile.get("default_idea_assistant") if profile.get("default_idea_assistant") in PRESET_TONE_KEYS else DEFAULT_PRESET_TONE),
+        "preset_tones": PRESET_TONES,
+        "has_voice": bool(get_voice_profile(user["id"])),
     })
 
 
@@ -2215,6 +2219,34 @@ STYLE_PROMPTS = {
         + _JSON_SCRIPT_SCHEMA
     ),
 
+    "educacional": (
+        "Eres un guionista de reels. Reescribe este guión para ENSEÑAR un concepto concreto y que se entienda a la primera. "
+        "Reglas: el hook plantea el problema o promete lo que el viewer va a SABER hacer al final — específico, sin 'hola' ni contexto. "
+        "El desarrollo explica paso a paso, cada frase aporta un dato o un porqué, nunca relleno. "
+        "Usa un ejemplo concreto del material fuente para aterrizar la idea — nada abstracto. "
+        "Frases de máximo 15 palabras, claras, sin jerga innecesaria; si hay un término técnico, se explica al usarlo. "
+        "Cierre que fija lo aprendido en una frase memorizable, sin CTA explícito. "
+        "Nunca uses: 'es fundamental entender que', 'en el panorama actual', 'descubre cómo', motivacional ni '¿sabías que…?'. "
+        "El resultado se lee frase por frase con viñetas (▸). "
+        "Regla de especificidad: conserva datos, cifras, nombres y el ángulo concreto del material fuente; un guion que vale para cualquier nicho es fallido. "
+        "Output mínimo: 6-8 frases en body, 100+ palabras totales en el guion. "
+        + _JSON_SCRIPT_SCHEMA
+    ),
+
+    "informativo": (
+        "Eres un guionista de reels. Reescribe este guión en tono INFORMATIVO y DIRECTO: máxima densidad de información, cero relleno. "
+        "Reglas: el hook es el dato o la conclusión más fuerte, sin rodeos ni preámbulo. "
+        "El desarrollo encadena hechos/datos concretos en orden lógico — cada frase es información que el viewer no tenía. "
+        "Nada de opinión vacía, hipérbole ni adornos; tono sobrio y seguro, como quien informa de algo que domina. "
+        "Frases cortas (máx 15 palabras), afirmativas, sin muletillas ni emojis. "
+        "Cierre con el dato o la implicación que el viewer se lleva, sin CTA ni moraleja. "
+        "Nunca uses: 'increíble', 'brutal', 'os va a flipar', 'en el panorama actual', 'es fundamental', motivacional. "
+        "El resultado se lee frase por frase con viñetas (▸). "
+        "Regla de especificidad: conserva datos, cifras, nombres y el ángulo concreto del material fuente; sin ellos no informa. "
+        "Output mínimo: 6-8 frases en body, 100+ palabras totales en el guion. "
+        + _JSON_SCRIPT_SCHEMA
+    ),
+
     "hooks": (
         "Eres un guionista de reels. Dame exactamente 5 hooks para este guión, uno de cada tipo. "
         "Reglas para todos: tienen que incluir términos específicos del nicho para filtrar a la audiencia correcta desde el primer segundo. "
@@ -2254,7 +2286,21 @@ _ASSISTANT_BUILT_IN_LABELS = {
     "storytelling": "Storytelling",
     "story": "Storytelling",
     "linkedin": "LinkedIn",
+    "educacional": "Educacional",
+    "informativo": "Informativo",
 }
+
+# Tonos PRESET elegibles (personalidad del primer guion cuando aún no hay voz
+# personal entrenada). key = STYLE_PROMPTS · label = etiqueta UI. DEFAULT = viral.
+PRESET_TONES = [
+    {"key": "viral",        "label": "Polémico/Viral"},
+    {"key": "educacional",  "label": "Educacional"},
+    {"key": "divertido",    "label": "Cercano/Divertido"},
+    {"key": "informativo",  "label": "Informativo"},
+    {"key": "storytelling", "label": "Storytelling"},
+]
+PRESET_TONE_KEYS = {t["key"] for t in PRESET_TONES}
+DEFAULT_PRESET_TONE = "viral"
 
 
 def _resolve_assistant_name(payload, user_id, supa):
@@ -4509,7 +4555,7 @@ def regenerate_idea(idea_id):
 
 # v0.14.30: linkedin queda fuera del set para to-script (no encaja con reel
 # 30-45s). El estilo sigue disponible vía /adapt directo para retrocompat.
-_BUILTIN_SCRIPT_STYLES = {"viral", "divertido", "storytelling", "hooks"}
+_BUILTIN_SCRIPT_STYLES = {"viral", "divertido", "storytelling", "hooks", "educacional", "informativo"}
 
 # v0.15.7.b: umbral mínimo de chars en custom_prompt antes de invocar al LLM.
 # Custom prompts demasiado cortos ("instruccion base", 16 chars) provocan que
@@ -5219,6 +5265,21 @@ def api_ideas_save():
         pass
 
     return jsonify(row.data[0] if row.data else {"ok": True})
+
+
+@app.route("/api/voice/tone", methods=["POST"])
+@require_auth
+def set_preset_tone():
+    """Bloque A1: fija el TONO preset del usuario (personalidad del primer guion
+    cuando aún no hay voz personal). Se guarda en default_idea_assistant — que YA
+    es el estilo por defecto de toda la generación. Solo acepta tonos válidos."""
+    user = current_user()
+    body = request.get_json() or {}
+    tone = (body.get("tone") or "").strip().lower()
+    if tone not in PRESET_TONE_KEYS:
+        return jsonify({"error": "invalid_tone", "options": [t["key"] for t in PRESET_TONES]}), 400
+    db.table("profiles").update({"default_idea_assistant": tone}).eq("id", user["id"]).execute()
+    return jsonify({"ok": True, "tone": tone})
 
 
 @app.route("/me/preferences")

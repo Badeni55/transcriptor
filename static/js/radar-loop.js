@@ -117,7 +117,7 @@
   /* ── estado ──────────────────────────────────────────────────── */
   var S = {
     device:"desktop", _wired:false,
-    user:{ name:"", handle:"", email:"", credits:0, streak:0, plan:"", freeLeft:0 },
+    user:{ name:"", handle:"", email:"", credits:0, streak:0, plan:"", freeLeft:0, presetTone:"viral", presetTones:[], hasVoice:false },
     brands:[], brandId:null,
     plan:"creador",                     // creador | agencia (de /auth/me; en demo, toggle)
     scope:"brand",                      // brand (radar de 1 marca) | portfolio (todas — solo agencia)
@@ -1143,6 +1143,25 @@
     };
   }
   // Tarjeta de CAPTURA del moat: el creador pega 1-2 reels suyos → aprendemos su voz.
+  /* A1: selector de TONO preset. Define la personalidad del guion cuando aún no
+     hay voz personal entrenada. Si ya hay voz, esta MANDA (el tono queda de base);
+     se indica para no confundir. Persiste en /api/voice/tone (default de generación). */
+  function toneSelectorHTML(){
+    var tones=(S.user.presetTones&&S.user.presetTones.length)?S.user.presetTones:[
+      {key:"viral",label:"Polémico/Viral"},{key:"educacional",label:"Educacional"},
+      {key:"divertido",label:"Cercano/Divertido"},{key:"informativo",label:"Informativo"},
+      {key:"storytelling",label:"Storytelling"}];
+    var cur=S.user.presetTone||"viral";
+    var chips=tones.map(function(t){
+      return '<button class="tone-chip'+(t.key===cur?" on":"")+'" data-act="set-tone" data-k="'+ESC(t.key)+'" aria-pressed="'+(t.key===cur?"true":"false")+'">'+ESC(t.label)+'</button>';
+    }).join("");
+    var note=hasRealVoice()
+      ? 'Tu voz entrenada manda en cada guion; el tono es la base por si refrescas la voz.'
+      : 'Tu próximo «Hazlo mío» saldrá con este tono — con carácter, no genérico. Entrena tu voz abajo para que suene a ti.';
+    return '<div class="brain-section-t">Tu tono</div>'+
+      '<div class="tone-pick"><div class="tone-chips">'+chips+'</div>'+
+      '<p class="tone-note">'+note+'</p></div>';
+  }
   function voiceCaptureHTML(){
     // Voz AUTO: si el user tiene reels publicados (métricas), la vía destacada
     // es derivarla de ellos — sin pegar nada. El coste (transcripciones que
@@ -1287,6 +1306,8 @@
           '<div class="brain-why">A más nivel, menos retoques: tu voz y tus reels ganadores entran en el prompt de cada «Hazlo mío».</div>'+
         '</div>'+
       '</div>'+
+      // A1: selector de TONO preset (personalidad cuando aún no hay voz personal)
+      toneSelectorHTML()+
       // CAPTURA del moat (si aún no hay voz) o EVIDENCIA real (si ya aprendió)
       (hasRealVoice() ? voiceEvidenceHTML() : voiceCaptureHTML())+
       // fuentes del conocimiento
@@ -2812,6 +2833,13 @@
       setTimeout(function(){ var ta=document.getElementById("rsVoiceText"); if(ta){ ta.focus(); if(ta.scrollIntoView) ta.scrollIntoView({block:"center",behavior:"smooth"}); } },80);
       return;
     }
+    if(act==="set-tone"){
+      var prev=S.user.presetTone; S.user.presetTone=k; render();
+      if(!isDemo()){ apiPost("/api/voice/tone",{tone:k}).then(function(r){ if(!r.ok){ S.user.presetTone=prev; render(); showError("No pude guardar el tono."); } }); }
+      var lbl=((S.user.presetTones||[]).filter(function(t){return t.key===k;})[0]||{}).label||k;
+      showToast("Tono: "+lbl+(hasRealVoice()?" (tu voz entrenada sigue mandando).":". Tu próximo «Hazlo mío» saldrá así."));
+      return;
+    }
     if(act==="voice-onboard") return onboardVoice();
     if(act==="voice-auto") return voiceAutoDerive();
     if(act==="voice-refine") return refineVoice();
@@ -3050,6 +3078,10 @@
       // Plan crudo de /auth/me (puede ser "free") + guiones gratis del mes restantes.
       S.user.plan=(me.plan||(me.user&&me.user.plan))||"";
       if(me.free_lifetime_left!=null) S.user.freeLeft=me.free_lifetime_left;
+      // A1: tono preset (personalidad del 1er guion sin voz personal) + opciones.
+      S.user.presetTone=me.preset_tone||"viral";
+      S.user.presetTones=Array.isArray(me.preset_tones)&&me.preset_tones.length?me.preset_tones:[{key:"viral",label:"Polémico/Viral"},{key:"educacional",label:"Educacional"},{key:"divertido",label:"Cercano/Divertido"},{key:"informativo",label:"Informativo"},{key:"storytelling",label:"Storytelling"}];
+      S.user.hasVoice=!!me.has_voice;
       // reverse-trial: estado del trial (Pro capado sin tarjeta) + watermark en exports (free post-trial).
       S.user.trialActive=!!me.trial_active;
       S.user.trialDaysLeft=me.trial_days_left||0;
