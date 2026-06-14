@@ -265,8 +265,12 @@
   function railHTML(){
     // Ideas ya no es un tab suelto: la "Fábrica de ideas" vive dentro de Radar
     // (dashboardHTML → ideasZoneHTML), bajo las señales del día.
+    // TODO(agencia): reactivar el tab "Equipo" cuando se complete la propagación
+    // de ownership del miembro a scripts/radar/tracked (workspace_owner_id). De
+    // momento oculto del rail; el backend (invite/join/roles) y teamHTML se quedan.
+    //   ...,["team",IC.users,"Equipo"]
     var navTabs = isAgency()
-      ? [["portfolio",IC.layers,"Portfolio"],["dashboard",IC.grid,"Radar"],["guiones",IC.doc,"Guiones"],["metrics",IC.chart,"Métricas"],["brain",IC.brain,"Cerebro"],["team",IC.users,"Equipo"]]
+      ? [["portfolio",IC.layers,"Portfolio"],["dashboard",IC.grid,"Radar"],["guiones",IC.doc,"Guiones"],["metrics",IC.chart,"Métricas"],["brain",IC.brain,"Cerebro"]]
       : [["dashboard",IC.grid,"Radar"],["guiones",IC.doc,"Guiones"],["metrics",IC.chart,"Métricas"],["brain",IC.brain,"Cerebro"]];
     return '<nav class="rail">'+
       '<img class="rail-logo" src="/static/img/branding/isotipo-128.png" srcset="/static/img/branding/isotipo-128.png 1x, /static/img/branding/isotipo-256.png 2x" alt="Reelscript">'+
@@ -1547,6 +1551,9 @@
     // T1: "ideas" dejó de ser una vista propia — la Fábrica de ideas vive dentro
     // de Radar. Normalizamos cualquier ruta/deep-link heredado (/profile/ideas, ?t=ideas).
     if(S.tab==="ideas") S.tab="dashboard";
+    // Equipo oculto temporalmente (ver TODO en railHTML): cualquier deep-link a
+    // team se normaliza al Radar/Portfolio para no dejar una vista huérfana.
+    if(S.tab==="team") S.tab=isAgency()?"portfolio":"dashboard";
     var html='';
     html+=railHTML()+'<div class="work">'+cmdHTML();
     if(S.tab==="portfolio") html+=(isAgency()?portfolioHTML():dashboardHTML());
@@ -3023,8 +3030,9 @@
     if(seg==="transc"||seg==="transcriptions"){ S._pendingLegacy="transc"; return; }
     if(seg==="settings"){ S._pendingLegacy="settings"; return; }
     // Cualquier /profile/<x> con sección → tab del rail. Sin equivalente → "dashboard" (Radar).
+    // team: oculto temporalmente → cae al default (render lo re-normaliza también).
     S.tab = ({scripts:"guiones", guiones:"guiones", ideas:"dashboard", metrics:"metrics",
-              brain:"brain", cerebro:"brain", portfolio:"portfolio", team:"team",
+              brain:"brain", cerebro:"brain", portfolio:"portfolio",
               radar:"dashboard", overview:"dashboard", dashboard:"dashboard"})[seg] || "dashboard";
   }
   function loadAll(){
