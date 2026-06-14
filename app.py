@@ -3074,6 +3074,121 @@ def api_voice_auto_derive():
     })
 
 
+_VOICE_URL_MAX = 6   # máx URLs por entreno (muestra de sobra; controla coste)
+
+
+def _is_reel_url(url: str) -> bool:
+    """True si la URL apunta a un reel/vídeo concreto (no a un perfil)."""
+    u = (url or "").lower()
+    if detect_platform(url) == "otro":
+        return False
+    if "tiktok.com" in u:
+        return ("/video/" in u) or ("vm.tiktok" in u) or ("vt.tiktok" in u)
+    # instagram: reel/post/tv concreto (no el perfil suelto)
+    return ("/reel/" in u) or ("/reels/" in u) or ("/p/" in u) or ("/tv/" in u)
+
+
+def _parse_voice_urls(blob):
+    """Extrae URLs de reel válidas de un texto/array. Devuelve (validas, perfil_detectado)."""
+    import re as _re
+    if isinstance(blob, list):
+        cand = blob
+    else:
+        cand = _re.findall(r"https?://\S+", str(blob or ""))
+    out, seen, had_profile = [], set(), False
+    for raw in cand:
+        url = raw.strip().strip('",)')
+        if not url or url in seen:
+            continue
+        if _is_reel_url(url):
+            seen.add(url)
+            out.append(url)
+        elif detect_platform(url) != "otro":
+            had_profile = True   # IG/TikTok pero perfil, no reel
+        if len(out) >= _VOICE_URL_MAX:
+            break
+    return out, had_profile
+
+
+@app.route("/api/voice/from-urls", methods=["POST"])
+@limiter.limit("3 per minute;10 per hour")
+@require_auth
+def api_voice_from_urls():
+    """Bloque A3: entrenar la voz pegando URLs de TUS reels. Transcribe cada uno
+    (reusa _transcribe_reel — cobra como una transcripción normal; el front avisa
+    del coste antes) y deriva la voz con derive_voice_profile. Nada de pegar
+    transcripciones a mano."""
+    if not (OPENROUTER_API_KEY or GROQ_API_KEY) or not GROQ_API_KEY:
+        return jsonify({"error": "Servicio no disponible"}), 503
+    user = current_user()
+    uid = user["id"]
+    body = request.get_json(silent=True) or {}
+    project_id = body.get("project_id") or None
+    urls, had_profile = _parse_voice_urls(body.get("urls") if body.get("urls") is not None else body.get("text"))
+    if not urls:
+        msg = ("Pega URLs de TUS reels concretos (no el perfil). O conecta tu Instagram en Métricas y los leo solos."
+               if had_profile else
+               "Pega 1-5 URLs de reels tuyos (Instagram/TikTok) para aprender tu voz.")
+        return jsonify({"error": "no_urls", "message": msg}), 400
+
+    is_unlimited = user.get("email", "").lower() in UNLIMITED_EMAILS
+    texts, charged = [], 0
+    for url in urls:
+        cached = _reel_transcript_cached(uid, url)
+        if cached:
+            texts.append(cached)
+            continue
+        # Cobro por transcripción — mismo patrón que voice/auto-derive y metrics.
+        if not is_unlimited:
+            profile = get_profile(uid)
+            plan = profile.get("plan", "free")
+            if paid_features_active(profile, user):
+                ok, _e = check_monthly_limit(profile)
+                if not ok:
+                    break
+            elif (profile.get("credits_cents") or 0) >= COST_CENTS:
+                pass
+            elif (profile.get("free_used_today") or 0) < FREE_DAILY_USER:
+                pass
+            else:
+                break   # sin presupuesto → deriva con lo que haya
+        txt = _transcribe_reel(uid, url)
+        if not (txt or "").strip():
+            continue
+        if not is_unlimited:
+            profile = get_profile(uid)
+            if paid_features_active(profile, user):
+                db.table("profiles").update({"monthly_usage": (profile.get("monthly_usage") or 0) + 1}).eq("id", uid).execute()
+            elif (profile.get("credits_cents") or 0) >= COST_CENTS:
+                db.table("profiles").update({"credits_cents": profile["credits_cents"] - COST_CENTS}).eq("id", uid).execute()
+            else:
+                db.table("profiles").update({"free_used_today": (profile.get("free_used_today") or 0) + 1}).eq("id", uid).execute()
+        charged += 1
+        texts.append(txt)
+
+    if not texts:
+        return jsonify({"error": "no_transcripts",
+                        "message": "No pude transcribir esos reels (privados o no disponibles). Prueba con otros."}), 502
+
+    vp = derive_voice_profile(texts[:_VOICE_URL_MAX])
+    if not vp:
+        return jsonify({"error": "derive_failed",
+                        "message": "No pude derivar tu voz con esta muestra. Prueba con más reels."}), 502
+    raw = vp.get("raw") if isinstance(vp.get("raw"), dict) else dict(vp)
+    raw["samples"] = texts[:_VOICE_URL_MAX]
+    raw["from_urls"] = True
+    vp["raw"] = raw
+    save_voice_profile(uid, vp, brand_id=project_id)
+    if project_id and not get_voice_profile(uid):
+        save_voice_profile(uid, vp)
+    return jsonify({
+        "ok": True, "confidence": vp.get("confidence"),
+        "source_count": len(texts[:_VOICE_URL_MAX]), "transcribed_now": charged,
+        "tone": vp.get("tone"), "phrases": vp.get("phrases") or [],
+        "evidence": vp.get("evidence") or [],
+    })
+
+
 @app.route("/adapt", methods=["POST"])
 @limiter.limit("20 per minute;100 per hour")
 def adapt():

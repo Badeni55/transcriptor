@@ -1177,10 +1177,39 @@
     return '<div class="brain-section-t">Enséñame tu voz</div>'+
       '<div class="voice-capture">'+
         auto+
-        '<p class="vc-lead">'+(nPub>0?'O pega':'Pega')+' lo que dices en <b>1-2 reels TUYOS</b>. Aprendo a sonar como tú — y tu próximo «Hazlo mío» ya saldrá con tu voz, no genérico.</p>'+
-        '<textarea class="vc-ta" id="rsVoiceText" rows="5" placeholder="Pega aquí la transcripción de tus reels (lo que dices)…"></textarea>'+
-        '<button class="btn btn-md '+(nPub>0?'btn-secondary':'btn-primary')+'" data-act="voice-onboard">'+IC.spark+' Aprender mi voz</button>'+
+        '<p class="vc-lead">'+(nPub>0?'O pega':'Pega')+' las <b>URLs de 1-5 reels TUYOS</b> (Instagram/TikTok) y yo los transcribo y aprendo tu voz. '+
+          'Tu próximo «Hazlo mío» saldrá sonando a ti, no genérico.</p>'+
+        '<textarea class="vc-ta" id="rsVoiceUrls" rows="4" placeholder="https://www.instagram.com/reel/…&#10;https://www.tiktok.com/@tu/video/…"></textarea>'+
+        '<button class="btn btn-md '+(nPub>0?'btn-secondary':'btn-primary')+'" data-act="voice-from-urls">'+IC.spark+' Aprender mi voz de estos reels</button>'+
+        '<p class="vc-hint">Transcribir cada reel cuesta 1 crédito — te lo confirmo antes. Nada de pegar texto a mano.</p>'+
       '</div>';
+  }
+  // A3: entrenar voz pegando URLs de reels propios. Confirma el coste ANTES.
+  function voiceFromUrls(){
+    var ta=document.getElementById("rsVoiceUrls"); var blob=ta?ta.value:"";
+    var urls=(blob.match(/https?:\/\/\S+/g)||[]).filter(function(u){ return /instagram\.com|tiktok\.com/.test(u); });
+    var reels=urls.filter(function(u){ return /\/reel\/|\/reels\/|\/p\/|\/tv\/|\/video\/|vm\.tiktok|vt\.tiktok/.test(u); });
+    if(!reels.length){ return showError("Pega URLs de reels concretos tuyos (no el perfil). O conecta tu Instagram en Métricas."); }
+    var n=Math.min(reels.length,6);
+    if(isDemo()){
+      S.voice={ has_profile:true, tone:"Directo, sin postureo.", phrases:["te lo cuento porque","paso uno… paso dos"], structure:"hook → pasos → cierre", avg_duration:38, avoid:"tecnicismos", confidence:62, source_count:n, evidence:["abres directo","frases cortas","cierras pidiendo guardar"] };
+      render(); showToast("Voz aprendida de "+n+" reels (demo) — te conozco al 62%."); setTimeout(brainLevelPulse,1600); return;
+    }
+    var go=function(){
+      showToast("Transcribiendo tus reels y aprendiendo tu voz… (~1 min)");
+      apiPost("/api/voice/from-urls",{urls:reels.slice(0,6)}).then(function(r){
+        if(r.ok && r.d && r.d.ok){
+          return fetch("/api/voice",{credentials:"same-origin"}).then(function(x){return x.json();}).then(function(v){
+            S.voice=v; render(); showToast("Voz aprendida de "+(r.d.source_count||n)+" reels — te conozco al "+(r.d.confidence||v.confidence||0)+"%.");
+            setTimeout(brainLevelPulse,1600);
+          });
+        }
+        showError((r.d&&r.d.message)||(r.d&&r.d.error)||"No pude aprender tu voz con esos reels.");
+      });
+    };
+    if(typeof window.confirmModal==="function"){
+      window.confirmModal({ title:"Aprender tu voz", body:"Voy a transcribir "+n+" reel"+(n===1?"":"s")+" tuyo"+(n===1?"":"s")+" — cuesta "+n+" crédito"+(n===1?"":"s")+". Con eso aprendo tu voz.", confirmText:"Sí, aprender mi voz", cancelText:"Ahora no" }).then(function(ok){ if(ok) go(); });
+    } else go();
   }
   /* B6 + T1 (IDI): onboarding de voz como 2º punto de entrada — en el Dashboard
      es un BANNER delgado (no una card con CTA primario): no compite con la
@@ -2830,9 +2859,10 @@
     // de captura (la acción de verdad), no en la pestaña a secas.
     if(act==="voice-focus"){
       if(S.tab!=="brain") switchTab("brain");
-      setTimeout(function(){ var ta=document.getElementById("rsVoiceText"); if(ta){ ta.focus(); if(ta.scrollIntoView) ta.scrollIntoView({block:"center",behavior:"smooth"}); } },80);
+      setTimeout(function(){ var ta=document.getElementById("rsVoiceUrls"); if(ta){ ta.focus(); if(ta.scrollIntoView) ta.scrollIntoView({block:"center",behavior:"smooth"}); } },80);
       return;
     }
+    if(act==="voice-from-urls") return voiceFromUrls();
     if(act==="set-tone"){
       var prev=S.user.presetTone; S.user.presetTone=k; render();
       if(!isDemo()){ apiPost("/api/voice/tone",{tone:k}).then(function(r){ if(!r.ok){ S.user.presetTone=prev; render(); showError("No pude guardar el tono."); } }); }
