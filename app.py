@@ -610,7 +610,7 @@ def validate_adapt(data):
     if len(text) > 10000:
         return "Text too long (max 10,000 characters)"
     style = (data.get("style") or "").strip()
-    valid = {"viral", "divertido", "linkedin", "storytelling", "hooks", "custom"}
+    valid = {"viral", "divertido", "linkedin", "storytelling", "hooks", "custom", "educacional", "informativo"}
     if style and style not in valid and not data.get("assistant_id"):
         return f"Invalid style"
     if len(data.get("custom_prompt") or "") > 2000:
@@ -1165,6 +1165,10 @@ def auth_me():
         "free_analysis_left": free_analysis_left(profile),
         "avatar_seed": profile.get("avatar_seed", "default"),
         "has_stripe_sub": bool(profile.get("stripe_subscription_id")),
+        # A1: tono preset (personalidad del 1er guion sin voz) + opciones + si hay voz.
+        "preset_tone": (profile.get("default_idea_assistant") if profile.get("default_idea_assistant") in PRESET_TONE_KEYS else DEFAULT_PRESET_TONE),
+        "preset_tones": PRESET_TONES,
+        "has_voice": bool(get_voice_profile(user["id"])),
     })
 
 
@@ -2215,6 +2219,34 @@ STYLE_PROMPTS = {
         + _JSON_SCRIPT_SCHEMA
     ),
 
+    "educacional": (
+        "Eres un guionista de reels. Reescribe este guión para ENSEÑAR un concepto concreto y que se entienda a la primera. "
+        "Reglas: el hook plantea el problema o promete lo que el viewer va a SABER hacer al final — específico, sin 'hola' ni contexto. "
+        "El desarrollo explica paso a paso, cada frase aporta un dato o un porqué, nunca relleno. "
+        "Usa un ejemplo concreto del material fuente para aterrizar la idea — nada abstracto. "
+        "Frases de máximo 15 palabras, claras, sin jerga innecesaria; si hay un término técnico, se explica al usarlo. "
+        "Cierre que fija lo aprendido en una frase memorizable, sin CTA explícito. "
+        "Nunca uses: 'es fundamental entender que', 'en el panorama actual', 'descubre cómo', motivacional ni '¿sabías que…?'. "
+        "El resultado se lee frase por frase con viñetas (▸). "
+        "Regla de especificidad: conserva datos, cifras, nombres y el ángulo concreto del material fuente; un guion que vale para cualquier nicho es fallido. "
+        "Output mínimo: 6-8 frases en body, 100+ palabras totales en el guion. "
+        + _JSON_SCRIPT_SCHEMA
+    ),
+
+    "informativo": (
+        "Eres un guionista de reels. Reescribe este guión en tono INFORMATIVO y DIRECTO: máxima densidad de información, cero relleno. "
+        "Reglas: el hook es el dato o la conclusión más fuerte, sin rodeos ni preámbulo. "
+        "El desarrollo encadena hechos/datos concretos en orden lógico — cada frase es información que el viewer no tenía. "
+        "Nada de opinión vacía, hipérbole ni adornos; tono sobrio y seguro, como quien informa de algo que domina. "
+        "Frases cortas (máx 15 palabras), afirmativas, sin muletillas ni emojis. "
+        "Cierre con el dato o la implicación que el viewer se lleva, sin CTA ni moraleja. "
+        "Nunca uses: 'increíble', 'brutal', 'os va a flipar', 'en el panorama actual', 'es fundamental', motivacional. "
+        "El resultado se lee frase por frase con viñetas (▸). "
+        "Regla de especificidad: conserva datos, cifras, nombres y el ángulo concreto del material fuente; sin ellos no informa. "
+        "Output mínimo: 6-8 frases en body, 100+ palabras totales en el guion. "
+        + _JSON_SCRIPT_SCHEMA
+    ),
+
     "hooks": (
         "Eres un guionista de reels. Dame exactamente 5 hooks para este guión, uno de cada tipo. "
         "Reglas para todos: tienen que incluir términos específicos del nicho para filtrar a la audiencia correcta desde el primer segundo. "
@@ -2254,7 +2286,21 @@ _ASSISTANT_BUILT_IN_LABELS = {
     "storytelling": "Storytelling",
     "story": "Storytelling",
     "linkedin": "LinkedIn",
+    "educacional": "Educacional",
+    "informativo": "Informativo",
 }
+
+# Tonos PRESET elegibles (personalidad del primer guion cuando aún no hay voz
+# personal entrenada). key = STYLE_PROMPTS · label = etiqueta UI. DEFAULT = viral.
+PRESET_TONES = [
+    {"key": "viral",        "label": "Polémico/Viral"},
+    {"key": "educacional",  "label": "Educacional"},
+    {"key": "divertido",    "label": "Cercano/Divertido"},
+    {"key": "informativo",  "label": "Informativo"},
+    {"key": "storytelling", "label": "Storytelling"},
+]
+PRESET_TONE_KEYS = {t["key"] for t in PRESET_TONES}
+DEFAULT_PRESET_TONE = "viral"
 
 
 def _resolve_assistant_name(payload, user_id, supa):
@@ -3024,6 +3070,121 @@ def api_voice_auto_derive():
         "transcribed_now": transcribed_now,
         "tone": vp.get("tone"),
         "phrases": vp.get("phrases") or [],
+        "evidence": vp.get("evidence") or [],
+    })
+
+
+_VOICE_URL_MAX = 6   # máx URLs por entreno (muestra de sobra; controla coste)
+
+
+def _is_reel_url(url: str) -> bool:
+    """True si la URL apunta a un reel/vídeo concreto (no a un perfil)."""
+    u = (url or "").lower()
+    if detect_platform(url) == "otro":
+        return False
+    if "tiktok.com" in u:
+        return ("/video/" in u) or ("vm.tiktok" in u) or ("vt.tiktok" in u)
+    # instagram: reel/post/tv concreto (no el perfil suelto)
+    return ("/reel/" in u) or ("/reels/" in u) or ("/p/" in u) or ("/tv/" in u)
+
+
+def _parse_voice_urls(blob):
+    """Extrae URLs de reel válidas de un texto/array. Devuelve (validas, perfil_detectado)."""
+    import re as _re
+    if isinstance(blob, list):
+        cand = blob
+    else:
+        cand = _re.findall(r"https?://\S+", str(blob or ""))
+    out, seen, had_profile = [], set(), False
+    for raw in cand:
+        url = raw.strip().strip('",)')
+        if not url or url in seen:
+            continue
+        if _is_reel_url(url):
+            seen.add(url)
+            out.append(url)
+        elif detect_platform(url) != "otro":
+            had_profile = True   # IG/TikTok pero perfil, no reel
+        if len(out) >= _VOICE_URL_MAX:
+            break
+    return out, had_profile
+
+
+@app.route("/api/voice/from-urls", methods=["POST"])
+@limiter.limit("3 per minute;10 per hour")
+@require_auth
+def api_voice_from_urls():
+    """Bloque A3: entrenar la voz pegando URLs de TUS reels. Transcribe cada uno
+    (reusa _transcribe_reel — cobra como una transcripción normal; el front avisa
+    del coste antes) y deriva la voz con derive_voice_profile. Nada de pegar
+    transcripciones a mano."""
+    if not (OPENROUTER_API_KEY or GROQ_API_KEY) or not GROQ_API_KEY:
+        return jsonify({"error": "Servicio no disponible"}), 503
+    user = current_user()
+    uid = user["id"]
+    body = request.get_json(silent=True) or {}
+    project_id = body.get("project_id") or None
+    urls, had_profile = _parse_voice_urls(body.get("urls") if body.get("urls") is not None else body.get("text"))
+    if not urls:
+        msg = ("Pega URLs de TUS reels concretos (no el perfil). O conecta tu Instagram en Métricas y los leo solos."
+               if had_profile else
+               "Pega 1-5 URLs de reels tuyos (Instagram/TikTok) para aprender tu voz.")
+        return jsonify({"error": "no_urls", "message": msg}), 400
+
+    is_unlimited = user.get("email", "").lower() in UNLIMITED_EMAILS
+    texts, charged = [], 0
+    for url in urls:
+        cached = _reel_transcript_cached(uid, url)
+        if cached:
+            texts.append(cached)
+            continue
+        # Cobro por transcripción — mismo patrón que voice/auto-derive y metrics.
+        if not is_unlimited:
+            profile = get_profile(uid)
+            plan = profile.get("plan", "free")
+            if paid_features_active(profile, user):
+                ok, _e = check_monthly_limit(profile)
+                if not ok:
+                    break
+            elif (profile.get("credits_cents") or 0) >= COST_CENTS:
+                pass
+            elif (profile.get("free_used_today") or 0) < FREE_DAILY_USER:
+                pass
+            else:
+                break   # sin presupuesto → deriva con lo que haya
+        txt = _transcribe_reel(uid, url)
+        if not (txt or "").strip():
+            continue
+        if not is_unlimited:
+            profile = get_profile(uid)
+            if paid_features_active(profile, user):
+                db.table("profiles").update({"monthly_usage": (profile.get("monthly_usage") or 0) + 1}).eq("id", uid).execute()
+            elif (profile.get("credits_cents") or 0) >= COST_CENTS:
+                db.table("profiles").update({"credits_cents": profile["credits_cents"] - COST_CENTS}).eq("id", uid).execute()
+            else:
+                db.table("profiles").update({"free_used_today": (profile.get("free_used_today") or 0) + 1}).eq("id", uid).execute()
+        charged += 1
+        texts.append(txt)
+
+    if not texts:
+        return jsonify({"error": "no_transcripts",
+                        "message": "No pude transcribir esos reels (privados o no disponibles). Prueba con otros."}), 502
+
+    vp = derive_voice_profile(texts[:_VOICE_URL_MAX])
+    if not vp:
+        return jsonify({"error": "derive_failed",
+                        "message": "No pude derivar tu voz con esta muestra. Prueba con más reels."}), 502
+    raw = vp.get("raw") if isinstance(vp.get("raw"), dict) else dict(vp)
+    raw["samples"] = texts[:_VOICE_URL_MAX]
+    raw["from_urls"] = True
+    vp["raw"] = raw
+    save_voice_profile(uid, vp, brand_id=project_id)
+    if project_id and not get_voice_profile(uid):
+        save_voice_profile(uid, vp)
+    return jsonify({
+        "ok": True, "confidence": vp.get("confidence"),
+        "source_count": len(texts[:_VOICE_URL_MAX]), "transcribed_now": charged,
+        "tone": vp.get("tone"), "phrases": vp.get("phrases") or [],
         "evidence": vp.get("evidence") or [],
     })
 
@@ -4509,7 +4670,7 @@ def regenerate_idea(idea_id):
 
 # v0.14.30: linkedin queda fuera del set para to-script (no encaja con reel
 # 30-45s). El estilo sigue disponible vía /adapt directo para retrocompat.
-_BUILTIN_SCRIPT_STYLES = {"viral", "divertido", "storytelling", "hooks"}
+_BUILTIN_SCRIPT_STYLES = {"viral", "divertido", "storytelling", "hooks", "educacional", "informativo"}
 
 # v0.15.7.b: umbral mínimo de chars en custom_prompt antes de invocar al LLM.
 # Custom prompts demasiado cortos ("instruccion base", 16 chars) provocan que
@@ -5219,6 +5380,21 @@ def api_ideas_save():
         pass
 
     return jsonify(row.data[0] if row.data else {"ok": True})
+
+
+@app.route("/api/voice/tone", methods=["POST"])
+@require_auth
+def set_preset_tone():
+    """Bloque A1: fija el TONO preset del usuario (personalidad del primer guion
+    cuando aún no hay voz personal). Se guarda en default_idea_assistant — que YA
+    es el estilo por defecto de toda la generación. Solo acepta tonos válidos."""
+    user = current_user()
+    body = request.get_json() or {}
+    tone = (body.get("tone") or "").strip().lower()
+    if tone not in PRESET_TONE_KEYS:
+        return jsonify({"error": "invalid_tone", "options": [t["key"] for t in PRESET_TONES]}), 400
+    db.table("profiles").update({"default_idea_assistant": tone}).eq("id", user["id"]).execute()
+    return jsonify({"ok": True, "tone": tone})
 
 
 @app.route("/me/preferences")

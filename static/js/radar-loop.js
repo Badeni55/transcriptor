@@ -117,7 +117,7 @@
   /* ── estado ──────────────────────────────────────────────────── */
   var S = {
     device:"desktop", _wired:false,
-    user:{ name:"", handle:"", email:"", credits:0, streak:0, plan:"", freeLeft:0 },
+    user:{ name:"", handle:"", email:"", credits:0, streak:0, plan:"", freeLeft:0, presetTone:"viral", presetTones:[], hasVoice:false },
     brands:[], brandId:null,
     plan:"creador",                     // creador | agencia (de /auth/me; en demo, toggle)
     scope:"brand",                      // brand (radar de 1 marca) | portfolio (todas — solo agencia)
@@ -413,11 +413,50 @@
       '<div class="onb-spin"><span class="mini-spin" style="width:26px;height:26px;border-width:3px"></span></div>'+
     '</div>';
   }
+  // A4: paso ligero de TONO tras seguir competidores. Una primaria: elegir un
+  // tono (1 clic) — así el primer «Hazlo mío» ya sale con carácter. Secundario:
+  // entrenar la voz con tus reels (más adelante, en Cerebro).
+  function onbStepToneHTML(){
+    var tones=(S.user.presetTones&&S.user.presetTones.length)?S.user.presetTones:[
+      {key:"viral",label:"Polémico/Viral"},{key:"educacional",label:"Educacional"},
+      {key:"divertido",label:"Cercano/Divertido"},{key:"informativo",label:"Informativo"},
+      {key:"storytelling",label:"Storytelling"}];
+    var cur=S.user.presetTone||"viral";
+    var chips=tones.map(function(t){
+      return '<button class="tone-chip'+(t.key===cur?" on":"")+'" data-act="onb-tone" data-k="'+ESC(t.key)+'">'+ESC(t.label)+'</button>';
+    }).join("");
+    return '<div class="onb-step">'+
+      '<div class="onb-eyebrow">'+IC.spark+' Último paso</div>'+
+      '<h2 class="onb-h">¿Con qué tono escribes?</h2>'+
+      '<p class="onb-sub">Elige una personalidad para tus guiones — tu primer «Hazlo mío» ya saldrá con carácter, no genérico. Lo cambias cuando quieras.</p>'+
+      '<div class="tone-chips" style="margin-bottom:20px">'+chips+'</div>'+
+      '<button class="btn btn-lg btn-primary" data-act="onb-tone-go" data-k="'+ESC(cur)+'">'+IC.bolt+' Empezar con este tono</button>'+
+      '<button class="onb-skip" data-act="onb-voice">O entrena tu voz con tus reels (en el Cerebro) →</button>'+
+    '</div>';
+  }
   function onboardingHTML(){
     var inner = S.onb.step==="pick" ? onbStepPickHTML()
+              : S.onb.step==="tone" ? onbStepToneHTML()
               : S.onb.step==="done" ? onbStepDoneHTML()
               : onbStepAskHTML();
     return '<section class="onb">'+inner+'</section>';
+  }
+  // A4: fija el tono elegido y cierra el onboarding (→ done + carga de reels).
+  function onbPickTone(k){
+    if(k){ var prev=S.user.presetTone; S.user.presetTone=k; if(!isDemo()) apiPost("/api/voice/tone",{tone:k}).then(function(r){ if(!r.ok) S.user.presetTone=prev; }); }
+    render();
+  }
+  function onbFinish(){
+    S.onb.step="done"; render();
+    var tries=0;
+    (function poll(){
+      if(S.onb.step!=="done") return;
+      _refreshReelsLight(function(){
+        if((S.reels||[]).length>0){ S.onb.skipped=true; render(); return; }
+        if(++tries>20) return;
+        setTimeout(poll, 5000);
+      });
+    })();
   }
   function onbSuggest(){
     var inp=document.getElementById("rsOnbHandle");
@@ -456,20 +495,10 @@
       var ok=res.filter(Boolean).length;
       S.onb.busy=false;
       if(!ok){ S.onb.error="No pude seguir a esos competidores. Prueba a añadir uno a mano."; return render(); }
-      S.onb.step="done"; render();
+      // A4: tras seguir competidores → paso ligero de TONO (el scrape sigue en
+      // background; los reels se cargan al cerrar el onboarding, onbFinish).
+      S.onb.step="tone"; render();
       showToast("Radar activado con "+ok+" competidor"+(ok===1?"":"es")+". Trayendo sus reels…");
-      // El scrape es async (~1 min). Refrescamos en LIGERO (sin el skeleton de
-      // loadBrandData, que reescribe el root y se llevaría el toast + el paso
-      // «done» por delante). Cuando lleguen reels el empty-state desaparece solo.
-      var tries=0;
-      (function poll(){
-        if(S.onb.step!=="done") return;             // el user navegó a otro sitio
-        _refreshReelsLight(function(){
-          if((S.reels||[]).length>0){ S.onb.skipped=true; render(); return; }   // reels → fin del onboarding
-          if(++tries>20) return;                     // ~100s techo; el digest/refresco lo cubrirá
-          setTimeout(poll, 5000);
-        });
-      })();
     });
   }
 
@@ -1143,6 +1172,25 @@
     };
   }
   // Tarjeta de CAPTURA del moat: el creador pega 1-2 reels suyos → aprendemos su voz.
+  /* A1: selector de TONO preset. Define la personalidad del guion cuando aún no
+     hay voz personal entrenada. Si ya hay voz, esta MANDA (el tono queda de base);
+     se indica para no confundir. Persiste en /api/voice/tone (default de generación). */
+  function toneSelectorHTML(){
+    var tones=(S.user.presetTones&&S.user.presetTones.length)?S.user.presetTones:[
+      {key:"viral",label:"Polémico/Viral"},{key:"educacional",label:"Educacional"},
+      {key:"divertido",label:"Cercano/Divertido"},{key:"informativo",label:"Informativo"},
+      {key:"storytelling",label:"Storytelling"}];
+    var cur=S.user.presetTone||"viral";
+    var chips=tones.map(function(t){
+      return '<button class="tone-chip'+(t.key===cur?" on":"")+'" data-act="set-tone" data-k="'+ESC(t.key)+'" aria-pressed="'+(t.key===cur?"true":"false")+'">'+ESC(t.label)+'</button>';
+    }).join("");
+    var note=hasRealVoice()
+      ? 'Tu voz entrenada manda en cada guion; el tono es la base por si refrescas la voz.'
+      : 'Tu próximo «Hazlo mío» saldrá con este tono — con carácter, no genérico. Entrena tu voz abajo para que suene a ti.';
+    return '<div class="brain-section-t">Tu tono</div>'+
+      '<div class="tone-pick"><div class="tone-chips">'+chips+'</div>'+
+      '<p class="tone-note">'+note+'</p></div>';
+  }
   function voiceCaptureHTML(){
     // Voz AUTO: si el user tiene reels publicados (métricas), la vía destacada
     // es derivarla de ellos — sin pegar nada. El coste (transcripciones que
@@ -1158,10 +1206,39 @@
     return '<div class="brain-section-t">Enséñame tu voz</div>'+
       '<div class="voice-capture">'+
         auto+
-        '<p class="vc-lead">'+(nPub>0?'O pega':'Pega')+' lo que dices en <b>1-2 reels TUYOS</b>. Aprendo a sonar como tú — y tu próximo «Hazlo mío» ya saldrá con tu voz, no genérico.</p>'+
-        '<textarea class="vc-ta" id="rsVoiceText" rows="5" placeholder="Pega aquí la transcripción de tus reels (lo que dices)…"></textarea>'+
-        '<button class="btn btn-md '+(nPub>0?'btn-secondary':'btn-primary')+'" data-act="voice-onboard">'+IC.spark+' Aprender mi voz</button>'+
+        '<p class="vc-lead">'+(nPub>0?'O pega':'Pega')+' las <b>URLs de 1-5 reels TUYOS</b> (Instagram/TikTok) y yo los transcribo y aprendo tu voz. '+
+          'Tu próximo «Hazlo mío» saldrá sonando a ti, no genérico.</p>'+
+        '<textarea class="vc-ta" id="rsVoiceUrls" rows="4" placeholder="https://www.instagram.com/reel/…&#10;https://www.tiktok.com/@tu/video/…"></textarea>'+
+        '<button class="btn btn-md '+(nPub>0?'btn-secondary':'btn-primary')+'" data-act="voice-from-urls">'+IC.spark+' Aprender mi voz de estos reels</button>'+
+        '<p class="vc-hint">Transcribir cada reel cuesta 1 crédito — te lo confirmo antes. Nada de pegar texto a mano.</p>'+
       '</div>';
+  }
+  // A3: entrenar voz pegando URLs de reels propios. Confirma el coste ANTES.
+  function voiceFromUrls(){
+    var ta=document.getElementById("rsVoiceUrls"); var blob=ta?ta.value:"";
+    var urls=(blob.match(/https?:\/\/\S+/g)||[]).filter(function(u){ return /instagram\.com|tiktok\.com/.test(u); });
+    var reels=urls.filter(function(u){ return /\/reel\/|\/reels\/|\/p\/|\/tv\/|\/video\/|vm\.tiktok|vt\.tiktok/.test(u); });
+    if(!reels.length){ return showError("Pega URLs de reels concretos tuyos (no el perfil). O conecta tu Instagram en Métricas."); }
+    var n=Math.min(reels.length,6);
+    if(isDemo()){
+      S.voice={ has_profile:true, tone:"Directo, sin postureo.", phrases:["te lo cuento porque","paso uno… paso dos"], structure:"hook → pasos → cierre", avg_duration:38, avoid:"tecnicismos", confidence:62, source_count:n, evidence:["abres directo","frases cortas","cierras pidiendo guardar"] };
+      render(); showToast("Voz aprendida de "+n+" reels (demo) — te conozco al 62%."); setTimeout(brainLevelPulse,1600); return;
+    }
+    var go=function(){
+      showToast("Transcribiendo tus reels y aprendiendo tu voz… (~1 min)");
+      apiPost("/api/voice/from-urls",{urls:reels.slice(0,6)}).then(function(r){
+        if(r.ok && r.d && r.d.ok){
+          return fetch("/api/voice",{credentials:"same-origin"}).then(function(x){return x.json();}).then(function(v){
+            S.voice=v; render(); showToast("Voz aprendida de "+(r.d.source_count||n)+" reels — te conozco al "+(r.d.confidence||v.confidence||0)+"%.");
+            setTimeout(brainLevelPulse,1600);
+          });
+        }
+        showError((r.d&&r.d.message)||(r.d&&r.d.error)||"No pude aprender tu voz con esos reels.");
+      });
+    };
+    if(typeof window.confirmModal==="function"){
+      window.confirmModal({ title:"Aprender tu voz", body:"Voy a transcribir "+n+" reel"+(n===1?"":"s")+" tuyo"+(n===1?"":"s")+" — cuesta "+n+" crédito"+(n===1?"":"s")+". Con eso aprendo tu voz.", confirmText:"Sí, aprender mi voz", cancelText:"Ahora no" }).then(function(ok){ if(ok) go(); });
+    } else go();
   }
   /* B6 + T1 (IDI): onboarding de voz como 2º punto de entrada — en el Dashboard
      es un BANNER delgado (no una card con CTA primario): no compite con la
@@ -1200,7 +1277,7 @@
         ev.map(function(e){ return '<div class="learn-item">'+IC.check+'<span>'+ESC(e)+'</span></div>'; }).join("")+
       '</div></div>'+
       // Refinar: acumula más reels tuyos → sube confianza (POST /api/voice/refine).
-      '<div class="voice-refine" style="margin-bottom:18px"><button class="btn btn-sm btn-secondary" data-act="voice-refine">'+IC.spark+' Refinar mi voz</button><span class="vr-hint" style="margin-left:10px;color:var(--text-tertiary);font-size:12.5px">Pega más reels tuyos y subo el % de voz.</span></div>';
+      '<div class="voice-refine" style="margin-bottom:18px"><button class="btn btn-sm btn-secondary" data-act="voice-refine">'+IC.spark+' Refinar mi voz</button><span class="vr-hint" style="margin-left:10px;color:var(--text-tertiary);font-size:12.5px">Pega más URLs de tus reels y subo el % de voz.</span></div>';
   }
   function brainCompetitors(){
     var by={}; (S.reels||[]).forEach(function(r){ var h=r.creator&&r.creator.handle; if(!h) return; by[h]=(by[h]||0)+1; });
@@ -1287,6 +1364,8 @@
           '<div class="brain-why">A más nivel, menos retoques: tu voz y tus reels ganadores entran en el prompt de cada «Hazlo mío».</div>'+
         '</div>'+
       '</div>'+
+      // A1: selector de TONO preset (personalidad cuando aún no hay voz personal)
+      toneSelectorHTML()+
       // CAPTURA del moat (si aún no hay voz) o EVIDENCIA real (si ya aprendió)
       (hasRealVoice() ? voiceEvidenceHTML() : voiceCaptureHTML())+
       // fuentes del conocimiento
@@ -2513,41 +2592,43 @@
   // Mirror de onboardVoice: mismo auth (credentials same-origin), mismo refresh
   // (GET /api/voice → re-pinta Cerebro), mismo branch demo (en demo NO postea).
   // T2 (IDI): sheet con textarea (igual que el onboarding) en vez de window.prompt.
+  // A3 (coherencia): refinar = pegar MÁS URLs de tus reels (nada de transcripciones).
   function refineVoice(){
     promptSheet({
-      title:"Refinar mi voz", label:"Transcripción de tus reels",
-      placeholder:"Pega aquí lo que dices en 1-2 reels TUYOS más…",
-      helper:"Los sumo a tu voz y subo el % que te conozco.",
-      multiline:true, submitLabel:"Refinar mi voz",
-      validate:function(v){ if(!v.trim()) return "Pega el texto de al menos 1 reel tuyo."; },
+      title:"Refinar mi voz", label:"URLs de más reels tuyos",
+      placeholder:"https://www.instagram.com/reel/…  https://www.tiktok.com/@tu/video/…",
+      helper:"Los transcribo y subo el % que te conozco. Cada reel cuesta 1 crédito (te lo confirmo).",
+      multiline:true, submitLabel:"Continuar",
+      validate:function(v){ var u=(v.match(/https?:\/\/\S+/g)||[]).filter(function(x){return /instagram\.com|tiktok\.com/.test(x);}); if(!u.length) return "Pega URLs de reels tuyos (Instagram/TikTok)."; },
       onSubmit:refineVoiceWith
     });
   }
-  function refineVoiceWith(txt){
-    txt=(txt||"").trim();
-    if(!txt){ showToast("Pega el texto de al menos 1 reel tuyo."); return; }
-    // En DEMO no llamamos al backend real: subimos la confianza localmente
-    // y sumamos una fuente, para que el "después" del refino se vea sin red ni claves.
+  function refineVoiceWith(blob){
+    var urls=((blob||"").match(/https?:\/\/\S+/g)||[]);
+    var reels=urls.filter(function(u){ return /instagram\.com|tiktok\.com/.test(u) && /\/reel\/|\/reels\/|\/p\/|\/tv\/|\/video\/|vm\.tiktok|vt\.tiktok/.test(u); });
+    if(!reels.length){ return showError("Pega URLs de reels concretos tuyos (no el perfil)."); }
+    var n=Math.min(reels.length,6);
     if(isDemo()){
-      S.voice=S.voice||{ has_profile:true };
-      S.voice.has_profile=true;
-      S.voice.source_count=(S.voice.source_count||1)+1;
+      S.voice=S.voice||{ has_profile:true }; S.voice.has_profile=true;
+      S.voice.source_count=(S.voice.source_count||1)+n;
       S.voice.confidence=Math.min(100,(S.voice.confidence||62)+11);
       brand().voice=S.voice.confidence; render();
-      showToast("Voz refinada — ahora te conozco al "+S.voice.confidence+"%."); setTimeout(brainLevelPulse,1600); return;
+      showToast("Voz refinada (demo) — ahora te conozco al "+S.voice.confidence+"%."); setTimeout(brainLevelPulse,1600); return;
     }
-    showToast("Refinando tu voz…");
-    fetch("/api/voice/refine",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({texts:[txt]})})
-      .then(function(r){ return r.json().catch(function(){return{};}); })
-      .then(function(d){
-        if(d&&d.ok){
-          return fetch("/api/voice",{credentials:"same-origin"}).then(function(r){return r.json();}).then(function(v){
-            S.voice=v; render(); showToast("Voz refinada — ahora te conozco al "+(v.confidence||0)+"%."); setTimeout(brainLevelPulse,1600);
+    var go=function(){
+      showToast("Transcribiendo y refinando tu voz… (~1 min)");
+      apiPost("/api/voice/from-urls",{urls:reels.slice(0,6)}).then(function(r){
+        if(r.ok && r.d && r.d.ok){
+          return fetch("/api/voice",{credentials:"same-origin"}).then(function(x){return x.json();}).then(function(v){
+            S.voice=v; render(); showToast("Voz refinada — ahora te conozco al "+(r.d.confidence||v.confidence||0)+"%."); setTimeout(brainLevelPulse,1600);
           });
         }
-        showError((d&&d.error)||"No pude refinar tu voz. Prueba con otro reel.");
-      })
-      .catch(function(){ showError("Error de red. Inténtalo de nuevo."); });
+        showError((r.d&&r.d.message)||(r.d&&r.d.error)||"No pude refinar tu voz con esos reels.");
+      });
+    };
+    if(typeof window.confirmModal==="function"){
+      window.confirmModal({ title:"Refinar tu voz", body:"Voy a transcribir "+n+" reel"+(n===1?"":"s")+" más — cuesta "+n+" crédito"+(n===1?"":"s")+".", confirmText:"Sí, refinar", cancelText:"Ahora no" }).then(function(ok){ if(ok) go(); });
+    } else go();
   }
 
   // Refresca métricas + insights de la marca activa (summary + insights) y re-pinta.
@@ -2800,6 +2881,9 @@
     if(act==="onb-suggest") return onbSuggest();
     if(act==="onb-toggle") return onbToggle(btn.getAttribute("data-h"));
     if(act==="onb-follow") return onbFollow();
+    if(act==="onb-tone") return onbPickTone(k);                 // A4: elige tono (resalta)
+    if(act==="onb-tone-go"){ onbPickTone(S.user.presetTone||k); onbFinish(); return showToast("Listo. Tu primer «Hazlo mío» saldrá con carácter."); }
+    if(act==="onb-voice"){ onbFinish(); switchTab("brain"); setTimeout(function(){ var ta=document.getElementById("rsVoiceUrls"); if(ta){ ta.focus(); if(ta.scrollIntoView) ta.scrollIntoView({block:"center",behavior:"smooth"}); } },120); return; }
     if(act==="onb-back"){ S.onb.step="ask"; S.onb.error=null; return render(); }
     if(act==="onb-manual"){ S.onb.skipped=true; render(); if(typeof window.openAddCompetitorModal==="function") window.openAddCompetitorModal(); return; }
     // Reusa el modal legacy global (index.html); al añadir, submitAddCompetitor
@@ -2809,7 +2893,15 @@
     // de captura (la acción de verdad), no en la pestaña a secas.
     if(act==="voice-focus"){
       if(S.tab!=="brain") switchTab("brain");
-      setTimeout(function(){ var ta=document.getElementById("rsVoiceText"); if(ta){ ta.focus(); if(ta.scrollIntoView) ta.scrollIntoView({block:"center",behavior:"smooth"}); } },80);
+      setTimeout(function(){ var ta=document.getElementById("rsVoiceUrls"); if(ta){ ta.focus(); if(ta.scrollIntoView) ta.scrollIntoView({block:"center",behavior:"smooth"}); } },80);
+      return;
+    }
+    if(act==="voice-from-urls") return voiceFromUrls();
+    if(act==="set-tone"){
+      var prev=S.user.presetTone; S.user.presetTone=k; render();
+      if(!isDemo()){ apiPost("/api/voice/tone",{tone:k}).then(function(r){ if(!r.ok){ S.user.presetTone=prev; render(); showError("No pude guardar el tono."); } }); }
+      var lbl=((S.user.presetTones||[]).filter(function(t){return t.key===k;})[0]||{}).label||k;
+      showToast("Tono: "+lbl+(hasRealVoice()?" (tu voz entrenada sigue mandando).":". Tu próximo «Hazlo mío» saldrá así."));
       return;
     }
     if(act==="voice-onboard") return onboardVoice();
@@ -3050,6 +3142,10 @@
       // Plan crudo de /auth/me (puede ser "free") + guiones gratis del mes restantes.
       S.user.plan=(me.plan||(me.user&&me.user.plan))||"";
       if(me.free_lifetime_left!=null) S.user.freeLeft=me.free_lifetime_left;
+      // A1: tono preset (personalidad del 1er guion sin voz personal) + opciones.
+      S.user.presetTone=me.preset_tone||"viral";
+      S.user.presetTones=Array.isArray(me.preset_tones)&&me.preset_tones.length?me.preset_tones:[{key:"viral",label:"Polémico/Viral"},{key:"educacional",label:"Educacional"},{key:"divertido",label:"Cercano/Divertido"},{key:"informativo",label:"Informativo"},{key:"storytelling",label:"Storytelling"}];
+      S.user.hasVoice=!!me.has_voice;
       // reverse-trial: estado del trial (Pro capado sin tarjeta) + watermark en exports (free post-trial).
       S.user.trialActive=!!me.trial_active;
       S.user.trialDaysLeft=me.trial_days_left||0;
