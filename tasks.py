@@ -535,6 +535,16 @@ def detect_platform(url):
         return "tiktok"
     return "otro"
 
+def _is_rate_limited(err) -> bool:
+    """Detecta el rate-limit / muro de login de IG/TikTok en el error de yt-dlp."""
+    m = str(err or "").lower()
+    return any(k in m for k in (
+        "rate-limit", "rate limit", "429", "too many requests",
+        "login required", "please log in", "log in", "sign in",
+        "requested content is not available", "restricted video",
+    ))
+
+
 def _ytdlp(url, output_dir):
     out = os.path.join(output_dir, "audio")
     opts = {
@@ -544,6 +554,11 @@ def _ytdlp(url, output_dir):
         "quiet": True,
         "no_warnings": True,
     }
+    # B (fallback cookies): si David configura un cookies.txt (YTDLP_COOKIES_FILE),
+    # yt-dlp lo usa para sortear el muro de login de IG. Degrada si no existe.
+    _ck = os.environ.get("YTDLP_COOKIES_FILE", "")
+    if _ck and os.path.exists(_ck):
+        opts["cookiefile"] = _ck
     thumbnail_url = None
     with yt_dlp.YoutubeDL(opts) as ydl:
         info = ydl.extract_info(url, download=True)
@@ -602,17 +617,56 @@ def _apify_instagram(url, output_dir):
         raise ValueError("Error al convertir vídeo a audio con FFmpeg")
     return mp3_path, thumbnail_url, item
 
+class DownloadError(Exception):
+    """Fallo de descarga con causa identificada (rate_limit | unavailable)."""
+    def __init__(self, code, detail=""):
+        self.code = code
+        super().__init__(detail or code)
+
+
 def download_audio(url, output_dir, platform):
-    """Returns (mp3_path, thumbnail_url, apify_item|None).
-    apify_item is None for tiktok or when apify scrape failed and yt-dlp ran."""
+    """Returns (mp3_path, thumbnail_url, apify_item|None). Endurecido (B):
+      - IG: Apify PRIMARIO con 1 reintento (fallos transitorios) → yt-dlp fallback.
+      - yt-dlp con 2-3 reintentos y backoff; detecta rate-limit/login de IG.
+      - Si yt-dlp topa rate-limit y hay Apify, Apify hace de fallback final.
+    Lanza DownloadError(code) si todo falla (el caller muestra mensaje limpio)."""
     APIFY_TOKEN = os.environ.get("APIFY_TOKEN", "")
-    if platform == "instagram" and APIFY_TOKEN:
+    apify_avail = (platform == "instagram") and bool(APIFY_TOKEN)
+    attempts = []
+    rate_seen = False
+
+    # 1) Apify primario para IG (2 intentos: cubre fallos transitorios del actor).
+    if apify_avail:
+        for i in range(2):
+            try:
+                return _apify_instagram(url, output_dir)
+            except Exception as e:
+                attempts.append("apify#%d:%s" % (i + 1, str(e)[:80]))
+                if i == 0:
+                    time.sleep(2)
+
+    # 2) yt-dlp con reintentos + backoff (fallback IG · primario TikTok/otros).
+    last = None
+    for i in range(3):
         try:
-            return _apify_instagram(url, output_dir)
-        except Exception:
-            pass
-    mp3, thumb = _ytdlp(url, output_dir)
-    return mp3, thumb, None
+            mp3, thumb = _ytdlp(url, output_dir)
+            return mp3, thumb, None
+        except Exception as e:
+            last = e
+            attempts.append("ytdlp#%d:%s" % (i + 1, str(e)[:80]))
+            if _is_rate_limited(e):
+                rate_seen = True
+                # rate-limit de yt-dlp → si hay Apify (IG), úsala como salida.
+                if apify_avail:
+                    try:
+                        return _apify_instagram(url, output_dir)
+                    except Exception as e2:
+                        attempts.append("apify_fb:%s" % (str(e2)[:80]))
+            if i < 2:
+                time.sleep(2 * (i + 1))   # backoff 2s, 4s
+
+    logger.warning("download_audio agotado url=%s attempts=%s", url, " | ".join(attempts[-4:]))
+    raise DownloadError("rate_limit" if rate_seen else "unavailable", str(last or "")[:120])
 
 
 def _apify_metrics_only(url):
@@ -722,7 +776,18 @@ def transcribe_task(self, url, language, user_id, ip, is_paid=False, charge=None
 
     except Exception as e:
         _refund_transcribe_charge(db, user_id, ip, charge)
-        return {"ok": False, "error": str(e)}
+        # B3: el usuario nunca ve el error crudo de yt-dlp/Apify en su 1ª acción.
+        if isinstance(e, DownloadError) and e.code == "rate_limit":
+            msg = ("Instagram va saturado ahora mismo. No te hemos cobrado — "
+                   "prueba de nuevo en un par de minutos.")
+        elif isinstance(e, DownloadError):
+            msg = ("No pude descargar ese reel (puede ser privado o no estar "
+                   "disponible). No te hemos cobrado — revisa el enlace o prueba otro.")
+        else:
+            msg = ("No pude procesar ese reel ahora mismo. No te hemos cobrado — "
+                   "inténtalo de nuevo en un momento.")
+        logger.warning("transcribe_task download failed url=%s err=%s", url, str(e)[:120])
+        return {"ok": False, "error": msg}
 
     thumb_b64 = None
     try:
