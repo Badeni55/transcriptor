@@ -56,6 +56,7 @@
       hooks:alt, expanded:false,
       from:s.from_competitor_username?("@"+s.from_competitor_username):null,
       brand:brand().name, type:"guión",
+      approval:(s.approval_status==="approved"?"approved":"pending"),   // B3: aprobación
       status:(s.recording_status==="recorded"?"recorded":(s.recording_status==="discarded"?"discarded":"draft")) };
   }
   // Mapea una fila de GET /ideas (backend) → idea local (con script_draft como
@@ -133,6 +134,10 @@
   function root(){ return document.getElementById("radarRoot"); }
   function brand(){ return S.brands.filter(function(b){return b.id===S.brandId;})[0] || S.brands[0] || {name:"Mi marca",level:1,voice:40,reelsAnalyzed:0,scripts:0,color:"#f97316"}; }
   function isAgency(){ return S.plan==="agencia"; }
+  // Ola Agencia B1: multi-marca = planes con >1 marca (Estudio/Agencia). El
+  // switcher y el CRUD de marcas se habilitan aquí (no solo en agencia). Portfolio
+  // y Equipo siguen siendo SOLO de agencia (isAgency).
+  function isMultiBrand(){ return isAgency() || S.realPlan==="estudio" || (S.brands&&S.brands.length>1); }
   // MACRO = portfolio de todas las marcas (solo agencia). MICRO = radar de una marca.
   function isMacro(){ return isAgency() && S.tab==="portfolio"; }
 
@@ -203,10 +208,26 @@
     if(S.brandMenu){
       var items="";
       if(isAgency()) items+='<button class="brand-opt'+(portfolio?" on":"")+'" data-act="all-brands"><span class="brand-dot multi"></span>Todas las marcas</button>';
-      items+=S.brands.map(function(x){ var on=(!portfolio && x.id===S.brandId); return '<button class="brand-opt'+(on?" on":"")+'" data-act="brand" data-id="'+ESC(x.id)+'"><span class="brand-dot" style="background:'+ESC(x.color)+'"></span>'+ESC(x.name)+'<span class="brand-lvl">Nv '+x.level+'</span></button>';}).join("");
+      // Cada marca: clic = cambiar de contexto (datos aislados por project_id).
+      // Renombrar / borrar inline (× con confirmación). 'default' (marca única
+      // sin project real) no se renombra/borra.
+      items+=S.brands.map(function(x){
+        var on=(!portfolio && x.id===S.brandId);
+        var manage=(x.id!=="default")
+          ? '<span class="brand-opt-act" data-act="brand-rename" data-id="'+ESC(x.id)+'" data-name="'+ESC(x.name)+'" title="Renombrar" aria-label="Renombrar '+ESC(x.name)+'">'+IC.gear+'</span>'+
+            (S.brands.length>1?'<span class="brand-opt-act" data-act="brand-del" data-id="'+ESC(x.id)+'" data-name="'+ESC(x.name)+'" title="Borrar marca" aria-label="Borrar '+ESC(x.name)+'">'+IC.x+'</span>':'')
+          : '';
+        return '<div class="brand-opt-row"><button class="brand-opt'+(on?" on":"")+'" data-act="brand" data-id="'+ESC(x.id)+'"><span class="brand-dot" style="background:'+ESC(x.color)+'"></span>'+ESC(x.name)+'<span class="brand-lvl">Nv '+x.level+'</span></button>'+manage+'</div>';
+      }).join("");
       // Entregable de Agencia: informe white-label del mes de la marca activa.
       if(isAgency() && !portfolio) items+='<button class="brand-opt" data-act="brand-report">'+IC.doc+' Generar informe del mes</button>';
-      if(isAgency()) items+='<button class="brand-opt add" data-act="brand-add">'+IC.plus+' Añadir marca</button>';
+      // + Nueva marca (Estudio/Agencia): cap-aware. Al tope → CTA de upgrade/extra.
+      var atCap = (S.brandsCap!=null) && (S.brands.length>=S.brandsCap);
+      if(isMultiBrand()){
+        items+= atCap
+          ? '<button class="brand-opt add" data-act="brand-cap">'+IC.plus+' Marca extra (tope '+S.brandsCap+')</button>'
+          : '<button class="brand-opt add" data-act="brand-add">'+IC.plus+' Nueva marca'+(S.brandsCap!=null?' ('+S.brands.length+'/'+S.brandsCap+')':'')+'</button>';
+      }
       menu='<div class="brand-menu">'+items+'</div>';
     }
     return '<button class="brand-switch" data-act="brand-toggle">'+dot+
@@ -244,8 +265,12 @@
   function railHTML(){
     // Ideas ya no es un tab suelto: la "Fábrica de ideas" vive dentro de Radar
     // (dashboardHTML → ideasZoneHTML), bajo las señales del día.
+    // TODO(agencia): reactivar el tab "Equipo" cuando se complete la propagación
+    // de ownership del miembro a scripts/radar/tracked (workspace_owner_id). De
+    // momento oculto del rail; el backend (invite/join/roles) y teamHTML se quedan.
+    //   ...,["team",IC.users,"Equipo"]
     var navTabs = isAgency()
-      ? [["portfolio",IC.layers,"Portfolio"],["dashboard",IC.grid,"Radar"],["guiones",IC.doc,"Guiones"],["metrics",IC.chart,"Métricas"],["brain",IC.brain,"Cerebro"],["team",IC.users,"Equipo"]]
+      ? [["portfolio",IC.layers,"Portfolio"],["dashboard",IC.grid,"Radar"],["guiones",IC.doc,"Guiones"],["metrics",IC.chart,"Métricas"],["brain",IC.brain,"Cerebro"]]
       : [["dashboard",IC.grid,"Radar"],["guiones",IC.doc,"Guiones"],["metrics",IC.chart,"Métricas"],["brain",IC.brain,"Cerebro"]];
     return '<nav class="rail">'+
       '<img class="rail-logo" src="/static/img/branding/isotipo-128.png" srcset="/static/img/branding/isotipo-128.png 1x, /static/img/branding/isotipo-256.png 2x" alt="Reelscript">'+
@@ -269,7 +294,7 @@
     var streak=(S.user.streak>0)?'<span class="cmd-streak" title="Días seguidos creando">'+IC.spark+' Racha '+S.user.streak+'</span>':'';
     var demoToggle=isDemo()?'<div class="demo-plan" title="Solo demo: cambia de plan"><span class="dp-k">DEMO</span><button class="dp'+(S.plan==="creador"?" on":"")+'" data-act="demo-plan" data-k="creador">Creador</button><button class="dp'+(S.plan==="agencia"?" on":"")+'" data-act="demo-plan" data-k="agencia">Agencia</button></div>':'';
     return '<div class="cmd">'+
-      (isAgency()?brandSwitchHTML():brandStaticHTML())+
+      (isMultiBrand()?brandSwitchHTML():brandStaticHTML())+
       crumb+
       '<span class="grow"></span>'+
       // T1 (IDI): captura de ideas siempre a mano, en cualquier vista de la isla.
@@ -864,6 +889,9 @@
   function guiCardHTML(g){
     var rec=g.status==="recorded";
     var pill=rec?'<span class="gui-pill done">'+IC.check+' Grabado</span>':'<span class="gui-pill">Por grabar</span>';
+    // B3: aprobación (solo agencia/estudio): badge + toggle "listo para cliente".
+    var apr=(g.approval==="approved");
+    var aprBadge=isMultiBrand()?('<span class="gui-pill '+(apr?'appr':'appr-pend')+'" title="'+(apr?'Aprobado · listo para cliente':'Pendiente de aprobar')+'">'+(apr?IC.check+' Aprobado':'Pendiente')+'</span>'):'';
     var nh=(g.hooks&&g.hooks.length)||0;
     var meta=(g.from?'robado de '+ESC(g.from)+' · ':'')+'voz '+ESC(g.brand);
     var pub;
@@ -897,8 +925,9 @@
       '<div class="gui-card'+(rec?" is-rec":"")+'">'+
         '<div class="ava bava">'+ESC(initialsOf(g.from||g.brand))+'</div>'+
         '<div class="gui-main"><div class="gui-title">'+ESC(g.title)+'</div><div class="gui-meta">'+meta+'</div>'+pub+bodyToggle+toggle+'</div>'+
-        pill+
+        aprBadge+pill+
         '<div class="gui-acts">'+
+          (isMultiBrand()?'<button class="iconbtn'+(apr?" on":"")+'" data-act="gui-approve" data-id="'+g.id+'" title="'+(apr?"Quitar aprobado":"Aprobar (listo para cliente)")+'" aria-label="'+(apr?"Quitar aprobado":"Aprobar")+'">'+IC.check+'</button>':'')+
           '<button class="iconbtn" data-act="gui-record" data-id="'+g.id+'" title="Grabar (teleprompter)">'+IC.mic+'</button>'+
           '<button class="iconbtn'+(rec?" on":"")+'" data-act="gui-toggle-rec" data-id="'+g.id+'" title="'+(rec?"Marcar por grabar":"Marcar grabado")+'">'+IC.check+'</button>'+
           '<button class="iconbtn danger" data-act="gui-discard" data-id="'+g.id+'" title="Descartar">'+IC.x+'</button>'+
@@ -911,11 +940,20 @@
   function guionesHTML(){
     var all=S.guiones.filter(function(g){return g.status!=="discarded";});
     var filt=S.guiFilter||"all";
-    var items=all.filter(function(g){ if(filt==="draft") return g.status==="draft"; if(filt==="recorded") return g.status==="recorded"; return true; });
+    var appr=S.guiApproval||"all";   // B3: filtro de aprobación (multi-marca)
+    var items=all.filter(function(g){ if(filt==="draft") return g.status==="draft"; if(filt==="recorded") return g.status==="recorded"; return true; })
+                 .filter(function(g){ if(!isMultiBrand()||appr==="all") return true; var a=(g.approval==="approved"); return appr==="approved"?a:!a; });
     var cAll=all.length, cDraft=all.filter(function(g){return g.status==="draft";}).length, cRec=all.filter(function(g){return g.status==="recorded";}).length;
     var chips='<div class="filters">'+[["all","Todos",cAll],["draft","Por grabar",cDraft],["recorded","Grabados",cRec]].map(function(f){
       return '<button class="fchip'+(filt===f[0]?" on":"")+'" data-act="gui-filter" data-k="'+f[0]+'">'+f[1]+' '+f[2]+'</button>';
     }).join("")+'</div>';
+    // B3: para agencia/estudio, segunda fila de filtros por estado de aprobación.
+    if(isMultiBrand()){
+      var cPend=all.filter(function(g){return g.approval!=="approved";}).length, cAppr=all.filter(function(g){return g.approval==="approved";}).length;
+      chips+='<div class="filters">'+[["all","Todas",cAll],["pending","Pendientes",cPend],["approved","Aprobadas",cAppr]].map(function(f){
+        return '<button class="fchip'+(appr===f[0]?" on":"")+'" data-act="gui-approval-filter" data-k="'+f[0]+'">'+f[1]+' '+f[2]+'</button>';
+      }).join("")+'</div>';
+    }
     var body=items.length===0
       ? '<div class="rs-empty" style="margin-top:24px">'+(cAll===0
           ? 'Aún no tienes guiones. Roba un reel en el <b>Radar</b> o apunta una idea (💡 arriba) — todo lo que generes aterriza aquí.'
@@ -1322,11 +1360,11 @@
   function teamHTML(){
     // En prod pinta los miembros reales (S.team, cargado por loadTeam); en demo, el pool demo.
     var members=(!isDemo() && Array.isArray(S.team)) ? S.team : teamMembers();
-    var roleCls={"Owner":"owner","Editor":"editor","Solo lectura":"viewer"};
+    var roleCls={"Owner":"owner","Miembro":"editor","Editor":"editor","Invitado · pendiente":"viewer","Solo lectura":"viewer"};
     var stats=[
       ["Miembros", members.length, "", ""],
       ["Marcas", S.brands.length, "", ""],
-      ["Editores", members.filter(function(m){return m.role==="Editor";}).length, "", ""],
+      ["Asientos", "∞", "ilimitados", "acc"],
       ["Créditos", "pool", "compartido de cuenta", "acc"]
     ];
     var statbar='<div class="statbar">'+stats.map(function(s){
@@ -1513,6 +1551,9 @@
     // T1: "ideas" dejó de ser una vista propia — la Fábrica de ideas vive dentro
     // de Radar. Normalizamos cualquier ruta/deep-link heredado (/profile/ideas, ?t=ideas).
     if(S.tab==="ideas") S.tab="dashboard";
+    // Equipo oculto temporalmente (ver TODO en railHTML): cualquier deep-link a
+    // team se normaliza al Radar/Portfolio para no dejar una vista huérfana.
+    if(S.tab==="team") S.tab=isAgency()?"portfolio":"dashboard";
     var html='';
     html+=railHTML()+'<div class="work">'+cmdHTML();
     if(S.tab==="portfolio") html+=(isAgency()?portfolioHTML():dashboardHTML());
@@ -1679,6 +1720,80 @@
     if(isDemo()){ applyDemoBrand(); render(); }
     else { loadBrandData(); }
   }
+
+  /* ── Ola Agencia B1 · CRUD de marcas ─────────────────────────────────────
+     Crear / renombrar / borrar marca (= project). Datos aislados por project_id
+     (el switch ya recarga con el filtro). Cap por plan (gateado en el menú +
+     re-chequeado en el 403 del backend). En demo, mutación local. */
+  function reloadBrands(cb){
+    if(isDemo()){ if(cb) cb(); return; }
+    apiGet("/api/brands").then(function(r){
+      if(r.ok && r.d && Array.isArray(r.d.brands)){
+        S.brands=r.d.brands;
+        if(r.d.brands_cap!=null) S.brandsCap=r.d.brands_cap;
+      }
+      if(cb) cb();
+    });
+  }
+  function brandCreate(){
+    S.brandMenu=false;
+    promptSheet({
+      title:"Nueva marca", label:"Nombre de la marca o cliente",
+      placeholder:"Ej. Café Aurora",
+      helper:"Cada marca tiene su radar, su cerebro y sus guiones, aislados.",
+      submitLabel:"Crear marca",
+      validate:function(v){ if(!v.trim()) return "Ponle un nombre."; if(v.trim().length>60) return "Máximo 60 caracteres."; },
+      onSubmit:function(v){
+        var name=v.trim();
+        if(isDemo()){ var nb={id:"demo-"+Date.now(),name:name,handle:name.toLowerCase().replace(/[^a-z0-9]/g,""),color:"#4f7cff",level:1,voice:40,reelsAnalyzed:0,scripts:0}; S.brands.push(nb); S.brandId=nb.id; S.tab="dashboard"; S.view="feed"; applyDemoBrand(); render(); return showToast("Marca «"+name+"» creada."); }
+        showToast("Creando «"+name+"»…");
+        apiPost("/projects",{name:name}).then(function(r){
+          if(r.ok && r.d && r.d.id){
+            reloadBrands(function(){ S.brandId=r.d.id; S.tab="dashboard"; S.view="feed"; S._lvlSeen=null; loadBrandData(); showToast("Marca «"+name+"» creada."); });
+          } else if(r.status===403){
+            showError((r.d&&r.d.error)||"Has llegado al tope de marcas de tu plan.");
+            if(typeof window.openUpgradeModal==="function"){ try{ window.openUpgradeModal("brand_limit"); }catch(e){} }
+          } else { showError((r.d&&r.d.error)||"No pude crear la marca."); }
+        });
+      }
+    });
+  }
+  function brandRename(id, oldName){
+    S.brandMenu=false;
+    promptSheet({
+      title:"Renombrar marca", label:"Nuevo nombre", initial:oldName||"",
+      submitLabel:"Guardar",
+      validate:function(v){ if(!v.trim()) return "No puede estar vacío."; if(v.trim().length>60) return "Máximo 60 caracteres."; },
+      onSubmit:function(v){
+        var name=v.trim();
+        var b=S.brands.filter(function(x){return x.id===id;})[0]; if(b) b.name=name;   // optimista
+        render();
+        if(isDemo()){ showToast("Marca renombrada."); return; }
+        apiPatch("/projects/"+encodeURIComponent(id),{name:name}).then(function(r){
+          if(!r.ok){ showError("No pude renombrar la marca."); reloadBrands(render); }
+          else showToast("Marca renombrada.");
+        });
+      }
+    });
+  }
+  function brandDelete(id, name){
+    S.brandMenu=false; render();
+    var go=function(){
+      if(isDemo()){ S.brands=S.brands.filter(function(x){return x.id!==id;}); if(S.brandId===id){ S.brandId=S.brands[0].id; applyDemoBrand(); } render(); return showToast("Marca borrada."); }
+      apiDelete("/projects/"+encodeURIComponent(id)).then(function(r){
+        if(!r.ok){ return showError("No pude borrar la marca."); }
+        reloadBrands(function(){
+          if(S.brandId===id){ S.brandId=(S.brands[0]&&S.brands[0].id)||"default"; S._lvlSeen=null; loadBrandData(); }
+          else render();
+          showToast("Marca «"+(name||"")+"» borrada.");
+        });
+      });
+    };
+    if(typeof window.confirmModal==="function"){
+      window.confirmModal({ title:"Borrar «"+(name||"marca")+"»", body:"Se borrará la marca y se desvincularán sus datos. Esta acción no se puede deshacer.", confirmText:"Borrar", cancelText:"Cancelar", danger:true })
+        .then(function(ok){ if(ok) go(); });
+    } else { go(); }
+  }
   // Toggle de plan SOLO en demo, para ver las dos experiencias.
   function setDemoPlan(k){
     if(S.plan===k){ return; } S.plan=k; S.brandMenu=false; S.view="feed"; S.feedExpanded=false; S._lvlSeen=null;
@@ -1842,12 +1957,15 @@
       if(me.free_lifetime_left!=null) S.user.freeLeft=me.free_lifetime_left;
     });
   }
-  // Muro: free agotó sus 5 «Hazlo mío» (o sin créditos). Abre el modal de planes.
+  // Muro: free agotó sus guiones del mes (o sin créditos). Abre el modal de planes.
   function showPaywall(err){
     var msg = (err==="free_limit_reached")
-      ? "Has usado tus 5 «Hazlo mío» gratis. Sube a Creador para seguir creando."
+      ? "Has usado tus guiones gratis de este mes. Sube a Creador para seguir creando."
       : "Necesitas créditos para generar este guion.";
     showToast(msg);
+    // FIX free-counter: refresca el contador real tras el muro (la pill no debe
+    // quedarse en "1 este mes" cuando el restante real es 0).
+    if(!isDemo()){ refreshCredits().then(function(){ render(); }); }
     if(typeof window.openUpgradeModal==="function"){ try{ window.openUpgradeModal("hazlo_mio_free_limit"); }catch(e){} }
   }
   function ensureScript(r,cb){
@@ -2529,7 +2647,7 @@
         if(d&&d.invite_url){
           try{ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(d.invite_url); }catch(e){}
           loadTeam();
-          showToast("Invitación creada · enlace copiado");
+          showToast(d.emailed?"Invitación enviada por email · enlace copiado":"Invitación creada · enlace copiado");
           return;
         }
         showError((d&&d.error)||"No pude crear la invitación.");
@@ -2542,17 +2660,22 @@
       .then(function(r){ return r.json().catch(function(){return[];}); })
       .then(function(rows){
         if(!Array.isArray(rows)) rows=[];
-        S.team=rows.map(function(m){
+        // Owner implícito (el usuario actual) primero; luego los miembros con su rol.
+        var owner={ name:(S.user.email||"Owner"), role:"Owner",
+          initials:(S.user.email||"O").slice(0,2).toUpperCase(), color:"#f59e0b", brands:[] };
+        var members=rows.map(function(m){
           var email=m.invited_email||"miembro";
           var active=m.status==="active";
+          var roleName = (m.role==="owner") ? "Owner" : (active?"Miembro":"Invitado · pendiente");
           return {
             name: email,
-            role: active?"Miembro":"Invitado · pendiente",
+            role: roleName,
             initials: (m.invited_email||"M").slice(0,2).toUpperCase(),
             color: active?"#12a37c":"#6d6bf6",
             brands: []
           };
         });
+        S.team=[owner].concat(members);
         if(S.tab==="team") render();
       })
       .catch(function(){});
@@ -2632,7 +2755,29 @@
     if(act==="demo-plan") return setDemoPlan(k);
     if(act==="team-invite") return teamInvite();
     if(act==="team-edit") return showToast("Gestión de roles y marcas por miembro: próximamente.");
-    if(act==="brand-add"){ S.brandMenu=false; render(); return showToast("Nueva marca: disponible en plan Agencia."); }
+    if(act==="brand-add") return brandCreate();
+    if(act==="brand-cap"){
+      S.brandMenu=false; render();
+      // Agencia al tope → ofrecer marca EXTRA (+€10/mes, add-on Stripe). Resto → upgrade.
+      if(isAgency() && !isDemo()){
+        var doBuy=function(){
+          apiPost("/billing/add-brand",{}).then(function(r){
+            if(r.ok && r.d && r.d.url){ try{ window.location.href=r.d.url; }catch(e){} return; }
+            if(r.d && r.d.code==="addon_not_configured"){ return showError("Las marcas extra aún no están disponibles. Vuelve pronto."); }
+            showError((r.d&&r.d.error)||"No pude iniciar la compra.");
+          });
+        };
+        if(typeof window.confirmModal==="function"){
+          window.confirmModal({ title:"Añadir marca extra", body:"Suma una marca más a tu Agencia por +10€/mes. Se factura junto a tu plan.", confirmText:"Añadir por 10€/mes", cancelText:"Ahora no" }).then(function(ok){ if(ok) doBuy(); });
+        } else doBuy();
+        return;
+      }
+      showToast("Has llegado al tope de marcas de tu plan.");
+      if(typeof window.openUpgradeModal==="function"){ try{ window.openUpgradeModal("brand_limit"); }catch(e){} }
+      return;
+    }
+    if(act==="brand-rename") return brandRename(id, btn.getAttribute("data-name"));
+    if(act==="brand-del") return brandDelete(id, btn.getAttribute("data-name"));
     if(act==="brand-report"){
       S.brandMenu=false; render();
       if(isDemo()) return showToast("Informe white-label del mes — disponible en tu cuenta de Agencia.");
@@ -2729,6 +2874,16 @@
     if(act==="fw-guiones"){ S.view="feed"; S._fillPhase=null; S.tab="guiones"; S.guiFilter="all"; return render(); }
     if(act==="fw-record"){ var fid=S._fillGuionIds&&S._fillGuionIds[0]; var g0=fid?guionById(fid):null; if(g0){ S.activeGuionId=g0.id; S.reel={creator:{handle:(g0.from||"").replace("@","")},script:{hook:g0.hook,beats:g0.beats,close:g0.close}}; S.view="prompter"; render(); } return; }
     if(act==="gui-filter"){ S.guiFilter=k; return render(); }
+    if(act==="gui-approval-filter"){ S.guiApproval=k; return render(); }
+    if(act==="gui-approve"){
+      var ga=guionById(id);
+      if(ga){
+        ga.approval=(ga.approval==="approved")?"pending":"approved";
+        render(); showToast(ga.approval==="approved"?"Guion aprobado · listo para cliente.":"Aprobación retirada.");
+        if(!isDemo() && ga._sid){ apiPatch("/scripts/"+encodeURIComponent(ga._sid),{approval_status:ga.approval}); }
+      }
+      return;
+    }
     if(act==="gui-record"){ var g=guionById(id); if(g){ S.activeGuionId=g.id; S.reel={creator:{handle:(g.from||"").replace("@","")},script:{hook:g.hook,beats:g.beats,close:g.close}}; S.view="prompter"; render(); } return; }
     if(act==="gui-toggle-rec"){ var g2=guionById(id); if(g2){ g2.status=(g2.status==="recorded")?"draft":"recorded"; if(g2.status==="recorded"&&S.stats) S.stats.stolen_today+=1; render(); showToast(g2.status==="recorded"?"Marcado como grabado.":"Vuelto a borrador."); persistRecStatus(g2); } return; }
     if(act==="gui-discard"){ var g3=guionById(id); if(g3){ g3.status="discarded"; S._lastDiscarded=id; render(); showToast("Descartado.","Deshacer","undo-discard"); persistRecStatus(g3); } return; }   // T9: descartar siempre con vuelta atrás
@@ -2875,8 +3030,9 @@
     if(seg==="transc"||seg==="transcriptions"){ S._pendingLegacy="transc"; return; }
     if(seg==="settings"){ S._pendingLegacy="settings"; return; }
     // Cualquier /profile/<x> con sección → tab del rail. Sin equivalente → "dashboard" (Radar).
+    // team: oculto temporalmente → cae al default (render lo re-normaliza también).
     S.tab = ({scripts:"guiones", guiones:"guiones", ideas:"dashboard", metrics:"metrics",
-              brain:"brain", cerebro:"brain", portfolio:"portfolio", team:"team",
+              brain:"brain", cerebro:"brain", portfolio:"portfolio",
               radar:"dashboard", overview:"dashboard", dashboard:"dashboard"})[seg] || "dashboard";
   }
   function loadAll(){
@@ -2905,7 +3061,10 @@
       // INGLÉS (verificado en DB: free, agency); la isla razona en creador|agencia. Sin esto
       // los Agency (plan="agency") fallaban isAgency() y perdían Portfolio/Equipo en prod.
       var _rawPlan = (me.plan||(me.user&&me.user.plan))||"free";
+      S.realPlan = isDemo() ? "agency" : _rawPlan;   // plan crudo (free/creator/estudio/agency)
       S.plan = isDemo() ? "agencia" : (_rawPlan === "agency" ? "agencia" : "creador");
+      // Ola Agencia B1: cap de marcas (de /api/brands) → gatea "+ Nueva marca".
+      S.brandsCap = (bd.brands_cap!=null) ? bd.brands_cap : (isDemo()?10:null);
       S.brands=(bd.brands&&bd.brands.length)?bd.brands:[{id:"default",name:(me.user&&me.user.name)?me.user.name:"Mi marca",handle:S.user.handle,color:"#f97316",level:1,voice:40,reelsAnalyzed:0,scripts:0}];
       if(isDemo()){ S.brands = isAgency() ? demoBrands() : [demoBrands()[0]]; }
       S.brandId=S.brands[0].id;

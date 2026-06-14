@@ -80,6 +80,11 @@ celery_app.conf.beat_schedule = {
         "task": "tasks.send_trial_lifecycle_emails",
         "schedule": 3600.0,
     },
+    # Ola Agencia B5: informe mensual white-label (1º de mes, 08:00 UTC).
+    "send-monthly-brand-reports": {
+        "task": "tasks.send_monthly_brand_reports",
+        "schedule": crontab(day_of_month=1, hour=8, minute=0),
+    },
     "sweep-stale-resources": {
         "task": "tasks.sweep_stale_resources",
         "schedule": 300.0,
@@ -112,6 +117,64 @@ def send_email_now(user_id, template_key):
     except Exception as e:
         logger.warning("send_email_now failed user=%s template=%s err=%s",
                        user_id, template_key, e)
+
+
+@celery_app.task(name="tasks.send_monthly_brand_reports")
+def send_monthly_brand_reports():
+    """Ola Agencia B5: el 1º de mes, avisa a cada owner de Agencia de que el
+    informe white-label de cada una de sus marcas está listo (enlace al generador
+    in-app). Idempotente por (owner, marca, mes) vía email_log."""
+    SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+    SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return {"error": "supabase_not_configured"}
+    db = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+    try:
+        from app import _build_brand_report
+        from emails import send_brand_report_ready
+    except Exception as e:
+        logger.error("send_monthly_brand_reports: import failed: %s", e)
+        return {"error": "import"}
+
+    now = datetime.now(timezone.utc)
+    month_label = f"{now.year}-{now.month:02d}"
+    try:
+        agencies = (db.table("profiles").select("id").eq("plan", "agency").execute()).data or []
+    except Exception as e:
+        logger.error("send_monthly_brand_reports: agencies query failed: %s", e)
+        return {"error": "query"}
+
+    sent = 0
+    for ag in agencies:
+        owner_id = ag["id"]
+        try:
+            projs = (db.table("projects").select("id, name").eq("user_id", owner_id).execute()).data or []
+        except Exception:
+            projs = []
+        for p in projs:
+            try:
+                data = _build_brand_report(owner_id, p["id"])
+                if not data["reels"] and not data["scripts"]:
+                    continue   # nada que reportar este mes
+                res = send_brand_report_ready(owner_id, p.get("name") or "Tu marca",
+                                              p["id"], len(data["reels"]), len(data["scripts"]), month_label)
+                if res.get("sent"):
+                    sent += 1
+            except Exception as e:
+                logger.warning("monthly_brand_report failed owner=%s proj=%s err=%s", owner_id, p.get("id"), e)
+    logger.info("send_monthly_brand_reports done agencies=%s sent=%s", len(agencies), sent)
+    return {"agencies": len(agencies), "sent": sent}
+
+
+@celery_app.task(name="tasks.send_agency_invite_email")
+def send_agency_invite_email(owner_id, invited_email, invite_url, owner_name=None):
+    """Ola Agencia B2: envía la invitación de equipo fuera del request."""
+    try:
+        from emails import send_agency_invite
+        return send_agency_invite(owner_id, invited_email, invite_url, owner_name)
+    except Exception as e:
+        logger.warning("send_agency_invite_email failed owner=%s err=%s", owner_id, e)
+        return {"error": str(e)[:200]}
 
 
 @celery_app.task(name="tasks.send_payment_failed_email")
@@ -988,10 +1051,12 @@ def generate_script_competitor_task(self, reel_id, user_id, assistant_id, langua
             return _fail("reel_not_found", "Reel no encontrado.")
         ig_username = (reel.get("creator") or {}).get("ig_username") or ""
 
-        # 2. Cargar profile del user.
+        # 2. Cargar profile del user. Incluye los campos que necesita la MISMA
+        # contabilidad que el endpoint sync (trial + free mensual), no solo plan.
         try:
             pr = (db.table("profiles")
-                    .select("plan, monthly_usage, credits_cents, default_idea_assistant")
+                    .select("plan, monthly_usage, credits_cents, default_idea_assistant, "
+                            "stripe_subscription_id, trial_ends_at, free_lifetime_uses, free_month_reset_at")
                     .eq("id", user_id)
                     .single()
                     .execute())
@@ -999,7 +1064,17 @@ def generate_script_competitor_task(self, reel_id, user_id, assistant_id, langua
         except Exception:
             profile = {}
         plan = profile.get("plan", "free")
-        is_paid_unlimited = plan in ("pro", "creator", "agency")
+        # FIX free-counter: alinear el cobro async con el sync. Antes la task
+        # gateaba por plan in (pro/creator/agency) y cobraba créditos a los free
+        # → NO tocaba free_lifetime_uses (la pill no bajaba) y dejaba créditos en
+        # negativo; el trial tampoco contaba contra su tope. Ahora usa los mismos
+        # helpers que el endpoint.
+        try:
+            from app import (paid_features_active as _pfa, free_lifetime_left as _fll,
+                             _next_month_boundary as _nmb, _parse_ts as _pts)  # lazy (circular)
+        except Exception:
+            _pfa = _fll = _nmb = _pts = None
+        is_paid_unlimited = _pfa(profile) if _pfa else (plan in ("pro", "creator", "agency"))
 
         self.update_state(state="PROGRESS", meta={"step": "preparing"})
 
@@ -1267,12 +1342,29 @@ def generate_script_competitor_task(self, reel_id, user_id, assistant_id, langua
             logger.exception("gen_script_task scripts insert failed reel=%s: %s", reel_id, e)
             return _fail("insert_error", "Error guardando el guion.")
 
-        # Cobrar SOLO tras insert OK.
+        # Cobrar SOLO tras insert OK. Mismo orden que el endpoint sync:
+        #   pago/trial → monthly_usage · free con cuota del mes → free_lifetime_uses
+        #   (reset mensual) · resto → créditos.
         try:
             if is_paid_unlimited:
                 db.table("profiles").update({
                     "monthly_usage": (profile.get("monthly_usage") or 0) + 1
                 }).eq("id", user_id).execute()
+            elif _fll and _fll(profile) > 0:
+                # Consumo del free MENSUAL (espejo de app._free_month_consume) con
+                # la db de la task: reset si el boundary pasó, luego +1.
+                now = datetime.now(timezone.utc)
+                reset_dt = _pts(profile.get("free_month_reset_at")) if _pts else None
+                rolled = reset_dt is None or now >= reset_dt
+                if rolled and _nmb:
+                    db.table("profiles").update({
+                        "free_analysis_uses": 0, "free_lifetime_uses": 1,
+                        "free_month_reset_at": _nmb(now).isoformat(),
+                    }).eq("id", user_id).execute()
+                else:
+                    db.table("profiles").update({
+                        "free_lifetime_uses": (profile.get("free_lifetime_uses") or 0) + 1
+                    }).eq("id", user_id).execute()
             else:
                 db.table("profiles").update({
                     "credits_cents": (profile.get("credits_cents") or 0) - SCRIPT_COST

@@ -761,6 +761,105 @@ def send_radar_digest(user_id, reels, day_key, next_suggestion=None):
     return {"sent": True}
 
 
+# ── Ola Agencia B5 · aviso mensual del informe white-label ──────────────────
+
+def send_brand_report_ready(owner_id, brand_name, project_id, n_reels, n_scripts, month_label):
+    """Aviso mensual (1º de mes): el informe white-label de la marca está listo.
+    Enlaza al generador in-app (donde el owner lo abre y exporta a PDF para el
+    cliente). Idempotente por (owner, marca, mes) vía email_log."""
+    key = f"brand_report_{project_id}_{month_label}"
+    db = _db()
+    now = datetime.now(timezone.utc).isoformat()
+    try:
+        db.table("email_log").insert({"user_id": owner_id, "template_key": key,
+                                      "status": "queued", "scheduled_for": now}).execute()
+    except Exception:
+        return {"skipped": "already_sent"}
+
+    def _skip(reason):
+        db.table("email_log").update({"status": "skipped", "error": reason, "sent_at": now}) \
+          .eq("user_id", owner_id).eq("template_key", key).execute()
+        return {"skipped": reason}
+
+    email, confirmed_at = _user_email(owner_id)
+    if not email:
+        return _skip("no_email")
+    profile = _profile(owner_id)
+    lang = profile.get("lang") or "es"
+    if lang not in ("es", "en"):
+        lang = "es"
+    token = profile.get("unsubscribe_token") or ""
+    unsub_url = f"{APP_URL}/unsubscribe?token={token}"
+    report_url = f"{APP_URL}/brands/{project_id}/report"
+
+    if lang == "es":
+        subject = f"📄 Informe de {brand_name} · {month_label}"
+        inner = (f"<p>hola.</p><p>el informe white-label de <b>{brand_name}</b> de "
+                 f"{month_label} está listo: <b>{n_reels}</b> reels que petaron en su "
+                 f"nicho y <b>{n_scripts}</b> guiones del mes.</p>"
+                 f"<p>ábrelo, ponle tu logo y expórtalo a PDF para tu cliente.</p>"
+                 + _btn(report_url, "abrir el informe →"))
+        txt = (f"el informe de {brand_name} de {month_label} está listo "
+               f"({n_reels} reels, {n_scripts} guiones): {report_url}")
+    else:
+        subject = f"📄 {brand_name} report · {month_label}"
+        inner = (f"<p>hi.</p><p>the white-label report for <b>{brand_name}</b> "
+                 f"({month_label}) is ready: <b>{n_reels}</b> reels that blew up in "
+                 f"its niche and <b>{n_scripts}</b> scripts this month.</p>"
+                 f"<p>open it, add your logo and export to PDF for your client.</p>"
+                 + _btn(report_url, "open the report →"))
+        txt = (f"the {brand_name} report for {month_label} is ready "
+               f"({n_reels} reels, {n_scripts} scripts): {report_url}")
+
+    html = _wrap_html(inner, unsub_url, lang)
+    text = _wrap_text(txt, unsub_url, lang)
+    resend_id, err = _send_via_resend(email, subject, html, text)
+    now2 = datetime.now(timezone.utc).isoformat()
+    if err:
+        db.table("email_log").update({"status": "failed", "error": err, "sent_at": now2}) \
+          .eq("user_id", owner_id).eq("template_key", key).execute()
+        return {"error": err}
+    db.table("email_log").update({"status": "sent", "sent_at": now2, "resend_id": resend_id}) \
+      .eq("user_id", owner_id).eq("template_key", key).execute()
+    track("email_sent", owner_id, {"template_key": "brand_report", "resend_id": resend_id})
+    return {"sent": True}
+
+
+# ── Ola Agencia B2 · invitación de equipo por email ─────────────────────────
+
+def send_agency_invite(owner_id, invited_email, invite_url, owner_name=None):
+    """Invitación al workspace por email (Resend). Transaccional (no marketing):
+    ignora opt-out/rate-limit. No idempotente por email_log (reinvitar es válido).
+    Devuelve {sent|error}."""
+    if not invited_email or not invite_url:
+        return {"error": "missing_args"}
+    who = owner_name or "Un equipo"
+    subject_es = f"{who} te invita a su workspace en ReelScript"
+    subject_en = f"{who} invited you to their ReelScript workspace"
+    # idioma: no sabemos el del invitado (puede no tener cuenta) → bilingüe corto ES.
+    inner_html = (
+        f"<p>hola.</p>"
+        f"<p><b>{who}</b> te ha invitado a su equipo en ReelScript para crear guiones "
+        f"sobre sus marcas.</p>"
+        f"<p>entra con el enlace, inicia sesión (o crea tu cuenta gratis) y quedarás "
+        f"dentro del workspace.</p>"
+        + _btn(invite_url, "unirme al equipo →")
+        + f'<p style="color:#9A9A9F;font-size:13px">o copia este enlace: {invite_url}</p>'
+    )
+    inner_text = (f"hola.\n\n{who} te ha invitado a su equipo en ReelScript.\n\n"
+                  f"únete: {invite_url}")
+    html = _wrap_html(inner_html, invite_url, "es")
+    text = _wrap_text(inner_text, invite_url, "es")
+    resend_id, err = _send_via_resend(invited_email, subject_es, html, text)
+    if err:
+        track("email_failed", owner_id, {"template_key": "agency_invite", "error": err})
+        return {"error": err}
+    track("email_sent", owner_id, {"template_key": "agency_invite", "resend_id": resend_id,
+                                   "invited": invited_email})
+    logger.info("agency_invite sent owner=%s to=%s", owner_id, invited_email)
+    return {"sent": True}
+
+
 # ── growth-6 · RETENCIÓN: digest SEMANAL (gancho de vuelta para FREE) ───────
 
 def send_weekly_digest(user_id, reels, week_key, next_suggestion=None):

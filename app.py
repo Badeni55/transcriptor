@@ -1737,7 +1737,17 @@ def stripe_webhook():
         stripe_session_id = obj["id"]
         user_id           = obj["metadata"]["user_id"]
 
-        if obj["metadata"].get("type") == "subscription":
+        if obj["metadata"].get("type") == "addon_brand":
+            # ── Ola Agencia B4: marca extra comprada → +1 slot ───────────
+            try:
+                prof = (db.table("profiles").select("extra_brand_slots")
+                          .eq("id", user_id).single().execute())
+                cur = int((prof.data or {}).get("extra_brand_slots") or 0)
+                db.table("profiles").update({"extra_brand_slots": cur + 1}).eq("id", user_id).execute()
+                track_event("brand_addon_purchased", user_id, {"slots": cur + 1})
+            except Exception as e:
+                logger.error("addon_brand webhook failed user=%s err=%s", user_id, e)
+        elif obj["metadata"].get("type") == "subscription":
             # ── Suscripción ──────────────────────────────────────────
             line_items = stripe_lib.checkout.Session.list_line_items(stripe_session_id)
             price_id = line_items.data[0].price.id if line_items.data else None
@@ -1761,19 +1771,28 @@ def stripe_webhook():
             else:
                 line_items = stripe_lib.checkout.Session.list_line_items(stripe_session_id)
                 price_id = line_items.data[0].price.id if line_items.data else None
-                # Resolver créditos por price_id: config DB con fallback a env (STRIPE_TOPUP_PRICES).
-                credits = None
-                try:
-                    by_price = {
-                        t.get("stripe_price_id"): t.get("credits")
-                        for t in load_topups_config().get("topups", [])
-                        if t.get("stripe_price_id")
-                    }
-                    credits = by_price.get(price_id)
-                except Exception:
+                # GATE addon: el price de "marca extra" (STRIPE_PRICE_ADDON_BRAND)
+                # apunta a un producto que LEGACY daba 150 créditos (topup). La compra
+                # real se enruta por la rama type=="addon_brand" (solo slot). Si por
+                # config DB heredada cayera aquí, NO acreditar créditos — solo loguear.
+                if STRIPE_PRICE_ADDON_BRAND and price_id == STRIPE_PRICE_ADDON_BRAND:
+                    logger.warning("addon_brand price hit topup branch (session=%s) — "
+                                   "NO se acreditan créditos legacy", stripe_session_id)
+                    credits = 0
+                else:
+                    # Resolver créditos por price_id: config DB con fallback a env (STRIPE_TOPUP_PRICES).
                     credits = None
-                if credits is None:
-                    credits = STRIPE_TOPUP_PRICES.get(price_id, 0)
+                    try:
+                        by_price = {
+                            t.get("stripe_price_id"): t.get("credits")
+                            for t in load_topups_config().get("topups", [])
+                            if t.get("stripe_price_id")
+                        }
+                        credits = by_price.get(price_id)
+                    except Exception:
+                        credits = None
+                    if credits is None:
+                        credits = STRIPE_TOPUP_PRICES.get(price_id, 0)
                 amount_cents = (credits or 0) * get_cost_cents()
 
             db.table("payments").update({
@@ -1807,14 +1826,18 @@ def stripe_webhook():
         inv = event["data"]["object"]
         if inv.get("billing_reason") == "subscription_cycle":
             sub_id = inv.get("subscription")
-            if sub_id:
+            _line0 = (inv.get("lines", {}).get("data") or [{}])[0]
+            _inv_price = (_line0.get("price") or {}).get("id")
+            # GATE addon: el "marca extra" es una suscripción recurrente APARTE; sus
+            # invoices NO son renovación de plan ni dan créditos. Saltar siempre.
+            if STRIPE_PRICE_ADDON_BRAND and _inv_price == STRIPE_PRICE_ADDON_BRAND:
+                logger.info("invoice.paid addon_brand (sub=%s) — no es plan, skip", sub_id)
+            elif sub_id:
                 prof = (db.table("profiles").select("id")
                           .eq("stripe_subscription_id", sub_id).limit(1).execute())
                 if prof.data:
                     uid2 = prof.data[0]["id"]
-                    line0 = (inv.get("lines", {}).get("data") or [{}])[0]
-                    price_id = (line0.get("price") or {}).get("id")
-                    plan2 = PRICE_TO_PLAN.get(price_id) or "creator"
+                    plan2 = PRICE_TO_PLAN.get(_inv_price) or "creator"
                     db.table("profiles").update({"plan": plan2}).eq("id", uid2).execute()
                     grant_monthly_allowance(uid2, plan2)
 
@@ -1952,6 +1975,38 @@ def create_subscription_checkout():
     except Exception as e:
         logger.error(f"Error: {e}", exc_info=True)
         return jsonify({"error": "Internal server error. Please try again."}), 500
+
+
+@app.route("/billing/add-brand", methods=["POST"])
+@require_auth
+def add_brand_addon():
+    """Ola Agencia B4: comprar una MARCA EXTRA (add-on +€10/mes) para Agencia
+    (base 10). FLAG: David crea el price en Stripe (STRIPE_PRICE_ADDON_BRAND).
+    Sin price → degrada limpio ('no configurado'), no rompe. Al completar el pago,
+    el webhook incrementa profiles.extra_brand_slots → brands_cap sube +1."""
+    if not STRIPE_OK:
+        return jsonify({"error": "Pagos no disponibles"}), 503
+    user = current_user()
+    profile = get_profile(user["id"])
+    if profile.get("plan") != "agency":
+        return jsonify({"error": "Las marcas extra son del plan Agencia."}), 403
+    if not STRIPE_PRICE_ADDON_BRAND:
+        # FLAG: price del add-on aún no configurado por David.
+        return jsonify({"error": "Las marcas extra aún no están disponibles. Vuelve pronto.",
+                        "code": "addon_not_configured"}), 400
+    try:
+        checkout_session = stripe_lib.checkout.Session.create(
+            payment_method_types=["card"],
+            mode="subscription",
+            line_items=[{"price": STRIPE_PRICE_ADDON_BRAND, "quantity": 1}],
+            success_url=request.host_url + "profile/settings?addon=brand_ok",
+            cancel_url=request.host_url + "profile/settings?addon=cancel",
+            metadata={"user_id": user["id"], "type": "addon_brand"},
+        )
+        return jsonify({"url": checkout_session.url})
+    except Exception as e:
+        logger.error("add_brand_addon failed user=%s err=%s", user["id"], e, exc_info=True)
+        return jsonify({"error": "No se pudo iniciar la compra."}), 500
 
 
 @app.route("/manage-subscription", methods=["POST"])
@@ -3278,6 +3333,20 @@ def _slugify_handle(name):
     return re.sub(r"[^a-z0-9]", "", name.lower())
 
 
+def workspace_owner_id(user_id: str) -> str:
+    """Ola Agencia B2: si el usuario es MIEMBRO activo de una agencia, su
+    'workspace' es el del owner (ve y opera sobre las marcas del owner). Si no,
+    su propio id. Best-effort: ante cualquier fallo, devuelve su propio id."""
+    try:
+        r = (db.table("agency_members").select("agency_owner_id")
+               .eq("member_id", user_id).eq("status", "active").limit(1).execute())
+        if r.data and r.data[0].get("agency_owner_id"):
+            return r.data[0]["agency_owner_id"]
+    except Exception:
+        pass
+    return user_id
+
+
 @app.route("/api/brands", methods=["GET"])
 @require_auth
 def api_brands():
@@ -3288,27 +3357,31 @@ def api_brands():
     Sin projects → una marca derivada del profile (id:'default')."""
     user = current_user()
     uid = user["id"]
-    profile = get_profile(uid)
+    # B2: si es MIEMBRO de una agencia, opera en el workspace del owner.
+    owner_uid = workspace_owner_id(uid)
+    is_member = owner_uid != uid
+    eff_uid = owner_uid
+    profile = get_profile(eff_uid)
     plan = (profile or {}).get("plan", "free")
 
     projects = []
     try:
         if plan == "agency":
-            owned = db.table("projects").select("*").eq("user_id", uid).execute().data or []
-            managed = db.table("projects").select("*").eq("agency_owner_id", uid).execute().data or []
+            owned = db.table("projects").select("*").eq("user_id", eff_uid).execute().data or []
+            managed = db.table("projects").select("*").eq("agency_owner_id", eff_uid).execute().data or []
             seen = set()
             for p in owned + managed:
                 if p.get("id") and p["id"] not in seen:
                     seen.add(p["id"])
                     projects.append(p)
         else:
-            projects = db.table("projects").select("*").eq("user_id", uid).execute().data or []
+            projects = db.table("projects").select("*").eq("user_id", eff_uid).execute().data or []
     except Exception as e:
         logger.warning("api_brands query failed user=%s err=%s", uid, e)
         projects = []
 
-    # Voz del usuario: confidence del VoiceProfile (marca por defecto) si existe, si no 40.
-    vp = get_voice_profile(uid)
+    # Voz del workspace: confidence del VoiceProfile (marca por defecto) si existe, si no 40.
+    vp = get_voice_profile(eff_uid)
     voice = int(vp.get("confidence") or 0) if vp else 40
     if voice <= 0:
         voice = 40
@@ -3347,7 +3420,31 @@ def api_brands():
             "scripts": 0,
         }]
 
-    return jsonify({"brands": brands})
+    # cap de marcas + plan → la isla muestra "N/cap" y gatea "+ Nueva marca".
+    _cap = brands_cap(profile)
+    return jsonify({"brands": brands, "plan": plan, "brands_cap": _cap})
+
+
+def get_extra_brand_slots(user_id: str) -> int:
+    """Marcas extra compradas (add-on Agencia +10€/marca). Block-4 cablea la
+    compra en Stripe; por ahora 0 (sin price ID → degrada limpio)."""
+    try:
+        r = (db.table("profiles").select("extra_brand_slots")
+               .eq("id", user_id).single().execute())
+        return int((r.data or {}).get("extra_brand_slots") or 0)
+    except Exception:
+        return 0
+
+
+def brands_cap(profile: dict) -> int | None:
+    """Tope de marcas (projects) por plan. None = sin tope.
+    Estudio 3 · Agencia 10 (+ extras comprados) · free 1 · creator/pro sin tope (no se toca)."""
+    plan = profile.get("plan", "free")
+    if plan == "agency":
+        return 10 + get_extra_brand_slots(profile.get("id"))
+    if plan == "estudio":
+        return 3
+    return PLANS.get(plan, PLANS["free"]).get("projects_max")
 
 
 @app.route("/projects", methods=["POST"])
@@ -3355,13 +3452,13 @@ def api_brands():
 def create_project():
     user = current_user()
     profile = get_profile(user["id"])
-    plan = profile.get("plan", "free")
-    max_proj = PLANS.get(plan, PLANS["free"])["projects_max"]
+    max_proj = brands_cap(profile)
     if max_proj is not None:
         count = db.table("projects").select("id", count="exact").eq("user_id", user["id"]).execute()
         current = count.count if hasattr(count, "count") else len(count.data)
         if current >= max_proj:
-            return jsonify({"error": f"Has alcanzado el límite de {max_proj} proyecto(s) en tu plan. Sube de plan para tener ilimitados."}), 403
+            return jsonify({"error": f"Has alcanzado el límite de {max_proj} marca(s) de tu plan. Sube de plan o añade una marca extra.",
+                            "limit": max_proj, "code": "brand_limit"}), 403
     body = request.get_json() or {}
     ok_color, norm_color = _validate_project_color(body.get("color"))
     if not ok_color:
@@ -3442,7 +3539,7 @@ def update_script(script_id):
     user = current_user()
     body = request.get_json()
     updates = {}
-    for key in ("title", "transcription", "script", "performance_notes", "views_count", "engagement_rate", "project_id", "likes", "comments", "saves", "metrics_image_url", "published_at", "recording_status", "alt_hooks"):
+    for key in ("title", "transcription", "script", "performance_notes", "views_count", "engagement_rate", "project_id", "likes", "comments", "saves", "metrics_image_url", "published_at", "recording_status", "alt_hooks", "approval_status"):
         if key in body:
             updates[key] = body[key]
     if "recording_status" in updates and updates["recording_status"] not in ("pending", "recorded", "discarded"):
@@ -3554,15 +3651,30 @@ def invite_member():
     if not email:
         return jsonify({"error": "Email required"}), 400
 
-    result = db.table("agency_members").insert({
-        "agency_owner_id": user["id"],
-        "invited_email": email,
-        "status": "pending",
-    }).execute()
+    body_role = (body.get("role") or "member").strip().lower()
+    if body_role not in ("member", "owner"):
+        body_role = "member"
+    # role: por defecto 'member' (crea/edita guiones). El owner es implícito (el
+    # dueño de la agencia), no una fila aquí. Resiliente si la columna `role`
+    # aún no existe (migración del bloque) → reintenta sin ella.
+    _payload = {"agency_owner_id": user["id"], "invited_email": email,
+                "status": "pending", "role": body_role}
+    try:
+        result = db.table("agency_members").insert(_payload).execute()
+    except Exception:
+        _payload.pop("role", None)
+        result = db.table("agency_members").insert(_payload).execute()
 
     token = result.data[0]["invite_token"] if result.data else None
     invite_url = f"{request.host_url}join?token={token}"
-    return jsonify({"invite_url": invite_url, "token": token})
+    # B2: enviar la invitación por EMAIL (Resend), además de devolver el enlace.
+    try:
+        from tasks import send_agency_invite_email
+        _owner_name = (user.get("email") or "").split("@")[0] or None
+        send_agency_invite_email.delay(user["id"], email, invite_url, _owner_name)
+    except Exception as e:
+        logger.warning("agency invite email dispatch failed owner=%s err=%s", user["id"], e)
+    return jsonify({"invite_url": invite_url, "token": token, "emailed": True})
 
 
 @app.route("/agency/join", methods=["POST"])
