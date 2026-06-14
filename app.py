@@ -1771,19 +1771,28 @@ def stripe_webhook():
             else:
                 line_items = stripe_lib.checkout.Session.list_line_items(stripe_session_id)
                 price_id = line_items.data[0].price.id if line_items.data else None
-                # Resolver créditos por price_id: config DB con fallback a env (STRIPE_TOPUP_PRICES).
-                credits = None
-                try:
-                    by_price = {
-                        t.get("stripe_price_id"): t.get("credits")
-                        for t in load_topups_config().get("topups", [])
-                        if t.get("stripe_price_id")
-                    }
-                    credits = by_price.get(price_id)
-                except Exception:
+                # GATE addon: el price de "marca extra" (STRIPE_PRICE_ADDON_BRAND)
+                # apunta a un producto que LEGACY daba 150 créditos (topup). La compra
+                # real se enruta por la rama type=="addon_brand" (solo slot). Si por
+                # config DB heredada cayera aquí, NO acreditar créditos — solo loguear.
+                if STRIPE_PRICE_ADDON_BRAND and price_id == STRIPE_PRICE_ADDON_BRAND:
+                    logger.warning("addon_brand price hit topup branch (session=%s) — "
+                                   "NO se acreditan créditos legacy", stripe_session_id)
+                    credits = 0
+                else:
+                    # Resolver créditos por price_id: config DB con fallback a env (STRIPE_TOPUP_PRICES).
                     credits = None
-                if credits is None:
-                    credits = STRIPE_TOPUP_PRICES.get(price_id, 0)
+                    try:
+                        by_price = {
+                            t.get("stripe_price_id"): t.get("credits")
+                            for t in load_topups_config().get("topups", [])
+                            if t.get("stripe_price_id")
+                        }
+                        credits = by_price.get(price_id)
+                    except Exception:
+                        credits = None
+                    if credits is None:
+                        credits = STRIPE_TOPUP_PRICES.get(price_id, 0)
                 amount_cents = (credits or 0) * get_cost_cents()
 
             db.table("payments").update({
@@ -1817,14 +1826,18 @@ def stripe_webhook():
         inv = event["data"]["object"]
         if inv.get("billing_reason") == "subscription_cycle":
             sub_id = inv.get("subscription")
-            if sub_id:
+            _line0 = (inv.get("lines", {}).get("data") or [{}])[0]
+            _inv_price = (_line0.get("price") or {}).get("id")
+            # GATE addon: el "marca extra" es una suscripción recurrente APARTE; sus
+            # invoices NO son renovación de plan ni dan créditos. Saltar siempre.
+            if STRIPE_PRICE_ADDON_BRAND and _inv_price == STRIPE_PRICE_ADDON_BRAND:
+                logger.info("invoice.paid addon_brand (sub=%s) — no es plan, skip", sub_id)
+            elif sub_id:
                 prof = (db.table("profiles").select("id")
                           .eq("stripe_subscription_id", sub_id).limit(1).execute())
                 if prof.data:
                     uid2 = prof.data[0]["id"]
-                    line0 = (inv.get("lines", {}).get("data") or [{}])[0]
-                    price_id = (line0.get("price") or {}).get("id")
-                    plan2 = PRICE_TO_PLAN.get(price_id) or "creator"
+                    plan2 = PRICE_TO_PLAN.get(_inv_price) or "creator"
                     db.table("profiles").update({"plan": plan2}).eq("id", uid2).execute()
                     grant_monthly_allowance(uid2, plan2)
 
