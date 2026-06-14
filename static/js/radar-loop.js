@@ -1277,7 +1277,7 @@
         ev.map(function(e){ return '<div class="learn-item">'+IC.check+'<span>'+ESC(e)+'</span></div>'; }).join("")+
       '</div></div>'+
       // Refinar: acumula más reels tuyos → sube confianza (POST /api/voice/refine).
-      '<div class="voice-refine" style="margin-bottom:18px"><button class="btn btn-sm btn-secondary" data-act="voice-refine">'+IC.spark+' Refinar mi voz</button><span class="vr-hint" style="margin-left:10px;color:var(--text-tertiary);font-size:12.5px">Pega más reels tuyos y subo el % de voz.</span></div>';
+      '<div class="voice-refine" style="margin-bottom:18px"><button class="btn btn-sm btn-secondary" data-act="voice-refine">'+IC.spark+' Refinar mi voz</button><span class="vr-hint" style="margin-left:10px;color:var(--text-tertiary);font-size:12.5px">Pega más URLs de tus reels y subo el % de voz.</span></div>';
   }
   function brainCompetitors(){
     var by={}; (S.reels||[]).forEach(function(r){ var h=r.creator&&r.creator.handle; if(!h) return; by[h]=(by[h]||0)+1; });
@@ -2592,41 +2592,43 @@
   // Mirror de onboardVoice: mismo auth (credentials same-origin), mismo refresh
   // (GET /api/voice → re-pinta Cerebro), mismo branch demo (en demo NO postea).
   // T2 (IDI): sheet con textarea (igual que el onboarding) en vez de window.prompt.
+  // A3 (coherencia): refinar = pegar MÁS URLs de tus reels (nada de transcripciones).
   function refineVoice(){
     promptSheet({
-      title:"Refinar mi voz", label:"Transcripción de tus reels",
-      placeholder:"Pega aquí lo que dices en 1-2 reels TUYOS más…",
-      helper:"Los sumo a tu voz y subo el % que te conozco.",
-      multiline:true, submitLabel:"Refinar mi voz",
-      validate:function(v){ if(!v.trim()) return "Pega el texto de al menos 1 reel tuyo."; },
+      title:"Refinar mi voz", label:"URLs de más reels tuyos",
+      placeholder:"https://www.instagram.com/reel/…  https://www.tiktok.com/@tu/video/…",
+      helper:"Los transcribo y subo el % que te conozco. Cada reel cuesta 1 crédito (te lo confirmo).",
+      multiline:true, submitLabel:"Continuar",
+      validate:function(v){ var u=(v.match(/https?:\/\/\S+/g)||[]).filter(function(x){return /instagram\.com|tiktok\.com/.test(x);}); if(!u.length) return "Pega URLs de reels tuyos (Instagram/TikTok)."; },
       onSubmit:refineVoiceWith
     });
   }
-  function refineVoiceWith(txt){
-    txt=(txt||"").trim();
-    if(!txt){ showToast("Pega el texto de al menos 1 reel tuyo."); return; }
-    // En DEMO no llamamos al backend real: subimos la confianza localmente
-    // y sumamos una fuente, para que el "después" del refino se vea sin red ni claves.
+  function refineVoiceWith(blob){
+    var urls=((blob||"").match(/https?:\/\/\S+/g)||[]);
+    var reels=urls.filter(function(u){ return /instagram\.com|tiktok\.com/.test(u) && /\/reel\/|\/reels\/|\/p\/|\/tv\/|\/video\/|vm\.tiktok|vt\.tiktok/.test(u); });
+    if(!reels.length){ return showError("Pega URLs de reels concretos tuyos (no el perfil)."); }
+    var n=Math.min(reels.length,6);
     if(isDemo()){
-      S.voice=S.voice||{ has_profile:true };
-      S.voice.has_profile=true;
-      S.voice.source_count=(S.voice.source_count||1)+1;
+      S.voice=S.voice||{ has_profile:true }; S.voice.has_profile=true;
+      S.voice.source_count=(S.voice.source_count||1)+n;
       S.voice.confidence=Math.min(100,(S.voice.confidence||62)+11);
       brand().voice=S.voice.confidence; render();
-      showToast("Voz refinada — ahora te conozco al "+S.voice.confidence+"%."); setTimeout(brainLevelPulse,1600); return;
+      showToast("Voz refinada (demo) — ahora te conozco al "+S.voice.confidence+"%."); setTimeout(brainLevelPulse,1600); return;
     }
-    showToast("Refinando tu voz…");
-    fetch("/api/voice/refine",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({texts:[txt]})})
-      .then(function(r){ return r.json().catch(function(){return{};}); })
-      .then(function(d){
-        if(d&&d.ok){
-          return fetch("/api/voice",{credentials:"same-origin"}).then(function(r){return r.json();}).then(function(v){
-            S.voice=v; render(); showToast("Voz refinada — ahora te conozco al "+(v.confidence||0)+"%."); setTimeout(brainLevelPulse,1600);
+    var go=function(){
+      showToast("Transcribiendo y refinando tu voz… (~1 min)");
+      apiPost("/api/voice/from-urls",{urls:reels.slice(0,6)}).then(function(r){
+        if(r.ok && r.d && r.d.ok){
+          return fetch("/api/voice",{credentials:"same-origin"}).then(function(x){return x.json();}).then(function(v){
+            S.voice=v; render(); showToast("Voz refinada — ahora te conozco al "+(r.d.confidence||v.confidence||0)+"%."); setTimeout(brainLevelPulse,1600);
           });
         }
-        showError((d&&d.error)||"No pude refinar tu voz. Prueba con otro reel.");
-      })
-      .catch(function(){ showError("Error de red. Inténtalo de nuevo."); });
+        showError((r.d&&r.d.message)||(r.d&&r.d.error)||"No pude refinar tu voz con esos reels.");
+      });
+    };
+    if(typeof window.confirmModal==="function"){
+      window.confirmModal({ title:"Refinar tu voz", body:"Voy a transcribir "+n+" reel"+(n===1?"":"s")+" más — cuesta "+n+" crédito"+(n===1?"":"s")+".", confirmText:"Sí, refinar", cancelText:"Ahora no" }).then(function(ok){ if(ok) go(); });
+    } else go();
   }
 
   // Refresca métricas + insights de la marca activa (summary + insights) y re-pinta.
