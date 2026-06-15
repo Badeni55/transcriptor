@@ -9469,7 +9469,7 @@
       --brand-50:#eef3ff; --brand-100:#dde6ff; --brand-200:#c2d2ff; --brand-300:#97b2ff;
       --brand-400:#6f93ff; --brand-500:#4f7cff; --brand-600:#3a63ec; --brand-700:#2f4fc8;
       --brand-800:#2941a0; --brand-900:#22357c;
-      --success:#16a34a; --success-bg:rgba(22,163,74,.10); --success-fg:#15803d; --success-border:rgba(22,163,74,.25);
+      --success:#16a34a; --success-bg:rgba(22,163,74,.10); --success-fg:#117033; --success-border:rgba(22,163,74,.25);
       --danger:#dc2626; --danger-bg:rgba(220,38,38,.08); --danger-fg:#dc2626;
       --warning:#d97706; --warning-bg:rgba(217,119,6,.10); --warning-fg:#b45309;
       --info:#2563eb; --info-bg:rgba(37,99,235,.08); --info-fg:#2563eb;
@@ -9481,6 +9481,22 @@
       --shadow-lg:0 8px 24px rgba(0,0,0,.10), 0 24px 64px rgba(0,0,0,.12);
       --glow:0 0 0 1px rgba(79,124,255,.30), 0 8px 30px rgba(79,124,255,.18);
     }
+    /* Auditoría contraste — tema CLARO: solo acentos ILEGIBLES (<4.5:1). No se
+       toca el oscuro ni la identidad de marca pura (eyebrows brand-500, números
+       Nivel/×). --success-fg oscurecido arriba (#15803d→#117033) para los estados
+       verdes ("Sigue a 1 competidor", "Guardado en Guiones"). */
+    .rs[data-theme="light"] .tone-chip.on { color: var(--brand-700); }          /* chip de tono seleccionado: 1.29→ */
+    .rs[data-theme="light"] .ava { background: linear-gradient(135deg, var(--brand-600), var(--brand-800)); } /* avatares: blanco legible */
+    .rs[data-theme="light"] .bar-line.media,
+    .rs[data-theme="light"] .bar-line.media span { color: var(--brand-700); border-color: var(--brand-700); }  /* eje Media: 2.64→ */
+    .rs[data-theme="light"] .bar-line.mediana,
+    .rs[data-theme="light"] .bar-line.mediana span { color: #946100; border-color: #946100; }                 /* eje Mediana: 1.53→ */
+    .rs[data-theme="light"] .brow-attn,
+    .rs[data-theme="light"] .stat-d.warn,
+    .rs[data-theme="light"] .brow-sig .hot,
+    .rs[data-theme="light"] .momentum .line .hot,
+    .rs[data-theme="light"] .awaken-line .hot,
+    .rs[data-theme="light"] .gui-pub.hot { color: var(--brand-700); }            /* estados: ⚠ Atención, 🔥 explosivos, revísalas */
     .rs {
       --font-display:'Space Grotesk', system-ui, sans-serif;
       --font-display-2:'Space Grotesk', system-ui, sans-serif;
