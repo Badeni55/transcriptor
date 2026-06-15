@@ -9497,6 +9497,13 @@
     .rs[data-theme="light"] .momentum .line .hot,
     .rs[data-theme="light"] .awaken-line .hot,
     .rs[data-theme="light"] .gui-pub.hot { color: var(--brand-700); }            /* estados: ⚠ Atención, 🔥 explosivos, revísalas */
+    /* Texto INFORMATIVO brand-tinted que era ilegible (<2.5:1) — NO son eyebrows
+       ni números de identidad: el usuario lo lee. Se oscurece la tinta solo aquí. */
+    .rs[data-theme="light"] .brain-tag,        /* "de tus métricas" brand-300 1.78 */
+    .rs[data-theme="light"] .met-acct-info,    /* "1/1 análisis restantes" 2.47 */
+    .rs[data-theme="light"] .ns-eyebrow,       /* "Tu próxima serie" 2.47 */
+    .rs[data-theme="light"] .pub-link,
+    .rs[data-theme="light"] .pub-link b { color: var(--brand-700); }   /* "de tu guion «…»" 2.64 */
     .rs {
       --font-display:'Space Grotesk', system-ui, sans-serif;
       --font-display-2:'Space Grotesk', system-ui, sans-serif;
