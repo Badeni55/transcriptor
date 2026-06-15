@@ -1845,7 +1845,7 @@
 
     @media (max-width: 880px) {
       .hero-rotator { padding: 0 4px; }
-      .hr-tab { padding: 10px 16px; font-size: .82rem; }
+      .hr-tab { padding: 10px 16px; font-size: .82rem; min-height: 44px; display: inline-flex; align-items: center; }
     }
 
     /* ── How it works (v0.14.11c) — 3 pasos con micro-vídeos ───── */
@@ -10313,6 +10313,11 @@
        y los tabs de marca de agencia (36px). */
     .rs--mobile .overlay .obar .back { width:44px; height:44px; }
     .rs--mobile .btab { height:auto; min-height:44px; }
+    /* Auditoría móvil (2026-06): targets que aún quedaban <44px en el pulgar. */
+    .rs--mobile .tone-chip { min-height:44px; display:inline-flex; align-items:center; justify-content:center; }
+    .rs--mobile .rail-acct { width:44px; height:44px; }
+    .rs--mobile .brand-switch { min-height:44px; }
+    .rs--mobile .gui-hooks-toggle { min-height:44px; }
     .rs .see-all { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:18px; padding:14px; background:transparent; border:1px solid var(--border-default); border-radius:10px; color:var(--text-secondary); font:inherit; font-family:var(--font-body); font-size:13.5px; font-weight:600; cursor:pointer; }
     .rs .see-all:hover { border-color:var(--border-strong); color:var(--text-primary); }
     .rs .see-all svg { width:15px; height:15px; }
