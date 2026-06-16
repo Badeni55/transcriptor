@@ -1169,6 +1169,11 @@ def auth_me():
         "preset_tone": (profile.get("default_idea_assistant") if profile.get("default_idea_assistant") in PRESET_TONE_KEYS else DEFAULT_PRESET_TONE),
         "preset_tones": PRESET_TONES,
         "has_voice": bool(get_voice_profile(user["id"])),
+        # onboarding v2: gatea la pantalla dedicada en prod (None si falta columna → muestra onboarding)
+        "onb_v2_done": bool(profile.get("onboarding_v2_done")),
+        "niche": profile.get("niche"),
+        "subniches": profile.get("subniches") or [],
+        "goal": profile.get("goal"),
     })
 
 
@@ -6877,6 +6882,248 @@ def suggest_competitors():
                         "message": "No pude buscar tu competencia ahora. Añade un competidor a mano para empezar."}), 200
 
     return jsonify({"creators": creators, "handle": handle, "platform": platform}), 200
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# ONBOARDING v2 — categorización por TAGS (nicho/subnicho) + librería reciclable.
+# El foso: cada creador trackeado se etiqueta con el subnicho del usuario que lo
+# añade → un usuario nuevo del subnicho X recibe el radar PRE-LLENO con reels que
+# ya petaron (reusa cacheado, scrapea SOLO lo nuevo). Matching por TAGS (overlap
+# de subniches), no por nicho amplio: cosmética orgánica ≠ cosmética.
+# NOTA: requiere la migración 0001_onboarding_v2_tags.sql (columnas niche/
+# subniches en creators_global y profiles). Si no está aplicada, los endpoints
+# degradan limpio (try/except) — nunca 500.
+# ════════════════════════════════════════════════════════════════════════════
+NICHE_SUBNICHE_SEED = {
+    "fitness": ["hipertrofia", "pérdida de peso", "running", "crossfit", "yoga", "calistenia"],
+    "finanzas": ["inversión", "ahorro", "cripto", "libertad financiera", "bolsa", "finanzas personales"],
+    "marketing": ["copywriting", "ads de pago", "email marketing", "marca personal", "seo", "redes sociales"],
+    "cocina": ["recetas fit", "cocina rápida", "repostería", "vegano", "meal prep", "low cost"],
+    "moda": ["streetwear", "moda sostenible", "low cost", "lujo", "tendencias", "outfits"],
+    "belleza": ["skincare", "maquillaje", "cosmética orgánica", "cosmética coreana", "antiedad", "uñas"],
+    "tecnología": ["ia", "automatización", "gadgets", "programación", "no-code", "productividad"],
+    "educación": ["idiomas", "oposiciones", "estudio", "matemáticas", "historia", "ciencia"],
+    "negocios": ["emprender", "ecommerce", "saas", "ventas", "liderazgo", "freelance"],
+}
+
+
+def _norm_tag(s: str) -> str:
+    s = (s or "").strip().lower()
+    for a, b in (("á", "a"), ("é", "e"), ("í", "i"), ("ó", "o"), ("ú", "u"), ("ñ", "n")):
+        s = s.replace(a, b)
+    return re.sub(r"[^a-z0-9 _-]", "", s)[:40].strip()
+
+
+def _subniche_suggestions(niche: str):
+    """Cold-start: subnichos sugeridos por nicho amplio (sin LLM ni BD)."""
+    return NICHE_SUBNICHE_SEED.get(_norm_tag(niche), [
+        "consejos", "tutoriales", "detrás de cámaras", "historias", "errores comunes", "tendencias"])
+
+
+def _fmt_views(n) -> str:
+    try:
+        n = int(n)
+    except Exception:
+        return "0"
+    if n >= 1_000_000:
+        return f"{n/1_000_000:.1f} M"
+    if n >= 1_000:
+        return f"{round(n/1_000)} K"
+    return str(n)
+
+
+def _track_and_tag_creator(uid: str, ig_username: str, subniches, project_id=None) -> bool:
+    """Upsert creator + TAG con los subnichos del usuario (enriquece la librería)
+    + tracking idempotente + scrape SOLO si nuevo/stale (>24h). Reusa el patrón de
+    POST /api/tracked-creators. Devuelve True si quedó trackeado.
+    OJO (MVP): no re-aplica el cap por plan aquí — el onboarding ya limita a ≤2
+    elegidos; en prod habría que delegar al límite de tracked-creators."""
+    ig_username = (ig_username or "").strip().lstrip("@").lower()
+    if not re.match(r"^[a-z0-9._]{1,30}$", ig_username):
+        return False
+    subs = [t for t in (_norm_tag(s) for s in (subniches or [])) if t][:8]
+    try:
+        ins = (db.table("creators_global")
+                 .upsert({"ig_username": ig_username}, on_conflict="ig_username")
+                 .execute())
+        creator_row = (ins.data or [None])[0]
+        if not creator_row:
+            creator_row = db.table("creators_global").select("*").eq("ig_username", ig_username).single().execute().data
+    except Exception:
+        logger.exception("[onb2] upsert creator failed %s", ig_username)
+        return False
+    creator_id = creator_row["id"]
+    # TAG: unión de subnichos (el foso). Degradado si falta la columna.
+    if subs:
+        try:
+            cur = set(creator_row.get("subniches") or [])
+            new = cur | set(subs)
+            if new != cur:
+                db.table("creators_global").update({"subniches": sorted(new)}).eq("id", creator_id).execute()
+        except Exception:
+            logger.warning("[onb2] tag subniches failed (¿migración?) %s", ig_username, exc_info=True)
+    # tracking idempotente
+    try:
+        q = (db.table("user_tracked_creators").select("id")
+             .eq("user_id", uid).eq("creator_id", creator_id).is_("archived_at", "null"))
+        q = q.is_("project_id", "null") if project_id is None else q.eq("project_id", project_id)
+        if not (q.execute().data):
+            db.table("user_tracked_creators").insert(
+                {"user_id": uid, "creator_id": creator_id, "project_id": project_id}).execute()
+    except Exception:
+        logger.exception("[onb2] track insert failed %s", ig_username)
+        return False
+    # scrape SOLO si nuevo/stale (reusa caché si <24h; nunca si private/not_found)
+    _status = creator_row.get("scrape_status")
+    _last = creator_row.get("last_scraped_at")
+    should = False
+    if _status in ("private", "not_found"):
+        should = False
+    elif _last is None:
+        should = True
+    else:
+        try:
+            age = (datetime.now(timezone.utc) - datetime.fromisoformat(str(_last).replace("Z", "+00:00"))).total_seconds() / 3600.0
+            should = age > 24
+        except Exception:
+            should = True
+    if should and not DEMO_MODE:
+        try:
+            from tasks import scrape_creator_task  # noqa: E402
+            scrape_creator_task.delay(creator_id)
+        except Exception:
+            logger.warning("[onb2] scrape enqueue failed %s", ig_username, exc_info=True)
+    return True
+
+
+@app.route("/api/niche/trending-reels", methods=["GET"])
+@require_auth
+@limiter.limit("30 per minute")
+def niche_trending_reels():
+    """RECICLAJE: reels que ya petaron de creadores tageados con el subnicho del
+    usuario — REUSA lo cacheado (cero scrape, baja coste/latencia). Matching por
+    overlap de subniches (tags). Cold-start (subnicho sin datos) → fallback con
+    sugerencias de subnicho para que el front no quede vacío."""
+    niche = (request.args.get("niche") or "").strip()[:80]
+    subs = [t for t in (_norm_tag(s) for s in (request.args.get("subniches") or "").split(",")) if t][:8]
+    reels = []
+    try:
+        if subs:
+            cg = (db.table("creators_global").select("id,ig_username")
+                  .overlaps("subniches", subs).limit(40).execute())
+            uname = {c["id"]: c["ig_username"] for c in (cg.data or [])}
+            cids = list(uname.keys())
+            if cids:
+                rr = (db.table("creator_reels_global")
+                      .select("id,creator_id,caption,views,thumb_b64")
+                      .in_("creator_id", cids).eq("is_archived", False)
+                      .order("views", desc=True).limit(20).execute())
+                rows = rr.data or []
+                vs = sorted(int(r.get("views") or 0) for r in rows)
+                med = vs[len(vs) // 2] if vs else 0
+                for r in rows[:8]:
+                    v = int(r.get("views") or 0)
+                    mult = round(v / med, 1) if med > 0 else 1.0
+                    reels.append({
+                        "id": r["id"], "handle": uname.get(r["creator_id"], ""),
+                        "caption": (r.get("caption") or "").strip()[:90],
+                        "views": _fmt_views(v), "mult": mult,
+                        "tag": "explota" if mult >= 2.5 else ("subiendo" if mult >= 1.5 else "constante"),
+                    })
+    except Exception:
+        logger.exception("[onb2] niche_trending_reels failed")
+        reels = []
+    return jsonify({"reels": reels, "cold_start": len(reels) == 0,
+                    "subniche_suggestions": _subniche_suggestions(niche)}), 200
+
+
+@app.route("/api/onboarding/complete", methods=["POST"])
+@require_auth
+@limiter.limit("10 per hour;30 per day")
+def onboarding_complete():
+    """CIERRE del onboarding v2: persiste nicho/subnichos/objetivo, etiqueta a los
+    competidores elegidos con esos subnichos (enriquece la librería = el foso),
+    los sigue (scrape SOLO lo nuevo, async) y siembra un Cerebro ~50% HONESTO:
+    un PERFIL DE CONTEXTO (nicho+objetivo+competencia), NO un clon de voz. El
+    resto (50→100%) se gana entrenando la voz con los reels propios."""
+    user = current_user()
+    uid = user["id"]
+    body = request.get_json() or {}
+    niche = (body.get("niche") or "").strip()[:80]
+    subs = [t for t in (_norm_tag(s) for s in (body.get("subniches") or [])) if t][:8]
+    goal = (body.get("goal") or "").strip()[:20]
+    skipped = bool(body.get("skipped"))
+    comps = []
+    for c in (body.get("competitors") or [])[:5]:
+        h = (c or "").strip().lstrip("@").lower()
+        if re.match(r"^[a-z0-9._]{1,30}$", h):
+            comps.append(h)
+    track_event("onboarding_v2_completed", uid, {
+        "niche": niche, "subniches": len(subs), "goal": goal,
+        "competitors": len(comps), "skipped": skipped})
+
+    # 1) persistir nicho/subnichos/objetivo (degradado si faltan columnas)
+    try:
+        db.table("profiles").update({
+            "niche": niche or None, "subniches": subs,
+            "goal": goal or None, "onboarding_v2_done": True}).eq("id", uid).execute()
+    except Exception:
+        logger.warning("[onb2] profiles update failed (¿migración?)", exc_info=True)
+        try:
+            db.table("profiles").update({"onboarding_v2_done": True}).eq("id", uid).execute()
+        except Exception:
+            pass
+
+    if skipped:
+        return jsonify({"ok": True, "skipped": True, "voice": 0}), 200
+
+    # 2) seguir + etiquetar competidores (scrape solo lo nuevo, async).
+    #    #3 CAP: el onboarding da la "probada" de 2 (parte del aha) PERO sin abrir
+    #    la puerta a ilimitados. Tope = max(slots del plan, 2). El conteo activo se
+    #    RE-LEE del DB en cada llamada, así que repetir este endpoint no acumula
+    #    más allá del tope; y cualquier add posterior via POST /api/tracked-creators
+    #    re-aplica el cap estricto del plan (free=1, 2>=1 → bloquea).
+    ONBOARDING_GRACE = 2
+    project_id = body.get("project_id")
+    try:
+        _profile = get_profile(uid)
+        _slots = get_tracked_creators_limit(effective_plan(_profile))["base_slots_global"] + get_user_extra_slots(uid)
+    except Exception:
+        _slots = 1
+    cap = max(_slots, ONBOARDING_GRACE)
+    try:
+        active = count_active_tracked(uid, scope="global")
+    except Exception:
+        active = 0
+    tracked = 0
+    for h in comps:
+        if active + tracked >= cap:
+            logger.info("[onb2] cap alcanzado (%s/%s) — no se sigue %s", active + tracked, cap, h)
+            break
+        try:
+            if _track_and_tag_creator(uid, h, subs, project_id):
+                tracked += 1
+        except Exception:
+            logger.exception("[onb2] track competitor %s", h)
+
+    # 3) Cerebro ~50% HONESTO: perfil de contexto sembrado (no clon de voz).
+    voice = 50
+    try:
+        db.table("voice_profiles").upsert({
+            "user_id": uid, "brand_id": "", "confidence": voice, "source_count": 0,
+            "tone": "", "phrases": [],
+            "structure": "perfil de contexto (nicho + objetivo + competencia)",
+            "raw": {"seed": "onboarding_v2", "niche": niche, "subniches": subs, "goal": goal,
+                    "label": "perfil de contexto, no clon de voz",
+                    "evidence": ["Nicho y subnicho definidos",
+                                 f"{tracked} competidor(es) en el radar",
+                                 "Objetivo: " + (goal or "—")]},
+        }, on_conflict="user_id,brand_id").execute()
+    except Exception:
+        logger.warning("[onb2] voice seed failed", exc_info=True)
+        voice = 40
+
+    return jsonify({"ok": True, "voice": voice, "tracked": tracked, "subniches": subs}), 200
 
 
 @app.route("/api/tracked-creators", methods=["POST"])
