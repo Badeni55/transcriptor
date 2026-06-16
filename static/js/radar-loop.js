@@ -3325,6 +3325,7 @@
       S.user.presetTone=me.preset_tone||"viral";
       S.user.presetTones=Array.isArray(me.preset_tones)&&me.preset_tones.length?me.preset_tones:[{key:"viral",label:"Polémico/Viral"},{key:"educacional",label:"Educacional"},{key:"divertido",label:"Cercano/Divertido"},{key:"informativo",label:"Informativo"},{key:"storytelling",label:"Storytelling"}];
       S.user.hasVoice=!!me.has_voice;
+      S.user.onbV2Done=!!me.onb_v2_done;   // onboarding v2: gate de la pantalla dedicada (prod)
       // reverse-trial: estado del trial (Pro capado sin tarjeta) + watermark en exports (free post-trial).
       S.user.trialActive=!!me.trial_active;
       S.user.trialDaysLeft=me.trial_days_left||0;
