@@ -13,6 +13,8 @@
      Mismo estilo que el resto del archivo (fetch same-origin + .json()).
      apiPost/apiGet resuelven a {ok, status, d} para distinguir 402/409/502. */
   function rsLang(){ try{ var l=(document.documentElement.lang||"es").toLowerCase(); return l.indexOf("en")===0?"en":"es"; }catch(e){ return "es"; } }
+  // i18n del onboarding (Fathom: debe traducir al pasar a /en/). L(es,en) → según idioma.
+  function L(es,en){ return rsLang()==="en" ? en : es; }
   function apiPost(url, body){
     return fetch(url,{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify(body||{})})
       .then(function(res){ return res.json().catch(function(){return{};}).then(function(d){ return {ok:res.ok, status:res.status, d:d}; }); })
@@ -131,6 +133,7 @@
     genStepTimer:null, fillTimer:null, toastTimer:null,
     // onboarding v2: handle→nicho→subnicho→valor→competidores→objetivo→cierre.
     onb:{ step:"handle", handle:"", platform:"instagram", niche:"", subniches:[], valueReels:[], valueLoading:false,
+          ahaReel:null, ahaLoading:false, ahaScript:null,
           competitors:[], compLoading:false, goal:"", busy:false, error:null, skipped:false, _force:false, _viewed:{} }
   };
   function root(){ return document.getElementById("radarRoot"); }
@@ -276,7 +279,7 @@
       : [["dashboard",IC.grid,"Radar"],["guiones",IC.doc,"Guiones"],["metrics",IC.chart,"Métricas"],["brain",IC.brain,"Cerebro"]];
     return '<nav class="rail">'+
       '<img class="rail-logo" src="/static/img/branding/isotipo-128.png" srcset="/static/img/branding/isotipo-128.png 1x, /static/img/branding/isotipo-256.png 2x" alt="Reelscript">'+
-      navTabs.map(function(t){return '<button class="rail-btn'+(S.tab===t[0]&&!S.legacy?" on":"")+'" data-act="tab" data-k="'+t[0]+'">'+t[1]+'<span class="tip">'+t[2]+'</span></button>';}).join("")+
+      navTabs.map(function(t){return '<button class="rail-btn'+(S.tab===t[0]&&!S.legacy?" on":"")+'" data-act="tab" data-k="'+t[0]+'" data-tour="tab-'+t[0]+'">'+t[1]+'<span class="tip">'+t[2]+'</span></button>';}).join("")+
       // Accesos a las secciones legacy reutilizadas (no son S.tab internos).
       '<button class="rail-btn'+(S.legacy==="transc"?" on":"")+'" data-act="legacy" data-k="transc" aria-label="Analizar">'+IC.mic+'<span class="tip">Analizar</span></button>'+
       '<button class="rail-btn'+(S.legacy==="settings"?" on":"")+'" data-act="legacy" data-k="settings" aria-label="Configuración">'+IC.gear+'<span class="tip">Configuración</span></button>'+
@@ -294,7 +297,10 @@
     else if(isAgency()) crumb='<button class="crumb crumb-link" data-act="all-brands">Todas las marcas</button><span class="crumb">/ '+tabName+'</span>';
     else crumb='<span class="crumb">/ '+tabName+'</span>';
     var streak=(S.user.streak>0)?'<span class="cmd-streak" title="Días seguidos creando">'+IC.spark+' Racha '+S.user.streak+'</span>':'';
-    var demoToggle=isDemo()?'<div class="demo-plan" title="Solo demo: cambia de plan"><span class="dp-k">DEMO</span><button class="dp'+(S.plan==="creador"?" on":"")+'" data-act="demo-plan" data-k="creador">Creador</button><button class="dp'+(S.plan==="agencia"?" on":"")+'" data-act="demo-plan" data-k="agencia">Agencia</button></div>':'';
+    var demoToggle=isDemo()?'<div class="demo-plan" title="Solo demo: cambia de plan"><span class="dp-k">DEMO</span>'+
+      '<button class="dp'+(S._demoFree===true?" on":"")+'" data-act="demo-plan" data-k="free">Free</button>'+
+      '<button class="dp'+(!S._demoFree && S.plan==="creador"?" on":"")+'" data-act="demo-plan" data-k="creador">Creador</button>'+
+      '<button class="dp'+(!S._demoFree && S.plan==="agencia"?" on":"")+'" data-act="demo-plan" data-k="agencia">Agencia</button></div>':'';
     return '<div class="cmd">'+
       (isMultiBrand()?brandSwitchHTML():brandStaticHTML())+
       crumb+
@@ -359,7 +365,7 @@
        2. pick  → 3-5 competidores que sugiere el LLM (preseleccionados)
                                                   [Seguir y empezar]
        3. done  → los sigue (valida al scrapear) → sus reels caen al Radar
-                  y el propio empty-state desaparece; guiamos al «Hazlo mío».
+                  y el propio empty-state desaparece; guiamos al «Roba la idea».
      Solo en prod, usuario sin competidores. Saltarlo cae al empty-state clásico.
      ════════════════════════════════════════════════════════════════ */
   /* ════════════════════════════════════════════════════════════════════════
@@ -370,7 +376,9 @@
      backend + selector en Cerebro). Pantalla dedicada que oculta el radar vacío.
      Demo-funcional vía ?onb=1. ════════════════════════════════════════════════ */
   var ONB_STEPS=["handle","niche","subniche","value","competitors","goal","close"];
-  var NICHE_CHIPS=["Fitness","Finanzas","Marketing","Cocina","Moda","Belleza","Viajes","Tecnología","Educación","Inmobiliaria","Salud","Negocios"];
+  function nicheChips(){ return rsLang()==="en"
+    ? ["Fitness","Finance","Marketing","Cooking","Fashion","Beauty","Travel","Tech","Education","Real estate","Health","Business"]
+    : ["Fitness","Finanzas","Marketing","Cocina","Moda","Belleza","Viajes","Tecnología","Educación","Inmobiliaria","Salud","Negocios"]; }
   var SUBNICHE_SEED={
     "fitness":["hipertrofia","pérdida de peso","running","crossfit","yoga","calistenia"],
     "finanzas":["inversión","ahorro","cripto","libertad financiera","bolsa","finanzas personales"],
@@ -384,10 +392,10 @@
     "_default":["consejos","tutoriales","detrás de cámaras","historias","errores comunes","tendencias"]
   };
   var ONB_GOALS=[
-    {key:"grow",label:"Crecer",desc:"Más alcance y seguidores",ic:"chart"},
-    {key:"sell",label:"Vender",desc:"Convertir en clientes",ic:"bolt"},
-    {key:"educate",label:"Educar",desc:"Enseñar lo que sabes",ic:"bulb"},
-    {key:"entertain",label:"Entretener",desc:"Enganchar y divertir",ic:"spark"}
+    {key:"grow",label:"Crecer",label_en:"Grow",desc:"Más alcance y seguidores",desc_en:"More reach and followers",ic:"chart"},
+    {key:"sell",label:"Vender",label_en:"Sell",desc:"Convertir en clientes",desc_en:"Turn into customers",ic:"bolt"},
+    {key:"educate",label:"Educar",label_en:"Educate",desc:"Enseñar lo que sabes",desc_en:"Teach what you know",ic:"bulb"},
+    {key:"entertain",label:"Entretener",label_en:"Entertain",desc:"Enganchar y divertir",desc_en:"Hook and entertain",ic:"spark"}
   ];
   function _norm(s){ return String(s||"").toLowerCase().trim().replace(/[áà]/g,"a").replace(/[éè]/g,"e").replace(/[íì]/g,"i").replace(/[óò]/g,"o").replace(/[úù]/g,"u"); }
   function onbSubSuggest(){ var k=_norm(S.onb.niche); return (SUBNICHE_SEED[k]||SUBNICHE_SEED["_default"]).filter(function(t){ return (S.onb.subniches||[]).indexOf(t)<0; }); }
@@ -421,110 +429,156 @@
   function onbEyebrow(t){ return '<div class="onb-eyebrow">'+IC.spark+' '+ESC(t)+'</div>'; }
   function onbErr(){ return S.onb.error?'<div class="onb-err" role="alert">'+ESC(S.onb.error)+'</div>':''; }
   function onbCardWrap(eyebrow,h,sub,body,wide){ return '<section class="onb-box'+(wide?' onb-box--wide':'')+'">'+eyebrow+'<h2 class="onb-h">'+h+'</h2>'+(sub?'<p class="onb-sub">'+sub+'</p>':'')+body+'</section>'; }
-  function onbBackBtn(){ return onbIdx()>0&&S.onb.step!=="close"?'<button class="onb-back-btn" data-act="onb-back" aria-label="Atrás">'+IC.back+' Atrás</button>':''; }
+  function onbBackBtn(){ return onbIdx()>0&&S.onb.step!=="close"?'<button class="onb-back-btn" data-act="onb-back" aria-label="'+L("Atrás","Back")+'">'+IC.back+' '+L("Atrás","Back")+'</button>':''; }
 
+  // Avatar de competidor: intenta la foto REAL de Instagram (unavatar) y, si no
+  // existe/falla, cae a las iniciales (que quedan debajo). Mejora progresiva.
+  function onbAvatar(handle){
+    var h=String(handle||"").replace(/^@+/,"");
+    return '<span class="ava bava ava--photo">'+ESC(initialsOf(handle))+
+      '<img class="ava-img" src="https://unavatar.io/instagram/'+encodeURIComponent(h)+'?fallback=false" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></span>';
+  }
   // Paso 1 — handle (OBLIGATORIO).
   function onbHandleHTML(){
-    return onbCardWrap(onbEyebrow("Empecemos por ti"),"¿Cuál es tu cuenta?",
-      "Tu usuario de Instagram o TikTok. Leo tus propios reels para que tu primer guión suene a ti, no genérico.",
+    return onbCardWrap(onbEyebrow(L("Empecemos por ti","Let's start with you")),L("¿Cuál es tu cuenta?","What's your account?"),
+      L("Tu usuario de Instagram o TikTok. Leo tus propios reels para que tu primer guión suene a ti, no genérico.","Your Instagram or TikTok handle. I read your own reels so your first script sounds like you, not generic."),
       '<div class="onb-pform"><div class="onb-handle"><span class="onb-at">@</span>'+
-        '<input id="rsOnbHandle" class="onb-input" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="tu_usuario" value="'+ESC(S.onb.handle||"")+'" aria-label="Tu usuario de Instagram o TikTok"></div></div>'+
+        '<input id="rsOnbHandle" class="onb-input" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="'+L("tu_usuario","your_handle")+'" value="'+ESC(S.onb.handle||"")+'" aria-label="'+L("Tu usuario de Instagram o TikTok","Your Instagram or TikTok handle")+'"></div></div>'+
       onbErr()+
-      '<button class="btn btn-lg btn-primary onb-cta" data-act="onb-handle-next">'+IC.arr+' Continuar</button>');
+      '<button class="btn btn-lg btn-primary onb-cta" data-act="onb-handle-next">'+IC.arr+' '+L("Continuar","Continue")+'</button>');
   }
   // Paso 2 — nicho (OBLIGATORIO): chips amplios + texto libre.
   function onbNicheHTML(){
-    var chips=NICHE_CHIPS.map(function(n){ var on=_norm(S.onb.niche)===_norm(n); return '<button class="onb-chip'+(on?" on":"")+'" data-act="onb-pick-niche" data-k="'+ESC(n)+'">'+ESC(n)+'</button>'; }).join("");
-    var custom=(NICHE_CHIPS.some(function(n){return _norm(n)===_norm(S.onb.niche);})||!S.onb.niche)?"":S.onb.niche;
-    return onbCardWrap(onbEyebrow("Tu terreno"),"¿De qué va tu contenido?",
-      "Elige tu nicho o escríbelo. Con esto encuentro qué está petando ahí — y a quién deberías vigilar.",
+    var _nc=nicheChips();
+    var chips=_nc.map(function(n){ var on=_norm(S.onb.niche)===_norm(n); return '<button class="onb-chip'+(on?" on":"")+'" data-act="onb-pick-niche" data-k="'+ESC(n)+'">'+ESC(n)+'</button>'; }).join("");
+    var custom=(_nc.some(function(n){return _norm(n)===_norm(S.onb.niche);})||!S.onb.niche)?"":S.onb.niche;
+    return onbCardWrap(onbEyebrow(L("Tu terreno","Your turf")),L("¿De qué va tu contenido?","What's your content about?"),
+      L("Elige tu nicho o escríbelo. Con esto encuentro qué está petando ahí — y a quién deberías vigilar.","Pick your niche or type it. With this I find what's blowing up there — and who you should be watching."),
       '<div class="onb-chips">'+chips+'</div>'+
-      '<input id="rsOnbNiche" class="onb-text" type="text" placeholder="…o escríbelo (ej: nutrición deportiva)" value="'+ESC(custom)+'" aria-label="Tu nicho">'+
+      '<input id="rsOnbNiche" class="onb-text" type="text" placeholder="'+L("…o escríbelo (ej: nutrición deportiva)","…or type it (e.g. sports nutrition)")+'" value="'+ESC(custom)+'" aria-label="'+L("Tu nicho","Your niche")+'">'+
       onbErr()+
-      '<div class="onb-row">'+onbBackBtn()+'<button class="btn btn-lg btn-primary onb-cta" data-act="onb-niche-next">'+IC.arr+' Continuar</button></div>');
+      '<div class="onb-row">'+onbBackBtn()+'<button class="btn btn-lg btn-primary onb-cta" data-act="onb-niche-next">'+IC.arr+' '+L("Continuar","Continue")+'</button></div>');
   }
   // Paso 3 — subnicho (OBLIGATORIO): TAGS multi-etiqueta (segmentación) + libre.
   function onbSubnicheHTML(){
     var sel=(S.onb.subniches||[]).map(function(t){ return '<span class="onb-tag on" data-act="onb-tag-toggle" data-k="'+ESC(t)+'">#'+ESC(t)+' <b>×</b></span>'; }).join("");
     var sugg=onbSubSuggest().slice(0,8).map(function(t){ return '<button class="onb-tag" data-act="onb-tag-toggle" data-k="'+ESC(t)+'">#'+ESC(t)+'</button>'; }).join("");
-    return onbCardWrap(onbEyebrow("Afina tu nicho"),"¿En qué exactamente?",
-      "Cuanto más específico, mejor el match: <b>cosmética orgánica</b> ≠ <b>cosmética</b>. Elige varias o añade las tuyas.",
-      '<div class="onb-tags" id="rsOnbTags">'+(sel||'<span class="onb-tags-ph">Tus etiquetas aparecerán aquí…</span>')+'</div>'+
-      '<div class="onb-tagadd"><span class="onb-hash">#</span><input id="rsOnbTagInput" class="onb-text onb-text--tag" type="text" placeholder="añade una etiqueta y Enter" aria-label="Añadir subnicho"><button class="onb-tagadd-btn" data-act="onb-tag-add">'+IC.plus+'</button></div>'+
-      (sugg?'<div class="onb-sugg-lbl">Sugerencias para tu nicho</div><div class="onb-tags onb-tags--sugg">'+sugg+'</div>':'')+
+    return onbCardWrap(onbEyebrow(L("Más concreto","Get specific")),L("Ponle 2-3 subcategorías","Add 2-3 subcategories"),
+      L("Cuanto más específico, mejor el match: <b>cosmética orgánica</b> es mejor que <b>cosmética</b>. Elige varias o añade las tuyas.","The more specific, the better the match: <b>organic skincare</b> beats <b>skincare</b>. Pick a few or add your own."),
+      '<div class="onb-tags" id="rsOnbTags">'+(sel||'<span class="onb-tags-ph">'+L("Tus etiquetas aparecerán aquí…","Your tags will show up here…")+'</span>')+'</div>'+
+      '<div class="onb-tagadd"><span class="onb-hash">#</span><input id="rsOnbTagInput" class="onb-text onb-text--tag" type="text" placeholder="'+L("añade una etiqueta y Enter","add a tag and hit Enter")+'" aria-label="'+L("Añadir subnicho","Add subniche")+'"><button class="onb-tagadd-btn" data-act="onb-tag-add">'+IC.plus+'</button></div>'+
+      (sugg?'<div class="onb-sugg-lbl">'+L("Sugerencias para tu nicho","Suggestions for your niche")+'</div><div class="onb-tags onb-tags--sugg">'+sugg+'</div>':'')+
       onbErr()+
-      '<div class="onb-row">'+onbBackBtn()+'<button class="btn btn-lg btn-primary onb-cta" data-act="onb-sub-next">'+IC.bolt+' Ver qué está petando</button></div>');
+      '<div class="onb-row">'+onbBackBtn()+'<button class="btn btn-lg btn-primary onb-cta" data-act="onb-sub-next">'+IC.arr+' '+L("Continuar","Continue")+'</button></div>');
   }
-  // Paso 4 — PANTALLA DE VALOR (aha): reels explosivos del subnicho llenándose.
+  // Paso 4 — VALOR (aha): roba 1 de 3 reels explosivos → tu 1er guion a tu medida
+  // (nicho + tono; aún NO voz personal — esa es la promesa del cierre/entrenar voz).
   function onbValueHTML(){
     var subs=(S.onb.subniches||[]).slice(0,3).map(function(t){return "#"+t;}).join(" ");
+    // Sub-vista AHA: ya eligió un reel → mostramos el guion generado en su voz.
+    if(S.onb.ahaReel) return onbAhaHTML(subs);
     var body;
     if(S.onb.valueLoading){
-      body='<div class="onb-value-load"><span class="mini-spin" style="width:22px;height:22px;border-width:3px"></span> Analizando tu nicho… leyendo lo que petó esta semana</div>'+
+      body='<div class="onb-value-load"><span class="mini-spin" style="width:22px;height:22px;border-width:3px"></span> '+L("Analizando tu nicho… leyendo lo que petó esta semana","Analyzing your niche… reading what blew up this week")+'</div>'+
         '<div class="onb-value-grid">'+[0,1,2].map(function(){return '<div class="onb-vcard onb-vcard--skel"></div>';}).join("")+'</div>';
+    } else if(!(S.onb.valueReels||[]).length){
+      // Seed vacío → no bloquear: estado "radar en marcha" (sensación de trabajo).
+      body='<div class="onb-value-load"><span class="mini-spin" style="width:22px;height:22px;border-width:3px"></span> '+L("Radar en marcha — rastreando lo que petó en tu subnicho. En segundos lo tendrás en tu panel. Sigue y te espera ahí.","Radar running — tracking what blew up in your subniche. You'll have it in seconds. Keep going, it'll be waiting in your panel.")+'</div>';
     } else {
-      var cards=(S.onb.valueReels||[]).map(function(r){
-        return '<div class="onb-vcard">'+
+      var cards=(S.onb.valueReels||[]).map(function(r,i){
+        return '<div class="onb-vcard onb-vcard--pick" data-act="onb-value-steal" data-i="'+i+'" role="button" tabindex="0" style="cursor:pointer">'+
           '<div class="onb-vcard-top"><span class="ava bava">'+ESC(initialsOf(r.handle))+'</span><span class="onb-vcard-h">@'+ESC(r.handle)+'</span><span class="onb-vcard-x">'+IC.bolt+' '+ESC(r.mult)+'×</span></div>'+
           '<div class="onb-vcard-cap">'+ESC(r.caption)+'</div>'+
           '<div class="onb-vcard-meta">'+IC.eye+' '+ESC(r.views)+' · '+ESC(r.tag)+'</div>'+
+          '<div class="onb-vcard-steal" style="margin-top:10px;font-size:13px;font-weight:700;color:var(--rs-accent,#4f7cff);display:flex;align-items:center;gap:6px">'+IC.bolt+' '+L("Robar este","Steal this")+'</div>'+
         '</div>';
       }).join("");
       body='<div class="onb-value-grid">'+cards+'</div>';
     }
-    return onbCardWrap('<div class="onb-eyebrow">'+IC.bolt+' '+ESC(subs||"Tu subnicho")+'</div>',
-      "Esto está petando ahora en tu subnicho",
-      "Reels reales de creadores como tú que están explotando. Aquí no empiezas de cero: empiezas de lo que ya funciona.",
+    // Cargando → SIN botón (solo Atrás): no mostramos avanzar hasta que cargue todo.
+    // Con reels → hint (se roba tocando). Sin reels tras cargar (cold-start) → Seguir.
+    var cta;
+    if(S.onb.valueLoading) cta='';
+    else if((S.onb.valueReels||[]).length) cta='<span class="onb-hint" style="font-size:13px;opacity:.6;align-self:center">'+L("Toca un reel para robarlo y convertirlo en tu guion","Tap a reel to steal it and turn it into your script")+'</span>';
+    else cta='<button class="btn btn-lg btn-primary onb-cta" data-act="onb-value-next">'+IC.arr+' '+L("Seguir","Continue")+'</button>';
+    return onbCardWrap('<div class="onb-eyebrow">'+IC.bolt+' '+ESC(subs||L("Tu subnicho","Your subniche"))+'</div>',
+      L("Roba uno y hazlo tuyo","Steal one and make it yours"),
+      L("Reels reales de creadores como tú que están explotando. Elige el que más te encaje — te lo convierto en guion tuyo al instante.","Real reels from creators like you that are blowing up. Pick the one that fits — I turn it into your script instantly."),
       body+
-      '<div class="onb-row">'+onbBackBtn()+'<button class="btn btn-lg btn-primary onb-cta" data-act="onb-value-next"'+(S.onb.valueLoading?' disabled':'')+'>'+IC.arr+' Quiero esto para mí</button></div>', true);
+      '<div class="onb-row">'+onbBackBtn()+cta+'</div>', true);
+  }
+  // Sub-vista AHA — el primer guion, generado a partir del reel robado.
+  function onbAhaHTML(subs){
+    var r=S.onb.ahaReel, inner;
+    if(S.onb.ahaLoading || !S.onb.ahaScript){
+      inner='<div class="onb-value-load"><span class="mini-spin" style="width:24px;height:24px;border-width:3px"></span> '+L("Robando a @","Stealing from @")+ESC(r.handle)+L(" y convirtiéndolo en tu guion…"," and turning it into your script…")+'</div>';
+    } else {
+      var s=S.onb.ahaScript;
+      var beats=(s.beats||[]).map(function(b,i){return '<div class="beat"><span class="n">'+String(i+1).padStart(2,"0")+'</span><span>'+ESC(b)+'</span></div>';}).join("");
+      inner='<div style="border:1px solid var(--rs-line,rgba(128,128,128,.2));border-radius:14px;padding:18px;text-align:left;background:var(--rs-surface,rgba(127,127,127,.04))">'+
+        '<div style="font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--rs-accent,#4f7cff);margin-bottom:12px;display:flex;align-items:center;gap:6px">'+IC.check+' '+L("Robado de @","Stolen from @")+ESC(r.handle)+L(" · ya es tuyo"," · now yours")+'</div>'+
+        '<h3 style="font-size:19px;font-weight:700;line-height:1.3;margin:0 0 14px">'+ESC(s.hook)+'</h3>'+
+        '<div class="script-body">'+beats+'</div>'+
+        (s.close?'<div style="margin-top:12px;opacity:.8;font-style:italic">'+ESC(s.close)+'</div>':'')+
+      '</div>';
+    }
+    var ready=!S.onb.ahaLoading && S.onb.ahaScript;
+    var row = ready
+      ? '<div class="onb-row"><button class="btn btn-ghost" data-act="onb-value-reset">← '+L("Elegir otro","Pick another")+'</button><button class="btn btn-lg btn-primary onb-cta" data-act="onb-value-next">'+IC.arr+' '+L("Sigamos — guárdalo y a por más","Let's go — save it and grab more")+'</button></div>'
+      : '';
+    return onbCardWrap('<div class="onb-eyebrow">'+IC.check+' '+L("Tu primer guión","Your first script")+'</div>',
+      L("Esto ya es tuyo. Tu primer guion, en 1 clic.","This is yours now. Your first script, in 1 click."),
+      L("Acabas de convertir un reel que petó en ","You just turned a reel that blew up in ")+(subs||L("tu subnicho","your subniche"))+L(" en un guión listo para grabar. Y cuando me enseñes tu voz, sonará clavado a ti."," into a script ready to record. And once you teach me your voice, it'll sound exactly like you."),
+      inner+row, true);
   }
   // Paso 5 — competidores (OBLIGATORIO 2), pre-sugeridos del subnicho.
   function onbCompsHTML(){
     var body;
     if(S.onb.compLoading){
-      body='<div class="onb-value-load"><span class="mini-spin" style="width:20px;height:20px;border-width:2.5px"></span> Buscando a quién deberías vigilar…</div>';
+      body='<div class="onb-value-load"><span class="mini-spin" style="width:20px;height:20px;border-width:2.5px"></span> '+L("Buscando a quién deberías vigilar…","Finding who you should be watching…")+'</div>';
     } else {
       var list=(S.onb.competitors||[]).map(function(c){
         return '<button class="onb-card-row'+(c.picked?" on":"")+'" data-act="onb-comp-toggle" data-h="'+ESC(c.handle)+'" role="checkbox" aria-checked="'+(c.picked?"true":"false")+'">'+
           '<span class="onb-card-check">'+(c.picked?IC.check:"")+'</span>'+
-          '<span class="ava bava">'+ESC(initialsOf(c.handle))+'</span>'+
+          onbAvatar(c.handle)+
           '<span class="onb-card-body"><span class="onb-card-h">@'+ESC(c.handle)+'</span>'+(c.reason?'<span class="onb-card-r">'+ESC(c.reason)+'</span>':'')+'</span>'+
         '</button>';
       }).join("");
-      body='<div class="onb-cards">'+list+'</div>'+
-        '<div class="onb-tagadd"><span class="onb-hash">@</span><input id="rsOnbCompInput" class="onb-text onb-text--tag" type="text" autocapitalize="none" spellcheck="false" placeholder="añade otro a mano" aria-label="Añadir competidor"><button class="onb-tagadd-btn" data-act="onb-comp-add">'+IC.plus+'</button></div>';
+      // "Añadir a mano" ARRIBA del listado (pedido por David) + Enter ya soportado.
+      body='<div class="onb-tagadd onb-tagadd--top"><span class="onb-hash">@</span><input id="rsOnbCompInput" class="onb-text onb-text--tag" type="text" autocapitalize="none" spellcheck="false" placeholder="'+L("añade un competidor a mano y Enter","add a competitor by hand and hit Enter")+'" aria-label="'+L("Añadir competidor","Add competitor")+'"><button class="onb-tagadd-btn" data-act="onb-comp-add">'+IC.plus+'</button></div>'+
+        '<div class="onb-cards">'+list+'</div>';
     }
     var nPick=(S.onb.competitors||[]).filter(function(c){return c.picked;}).length;
-    return onbCardWrap(onbEyebrow("Tu radar"),"¿A quién sigues de cerca?",
-      "Pre-elegí a 2 de tu subnicho. Seguiré sus reels que petan para que robes el primero en tu voz. Quita o añade los que quieras.",
+    return onbCardWrap(onbEyebrow(L("Tu radar","Your radar")),L("¿A quién sigues de cerca?","Who do you keep an eye on?"),
+      L("Pre-elegí a 2 de tu subnicho. Seguiré sus reels que petan para que robes el primero en tu voz. Quita o añade los que quieras.","I pre-picked 2 from your subniche. I'll track the reels that blow up so you can steal the first in your voice. Remove or add whoever you want."),
       body+onbErr()+
-      '<div class="onb-row">'+onbBackBtn()+'<button class="btn btn-lg btn-primary onb-cta" data-act="onb-comps-next"'+(nPick<1?' disabled':'')+'>'+IC.arr+' Seguir a '+nPick+' y seguir</button></div>');
+      '<div class="onb-row">'+onbBackBtn()+'<button class="btn btn-lg btn-primary onb-cta" data-act="onb-comps-next"'+(nPick<1?' disabled':'')+'>'+IC.arr+' '+L("Seguir a "+nPick+" y seguir","Follow "+nPick+" and continue")+'</button></div>');
   }
   // Paso 6 — objetivo (adapta tono+estructura).
   function onbGoalHTML(){
     var cards=ONB_GOALS.map(function(g){ var on=S.onb.goal===g.key; return '<button class="onb-goal'+(on?" on":"")+'" data-act="onb-pick-goal" data-k="'+g.key+'">'+
-      '<span class="onb-goal-ic">'+(IC[g.ic]||IC.spark)+'</span><span class="onb-goal-l">'+ESC(g.label)+'</span><span class="onb-goal-d">'+ESC(g.desc)+'</span></button>'; }).join("");
-    return onbCardWrap(onbEyebrow("El para qué"),"¿Qué quieres conseguir?",
-      "Con esto ajusto el tono y la estructura de tus guiones — vender no se escribe como entretener.",
+      '<span class="onb-goal-ic">'+(IC[g.ic]||IC.spark)+'</span><span class="onb-goal-l">'+ESC(L(g.label,g.label_en))+'</span><span class="onb-goal-d">'+ESC(L(g.desc,g.desc_en))+'</span></button>'; }).join("");
+    return onbCardWrap(onbEyebrow(L("El para qué","The why")),L("¿Qué quieres conseguir?","What do you want to achieve?"),
+      L("Con esto ajusto el tono y la estructura de tus guiones — vender no se escribe como entretener.","With this I tune the tone and structure of your scripts — selling isn't written like entertaining."),
       '<div class="onb-goals">'+cards+'</div>'+onbErr()+
-      '<div class="onb-row">'+onbBackBtn()+'<button class="btn btn-lg btn-primary onb-cta" data-act="onb-goal-next"'+(S.onb.goal?'':' disabled')+'>'+IC.bolt+' Crear mi primer guión</button></div>');
+      '<div class="onb-row">'+onbBackBtn()+'<button class="btn btn-lg btn-primary onb-cta" data-act="onb-goal-next"'+(S.onb.goal?'':' disabled')+'>'+IC.arr+' '+L("Continuar","Continue")+'</button></div>');
   }
   // Paso 7 — CIERRE: Cerebro 50% + primer guión + camino a 100%.
   function onbCloseHTML(){
     var pct=50;
-    return onbCardWrap('<div class="onb-eyebrow">'+IC.check+' Listo</div>',
-      "Te conozco al 50%. Aquí va tu primer guión.",
-      "Ya leí tu cuenta y a tus 2 competidores. Tu Cerebro es un <b>perfil de contexto</b> (no un clon total de tu voz todavía) — y con eso ya escribo a tu medida.",
+    return onbCardWrap('<div class="onb-eyebrow">'+IC.check+' '+L("Listo","Ready")+'</div>',
+      L("Listo. Te conozco al 50%.","Done. I know you at 50%."),
+      L("Ya leí tu cuenta y a tus 2 competidores. Tu Cerebro es un <b>perfil de contexto</b> (no un clon total de tu voz todavía) — y con eso ya escribo a tu medida.","I've read your account and your 2 competitors. Your Brain is a <b>context profile</b> (not a full clone of your voice yet) — and with that I already write to your measure."),
       '<div class="onb-brain"><div class="onb-brain-bar"><div class="onb-brain-fill" style="width:'+pct+'%"></div></div>'+
-        '<div class="onb-brain-row"><span class="onb-brain-k">'+IC.brain+' Cerebro</span><span class="onb-brain-v">'+pct+'%</span></div></div>'+
+        '<div class="onb-brain-row"><span class="onb-brain-k">'+IC.brain+' '+L("Cerebro","Brain")+'</span><span class="onb-brain-v">'+pct+'%</span></div></div>'+
       '<ul class="onb-checklist">'+
-        '<li>'+IC.check+' Panel lleno con reels que petan en tu subnicho</li>'+
-        '<li>'+IC.check+' 2 competidores en el radar, trayendo sus reels</li>'+
-        '<li>'+IC.check+' Tu primer guión, listo para robar</li>'+
+        '<li>'+IC.check+' '+L("Panel lleno con reels que petan en tu subnicho","Panel full of reels blowing up in your subniche")+'</li>'+
+        '<li>'+IC.check+' '+L("2 competidores en el radar, trayendo sus reels","2 competitors on your radar, bringing their reels")+'</li>'+
+        '<li>'+IC.check+' '+L("Tu primer guión, esperándote en el radar","Your first script, waiting on your radar")+'</li>'+
       '</ul>'+
-      '<p class="onb-path">El resto se gana: <b>enséñame tu voz</b> con tus propios reels y subimos del 50% al 100%.</p>'+
+      '<p class="onb-path">'+L("El resto se gana: <b>enséñame tu voz</b> con tus propios reels y subimos del 50% al 100%.","The rest is earned: <b>teach me your voice</b> with your own reels and we go from 50% to 100%.")+'</p>'+
       onbErr()+
-      '<button class="btn btn-lg btn-primary onb-cta" data-act="onb-finish"'+(S.onb.busy?' disabled':'')+'>'+(S.onb.busy?'<span class="mini-spin"></span> Preparando…':IC.bolt+' Entrar a mi radar')+'</button>');
+      '<button class="btn btn-lg btn-primary onb-cta" data-act="onb-finish"'+(S.onb.busy?' disabled':'')+'>'+(S.onb.busy?'<span class="mini-spin"></span> '+L("Preparando…","Preparing…"):IC.bolt+' '+L("Entrar a mi radar","Enter my radar"))+'</button>');
   }
   function onbStepHTML(){
     switch(S.onb.step){
@@ -544,8 +598,8 @@
     return '<div class="onb-screen"><div class="onb-screen-bg" aria-hidden="true"></div>'+
       '<div class="onb-screen-inner">'+
         '<div class="onb-top"><span class="onb-logo">'+IC.bolt+' ReelScript</span>'+
-          (i>0&&S.onb.step!=="close"?'<button class="onb-skip-top" data-act="onb-skip">Saltar configuración</button>':'')+'</div>'+
-        '<div class="onb-prog"><div class="onbp-dots">'+dots+'</div><span class="onbp-lbl">Paso '+(i+1)+' de '+ONB_STEPS.length+'</span></div>'+
+          (i>0&&S.onb.step!=="close"?'<button class="onb-skip-top" data-act="onb-skip">'+L("Saltar configuración","Skip setup")+'</button>':'')+'</div>'+
+        '<div class="onb-prog"><div class="onbp-dots">'+dots+'</div><span class="onbp-lbl">'+L("Paso","Step")+' '+(i+1)+' '+L("de","of")+' '+ONB_STEPS.length+'</span></div>'+
         onbStepHTML()+
       '</div></div>';
   }
@@ -556,7 +610,7 @@
   function onbHandleNext(){
     var inp=document.getElementById("rsOnbHandle");
     var h=(inp?inp.value:S.onb.handle||"").trim().replace(/^@+/,"").toLowerCase();
-    if(!/^[a-z0-9._]{1,30}$/.test(h)){ S.onb.error="Escribe tu usuario sin @ (letras, números, punto y guion bajo)."; S.onb.handle=h; return render(); }
+    if(!/^[a-z0-9._]{1,30}$/.test(h)){ S.onb.error=L("Escribe tu usuario sin @ (letras, números, punto y guion bajo).","Type your handle without @ (letters, numbers, dot and underscore)."); S.onb.handle=h; return render(); }
     S.onb.handle=h; onbNext();
   }
   function onbPickNiche(n){
@@ -567,7 +621,7 @@
     var ni=document.getElementById("rsOnbNiche");
     var custom=ni&&ni.value.trim()?ni.value.trim():"";
     if(custom) S.onb.niche=custom;
-    if(!(S.onb.niche||"").trim()){ S.onb.error="Elige un nicho o escríbelo para encontrar lo que petó."; return render(); }
+    if(!(S.onb.niche||"").trim()){ S.onb.error=L("Elige un nicho o escríbelo para encontrar lo que petó.","Pick a niche or type it so I can find what's blowing up."); return render(); }
     onbNext();
   }
   function onbTagToggle(t){
@@ -582,12 +636,14 @@
     render(); var ni=document.getElementById("rsOnbTagInput"); if(ni) ni.focus();
   }
   function onbSubNext(){
-    if(!(S.onb.subniches||[]).length){ S.onb.error="Elige al menos una etiqueta — es la clave del match."; return render(); }
+    if(!(S.onb.subniches||[]).length){ S.onb.error=L("Elige al menos una etiqueta — es la clave del match.","Pick at least one tag — it's the key to the match."); return render(); }
     onbTrack("onb_step_completed"); onbGoto("value"); onbLoadValue();
   }
   // Reels reciclados del subnicho (recycling library). Demo siembra local.
   function onbLoadValue(){
-    S.onb.valueLoading=true; S.onb.valueReels=[];
+    S.onb.valueLoading=true; S.onb.valueReels=[]; S.onb.ahaReel=null; S.onb.ahaScript=null; S.onb.ahaLoading=false;
+    render();   // pinta el estado de CARGA ya (skeletons + botón deshabilitado) → sin
+                // flash del cold-start con el botón activo (evita saltarse el paso sin querer).
     var done=function(reels){ S.onb.valueReels=reels||[]; S.onb.valueLoading=false; if(S.onb.step==="value") render(); };
     if(isDemo()){ setTimeout(function(){ done(onbDemoValueReels()); }, 1400); return; }
     apiGet("/api/niche/trending-reels?niche="+encodeURIComponent(S.onb.niche||"")+"&subniches="+encodeURIComponent((S.onb.subniches||[]).join(","))).then(function(r){
@@ -595,6 +651,39 @@
     });
   }
   function onbValueNext(){ onbTrack("onb_step_completed",{value_reels:(S.onb.valueReels||[]).length}); onbGoto("competitors"); onbLoadComps(); }
+  // AHA: roba el reel i → genera el guion en su voz y lo muestra en el flujo.
+  function onbValueSteal(i){
+    var r=(S.onb.valueReels||[])[i]; if(!r) return;
+    S.onb.ahaReel=r; S.onb.ahaScript=null; S.onb.ahaLoading=true; onbTrack("onb_aha_steal",{handle:r.handle}); render();
+    var done=function(script){ S.onb.ahaScript=script||onbDemoAhaScript(r); S.onb.ahaLoading=false; if(S.onb.step==="value") render(); };
+    if(isDemo()){ setTimeout(function(){ done(onbDemoAhaScript(r)); }, 1700); return; }
+    // Prod: endpoint de onboarding (sin tracking ni créditos). Si falla, cae a un
+    // guion derivado del reel para no romper el aha (LLM real: fase 2).
+    var lang=(typeof rsLang==="function")?rsLang():(document.documentElement.lang||"es");
+    apiPost("/api/onboarding/aha-script",{ caption:r.caption, handle:r.handle, niche:S.onb.niche, subniches:S.onb.subniches||[], language:lang }).then(function(rr){
+      done(rr&&rr.ok&&rr.d&&rr.d.script ? normAhaScript(rr.d.script) : null);
+    }).catch(function(){ done(null); });
+  }
+  function onbValueReset(){ S.onb.ahaReel=null; S.onb.ahaScript=null; S.onb.ahaLoading=false; render(); }
+  function normAhaScript(s){
+    if(!s) return null;
+    if(typeof s==="string"){ var p=s.split("\n").map(function(x){return x.trim();}).filter(Boolean); return {hook:p[0]||s, beats:p.slice(1,Math.max(1,p.length-1)), close:p.length>1?p[p.length-1]:""}; }
+    return { hook:s.hook||"", beats:Array.isArray(s.beats)?s.beats:[], close:s.close||"" };
+  }
+  // Guion del aha para demo / respaldo — derivado del reel y el subnicho.
+  function onbDemoAhaScript(r){
+    var sub=(S.onb.subniches||[])[0]||S.onb.niche||"tu tema";
+    var cap=(r&&r.caption?r.caption:"este tema").replace(/\.+$/,"");
+    return {
+      hook:"¿Y si "+sub+" no fuera tan complicado como te lo han pintado?",
+      beats:[
+        "Esto es lo que vi en el reel que petó: "+cap.charAt(0).toLowerCase()+cap.slice(1)+".",
+        "El error que comete casi todo el mundo — y por qué te está frenando.",
+        "Hazlo así, en 3 pasos, y nota el cambio esta misma semana."
+      ],
+      close:"Guarda este guión y grábalo hoy. Tu próximo viral empieza aquí."
+    };
+  }
   // Competidores pre-sugeridos del subnicho (1 clic). Demo siembra local.
   function onbLoadComps(){
     if((S.onb.competitors||[]).length){ return; }   // ya cargados (volver atrás)
@@ -614,11 +703,14 @@
     render();
   }
   function onbCompsNext(){
-    if((S.onb.competitors||[]).filter(function(c){return c.picked;}).length<1){ S.onb.error="Elige al menos un competidor para llenar tu radar."; return render(); }
+    if((S.onb.competitors||[]).filter(function(c){return c.picked;}).length<1){ S.onb.error=L("Elige al menos un competidor para llenar tu radar.","Pick at least one competitor to fill your radar."); return render(); }
     onbNext();
   }
   function onbPickGoal(k){ S.onb.goal=k; render(); }
-  function onbGoalNext(){ if(!S.onb.goal){ S.onb.error="Elige un objetivo — adapta el tono."; return render(); } onbNext(); }
+  function onbGoalNext(){ if(!S.onb.goal){ S.onb.error=L("Elige un objetivo — adapta el tono.","Pick a goal — it tunes the tone."); return render(); } onbNext(); }
+  // Tras el onboarding, arranca el House Tour (orden Fathom: onboarding → tour).
+  // El auto-start de index.html se inhibe mientras la pantalla de onboarding existe.
+  function onbStartTour(){ if(typeof window.startTour==="function"){ setTimeout(function(){ try{ window.startTour(); }catch(e){} }, 700); } }
   // CIERRE: ingiere (prod) → Cerebro ~50% + 1er guión; demo simula y siembra panel.
   function onbFinish(){
     onbTrack("onb_step_completed");
@@ -628,8 +720,8 @@
       S.onb.skipped=true; S.user.onbV2Done=true;
       try{ var b=brand(); if(b){ b.voice=Math.max(b.voice||0,50); b.level=Math.max(b.level||1,2); } }catch(e){}
       if(typeof seedDemoContent==="function" && !(S.reels||[]).length){ try{ seedDemoContent(); }catch(e){} }
-      S.tab="dashboard"; render();
-      showToast("Cerebro al 50% · tu primer guión está listo. Róbalo →");
+      S.tab="dashboard"; render(); onbStartTour();
+      showToast(L("Cerebro al 50% · tu primer guión está listo. Róbalo →","Brain at 50% · your first script is ready. Steal it →"));
       return;
     }
     S.onb.busy=true; render();
@@ -639,9 +731,9 @@
       S.onb.busy=false; S.onb.skipped=true; S.user.onbV2Done=true;
       var v=(r.ok&&r.d&&r.d.voice!=null)?r.d.voice:50;
       try{ brand().voice=Math.max(brand().voice||0,v); }catch(e){}
-      S.tab="dashboard"; render();
+      S.tab="dashboard"; render(); onbStartTour();
       if(typeof loadBrandData==="function"){ try{ loadBrandData(); }catch(e){} }
-      showToast("Cerebro al "+v+"% · analizando tu nicho, tu panel se está llenando…");
+      showToast(L("Cerebro al "+v+"% · analizando tu nicho, tu panel se está llenando…","Brain at "+v+"% · analyzing your niche, your panel is filling up…"));
     });
   }
   function onbSkip(){ onbTrack("onb_skipped"); S.onb.skipped=true; if(!isDemo()){ try{ apiPost("/api/onboarding/complete",{handle:S.onb.handle, skipped:true, niche:S.onb.niche, subniches:S.onb.subniches||[]}); }catch(e){} } S.tab="dashboard"; render(); }
@@ -672,7 +764,7 @@
      no renderiza nada (sin hueco). Misma tarjeta en ambos sitios. */
   function nextSeries(){ return (S.metrics && S.metrics.insights && S.metrics.insights.next) || null; }
   // T1 (IDI): una sola acción primaria por pantalla. En el Dashboard el CTA es
-  // secundario (el primario es el «Hazlo mío» de la Oportunidad #1); en el
+  // secundario (el primario es el «Roba la idea» de la Oportunidad #1); en el
   // Cerebro sigue primario porque ahí ES la acción principal. ctx: "brain"|"dash".
   function nextSeriesHTML(ctx){
     var nx=nextSeries(); if(!nx || !(nx.title||nx.message)) return '';
@@ -737,7 +829,7 @@
       '<div class="row-mid"><div class="row-crow"><span class="ava">'+ESC(r.creator.initials)+'</span><span class="row-who">@'+ESC(r.creator.handle)+'</span><span class="row-when">'+ESC(r.when)+'</span></div><p class="row-cap">'+ESC(r.cap)+'</p></div>'+
       '<div class="row-metrics"><span>'+IC.eye+' '+ESC(r.views)+'</span><span>'+IC.heart+' '+ESC(r.likes)+'</span></div>'+
       '<div class="row-actions"><button class="iconbtn'+(isFav?" on":"")+'" data-act="fav" data-id="'+ESC(r.id)+'" title="Guardar">'+(isFav?IC.star:IC.starO)+'</button>'+
-        '<button class="btn btn-sm btn-primary" data-act="steal" data-id="'+ESC(r.id)+'">'+IC.bolt+' Hazlo mío</button></div>'+
+        '<button class="btn btn-sm btn-primary" data-act="steal" data-id="'+ESC(r.id)+'">'+IC.bolt+' Roba la idea</button></div>'+
     '</div>';
   }
 
@@ -756,8 +848,9 @@
         '<h2 class="feature-cap">'+ESC(r.cap)+'</h2>'+
         (r.sum?'<p class="feature-sum">'+ESC(r.sum)+'</p>':'')+
         '<div class="feature-why">'+IC.spark+'<span>'+ESC(why)+'</span></div>'+
-        '<div class="feature-actions"><button class="btn btn-lg btn-primary" data-act="steal" data-id="'+ESC(r.id)+'">'+IC.bolt+' Hazlo mío</button>'+
-          '<button class="iconbtn'+(S.favs[r.id]?" on":"")+'" data-act="fav" data-id="'+ESC(r.id)+'" title="Guardar">'+(S.favs[r.id]?IC.star:IC.starO)+'</button></div>'+
+        '<div class="feature-actions"><button class="btn btn-lg btn-primary" data-act="steal" data-id="'+ESC(r.id)+'">'+IC.bolt+' Roba la idea</button>'+
+          '<button class="iconbtn'+(S.favs[r.id]?" on":"")+'" data-act="fav" data-id="'+ESC(r.id)+'" title="Guardar">'+(S.favs[r.id]?IC.star:IC.starO)+'</button>'+
+          '<button class="iconbtn" data-act="reel-dismiss" data-id="'+ESC(r.id)+'" title="No me interesa — trae otro" aria-label="Descartar y traer otro">'+IC.x+'</button></div>'+
       '</div>'+
       '<div class="feature-data">'+
         '<div class="dmetric big"><div class="dk">Explosión</div><div class="dv">'+(r.explosionTxt!=null?ESC(r.explosionTxt):"–")+'×</div><div class="dbar"><i style="width:'+expPct+'%"></i></div></div>'+
@@ -903,7 +996,7 @@
   /* T1 · Fábrica de ideas embebida en Radar — input suelto + generadores +
      lista acordeón (idea → guiones → hooks). Reutiliza ideaBlockHTML y los
      handlers existentes (seed-go, gen5ideas, explosion, gen5scripts, gen5hooks).
-     Una sola acción primaria en Radar sigue siendo «Hazlo mío»: aquí todo es
+     Una sola acción primaria en Radar sigue siendo «Roba la idea»: aquí todo es
      secundario/ghost. */
   // T1+refino: la fábrica de ideas vive en GUIONES, en DOS grupos por estado:
   //   · "Sin desarrollar" — ideas en bruto (gratis), sin guiones. Botón Desarrollar (cuesta).
@@ -1247,6 +1340,12 @@
         '<button class="btn btn-md btn-primary" data-act="upsell" data-k="metrics">'+IC.bolt+' Desbloquea con Pro</button>'+
       '</div></div></div>';
   }
+  // Muro borroso compacto: datos COMPLETOS del competidor (métricas del reel)
+  // difuminados en free → incentivo a suscribirse (Fathom). Reusa .rs-lock.
+  function compMetsLock(inner){
+    return '<div class="rs-lock rs-lock--sm"><div class="rs-lock-inner" aria-hidden="true">'+inner+'</div>'+
+      '<div class="rs-lock-over"><button class="btn btn-sm btn-primary" data-act="upsell" data-k="competitor">'+IC.bolt+' Métricas con Pro</button></div></div>';
+  }
   function metricsHTML(){
     if(!S.igConnected) return connectIgHTML();
     var m=S.metrics||{}; var b=brand();
@@ -1312,12 +1411,14 @@
      seguir competidor, crear guion, vincular publicados…), toast + orbe en pulso +
      la barra del hero se re-anima de 0 → pct. Llamar tras cada recarga de señales. */
   function brainLevelPulse(){
+    brainEmitSignals();   // capa "alimentar": lanza partículas reales por cada señal que subió
     var lv=brainLevel().level;
     if(S._lvlSeen==null){ S._lvlSeen=lv; return; }
     if(lv===S._lvlSeen) return;
     if(lv<S._lvlSeen){ S._lvlSeen=lv; return; }   // bajó (p.ej. descartó guiones): sin fanfarria
     S._lvlSeen=lv;
     showToast("🧠 Nivel "+lv+" · "+ecoLevelName(lv)+" — el sistema te conoce mejor: guiones con menos retoques.");
+    try{ if(window.RSBrain) window.RSBrain.levelup(); }catch(e){}   // destello global del cerebro 3D
     var orb=document.querySelector(".brain-orb"); if(orb){ orb.classList.add("lvlup"); setTimeout(function(){ orb.classList.remove("lvlup"); },1600); }
     var fill=document.querySelector(".brain-hero .eco-fill");
     if(fill){ var w=fill.style.width; fill.style.width="0%"; void fill.offsetWidth; fill.style.width=w; }
@@ -1362,7 +1463,7 @@
     }).join("");
     var note=hasRealVoice()
       ? 'Tu voz entrenada manda en cada guion; el tono es la base por si refrescas la voz.'
-      : 'Tu próximo «Hazlo mío» saldrá con este tono — con carácter, no genérico. Entrena tu voz abajo para que suene a ti.';
+      : 'Tu próximo «Roba la idea» saldrá con este tono — con carácter, no genérico. Entrena tu voz abajo para que suene a ti.';
     return '<div class="brain-section-t">Tu tono</div>'+
       '<div class="tone-pick"><div class="tone-chips">'+chips+'</div>'+
       '<p class="tone-note">'+note+'</p></div>';
@@ -1383,7 +1484,7 @@
       '<div class="voice-capture">'+
         auto+
         '<p class="vc-lead">'+(nPub>0?'O pega':'Pega')+' las <b>URLs de 1-5 reels TUYOS</b> (Instagram/TikTok) y yo los transcribo y aprendo tu voz. '+
-          'Tu próximo «Hazlo mío» saldrá sonando a ti, no genérico.</p>'+
+          'Tu próximo «Roba la idea» saldrá sonando a ti, no genérico.</p>'+
         '<textarea class="vc-ta" id="rsVoiceUrls" rows="4" placeholder="https://www.instagram.com/reel/…&#10;https://www.tiktok.com/@tu/video/…"></textarea>'+
         '<button class="btn btn-md '+(nPub>0?'btn-secondary':'btn-primary')+'" data-act="voice-from-urls">'+IC.spark+' Aprender mi voz de estos reels</button>'+
         '<p class="vc-hint">Transcribir cada reel cuesta 1 crédito — te lo confirmo antes. Nada de pegar texto a mano.</p>'+
@@ -1426,7 +1527,7 @@
     if(!hasRealVoice()){
       return '<div class="voice-banner">'+
         '<span class="vb-ic">'+IC.mic+'</span>'+
-        '<span class="vb-text"><b>Enséñame tu voz</b> — pega 1-2 reels tuyos y tu próximo «Hazlo mío» saldrá sonando a ti, no genérico.</span>'+
+        '<span class="vb-text"><b>Enséñame tu voz</b> — pega 1-2 reels tuyos y tu próximo «Roba la idea» saldrá sonando a ti, no genérico.</span>'+
         '<button class="btn btn-sm btn-secondary" data-act="voice-focus">Enseñar mi voz</button>'+
       '</div>';
     }
@@ -1469,6 +1570,154 @@
     apiGet("/api/tracked-creators"+(_pid?("?project_id="+encodeURIComponent(_pid)):"")).then(function(r){
       if(r.ok && r.d && Array.isArray(r.d.tracked)){ S.tracked=r.d.tracked; if(S.tab==="brain"||S.tab==="dashboard") render(); brainLevelPulse(); }
     });
+  }
+  /* ── Cerebro 3D (WebGL, lazy) ──────────────────────────────────────────────
+     Three.js (vendado) + brain3d.js se cargan SOLO al abrir Cerebro. Si no es
+     elegible (reduced-motion, sin WebGL, headless del harness, o fallo de carga)
+     se queda el orb estático de fallback. El canvas es un singleton que se re-ancla
+     en cada render (ensureBrain3D) → sobrevive a los innerHTML de la isla. */
+  var _brain3dState=0;   // 0 idle · 1 cargando · 2 listo · 3 no-disponible
+  function brain3dEligible(){
+    if(window.__RS_NO_3D__) return false;
+    var force = window.__RS_FORCE_3D__ || /[?&]brain3d=(force|on)/.test(location.search);
+    // SEGURIDAD: el Cerebro 3D (WebGL) queda DESACTIVADO por defecto. En equipos con
+    // GPU/drivers justos puede tumbar el driver y reiniciar el PC. Queda el orbe estático
+    // (fallback, sin WebGL). Para reactivarlo a propósito: añadir ?brain3d=on a la URL.
+    if(!force) return false;
+    // Headless (harness) y reduced-motion → fallback estático también.
+    if(/headless/i.test(navigator.userAgent||"") || navigator.webdriver) return false;
+    try{ if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false; }catch(e){}
+    try{ var c=document.createElement('canvas'); if(!(c.getContext('webgl')||c.getContext('experimental-webgl'))) return false; }catch(e){ return false; }
+    return true;
+  }
+  function loadScriptOnce(src, cb){
+    var ex=document.querySelector('script[data-rs="'+src+'"]');
+    if(ex){ if(ex.getAttribute('data-loaded')) return cb(true); ex.addEventListener('load',function(){cb(true);}); ex.addEventListener('error',function(){cb(false);}); return; }
+    var s=document.createElement('script'); s.src=src; s.async=true; s.setAttribute('data-rs',src);
+    s.onload=function(){ s.setAttribute('data-loaded','1'); cb(true); };
+    s.onerror=function(){ cb(false); };
+    document.head.appendChild(s);
+  }
+  function currentBrainState(){
+    var b=brand();
+    var voicePct = hasRealVoice() ? Math.max(0,Math.min(100,S.voice.confidence||0)) : (isDemo()?Math.max(6,Math.min(100,b.voice||40)):0);
+    return { knowledge: voicePct };
+  }
+  // Capa "alimentar al cerebro": cuando una partícula REAL aterriza (no ambiente),
+  // el motor llama aquí → toast flotante "+1 [tipo]" sobre el stage + bump del contador
+  // de la fuente correspondiente. type ∈ reel|comp|guio|metr.
+  var BRAIN_FEED_LBL={ reel:L("voz","voice"), comp:L("competidor","competitor"), guio:L("guion","script"), metr:L("métrica","metric") };
+  var BRAIN_SRC_IDX={ reel:0, comp:1, guio:2, metr:3 };   // orden de .brain-src en brainHTML
+  function onBrainAbsorb(type){
+    var stage=document.getElementById('rsBrainStage'); if(!stage) return;
+    var pop=document.createElement('div'); pop.className='brain-feed-pop bf-'+type;
+    pop.textContent='+1 '+(BRAIN_FEED_LBL[type]||L("señal","signal"));
+    stage.appendChild(pop);
+    setTimeout(function(){ if(pop.parentNode) pop.parentNode.removeChild(pop); }, 1400);
+    var idx=BRAIN_SRC_IDX[type], nodes=document.querySelectorAll('.brain-src-n');
+    if(idx!=null && nodes[idx]){ var n=nodes[idx]; n.classList.remove('bump'); void n.offsetWidth; n.classList.add('bump'); }
+  }
+  /* Emite partículas reales al cerebro comparando las señales actuales con la última
+     foto (S._sigSeen). La foto SIEMPRE avanza (aunque no estés en Cerebro) para no
+     acumular un aluvión de partículas al abrir la pestaña luego; el disparo visual
+     solo ocurre si estás en Cerebro con el 3D montado. Llamar tras eventos reales. */
+  function brainEmitSignals(){
+    var s=brainSignals();
+    var prev=S._sigSeen;
+    S._sigSeen={voice:s.voice, comps:s.comps, guiones:s.guiones, pub:s.pub};
+    if(!prev) return;                                  // primera foto: sin disparo
+    if(S.tab!=="brain" || !window.RSBrain) return;
+    var fired=[];
+    if(s.guiones>prev.guiones) fired.push(['guio', s.guiones-prev.guiones]);
+    if(s.comps  >prev.comps)   fired.push(['comp', s.comps-prev.comps]);
+    if(s.pub    >prev.pub)     fired.push(['metr', s.pub-prev.pub]);
+    if(s.voice  >prev.voice)   fired.push(['reel', 1]);   // voz: 1 partícula simbólica
+    fired.forEach(function(f){
+      var k=Math.min(f[1],4);
+      for(var i=0;i<k;i++) (function(d){ setTimeout(function(){ try{ window.RSBrain.feed(f[0]); }catch(e){} }, d*130); })(i);
+    });
+  }
+  function ensureBrain3D(){
+    var stage=document.getElementById('rsBrainStage'); if(!stage) return;
+    // Durante el house tour NO montamos el 3D: su build bloquea el hilo y lagea la
+    // transición a Cerebro. Queda el orb; se monta al abrir Cerebro de verdad (post-tour).
+    var ov=document.querySelector('.tour-overlay'); if(ov && getComputedStyle(ov).display!=='none') return;
+    if(!brain3dEligible()){ _brain3dState=3; return; }
+    if(_brain3dState===2){ if(window.RSBrain){ window.RSBrain.mount(stage, currentBrainState()); window.RSBrain.update(currentBrainState()); window.RSBrain.setOnAbsorb(onBrainAbsorb); } if(S._sigSeen==null) brainEmitSignals(); return; }
+    if(_brain3dState===1) return;
+    _brain3dState=1;
+    loadScriptOnce('/static/js/vendor/three.min.js', function(ok){
+      if(!ok){ _brain3dState=3; return; }
+      loadScriptOnce('/static/js/brain3d.js', function(ok2){
+        if(!ok2 || !window.RSBrain){ _brain3dState=3; return; }
+        _brain3dState=2;
+        var st=document.getElementById('rsBrainStage');
+        if(st && S.tab==="brain"){ window.RSBrain.mount(st, currentBrainState()); window.RSBrain.setOnAbsorb(onBrainAbsorb); }
+        if(S._sigSeen==null) brainEmitSignals();   // fija la línea base al abrir Cerebro
+      });
+    });
+  }
+  function pauseBrain3D(){ try{ if(window.RSBrain) window.RSBrain.pause(); }catch(e){} }
+
+  /* ── Brain «Entrenar» (lever de INVERSIÓN, Fathom): valora hooks 👍/👎 → afina tu
+     gusto Y alimenta el cerebro 3D (partícula al votar). Demo local; prod backend. */
+  function ensureBrainTrain(){
+    if(!S.brainTrain) S.brainTrain={cards:[], i:0, rated:0, loading:false};
+    var bt=S.brainTrain;
+    if(!bt.cards.length && !bt.loading) brainTrainLoad();
+  }
+  function brainTrainLoad(){
+    var bt=S.brainTrain||(S.brainTrain={cards:[], i:0, rated:0, loading:false});
+    bt.loading=true; bt.i=0; bt.cards=[];
+    var done=function(cards){ bt.cards=cards||[]; bt.i=0; bt.loading=false; if(S.tab==="brain") render(); };
+    if(isDemo()){ setTimeout(function(){ done(brainDemoCards()); }, 900); return; }
+    var niche=(S.onb&&S.onb.niche)||"";
+    apiGet('/api/brain/training-cards'+(niche?('?niche='+encodeURIComponent(niche)):'')).then(function(r){
+      done((r.ok&&r.d&&Array.isArray(r.d.cards))?r.d.cards:[]);
+    }).catch(function(){ done([]); });
+  }
+  function brainRate(rating){
+    var bt=S.brainTrain; if(!bt||!bt.cards.length||bt.i>=bt.cards.length) return;
+    var c=bt.cards[bt.i]; bt.rated=(bt.rated||0)+1; bt.i++;
+    // voto = SOLO VISUAL: la partícula vuela y el cerebro reacciona, pero NO infla el
+    // % real ni los contadores → feed silencioso (sin toast "+1").
+    try{ if(window.RSBrain) window.RSBrain.feed(rating?'guio':'comp', true); }catch(e){}
+    if(!isDemo()){ var niche=(S.onb&&S.onb.niche)||""; try{ apiPost('/api/brain/rate',{text:c.text, kind:c.kind||'hook', rating:rating, niche:niche}); }catch(e){} }
+    render();
+  }
+  function brainTrainMore(){ brainTrainLoad(); render(); }
+  function brainDemoCards(){
+    var n=(S.onb&&S.onb.niche)||(brand().name)||"tu nicho";
+    return [
+      {kind:"polémico",       text:"Lo que nadie te dice sobre "+n+" (y por qué te están mintiendo)."},
+      {kind:"error",          text:"El error de "+n+" que comete el 90% — y te frena sin que lo notes."},
+      {kind:"resultado",      text:"Hice esto en "+n+" 30 días seguidos. Esto es lo que pasó."},
+      {kind:"curiosidad",     text:"Nadie habla de este truco de "+n+". Hasta hoy."},
+      {kind:"promesa",        text:"Domina "+n+" en 3 pasos, aunque empieces de cero."},
+      {kind:"contraintuitivo",text:"Deja de hacer esto en "+n+": te cuesta más de lo que crees."}
+    ];
+  }
+  function brainTrainHTML(){
+    var bt=S.brainTrain, inner;
+    if(!bt || (bt.loading && !bt.cards.length)){
+      inner='<div class="bt-load"><span class="mini-spin"></span> Preparando hooks para entrenarte…</div>';
+    } else if(!bt.cards.length){
+      inner='<div class="bt-load">No pude traer hooks ahora. <button class="btn btn-sm btn-ghost" data-act="brain-train-more">Reintentar</button></div>';
+    } else if(bt.i>=bt.cards.length){
+      inner='<div class="bt-done">'+IC.check+' Has entrenado <b>'+(bt.rated||0)+'</b> hoy. Cada voto afina tu Cerebro. <button class="btn btn-sm btn-secondary" data-act="brain-train-more">'+IC.spark+' Traer más</button></div>';
+    } else {
+      var c=bt.cards[bt.i];
+      inner='<div class="bt-card">'+
+        '<div class="bt-kind">'+ESC(c.kind||"hook")+'</div>'+
+        '<p class="bt-text">'+ESC(c.text)+'</p>'+
+        '<div class="bt-row">'+
+          '<button class="bt-btn bt-no" data-act="brain-rate" data-k="0" aria-label="No es mío">'+IC.x+' No es mío</button>'+
+          '<button class="bt-btn bt-yes" data-act="brain-rate" data-k="1" aria-label="Suena a mí">'+IC.check+' Suena a mí</button>'+
+        '</div>'+
+        '<div class="bt-prog">'+(bt.i+1)+' / '+bt.cards.length+' · <b>'+(bt.rated||0)+'</b> entrenados</div>'+
+      '</div>';
+    }
+    return '<div class="brain-section-t">Entrena tu Cerebro <span class="brain-tag">cada voto te afina</span></div><div class="bt-wrap">'+inner+'</div>';
   }
   function brainHTML(){
     var b=brand();
@@ -1521,7 +1770,7 @@
       pheadHTML("Cerebro · @"+(b.handle||S.user.handle||""), "El cerebro de "+b.name, "Todo lo que el sistema sabe de esta marca, y cómo crece. Cuanto más creas y publicas, más tuyo suena todo.")+
       // hero de nivel + voz
       '<div class="brain-hero">'+
-        '<div class="brain-orb">'+IC.brain+'</div>'+
+        '<div id="rsBrainStage" class="brain3d-stage"><div class="brain-orb brain3d-fallback">'+IC.brain+'</div></div>'+
         '<div class="brain-hero-body">'+
           '<div class="brain-lvl">Nivel '+lv.level+' · '+ESC(ecoLevelName(lv.level))+'</div>'+
           '<div class="brain-voiceline">Te conozco al <b>'+voicePct+'%</b></div>'+
@@ -1537,8 +1786,16 @@
                 ? '<button class="btn btn-md btn-primary" style="margin-top:12px" data-act="'+ESC(lv.nextAction.cta.act)+'"'+(lv.nextAction.cta.k?' data-k="'+ESC(lv.nextAction.cta.k)+'"':'')+'>'+ESC(lv.nextAction.cta.t)+'</button>'
                 : '')
             : '<div class="brain-next">Nivel máximo: creo con tu voz, tus rivales y tus datos. Guiones casi sin retoques.</div>')+
-          '<div class="brain-why">A más nivel, menos retoques: tu voz y tus reels ganadores entran en el prompt de cada «Hazlo mío».</div>'+
+          '<div class="brain-why">A más nivel, menos retoques: tu voz y tus reels ganadores entran en el prompt de cada «Roba la idea».</div>'+
         '</div>'+
+      '</div>'+
+      // Entrenar (inversión): valora hooks → afina tu gusto + alimenta el cerebro 3D.
+      brainTrainHTML()+
+      // Analizar un reel suelto (sin añadirlo como competidor) — atajo al panel Analizar.
+      '<div class="brain-section-t">'+L("Analiza un reel suelto","Analyze a one-off reel")+'</div>'+
+      '<div class="bt-load" style="justify-content:space-between;gap:14px;margin-bottom:20px">'+
+        '<span>'+L("¿Viste un reel que te llamó? Pégalo y lo transcribo — sin añadirlo a tu radar.","Saw a reel that caught your eye? Paste it and I'll transcribe it — without adding it to your radar.")+'</span>'+
+        '<button class="btn btn-sm btn-secondary" style="flex-shrink:0" data-act="legacy" data-k="transc">'+IC.mic+' '+L("Analizar un reel","Analyze a reel")+'</button>'+
       '</div>'+
       // A1: selector de TONO preset (personalidad cuando aún no hay voz personal)
       toneSelectorHTML()+
@@ -1665,17 +1922,23 @@
     // hooks/carousel/linkedin/x/serie hoy son TEATRO (contenido hardcodeado +
     // descuento local de créditos) → solo se enseñan en demo. Al implementar un
     // formato de verdad, basta marcarlo real:true.
+    // P4 (plan acción): continuidad del bucle = corazón del Hook Model. Si queda otra
+    // señal en el radar, el siguiente paso natural NO es volver al feed: es robar la
+    // siguiente sin salir del flujo. Es la acción REAL de más impacto de la cinta.
+    var nx=feedReels().filter(function(x){ return !(S.reel && x.id===S.reel.id); })[0];
     var items=[
-      {k:"record",  ic:IC.mic,    t:"Grábalo ahora",          d:"Teleprompter listo · gratis",     feature:true,  real:true },
+      {k:"record",  ic:IC.mic,    t:L("Grábalo ahora","Record it now"),       d:L("Teleprompter listo · gratis","Teleprompter ready · free"), feature:true,  real:true },
+      (nx ? {k:"next", ic:IC.spark, t:L("Roba la siguiente señal","Steal the next signal"),
+             d:"@"+nx.creator.handle+L(" está petando ahora"," is blowing up now"), feature:true, real:true } : null),
       {k:"hooks",   ic:IC.hook,   t:"5 hooks alternativos",   d:"El hook es el 80% del reel",      feature:false, real:false},
       {k:"carousel",ic:IC.layers, t:"Conviértelo en carrusel",d:"La misma idea, en post",          feature:false, real:false},
       {k:"linkedin",ic:'<span style="font-weight:800;font-size:13px">in</span>', t:"Versión LinkedIn", d:"Llega a otro público", feature:false, real:false},
       {k:"x",       ic:'<span style="font-weight:800;font-size:15px">𝕏</span>',  t:"Hilo para X",      d:"Exprime el mismo ángulo", feature:false, real:false},
       {k:"serie",   ic:IC.repeat, t:"Genérame una serie de 3",d:"Contenido para toda la semana",   feature:false, real:false}
-    ];
+    ].filter(Boolean);
     if(!isDemo()) items=items.filter(function(it){ return it.real; });
     var rows=items.map(function(it){ var k=it.k,d=!!S.done[k]; var lbl=d?(k==="record"?"Grabado ✓":"Hecho ✓"):it.t;
-      return '<button class="chain'+(it.feature?" feature":"")+(d?" done":"")+'" '+(d?"":'data-act="chain" data-k="'+k+'"')+'><div class="cic">'+(d?IC.check:it.ic)+'</div><div class="ctext"><div class="ct">'+ESC(lbl)+'</div><div class="cd">'+ESC(it.d)+'</div></div>'+(d?"":'<span class="arr">'+IC.arr+'</span>')+'</button>'; }).join("");
+      return '<button class="chain'+(it.feature?" chain-feature":"")+(d?" done":"")+'" '+(d?"":'data-act="chain" data-k="'+k+'"')+'><div class="cic">'+(d?IC.check:it.ic)+'</div><div class="ctext"><div class="ct">'+ESC(lbl)+'</div><div class="cd">'+ESC(it.d)+'</div></div>'+(d?"":'<span class="arr">'+IC.arr+'</span>')+'</button>'; }).join("");
     var sub=items.length>1
       ? 'Ya tienes el guión. Multiplícalo en un toque — cada formato es una pieza más sin volver a pensar.'
       : 'Ya tienes el guión, guardado en Guiones. Pásalo al teleprompter y grábalo — grabar no gasta créditos.';
@@ -1839,6 +2102,8 @@
     var errN=document.getElementById("rsErr"),errM=document.getElementById("rsErrMsg");
     if(errN&&errM){ if(S.errMsg){ errM.textContent=S.errMsg; errN.classList.add("show"); } else { errN.classList.remove("show"); } }
     if(S.view==="gen") startGenSteps();
+    // Cerebro 3D: monta/re-ancla al entrar en la pestaña Cerebro, pausa al salir.
+    if(S.tab==="brain"){ ensureBrain3D(); ensureBrainTrain(); } else pauseBrain3D();
     // Sección legacy pendiente de la URL (/profile/transcriptions|settings): se abre
     // una vez que #rsLegacy ya existe (primer render). openLegacy consume el flag.
     if(S._pendingLegacy && document.getElementById("rsLegacy")){ var _pl=S._pendingLegacy; S._pendingLegacy=null; openLegacy(_pl); }
@@ -2055,15 +2320,18 @@
   }
   // Toggle de plan SOLO en demo, para ver las dos experiencias.
   function setDemoPlan(k){
-    if(S.plan===k){ return; } S.plan=k; S.brandMenu=false; S.view="feed"; S.feedExpanded=false; S._lvlSeen=null;
-    if(k==="agencia"){ S.brands=demoBrands(); S.brandId=S.brands[0].id; S.tab="portfolio"; }   // macro
-    else { S.brands=[demoBrands()[0]]; S.brandId=S.brands[0].id; S.tab="dashboard"; applyDemoBrand(); }
+    var toFree=(k==="free");
+    var plan=toFree?"creador":k;   // free reusa el layout de creador (1 marca) + isFree()=true
+    if(S.plan===plan && (S._demoFree===true)===toFree){ return; }   // sin cambio real
+    S._demoFree=toFree; S.plan=plan; S.brandMenu=false; S.view="feed"; S.feedExpanded=false; S._lvlSeen=null;
+    if(plan==="agencia"){ S.brands=demoBrands(); S.brandId=S.brands[0].id; S.tab="portfolio"; }   // macro
+    else { S.brands=[demoBrands()[0]]; S.brandId=S.brands[0].id; S.tab=toFree?"metrics":"dashboard"; applyDemoBrand(); }
     render();
   }
   /* ── A: DETALLE DEL REEL — desplegable INLINE bajo la card (mismo patrón que
      «Ver guión completo»: estado propio, sin modal). Solo un reel abierto a la
      vez (S.detailReelId). Contenido: thumb + autor + métricas + transcripción
-     on-demand (misma caché que «Hazlo mío»: 2ª vez gratis) + acciones (robar /
+     on-demand (misma caché que «Roba la idea»: 2ª vez gratis) + acciones (robar /
      fav / seguir autor / ver todos sus reels). S._tx = {id,status,text}. */
   function openReelDetail(id){
     if(S.detailReelId===id){ S.detailReelId=null; return render(); }   // toggle
@@ -2100,11 +2368,11 @@
           '<div class="reel-d-who"><span class="ava bava">'+ESC(r.creator.initials)+'</span>'+who+'<span class="reel-d-when">'+ESC(r.when)+'</span></div>'+
           '<p class="reel-d-cap">'+ESC(r.cap)+'</p>'+
           (r.sum?'<p class="reel-d-sum">'+ESC(r.sum)+'</p>':'')+
-          '<div class="reel-d-mets">'+mets.map(function(m){return '<div class="pm"><div class="pm-k">'+ESC(m[0].toUpperCase())+'</div><div class="pm-v">'+ESC(String(m[1]))+'</div></div>';}).join("")+'</div>'+
+          (function(){ var metsHTML='<div class="reel-d-mets">'+mets.map(function(m){return '<div class="pm"><div class="pm-k">'+ESC(m[0].toUpperCase())+'</div><div class="pm-v">'+ESC(String(m[1]))+'</div></div>';}).join("")+'</div>'; return isFree()?compMetsLock(metsHTML):metsHTML; })()+
         '</div>'+
       '</div>'+
       '<div class="reel-d-acts">'+
-        '<button class="btn btn-md btn-primary" data-act="steal" data-id="'+ESC(r.id)+'">'+IC.bolt+' Hazlo mío</button>'+
+        '<button class="btn btn-md btn-primary" data-act="steal" data-id="'+ESC(r.id)+'">'+IC.bolt+' Roba la idea</button>'+
         '<button class="iconbtn'+(isFav?" on":"")+'" data-act="fav" data-id="'+ESC(r.id)+'" title="Guardar" aria-label="'+(isFav?"Quitar de favoritos":"Guardar en favoritos")+'">'+(isFav?IC.star:IC.starO)+'</button>'+
         '<button class="btn btn-md btn-ghost" data-act="reel-follow" data-handle="'+ESC(r.creator.handle)+'">'+IC.plus+' Seguir a @'+ESC(r.creator.handle)+'</button>'+
       '</div>'+
@@ -2198,6 +2466,8 @@
       }
       // El guión generado se guarda SIEMPRE en Guiones (draft). No se pierde nada.
       var s=r.script||{}; var gidNew=addGuion({title:s.hook, hook:s.hook, beats:s.beats, close:s.close, from:"@"+r.creator.handle, type:"guión"});
+      removeStolenReel(id);   // loop continuity (Fathom): robado → fuera del radar, entra el siguiente
+      brainEmitSignals();     // capa "alimentar": el guion nuevo entra como partícula al cerebro
       if(!isDemo() && r._sid){ var g=guionById(gidNew); if(g) g._sid=r._sid; }
       if(bg){ render(); showToast("Tu guion ya está listo — te espera en Guiones."); }
       else { S.activeGuionId=gidNew; S.view="script"; render(); }
@@ -2206,6 +2476,27 @@
       if(isDemo()){ spend(COST.script); bumpEco(1,1); flashSpark(-COST.script); }
       else { refreshCredits().then(function(){ flashSpark(0); }); }
     });
+  }
+  /* Loop continuity (Fathom): al robar/descartar, el reel sale del radar y entra el
+     siguiente con más explosión (sorted[0] promueve el próximo). En demo, si el feed
+     se vacía, re-siembra (sensación de "siempre hay señales nuevas"). */
+  function _demoRefillIfEmpty(){ if(isDemo() && !(S.reels||[]).length && typeof applyDemoBrand==="function"){ try{ applyDemoBrand(); }catch(e){} } }
+  function removeStolenReel(id){
+    var i=(S.reels||[]).map(function(x){return x.id;}).indexOf(id);
+    if(i>=0) S.reels.splice(i,1);
+    _demoRefillIfEmpty();
+  }
+  function reelDismiss(id){
+    var i=(S.reels||[]).map(function(x){return x.id;}).indexOf(id); if(i<0) return;
+    S._dismissed={ reel:S.reels[i], index:i }; S.reels.splice(i,1);
+    if(S.detailReelId===id) S.detailReelId=null;
+    _demoRefillIfEmpty(); render();
+    showToast("Descartado — entra el siguiente.","Deshacer","undo-dismiss");
+  }
+  function undoDismiss(){
+    var d=S._dismissed; S._dismissed=null; if(!d) return;
+    S.reels.splice(Math.min(d.index,(S.reels||[]).length),0,d.reel); render();
+    showToast("Recuperado.");
   }
   // Re-lee el saldo real de créditos del servidor y lo refleja en la pill.
   function refreshCredits(){
@@ -2275,7 +2566,16 @@
   // record = real (teleprompter, gratis). El resto es TEATRO demo (contenido
   // hardcodeado + spend local): en prod ni se renderizan (conveyorHTML filtra
   // por real) ni pueden ejecutarse — este guard cubre cualquier disparo residual.
-  function chain(kind){ if(kind==="record"){ S.view="prompter"; render(); return; } if(!isDemo()) return; S.genKind=kind; S.resultKind=kind; S.view="gen"; render(); setTimeout(function(){ spend(COST[kind]||1); S.done[kind]=true; S.view="result"; render(); flashSpark(-(COST[kind]||1)); },1500); }
+  function chain(kind){
+    if(kind==="record"){ S.view="prompter"; render(); return; }
+    // P4: «Roba la siguiente señal» — salta al siguiente reel del radar y lo roba sin
+    // volver al feed. Funciona en prod (real), no solo demo. Mantiene el bucle girando.
+    if(kind==="next"){
+      var nx=feedReels().filter(function(x){ return !(S.reel && x.id===S.reel.id); })[0];
+      if(!nx){ S.view="feed"; render(); showToast(L("Has vaciado tu radar — entran señales nuevas pronto.","You've cleared your radar — fresh signals land soon.")); return; }
+      steal(nx.id); return;   // steal: gen → guarda → reveal + continuidad (removeStolenReel)
+    }
+    if(!isDemo()) return; S.genKind=kind; S.resultKind=kind; S.view="gen"; render(); setTimeout(function(){ spend(COST[kind]||1); S.done[kind]=true; S.view="result"; render(); flashSpark(-(COST[kind]||1)); },1500); }
   function recorded(){
     // Cierra el loop (momento 4): marca el guión activo como grabado en Guiones.
     if(S.activeGuionId){ var g=guionById(S.activeGuionId); if(g){ g.status="recorded"; persistRecStatus(g); } }
@@ -3017,6 +3317,8 @@
     if(act==="all-brands"){ S.tab="portfolio"; S.brandMenu=false; S.view="feed"; return render(); }
     if(act==="open-brand") return openBrand(id);
     if(act==="demo-plan") return setDemoPlan(k);
+    if(act==="brain-rate") return brainRate(parseInt(btn.getAttribute("data-k"),10)||0);
+    if(act==="brain-train-more") return brainTrainMore();
     if(act==="team-invite") return teamInvite();
     if(act==="team-edit") return showToast("Gestión de roles y marcas por miembro: próximamente.");
     if(act==="brand-add") return brandCreate();
@@ -3051,6 +3353,8 @@
       return showToast("Generando el informe del mes…");
     }
     if(act==="steal") return steal(id);
+    if(act==="reel-dismiss") return reelDismiss(id);
+    if(act==="undo-dismiss") return undoDismiss();
     if(act==="reel-detail") return openReelDetail(id);
     if(act==="reel-tx") return loadReelTranscript(id);
     if(act==="reel-follow"){ if(typeof window.openAddCompetitorModal==="function") window.openAddCompetitorModal(btn.getAttribute("data-handle")||""); return; }
@@ -3069,6 +3373,8 @@
     if(act==="onb-tag-add") return onbTagAdd();
     if(act==="onb-sub-next") return onbSubNext();
     if(act==="onb-value-next") return onbValueNext();
+    if(act==="onb-value-steal") return onbValueSteal(parseInt(btn.getAttribute("data-i"),10)||0);
+    if(act==="onb-value-reset") return onbValueReset();
     if(act==="onb-comp-toggle") return onbCompToggle(btn.getAttribute("data-h"));
     if(act==="onb-comp-add") return onbCompAdd();
     if(act==="onb-comps-next") return onbCompsNext();
@@ -3099,7 +3405,7 @@
       var prev=S.user.presetTone; S.user.presetTone=k; render();
       if(!isDemo()){ apiPost("/api/voice/tone",{tone:k}).then(function(r){ if(!r.ok){ S.user.presetTone=prev; render(); showError("No pude guardar el tono."); } }); }
       var lbl=((S.user.presetTones||[]).filter(function(t){return t.key===k;})[0]||{}).label||k;
-      showToast("Tono: "+lbl+(hasRealVoice()?" (tu voz entrenada sigue mandando).":". Tu próximo «Hazlo mío» saldrá así."));
+      showToast("Tono: "+lbl+(hasRealVoice()?" (tu voz entrenada sigue mandando).":". Tu próximo «Roba la idea» saldrá así."));
       return;
     }
     if(act==="voice-onboard") return onboardVoice();

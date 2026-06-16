@@ -7037,6 +7037,126 @@ def niche_trending_reels():
                     "subniche_suggestions": _subniche_suggestions(niche)}), 200
 
 
+@app.route("/api/onboarding/aha-script", methods=["POST"])
+@require_auth
+@limiter.limit("12 per hour;40 per day")
+def onboarding_aha_script():
+    """Onboarding aha (Fathom): genera el PRIMER guion del usuario a partir de un
+    reel del seed/reciclaje de su subnicho, en su voz. GRATIS y sin requerir que
+    el creador esté tracked (el reel viene de la librería de reciclaje, no de un
+    competidor seguido). Es un teaser de activación: NO cobra créditos ni persiste
+    el guion. Reusa adapt_with_ai (mismo generador que «Hazlo mío»)."""
+    user = current_user()
+    uid = user["id"]
+    body = request.get_json(silent=True) or {}
+    caption = (body.get("caption") or "").strip()[:600]
+    handle = (body.get("handle") or "").strip().lstrip("@")[:40]
+    niche = (body.get("niche") or "").strip()[:80]
+    subs = body.get("subniches") or []
+    if isinstance(subs, list):
+        subs = ", ".join(s.strip()[:40] for s in (str(x) for x in subs[:5]) if s.strip())
+    else:
+        subs = str(subs)[:120]
+    out_lang = (body.get("language") or "es").lower()[:2]
+    if not caption:
+        return jsonify({"error": "missing_caption"}), 400
+
+    niche_ctx = niche + ((" · " + subs) if subs else "")
+    user_content = (
+        f"Un reel está EXPLOTANDO ahora mismo en el nicho «{niche_ctx or 'creadores'}»"
+        + (f" (de @{handle})" if handle else "") + ".\n"
+        f'Idea/caption del reel: "{caption}"\n\n'
+        "Reescríbelo como el PRIMER guion de un creador de ese nicho: mismo ángulo "
+        "ganador, pero en su voz, listo para grabar. Responde en "
+        + ("español." if out_lang == "es" else "inglés.")
+    )
+    try:
+        result = adapt_with_ai(user_content, "viral",
+                               voice=get_voice_profile(uid), user_id=uid)
+    except Exception:
+        logger.exception("aha_script failed user=%s", uid)
+        # El front cae a su respaldo plantillado: nunca rompemos el aha.
+        return jsonify({"error": "generation_failed"}), 200
+
+    script = {
+        "hook": (result.get("hook") or "").strip(),
+        "beats": [str(b) for b in (result.get("body") or []) if str(b).strip()],
+        "close": (result.get("closing") or "").strip(),
+    }
+    try:
+        track_event("onboarding_aha_generated", uid, {"niche": niche})
+    except Exception:
+        pass
+    return jsonify({"script": script}), 200
+
+
+@app.route("/api/brain/training-cards", methods=["GET"])
+@require_auth
+@limiter.limit("20 per hour")
+def brain_training_cards():
+    """Brain «Entrenar» (lever de INVERSIÓN, Fathom): genera hooks variados del nicho
+    del usuario para que los valore (👍/👎). Cada voto refina su gusto. GRATIS."""
+    user = current_user()
+    uid = user["id"]
+    profile = get_profile(uid)
+    niche = (request.args.get("niche") or profile.get("niche") or "").strip()[:80]
+    lang = (request.args.get("language") or profile.get("lang") or "es").lower()[:2]
+    system = (
+        "Eres guionista de reels. Generas HOOKS (1-2 líneas que paran el scroll) para "
+        "que un creador los valore (me gusta / no me gusta) y aprendamos su gusto. "
+        "Devuelves SOLO JSON válido, sin markdown."
+    )
+    user_content = (
+        f"Nicho del creador: {niche or 'creadores de contenido'}.\n"
+        "Genera 6 hooks variados, cada uno con un ángulo distinto (polémico, curiosidad, "
+        "error común, resultado, promesa, contraintuitivo), en "
+        + ("español" if lang == "es" else "inglés") + ".\n"
+        'Forma EXACTA: {"cards":[{"kind":"ángulo en 1 palabra","text":"el hook"}]}'
+    )
+    cards = []
+    try:
+        raw = _call_llm(system, user_content, temperature=0.9, max_tokens=900)
+        t = (raw or "").strip()
+        if t.startswith("```"):
+            t = re.sub(r"^```(?:json)?\s*", "", t); t = re.sub(r"\s*```$", "", t)
+        try:
+            data = json.loads(t)
+        except json.JSONDecodeError:
+            m = re.search(r"\{[\s\S]*\}", t); data = json.loads(m.group()) if m else {}
+        for c in (data.get("cards") or [])[:8]:
+            if not isinstance(c, dict):
+                continue
+            tx = (c.get("text") or "").strip()
+            if tx:
+                cards.append({"kind": (c.get("kind") or "hook").strip()[:24], "text": tx[:240]})
+    except Exception:
+        logger.exception("brain_training_cards failed uid=%s", uid)
+        cards = []
+    return jsonify({"cards": cards}), 200
+
+
+@app.route("/api/brain/rate", methods=["POST"])
+@require_auth
+@limiter.limit("180 per hour")
+def brain_rate():
+    """Guarda el voto del Brain «Entrenar». v1: se captura como evento (PostHog) —
+    cero migración. Pipeline a tabla + señal de voz: follow-up."""
+    user = current_user()
+    uid = user["id"]
+    body = request.get_json(silent=True) or {}
+    rating = 1 if body.get("rating") in (1, "1", True, "true") else 0
+    kind = (body.get("kind") or "hook").strip()[:24]
+    text = (body.get("text") or "").strip()[:200]
+    niche = (body.get("niche") or "").strip()[:80]
+    if not text:
+        return jsonify({"error": "missing_text"}), 400
+    try:
+        track_event("brain_rating", uid, {"rating": rating, "kind": kind, "niche": niche, "text": text[:120]})
+    except Exception:
+        pass
+    return jsonify({"ok": True}), 200
+
+
 @app.route("/api/onboarding/complete", methods=["POST"])
 @require_auth
 @limiter.limit("10 per hour;30 per day")
