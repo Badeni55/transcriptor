@@ -9882,6 +9882,19 @@
     .rs--mobile .onb-box { padding:26px 20px; border-radius:18px; }
     .rs--mobile .onb-value-grid, .rs--mobile .onb-goals { grid-template-columns:1fr; }
     .rs--mobile .onb-screen-inner { max-width:100%; }
+
+    /* F: muro borroso — el panel se rellena pero free lo ve blurred + CTA Pro */
+    .rs .rs-lock { position:relative; border-radius:16px; overflow:hidden; }
+    .rs .rs-lock-inner { filter:blur(8px); pointer-events:none; user-select:none; opacity:.55; }
+    .rs .rs-lock-over { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:24px;
+      background:linear-gradient(180deg, color-mix(in srgb, var(--surface-base) 40%, transparent), color-mix(in srgb, var(--surface-base) 78%, transparent)); }
+    .rs .rs-lock-card { max-width:340px; text-align:center; padding:24px 22px; border-radius:18px; border:1px solid var(--border-strong);
+      background:var(--surface-overlay); box-shadow:var(--shadow-lg); }
+    .rs .rs-lock-card > svg { color:var(--brand-500); margin-bottom:8px; }
+    .rs[data-theme="light"] .rs-lock-card > svg { color:var(--brand-700); }
+    .rs .rs-lock-h { font-family:var(--font-display); font-size:18px; font-weight:700; color:var(--text-primary); margin-bottom:6px; }
+    .rs .rs-lock-sub { font-size:13.5px; line-height:1.5; color:var(--text-secondary); margin-bottom:16px; }
+    .rs .rs-lock-card .btn { width:100%; justify-content:center; }
     .rs .rs-skel { background:var(--surface-raised); border:1px solid var(--border-default); border-radius:18px; height:160px; animation: rsPulse 1.3s ease-in-out infinite; }
     @keyframes rsPulse { 0%,100%{opacity:.5;} 50%{opacity:.8;} }
 

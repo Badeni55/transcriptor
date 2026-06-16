@@ -1236,25 +1236,37 @@
     }).join("");
     return '<div class="more-head" style="margin-top:8px"><span class="more-title">Tus reels publicados</span><div class="filters">'+sortTabs+'</div></div><div class="vid-grid">'+cards+'</div>';
   }
+  // F: free ve el producto pero las MÉTRICAS al detalle van borrosas. En demo se
+  // fuerza con ?free=1 (el plan normal demo es de pago).
+  function isFree(){ return isDemo() ? (S._demoFree===true) : (S.realPlan==="free" || !S.realPlan); }
+  function metricsLockHTML(inner){
+    return '<div class="rs-lock"><div class="rs-lock-inner" aria-hidden="true">'+inner+'</div>'+
+      '<div class="rs-lock-over"><div class="rs-lock-card">'+IC.bolt+
+        '<div class="rs-lock-h">Tus métricas, al detalle</div>'+
+        '<div class="rs-lock-sub">Vistas, retención y los patrones que el sistema aprende de cada reel — desbloquéalo con Pro.</div>'+
+        '<button class="btn btn-md btn-primary" data-act="upsell" data-k="metrics">'+IC.bolt+' Desbloquea con Pro</button>'+
+      '</div></div></div>';
+  }
   function metricsHTML(){
     if(!S.igConnected) return connectIgHTML();
     var m=S.metrics||{}; var b=brand();
     var learned=(m.learned||[]).map(function(l){ return '<div class="learn-item">'+IC.check+'<span>'+ESC(l)+'</span></div>'; }).join("");
     var top=m.top?('<div class="met-top">🏆 <b>Top:</b> '+ESC(m.top.title)+' — '+ESC(m.top.views)+' views ↗</div>'):"";
     var hasVideos=metricVideos().length>0;
+    // El panel de datos (stats + chart + grid) es lo premium → borroso en free.
+    var data=hasVideos?(metricStatsHTML()+metricChartHTML()+metricGridHTML()):'<div class="rs-empty">Pulsa “Actualizar reels” para traer tus métricas.</div>';
+    var panel=isFree()?metricsLockHTML(data):data;
     return '<div class="scroll"><div class="canvas">'+
       pheadHTML("Métricas · @"+(b.handle||S.user.handle||""), "Métricas", "Tus reels al detalle — y lo que el sistema aprende de ellos para crear mejor.")+
       '<div class="met-acct"><span class="met-acct-ig">'+IC.ig+' @'+ESC(b.handle||"tu_cuenta")+'</span>'+
         '<button class="btn btn-sm btn-primary" data-act="metric-refresh">Actualizar reels</button>'+
         '<span class="met-acct-info">'+ESC(m.analyses_left||"1/1")+' análisis restantes esta semana</span>'+
         '<span style="flex:1"></span><button class="btn btn-sm btn-ghost" data-act="ig-disconnect">Desvincular</button></div>'+
-      (hasVideos?metricStatsHTML():"")+
       '<div class="learn"><div class="learn-head">'+IC.brain+'<span>Lo que el sistema aprendió de ti</span></div>'+
         '<div class="learn-list">'+(learned||'<div class="learn-item" style="opacity:.6">Publica un par de reels creados aquí y empezaré a ver patrones.</div>')+'</div>'+
         '<div class="learn-foot">Esto afina tu voz (al '+(b.voice||40)+'%) y reordena tus oportunidades del Dashboard. El círculo se cierra.</div>'+
       '</div>'+
-      top+
-      (hasVideos?(metricChartHTML()+metricGridHTML()):'<div class="rs-empty">Pulsa “Actualizar reels” para traer tus métricas.</div>')+
+      top+panel+
     '</div></div>';
   }
 
@@ -3065,6 +3077,13 @@
     if(act==="onb-finish") return onbFinish();
     if(act==="onb-back") return onbBack();
     if(act==="onb-skip") return onbSkip();
+    // F: CTA del muro borroso de métricas (y otros) → modal de upgrade.
+    if(act==="upsell"){
+      try{ if(window.posthog&&window.posthog.capture) window.posthog.capture("paywall_cta_clicked",{wall:(k||"metrics"),plan:S.realPlan}); }catch(e){}
+      if(typeof window.openUpgradeModal==="function") window.openUpgradeModal((k||"metrics")+"_locked");
+      else showToast("Pásate a Pro para desbloquear tus métricas al detalle.");
+      return;
+    }
     // Reusa el modal legacy global (index.html); al añadir, submitAddCompetitor
     // recarga el Radar vía window.RS_reloadRadar (puente en loadBrandData).
     if(act==="add-comp"){ if(typeof window.openAddCompetitorModal==="function") window.openAddCompetitorModal(); return; }
@@ -3353,6 +3372,8 @@
         var qt=qs.get("t"); if(qt==="perf"){ S.tab="guiones"; S.view="perf"; S.perfGuion="gd1"; } else if(qt){ S.tab=qt; }
         // ?onb=1 → fuerza el onboarding v2 en demo (sin tocar el flujo normal/harness)
         if(qs.get("onb")==="1"){ S.onb._force=true; S.onb.skipped=false; S.onb.step="handle"; S.reels=[]; S.tracked=[]; }
+        // ?free=1 → simula plan FREE en demo (para ver el muro borroso de métricas)
+        if(qs.get("free")==="1"){ S._demoFree=true; }
       }catch(e){} }
       loadBrandData();
     });
