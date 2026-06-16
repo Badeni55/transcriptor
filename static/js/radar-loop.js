@@ -129,7 +129,9 @@
     reel:null, genKind:"script", resultKind:"hooks", done:{},
     _fillPhase:null, brandMenu:false, acctMenu:false,
     genStepTimer:null, fillTimer:null, toastTimer:null,
-    onb:{ step:"ask", handle:"", platform:"instagram", suggestions:[], busy:false, error:null, skipped:false }   // growth-2: onboarding de activación
+    // onboarding v2: handle→nicho→subnicho→valor→competidores→objetivo→cierre.
+    onb:{ step:"handle", handle:"", platform:"instagram", niche:"", subniches:[], valueReels:[], valueLoading:false,
+          competitors:[], compLoading:false, goal:"", busy:false, error:null, skipped:false, _force:false, _viewed:{} }
   };
   function root(){ return document.getElementById("radarRoot"); }
   function brand(){ return S.brands.filter(function(b){return b.id===S.brandId;})[0] || S.brands[0] || {name:"Mi marca",level:1,voice:40,reelsAnalyzed:0,scripts:0,color:"#f97316"}; }
@@ -360,146 +362,308 @@
                   y el propio empty-state desaparece; guiamos al «Hazlo mío».
      Solo en prod, usuario sin competidores. Saltarlo cae al empty-state clásico.
      ════════════════════════════════════════════════════════════════ */
+  /* ════════════════════════════════════════════════════════════════════════
+     ONBOARDING v2 — motor de aha + personalización + datos reciclables.
+     7 pasos: handle → nicho → subnicho(tags) → VALOR → competidores → objetivo
+     → cierre(50% + 1er guión). El TONO ya NO se pregunta: se auto-deriva del
+     contenido ingerido + el objetivo (STYLE_PROMPTS/PRESET_TONES intactos en
+     backend + selector en Cerebro). Pantalla dedicada que oculta el radar vacío.
+     Demo-funcional vía ?onb=1. ════════════════════════════════════════════════ */
+  var ONB_STEPS=["handle","niche","subniche","value","competitors","goal","close"];
+  var NICHE_CHIPS=["Fitness","Finanzas","Marketing","Cocina","Moda","Belleza","Viajes","Tecnología","Educación","Inmobiliaria","Salud","Negocios"];
+  var SUBNICHE_SEED={
+    "fitness":["hipertrofia","pérdida de peso","running","crossfit","yoga","calistenia"],
+    "finanzas":["inversión","ahorro","cripto","libertad financiera","bolsa","finanzas personales"],
+    "marketing":["copywriting","ads de pago","email marketing","marca personal","SEO","redes sociales"],
+    "cocina":["recetas fit","cocina rápida","repostería","vegano","meal prep","low cost"],
+    "moda":["streetwear","moda sostenible","low cost","lujo","tendencias","outfits"],
+    "belleza":["skincare","maquillaje","cosmética orgánica","cosmética coreana","antiedad","uñas"],
+    "tecnología":["IA","automatización","gadgets","programación","no-code","productividad"],
+    "educación":["idiomas","oposiciones","estudio","matemáticas","historia","ciencia"],
+    "negocios":["emprender","ecommerce","SaaS","ventas","liderazgo","freelance"],
+    "_default":["consejos","tutoriales","detrás de cámaras","historias","errores comunes","tendencias"]
+  };
+  var ONB_GOALS=[
+    {key:"grow",label:"Crecer",desc:"Más alcance y seguidores",ic:"chart"},
+    {key:"sell",label:"Vender",desc:"Convertir en clientes",ic:"bolt"},
+    {key:"educate",label:"Educar",desc:"Enseñar lo que sabes",ic:"bulb"},
+    {key:"entertain",label:"Entretener",desc:"Enganchar y divertir",ic:"spark"}
+  ];
+  function _norm(s){ return String(s||"").toLowerCase().trim().replace(/[áà]/g,"a").replace(/[éè]/g,"e").replace(/[íì]/g,"i").replace(/[óò]/g,"o").replace(/[úù]/g,"u"); }
+  function onbSubSuggest(){ var k=_norm(S.onb.niche); return (SUBNICHE_SEED[k]||SUBNICHE_SEED["_default"]).filter(function(t){ return (S.onb.subniches||[]).indexOf(t)<0; }); }
+
+  // Gate: prod = usuario nuevo sin datos; demo = solo con ?onb=1.
   function showOnboarding(){
-    return !isDemo() && S.filter!=="fav" && !S.onb.skipped
-      && Array.isArray(S.tracked) && S.tracked.length===0
+    if(!S.onb || S.onb.skipped) return false;
+    if(isDemo()) return S.onb._force===true;
+    return S.filter!=="fav" && !S.user.onbV2Done && Array.isArray(S.tracked) && S.tracked.length===0
       && (S.reels||[]).length===0 && !S.creatorFilter;
   }
-  function onbStepAskHTML(){
-    var err=S.onb.error?'<div class="onb-err" role="alert">'+ESC(S.onb.error)+'</div>':'';
-    return '<div class="onb-step">'+
-      '<div class="onb-eyebrow">'+IC.spark+' Paso 1 de 2</div>'+
-      '<h2 class="onb-h">¿Cuál es tu cuenta?</h2>'+
-      '<p class="onb-sub">Dime tu usuario de Instagram o TikTok y te encuentro a quién deberías estar vigilando — en segundos.</p>'+
-      '<div class="onb-pform">'+
-        '<div class="onb-handle"><span class="onb-at">@</span>'+
-          '<input id="rsOnbHandle" class="onb-input" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" '+
-            'placeholder="tu_usuario" value="'+ESC(S.onb.handle||"")+'" aria-label="Tu usuario de Instagram o TikTok">'+
-        '</div>'+
-        '<button class="btn btn-lg btn-primary onb-go" data-act="onb-suggest"'+(S.onb.busy?' disabled':'')+'>'+
-          (S.onb.busy?'<span class="mini-spin"></span> Buscando…':IC.bolt+' Buscar mi competencia')+'</button>'+
-      '</div>'+
-      err+
-      '<button class="onb-skip" data-act="onb-manual">Prefiero añadir un competidor a mano</button>'+
-    '</div>';
+  function onbIdx(){ var i=ONB_STEPS.indexOf(S.onb.step); return i<0?0:i; }
+
+  /* ── PostHog: 1 evento "viewed" por paso (entrada) + "completed" (avance) →
+     funnel de drop-off por paso. window.posthog ya disponible en la isla. ── */
+  function onbTrack(evt, extra){
+    try{
+      var p={ step:S.onb.step, step_num:onbIdx()+1, total:ONB_STEPS.length,
+        niche:S.onb.niche||null, subniches:(S.onb.subniches||[]).length,
+        goal:S.onb.goal||null, demo:isDemo() };
+      if(extra) for(var kk in extra) p[kk]=extra[kk];
+      if(window.posthog && window.posthog.capture) window.posthog.capture(evt, p);
+    }catch(e){}
   }
-  function onbStepPickHTML(){
-    var list=(S.onb.suggestions||[]).map(function(c){
-      return '<button class="onb-card'+(c.picked?' on':'')+'" data-act="onb-toggle" data-h="'+ESC(c.handle)+'" role="checkbox" aria-checked="'+(c.picked?'true':'false')+'">'+
-        '<span class="onb-card-check">'+(c.picked?IC.check:'')+'</span>'+
-        '<span class="ava bava">'+ESC(initialsOf(c.handle))+'</span>'+
-        '<span class="onb-card-body"><span class="onb-card-h">@'+ESC(c.handle)+'</span>'+
-          (c.reason?'<span class="onb-card-r">'+ESC(c.reason)+'</span>':'')+'</span>'+
-      '</button>';
-    }).join("");
-    var nPick=(S.onb.suggestions||[]).filter(function(c){return c.picked;}).length;
-    var err=S.onb.error?'<div class="onb-err" role="alert">'+ESC(S.onb.error)+'</div>':'';
-    return '<div class="onb-step">'+
-      '<div class="onb-eyebrow">'+IC.spark+' Paso 2 de 2</div>'+
-      '<h2 class="onb-h">Esta es tu competencia</h2>'+
-      '<p class="onb-sub">Creadores de tu nicho. Quita los que no encajen — los seguiré y traeré sus reels que petaron para que robes el primero.</p>'+
-      '<div class="onb-cards">'+list+'</div>'+
-      err+
-      '<button class="btn btn-lg btn-primary" data-act="onb-follow"'+(S.onb.busy||nPick===0?' disabled':'')+'>'+
-        (S.onb.busy?'<span class="mini-spin"></span> Activando tu radar…':IC.bolt+' Seguir a '+nPick+' y empezar')+'</button>'+
-      '<button class="onb-skip" data-act="onb-back">← Cambiar mi cuenta</button>'+
-    '</div>';
+  function onbView(){ if(!S.onb._viewed) S.onb._viewed={}; if(!S.onb._viewed[S.onb.step]){ S.onb._viewed[S.onb.step]=1; onbTrack("onb_step_viewed"); } }
+  function onbGoto(step){ S.onb.step=step; S.onb.error=null; render(); }
+  function onbNext(){ var i=onbIdx(); onbTrack("onb_step_completed"); if(i<ONB_STEPS.length-1) onbGoto(ONB_STEPS[i+1]); }
+  function onbBack(){ var i=onbIdx(); if(i>0) onbGoto(ONB_STEPS[i-1]); }
+
+  /* ── helpers de markup ── */
+  function onbEyebrow(t){ return '<div class="onb-eyebrow">'+IC.spark+' '+ESC(t)+'</div>'; }
+  function onbErr(){ return S.onb.error?'<div class="onb-err" role="alert">'+ESC(S.onb.error)+'</div>':''; }
+  function onbCardWrap(eyebrow,h,sub,body,wide){ return '<section class="onb-box'+(wide?' onb-box--wide':'')+'">'+eyebrow+'<h2 class="onb-h">'+h+'</h2>'+(sub?'<p class="onb-sub">'+sub+'</p>':'')+body+'</section>'; }
+  function onbBackBtn(){ return onbIdx()>0&&S.onb.step!=="close"?'<button class="onb-back-btn" data-act="onb-back" aria-label="Atrás">'+IC.back+' Atrás</button>':''; }
+
+  // Paso 1 — handle (OBLIGATORIO).
+  function onbHandleHTML(){
+    return onbCardWrap(onbEyebrow("Empecemos por ti"),"¿Cuál es tu cuenta?",
+      "Tu usuario de Instagram o TikTok. Leo tus propios reels para que tu primer guión suene a ti, no genérico.",
+      '<div class="onb-pform"><div class="onb-handle"><span class="onb-at">@</span>'+
+        '<input id="rsOnbHandle" class="onb-input" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="tu_usuario" value="'+ESC(S.onb.handle||"")+'" aria-label="Tu usuario de Instagram o TikTok"></div></div>'+
+      onbErr()+
+      '<button class="btn btn-lg btn-primary onb-cta" data-act="onb-handle-next">'+IC.arr+' Continuar</button>');
   }
-  function onbStepDoneHTML(){
-    return '<div class="onb-step onb-done">'+
-      '<div class="onb-eyebrow">'+IC.check+' Radar activado</div>'+
-      '<h2 class="onb-h">Buscando los reels que petaron…</h2>'+
-      '<p class="onb-sub">Estoy leyendo a tus competidores. En cuanto lleguen sus reels más explosivos aparecerán aquí — y podrás robar el primero en tu voz.</p>'+
-      '<div class="onb-spin"><span class="mini-spin" style="width:26px;height:26px;border-width:3px"></span></div>'+
-    '</div>';
+  // Paso 2 — nicho (OBLIGATORIO): chips amplios + texto libre.
+  function onbNicheHTML(){
+    var chips=NICHE_CHIPS.map(function(n){ var on=_norm(S.onb.niche)===_norm(n); return '<button class="onb-chip'+(on?" on":"")+'" data-act="onb-pick-niche" data-k="'+ESC(n)+'">'+ESC(n)+'</button>'; }).join("");
+    var custom=(NICHE_CHIPS.some(function(n){return _norm(n)===_norm(S.onb.niche);})||!S.onb.niche)?"":S.onb.niche;
+    return onbCardWrap(onbEyebrow("Tu terreno"),"¿De qué va tu contenido?",
+      "Elige tu nicho o escríbelo. Con esto encuentro qué está petando ahí — y a quién deberías vigilar.",
+      '<div class="onb-chips">'+chips+'</div>'+
+      '<input id="rsOnbNiche" class="onb-text" type="text" placeholder="…o escríbelo (ej: nutrición deportiva)" value="'+ESC(custom)+'" aria-label="Tu nicho">'+
+      onbErr()+
+      '<div class="onb-row">'+onbBackBtn()+'<button class="btn btn-lg btn-primary onb-cta" data-act="onb-niche-next">'+IC.arr+' Continuar</button></div>');
   }
-  // A4: paso ligero de TONO tras seguir competidores. Una primaria: elegir un
-  // tono (1 clic) — así el primer «Hazlo mío» ya sale con carácter. Secundario:
-  // entrenar la voz con tus reels (más adelante, en Cerebro).
-  function onbStepToneHTML(){
-    var tones=(S.user.presetTones&&S.user.presetTones.length)?S.user.presetTones:[
-      {key:"viral",label:"Polémico/Viral"},{key:"educacional",label:"Educacional"},
-      {key:"divertido",label:"Cercano/Divertido"},{key:"informativo",label:"Informativo"},
-      {key:"storytelling",label:"Storytelling"}];
-    var cur=S.user.presetTone||"viral";
-    var chips=tones.map(function(t){
-      return '<button class="tone-chip'+(t.key===cur?" on":"")+'" data-act="onb-tone" data-k="'+ESC(t.key)+'">'+ESC(t.label)+'</button>';
-    }).join("");
-    return '<div class="onb-step">'+
-      '<div class="onb-eyebrow">'+IC.spark+' Último paso</div>'+
-      '<h2 class="onb-h">¿Con qué tono escribes?</h2>'+
-      '<p class="onb-sub">Elige una personalidad para tus guiones — tu primer «Hazlo mío» ya saldrá con carácter, no genérico. Lo cambias cuando quieras.</p>'+
-      '<div class="tone-chips" style="margin-bottom:20px">'+chips+'</div>'+
-      '<button class="btn btn-lg btn-primary" data-act="onb-tone-go" data-k="'+ESC(cur)+'">'+IC.bolt+' Empezar con este tono</button>'+
-      '<button class="onb-skip" data-act="onb-voice">O entrena tu voz con tus reels (en el Cerebro) →</button>'+
-    '</div>';
+  // Paso 3 — subnicho (OBLIGATORIO): TAGS multi-etiqueta (segmentación) + libre.
+  function onbSubnicheHTML(){
+    var sel=(S.onb.subniches||[]).map(function(t){ return '<span class="onb-tag on" data-act="onb-tag-toggle" data-k="'+ESC(t)+'">#'+ESC(t)+' <b>×</b></span>'; }).join("");
+    var sugg=onbSubSuggest().slice(0,8).map(function(t){ return '<button class="onb-tag" data-act="onb-tag-toggle" data-k="'+ESC(t)+'">#'+ESC(t)+'</button>'; }).join("");
+    return onbCardWrap(onbEyebrow("Afina tu nicho"),"¿En qué exactamente?",
+      "Cuanto más específico, mejor el match: <b>cosmética orgánica</b> ≠ <b>cosmética</b>. Elige varias o añade las tuyas.",
+      '<div class="onb-tags" id="rsOnbTags">'+(sel||'<span class="onb-tags-ph">Tus etiquetas aparecerán aquí…</span>')+'</div>'+
+      '<div class="onb-tagadd"><span class="onb-hash">#</span><input id="rsOnbTagInput" class="onb-text onb-text--tag" type="text" placeholder="añade una etiqueta y Enter" aria-label="Añadir subnicho"><button class="onb-tagadd-btn" data-act="onb-tag-add">'+IC.plus+'</button></div>'+
+      (sugg?'<div class="onb-sugg-lbl">Sugerencias para tu nicho</div><div class="onb-tags onb-tags--sugg">'+sugg+'</div>':'')+
+      onbErr()+
+      '<div class="onb-row">'+onbBackBtn()+'<button class="btn btn-lg btn-primary onb-cta" data-act="onb-sub-next">'+IC.bolt+' Ver qué está petando</button></div>');
   }
-  function onboardingHTML(){
-    var inner = S.onb.step==="pick" ? onbStepPickHTML()
-              : S.onb.step==="tone" ? onbStepToneHTML()
-              : S.onb.step==="done" ? onbStepDoneHTML()
-              : onbStepAskHTML();
-    return '<section class="onb">'+inner+'</section>';
+  // Paso 4 — PANTALLA DE VALOR (aha): reels explosivos del subnicho llenándose.
+  function onbValueHTML(){
+    var subs=(S.onb.subniches||[]).slice(0,3).map(function(t){return "#"+t;}).join(" ");
+    var body;
+    if(S.onb.valueLoading){
+      body='<div class="onb-value-load"><span class="mini-spin" style="width:22px;height:22px;border-width:3px"></span> Analizando tu nicho… leyendo lo que petó esta semana</div>'+
+        '<div class="onb-value-grid">'+[0,1,2].map(function(){return '<div class="onb-vcard onb-vcard--skel"></div>';}).join("")+'</div>';
+    } else {
+      var cards=(S.onb.valueReels||[]).map(function(r){
+        return '<div class="onb-vcard">'+
+          '<div class="onb-vcard-top"><span class="ava bava">'+ESC(initialsOf(r.handle))+'</span><span class="onb-vcard-h">@'+ESC(r.handle)+'</span><span class="onb-vcard-x">'+IC.bolt+' '+ESC(r.mult)+'×</span></div>'+
+          '<div class="onb-vcard-cap">'+ESC(r.caption)+'</div>'+
+          '<div class="onb-vcard-meta">'+IC.eye+' '+ESC(r.views)+' · '+ESC(r.tag)+'</div>'+
+        '</div>';
+      }).join("");
+      body='<div class="onb-value-grid">'+cards+'</div>';
+    }
+    return onbCardWrap('<div class="onb-eyebrow">'+IC.bolt+' '+ESC(subs||"Tu subnicho")+'</div>',
+      "Esto está petando ahora en tu subnicho",
+      "Reels reales de creadores como tú que están explotando. Aquí no empiezas de cero: empiezas de lo que ya funciona.",
+      body+
+      '<div class="onb-row">'+onbBackBtn()+'<button class="btn btn-lg btn-primary onb-cta" data-act="onb-value-next"'+(S.onb.valueLoading?' disabled':'')+'>'+IC.arr+' Quiero esto para mí</button></div>', true);
   }
-  // A4: fija el tono elegido y cierra el onboarding (→ done + carga de reels).
-  function onbPickTone(k){
-    if(k){ var prev=S.user.presetTone; S.user.presetTone=k; if(!isDemo()) apiPost("/api/voice/tone",{tone:k}).then(function(r){ if(!r.ok) S.user.presetTone=prev; }); }
-    render();
+  // Paso 5 — competidores (OBLIGATORIO 2), pre-sugeridos del subnicho.
+  function onbCompsHTML(){
+    var body;
+    if(S.onb.compLoading){
+      body='<div class="onb-value-load"><span class="mini-spin" style="width:20px;height:20px;border-width:2.5px"></span> Buscando a quién deberías vigilar…</div>';
+    } else {
+      var list=(S.onb.competitors||[]).map(function(c){
+        return '<button class="onb-card-row'+(c.picked?" on":"")+'" data-act="onb-comp-toggle" data-h="'+ESC(c.handle)+'" role="checkbox" aria-checked="'+(c.picked?"true":"false")+'">'+
+          '<span class="onb-card-check">'+(c.picked?IC.check:"")+'</span>'+
+          '<span class="ava bava">'+ESC(initialsOf(c.handle))+'</span>'+
+          '<span class="onb-card-body"><span class="onb-card-h">@'+ESC(c.handle)+'</span>'+(c.reason?'<span class="onb-card-r">'+ESC(c.reason)+'</span>':'')+'</span>'+
+        '</button>';
+      }).join("");
+      body='<div class="onb-cards">'+list+'</div>'+
+        '<div class="onb-tagadd"><span class="onb-hash">@</span><input id="rsOnbCompInput" class="onb-text onb-text--tag" type="text" autocapitalize="none" spellcheck="false" placeholder="añade otro a mano" aria-label="Añadir competidor"><button class="onb-tagadd-btn" data-act="onb-comp-add">'+IC.plus+'</button></div>';
+    }
+    var nPick=(S.onb.competitors||[]).filter(function(c){return c.picked;}).length;
+    return onbCardWrap(onbEyebrow("Tu radar"),"¿A quién sigues de cerca?",
+      "Pre-elegí a 2 de tu subnicho. Seguiré sus reels que petan para que robes el primero en tu voz. Quita o añade los que quieras.",
+      body+onbErr()+
+      '<div class="onb-row">'+onbBackBtn()+'<button class="btn btn-lg btn-primary onb-cta" data-act="onb-comps-next"'+(nPick<1?' disabled':'')+'>'+IC.arr+' Seguir a '+nPick+' y seguir</button></div>');
   }
-  function onbFinish(){
-    S.onb.step="done"; render();
-    var tries=0;
-    (function poll(){
-      if(S.onb.step!=="done") return;
-      _refreshReelsLight(function(){
-        if((S.reels||[]).length>0){ S.onb.skipped=true; render(); return; }
-        if(++tries>20) return;
-        setTimeout(poll, 5000);
-      });
-    })();
+  // Paso 6 — objetivo (adapta tono+estructura).
+  function onbGoalHTML(){
+    var cards=ONB_GOALS.map(function(g){ var on=S.onb.goal===g.key; return '<button class="onb-goal'+(on?" on":"")+'" data-act="onb-pick-goal" data-k="'+g.key+'">'+
+      '<span class="onb-goal-ic">'+(IC[g.ic]||IC.spark)+'</span><span class="onb-goal-l">'+ESC(g.label)+'</span><span class="onb-goal-d">'+ESC(g.desc)+'</span></button>'; }).join("");
+    return onbCardWrap(onbEyebrow("El para qué"),"¿Qué quieres conseguir?",
+      "Con esto ajusto el tono y la estructura de tus guiones — vender no se escribe como entretener.",
+      '<div class="onb-goals">'+cards+'</div>'+onbErr()+
+      '<div class="onb-row">'+onbBackBtn()+'<button class="btn btn-lg btn-primary onb-cta" data-act="onb-goal-next"'+(S.onb.goal?'':' disabled')+'>'+IC.bolt+' Crear mi primer guión</button></div>');
   }
-  function onbSuggest(){
+  // Paso 7 — CIERRE: Cerebro 50% + primer guión + camino a 100%.
+  function onbCloseHTML(){
+    var pct=50;
+    return onbCardWrap('<div class="onb-eyebrow">'+IC.check+' Listo</div>',
+      "Te conozco al 50%. Aquí va tu primer guión.",
+      "Ya leí tu cuenta y a tus 2 competidores. Tu Cerebro es un <b>perfil de contexto</b> (no un clon total de tu voz todavía) — y con eso ya escribo a tu medida.",
+      '<div class="onb-brain"><div class="onb-brain-bar"><div class="onb-brain-fill" style="width:'+pct+'%"></div></div>'+
+        '<div class="onb-brain-row"><span class="onb-brain-k">'+IC.brain+' Cerebro</span><span class="onb-brain-v">'+pct+'%</span></div></div>'+
+      '<ul class="onb-checklist">'+
+        '<li>'+IC.check+' Panel lleno con reels que petan en tu subnicho</li>'+
+        '<li>'+IC.check+' 2 competidores en el radar, trayendo sus reels</li>'+
+        '<li>'+IC.check+' Tu primer guión, listo para robar</li>'+
+      '</ul>'+
+      '<p class="onb-path">El resto se gana: <b>enséñame tu voz</b> con tus propios reels y subimos del 50% al 100%.</p>'+
+      onbErr()+
+      '<button class="btn btn-lg btn-primary onb-cta" data-act="onb-finish"'+(S.onb.busy?' disabled':'')+'>'+(S.onb.busy?'<span class="mini-spin"></span> Preparando…':IC.bolt+' Entrar a mi radar')+'</button>');
+  }
+  function onbStepHTML(){
+    switch(S.onb.step){
+      case "niche": return onbNicheHTML();
+      case "subniche": return onbSubnicheHTML();
+      case "value": return onbValueHTML();
+      case "competitors": return onbCompsHTML();
+      case "goal": return onbGoalHTML();
+      case "close": return onbCloseHTML();
+      default: return onbHandleHTML();
+    }
+  }
+  // A) Pantalla dedicada: ocupa todo, oculta el radar vacío del fondo.
+  function onboardingScreenHTML(){
+    var i=onbIdx();
+    var dots=ONB_STEPS.map(function(s,n){ return '<span class="onbp-dot'+(n<=i?" on":"")+'"></span>'; }).join("");
+    return '<div class="onb-screen"><div class="onb-screen-bg" aria-hidden="true"></div>'+
+      '<div class="onb-screen-inner">'+
+        '<div class="onb-top"><span class="onb-logo">'+IC.bolt+' ReelScript</span>'+
+          (i>0&&S.onb.step!=="close"?'<button class="onb-skip-top" data-act="onb-skip">Saltar configuración</button>':'')+'</div>'+
+        '<div class="onb-prog"><div class="onbp-dots">'+dots+'</div><span class="onbp-lbl">Paso '+(i+1)+' de '+ONB_STEPS.length+'</span></div>'+
+        onbStepHTML()+
+      '</div></div>';
+  }
+  // compat: el dashboard antiguo llamaba onboardingHTML(); ya no se usa (render
+  // hace short-circuit a la pantalla dedicada), pero lo dejamos seguro.
+  function onboardingHTML(){ return ''; }
+  /* ── handlers v2 ── */
+  function onbHandleNext(){
     var inp=document.getElementById("rsOnbHandle");
     var h=(inp?inp.value:S.onb.handle||"").trim().replace(/^@+/,"").toLowerCase();
     if(!/^[a-z0-9._]{1,30}$/.test(h)){ S.onb.error="Escribe tu usuario sin @ (letras, números, punto y guion bajo)."; S.onb.handle=h; return render(); }
-    S.onb.handle=h; S.onb.error=null; S.onb.busy=true; render();
-    apiPost("/api/onboarding/suggest-competitors",{handle:h, platform:S.onb.platform}).then(function(r){
-      S.onb.busy=false;
-      if(r.ok && r.d && Array.isArray(r.d.creators) && r.d.creators.length){
-        S.onb.suggestions=r.d.creators.map(function(c){ return {handle:c.handle, reason:c.reason||"", picked:true}; });
-        S.onb.step="pick"; S.onb.error=null; return render();
-      }
-      // sin sugerencias o error → mensaje claro + caída a manual (no castigar)
-      S.onb.error=(r.d&&r.d.message)||"No pude buscar tu competencia ahora. Añade un competidor a mano para empezar.";
-      render();
-    });
+    S.onb.handle=h; onbNext();
   }
-  function onbToggle(h){
-    (S.onb.suggestions||[]).forEach(function(c){ if(c.handle===h) c.picked=!c.picked; });
+  function onbPickNiche(n){
+    var ni=document.getElementById("rsOnbNiche"); if(ni) ni.value="";
+    S.onb.niche=n; S.onb.subniches=[]; render();
+  }
+  function onbNicheNext(){
+    var ni=document.getElementById("rsOnbNiche");
+    var custom=ni&&ni.value.trim()?ni.value.trim():"";
+    if(custom) S.onb.niche=custom;
+    if(!(S.onb.niche||"").trim()){ S.onb.error="Elige un nicho o escríbelo para encontrar lo que petó."; return render(); }
+    onbNext();
+  }
+  function onbTagToggle(t){
+    var a=S.onb.subniches||(S.onb.subniches=[]); var i=a.indexOf(t);
+    if(i>=0) a.splice(i,1); else a.push(t);
     render();
   }
-  function onbFollow(){
-    var picked=(S.onb.suggestions||[]).filter(function(c){return c.picked;});
-    if(!picked.length) return;
-    S.onb.busy=true; S.onb.error=null; render();
-    var _pid=_pidOf(S.brandId);
-    var jobs=picked.map(function(c){
-      var body={ig_username:c.handle, source:"onboarding"};
-      if(isAgency()&&_pid) body.project_id=_pid;
-      return apiPost("/api/tracked-creators",body).then(function(r){
-        // 201 nuevo · 409 ya seguido → ambos cuentan como "seguido". Otros = fallo.
-        return (r.ok || (r.d&&r.d.error==="tc.error.already_tracking"));
-      });
+  function onbTagAdd(){
+    var inp=document.getElementById("rsOnbTagInput"); if(!inp) return;
+    var t=inp.value.trim().replace(/^#/,"").toLowerCase(); inp.value="";
+    if(t && (S.onb.subniches||[]).indexOf(t)<0){ (S.onb.subniches||(S.onb.subniches=[])).push(t); }
+    render(); var ni=document.getElementById("rsOnbTagInput"); if(ni) ni.focus();
+  }
+  function onbSubNext(){
+    if(!(S.onb.subniches||[]).length){ S.onb.error="Elige al menos una etiqueta — es la clave del match."; return render(); }
+    onbTrack("onb_step_completed"); onbGoto("value"); onbLoadValue();
+  }
+  // Reels reciclados del subnicho (recycling library). Demo siembra local.
+  function onbLoadValue(){
+    S.onb.valueLoading=true; S.onb.valueReels=[];
+    var done=function(reels){ S.onb.valueReels=reels||[]; S.onb.valueLoading=false; if(S.onb.step==="value") render(); };
+    if(isDemo()){ setTimeout(function(){ done(onbDemoValueReels()); }, 1400); return; }
+    apiGet("/api/niche/trending-reels?niche="+encodeURIComponent(S.onb.niche||"")+"&subniches="+encodeURIComponent((S.onb.subniches||[]).join(","))).then(function(r){
+      done((r.ok&&r.d&&Array.isArray(r.d.reels))?r.d.reels:[]);
     });
-    Promise.all(jobs).then(function(res){
-      var ok=res.filter(Boolean).length;
-      S.onb.busy=false;
-      if(!ok){ S.onb.error="No pude seguir a esos competidores. Prueba a añadir uno a mano."; return render(); }
-      // A4: tras seguir competidores → paso ligero de TONO (el scrape sigue en
-      // background; los reels se cargan al cerrar el onboarding, onbFinish).
-      S.onb.step="tone"; render();
-      showToast("Radar activado con "+ok+" competidor"+(ok===1?"":"es")+". Trayendo sus reels…");
+  }
+  function onbValueNext(){ onbTrack("onb_step_completed",{value_reels:(S.onb.valueReels||[]).length}); onbGoto("competitors"); onbLoadComps(); }
+  // Competidores pre-sugeridos del subnicho (1 clic). Demo siembra local.
+  function onbLoadComps(){
+    if((S.onb.competitors||[]).length){ return; }   // ya cargados (volver atrás)
+    S.onb.compLoading=true;
+    var done=function(list){ S.onb.competitors=(list||[]).map(function(c,i){ return {handle:c.handle, reason:c.reason||"", picked:i<2}; }); S.onb.compLoading=false; if(S.onb.step==="competitors") render(); };
+    if(isDemo()){ setTimeout(function(){ done(onbDemoComps()); }, 1100); return; }
+    apiPost("/api/onboarding/suggest-competitors",{handle:S.onb.handle, platform:S.onb.platform, niche:S.onb.niche, subniches:S.onb.subniches}).then(function(r){
+      done((r.ok&&r.d&&Array.isArray(r.d.creators))?r.d.creators:[]);
     });
+  }
+  function onbCompToggle(h){ (S.onb.competitors||[]).forEach(function(c){ if(c.handle===h) c.picked=!c.picked; }); render(); }
+  function onbCompAdd(){
+    var inp=document.getElementById("rsOnbCompInput"); if(!inp) return;
+    var h=inp.value.trim().replace(/^@+/,"").toLowerCase(); inp.value="";
+    if(!/^[a-z0-9._]{1,30}$/.test(h)) return render();
+    if(!(S.onb.competitors||[]).some(function(c){return c.handle===h;})) (S.onb.competitors||(S.onb.competitors=[])).unshift({handle:h, reason:"añadido a mano", picked:true});
+    render();
+  }
+  function onbCompsNext(){
+    if((S.onb.competitors||[]).filter(function(c){return c.picked;}).length<1){ S.onb.error="Elige al menos un competidor para llenar tu radar."; return render(); }
+    onbNext();
+  }
+  function onbPickGoal(k){ S.onb.goal=k; render(); }
+  function onbGoalNext(){ if(!S.onb.goal){ S.onb.error="Elige un objetivo — adapta el tono."; return render(); } onbNext(); }
+  // CIERRE: ingiere (prod) → Cerebro ~50% + 1er guión; demo simula y siembra panel.
+  function onbFinish(){
+    onbTrack("onb_step_completed");
+    var picked=(S.onb.competitors||[]).filter(function(c){return c.picked;});
+    onbTrack("onb_completed",{competitors:picked.length, value_reels:(S.onb.valueReels||[]).length});
+    if(isDemo()){
+      S.onb.skipped=true; S.user.onbV2Done=true;
+      try{ var b=brand(); if(b){ b.voice=Math.max(b.voice||0,50); b.level=Math.max(b.level||1,2); } }catch(e){}
+      if(typeof seedDemoContent==="function" && !(S.reels||[]).length){ try{ seedDemoContent(); }catch(e){} }
+      S.tab="dashboard"; render();
+      showToast("Cerebro al 50% · tu primer guión está listo. Róbalo →");
+      return;
+    }
+    S.onb.busy=true; render();
+    var body={ handle:S.onb.handle, platform:S.onb.platform, niche:S.onb.niche, subniches:S.onb.subniches||[], goal:S.onb.goal||"", competitors:picked.map(function(c){return c.handle;}) };
+    var _pid=_pidOf(S.brandId); if(isAgency()&&_pid) body.project_id=_pid;
+    apiPost("/api/onboarding/complete",body).then(function(r){
+      S.onb.busy=false; S.onb.skipped=true; S.user.onbV2Done=true;
+      var v=(r.ok&&r.d&&r.d.voice!=null)?r.d.voice:50;
+      try{ brand().voice=Math.max(brand().voice||0,v); }catch(e){}
+      S.tab="dashboard"; render();
+      if(typeof loadBrandData==="function"){ try{ loadBrandData(); }catch(e){} }
+      showToast("Cerebro al "+v+"% · analizando tu nicho, tu panel se está llenando…");
+    });
+  }
+  function onbSkip(){ onbTrack("onb_skipped"); S.onb.skipped=true; if(!isDemo()){ try{ apiPost("/api/onboarding/complete",{handle:S.onb.handle, skipped:true, niche:S.onb.niche, subniches:S.onb.subniches||[]}); }catch(e){} } S.tab="dashboard"; render(); }
+
+  /* ── datos demo (para que el flujo sea clicable sin backend) ── */
+  function onbDemoValueReels(){
+    var subs=(S.onb.subniches||[]); var s=function(i){ return subs[i%Math.max(1,subs.length)]||S.onb.niche||"tu nicho"; };
+    return [
+      {handle:"nicho_top1", mult:"5.8", views:"1,4 M", tag:"explota", caption:"El error de "+s(0)+" que todos cometen (y cómo evitarlo)"},
+      {handle:"creador_ref", mult:"3.2", views:"680 K", tag:"explota", caption:"Probé "+s(1)+" durante 30 días — esto pasó"},
+      {handle:"viral_"+_norm(s(0)).slice(0,5), mult:"2.6", views:"420 K", tag:"subiendo", caption:"3 trucos de "+s(0)+" que nadie te cuenta"},
+      {handle:"top_"+_norm(S.onb.niche||"nicho").slice(0,4), mult:"2.1", views:"310 K", tag:"subiendo", caption:"Por qué tu "+s(0)+" no funciona"}
+    ];
+  }
+  function onbDemoComps(){
+    var n=_norm(S.onb.niche||"nicho").slice(0,6);
+    return [
+      {handle:n+"_pro", reason:"Referente de "+(S.onb.niche||"tu nicho")+", publica casi a diario"},
+      {handle:"the_"+n, reason:"Mismo subnicho, sus reels petan seguido"},
+      {handle:n+"_daily", reason:"Crece rápido en "+((S.onb.subniches||[])[0]||"tu tema")},
+      {handle:"miss_"+n, reason:"Tono cercano, buena referencia de estructura"}
+    ];
   }
 
   /* B1: "tu próxima serie" — sugerencia del Cerebro a partir de lo que petó en TU
@@ -1611,7 +1775,7 @@
     // un render de fondo (p.ej. robo en background al resolver) no debe borrarlo.
     if(S.sheet){ var _si=document.getElementById("rsSheetInput"); if(_si) S.sheet.initial=_si.value; }
     // growth-2: conserva el handle a medio teclear ante un render de fondo.
-    if(S.onb && S.onb.step==="ask"){ var _oi=document.getElementById("rsOnbHandle"); if(_oi) S.onb.handle=_oi.value; }
+    if(S.onb && S.onb.step==="handle"){ var _oi=document.getElementById("rsOnbHandle"); if(_oi) S.onb.handle=_oi.value; }
     // Fix review (T4/a11y): #rsToast/#rsErr deben ser nodos PERSISTENTES — una región
     // aria-live solo se anuncia cuando su contenido MUTA estando ya en el DOM. Si se
     // recrean en cada innerHTML, el patrón render()+showToast() no se anuncia. La vista
@@ -1633,6 +1797,15 @@
     // Equipo oculto temporalmente (ver TODO en railHTML): cualquier deep-link a
     // team se normaliza al Radar/Portfolio para no dejar una vista huérfana.
     if(S.tab==="team") S.tab=isAgency()?"portfolio":"dashboard";
+    // A) Onboarding v2 = pantalla dedicada (sin rail/cmd/statbar): el radar vacío
+    // (0 rivales · 0 reels) NO se ve detrás. Short-circuit antes de montar la isla.
+    if(showOnboarding()){
+      view.innerHTML=onboardingScreenHTML();
+      onbView();   // PostHog: 1 evento "viewed" por paso
+      var _of=document.getElementById("rsOnbHandle")||document.getElementById("rsOnbNiche")||document.getElementById("rsOnbTagInput");
+      if(_of && document.activeElement!==_of){ try{ _of.focus(); }catch(e){} }
+      return;
+    }
     var html='';
     html+=railHTML()+'<div class="work">'+cmdHTML();
     if(S.tab==="portfolio") html+=(isAgency()?portfolioHTML():dashboardHTML());
@@ -1658,12 +1831,7 @@
     // una vez que #rsLegacy ya existe (primer render). openLegacy consume el flag.
     if(S._pendingLegacy && document.getElementById("rsLegacy")){ var _pl=S._pendingLegacy; S._pendingLegacy=null; openLegacy(_pl); }
     manageOverlayFocus(el);
-    // growth-2: en el onboarding (paso handle), enfoca el input al montarlo —
-    // sin robar el foco si el usuario ya está escribiendo en él.
-    if(showOnboarding() && S.onb.step==="ask" && !S.sheet && (!S.view || S.view==="feed")){
-      var _oh=document.getElementById("rsOnbHandle");
-      if(_oh && document.activeElement!==_oh){ try{ _oh.focus(); var _v=_oh.value; _oh.value=""; _oh.value=_v; }catch(e){} }
-    }
+    // (onboarding v2: el foco del paso se maneja en el short-circuit de arriba)
   }
 
   /* T5 (IDI): gestión de foco de los diálogos. Al ABRIR un overlay/sheet, el foco
@@ -2787,7 +2955,10 @@
     if(e.key==="Enter" && !e.shiftKey && (e.target.tagName||"").toLowerCase()!=="textarea"){
       if(S.sheet && e.target.id==="rsSheetInput"){ e.preventDefault(); return submitSheet(); }
       if(e.target.id==="rsIdeaSeed"){ e.preventDefault(); return seedIdea("rsIdeaSeed", true); }
-      if(e.target.id==="rsOnbHandle"){ e.preventDefault(); return onbSuggest(); }   // growth-2: Enter en el handle
+      if(e.target.id==="rsOnbHandle"){ e.preventDefault(); return onbHandleNext(); }   // onboarding v2: Enter avanza
+      if(e.target.id==="rsOnbNiche"){ e.preventDefault(); return onbNicheNext(); }
+      if(e.target.id==="rsOnbTagInput"){ e.preventDefault(); return onbTagAdd(); }
+      if(e.target.id==="rsOnbCompInput"){ e.preventDefault(); return onbCompAdd(); }
       if(e.target.id==="rsIdeaSeed2"){ e.preventDefault(); return addSeedIdea(); }
       // A: la card del reel es role=button — Enter abre el detalle (a11y teclado).
       if(e.target.getAttribute && e.target.getAttribute("data-act")==="reel-detail"){ e.preventDefault(); return openReelDetail(e.target.getAttribute("data-id")); }
@@ -2878,14 +3049,22 @@
     if(act==="expand-feed"){ S.feedExpanded=true; return render(); }
     if(act==="add-reel") return addReelManual();
     // growth-2: onboarding de activación
-    if(act==="onb-suggest") return onbSuggest();
-    if(act==="onb-toggle") return onbToggle(btn.getAttribute("data-h"));
-    if(act==="onb-follow") return onbFollow();
-    if(act==="onb-tone") return onbPickTone(k);                 // A4: elige tono (resalta)
-    if(act==="onb-tone-go"){ onbPickTone(S.user.presetTone||k); onbFinish(); return showToast("Listo. Tu primer «Hazlo mío» saldrá con carácter."); }
-    if(act==="onb-voice"){ onbFinish(); switchTab("brain"); setTimeout(function(){ var ta=document.getElementById("rsVoiceUrls"); if(ta){ ta.focus(); if(ta.scrollIntoView) ta.scrollIntoView({block:"center",behavior:"smooth"}); } },120); return; }
-    if(act==="onb-back"){ S.onb.step="ask"; S.onb.error=null; return render(); }
-    if(act==="onb-manual"){ S.onb.skipped=true; render(); if(typeof window.openAddCompetitorModal==="function") window.openAddCompetitorModal(); return; }
+    // onboarding v2 (7 pasos)
+    if(act==="onb-handle-next") return onbHandleNext();
+    if(act==="onb-pick-niche") return onbPickNiche(btn.getAttribute("data-k"));
+    if(act==="onb-niche-next") return onbNicheNext();
+    if(act==="onb-tag-toggle") return onbTagToggle(btn.getAttribute("data-k"));
+    if(act==="onb-tag-add") return onbTagAdd();
+    if(act==="onb-sub-next") return onbSubNext();
+    if(act==="onb-value-next") return onbValueNext();
+    if(act==="onb-comp-toggle") return onbCompToggle(btn.getAttribute("data-h"));
+    if(act==="onb-comp-add") return onbCompAdd();
+    if(act==="onb-comps-next") return onbCompsNext();
+    if(act==="onb-pick-goal") return onbPickGoal(btn.getAttribute("data-k"));
+    if(act==="onb-goal-next") return onbGoalNext();
+    if(act==="onb-finish") return onbFinish();
+    if(act==="onb-back") return onbBack();
+    if(act==="onb-skip") return onbSkip();
     // Reusa el modal legacy global (index.html); al añadir, submitAddCompetitor
     // recarga el Radar vía window.RS_reloadRadar (puente en loadBrandData).
     if(act==="add-comp"){ if(typeof window.openAddCompetitorModal==="function") window.openAddCompetitorModal(); return; }
@@ -3171,6 +3350,8 @@
         var qp=qs.get("plan"); if(qp==="creador"){ S.plan="creador"; S.brands=[demoBrands()[0]]; S.brandId=S.brands[0].id; S.tab="dashboard"; } else if(qp==="agencia"){ S.plan="agencia"; S.brands=demoBrands(); S.brandId=S.brands[0].id; S.tab="portfolio"; }
         var qb=qs.get("b"); if(qb && S.brands.some(function(x){return x.id===qb;})){ S.brandId=qb; S.tab="dashboard"; }
         var qt=qs.get("t"); if(qt==="perf"){ S.tab="guiones"; S.view="perf"; S.perfGuion="gd1"; } else if(qt){ S.tab=qt; }
+        // ?onb=1 → fuerza el onboarding v2 en demo (sin tocar el flujo normal/harness)
+        if(qs.get("onb")==="1"){ S.onb._force=true; S.onb.skipped=false; S.onb.step="handle"; S.reels=[]; S.tracked=[]; }
       }catch(e){} }
       loadBrandData();
     });
