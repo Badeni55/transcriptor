@@ -7077,10 +7077,29 @@ def onboarding_complete():
     if skipped:
         return jsonify({"ok": True, "skipped": True, "voice": 0}), 200
 
-    # 2) seguir + etiquetar competidores (scrape solo lo nuevo, async)
+    # 2) seguir + etiquetar competidores (scrape solo lo nuevo, async).
+    #    #3 CAP: el onboarding da la "probada" de 2 (parte del aha) PERO sin abrir
+    #    la puerta a ilimitados. Tope = max(slots del plan, 2). El conteo activo se
+    #    RE-LEE del DB en cada llamada, así que repetir este endpoint no acumula
+    #    más allá del tope; y cualquier add posterior via POST /api/tracked-creators
+    #    re-aplica el cap estricto del plan (free=1, 2>=1 → bloquea).
+    ONBOARDING_GRACE = 2
     project_id = body.get("project_id")
+    try:
+        _profile = get_profile(uid)
+        _slots = get_tracked_creators_limit(effective_plan(_profile))["base_slots_global"] + get_user_extra_slots(uid)
+    except Exception:
+        _slots = 1
+    cap = max(_slots, ONBOARDING_GRACE)
+    try:
+        active = count_active_tracked(uid, scope="global")
+    except Exception:
+        active = 0
     tracked = 0
     for h in comps:
+        if active + tracked >= cap:
+            logger.info("[onb2] cap alcanzado (%s/%s) — no se sigue %s", active + tracked, cap, h)
+            break
         try:
             if _track_and_tag_creator(uid, h, subs, project_id):
                 tracked += 1
