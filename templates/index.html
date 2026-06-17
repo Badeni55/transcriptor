@@ -3231,6 +3231,8 @@
       font-family: var(--font-body); font-size: .65rem; font-weight: 600;
       padding: 4px 14px; border-radius: 20px; letter-spacing: .05em; white-space: nowrap;
     }
+    /* En el modal de upgrade ya hay un badge i18n (.price-badge "Más elegido") → evita el doble. */
+    .upgrade-modal .price-card.featured::before { display: none; }
     /* Billing toggle */
     .billing-toggle {
       display: inline-flex; align-items: center; gap: 4px;
@@ -23468,7 +23470,6 @@ const PLAN_META = {
     features: { es: ["200 créditos/mes","1 marca","Cerebro: aprende tu voz","Ideas, hooks y formatos","Métricas de Instagram","Teleprompter + grabación","Soporte por email"],
                 en: ["200 credits/mo","1 brand","Brain: learns your voice","Ideas, hooks & formats","Instagram metrics","Teleprompter + recording","Email support"] },
     stripeKeys: { month: "", year: "" },
-    featured: true,
   },
   estudio: {
     icon: "🎬", label: "Estudio",
@@ -23478,6 +23479,7 @@ const PLAN_META = {
                 en: ["400 credits/mo (double)","3 brands, each with its own brain","Everything in Creator + priority","The bridge between solo and agency"] },
     // FLAG: David crea los price IDs de Estudio en Stripe (STRIPE_PRICE_ESTUDIO_*).
     stripeKeys: { month: "", year: "" },
+    featured: true,
   },
   agency: {
     icon: "🏢", label: "Agencia",
