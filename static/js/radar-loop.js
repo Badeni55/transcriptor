@@ -274,9 +274,10 @@
     // de ownership del miembro a scripts/radar/tracked (workspace_owner_id). De
     // momento oculto del rail; el backend (invite/join/roles) y teamHTML se quedan.
     //   ...,["team",IC.users,"Equipo"]
+    var _tro='<svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M6 4h12v4a6 6 0 11-12 0V4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M6 6H4v1a3 3 0 003 3M18 6h2v1a3 3 0 01-3 3M9.5 14h5M12 14v3.5M8.5 20h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     var navTabs = isAgency()
-      ? [["portfolio",IC.layers,"Portfolio"],["dashboard",IC.grid,"Radar"],["guiones",IC.doc,"Guiones"],["metrics",IC.chart,"Métricas"],["brain",IC.brain,"Cerebro"]]
-      : [["dashboard",IC.grid,"Radar"],["guiones",IC.doc,"Guiones"],["metrics",IC.chart,"Métricas"],["brain",IC.brain,"Cerebro"]];
+      ? [["portfolio",IC.layers,"Portfolio"],["dashboard",IC.grid,"Radar"],["guiones",IC.doc,"Guiones"],["metrics",IC.chart,"Métricas"],["leaderboard",_tro,"Ranking"],["brain",IC.brain,"Cerebro"]]
+      : [["dashboard",IC.grid,"Radar"],["guiones",IC.doc,"Guiones"],["metrics",IC.chart,"Métricas"],["leaderboard",_tro,"Ranking"],["brain",IC.brain,"Cerebro"]];
     return '<nav class="rail">'+
       '<img class="rail-logo" src="/static/img/branding/isotipo-128.png" srcset="/static/img/branding/isotipo-128.png 1x, /static/img/branding/isotipo-256.png 2x" alt="Reelscript">'+
       navTabs.map(function(t){return '<button class="rail-btn'+(S.tab===t[0]&&!S.legacy?" on":"")+'" data-act="tab" data-k="'+t[0]+'" data-tour="tab-'+t[0]+'">'+t[1]+'<span class="tip">'+t[2]+'</span></button>';}).join("")+
@@ -291,7 +292,7 @@
     acctMenuHTML();
   }
   function cmdHTML(){
-    var tabName=({dashboard:"RADAR",ideas:"IDEAS",guiones:"GUIONES",metrics:"MÉTRICAS",brain:"CEREBRO",team:"EQUIPO"})[S.tab]||"";
+    var tabName=({dashboard:"RADAR",ideas:"IDEAS",guiones:"GUIONES",metrics:"MÉTRICAS",leaderboard:"RANKING",brain:"CEREBRO",team:"EQUIPO"})[S.tab]||"";
     var crumb;
     if(isMacro()) crumb='<span class="crumb">/ PORTFOLIO</span>';
     else if(isAgency()) crumb='<button class="crumb crumb-link" data-act="all-brands">Todas las marcas</button><span class="crumb">/ '+tabName+'</span>';
@@ -1037,7 +1038,6 @@
       nextSeriesHTML("dash")+   // B1+T1: "tu próxima serie" con CTA secundario en el Dashboard
       (S.reels.length?'<div class="plays">'+whaleHTML(fillCount)+'</div>':'')+
       (rest.length?('<div class="feed-head"><span class="feed-title">Más señales <span class="ct">· '+rest.length+'</span></span>'+filtersHTML()+'</div><div class="feed">'+rows+'</div>'+moreToggle):"")+
-      leaderboardHTML()+   // Fathom 17/06: tu posición vs competidores (Killer / competencia)
     '</div></div>';
   }
 
@@ -1618,32 +1618,42 @@
   function leaderboardRows(){
     var b=brand();
     var me={handle:(b.handle||S.user.handle||"tu_cuenta"), followers:42000, growth:8, you:true};
-    var comps=brainCompetitors().slice(0,6).map(function(c){
+    var comps=brainCompetitors().slice(0,12).map(function(c){
       return {handle:c.handle, followers:_lbHash(c.handle,8000,180000), growth:_lbHash(c.handle+"g",0,28)-9, you:false};
     });
     return comps.concat([me]).sort(function(a,b){ return b.followers-a.followers; });
   }
-  function leaderboardHTML(){
+  // PÁGINA COMPLETA del leaderboard (tab "leaderboard"). Tu posición vs competidores.
+  function leaderboardPageHTML(){
+    var b=brand();
     var rows=leaderboardRows();
-    if(rows.length<2) return '';
     var myIdx=-1; rows.forEach(function(r,i){ if(r.you) myIdx=i; });
     var above=myIdx>0?rows[myIdx-1]:null;
     var gap=above?(above.followers-rows[myIdx].followers):0;
+    var goal=above
+      ? '<div class="lb-goal">🎯 '+L("Te faltan <b>"+_fmtK(gap)+"</b> seguidores para superar a <b>@"+ESC(above.handle)+"</b>","<b>"+_fmtK(gap)+"</b> followers to overtake <b>@"+ESC(above.handle)+"</b>")+'</div>'
+      : '<div class="lb-goal">🏆 '+L("Lideras tu nicho — sigue así","You lead your niche — keep it up")+'</div>';
     var items=rows.map(function(r,i){
       var g=r.growth, gtxt=(g>=0?'↑':'↓')+Math.abs(g)+'%';
+      var pos=i===0?'🥇':i===1?'🥈':i===2?'🥉':String(i+1);
       return '<div class="lb-row'+(r.you?' me':'')+'">'+
-        '<span class="lb-pos">'+(i+1)+'</span>'+
+        '<span class="lb-pos">'+pos+'</span>'+
         '<span class="ava bava">'+ESC(initialsOf(r.handle))+'</span>'+
         '<span class="lb-h">@'+ESC(r.handle)+(r.you?' <b>('+L("tú","you")+')</b>':'')+'</span>'+
         '<span class="lb-f">'+_fmtK(r.followers)+'</span>'+
         '<span class="lb-g '+(g>=0?'up':'down')+'">'+gtxt+'</span>'+
       '</div>';
     }).join("");
-    var hint=above
-      ? '<div class="lb-hint">🎯 '+L("Te faltan <b>"+_fmtK(gap)+"</b> seguidores para superar a @"+ESC(above.handle),"<b>"+_fmtK(gap)+"</b> followers to overtake @"+ESC(above.handle))+'</div>'
-      : '<div class="lb-hint">🏆 '+L("Lideras tu nicho — sigue así","You lead your niche — keep it up")+'</div>';
-    return '<div class="brain-section-t" style="margin-top:8px">'+L("Tu posición en el nicho","Your rank in the niche")+' <span class="brain-tag">'+L("vs tus competidores","vs your competitors")+'</span></div>'+
-      '<div class="leaderboard">'+items+hint+'</div>';
+    return '<div class="scroll"><div class="canvas">'+
+      pheadHTML("Ranking · @"+(b.handle||S.user.handle||""), L("Ranking","Ranking"), L("Tu posición frente a tus competidores del nicho. Sube de puesto creando y publicando más.","Where you stand against your niche competitors. Climb by creating and publishing more."))+
+      goal+
+      '<div class="leaderboard">'+items+'</div>'+
+      '<div class="cluster cluster-sm" style="margin:16px 0 8px;gap:10px">'+
+        '<button class="btn btn-md btn-secondary" data-act="add-comp">'+IC.plus+' '+L("Añadir competidor al ranking","Add a competitor to the ranking")+'</button>'+
+        '<button class="btn btn-md btn-ghost" data-act="tab" data-k="metrics">'+IC.chart+' '+L("Ver mis métricas","See my metrics")+'</button>'+
+      '</div>'+
+      '<p class="lb-note">'+L("Las cifras de competidores son estimaciones del nicho; tus métricas reales salen al conectar Instagram.","Competitor figures are niche estimates; your real metrics appear once you connect Instagram.")+'</p>'+
+    '</div></div>';
   }
   // T3: lista REAL de competidores seguidos (con id de tracking → permite dejar de
   // seguir). Se carga aparte del feed; al resolver, repinta las vistas que la
@@ -2170,6 +2180,7 @@
     else if(S.tab==="dashboard") html+=dashboardHTML();
     else if(S.tab==="guiones") html+=guionesHTML();
     else if(S.tab==="metrics") html+=metricsHTML();
+    else if(S.tab==="leaderboard") html+=leaderboardPageHTML();
     else if(S.tab==="brain") html+=brainHTML();
     else if(S.tab==="team") html+=teamHTML();
     html+='</div>';  // /.work
