@@ -23862,7 +23862,7 @@ function startHoldWatch(step) {
       if (document.querySelector(step.awaitEl)) { clearHoldWatch(); nextTourStep(); return; }
       if (step.target && !document.querySelector(step.target)) {
         if (tourSpotlight) tourSpotlight.style.display = "none";
-        if (tourTooltip) tourTooltip.classList.remove("on");
+        if (tourTooltip) { tourTooltip.classList.remove("on"); tourTooltip.style.display = "none"; }
       }
     } else if (step.awaitGone) {
       if (!document.querySelector(step.awaitGone)) { clearHoldWatch(); nextTourStep(); return; }
@@ -23961,7 +23961,8 @@ function renderTourStep() {
       tourHoldFocusHidden = true;
       if (tourTrackRaf) { cancelAnimationFrame(tourTrackRaf); tourTrackRaf = 0; }
       if (tourSpotlight) tourSpotlight.style.display = "none";
-      if (tourTooltip) tourTooltip.classList.remove("on");
+      // display:none (no solo quitar .on): en escritorio .on no controla la visibilidad.
+      if (tourTooltip) { tourTooltip.classList.remove("on"); tourTooltip.style.display = "none"; }
     }, { once: true });
   }
 
@@ -23974,9 +23975,9 @@ function renderTourStep() {
     tourTooltip.classList.add("on");
     var t0 = performance.now();
     (function track() {
-      if (tourHoldFocusHidden) { tourTrackRaf = 0; return; }
+      if (!tourActive || tourHoldFocusHidden) { tourTrackRaf = 0; return; }   // acabó o ya actuó → no repintes el oscurecido
       positionSpotlight(el); positionTooltip(el);
-      if (tourActive && performance.now() - t0 < 1000) tourTrackRaf = requestAnimationFrame(track);
+      if (performance.now() - t0 < 1000) tourTrackRaf = requestAnimationFrame(track);
       else tourTrackRaf = 0;
     })();
   }));
@@ -24041,6 +24042,7 @@ function skipTour() {
 function endTour() {
   tourActive = false;
   clearHoldWatch();
+  if (tourTrackRaf) { cancelAnimationFrame(tourTrackRaf); tourTrackRaf = 0; }   // mata el tracking → no deja el oscurecido pegado
   document.querySelectorAll(".tour-highlight").forEach(e => e.classList.remove("tour-highlight"));
   if (tourOverlay) { tourOverlay.style.pointerEvents = ""; tourOverlay.style.display = "none"; }
   if (tourTooltip) { tourTooltip.classList.remove("on"); tourTooltip.style.display = "none"; }
