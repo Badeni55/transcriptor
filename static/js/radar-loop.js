@@ -848,7 +848,7 @@
     var _fl=freeStealsLeft();
     var scarce = (_fl===null) ? '' :
       (_fl<=0
-        ? '<div class="feat-scarce out">'+IC.bolt+' '+L("Sin robos gratis este mes — desbloquéalos","No free steals left this month — unlock them")+'</div>'
+        ? '<button class="feat-scarce out feat-scarce-btn" data-act="open-plans">'+IC.bolt+' '+L("Sin robos gratis este mes — desbloquéalos","No free steals left this month — unlock them")+' '+IC.arr+'</button>'
         : '<div class="feat-scarce">'+IC.bolt+' '+L("Te queda"+(_fl===1?"":"n")+" <b>"+_fl+"</b> robo"+(_fl===1?"":"s")+" gratis este mes","<b>"+_fl+"</b> free steal"+(_fl===1?"":"s")+" left this month")+'</div>');
     return '<article class="feature">'+
       '<div class="feature-thumb"><div class="thumb">'+thumbInner+'<span class="thumb-tag">reel · '+ESC(r.creator.handle.slice(0,6))+'</span><span class="dur">'+ESC(r.dur)+'</span></div></div>'+
@@ -2555,7 +2555,7 @@
     var msg = (err==="free_limit_reached")
       ? L("Sin robos gratis este mes. Tu radar tiene más ideas que petan — desbloquéalas.","No free steals left this month. Your radar has more ideas blowing up — unlock them.")
       : L("Necesitas créditos para robar esta idea.","You need credits to steal this idea.");
-    showToast(msg);
+    showToast(msg, L("Ver planes","See plans"), "open-plans");
     // FIX free-counter: refresca el contador real tras el muro (la pill no debe
     // quedarse en "1 este mes" cuando el restante real es 0).
     if(!isDemo()){ refreshCredits().then(function(){ render(); }); }
@@ -3436,6 +3436,7 @@
     // Reusa el modal legacy global (index.html); al añadir, submitAddCompetitor
     // recarga el Radar vía window.RS_reloadRadar (puente en loadBrandData).
     if(act==="add-comp"){ if(typeof window.openAddCompetitorModal==="function") window.openAddCompetitorModal(); return; }
+    if(act==="open-plans"){ if(typeof window.openUpgradeModal==="function"){ try{ window.openUpgradeModal("free_limit"); }catch(e){} } return; }
     // B2: CTA «Entrenar mi voz» — lleva al Cerebro y deja el cursor en el textarea
     // de captura (la acción de verdad), no en la pestaña a secas.
     if(act==="voice-focus"){
