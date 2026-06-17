@@ -23442,7 +23442,9 @@ function openUpgradeModal(source) {
   // En demo (sin login) NO redirigimos a registro: mostramos los planes igual — los
   // precios son client-side (PLAN_META), así que el muro sí lleva a la suscripción.
   if (!st.user && !window.__DEMO__) { openAuth("register"); return; }
-  if (st.plan === "agency") {
+  // En demo SIEMPRE mostramos los planes (st.plan puede venir como "agency" del estado
+  // de la demo, lo que bloquearía el modal); fuera de demo respetamos el tope real.
+  if (!window.__DEMO__ && st.plan === "agency") {
     showToast(currentLang === "es" ? "Ya tienes el plan más alto." : "You're already on the top plan.");
     return;
   }
@@ -23474,7 +23476,9 @@ function openUpgradeModal(source) {
 function renderUpgradeCards() {
   const grid = document.getElementById("upgradeCardsGrid");
   if (!grid) return;
-  const plan = st.plan || "free";
+  // En demo partimos de "free" para mostrar TODOS los planes (el estado demo puede
+  // traer st.plan="agency", que dejaría el modal vacío).
+  const plan = window.__DEMO__ ? "free" : (st.plan || "free");
   const cyc = billingCycle;
   const lang = currentLang;
 
