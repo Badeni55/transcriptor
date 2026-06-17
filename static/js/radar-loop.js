@@ -1610,6 +1610,12 @@
     var by={}; (S.reels||[]).forEach(function(r){ var h=r.creator&&r.creator.handle; if(!h) return; by[h]=(by[h]||0)+1; });
     return Object.keys(by).map(function(h){ return {handle:h, n:by[h]}; }).sort(function(a,b){return b.n-a.n;});
   }
+  // Fathom 17/06: mini-galería de miniaturas de los reels de un competidor (de S.reels).
+  function compThumbsHTML(handle){
+    var hs=(S.reels||[]).filter(function(r){ return r.creator && r.creator.handle===handle && r.thumb; }).slice(0,4);
+    if(!hs.length) return '';
+    return '<div class="comp-thumbs">'+hs.map(function(r){ return '<span class="comp-thumb"><img src="'+ESC(r.thumb)+'" alt="" loading="lazy">'+(r.dur?'<span class="ct-dur">'+ESC(r.dur)+'</span>':'')+'</span>'; }).join("")+'</div>';
+  }
   /* ── LEADERBOARD (Fathom 17/06) — tú vs tus competidores por seguidores, con "qué
      te falta para subir". Arquetipo Killer (Bartle) + SDT-competencia. En demo los
      seguidores se siembran deterministas por handle; en prod saldrían de métricas. */
@@ -1850,12 +1856,13 @@
               '<span class="brain-comp-h">@'+ESC(h)+'</span>'+
               '<span class="brain-comp-n">'+ESC(n)+'</span>'+
               '<button class="brain-comp-x" data-act="untrack" data-id="'+ESC(String(t.id))+'" data-handle="'+ESC(h)+'" title="Dejar de seguir a @'+ESC(h)+'" aria-label="Dejar de seguir a @'+ESC(h)+'">'+IC.x+'</button>'+
+              compThumbsHTML(h)+
             '</div>';
           }).join("")
         : '<div class="rs-empty" style="padding:20px">Aún no sigues a ningún competidor. Añádelos desde el Radar o un análisis.</div>';
     } else {
       compList = comps.length
-        ? comps.map(function(c){ return '<div class="brain-comp"><div class="ava bava">'+ESC(initialsOf(c.handle))+'</div><span class="brain-comp-h">@'+ESC(c.handle)+'</span><span class="brain-comp-n">'+c.n+' reels analizados</span></div>'; }).join("")
+        ? comps.map(function(c){ return '<div class="brain-comp"><div class="ava bava">'+ESC(initialsOf(c.handle))+'</div><span class="brain-comp-h">@'+ESC(c.handle)+'</span><span class="brain-comp-n">'+c.n+' reels analizados</span>'+compThumbsHTML(c.handle)+'</div>'; }).join("")
         : '<div class="rs-empty" style="padding:20px">Aún no sigues a nadie. Añade competidores en el Dashboard.</div>';
     }
 

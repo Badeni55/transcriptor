@@ -10310,9 +10310,14 @@
     .rs--mobile .voice-banner .btn { width:100%; }
     .rs .brain-comps { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .rs--mobile .brain-comps { grid-template-columns:1fr; }
-    .rs .brain-comp { display:flex; align-items:center; gap:11px; padding:12px 14px; border:1px solid var(--border-default); border-radius:12px; background:var(--surface-raised); }
+    .rs .brain-comp { display:flex; align-items:center; flex-wrap:wrap; gap:11px; padding:12px 14px; border:1px solid var(--border-default); border-radius:12px; background:var(--surface-raised); }
     .rs .brain-comp-h { font-size:13.5px; font-weight:600; }
     .rs .brain-comp-n { margin-left:auto; font-size:12px; color:var(--text-tertiary); }
+    /* Fathom 17/06: miniaturas de vídeos del competidor (segunda línea) */
+    .rs .comp-thumbs { display:flex; gap:7px; width:100%; margin-top:2px; }
+    .rs .comp-thumb { position:relative; flex:1 1 0; max-width:84px; aspect-ratio:9/14; border-radius:8px; overflow:hidden; background:var(--surface-overlay); border:1px solid var(--border-subtle); }
+    .rs .comp-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+    .rs .comp-thumb .ct-dur { position:absolute; bottom:3px; right:3px; font-family:var(--font-mono); font-size:9px; font-weight:600; color:#fff; background:rgba(0,0,0,.6); padding:1px 4px; border-radius:4px; }
     /* T3: dejar de seguir competidor. */
     .rs .brain-comp-x { flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:8px; border:1px solid transparent; background:transparent; color:var(--text-tertiary); cursor:pointer; transition:color .15s, border-color .15s, background .15s; }
     .rs .brain-comp-x:hover { color:#e0556b; border-color:color-mix(in srgb, #e0556b 45%, transparent); background:color-mix(in srgb, #e0556b 8%, transparent); }
