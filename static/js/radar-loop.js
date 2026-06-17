@@ -1644,11 +1644,25 @@
     var b=brand();
     var rows=leaderboardRows();
     var myIdx=-1; rows.forEach(function(r,i){ if(r.you) myIdx=i; });
+    var me=rows[myIdx]||{followers:0,growth:0};
     var above=myIdx>0?rows[myIdx-1]:null;
-    var gap=above?(above.followers-rows[myIdx].followers):0;
+    var gap=above?(above.followers-me.followers):0;
+    // #1 proyección: a TU ritmo, cuándo superas al de arriba → meta cercana y tangible.
+    var proj='';
+    if(above && me.growth>0){
+      var perMonth=me.followers*me.growth/100;
+      var weeks=Math.max(1,Math.round((gap/Math.max(1,perMonth))*4.345));
+      proj=' · '+L("a tu ritmo lo superas en ~<b>"+weeks+" semana"+(weeks===1?"":"s")+"</b>","at your pace you pass them in ~<b>"+weeks+" week"+(weeks===1?"":"s")+"</b>");
+    }
     var goal=above
-      ? '<div class="lb-goal">🎯 '+L("Te faltan <b>"+_fmtK(gap)+"</b> seguidores para superar a <b>@"+ESC(above.handle)+"</b>","<b>"+_fmtK(gap)+"</b> followers to overtake <b>@"+ESC(above.handle)+"</b>")+'</div>'
+      ? '<div class="lb-goal">🎯 '+L("Te faltan <b>"+_fmtK(gap)+"</b> seguidores para superar a <b>@"+ESC(above.handle)+"</b>","<b>"+_fmtK(gap)+"</b> followers to overtake <b>@"+ESC(above.handle)+"</b>")+proj+'</div>'
       : '<div class="lb-goal">🏆 '+L("Lideras tu nicho — sigue así","You lead your niche — keep it up")+'</div>';
+    // #3 momentum: racha de crecimiento (refuerzo positivo). Demo: semanas deterministas.
+    var momentum='';
+    if(me.growth>0){
+      var streakW=2+_lbHash((b.handle||"x")+"s",0,4);
+      momentum='<div class="lb-momentum">📈 '+L("Subiendo · <b>+"+me.growth+"%</b> este mes · llevas <b>"+streakW+" semanas</b> creciendo","Rising · <b>+"+me.growth+"%</b> this month · <b>"+streakW+" weeks</b> growing")+'</div>';
+    }
     var items=rows.map(function(r,i){
       var g=r.growth, gtxt=(g>=0?'↑':'↓')+Math.abs(g)+'%';
       var pos=i===0?'🥇':i===1?'🥈':i===2?'🥉':String(i+1);
@@ -1662,11 +1676,13 @@
     }).join("");
     return '<div class="scroll"><div class="canvas">'+
       pheadHTML("Ranking · @"+(b.handle||S.user.handle||""), L("Ranking","Ranking"), L("Tu posición frente a tus competidores del nicho. Sube de puesto creando y publicando más.","Where you stand against your niche competitors. Climb by creating and publishing more."))+
+      momentum+
       goal+
       '<div class="leaderboard">'+items+'</div>'+
+      // #2 conectar el ranking con la acción del producto (el loop) — CTA primario.
       '<div class="cluster cluster-sm" style="margin:16px 0 8px;gap:10px">'+
-        '<button class="btn btn-md btn-secondary" data-act="add-comp">'+IC.plus+' '+L("Añadir competidor al ranking","Add a competitor to the ranking")+'</button>'+
-        '<button class="btn btn-md btn-ghost" data-act="tab" data-k="metrics">'+IC.chart+' '+L("Ver mis métricas","See my metrics")+'</button>'+
+        '<button class="btn btn-md btn-primary" data-act="tab" data-k="dashboard">'+IC.bolt+' '+L("Roba y publica más para subir","Steal & publish more to climb")+'</button>'+
+        '<button class="btn btn-md btn-secondary" data-act="add-comp">'+IC.plus+' '+L("Añadir competidor","Add a competitor")+'</button>'+
       '</div>'+
       '<p class="lb-note">'+L("Las cifras de competidores son estimaciones del nicho; tus métricas reales salen al conectar Instagram.","Competitor figures are niche estimates; your real metrics appear once you connect Instagram.")+'</p>'+
     '</div></div>';
