@@ -1613,8 +1613,18 @@
   // Fathom 17/06: mini-galería de miniaturas de los reels de un competidor (de S.reels).
   function compThumbsHTML(handle){
     var hs=(S.reels||[]).filter(function(r){ return r.creator && r.creator.handle===handle && r.thumb; }).slice(0,4);
-    if(!hs.length) return '';
-    return '<div class="comp-thumbs">'+hs.map(function(r){ return '<span class="comp-thumb"><img src="'+ESC(r.thumb)+'" alt="" loading="lazy">'+(r.dur?'<span class="ct-dur">'+ESC(r.dur)+'</span>':'')+'</span>'; }).join("")+'</div>';
+    if(hs.length){
+      return '<div class="comp-thumbs">'+hs.map(function(r){ return '<span class="comp-thumb"><img src="'+ESC(r.thumb)+'" alt="" loading="lazy">'+(r.dur?'<span class="ct-dur">'+ESC(r.dur)+'</span>':'')+'</span>'; }).join("")+'</div>';
+    }
+    // Sin reels de ESTE competidor en el radar (demo o aún sin scrape) → placeholders
+    // con gradiente para que el layout se vea. En prod saldrían las miniaturas reales.
+    if(isDemo()){
+      var grad=['linear-gradient(135deg,#ff6a3d,#ff2d55)','linear-gradient(135deg,#5b8cff,#7b3dff)','linear-gradient(135deg,#1dd3b0,#0e9f87)','linear-gradient(135deg,#ffb648,#ff7a00)'];
+      var out='';
+      for(var i=0;i<4;i++){ out+='<span class="comp-thumb" style="background:'+grad[_lbHash(handle+i,0,grad.length)]+'"><span class="ct-ph">▶</span></span>'; }
+      return '<div class="comp-thumbs">'+out+'</div>';
+    }
+    return '';
   }
   /* ── LEADERBOARD (Fathom 17/06) — tú vs tus competidores por seguidores, con "qué
      te falta para subir". Arquetipo Killer (Bartle) + SDT-competencia. En demo los
