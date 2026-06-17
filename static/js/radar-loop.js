@@ -860,6 +860,9 @@
       '<div class="feature-thumb"><div class="thumb">'+thumbInner+'<span class="thumb-tag">reel · '+ESC(r.creator.handle.slice(0,6))+'</span><span class="dur">'+ESC(r.dur)+'</span></div></div>'+
       '<div class="feature-main">'+
         '<div class="feature-eyebrow">Oportunidad #1 <span class="who">· @'+ESC(r.creator.handle)+' · '+ESC(r.when)+'</span></div>'+
+        // #1 core-loop (variar recompensa): cuando aparece un bombazo, la vuelta se
+        // siente especial (novedad genuina, no siempre igual). Solo si es excepcional.
+        (mega?'<div class="opp-mega">🔥 '+L("El más explosivo de la semana","The week's biggest blow-up")+'</div>':'')+
         '<h2 class="feature-cap">'+ESC(r.cap)+'</h2>'+
         (r.sum?'<p class="feature-sum">'+ESC(r.sum)+'</p>':'')+
         '<div class="feature-why">'+IC.spark+'<span>'+ESC(why)+'</span></div>'+
