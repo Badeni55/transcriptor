@@ -1580,13 +1580,11 @@
   function brain3dEligible(){
     if(window.__RS_NO_3D__) return false;
     var force = window.__RS_FORCE_3D__ || /[?&]brain3d=(force|on)/.test(location.search);
-    // SEGURIDAD: el Cerebro 3D (WebGL) queda DESACTIVADO por defecto. En equipos con
-    // GPU/drivers justos puede tumbar el driver y reiniciar el PC. Queda el orbe estático
-    // (fallback, sin WebGL). Para reactivarlo a propósito: añadir ?brain3d=on a la URL.
-    if(!force) return false;
-    // Headless (harness) y reduced-motion → fallback estático también.
-    if(/headless/i.test(navigator.userAgent||"") || navigator.webdriver) return false;
-    try{ if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false; }catch(e){}
+    if(!force){
+      // Headless (harness verify-island) y reduced-motion → fallback estático (sin WebGL).
+      if(/headless/i.test(navigator.userAgent||"") || navigator.webdriver) return false;
+      try{ if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false; }catch(e){}
+    }
     try{ var c=document.createElement('canvas'); if(!(c.getContext('webgl')||c.getContext('experimental-webgl'))) return false; }catch(e){ return false; }
     return true;
   }
