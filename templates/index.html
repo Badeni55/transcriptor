@@ -3571,6 +3571,13 @@
     .topup-amt { font-size: 1.4rem; font-weight: 900; }
     .topup-cred { font-size: .7rem; color: var(--text3); margin-top: 3px; }
     .topup-note { font-size: .77rem; color: var(--text3); text-align: center; margin-bottom: 14px; }
+    /* #5 empuje a suscripción dentro del modal de packs */
+    .topup-sub-nudge { display:flex; flex-direction:column; gap:9px; align-items:flex-start; margin:14px 0 4px; padding:12px 14px; border-radius:12px;
+      border:1px solid rgba(79,124,255,.3); background:rgba(79,124,255,.08); font-size:.82rem; line-height:1.45; color:var(--text2); }
+    .topup-sub-nudge b { color:var(--text); font-weight:700; }
+    .topup-sub-nudge button { align-self:stretch; padding:9px 14px; border-radius:10px; border:none; cursor:pointer; font-weight:700; font-size:.82rem;
+      background:var(--brand-cta); color:#fff; box-shadow:0 3px 0 #22357c; transition:transform .12s; }
+    .topup-sub-nudge button:active { transform:translateY(2px); box-shadow:0 1px 0 #22357c; }
 
     /* ── Button active/inactive state ────────────────────────── */
     .btn-shimmer.inactive {
@@ -13573,6 +13580,11 @@
     <button class="modal-x" onclick="closeModal('topupOverlay')">✕</button>
     <h2 data-i18n="topup.title">Top up balance</h2>
     <p id="topupSubtitle"></p>
+    <!-- #5 conversión: empuje a suscripción (mejor €/crédito + sin límites) sobre el pack suelto. -->
+    <div class="topup-sub-nudge">
+      <span data-i18n-html-en="💡 With <b>Creator (€29/mo)</b> you get 200 credits and <b>unlimited</b> scripts — better value than buying one-offs.">💡 Con <b>Creador (29€/mes)</b> tienes 200 créditos y guiones <b>sin límite</b> — sale más a cuenta que comprar sueltos.</span>
+      <button type="button" onclick="closeModal('topupOverlay'); if(typeof openUpgradeModal==='function') openUpgradeModal('topup_nudge');" data-i18n-en="See plans">Ver planes</button>
+    </div>
     <!-- Packs dinámicos (GET /api/topups). Si falla o no hay packs configurados,
          se rellena con el pack legacy (1 opción · 7 usos). -->
     <div class="topup-grid" id="topupGrid" style="grid-template-columns:1fr">
@@ -23462,8 +23474,10 @@ function renderUpgradeCards() {
   const cyc = billingCycle;
   const lang = currentLang;
 
-  // Show only plans strictly above the user's current tier
-  const plans = ["creator","estudio","agency"].filter(p => PLAN_RANK[p] > PLAN_RANK[plan]);
+  // Show only plans strictly above the user's current tier.
+  // #5 conversión: ANCLAJE — el más caro primero. Tras ver Agencia (129€), Creador
+  // (29€ · "Más elegido") aterriza como una ganga. Orden caro→barato.
+  const plans = ["agency","estudio","creator"].filter(p => PLAN_RANK[p] > PLAN_RANK[plan]);
 
   grid.innerHTML = plans.map(p => {
     const m = PLAN_META[p];
