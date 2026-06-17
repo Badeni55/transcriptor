@@ -10430,6 +10430,12 @@
     .rs .ap-chip svg { width:12px; height:12px; }
     .rs .ap-chip.ok { border-color:color-mix(in srgb, var(--success-fg) 35%, transparent); color:var(--success-fg); background:color-mix(in srgb, var(--success-fg) 9%, transparent); }
     .rs .ap-o { font-size:10px; opacity:.6; }
+    /* #2 escasez al robar (decisión interesante / empuje suave al muro) */
+    .rs .feat-scarce { display:flex; align-items:center; gap:6px; margin-top:10px; font-size:12.5px; font-weight:600; color:var(--brand-500); }
+    .rs .feat-scarce svg { width:13px; height:13px; }
+    .rs .feat-scarce b { color:var(--brand-500); }
+    .rs .feat-scarce.out { color:var(--warn-fg, #d4a017); }
+    .rs .feat-scarce.out b { color:var(--warn-fg, #d4a017); }
     .rs .feature { display:grid; grid-template-columns:184px 1fr 132px; border:1px solid var(--border-strong); border-radius:16px; background:var(--surface-raised); box-shadow:var(--shadow-lg); overflow:hidden; margin-bottom:14px; }
     .rs .feature-thumb { position:relative; } .rs .feature-thumb .thumb { width:100%; height:100%; min-height:230px; border:none; border-radius:0; border-right:1px solid var(--border-default); }
     .rs .feature-main { padding:24px 26px; min-width:0; display:flex; flex-direction:column; }
@@ -23425,6 +23431,26 @@ function openUpgradeModal(source) {
     return;
   }
   renderUpgradeCards();
+  // #1 conversión: copy PAS cuando el muro viene de agotar robos (problema → agita →
+  // resuelve), no un "Mejorar plan" frío. En otros orígenes, copy neutro.
+  try {
+    var um = document.querySelector(".upgrade-modal");
+    if (um) {
+      var uh = um.querySelector("h2"), up = um.querySelector("p");
+      var fromLimit = /free_limit|hazlo_mio|steal|guion|script/i.test(source || "");
+      if (uh && up) {
+        if (fromLimit) {
+          uh.textContent = currentLang === "es" ? "Tu radar tiene ideas que petan, listas para robar" : "Your radar has ideas blowing up, ready to steal";
+          up.textContent = currentLang === "es"
+            ? "Cada día que no publicas, tu competidor sí — y el algoritmo se lo premia. Desbloquea robos en tu voz, sin límite."
+            : "Every day you don't post, your competitor does — and the algorithm rewards them. Unlock steals in your voice, no limits.";
+        } else {
+          uh.textContent = currentLang === "es" ? "Mejorar plan" : "Upgrade plan";
+          up.textContent = currentLang === "es" ? "Elige el plan que mejor se adapte. Cancela cuando quieras." : "Pick the plan that fits. Cancel anytime.";
+        }
+      }
+    }
+  } catch (e) {}
   openModal("upgradeOverlay");
   try { window.track && window.track.upgradeModalOpened && window.track.upgradeModalOpened({ source: source || "unknown", plan: st.plan }); } catch(e){}
 }

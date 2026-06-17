@@ -844,6 +844,12 @@
       ? "Está reventando: "+ (r.explosionTxt!=null?r.explosionTxt:"")+"× lo normal de @"+r.creator.handle+". Si hay uno que robar hoy, es este."
       : "Por encima de la media de @"+r.creator.handle+". Buen punto de partida para hoy.";
     var expPct=Math.min(100,(r.explosion||0)/6*100);
+    // #2 conversión: escasez visible → robar deja de ser obvio (trade-off de saldo).
+    var _fl=freeStealsLeft();
+    var scarce = (_fl===null) ? '' :
+      (_fl<=0
+        ? '<div class="feat-scarce out">'+IC.bolt+' '+L("Sin robos gratis este mes — desbloquéalos","No free steals left this month — unlock them")+'</div>'
+        : '<div class="feat-scarce">'+IC.bolt+' '+L("Te queda"+(_fl===1?"":"n")+" <b>"+_fl+"</b> robo"+(_fl===1?"":"s")+" gratis este mes","<b>"+_fl+"</b> free steal"+(_fl===1?"":"s")+" left this month")+'</div>');
     return '<article class="feature">'+
       '<div class="feature-thumb"><div class="thumb">'+thumbInner+'<span class="thumb-tag">reel · '+ESC(r.creator.handle.slice(0,6))+'</span><span class="dur">'+ESC(r.dur)+'</span></div></div>'+
       '<div class="feature-main">'+
@@ -854,6 +860,7 @@
         '<div class="feature-actions"><button class="btn btn-lg btn-primary" data-act="steal" data-id="'+ESC(r.id)+'">'+IC.bolt+' Roba la idea</button>'+
           '<button class="iconbtn'+(S.favs[r.id]?" on":"")+'" data-act="fav" data-id="'+ESC(r.id)+'" title="Guardar">'+(S.favs[r.id]?IC.star:IC.starO)+'</button>'+
           '<button class="iconbtn" data-act="reel-dismiss" data-id="'+ESC(r.id)+'" title="No me interesa — trae otro" aria-label="Descartar y traer otro">'+IC.x+'</button></div>'+
+        scarce+
       '</div>'+
       '<div class="feature-data">'+
         '<div class="dmetric big"><div class="dk">Explosión</div><div class="dv">'+(r.explosionTxt!=null?ESC(r.explosionTxt):"–")+'×</div><div class="dbar"><i style="width:'+expPct+'%"></i></div></div>'+
@@ -1363,6 +1370,8 @@
   // F: free ve el producto pero las MÉTRICAS al detalle van borrosas. En demo se
   // fuerza con ?free=1 (el plan normal demo es de pago).
   function isFree(){ return isDemo() ? (S._demoFree===true) : (S.realPlan==="free" || !S.realPlan); }
+  // #2 conversión (decisión interesante): robos gratis restantes este mes. null si no es free.
+  function freeStealsLeft(){ if(!isFree()) return null; return (S.user.freeLeft!=null ? S.user.freeLeft : (isDemo()?2:0)); }
   function metricsLockHTML(inner){
     return '<div class="rs-lock"><div class="rs-lock-inner" aria-hidden="true">'+inner+'</div>'+
       '<div class="rs-lock-over"><div class="rs-lock-card">'+IC.bolt+
@@ -2353,6 +2362,7 @@
     var plan=toFree?"creador":k;   // free reusa el layout de creador (1 marca) + isFree()=true
     if(S.plan===plan && (S._demoFree===true)===toFree){ return; }   // sin cambio real
     S._demoFree=toFree; S.plan=plan; S.brandMenu=false; S.view="feed"; S.feedExpanded=false; S._lvlSeen=null;
+    if(toFree) S.user.freeLeft=2;   // demo free: 2 robos gratis/mes (free_scripts_monthly) → escasez visible
     if(plan==="agencia"){ S.brands=demoBrands(); S.brandId=S.brands[0].id; S.tab="portfolio"; }   // macro
     else { S.brands=[demoBrands()[0]]; S.brandId=S.brands[0].id; S.tab=toFree?"metrics":"dashboard"; applyDemoBrand(); }
     render();
@@ -2468,6 +2478,10 @@
   }
   function steal(id){
     var r=S.reels.filter(function(x){return x.id===id;})[0]; if(!r) return;
+    // #2 conversión: muro en el PICO de Flow — free sin robos → paywall justo cuando
+    // hay deseo (acaba de elegir el reel). En demo lo demostramos aquí; en real lo
+    // confirma el backend (free_limit_reached). El muro borroso ya enseña el valor.
+    if(isDemo() && isFree() && freeStealsLeft()<=0){ showPaywall("free_limit_reached"); return; }
     // Fix review (T6): si ESTE reel ya tiene un robo en vuelo (lo mandó a background
     // con X/Esc/«seguir navegando»), no relanzamos — reabrimos el orbe del que ya
     // corre. Evita guiones duplicados y, en demo, el doble descuento de crédito.
@@ -2502,7 +2516,7 @@
       else { S.activeGuionId=gidNew; S.view="script"; render(); }
       // Demo: descuento local cosmético. Prod: el backend ya cobró server-side →
       // refrescamos el saldo real (/auth/me) sin descontar local (evita doble-cobro).
-      if(isDemo()){ spend(COST.script); bumpEco(1,1); flashSpark(-COST.script); }
+      if(isDemo()){ if(isFree()){ if(S.user.freeLeft>0) S.user.freeLeft--; } else { spend(COST.script); } bumpEco(1,1); flashSpark(-COST.script); }
       else { refreshCredits().then(function(){ flashSpark(0); }); }
     });
   }
@@ -2539,8 +2553,8 @@
   // Muro: free agotó sus guiones del mes (o sin créditos). Abre el modal de planes.
   function showPaywall(err){
     var msg = (err==="free_limit_reached")
-      ? "Has usado tus guiones gratis de este mes. Sube a Creador para seguir creando."
-      : "Necesitas créditos para generar este guion.";
+      ? L("Sin robos gratis este mes. Tu radar tiene más ideas que petan — desbloquéalas.","No free steals left this month. Your radar has more ideas blowing up — unlock them.")
+      : L("Necesitas créditos para robar esta idea.","You need credits to steal this idea.");
     showToast(msg);
     // FIX free-counter: refresca el contador real tras el muro (la pill no debe
     // quedarse en "1 este mes" cuando el restante real es 0).
@@ -3708,7 +3722,7 @@
         // ?onb=1 → fuerza el onboarding v2 en demo (sin tocar el flujo normal/harness)
         if(qs.get("onb")==="1"){ S.onb._force=true; S.onb.skipped=false; S.onb.step="handle"; S.reels=[]; S.tracked=[]; }
         // ?free=1 → simula plan FREE en demo (para ver el muro borroso de métricas)
-        if(qs.get("free")==="1"){ S._demoFree=true; }
+        if(qs.get("free")==="1"){ S._demoFree=true; S.user.freeLeft=2; }
       }catch(e){} }
       loadBrandData();
     });
