@@ -480,7 +480,7 @@
     var body;
     if(S.onb.valueLoading){
       body='<div class="onb-value-load"><span class="mini-spin" style="width:22px;height:22px;border-width:3px"></span> '+L("Analizando tu nicho… leyendo lo que petó esta semana","Analyzing your niche… reading what blew up this week")+'</div>'+
-        '<div class="onb-value-grid">'+[0,1,2].map(function(){return '<div class="onb-vcard onb-vcard--skel"></div>';}).join("")+'</div>';
+        '<div class="onb-value-grid">'+[0,1,2,3].map(function(){return '<div class="onb-vcard onb-vcard--skel"></div>';}).join("")+'</div>';
     } else if(!(S.onb.valueReels||[]).length){
       // Seed vacío → no bloquear: estado "radar en marcha" (sensación de trabajo).
       body='<div class="onb-value-load"><span class="mini-spin" style="width:22px;height:22px;border-width:3px"></span> '+L("Radar en marcha — rastreando lo que petó en tu subnicho. En segundos lo tendrás en tu panel. Sigue y te espera ahí.","Radar running — tracking what blew up in your subniche. You'll have it in seconds. Keep going, it'll be waiting in your panel.")+'</div>';
@@ -549,10 +549,13 @@
         '<div class="onb-cards">'+list+'</div>';
     }
     var nPick=(S.onb.competitors||[]).filter(function(c){return c.picked;}).length;
+    // Cargando → SIN botón de avanzar (solo Atrás): no aparece antes que los resultados.
+    var compCta=S.onb.compLoading ? ''
+      : '<button class="btn btn-lg btn-primary onb-cta" data-act="onb-comps-next"'+(nPick<1?' disabled':'')+'>'+IC.arr+' '+L("Seguir a "+nPick+" y seguir","Follow "+nPick+" and continue")+'</button>';
     return onbCardWrap(onbEyebrow(L("Tu radar","Your radar")),L("¿A quién sigues de cerca?","Who do you keep an eye on?"),
       L("Pre-elegí a 2 de tu subnicho. Seguiré sus reels que petan para que robes el primero en tu voz. Quita o añade los que quieras.","I pre-picked 2 from your subniche. I'll track the reels that blow up so you can steal the first in your voice. Remove or add whoever you want."),
       body+onbErr()+
-      '<div class="onb-row">'+onbBackBtn()+'<button class="btn btn-lg btn-primary onb-cta" data-act="onb-comps-next"'+(nPick<1?' disabled':'')+'>'+IC.arr+' '+L("Seguir a "+nPick+" y seguir","Follow "+nPick+" and continue")+'</button></div>');
+      '<div class="onb-row">'+onbBackBtn()+compCta+'</div>');
   }
   // Paso 6 — objetivo (adapta tono+estructura).
   function onbGoalHTML(){
@@ -939,6 +942,33 @@
       return '<div class="stat"><div class="stat-k">'+ESC(s[0])+'</div><div class="stat-v">'+ESC(s[1])+'</div>'+(s[2]?'<div class="stat-d '+s[3]+'">'+ESC(s[2])+'</div>':'')+'</div>';
     }).join("")+brainCell+'</div>';
   }
+  /* Endowed progress (#2 plan): checklist de activación con el 1er paso ya hecho
+     («Cuenta creada») → sensación de avance + empuje a robar la primera idea. Se
+     oculta al completar los 4. Deriva de señales reales (brainSignals). */
+  function activationSteps(){
+    var s=brainSignals();
+    return [
+      {ok:true,         label:L("Cuenta creada","Account created")},
+      {ok:s.guiones>=1, label:L("Roba tu primera idea","Steal your first idea")},
+      {ok:s.voice>0,    label:L("Entrena tu voz","Train your voice")},
+      {ok:s.pub>=1,     label:L("Conecta tus métricas","Connect your metrics")}
+    ];
+  }
+  function activationProgressHTML(){
+    var steps=activationSteps();
+    var done=steps.filter(function(x){return x.ok;}).length;
+    if(done>=steps.length) return '';   // activación completa → nada que empujar
+    var next=steps.filter(function(x){return !x.ok;})[0];
+    var chips=steps.map(function(x){
+      return '<span class="ap-chip'+(x.ok?' ok':'')+'">'+(x.ok?IC.check:'<span class="ap-o">○</span>')+' '+ESC(x.label)+'</span>';
+    }).join("");
+    return '<div class="act-prog">'+
+      '<div class="act-prog-head"><span class="act-prog-t">'+L("Activa tu cuenta","Activate your account")+(next?' · '+ESC(next.label):'')+'</span>'+
+        '<span class="act-prog-n">'+done+'/'+steps.length+'</span></div>'+
+      '<div class="act-prog-bar"><div class="act-prog-fill" style="width:'+Math.round(done/steps.length*100)+'%"></div></div>'+
+      '<div class="act-prog-steps">'+chips+'</div>'+
+    '</div>';
+  }
   function dashboardHTML(){
     var st=S.stats||{competitors:0,reels_week:0,exploded_week:0,stolen_today:0}; var b=brand();
     var sorted=feedReels();
@@ -985,6 +1015,7 @@
       (isAgency()?brandTabsHTML():"")+
       statbarHTML()+
       trackedManageHTML()+
+      activationProgressHTML()+   // endowed progress: «1/4 · Roba tu primera idea»
       opportunityHTML(hero)+
       voiceOnboardCardHTML()+   // B6+T1: banner de voz BAJO la oportunidad — no empuja el hero bajo el fold
       nextSeriesHTML("dash")+   // B1+T1: "tu próxima serie" con CTA secundario en el Dashboard

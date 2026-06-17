@@ -10418,6 +10418,18 @@
     .rs .stat-link:focus-visible { box-shadow:inset 0 0 0 2px var(--brand-500); }
     .rs .stat-link .stat-v { font-size:24px; color:var(--brand-400); }
     /* ── FEATURE (señal destacada) ── */
+    /* Endowed progress (#2): barra de activación «X/4» en el Radar */
+    .rs .act-prog { border:1px solid color-mix(in srgb, var(--brand-500) 22%, var(--border-default)); border-radius:14px; padding:13px 16px; margin-bottom:14px; background:linear-gradient(120deg, color-mix(in srgb, var(--brand-500) 8%, var(--surface-raised)), var(--surface-raised)); }
+    .rs .act-prog-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:9px; }
+    .rs .act-prog-t { font-size:13.5px; font-weight:600; color:var(--text-primary); }
+    .rs .act-prog-n { font-family:var(--font-mono); font-size:12.5px; font-weight:700; color:var(--brand-500); flex-shrink:0; }
+    .rs .act-prog-bar { height:5px; border-radius:99px; background:var(--surface-overlay); overflow:hidden; margin-bottom:11px; }
+    .rs .act-prog-fill { height:100%; border-radius:99px; background:linear-gradient(90deg, var(--brand-500), #6f93ff); transition:width .5s var(--ease-out); }
+    .rs .act-prog-steps { display:flex; flex-wrap:wrap; gap:7px; }
+    .rs .ap-chip { display:inline-flex; align-items:center; gap:5px; font-size:12px; padding:4px 9px; border-radius:99px; border:1px solid var(--border-default); color:var(--text-secondary); background:var(--surface-raised); }
+    .rs .ap-chip svg { width:12px; height:12px; }
+    .rs .ap-chip.ok { border-color:color-mix(in srgb, var(--success-fg) 35%, transparent); color:var(--success-fg); background:color-mix(in srgb, var(--success-fg) 9%, transparent); }
+    .rs .ap-o { font-size:10px; opacity:.6; }
     .rs .feature { display:grid; grid-template-columns:184px 1fr 132px; border:1px solid var(--border-strong); border-radius:16px; background:var(--surface-raised); box-shadow:var(--shadow-lg); overflow:hidden; margin-bottom:14px; }
     .rs .feature-thumb { position:relative; } .rs .feature-thumb .thumb { width:100%; height:100%; min-height:230px; border:none; border-radius:0; border-right:1px solid var(--border-default); }
     .rs .feature-main { padding:24px 26px; min-width:0; display:flex; flex-direction:column; }
@@ -23834,6 +23846,7 @@ let tourTooltip = null;
 let tourSpotlight = null;
 let tourTrackRaf = 0;
 let tourHoldTimer = 0;   // poll de los pasos interactivos (hold)
+let tourHoldFocusHidden = false;   // true en cuanto el usuario pulsa el target de un paso hold
 
 function clearHoldWatch() { if (tourHoldTimer) { clearInterval(tourHoldTimer); tourHoldTimer = 0; } }
 // Pasos interactivos: en vez de «Siguiente», esperamos a que el usuario actúe.
@@ -23938,17 +23951,30 @@ function renderTourStep() {
   `;
   tourTooltip.style.display = "block";
 
-  // Arranca la espera de acción para los pasos interactivos.
-  if (step.hold) startHoldWatch(step);
+  // Arranca la espera de acción para los pasos interactivos. Además, en cuanto el
+  // usuario PULSA el target (crear / cerrar), ocultamos el foco AL INSTANTE — sin
+  // esperar al poll ni al tracking — para que no quede el recuadro flotando.
+  tourHoldFocusHidden = false;
+  if (step.hold) {
+    startHoldWatch(step);
+    if (el) el.addEventListener("click", function () {
+      tourHoldFocusHidden = true;
+      if (tourTrackRaf) { cancelAnimationFrame(tourTrackRaf); tourTrackRaf = 0; }
+      if (tourSpotlight) tourSpotlight.style.display = "none";
+      if (tourTooltip) tourTooltip.classList.remove("on");
+    }, { once: true });
+  }
 
   // DOBLE rAF + tracking: tras 2 frames (scroll/layout asentados) el spotlight se
   // pinta YA en su sitio y luego SIGUE al elemento frame a frame ~1s. Si el layout
   // se mueve (avatares/thumbs async), el recuadro va PEGADO (sin transición = sin
   // deslizar): nunca se ve "ponerse mal y moverse".
   requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (tourHoldFocusHidden) return;   // ya actuó: no muestres el foco
     tourTooltip.classList.add("on");
     var t0 = performance.now();
     (function track() {
+      if (tourHoldFocusHidden) { tourTrackRaf = 0; return; }
       positionSpotlight(el); positionTooltip(el);
       if (tourActive && performance.now() - t0 < 1000) tourTrackRaf = requestAnimationFrame(track);
       else tourTrackRaf = 0;
