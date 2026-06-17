@@ -23437,7 +23437,9 @@ const PLAN_META = {
 const PLAN_RANK = { free: 0, pro: 1, creator: 2, estudio: 3, agency: 4 };
 
 function openUpgradeModal(source) {
-  if (!st.user) { openAuth("register"); return; }
+  // En demo (sin login) NO redirigimos a registro: mostramos los planes igual — los
+  // precios son client-side (PLAN_META), así que el muro sí lleva a la suscripción.
+  if (!st.user && !window.__DEMO__) { openAuth("register"); return; }
   if (st.plan === "agency") {
     showToast(currentLang === "es" ? "Ya tienes el plan más alto." : "You're already on the top plan.");
     return;
