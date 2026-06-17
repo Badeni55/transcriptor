@@ -1775,28 +1775,63 @@
     var bt=S.brainTrain;
     if(!bt.cards.length && !bt.loading) brainTrainLoad();
   }
+  // Fathom 17/06: modo del día — un día se entrenan HOOKS, otro GUIONES. Override manual.
+  function brainTrainMode(){
+    var bt=S.brainTrain||{};
+    if(bt.mode==='hooks'||bt.mode==='guiones') return bt.mode;
+    return (new Date().getDate()%2===0)?'hooks':'guiones';
+  }
+  function setBrainTrainMode(m){
+    if(!S.brainTrain) S.brainTrain={cards:[], i:0, rated:0, loading:false};
+    if(S.brainTrain.mode===m) return;
+    S.brainTrain.mode=m; S.brainTrain.improving=false;
+    brainTrainLoad(); render();
+  }
   function brainTrainLoad(){
     var bt=S.brainTrain||(S.brainTrain={cards:[], i:0, rated:0, loading:false});
-    bt.loading=true; bt.i=0; bt.cards=[];
+    bt.loading=true; bt.i=0; bt.cards=[]; bt.improving=false;
+    var mode=brainTrainMode();
     var done=function(cards){ bt.cards=cards||[]; bt.i=0; bt.loading=false; if(S.tab==="brain") render(); };
-    if(isDemo()){ setTimeout(function(){ done(brainDemoCards()); }, 900); return; }
+    if(isDemo()){ setTimeout(function(){ done(brainDemoCards(mode)); }, 900); return; }
     var niche=(S.onb&&S.onb.niche)||"";
-    apiGet('/api/brain/training-cards'+(niche?('?niche='+encodeURIComponent(niche)):'')).then(function(r){
+    apiGet('/api/brain/training-cards?type='+mode+(niche?('&niche='+encodeURIComponent(niche)):'')).then(function(r){
       done((r.ok&&r.d&&Array.isArray(r.d.cards))?r.d.cards:[]);
     }).catch(function(){ done([]); });
   }
   function brainRate(rating){
     var bt=S.brainTrain; if(!bt||!bt.cards.length||bt.i>=bt.cards.length) return;
-    var c=bt.cards[bt.i]; bt.rated=(bt.rated||0)+1; bt.i++;
-    // voto = SOLO VISUAL: la partícula vuela y el cerebro reacciona, pero NO infla el
-    // % real ni los contadores → feed silencioso (sin toast "+1").
+    // 👎 "No es mío" → en vez de pasar, ofrecemos decir CÓMO lo dirías (Fathom: David).
+    if(!rating){ bt.improving=true; render(); return; }
+    _brainCommitVote(1, "");
+  }
+  // Envía el voto (+ sugerencia opcional) y avanza a la siguiente tarjeta.
+  function _brainCommitVote(rating, suggestion){
+    var bt=S.brainTrain; if(!bt||bt.i>=bt.cards.length) return;
+    var c=bt.cards[bt.i]; bt.rated=(bt.rated||0)+1; bt.i++; bt.improving=false;
+    // voto = SOLO VISUAL para el cerebro 3D (no infla el % real); feed silencioso.
     try{ if(window.RSBrain) window.RSBrain.feed(rating?'guio':'comp', true); }catch(e){}
-    if(!isDemo()){ var niche=(S.onb&&S.onb.niche)||""; try{ apiPost('/api/brain/rate',{text:c.text, kind:c.kind||'hook', rating:rating, niche:niche}); }catch(e){} }
+    if(!isDemo()){ var niche=(S.onb&&S.onb.niche)||""; try{ apiPost('/api/brain/rate',{text:c.text, kind:c.kind||brainTrainMode(), type:brainTrainMode(), rating:rating, suggestion:suggestion||"", niche:niche}); }catch(e){} }
     render();
   }
+  function brainImprove(send){
+    var bt=S.brainTrain; if(!bt) return;
+    var sug="";
+    if(send){ var ta=document.getElementById("rsBtSuggest"); sug=ta?ta.value.trim():""; }
+    _brainCommitVote(0, sug);
+  }
   function brainTrainMore(){ brainTrainLoad(); render(); }
-  function brainDemoCards(){
+  function brainDemoCards(mode){
     var n=(S.onb&&S.onb.niche)||(brand().name)||"tu nicho";
+    if(mode==='guiones'){
+      return [
+        {kind:"gancho + giro", text:"Pensaba que "+n+" era cuestión de talento. Hasta que descubrí esto."},
+        {kind:"lista",         text:"3 cosas de "+n+" que ojalá me hubieran dicho antes de empezar."},
+        {kind:"historia",      text:"Llevaba meses estancado en "+n+". Cambié una sola cosa y se movió todo."},
+        {kind:"contraste",     text:"Lo que crees que funciona en "+n+" vs lo que de verdad funciona."},
+        {kind:"reto",          text:"Hazlo 7 días en "+n+" y nota el cambio. Te lo cuento paso a paso."},
+        {kind:"error caro",    text:"Este error en "+n+" me costó meses. Para que no lo repitas."}
+      ];
+    }
     return [
       {kind:"polémico",       text:"Lo que nadie te dice sobre "+n+" (y por qué te están mintiendo)."},
       {kind:"error",          text:"El error de "+n+" que comete el 90% — y te frena sin que lo notes."},
@@ -1808,25 +1843,34 @@
   }
   function brainTrainHTML(){
     var bt=S.brainTrain, inner;
+    var mode=brainTrainMode();
+    var modeLbl=mode==='hooks'?L("hooks","hooks"):L("guiones","scripts");
+    var toggle='<div class="bt-modes">'+
+      '<button class="bt-mode'+(mode==='hooks'?' on':'')+'" data-act="brain-train-mode" data-k="hooks">'+IC.hook+' Hooks</button>'+
+      '<button class="bt-mode'+(mode==='guiones'?' on':'')+'" data-act="brain-train-mode" data-k="guiones">'+IC.doc+' '+L("Guiones","Scripts")+'</button>'+
+    '</div>';
     if(!bt || (bt.loading && !bt.cards.length)){
-      inner='<div class="bt-load"><span class="mini-spin"></span> Preparando hooks para entrenarte…</div>';
+      inner='<div class="bt-load"><span class="mini-spin"></span> '+L("Preparando "+modeLbl+" para entrenarte…","Preparing "+modeLbl+" to train you…")+'</div>';
     } else if(!bt.cards.length){
-      inner='<div class="bt-load">No pude traer hooks ahora. <button class="btn btn-sm btn-ghost" data-act="brain-train-more">Reintentar</button></div>';
+      inner='<div class="bt-load">'+L("No pude traer "+modeLbl+" ahora.","Couldn't fetch "+modeLbl+" now.")+' <button class="btn btn-sm btn-ghost" data-act="brain-train-more">'+L("Reintentar","Retry")+'</button></div>';
     } else if(bt.i>=bt.cards.length){
-      inner='<div class="bt-done">'+IC.check+' Has entrenado <b>'+(bt.rated||0)+'</b> hoy. Cada voto afina tu Cerebro. <button class="btn btn-sm btn-secondary" data-act="brain-train-more">'+IC.spark+' Traer más</button></div>';
+      inner='<div class="bt-done">'+IC.check+' '+L("Has entrenado <b>"+(bt.rated||0)+"</b> hoy. Cada voto afina tu Cerebro.","You've trained <b>"+(bt.rated||0)+"</b> today. Every vote sharpens your Brain.")+' <button class="btn btn-sm btn-secondary" data-act="brain-train-more">'+IC.spark+' '+L("Traer más","More")+'</button></div>';
     } else {
       var c=bt.cards[bt.i];
+      var actions = bt.improving
+        ? '<div class="bt-improve"><textarea id="rsBtSuggest" class="bt-suggest" rows="2" placeholder="'+L("¿Cómo lo dirías TÚ? (opcional)","How would YOU say it? (optional)")+'"></textarea>'+
+            '<div class="bt-row"><button class="bt-btn bt-skip" data-act="brain-improve" data-k="skip">'+L("Saltar","Skip")+'</button>'+
+            '<button class="bt-btn bt-yes" data-act="brain-improve" data-k="send">'+IC.arr+' '+L("Enviar y siguiente","Send & next")+'</button></div></div>'
+        : '<div class="bt-row"><button class="bt-btn bt-no" data-act="brain-rate" data-k="0" aria-label="No es mío">'+IC.x+' '+L("No es mío","Not me")+'</button>'+
+            '<button class="bt-btn bt-yes" data-act="brain-rate" data-k="1" aria-label="Suena a mí">'+IC.check+' '+L("Suena a mí","Sounds like me")+'</button></div>';
       inner='<div class="bt-card">'+
-        '<div class="bt-kind">'+ESC(c.kind||"hook")+'</div>'+
+        '<div class="bt-kind">'+ESC(c.kind||mode)+'</div>'+
         '<p class="bt-text">'+ESC(c.text)+'</p>'+
-        '<div class="bt-row">'+
-          '<button class="bt-btn bt-no" data-act="brain-rate" data-k="0" aria-label="No es mío">'+IC.x+' No es mío</button>'+
-          '<button class="bt-btn bt-yes" data-act="brain-rate" data-k="1" aria-label="Suena a mí">'+IC.check+' Suena a mí</button>'+
-        '</div>'+
-        '<div class="bt-prog">'+(bt.i+1)+' / '+bt.cards.length+' · <b>'+(bt.rated||0)+'</b> entrenados</div>'+
+        actions+
+        '<div class="bt-prog">'+(bt.i+1)+' / '+bt.cards.length+' · <b>'+(bt.rated||0)+'</b> '+L("entrenados","trained")+'</div>'+
       '</div>';
     }
-    return '<div class="brain-section-t">Entrena tu Cerebro <span class="brain-tag">cada voto te afina</span></div><div class="bt-wrap">'+inner+'</div>';
+    return '<div class="brain-section-t">'+L("Hoy toca entrenar tus "+modeLbl,"Today: train your "+modeLbl)+' <span class="brain-tag">'+L("cada voto te afina","every vote sharpens you")+'</span></div>'+toggle+'<div class="bt-wrap">'+inner+'</div>';
   }
   function brainHTML(){
     var b=brand();
@@ -3434,6 +3478,8 @@
     if(act==="open-brand") return openBrand(id);
     if(act==="demo-plan") return setDemoPlan(k);
     if(act==="brain-rate") return brainRate(parseInt(btn.getAttribute("data-k"),10)||0);
+    if(act==="brain-train-mode") return setBrainTrainMode(k);
+    if(act==="brain-improve") return brainImprove(k==="send");
     if(act==="brain-train-more") return brainTrainMore();
     if(act==="team-invite") return teamInvite();
     if(act==="team-edit") return showToast("Gestión de roles y marcas por miembro: próximamente.");

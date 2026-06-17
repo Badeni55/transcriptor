@@ -10242,6 +10242,16 @@
     }
     /* Brain «Entrenar» (inversión): valora hooks 👍/👎. */
     .rs .bt-wrap { margin:4px 0 20px; }
+    /* Fathom 17/06: toggle hooks/guiones + flujo "¿cómo lo dirías?" */
+    .rs .bt-modes { display:inline-flex; gap:4px; padding:3px; border-radius:10px; background:var(--surface-raised); border:1px solid var(--border-default); margin:2px 0 10px; }
+    .rs .bt-mode { display:inline-flex; align-items:center; gap:6px; padding:6px 13px; border-radius:7px; border:none; background:transparent; color:var(--text-tertiary); font:inherit; font-size:12.5px; font-weight:600; cursor:pointer; transition:background .15s, color .15s; }
+    .rs .bt-mode svg { width:14px; height:14px; }
+    .rs .bt-mode.on { background:var(--brand-500); color:#fff; }
+    .rs .bt-improve { display:flex; flex-direction:column; gap:9px; }
+    .rs .bt-suggest { width:100%; resize:vertical; min-height:46px; padding:10px 12px; border-radius:11px; border:1px solid var(--border-strong); background:var(--surface-base); color:var(--text-primary); font:inherit; font-size:14px; }
+    .rs .bt-suggest:focus { outline:none; border-color:var(--brand-500); }
+    .rs .bt-skip { flex:0 0 auto; min-width:90px; }
+    .rs .bt-skip:hover { border-color:var(--border-strong); color:var(--text-secondary); }
     .rs .bt-load, .rs .bt-done { font-size:13.5px; color:var(--text-secondary); padding:14px 16px; border:1px solid var(--border-default); border-radius:14px; background:var(--surface-raised); display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
     .rs .bt-card { border:1px solid color-mix(in srgb, var(--brand-500) 24%, transparent); border-radius:16px; padding:18px; background:linear-gradient(135deg, color-mix(in srgb, var(--brand-500) 8%, var(--surface-raised)), var(--surface-raised)); }
     .rs .bt-kind { font-family:var(--font-mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--brand-400); font-weight:600; }
