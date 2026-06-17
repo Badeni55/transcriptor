@@ -1037,6 +1037,7 @@
       nextSeriesHTML("dash")+   // B1+T1: "tu próxima serie" con CTA secundario en el Dashboard
       (S.reels.length?'<div class="plays">'+whaleHTML(fillCount)+'</div>':'')+
       (rest.length?('<div class="feed-head"><span class="feed-title">Más señales <span class="ct">· '+rest.length+'</span></span>'+filtersHTML()+'</div><div class="feed">'+rows+'</div>'+moreToggle):"")+
+      leaderboardHTML()+   // Fathom 17/06: tu posición vs competidores (Killer / competencia)
     '</div></div>';
   }
 
@@ -1608,6 +1609,41 @@
   function brainCompetitors(){
     var by={}; (S.reels||[]).forEach(function(r){ var h=r.creator&&r.creator.handle; if(!h) return; by[h]=(by[h]||0)+1; });
     return Object.keys(by).map(function(h){ return {handle:h, n:by[h]}; }).sort(function(a,b){return b.n-a.n;});
+  }
+  /* ── LEADERBOARD (Fathom 17/06) — tú vs tus competidores por seguidores, con "qué
+     te falta para subir". Arquetipo Killer (Bartle) + SDT-competencia. En demo los
+     seguidores se siembran deterministas por handle; en prod saldrían de métricas. */
+  function _lbHash(s,min,max){ var h=2166136261; for(var i=0;i<s.length;i++){ h=((h^s.charCodeAt(i))>>>0)*16777619>>>0; } return min+(h%(max-min)); }
+  function _fmtK(n){ n=Math.round(n); return n>=1000000?((n/1000000).toFixed(1).replace(/\.0$/,'')+'M'):n>=1000?((n/1000).toFixed(1).replace(/\.0$/,'')+'K'):String(n); }
+  function leaderboardRows(){
+    var b=brand();
+    var me={handle:(b.handle||S.user.handle||"tu_cuenta"), followers:42000, growth:8, you:true};
+    var comps=brainCompetitors().slice(0,6).map(function(c){
+      return {handle:c.handle, followers:_lbHash(c.handle,8000,180000), growth:_lbHash(c.handle+"g",0,28)-9, you:false};
+    });
+    return comps.concat([me]).sort(function(a,b){ return b.followers-a.followers; });
+  }
+  function leaderboardHTML(){
+    var rows=leaderboardRows();
+    if(rows.length<2) return '';
+    var myIdx=-1; rows.forEach(function(r,i){ if(r.you) myIdx=i; });
+    var above=myIdx>0?rows[myIdx-1]:null;
+    var gap=above?(above.followers-rows[myIdx].followers):0;
+    var items=rows.map(function(r,i){
+      var g=r.growth, gtxt=(g>=0?'↑':'↓')+Math.abs(g)+'%';
+      return '<div class="lb-row'+(r.you?' me':'')+'">'+
+        '<span class="lb-pos">'+(i+1)+'</span>'+
+        '<span class="ava bava">'+ESC(initialsOf(r.handle))+'</span>'+
+        '<span class="lb-h">@'+ESC(r.handle)+(r.you?' <b>('+L("tú","you")+')</b>':'')+'</span>'+
+        '<span class="lb-f">'+_fmtK(r.followers)+'</span>'+
+        '<span class="lb-g '+(g>=0?'up':'down')+'">'+gtxt+'</span>'+
+      '</div>';
+    }).join("");
+    var hint=above
+      ? '<div class="lb-hint">🎯 '+L("Te faltan <b>"+_fmtK(gap)+"</b> seguidores para superar a @"+ESC(above.handle),"<b>"+_fmtK(gap)+"</b> followers to overtake @"+ESC(above.handle))+'</div>'
+      : '<div class="lb-hint">🏆 '+L("Lideras tu nicho — sigue así","You lead your niche — keep it up")+'</div>';
+    return '<div class="brain-section-t" style="margin-top:8px">'+L("Tu posición en el nicho","Your rank in the niche")+' <span class="brain-tag">'+L("vs tus competidores","vs your competitors")+'</span></div>'+
+      '<div class="leaderboard">'+items+hint+'</div>';
   }
   // T3: lista REAL de competidores seguidos (con id de tracking → permite dejar de
   // seguir). Se carga aparte del feed; al resolver, repinta las vistas que la
