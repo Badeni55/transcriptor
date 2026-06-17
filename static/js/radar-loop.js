@@ -357,6 +357,12 @@
     '</div>';
   }
   function ecoLevelName(l){ return ({1:"Calentando",2:"Cogiendo forma",3:"En racha",4:"Afinado",5:"Imparable"})[l||1]||"Calentando"; }
+  // #6 conversión (vanidad + aversión a perder progreso): el nivel del Cerebro como
+  // ESTATUS visible en el header del Radar, no solo dentro de la pestaña Cerebro.
+  function brainBadgeHTML(){
+    var lv=brainLevel();
+    return '<button class="brain-badge" data-act="tab" data-k="brain" title="'+L("Tu Cerebro — cuanto más creas, más tuyo suena","Your Brain — the more you create, the more it sounds like you")+'">'+IC.brain+' '+L("Cerebro","Brain")+' <b>Nv '+lv.level+'</b> · '+ESC(ecoLevelName(lv.level))+'</button>';
+  }
 
   /* ════════════════════════════════════════════════════════════════
      growth-2 · ONBOARDING DE ACTIVACIÓN (sesión 1) — empty-state del Radar.
@@ -905,7 +911,7 @@
       '<div><div class="eyebrow"><span class="pip"></span>Portfolio · '+bs.length+' marcas</div>'+
       '<h1 class="h-title">Tus marcas</h1>'+
       '<p class="h-sub">Lo que pasó hoy en cada una. Entra donde haya algo que capitalizar.</p></div>'+
-      '<div class="phead-right">'+(S.user.streak>0?'<span class="streak">'+IC.spark+' Racha '+S.user.streak+' días</span>':'')+'</div>'+
+      '<div class="phead-right">'+brainBadgeHTML()+(S.user.streak>0?'<span class="streak">'+IC.spark+' Racha '+S.user.streak+' días</span>':'')+'</div>'+
     '</header>';
     return '<div class="scroll"><div class="canvas">'+
       head+statbar+
@@ -986,7 +992,7 @@
       '<div><div class="eyebrow"><span class="pip"></span>Radar · @'+ESC(b.handle||S.user.handle||"tu_cuenta")+'</div>'+
       '<h1 class="h-title">Señales de hoy</h1>'+
       '<p class="h-sub">'+line+'</p></div>'+
-      '<div class="phead-right">'+(S.user.streak>0?'<span class="streak">'+IC.spark+' Racha '+S.user.streak+' días</span>':'')+'</div>'+
+      '<div class="phead-right">'+brainBadgeHTML()+(S.user.streak>0?'<span class="streak">'+IC.spark+' Racha '+S.user.streak+' días</span>':'')+'</div>'+
     '</header>';
 
     // B: vista «Reels de @X» — todos los reels del competidor, sin recorte.

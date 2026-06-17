@@ -10445,6 +10445,17 @@
     .rs .feat-scarce.out b { color:var(--warn-fg, #d4a017); }
     .rs .feat-scarce-btn { border:none; background:none; font:inherit; padding:0; cursor:pointer; }
     .rs .feat-scarce-btn:hover { text-decoration:underline; }
+    /* #6 badge de nivel del Cerebro = estatus visible (vanidad + no perder progreso) */
+    .rs .brain-badge { display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; cursor:pointer;
+      padding:6px 12px; border-radius:99px; color:var(--brand-500); white-space:nowrap;
+      border:1px solid color-mix(in srgb, var(--brand-500) 32%, transparent);
+      background:linear-gradient(120deg, color-mix(in srgb, var(--brand-500) 12%, transparent), transparent);
+      transition:transform .12s, border-color .15s; }
+    .rs .brain-badge svg { width:14px; height:14px; }
+    .rs .brain-badge b { color:var(--brand-600); font-weight:800; }
+    .rs .brain-badge:hover { transform:translateY(-1px); border-color:var(--brand-500); }
+    .rs .brain-badge:active { transform:translateY(0); }
+    .rs--mobile .brain-badge { font-size:11.5px; padding:5px 10px; }
     .rs .feature { display:grid; grid-template-columns:184px 1fr 132px; border:1px solid var(--border-strong); border-radius:16px; background:var(--surface-raised); box-shadow:var(--shadow-lg); overflow:hidden; margin-bottom:14px; }
     .rs .feature-thumb { position:relative; } .rs .feature-thumb .thumb { width:100%; height:100%; min-height:230px; border:none; border-radius:0; border-right:1px solid var(--border-default); }
     .rs .feature-main { padding:24px 26px; min-width:0; display:flex; flex-direction:column; }
