@@ -804,7 +804,8 @@
      En demo, sugerencia determinista (no seguida aún). En prod la alimenta el backend
      (creadores del nicho con métricas en alza — reutilizar el flujo de scrape). */
   function suggestedComp(){
-    if(!isDemo() || S._suggDismissed) return null;
+    if(S._suggDismissed) return null;
+    if(!isDemo()) return S._suggReal || null;   // real: lo carga loadSuggestion()
     var pool=[
       {handle:"ia_con_marcos", x:"×8", tag_es:"Nuevo en tu nicho", tag_en:"New in your niche",
         why_es:"se pegó un reel de 210k (×8 su media)", why_en:"just hit a 210k reel (8× their average)"},
@@ -818,15 +819,26 @@
     if(!cands.length) return null;
     return cands[ (new Date().getDate()) % cands.length ];
   }
+  // Real: carga la sugerencia del backend (1 vez), luego re-render. La UI es la misma.
+  function loadSuggestion(){
+    if(isDemo() || S._suggDismissed || S._suggReal || S._suggLoading) return;
+    S._suggLoading=true;
+    apiGet('/api/suggested-competitor').then(function(r){
+      S._suggLoading=false;
+      if(r && r.ok && r.d && r.d.suggestion){ S._suggReal=r.d.suggestion; if(S.tab==="dashboard") render(); }
+    });
+  }
   function suggestedCompHTML(){
     var c=suggestedComp(); if(!c) return '';
-    var why=L(c.why_es, c.why_en);
+    var why=c.why || L(c.why_es, c.why_en);   // real → string; demo → bilingüe
+    var tag=c.tag || L(c.tag_es, c.tag_en);
+    var whyCap=why ? (why.charAt(0).toUpperCase()+why.slice(1)) : "";
     return '<div class="sugg-comp">'+
       onbAvatar(c.handle)+
       '<div class="sugg-body">'+
-        '<div class="sugg-tag">'+IC.spark+' '+L("Te lo sugiero","Suggested")+' · '+ESC(L(c.tag_es,c.tag_en))+'</div>'+
-        '<div class="sugg-h">@'+ESC(c.handle)+' <span class="sugg-x">'+ESC(c.x)+'</span></div>'+
-        '<div class="sugg-why">'+L("Acaba de "+why+". Aún no lo sigues — añádelo y sus reels entran en tu radar.","Just "+why+". You don't follow them yet — add them and their reels enter your radar.")+'</div>'+
+        '<div class="sugg-tag">'+IC.spark+' '+L("Te lo sugiero","Suggested")+' · '+ESC(tag)+'</div>'+
+        '<div class="sugg-h">@'+ESC(c.handle)+' <span class="sugg-x">'+ESC(c.x||"")+'</span></div>'+
+        '<div class="sugg-why">'+ESC(whyCap)+'. '+L("Aún no lo sigues — añádelo y sus reels entran en tu radar.","You don't follow them yet — add them and their reels enter your radar.")+'</div>'+
       '</div>'+
       '<div class="sugg-actions">'+
         '<button class="btn btn-sm btn-primary" data-act="add-suggested" data-id="'+ESC(c.handle)+'">'+IC.plus+' '+L("Añadir","Add")+'</button>'+
@@ -2461,6 +2473,7 @@
     // Cerebro 3D: monta/re-ancla al entrar en la pestaña Cerebro, pausa al salir.
     if(S.tab==="brain"){ ensureBrain3D(); ensureBrainTrain(); } else pauseBrain3D();
     ensureFlashCountdown();   // tic-tac del reloj de la oferta flash si está visible
+    if(S.tab==="dashboard") loadSuggestion();   // sugerir competidores (real): carga 1 vez
     // Sección legacy pendiente de la URL (/profile/transcriptions|settings): se abre
     // una vez que #rsLegacy ya existe (primer render). openLegacy consume el flag.
     if(S._pendingLegacy && document.getElementById("rsLegacy")){ var _pl=S._pendingLegacy; S._pendingLegacy=null; openLegacy(_pl); }
@@ -3745,12 +3758,16 @@
     if(act==="force-scrape"){ return forceScrape(); }
     if(act==="add-suggested"){
       var sh=btn.getAttribute("data-id")||"";
-      if(isDemo()){ S.tracked=(Array.isArray(S.tracked)?S.tracked:[]).concat([{id:"sugg_"+sh, handle:sh, name:sh}]); }
-      S._suggDismissed=true;
-      showToast(L("@"+sh+" añadido a tu radar — sus reels empezarán a aparecer.","@"+sh+" added to your radar — their reels will start showing up."));
-      return render();
+      S._suggDismissed=true; S._suggReal=null;
+      if(isDemo()){
+        S.tracked=(Array.isArray(S.tracked)?S.tracked:[]).concat([{id:"sugg_"+sh, handle:sh, name:sh}]);
+        showToast(L("@"+sh+" añadido a tu radar — sus reels empezarán a aparecer.","@"+sh+" added to your radar — their reels will start showing up."));
+        return render();
+      }
+      render();                  // oculta la tarjeta
+      return _followAuthor(sh);  // sigue de verdad (POST /api/tracked-creators + refresh)
     }
-    if(act==="sugg-dismiss"){ S._suggDismissed=true; showToast(L("Vale, te sugeriré otro.","Okay, I'll suggest another.")); return render(); }
+    if(act==="sugg-dismiss"){ S._suggDismissed=true; S._suggReal=null; showToast(L("Vale, te sugeriré otro.","Okay, I'll suggest another.")); return render(); }
     if(act==="versus-start"){
       var opp=btn.getAttribute("data-id")||"rival";
       S.versus={ opp:opp, youHandle:(brand().handle||S.user.handle||"tu_cuenta"),

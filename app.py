@@ -7314,6 +7314,97 @@ def brain_rescrape():
                     "message": "Análisis de tu perfil encolado — tu nivel sube en cuanto termine."}), 200
 
 
+@app.route("/api/suggested-competitor", methods=["GET"])
+@require_auth
+@limiter.limit("60 per hour")
+def suggested_competitor():
+    """Sugerir competidores (Fathom 18/06): un creador del nicho que el usuario NO sigue
+    aún y está en alza. Heurística por CO-OCURRENCIA (quien sigue a tus competidores
+    también sigue a estos) → niche-relevante sin tag explícito. Acompaña el mejor
+    candidato de un reel reciente que petó. La UI ya existe (suggestedComp)."""
+    user = current_user()
+    uid = user["id"]
+    # 1. Mis competidores.
+    try:
+        mine_r = (db.table("user_tracked_creators").select("creator_id")
+                    .eq("user_id", uid).is_("archived_at", "null").execute())
+        mine = {r["creator_id"] for r in (mine_r.data or []) if r.get("creator_id")}
+    except Exception:
+        mine = set()
+    if not mine:
+        return jsonify({"suggestion": None}), 200
+    # 2. Peers que siguen a alguno de mis competidores.
+    peer_ids = set()
+    mine_list = list(mine)
+    for i in range(0, len(mine_list), 100):
+        try:
+            pr = (db.table("user_tracked_creators").select("user_id")
+                    .in_("creator_id", mine_list[i:i + 100]).is_("archived_at", "null")
+                    .neq("user_id", uid).limit(3000).execute())
+            peer_ids.update(r["user_id"] for r in (pr.data or []) if r.get("user_id"))
+        except Exception:
+            pass
+    # 3. Creadores que esos peers siguen y yo NO → co-ocurrencia.
+    counts = {}
+    peer_list = list(peer_ids)
+    for i in range(0, len(peer_list), 100):
+        try:
+            cr = (db.table("user_tracked_creators").select("creator_id")
+                    .in_("user_id", peer_list[i:i + 100]).is_("archived_at", "null")
+                    .limit(5000).execute())
+            for r in (cr.data or []):
+                cid = r.get("creator_id")
+                if cid and cid not in mine:
+                    counts[cid] = counts.get(cid, 0) + 1
+        except Exception:
+            pass
+    if not counts:
+        return jsonify({"suggestion": None}), 200
+    ranked = sorted(counts.items(), key=lambda kv: -kv[1])[:8]
+    cand_ids = [c for c, _ in ranked]
+    # 4. Mejor reel reciente (explosión) de los candidatos.
+    baselines = _creator_view_baselines(cand_ids)
+    try:
+        reels = (db.table("creator_reels_global")
+                   .select("creator_id, views, posted_at")
+                   .in_("creator_id", cand_ids).eq("is_archived", False)
+                   .order("posted_at", desc=True).limit(240).execute()).data or []
+    except Exception:
+        reels = []
+    best = {}
+    for r in reels:
+        cid = r.get("creator_id"); v = int(r.get("views") or 0)
+        exp = _explosion_score(v, baselines.get(cid))
+        score = exp if exp is not None else 0
+        if cid and (cid not in best or score > best[cid]["score"]):
+            best[cid] = {"views": v, "exp": exp, "score": score}
+    chosen = None
+    for cid, cooc in ranked:
+        info = best.get(cid)
+        if info and info["views"] > 0:
+            chosen = (cid, cooc, info); break
+    if not chosen:
+        cid, cooc = ranked[0]; chosen = (cid, cooc, best.get(cid) or {})
+    cid, cooc, info = chosen
+    try:
+        cg = db.table("creators_global").select("ig_username").eq("id", cid).single().execute()
+        handle = ((cg.data or {}).get("ig_username") or "").lstrip("@")
+    except Exception:
+        handle = ""
+    if not handle:
+        return jsonify({"suggestion": None}), 200
+    exp = info.get("exp"); views = info.get("views") or 0
+    if exp and exp >= 2:
+        why = f"se pegó un reel de {_fmt_views(views)} (×{exp:g} su media)"; xtag = f"×{exp:g}"
+    elif views:
+        why = f"tiene un reel reciente de {_fmt_views(views)}"; xtag = _fmt_views(views)
+    else:
+        why = "está creciendo en tu nicho"; xtag = "en alza"
+    return jsonify({"suggestion": {
+        "handle": handle, "why": why, "x": xtag, "tag": "Lo siguen en tu nicho",
+    }}), 200
+
+
 @app.route("/api/onboarding/complete", methods=["POST"])
 @require_auth
 @limiter.limit("10 per hour;30 per day")
