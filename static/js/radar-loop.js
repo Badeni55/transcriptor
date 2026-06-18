@@ -301,8 +301,9 @@
     var streak=(S.user.streak>0)?'<span class="cmd-streak" title="Días seguidos creando">'+IC.spark+' Racha '+S.user.streak+'</span>':'';
     var demoToggle=isDemo()?'<div class="demo-plan" title="Solo demo: cambia de plan"><span class="dp-k">DEMO</span>'+
       '<button class="dp'+(S._demoFree===true?" on":"")+'" data-act="demo-plan" data-k="free">Free</button>'+
-      '<button class="dp'+(!S._demoFree && S.plan==="creador"?" on":"")+'" data-act="demo-plan" data-k="creador">Creador</button>'+
-      '<button class="dp'+(!S._demoFree && S.plan==="agencia"?" on":"")+'" data-act="demo-plan" data-k="agencia">Agencia</button></div>':'';
+      '<button class="dp'+(S._demoTrial===true?" on":"")+'" data-act="demo-plan" data-k="trial">Trial</button>'+
+      '<button class="dp'+(!S._demoFree && !S._demoTrial && S.plan==="creador"?" on":"")+'" data-act="demo-plan" data-k="creador">Creador</button>'+
+      '<button class="dp'+(!S._demoFree && !S._demoTrial && S.plan==="agencia"?" on":"")+'" data-act="demo-plan" data-k="agencia">Agencia</button></div>':'';
     return '<div class="cmd">'+
       (isMultiBrand()?brandSwitchHTML():brandStaticHTML())+
       crumb+
@@ -322,8 +323,14 @@
   //   · free post-trial sin créditos → guiones gratis del mes restantes.
   //   · resto → créditos.
   function pillStatHTML(){
-    if(!isDemo() && S.user.trialActive){
+    if(isTrial()){
       var d=S.user.trialDaysLeft||0;
+      // Modelo nuevo (5 días · 3 guiones/día): si hay contador diario (demo, o real
+      // cuando el backend lo mande) muestra "X hoy"; si no, cae al de créditos del trial.
+      if(S.user.dayLeft!=null){
+        var dl=S.user.dayLeft;
+        return '<div class="spark pill-stat trial" id="rsSpark" title="Prueba Pro — '+dl+' guion'+(dl===1?'':'es')+' hoy · '+d+' día'+(d===1?'':'s')+' restantes" data-act="tab" data-k="brain" role="button" tabindex="0">'+IC.spark+'<span class="num">Pro</span> · <b id="rsSparkN">'+dl+'</b> hoy · '+d+'d</div>';
+      }
       var cr=S.user.trialCreditsLeft||0;
       return '<div class="spark pill-stat trial" id="rsSpark" title="Prueba Pro — '+cr+' crédito'+(cr===1?'':'s')+' · '+d+' día'+(d===1?'':'s')+' restantes" data-act="tab" data-k="brain" role="button" tabindex="0">'+IC.spark+'<span class="num">Pro</span> · '+cr+' cr</div>';
     }
@@ -1431,6 +1438,8 @@
   // F: free ve el producto pero las MÉTRICAS al detalle van borrosas. En demo se
   // fuerza con ?free=1 (el plan normal demo es de pago).
   function isFree(){ return isDemo() ? (S._demoFree===true) : (S.realPlan==="free" || !S.realPlan); }
+  // Trial = reverse-trial Pro (5 días, 3 guiones/día). En demo se activa con el toggle.
+  function isTrial(){ return isDemo() ? !!S._demoTrial : !!S.user.trialActive; }
   // #2 conversión (decisión interesante): robos gratis restantes este mes. null si no es free.
   function freeStealsLeft(){ if(!isFree()) return null; return (S.user.freeLeft!=null ? S.user.freeLeft : (isDemo()?2:0)); }
   function metricsLockHTML(inner){
@@ -2370,7 +2379,7 @@
   /* ── animaciones ─────────────────────────────────────────────── */
   // T6: con S._genSlow los mensajes honestos rotan LENTO (no es teatro, es espera real).
   function startGenSteps(){ clearInterval(S.genStepTimer); var steps=S._genSlow?HONEST_MSGS:(GEN_STEPS[S.genKind]||GEN_STEPS.script),i=0; S.genStepTimer=setInterval(function(){ i=(i+1)%steps.length; var n=document.getElementById("rsGenStep"); if(n){ n.style.opacity=0; setTimeout(function(){ n.textContent=steps[i]; n.style.opacity=1; },150); } },S._genSlow?9000:700); }
-  function flashSpark(delta){ var sp=document.getElementById("rsSpark"),nEl=document.getElementById("rsSparkN"); if(nEl) nEl.textContent=(S.user.plan==="free" && !S.user.credits)?S.user.freeLeft:S.user.credits; if(sp&&delta<0){ sp.classList.add("flash"); var fly=document.createElement("span"); fly.className="spark-fly"; fly.textContent=delta; sp.appendChild(fly); setTimeout(function(){ sp.classList.remove("flash"); if(fly.parentNode) fly.parentNode.removeChild(fly); },1000); } }
+  function flashSpark(delta){ var sp=document.getElementById("rsSpark"),nEl=document.getElementById("rsSparkN"); if(nEl) nEl.textContent=isTrial()?((S.user.dayLeft!=null)?S.user.dayLeft:3):((S.user.plan==="free" && !S.user.credits)?S.user.freeLeft:S.user.credits); if(sp&&delta<0){ sp.classList.add("flash"); var fly=document.createElement("span"); fly.className="spark-fly"; fly.textContent=delta; sp.appendChild(fly); setTimeout(function(){ sp.classList.remove("flash"); if(fly.parentNode) fly.parentNode.removeChild(fly); },1000); } }
   // T9 (IDI): showToast acepta una acción opcional («Deshacer») — con acción el
   // toast dura más (6s) para dar tiempo a reaccionar.
   function showToast(msg, actionLabel, actionAct){
@@ -2545,11 +2554,14 @@
   }
   // Toggle de plan SOLO en demo, para ver las dos experiencias.
   function setDemoPlan(k){
-    var toFree=(k==="free");
-    var plan=toFree?"creador":k;   // free reusa el layout de creador (1 marca) + isFree()=true
-    if(S.plan===plan && (S._demoFree===true)===toFree){ return; }   // sin cambio real
-    S._demoFree=toFree; S.plan=plan; S.brandMenu=false; S.view="feed"; S.feedExpanded=false; S._lvlSeen=null;
+    var toFree=(k==="free"), toTrial=(k==="trial");
+    var plan=(toFree||toTrial)?"creador":k;   // free/trial reusan el layout de creador (1 marca)
+    if(S.plan===plan && (S._demoFree===true)===toFree && (S._demoTrial===true)===toTrial){ return; }   // sin cambio real
+    S._demoFree=toFree; S._demoTrial=toTrial; S.plan=plan; S.brandMenu=false; S.view="feed"; S.feedExpanded=false; S._lvlSeen=null;
     if(toFree) S.user.freeLeft=2;   // demo free: 2 robos gratis/mes (free_scripts_monthly) → escasez visible
+    // Trial = Pro 5 días con tope de 3 guiones/día (Fathom 18/06).
+    if(toTrial){ S.user.trialActive=true; S.user.trialDaysLeft=5; S.user.dayLeft=3; }
+    else { S.user.trialActive=false; }
     if(plan==="agencia"){ S.brands=demoBrands(); S.brandId=S.brands[0].id; S.tab="portfolio"; }   // macro
     else { S.brands=[demoBrands()[0]]; S.brandId=S.brands[0].id; S.tab=toFree?"metrics":"dashboard"; applyDemoBrand(); }
     render();
@@ -2669,6 +2681,9 @@
     // hay deseo (acaba de elegir el reel). En demo lo demostramos aquí; en real lo
     // confirma el backend (free_limit_reached). El muro borroso ya enseña el valor.
     if(isDemo() && isFree() && freeStealsLeft()<=0){ showPaywall("free_limit_reached"); return; }
+    // Trial: tope de 3 guiones/día (Fathom 18/06). En demo lo demostramos; en real lo
+    // cuenta y resetea el backend. El muro diario empuja a volver mañana o a pagar.
+    if(isTrial() && S.user.dayLeft!=null && S.user.dayLeft<=0){ showDailyLimit(); return; }
     // Fix review (T6): si ESTE reel ya tiene un robo en vuelo (lo mandó a background
     // con X/Esc/«seguir navegando»), no relanzamos — reabrimos el orbe del que ya
     // corre. Evita guiones duplicados y, en demo, el doble descuento de crédito.
@@ -2703,7 +2718,7 @@
       else { S.activeGuionId=gidNew; S.view="script"; render(); }
       // Demo: descuento local cosmético. Prod: el backend ya cobró server-side →
       // refrescamos el saldo real (/auth/me) sin descontar local (evita doble-cobro).
-      if(isDemo()){ if(isFree()){ if(S.user.freeLeft>0) S.user.freeLeft--; } else { spend(COST.script); } bumpEco(1,1); flashSpark(-COST.script); }
+      if(isDemo()){ if(isFree()){ if(S.user.freeLeft>0) S.user.freeLeft--; } else if(S._demoTrial){ if(S.user.dayLeft>0) S.user.dayLeft--; } else { spend(COST.script); } bumpEco(1,1); flashSpark(-COST.script); }
       else { refreshCredits().then(function(){ flashSpark(0); }); }
     });
   }
@@ -2747,6 +2762,12 @@
     // quedarse en "1 este mes" cuando el restante real es 0).
     if(!isDemo()){ refreshCredits().then(function(){ render(); }); }
     if(typeof window.openUpgradeModal==="function"){ try{ window.openUpgradeModal("hazlo_mio_free_limit"); }catch(e){} }
+  }
+  // Tope diario del trial: aviso suave (no es "sin créditos", es "vuelve mañana").
+  function showDailyLimit(){
+    showToast(L("Has hecho tus 3 guiones de hoy. Vuelve mañana — o desbloquea sin límite.",
+                "You've used your 3 scripts for today. Come back tomorrow — or unlock unlimited."),
+              L("Ver planes","See plans"), "open-plans");
   }
   function ensureScript(r,cb){
     if(r.script&&r.script.hook){ setTimeout(function(){cb();},1700); return; }
@@ -3915,6 +3936,7 @@
         if(qs.get("onb")==="1"){ S.onb._force=true; S.onb.skipped=false; S.onb.step="handle"; S.reels=[]; S.tracked=[]; }
         // ?free=1 → simula plan FREE en demo (para ver el muro borroso de métricas)
         if(qs.get("free")==="1"){ S._demoFree=true; S.user.freeLeft=2; }
+        if(qs.get("trial")==="1"){ S._demoTrial=true; S.user.trialActive=true; S.user.trialDaysLeft=5; S.user.dayLeft=3; }
       }catch(e){} }
       loadBrandData();
     });
