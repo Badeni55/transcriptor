@@ -7843,6 +7843,16 @@ def generate_script_from_competitor_reel(reel_id: str):
     creator_id = creator["id"]
     ig_username = creator.get("ig_username") or ""
 
+    # Activación (Fathom 18/06): funnel tutorial → 1er robo. Marca cada robo y, si es
+    # el PRIMERO del usuario, el evento "activated" (la métrica norte de la activación).
+    try:
+        _n = (db.table("scripts").select("id", count="exact").eq("user_id", uid).execute()).count or 0
+        track_event("reel_steal", uid, {"reel_id": reel_id, "nth": _n + 1})
+        if _n == 0:
+            track_event("activated", uid, {"first_steal_reel": reel_id, "creator": ig_username})
+    except Exception:
+        pass
+
     own_r = (db.table("user_tracked_creators")
                .select("id")
                .eq("user_id", uid)

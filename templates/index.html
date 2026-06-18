@@ -24213,7 +24213,11 @@ function positionTooltip(el) {
 }
 
 function nextTourStep() {
-  if (tourStep >= TOUR_STEPS.length - 1) { endTour(); return; }
+  if (tourStep >= TOUR_STEPS.length - 1) {
+    // Activación (Fathom 18/06): completó el tutorial → 1er paso del funnel a "1er robo".
+    try { window.posthog && window.posthog.capture("tutorial_completed", { steps: TOUR_STEPS.length }); } catch (e) {}
+    endTour(); return;
+  }
   tourStep++;
   showTourStep();
 }
@@ -24225,6 +24229,7 @@ function prevTourStep() {
 }
 
 function skipTour() {
+  try { window.posthog && window.posthog.capture("tutorial_skipped", { at_step: tourStep + 1 }); } catch (e) {}
   endTour();
 }
 
