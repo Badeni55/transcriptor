@@ -244,14 +244,15 @@ TOPUPS = {
 PLAN_LIMITS = {p: v["monthly_uses"] or None for p, v in PLANS.items()}
 
 # ── Reverse-trial ────────────────────────────────────────────────────────────
-# Al registrarse: 3 días de Pro CAPADO sin tarjeta (trial_ends_at). Features de
-# pago desbloqueadas pero con TOPE de TRIAL_CREDIT_CAP créditos. El trial deja de
-# ser usable cuando se agota el tope O pasan los 3 días → cae a FREE mensual
-# ligero (3 análisis + 2 guiones + 1 competidor, resetea cada mes) + watermark.
-# El contador del tope = monthly_usage (lo que ya incrementan transcribe/genscript
-# durante el trial; 1 unidad = 1 crédito). NO toca los planes de pago.
-TRIAL_DAYS = 3
-TRIAL_CREDIT_CAP = 10        # tope de créditos (= acciones de pago) durante el trial
+# Al registrarse: 5 días de Pro CAPADO sin tarjeta (trial_ends_at). Features de
+# pago desbloqueadas pero con TOPE DIARIO de TRIAL_DAILY_SCRIPTS guiones/día (Fathom
+# 18/06: David quiere 5 días · 3 guiones/día para crear hábito sin quemarlo el día 1).
+# El trial deja de ser usable cuando pasan los 5 días → cae a FREE mensual ligero.
+# Tope diario = nº de scripts creados hoy (trial_scripts_today). TRIAL_CREDIT_CAP queda
+# como backstop total del trial (= 5×3). NO toca los planes de pago.
+TRIAL_DAYS = 5
+TRIAL_DAILY_SCRIPTS = 3      # tope de guiones/día durante el trial (reset diario, UTC)
+TRIAL_CREDIT_CAP = 15        # backstop total del trial (= TRIAL_DAYS × TRIAL_DAILY_SCRIPTS)
 TRIAL_PLAN = "creator"       # tier cuyos límites/feature-set ve el trial (Pro completo)
 
 
@@ -296,6 +297,26 @@ def trial_days_left(profile: dict) -> int:
     if secs <= 0:
         return 0
     return int(secs // 86400) + (1 if secs % 86400 else 0)
+
+
+def trial_scripts_today(user_id) -> int:
+    """Guiones creados HOY (UTC) por el usuario — base del tope diario del trial.
+    Sin tabla nueva: se cuenta de `scripts` por fecha (Fathom 18/06)."""
+    start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    try:
+        r = (db.table("scripts").select("id", count="exact")
+               .eq("user_id", user_id)
+               .gte("created_at", start.isoformat()).execute())
+        return r.count or 0
+    except Exception:
+        return 0
+
+
+def trial_daily_left(profile: dict) -> int:
+    """Guiones que le quedan HOY en el trial (None-equivalente: 0 si no está en trial)."""
+    if not in_trial(profile):
+        return 0
+    return max(0, TRIAL_DAILY_SCRIPTS - trial_scripts_today(profile.get("id")))
 
 
 def effective_plan(profile: dict) -> str:
@@ -1153,6 +1174,9 @@ def auth_me():
         "trial_days_left": trial_days_left(profile),
         "trial_credit_cap": TRIAL_CREDIT_CAP,
         "trial_credits_left": trial_credits_left(profile) if in_trial(profile) else 0,
+        # Fathom 18/06: tope diario del trial (3 guiones/día). El front lo muestra "N hoy".
+        "trial_daily_cap": TRIAL_DAILY_SCRIPTS,
+        "trial_daily_left": trial_daily_left(profile),
         "effective_plan": effective_plan(profile),
         # watermark en exports: solo free post-trial (ni pago ni trial).
         "watermark": not paid_features_active(profile, user),
@@ -7584,6 +7608,15 @@ def generate_script_from_competitor_reel(reel_id: str):
     except Exception as e:
         logger.warning("generate_script: dup check failed user=%s reel=%s err=%s",
                        uid, reel_id, e)
+
+    # Trial (Fathom 18/06): 5 días de Pro pero TOPE DIARIO de 3 guiones. Muro suave
+    # "vuelve mañana" — empuja al hábito y, al 4º, a desbloquear. Antes de la cuota.
+    if in_trial(profile) and trial_scripts_today(uid) >= TRIAL_DAILY_SCRIPTS:
+        track_event("paywall_shown", uid, {"wall": "trial_daily", "plan": plan})
+        return jsonify({
+            "error": "trial_daily_limit",
+            "message": f"Has hecho tus {TRIAL_DAILY_SCRIPTS} guiones de hoy. Vuelve mañana — o desbloquea sin límite."
+        }), 402
 
     # 1-2. Quién puede generar y cómo se paga este guion (sin cobrar todavía).
     #   paid  → cuenta contra su asignación mensual (monthly_usage).

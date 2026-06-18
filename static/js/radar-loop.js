@@ -2806,11 +2806,12 @@
       else if(S._stealInFlight===id) S._stealInFlight=null;   // robo superado: libera el guard de ESTE reel
       if(err){
         if(bg){
-          if(err==="free_limit_reached"||err==="no_credits") showPaywall(err);
+          if(err==="trial_daily_limit") showDailyLimit();
+          else if(err==="free_limit_reached"||err==="no_credits") showPaywall(err);
           else showError("No pude terminar tu guion. Inténtalo de nuevo.");   // persistente (T4): el usuario está en otra vista
           return;
         }
-        S.view="feed"; render(); showPaywall(err); return;
+        S.view="feed"; render(); if(err==="trial_daily_limit") showDailyLimit(); else showPaywall(err); return;
       }
       // El guión generado se guarda SIEMPRE en Guiones (draft). No se pierde nada.
       var s=r.script||{}; var gidNew=addGuion({title:s.hook, hook:s.hook, beats:s.beats, close:s.close, from:"@"+r.creator.handle, type:"guión"});
@@ -3219,6 +3220,7 @@
   // Distingue muro de pago (402/free_limit) de error genérico, reusando showPaywall.
   function showPaywallOrError(r){
     var ec=(r.d&&r.d.error)||"error";
+    if(ec==="trial_daily_limit"){ return showDailyLimit(); }
     if(r.status===402 || ec==="free_limit_reached" || ec==="no_credits"){ return showPaywall(ec); }
     showToast((r.d&&r.d.message)||(r.d&&r.d.error)||"No se pudo completar. Inténtalo de nuevo.");
   }
@@ -4033,6 +4035,8 @@
       S.user.trialActive=!!me.trial_active;
       S.user.trialDaysLeft=me.trial_days_left||0;
       S.user.trialCreditsLeft=(me.trial_credits_left!=null)?me.trial_credits_left:0;
+      // Fathom 18/06: tope diario del trial (3 guiones/día) → la pill muestra "N hoy".
+      if(me.trial_daily_left!=null) S.user.dayLeft=me.trial_daily_left;
       S.user.watermark=!!me.watermark;
       // Plan: en demo arranca en Agencia para ver el portfolio (toggle lo cambia);
       // en prod sale de /auth/me (profiles.plan).
