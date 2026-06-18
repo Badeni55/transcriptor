@@ -2535,6 +2535,33 @@ def voice_prompt_block(vp) -> str:
     return "\n".join(parts)
 
 
+def brain_voice_block(user_id, brand_id=None) -> str:
+    """Señal del Brain «Entrenar» (Fathom 18/06): hooks que el creador marcó 👍/👎 y
+    sus sugerencias ('cómo lo diría él'). Pesa el gusto REAL por encima de lo genérico.
+    Tolera que la tabla brain_ratings no exista todavía (devuelve '')."""
+    if not user_id:
+        return ""
+    try:
+        q = (db.table("brain_ratings")
+               .select("content,rating,suggestion")
+               .eq("user_id", user_id))
+        if brand_id is not None:
+            q = q.eq("brand_id", brand_id or "")
+        rows = (q.order("created_at", desc=True).limit(40).execute().data) or []
+    except Exception:
+        return ""
+    liked    = [r["content"] for r in rows if (r.get("rating") or 0) > 0 and r.get("content")][:6]
+    disliked = [r["content"] for r in rows if (r.get("rating") or 0) < 0 and r.get("content")][:4]
+    sugg     = [r["suggestion"] for r in rows if r.get("suggestion")][:4]
+    if not (liked or disliked or sugg):
+        return ""
+    parts = ["\n\n=== GUSTO DEL CREADOR (Brain «Entrenar» — pesa más que lo genérico) ==="]
+    if liked:    parts.append("Hooks que le GUSTAN (imita su tono y estructura): " + " · ".join(liked))
+    if disliked: parts.append("Hooks que RECHAZÓ (no van con él, evítalos): " + " · ".join(disliked))
+    if sugg:     parts.append("Cómo lo diría ÉL (aplica estas correcciones suyas): " + " · ".join(sugg))
+    return "\n".join(parts)
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 #  LOOP DE MEDICIÓN (C) — el lock-in: reel publicado → guión que lo originó →
 #  ¿superó tu media? → realimenta el VoiceProfile (B). El modelo de voz mejora
@@ -2806,6 +2833,7 @@ def adapt_with_ai(text: str, style: str, custom_prompt: str = "", voice=None, us
         neg = underperformers_signal(user_id)                 # evita lo que te hunde
         if neg:
             ctx += "\n\nEVITA (no te ha funcionado): " + neg
+        ctx += brain_voice_block(user_id)                     # gusto del Brain «Entrenar» (👍/👎 + sugerencias)
     if ctx:
         system = (system + ctx +
                   "\n\nIMPORTANTE: lo anterior es CONTEXTO de estilo. Responde SOLO con el "
@@ -7139,19 +7167,32 @@ def brain_training_cards():
 @require_auth
 @limiter.limit("180 per hour")
 def brain_rate():
-    """Guarda el voto del Brain «Entrenar». v1: se captura como evento (PostHog) —
-    cero migración. Pipeline a tabla + señal de voz: follow-up."""
+    """Guarda el voto del Brain «Entrenar» en la tabla brain_ratings (afina la voz)
+    + evento PostHog. Los 👍 y las sugerencias ('¿cómo lo dirías tú?') se realimentan
+    en el prompt de generación (ver brain_voice_block)."""
     user = current_user()
     uid = user["id"]
     body = request.get_json(silent=True) or {}
-    rating = 1 if body.get("rating") in (1, "1", True, "true") else 0
-    kind = (body.get("kind") or "hook").strip()[:24]
-    text = (body.get("text") or "").strip()[:200]
-    niche = (body.get("niche") or "").strip()[:80]
+    like = body.get("rating") in (1, "1", True, "true")
+    rating = 1 if like else -1
+    # `type` = modo del día (hooks/guiones); `kind` del front es el ángulo de la tarjeta.
+    mode = (body.get("type") or body.get("kind") or "hook").strip().lower()
+    kind = "guion" if mode.startswith("gui") else "hook"
+    text = (body.get("text") or "").strip()[:1000]
+    suggestion = (body.get("suggestion") or "").strip()[:1000]
+    brand_id = (body.get("brand_id") or "").strip()[:64]
     if not text:
         return jsonify({"error": "missing_text"}), 400
     try:
-        track_event("brain_rating", uid, {"rating": rating, "kind": kind, "niche": niche, "text": text[:120]})
+        db.table("brain_ratings").insert({
+            "user_id": uid, "brand_id": brand_id, "kind": kind,
+            "content": text, "rating": rating,
+            "suggestion": suggestion or None, "source": "nicho",
+        }).execute()
+    except Exception:
+        logger.exception("brain_rate insert failed uid=%s", uid)
+    try:
+        track_event("brain_rating", uid, {"rating": rating, "kind": kind, "text": text[:120]})
     except Exception:
         pass
     return jsonify({"ok": True}), 200
