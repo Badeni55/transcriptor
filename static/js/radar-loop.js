@@ -311,8 +311,8 @@
       '<button class="cmd-idea" data-act="idea-capture" title="Apunta una idea — se desarrolla en Guiones" aria-label="Apunta una idea"><span class="cmd-idea-bulb">'+IC.bulb+'</span><span class="cmd-idea-t">Apunta una idea</span></button>'+
       demoToggle+
       // Nivel del Cerebro como overlay persistente arriba del todo (en todas las
-      // páginas), estilo videojuego — pedido por David (Fathom 18/06).
-      brainBadgeHTML()+
+      // páginas), estilo videojuego — pedido por David (Fathom 18/06). Centrado.
+      '<span class="cmd-brain-center">'+brainBadgeHTML()+'</span>'+
       streak+
       pillStatHTML()+
     '</div>';
@@ -800,6 +800,41 @@
     '</article>';
   }
 
+  /* Sugerir competidores proactivamente (Fathom 18/06): "@X acaba de petar, síguelo".
+     En demo, sugerencia determinista (no seguida aún). En prod la alimenta el backend
+     (creadores del nicho con métricas en alza — reutilizar el flujo de scrape). */
+  function suggestedComp(){
+    if(!isDemo() || S._suggDismissed) return null;
+    var pool=[
+      {handle:"ia_con_marcos", x:"×8", tag_es:"Nuevo en tu nicho", tag_en:"New in your niche",
+        why_es:"se pegó un reel de 210k (×8 su media)", why_en:"just hit a 210k reel (8× their average)"},
+      {handle:"lucia.growth",  x:"↑45%", tag_es:"Está despegando", tag_en:"Taking off",
+        why_es:"subió +45% de seguidores esta semana", why_en:"grew +45% in followers this week"},
+      {handle:"hooks_diarios", x:"🔥 racha", tag_es:"Petando ahora", tag_en:"Blowing up now",
+        why_es:"encadenó 3 reels virales en 7 días", why_en:"chained 3 viral reels in 7 days"}
+    ];
+    var tracked=(Array.isArray(S.tracked)?S.tracked:[]).map(function(t){return String(t.handle||"").toLowerCase().replace(/^@+/,"");});
+    var cands=pool.filter(function(c){ return tracked.indexOf(c.handle)<0; });
+    if(!cands.length) return null;
+    return cands[ (new Date().getDate()) % cands.length ];
+  }
+  function suggestedCompHTML(){
+    var c=suggestedComp(); if(!c) return '';
+    var why=L(c.why_es, c.why_en);
+    return '<div class="sugg-comp">'+
+      onbAvatar(c.handle)+
+      '<div class="sugg-body">'+
+        '<div class="sugg-tag">'+IC.spark+' '+L("Te lo sugiero","Suggested")+' · '+ESC(L(c.tag_es,c.tag_en))+'</div>'+
+        '<div class="sugg-h">@'+ESC(c.handle)+' <span class="sugg-x">'+ESC(c.x)+'</span></div>'+
+        '<div class="sugg-why">'+L("Acaba de "+why+". Aún no lo sigues — añádelo y sus reels entran en tu radar.","Just "+why+". You don't follow them yet — add them and their reels enter your radar.")+'</div>'+
+      '</div>'+
+      '<div class="sugg-actions">'+
+        '<button class="btn btn-sm btn-primary" data-act="add-suggested" data-id="'+ESC(c.handle)+'">'+IC.plus+' '+L("Añadir","Add")+'</button>'+
+        '<button class="btn btn-sm btn-ghost" data-act="sugg-dismiss">'+L("Ahora no","Not now")+'</button>'+
+      '</div>'+
+    '</div>';
+  }
+
   // Gestión de competidores seguidos desde el Radar (acordeón plegado): borrar
   // reusa data-act="untrack" (mismo handler + confirm que en Cerebro).
   function trackedManageHTML(){
@@ -1093,6 +1128,7 @@
       trackedManageHTML()+
       activationProgressHTML()+   // endowed progress: «1/4 · Roba tu primera idea»
       opportunityCarouselHTML(heroN)+
+      suggestedCompHTML()+      // sugerir competidores proactivamente (Fathom 18/06)
       voiceOnboardCardHTML()+   // B6+T1: banner de voz BAJO la oportunidad — no empuja el hero bajo el fold
       nextSeriesHTML("dash")+   // B1+T1: "tu próxima serie" con CTA secundario en el Dashboard
       (S.reels.length?'<div class="plays">'+whaleHTML(fillCount)+'</div>':'')+
@@ -3657,6 +3693,14 @@
     if(act==="filter"){ S.filter=k; return render(); }
     if(act==="opp-nav"){ return oppNav(k); }
     if(act==="force-scrape"){ return forceScrape(); }
+    if(act==="add-suggested"){
+      var sh=btn.getAttribute("data-id")||"";
+      if(isDemo()){ S.tracked=(Array.isArray(S.tracked)?S.tracked:[]).concat([{id:"sugg_"+sh, handle:sh, name:sh}]); }
+      S._suggDismissed=true;
+      showToast(L("@"+sh+" añadido a tu radar — sus reels empezarán a aparecer.","@"+sh+" added to your radar — their reels will start showing up."));
+      return render();
+    }
+    if(act==="sugg-dismiss"){ S._suggDismissed=true; showToast(L("Vale, te sugeriré otro.","Okay, I'll suggest another.")); return render(); }
     if(act==="expand-feed"){ S.feedExpanded=true; return render(); }
     if(act==="add-reel") return addReelManual();
     // growth-2: onboarding de activación
