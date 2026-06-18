@@ -4106,6 +4106,10 @@
       S.user.trialCreditsLeft=(me.trial_credits_left!=null)?me.trial_credits_left:0;
       // Fathom 18/06: tope diario del trial (3 guiones/día) → la pill muestra "N hoy".
       if(me.trial_daily_left!=null) S.user.dayLeft=me.trial_daily_left;
+      // Fathom 18/06: % del Cerebro gamificado + candado del ejercicio diario.
+      if(me.brain_progress!=null) S.user.brainProgress=me.brain_progress;
+      S.user.brainExDate=me.brain_exercise_date||null;
+      if(me.brain_last_gain!=null) S.user.brainLastGain=me.brain_last_gain;
       S.user.watermark=!!me.watermark;
       // Plan: en demo arranca en Agencia para ver el portfolio (toggle lo cambia);
       // en prod sale de /auth/me (profiles.plan).
