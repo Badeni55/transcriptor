@@ -1803,25 +1803,29 @@
      En prod: tabla `challenges` + comparar las vistas reales de la semana. */
   function versusHintHTML(){
     if(S.versus) return '';
-    return '<div class="versus-hint">⚔️ '+L("Rétate con tu nicho","Challenge your niche")+' — '+
-      L("7 días, el que más vistas haga <b>gana créditos</b>. Pulsa <b>Retar</b> en cualquiera 👇","7 days, whoever gets more views <b>wins credits</b>. Hit <b>Challenge</b> on anyone 👇")+'</div>';
+    return '<div class="versus-hint">🎯 '+L("Ponte un objetivo","Set a goal")+' — '+
+      L("supera la <b>media de views</b> de un rival con tus reels. Pulsa <b>Supéralo</b> en cualquiera 👇","beat a rival's <b>average views</b> with your reels. Hit <b>Beat it</b> on anyone 👇")+'</div>';
   }
+  /* "Supéralo" (no reto mutuo): los competidores son cuentas de Instagram que NO usan
+     la app, así que no se les puede retar. Es un OBJETIVO personal — superar su media
+     de views con tus reels. Una cara, con datos que ya tienes. */
   function versusCardHTML(){
     if(!S.versus) return '';
-    var v=S.versus, lead=v.meViews>=v.themViews, total=(v.meViews+v.themViews)||1, mePct=Math.round(v.meViews/total*100);
-    var daysLeft=Math.max(0,7-v.day);
+    var v=S.versus, beat=v.mine>=v.oppAvg, pct=Math.min(100,Math.round(v.mine/(v.oppAvg||1)*100)), gap=Math.max(0,v.oppAvg-v.mine);
     return '<div class="versus-card">'+
-      '<div class="versus-head"><span class="versus-ico">⚔️</span><b>'+L("Reto activo","Active challenge")+'</b>'+
-        '<span class="versus-day">'+L("Día","Day")+' '+v.day+'/7 · '+(daysLeft>0?L(daysLeft+" día"+(daysLeft===1?"":"s")+" para el final",daysLeft+" day"+(daysLeft===1?"":"s")+" left"):L("último día","last day"))+'</span>'+
-        '<button class="versus-quit" data-act="versus-quit" aria-label="Abandonar reto">'+IC.x+'</button></div>'+
+      '<div class="versus-head"><span class="versus-ico">🎯</span><b>'+L("Tu objetivo","Your goal")+'</b>'+
+        '<span class="versus-day">'+L("supera a","beat")+' @'+ESC(v.opp)+'</span>'+
+        '<button class="versus-quit" data-act="versus-quit" aria-label="'+L("Quitar objetivo","Remove goal")+'">'+IC.x+'</button></div>'+
       '<div class="versus-vs">'+
-        '<div class="versus-side"><span class="ava bava">'+ESC(initialsOf(v.youHandle))+'</span><span class="vs-h">'+L("Tú","You")+'</span><span class="vs-n">'+_fmtK(v.meViews)+'</span></div>'+
-        '<span class="versus-mid '+(lead?'win':'lose')+'">'+(lead?'▲ '+L("vas ganando","winning"):'▼ '+L("vas perdiendo","behind"))+'</span>'+
-        '<div class="versus-side them"><span class="ava bava">'+ESC(initialsOf(v.opp))+'</span><span class="vs-h">@'+ESC(v.opp)+'</span><span class="vs-n">'+_fmtK(v.themViews)+'</span></div>'+
+        '<div class="versus-side"><span class="ava bava">'+ESC(initialsOf(v.youHandle))+'</span><span class="vs-h">'+L("Tu mejor reel","Your best reel")+'</span><span class="vs-n">'+_fmtK(v.mine)+'</span></div>'+
+        '<span class="versus-mid '+(beat?'win':'lose')+'">'+(beat?'✓ '+L("lo superas","you beat it"):L("a "+_fmtK(gap)+" de superarlo","− "+_fmtK(gap)+" to go"))+'</span>'+
+        '<div class="versus-side them"><span class="ava bava">'+ESC(initialsOf(v.opp))+'</span><span class="vs-h">'+L("media de","avg of")+' @'+ESC(v.opp)+'</span><span class="vs-n">'+_fmtK(v.oppAvg)+'</span></div>'+
       '</div>'+
-      '<div class="versus-bar"><i style="width:'+mePct+'%"></i></div>'+
-      '<div class="versus-foot"><span class="versus-metric">'+L("Vistas esta semana","Views this week")+'</span>'+
-        '<span class="versus-prize">🏆 '+L("Premio: <b>+10 créditos</b>","Prize: <b>+10 credits</b>")+'</span></div>'+
+      '<div class="versus-bar"><i style="width:'+pct+'%"></i></div>'+
+      '<div class="versus-foot"><span class="versus-metric">'+L("Views medias por reel","Avg views per reel")+'</span>'+
+        (beat
+          ? '<span class="versus-prize">🏆 '+L("¡Lo superas! Mantén el ritmo","You beat it! Keep it up")+'</span>'
+          : '<button class="btn btn-sm btn-primary" data-act="tab" data-k="dashboard">'+IC.bolt+' '+L("Roba y publica más","Steal & publish more")+'</button>')+'</div>'+
     '</div>';
   }
   // PÁGINA COMPLETA del leaderboard (tab "leaderboard"). Tu posición vs competidores.
@@ -1857,7 +1861,7 @@
         '<span class="lb-h">@'+ESC(r.handle)+(r.you?' <b>('+L("tú","you")+')</b>':'')+'</span>'+
         '<span class="lb-f">'+_fmtK(r.followers)+'</span>'+
         '<span class="lb-g '+(g>=0?'up':'down')+'">'+gtxt+'</span>'+
-        ((!r.you && !S.versus)?'<button class="lb-challenge" data-act="versus-start" data-id="'+ESC(r.handle)+'">⚔️ '+L("Retar","Challenge")+'</button>':'<span class="lb-challenge-sp"></span>')+
+        ((!r.you && !S.versus)?'<button class="lb-challenge" data-act="versus-start" data-id="'+ESC(r.handle)+'">🎯 '+L("Supéralo","Beat it")+'</button>':'<span class="lb-challenge-sp"></span>')+
       '</div>';
     }).join("");
     return '<div class="scroll"><div class="canvas">'+
@@ -3771,12 +3775,14 @@
     if(act==="sugg-dismiss"){ S._suggDismissed=true; S._suggReal=null; showToast(L("Vale, te sugeriré otro.","Okay, I'll suggest another.")); return render(); }
     if(act==="versus-start"){
       var opp=btn.getAttribute("data-id")||"rival";
+      // oppAvg = media de views del competidor (en real, de sus reels scrapeados);
+      // mine = tu mejor reel. Demo: deterministas, como el resto del leaderboard.
       S.versus={ opp:opp, youHandle:(brand().handle||S.user.handle||"tu_cuenta"),
-        meViews:_lbHash((S.user.handle||"me")+"vw",60000,180000), themViews:_lbHash(opp+"vw",60000,180000), day:3 };
-      showToast(L("⚔️ Reto enviado a @"+opp+" — 7 días, que gane el mejor.","⚔️ Challenge sent to @"+opp+" — 7 days, may the best win."));
+        oppAvg:_lbHash(opp+"avg",40000,160000), mine:_lbHash((S.user.handle||"me")+"best",50000,190000) };
+      showToast(L("🎯 Objetivo fijado: supera la media de @"+opp+".","🎯 Goal set: beat @"+opp+"'s average."));
       return render();
     }
-    if(act==="versus-quit"){ S.versus=null; showToast(L("Reto abandonado.","Challenge abandoned.")); return render(); }
+    if(act==="versus-quit"){ S.versus=null; showToast(L("Objetivo quitado.","Goal removed.")); return render(); }
     if(act==="expand-feed"){ S.feedExpanded=true; return render(); }
     if(act==="add-reel") return addReelManual();
     // growth-2: onboarding de activación
