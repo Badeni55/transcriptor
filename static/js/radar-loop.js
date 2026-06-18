@@ -2163,7 +2163,7 @@
         '<div class="brain-hero-body">'+
           '<div class="brain-lvl">Nivel '+lv.level+' · '+ESC(ecoLevelName(lv.level))+(lv.level>=4?' <span class="brain-pro" title="Eres Pro Reelscript — acceso a grupos solo-pros">🏅 Pro</span>':'')+'</div>'+
           '<div class="brain-voiceline">Te conozco al <b>'+brainProgress()+'%</b></div>'+
-          '<div class="eco-bar" style="margin:10px 0 8px"><div class="eco-fill" style="width:'+Math.max(4,lv.pct)+'%"></div></div>'+
+          '<div class="eco-bar" style="margin:10px 0 8px"><div class="eco-fill" style="width:'+Math.max(4,brainProgress())+'%"></div></div>'+
           // B2: umbrales VISIBLES del siguiente nivel (checklist ✓/○) + UNA acción primaria
           // (la primera carencia). B4: el beneficio es real — voz y ganadores entran en el prompt.
           (lv.next
