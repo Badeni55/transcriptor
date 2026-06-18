@@ -1883,7 +1883,7 @@
   /* Teaser "Próximamente" de las features de comunidad (entre USUARIOS de la app):
      genera expectativa + "Avísame" capta interés (PostHog) para medir demanda. */
   function communitySoonHTML(){
-    var interested=false; try{ interested=localStorage.getItem("rs_community_interest")==="1"; }catch(e){}
+    var interested=!!S.user.communityWaitlist; if(!interested){ try{ interested=localStorage.getItem("rs_community_interest")==="1"; }catch(e){} }
     var card=function(ico,title,desc){
       return '<div class="soon-card"><div class="soon-ico">'+ico+'</div>'+
         '<div class="soon-body"><div class="soon-h">'+title+' <span class="soon-pill">'+L("Próximamente","Soon")+'</span></div>'+
@@ -3834,6 +3834,8 @@
     if(act==="community-interest"){
       try{ localStorage.setItem("rs_community_interest","1"); }catch(e){}
       try{ if(window.posthog&&window.posthog.capture) window.posthog.capture("community_interest",{from:"ranking"}); }catch(e){}
+      S.user.communityWaitlist=true;
+      if(!isDemo()){ try{ apiPost('/api/community/interest',{}); }catch(e){} }   // persiste en backend
       showToast(L("¡Hecho! Te avisaremos en cuanto la comunidad esté lista.","Done! We'll let you know when the community is ready."));
       return render();
     }
@@ -4137,6 +4139,7 @@
       if(me.brain_progress!=null) S.user.brainProgress=me.brain_progress;
       S.user.brainExDate=me.brain_exercise_date||null;
       if(me.brain_last_gain!=null) S.user.brainLastGain=me.brain_last_gain;
+      S.user.communityWaitlist=!!me.community_waitlist;   // lista de espera Comunidad
       S.user.watermark=!!me.watermark;
       // Plan: en demo arranca en Agencia para ver el portfolio (toggle lo cambia);
       // en prod sale de /auth/me (profiles.plan).
