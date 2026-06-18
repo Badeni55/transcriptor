@@ -586,10 +586,10 @@
   }
   // Paso 7 — CIERRE: Cerebro 50% + primer guión + camino a 100%.
   function onbCloseHTML(){
-    var pct=50;
+    var pct=35;
     return onbCardWrap('<div class="onb-eyebrow">'+IC.check+' '+L("Listo","Ready")+'</div>',
-      L("Listo. Te conozco al 50%.","Done. I know you at 50%."),
-      L("Ya leí tu cuenta y a tus 2 competidores. Tu Cerebro es un <b>perfil de contexto</b> (no un clon total de tu voz todavía) — y con eso ya escribo a tu medida.","I've read your account and your 2 competitors. Your Brain is a <b>context profile</b> (not a full clone of your voice yet) — and with that I already write to your measure."),
+      L("Listo. Te conozco al 35%.","Done. I know you at 35%."),
+      L("Ya leí tu cuenta y a tus 2 competidores. Tu Cerebro es un <b>perfil de contexto</b> (no un clon total de tu voz todavía). Cada día, con <b>un ejercicio de 1 minuto</b>, subo un poco más — hasta sonar clavado a ti.","I've read your account and your 2 competitors. Your Brain is a <b>context profile</b> (not a full clone of your voice yet). Each day, with a <b>1-minute exercise</b>, it climbs a bit more — until it sounds just like you."),
       '<div class="onb-brain"><div class="onb-brain-bar"><div class="onb-brain-fill" style="width:'+pct+'%"></div></div>'+
         '<div class="onb-brain-row"><span class="onb-brain-k">'+IC.brain+' '+L("Cerebro","Brain")+'</span><span class="onb-brain-v">'+pct+'%</span></div></div>'+
       '<ul class="onb-checklist">'+
@@ -1984,9 +1984,33 @@
     if(!bt.cards.length && !bt.loading) brainTrainLoad();
   }
   // Fathom 17/06: modo del día — un día se entrenan HOOKS, otro GUIONES. Override manual.
+  /* % del Cerebro = progreso gamificado (Fathom 18/06): el tutorial deja 35% y cada
+     día subes +3-6% completando EL ejercicio del día (1 al día, alterna hooks/guiones,
+     no puedes hacer más). Demo: localStorage. Real: S.user.brainProgress del backend
+     (+ POST /api/brain/exercise-done) — pendiente de migración. */
+  function _todayStr(){ return new Date().toISOString().slice(0,10); }
+  function brainProgress(){
+    if(isDemo()){ try{ var v=localStorage.getItem("rs_brain_progress"); return v!=null?parseInt(v,10):35; }catch(e){ return 35; } }
+    return (S.user.brainProgress!=null) ? S.user.brainProgress : (hasRealVoice()?Math.max(35,Math.min(100,S.voice.confidence||0)):35);
+  }
+  function brainExDoneToday(){
+    if(isDemo()){ try{ return localStorage.getItem("rs_brain_ex_date")===_todayStr(); }catch(e){ return false; } }
+    return S.user.brainExDate===_todayStr();
+  }
+  function brainLastGain(){
+    if(isDemo()){ try{ return parseInt(localStorage.getItem("rs_brain_ex_gain")||"4",10); }catch(e){ return 4; } }
+    return S.user.brainLastGain||4;
+  }
+  function _brainCompleteExercise(){
+    if(brainExDoneToday()) return;
+    var day=_todayStr(), gain=3+_lbHash(day+"g",0,4), np=Math.min(95, brainProgress()+gain);  // +3..6 determinista
+    if(isDemo()){ try{ localStorage.setItem("rs_brain_progress",String(np)); localStorage.setItem("rs_brain_ex_date",day); localStorage.setItem("rs_brain_ex_gain",String(gain)); }catch(e){} }
+    else { S.user.brainProgress=np; S.user.brainExDate=day; S.user.brainLastGain=gain; try{ apiPost('/api/brain/exercise-done',{}); }catch(e){} }
+    try{ if(window.RSBrain) window.RSBrain.levelup(); }catch(e){}
+    showToast(L("🧠 +"+gain+"% · Cerebro entrenado hoy. Vuelve mañana para subir más.","🧠 +"+gain+"% · Brain trained today. Come back tomorrow for more."));
+  }
   function brainTrainMode(){
-    var bt=S.brainTrain||{};
-    if(bt.mode==='hooks'||bt.mode==='guiones') return bt.mode;
+    // El DÍA decide (alterna hooks/guiones); el usuario no elige (1 ejercicio/día).
     return (new Date().getDate()%2===0)?'hooks':'guiones';
   }
   function setBrainTrainMode(m){
@@ -2019,6 +2043,7 @@
     // voto = SOLO VISUAL para el cerebro 3D (no infla el % real); feed silencioso.
     try{ if(window.RSBrain) window.RSBrain.feed(rating?'guio':'comp', true); }catch(e){}
     if(!isDemo()){ var niche=(S.onb&&S.onb.niche)||""; try{ apiPost('/api/brain/rate',{text:c.text, kind:c.kind||brainTrainMode(), type:brainTrainMode(), rating:rating, suggestion:suggestion||"", niche:niche}); }catch(e){} }
+    if(bt.i>=bt.cards.length){ _brainCompleteExercise(); }   // completó el ejercicio del día → +3-6%
     render();
   }
   function brainImprove(send){
@@ -2050,19 +2075,21 @@
     ];
   }
   function brainTrainHTML(){
-    var bt=S.brainTrain, inner;
     var mode=brainTrainMode();
     var modeLbl=mode==='hooks'?L("hooks","hooks"):L("guiones","scripts");
-    var toggle='<div class="bt-modes">'+
-      '<button class="bt-mode'+(mode==='hooks'?' on':'')+'" data-act="brain-train-mode" data-k="hooks">'+IC.hook+' Hooks</button>'+
-      '<button class="bt-mode'+(mode==='guiones'?' on':'')+'" data-act="brain-train-mode" data-k="guiones">'+IC.doc+' '+L("Guiones","Scripts")+'</button>'+
-    '</div>';
+    var head='<div class="brain-section-t">'+L("Tu ejercicio de hoy: entrena tus "+modeLbl,"Today's exercise: train your "+modeLbl)+
+      ' <span class="brain-tag">'+L("+3-6% al Cerebro · 1 al día","+3-6% to your Brain · 1 a day")+'</span></div>';
+    // Ejercicio diario YA hecho → bloqueado hasta mañana (no se puede hacer más).
+    if(brainExDoneToday()){
+      return head+'<div class="bt-wrap"><div class="bt-done bt-locked">'+IC.check+' '+
+        L("Ejercicio completado · <b>+"+brainLastGain()+"%</b> al Cerebro. Vuelve mañana para el siguiente.",
+          "Done · <b>+"+brainLastGain()+"%</b> to your Brain. Come back tomorrow for the next one.")+'</div></div>';
+    }
+    var bt=S.brainTrain, inner;
     if(!bt || (bt.loading && !bt.cards.length)){
-      inner='<div class="bt-load"><span class="mini-spin"></span> '+L("Preparando "+modeLbl+" para entrenarte…","Preparing "+modeLbl+" to train you…")+'</div>';
+      inner='<div class="bt-load"><span class="mini-spin"></span> '+L("Preparando tu ejercicio…","Preparing your exercise…")+'</div>';
     } else if(!bt.cards.length){
-      inner='<div class="bt-load">'+L("No pude traer "+modeLbl+" ahora.","Couldn't fetch "+modeLbl+" now.")+' <button class="btn btn-sm btn-ghost" data-act="brain-train-more">'+L("Reintentar","Retry")+'</button></div>';
-    } else if(bt.i>=bt.cards.length){
-      inner='<div class="bt-done">'+IC.check+' '+L("Has entrenado <b>"+(bt.rated||0)+"</b> hoy. Cada voto afina tu Cerebro.","You've trained <b>"+(bt.rated||0)+"</b> today. Every vote sharpens your Brain.")+' <button class="btn btn-sm btn-secondary" data-act="brain-train-more">'+IC.spark+' '+L("Traer más","More")+'</button></div>';
+      inner='<div class="bt-load">'+L("No pude traer tu ejercicio ahora.","Couldn't load your exercise now.")+' <button class="btn btn-sm btn-ghost" data-act="brain-train-more">'+L("Reintentar","Retry")+'</button></div>';
     } else {
       var c=bt.cards[bt.i];
       var actions = bt.improving
@@ -2075,10 +2102,10 @@
         '<div class="bt-kind">'+ESC(c.kind||mode)+'</div>'+
         '<p class="bt-text">'+ESC(c.text)+'</p>'+
         actions+
-        '<div class="bt-prog">'+(bt.i+1)+' / '+bt.cards.length+' · <b>'+(bt.rated||0)+'</b> '+L("entrenados","trained")+'</div>'+
+        '<div class="bt-prog">'+(bt.i+1)+' / '+bt.cards.length+'</div>'+
       '</div>';
     }
-    return '<div class="brain-section-t">'+L("Hoy toca entrenar tus "+modeLbl,"Today: train your "+modeLbl)+' <span class="brain-tag">'+L("cada voto te afina","every vote sharpens you")+'</span></div>'+toggle+'<div class="bt-wrap">'+inner+'</div>';
+    return head+'<div class="bt-wrap">'+inner+'</div>';
   }
   function brainHTML(){
     var b=brand();
@@ -2135,7 +2162,7 @@
         '<div id="rsBrainStage" class="brain3d-stage"><div class="brain-orb brain3d-fallback">'+IC.brain+'</div></div>'+
         '<div class="brain-hero-body">'+
           '<div class="brain-lvl">Nivel '+lv.level+' · '+ESC(ecoLevelName(lv.level))+(lv.level>=4?' <span class="brain-pro" title="Eres Pro Reelscript — acceso a grupos solo-pros">🏅 Pro</span>':'')+'</div>'+
-          '<div class="brain-voiceline">Te conozco al <b>'+voicePct+'%</b></div>'+
+          '<div class="brain-voiceline">Te conozco al <b>'+brainProgress()+'%</b></div>'+
           '<div class="eco-bar" style="margin:10px 0 8px"><div class="eco-fill" style="width:'+Math.max(4,lv.pct)+'%"></div></div>'+
           // B2: umbrales VISIBLES del siguiente nivel (checklist ✓/○) + UNA acción primaria
           // (la primera carencia). B4: el beneficio es real — voz y ganadores entran en el prompt.

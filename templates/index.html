@@ -10255,6 +10255,8 @@
     .rs .bt-skip { flex:0 0 auto; min-width:90px; }
     .rs .bt-skip:hover { border-color:var(--border-strong); color:var(--text-secondary); }
     .rs .bt-load, .rs .bt-done { font-size:13.5px; color:var(--text-secondary); padding:14px 16px; border:1px solid var(--border-default); border-radius:14px; background:var(--surface-raised); display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+    .rs .bt-done.bt-locked { color:var(--success-fg, #22c55e); border-color:color-mix(in srgb, var(--success-fg, #22c55e) 35%, transparent); background:color-mix(in srgb, var(--success-fg, #22c55e) 8%, transparent); }
+    .rs .bt-done.bt-locked b { color:var(--text-primary); }
     .rs .bt-card { border:1px solid color-mix(in srgb, var(--brand-500) 24%, transparent); border-radius:16px; padding:18px; background:linear-gradient(135deg, color-mix(in srgb, var(--brand-500) 8%, var(--surface-raised)), var(--surface-raised)); }
     .rs .bt-kind { font-family:var(--font-mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--brand-400); font-weight:600; }
     .rs .bt-text { font-size:18px; font-weight:600; line-height:1.35; margin:8px 0 16px; color:var(--text-primary); }
