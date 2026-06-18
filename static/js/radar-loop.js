@@ -965,11 +965,22 @@
      del usuario; en demo solo cobra y confirma. Sin créditos → al muro. */
   function forceScrape(){
     var COST=10;
-    if(isFree() || (S.user.credits||0)<COST){ return showPaywall("force_scrape"); }
-    spend(COST);
-    render();
-    flashSpark(-COST);
-    showToast("🔎 Análisis de tu perfil encolado — si publicaste algo nuevo, tu nivel sube en cuanto termine.");
+    if(isDemo()){
+      if(isFree() || (S.user.credits||0)<COST){ return showPaywall("force_scrape"); }
+      spend(COST); render(); flashSpark(-COST);
+      showToast("🔎 Análisis de tu perfil encolado — si publicaste algo nuevo, tu nivel sube en cuanto termine.");
+      return;
+    }
+    // Real: el backend cobra los créditos y encola el scrape del propio perfil.
+    apiPost('/api/brain/rescrape',{}).then(function(r){
+      if(!r.ok){
+        if(r.status===402 || (r.d&&r.d.error)==="no_credits") return showPaywall("no_credits");
+        return showToast((r.d&&r.d.message)||"No pude encolar el análisis. Inténtalo en un momento.");
+      }
+      if(r.d && r.d.credits!=null) S.user.credits=r.d.credits;
+      render(); flashSpark(-COST);
+      showToast((r.d&&r.d.message)||"🔎 Análisis de tu perfil encolado — tu nivel sube en cuanto termine.");
+    });
   }
 
   /* ════════════════════════════════════════════════════════════════
