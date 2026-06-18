@@ -301,9 +301,8 @@
     var streak=(S.user.streak>0)?'<span class="cmd-streak" title="Días seguidos creando">'+IC.spark+' Racha '+S.user.streak+'</span>':'';
     var demoToggle=isDemo()?'<div class="demo-plan" title="Solo demo: cambia de plan"><span class="dp-k">DEMO</span>'+
       '<button class="dp'+(S._demoFree===true?" on":"")+'" data-act="demo-plan" data-k="free">Free</button>'+
-      '<button class="dp'+(S._demoTrial===true?" on":"")+'" data-act="demo-plan" data-k="trial">Trial</button>'+
-      '<button class="dp'+(!S._demoFree && !S._demoTrial && S.plan==="creador"?" on":"")+'" data-act="demo-plan" data-k="creador">Creador</button>'+
-      '<button class="dp'+(!S._demoFree && !S._demoTrial && S.plan==="agencia"?" on":"")+'" data-act="demo-plan" data-k="agencia">Agencia</button></div>':'';
+      '<button class="dp'+(!S._demoFree && S.plan==="creador"?" on":"")+'" data-act="demo-plan" data-k="creador">Creador</button>'+
+      '<button class="dp'+(!S._demoFree && S.plan==="agencia"?" on":"")+'" data-act="demo-plan" data-k="agencia">Agencia</button></div>':'';
     return '<div class="cmd">'+
       (isMultiBrand()?brandSwitchHTML():brandStaticHTML())+
       crumb+
@@ -887,8 +886,8 @@
     var _fl=freeStealsLeft();
     var scarce = (_fl===null) ? '' :
       (_fl<=0
-        ? '<button class="feat-scarce out feat-scarce-btn" data-act="open-plans">'+IC.bolt+' '+L("Sin robos gratis este mes — desbloquéalos","No free steals left this month — unlock them")+' '+IC.arr+'</button>'
-        : '<div class="feat-scarce">'+IC.bolt+' '+L("Te queda"+(_fl===1?"":"n")+" <b>"+_fl+"</b> robo"+(_fl===1?"":"s")+" gratis este mes","<b>"+_fl+"</b> free steal"+(_fl===1?"":"s")+" left this month")+'</div>');
+        ? '<button class="feat-scarce out feat-scarce-btn" data-act="open-plans">'+IC.bolt+' '+L("Hechos tus 3 guiones de hoy — vuelve mañana o desbloquéalos","Today's 3 scripts done — come back tomorrow or unlock them")+' '+IC.arr+'</button>'
+        : '<div class="feat-scarce">'+IC.bolt+' '+L("Te queda"+(_fl===1?"":"n")+" <b>"+_fl+"</b> guion"+(_fl===1?"":"es")+" hoy","<b>"+_fl+"</b> script"+(_fl===1?"":"s")+" left today")+'</div>');
     return '<article class="feature">'+
       '<div class="feature-thumb"><div class="thumb">'+thumbInner+'<span class="thumb-tag">reel · '+ESC(r.creator.handle.slice(0,6))+'</span><span class="dur">'+ESC(r.dur)+'</span></div></div>'+
       '<div class="feature-main">'+
@@ -1438,10 +1437,10 @@
   // F: free ve el producto pero las MÉTRICAS al detalle van borrosas. En demo se
   // fuerza con ?free=1 (el plan normal demo es de pago).
   function isFree(){ return isDemo() ? (S._demoFree===true) : (S.realPlan==="free" || !S.realPlan); }
-  // Trial = reverse-trial Pro (5 días, 3 guiones/día). En demo se activa con el toggle.
-  function isTrial(){ return isDemo() ? !!S._demoTrial : !!S.user.trialActive; }
-  // #2 conversión (decisión interesante): robos gratis restantes este mes. null si no es free.
-  function freeStealsLeft(){ if(!isFree()) return null; return (S.user.freeLeft!=null ? S.user.freeLeft : (isDemo()?2:0)); }
+  // Trial = reverse-trial Pro (5 días, 3 guiones/día). En demo, el modo FREE es el trial.
+  function isTrial(){ return isDemo() ? isFree() : !!S.user.trialActive; }
+  // #2 conversión: guiones restantes HOY (tope diario del trial). null si no es free.
+  function freeStealsLeft(){ if(!isFree()) return null; return (S.user.dayLeft!=null ? S.user.dayLeft : 3); }
   function metricsLockHTML(inner){
     return '<div class="rs-lock"><div class="rs-lock-inner" aria-hidden="true">'+inner+'</div>'+
       '<div class="rs-lock-over"><div class="rs-lock-card">'+IC.bolt+
@@ -2554,13 +2553,12 @@
   }
   // Toggle de plan SOLO en demo, para ver las dos experiencias.
   function setDemoPlan(k){
-    var toFree=(k==="free"), toTrial=(k==="trial");
-    var plan=(toFree||toTrial)?"creador":k;   // free/trial reusan el layout de creador (1 marca)
-    if(S.plan===plan && (S._demoFree===true)===toFree && (S._demoTrial===true)===toTrial){ return; }   // sin cambio real
-    S._demoFree=toFree; S._demoTrial=toTrial; S.plan=plan; S.brandMenu=false; S.view="feed"; S.feedExpanded=false; S._lvlSeen=null;
-    if(toFree) S.user.freeLeft=2;   // demo free: 2 robos gratis/mes (free_scripts_monthly) → escasez visible
-    // Trial = Pro 5 días con tope de 3 guiones/día (Fathom 18/06).
-    if(toTrial){ S.user.trialActive=true; S.user.trialDaysLeft=5; S.user.dayLeft=3; }
+    var toFree=(k==="free");
+    var plan=toFree?"creador":k;   // free reusa el layout de creador (1 marca) + isFree()=true
+    if(S.plan===plan && (S._demoFree===true)===toFree){ return; }   // sin cambio real
+    S._demoFree=toFree; S.plan=plan; S.brandMenu=false; S.view="feed"; S.feedExpanded=false; S._lvlSeen=null;
+    // Free = trial Pro de 5 días con tope de 3 guiones/día (Fathom 18/06): el free ES el trial.
+    if(toFree){ S.user.trialActive=true; S.user.trialDaysLeft=5; S.user.dayLeft=3; }
     else { S.user.trialActive=false; }
     if(plan==="agencia"){ S.brands=demoBrands(); S.brandId=S.brands[0].id; S.tab="portfolio"; }   // macro
     else { S.brands=[demoBrands()[0]]; S.brandId=S.brands[0].id; S.tab=toFree?"metrics":"dashboard"; applyDemoBrand(); }
@@ -2680,9 +2678,8 @@
     // #2 conversión: muro en el PICO de Flow — free sin robos → paywall justo cuando
     // hay deseo (acaba de elegir el reel). En demo lo demostramos aquí; en real lo
     // confirma el backend (free_limit_reached). El muro borroso ya enseña el valor.
-    if(isDemo() && isFree() && freeStealsLeft()<=0){ showPaywall("free_limit_reached"); return; }
-    // Trial: tope de 3 guiones/día (Fathom 18/06). En demo lo demostramos; en real lo
-    // cuenta y resetea el backend. El muro diario empuja a volver mañana o a pagar.
+    // Free = trial: tope de 3 guiones/día (Fathom 18/06). En demo lo demostramos; en real
+    // lo cuenta y resetea el backend. El muro diario empuja a volver mañana o a pagar.
     if(isTrial() && S.user.dayLeft!=null && S.user.dayLeft<=0){ showDailyLimit(); return; }
     // Fix review (T6): si ESTE reel ya tiene un robo en vuelo (lo mandó a background
     // con X/Esc/«seguir navegando»), no relanzamos — reabrimos el orbe del que ya
@@ -2718,7 +2715,7 @@
       else { S.activeGuionId=gidNew; S.view="script"; render(); }
       // Demo: descuento local cosmético. Prod: el backend ya cobró server-side →
       // refrescamos el saldo real (/auth/me) sin descontar local (evita doble-cobro).
-      if(isDemo()){ if(isFree()){ if(S.user.freeLeft>0) S.user.freeLeft--; } else if(S._demoTrial){ if(S.user.dayLeft>0) S.user.dayLeft--; } else { spend(COST.script); } bumpEco(1,1); flashSpark(-COST.script); }
+      if(isDemo()){ if(isTrial()){ if(S.user.dayLeft>0) S.user.dayLeft--; } else { spend(COST.script); } bumpEco(1,1); flashSpark(-COST.script); }
       else { refreshCredits().then(function(){ flashSpark(0); }); }
     });
   }
@@ -3935,8 +3932,7 @@
         // ?onb=1 → fuerza el onboarding v2 en demo (sin tocar el flujo normal/harness)
         if(qs.get("onb")==="1"){ S.onb._force=true; S.onb.skipped=false; S.onb.step="handle"; S.reels=[]; S.tracked=[]; }
         // ?free=1 → simula plan FREE en demo (para ver el muro borroso de métricas)
-        if(qs.get("free")==="1"){ S._demoFree=true; S.user.freeLeft=2; }
-        if(qs.get("trial")==="1"){ S._demoTrial=true; S.user.trialActive=true; S.user.trialDaysLeft=5; S.user.dayLeft=3; }
+        if(qs.get("free")==="1"){ S._demoFree=true; S.user.trialActive=true; S.user.trialDaysLeft=5; S.user.dayLeft=3; }
       }catch(e){} }
       loadBrandData();
     });
