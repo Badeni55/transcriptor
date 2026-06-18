@@ -1773,6 +1773,33 @@
     });
     return comps.concat([me]).sort(function(a,b){ return b.followers-a.followers; });
   }
+  /* VERSUS / retos (Fathom 18/06, la idea que más le gustó a David): reta a un rival
+     del nicho, 7 días a ver quién hace más vistas. El marcador sale de las MÉTRICAS
+     de reels que ya scrapeáis (en demo, deterministas). Premio = créditos / pool.
+     En prod: tabla `challenges` + comparar las vistas reales de la semana. */
+  function versusHintHTML(){
+    if(S.versus) return '';
+    return '<div class="versus-hint">⚔️ '+L("Rétate con tu nicho","Challenge your niche")+' — '+
+      L("7 días, el que más vistas haga <b>gana créditos</b>. Pulsa <b>Retar</b> en cualquiera 👇","7 days, whoever gets more views <b>wins credits</b>. Hit <b>Challenge</b> on anyone 👇")+'</div>';
+  }
+  function versusCardHTML(){
+    if(!S.versus) return '';
+    var v=S.versus, lead=v.meViews>=v.themViews, total=(v.meViews+v.themViews)||1, mePct=Math.round(v.meViews/total*100);
+    var daysLeft=Math.max(0,7-v.day);
+    return '<div class="versus-card">'+
+      '<div class="versus-head"><span class="versus-ico">⚔️</span><b>'+L("Reto activo","Active challenge")+'</b>'+
+        '<span class="versus-day">'+L("Día","Day")+' '+v.day+'/7 · '+(daysLeft>0?L(daysLeft+" día"+(daysLeft===1?"":"s")+" para el final",daysLeft+" day"+(daysLeft===1?"":"s")+" left"):L("último día","last day"))+'</span>'+
+        '<button class="versus-quit" data-act="versus-quit" aria-label="Abandonar reto">'+IC.x+'</button></div>'+
+      '<div class="versus-vs">'+
+        '<div class="versus-side"><span class="ava bava">'+ESC(initialsOf(v.youHandle))+'</span><span class="vs-h">'+L("Tú","You")+'</span><span class="vs-n">'+_fmtK(v.meViews)+'</span></div>'+
+        '<span class="versus-mid '+(lead?'win':'lose')+'">'+(lead?'▲ '+L("vas ganando","winning"):'▼ '+L("vas perdiendo","behind"))+'</span>'+
+        '<div class="versus-side them"><span class="ava bava">'+ESC(initialsOf(v.opp))+'</span><span class="vs-h">@'+ESC(v.opp)+'</span><span class="vs-n">'+_fmtK(v.themViews)+'</span></div>'+
+      '</div>'+
+      '<div class="versus-bar"><i style="width:'+mePct+'%"></i></div>'+
+      '<div class="versus-foot"><span class="versus-metric">'+L("Vistas esta semana","Views this week")+'</span>'+
+        '<span class="versus-prize">🏆 '+L("Premio: <b>+10 créditos</b>","Prize: <b>+10 credits</b>")+'</span></div>'+
+    '</div>';
+  }
   // PÁGINA COMPLETA del leaderboard (tab "leaderboard"). Tu posición vs competidores.
   function leaderboardPageHTML(){
     var b=brand();
@@ -1806,12 +1833,15 @@
         '<span class="lb-h">@'+ESC(r.handle)+(r.you?' <b>('+L("tú","you")+')</b>':'')+'</span>'+
         '<span class="lb-f">'+_fmtK(r.followers)+'</span>'+
         '<span class="lb-g '+(g>=0?'up':'down')+'">'+gtxt+'</span>'+
+        ((!r.you && !S.versus)?'<button class="lb-challenge" data-act="versus-start" data-id="'+ESC(r.handle)+'">⚔️ '+L("Retar","Challenge")+'</button>':'<span class="lb-challenge-sp"></span>')+
       '</div>';
     }).join("");
     return '<div class="scroll"><div class="canvas">'+
       pheadHTML("Ranking · @"+(b.handle||S.user.handle||""), L("Ranking","Ranking"), L("Tu posición frente a tus competidores del nicho. Sube de puesto creando y publicando más.","Where you stand against your niche competitors. Climb by creating and publishing more."))+
+      versusCardHTML()+
       momentum+
       goal+
+      versusHintHTML()+
       '<div class="leaderboard">'+items+'</div>'+
       // #2 conectar el ranking con la acción del producto (el loop) — CTA primario.
       '<div class="cluster cluster-sm" style="margin:16px 0 8px;gap:10px">'+
@@ -3701,6 +3731,14 @@
       return render();
     }
     if(act==="sugg-dismiss"){ S._suggDismissed=true; showToast(L("Vale, te sugeriré otro.","Okay, I'll suggest another.")); return render(); }
+    if(act==="versus-start"){
+      var opp=btn.getAttribute("data-id")||"rival";
+      S.versus={ opp:opp, youHandle:(brand().handle||S.user.handle||"tu_cuenta"),
+        meViews:_lbHash((S.user.handle||"me")+"vw",60000,180000), themViews:_lbHash(opp+"vw",60000,180000), day:3 };
+      showToast(L("⚔️ Reto enviado a @"+opp+" — 7 días, que gane el mejor.","⚔️ Challenge sent to @"+opp+" — 7 days, may the best win."));
+      return render();
+    }
+    if(act==="versus-quit"){ S.versus=null; showToast(L("Reto abandonado.","Challenge abandoned.")); return render(); }
     if(act==="expand-feed"){ S.feedExpanded=true; return render(); }
     if(act==="add-reel") return addReelManual();
     // growth-2: onboarding de activación
