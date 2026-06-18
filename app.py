@@ -254,6 +254,7 @@ TRIAL_DAYS = 5
 TRIAL_DAILY_SCRIPTS = 3      # tope de guiones/día durante el trial (reset diario, UTC)
 TRIAL_CREDIT_CAP = 15        # backstop total del trial (= TRIAL_DAYS × TRIAL_DAILY_SCRIPTS)
 TRIAL_PLAN = "creator"       # tier cuyos límites/feature-set ve el trial (Pro completo)
+RESCRAPE_COST_CREDITS = 10   # coste de forzar el re-scrape del propio perfil (Fathom 18/06)
 
 
 def _parse_ts(ts):
@@ -7220,6 +7221,97 @@ def brain_rate():
     except Exception:
         pass
     return jsonify({"ok": True}), 200
+
+
+@app.route("/api/brain/rescrape", methods=["POST"])
+@require_auth
+@limiter.limit("10 per hour")
+def brain_rescrape():
+    """Fuerza un re-scrape del PERFIL del usuario (adelanta el análisis automático
+    2×/sem) para detectar reels recién publicados → sube el nivel del Cerebro.
+    Cuesta créditos (Fathom 18/06: 'si quieres más scrapeos, gasta crédito').
+    Reusa scrape_creator_task; cobra del mismo pool que la pill (mensual + topups)."""
+    user = current_user()
+    uid = user["id"]
+    profile = get_profile(uid)
+    n = RESCRAPE_COST_CREDITS
+
+    # Handle propio del usuario (ig_profiles). Sin él no hay nada que scrapear.
+    try:
+        ig_r = db.table("ig_profiles").select("ig_username").eq("user_id", uid).limit(1).execute()
+        ig_username = ((ig_r.data or [{}])[0].get("ig_username") or "").strip().lstrip("@")
+    except Exception:
+        ig_username = ""
+    if not ig_username:
+        return jsonify({"error": "no_handle",
+                        "message": "Conecta tu Instagram primero para analizar tu perfil."}), 400
+
+    # Cobro: del mismo pool que credits_available (mensual del plan + topups). 402 si no llega.
+    plan = profile.get("plan", "free")
+    limit = PLAN_LIMITS.get(plan)
+    unlimited = paid_features_active(profile, user) and limit is None
+    if not unlimited:
+        monthly_rem = max(0, limit - (profile.get("monthly_usage", 0) or 0)) if limit else 0
+        topup_credits = (profile.get("credits_cents", 0) or 0) // COST_CENTS
+        if monthly_rem + topup_credits < n:
+            track_event("paywall_shown", uid, {"wall": "rescrape_no_credits"})
+            return jsonify({"error": "no_credits",
+                            "message": f"Necesitas {n} créditos para forzar el análisis de tu perfil."}), 402
+
+    # Resuelve/crea el creador global del propio usuario.
+    try:
+        ins = (db.table("creators_global")
+                 .upsert({"ig_username": ig_username}, on_conflict="ig_username").execute())
+        creator_row = (ins.data or [None])[0]
+        if not creator_row:
+            creator_row = (db.table("creators_global").select("id")
+                             .eq("ig_username", ig_username).single().execute()).data
+        creator_id = creator_row["id"]
+    except Exception:
+        logger.exception("brain_rescrape: upsert creators_global failed uid=%s", uid)
+        return jsonify({"error": "internal"}), 500
+
+    # Cobra (primero mensual, luego topups) — mismo orden que credits_available.
+    if not unlimited:
+        from_monthly = min(n, monthly_rem)
+        from_topup = n - from_monthly
+        updates = {}
+        if from_monthly:
+            updates["monthly_usage"] = (profile.get("monthly_usage", 0) or 0) + from_monthly
+        if from_topup:
+            updates["credits_cents"] = (profile.get("credits_cents", 0) or 0) - from_topup * COST_CENTS
+        try:
+            if updates:
+                db.table("profiles").update(updates).eq("id", uid).execute()
+        except Exception:
+            logger.exception("brain_rescrape: charge failed uid=%s", uid)
+            return jsonify({"error": "internal"}), 500
+
+    # Encola el scrape del perfil propio. Si falla, refund.
+    try:
+        from tasks import scrape_creator_task  # noqa: E402
+        scrape_creator_task.delay(creator_id)
+    except Exception:
+        logger.exception("brain_rescrape: enqueue failed uid=%s", uid)
+        if not unlimited:
+            try:
+                fresh = get_profile(uid)
+                refund = {}
+                if from_monthly:
+                    refund["monthly_usage"] = max(0, (fresh.get("monthly_usage", 0) or 0) - from_monthly)
+                if from_topup:
+                    refund["credits_cents"] = (fresh.get("credits_cents", 0) or 0) + from_topup * COST_CENTS
+                if refund:
+                    db.table("profiles").update(refund).eq("id", uid).execute()
+            except Exception:
+                logger.exception("brain_rescrape: refund failed uid=%s", uid)
+        return jsonify({"error": "enqueue_failed",
+                        "message": "No pude encolar el análisis. Inténtalo en un momento."}), 503
+
+    track_event("brain_rescrape", uid, {"handle": ig_username, "cost_credits": (0 if unlimited else n)})
+    fresh = get_profile(uid)
+    return jsonify({"ok": True, "credits": credits_available(fresh),
+                    "message": "Análisis de tu perfil encolado — tu nivel sube en cuanto termine."}), 200
 
 
 @app.route("/api/onboarding/complete", methods=["POST"])
