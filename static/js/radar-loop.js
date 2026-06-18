@@ -869,7 +869,7 @@
       '<button class="opp-arrow prev" data-act="opp-nav" data-k="prev" aria-label="Anterior">'+IC.arrL+'</button>'+
       '<div class="opp-track" id="rsOppTrack">'+slides+'</div>'+
       '<button class="opp-arrow next" data-act="opp-nav" data-k="next" aria-label="Siguiente">'+IC.arr+'</button>'+
-      '<div class="opp-dots">'+dots+'</div>'+
+      '<div class="opp-nav-bar"><div class="opp-dots">'+dots+'</div><div class="opp-count" id="rsOppCount">1 / '+reels.length+' oportunidades</div></div>'+
     '</section>';
   }
 
@@ -922,6 +922,7 @@
     track.scrollTo({left:i*w,behavior:"smooth"});
     var dots=track.parentNode.querySelectorAll(".opp-dot");
     for(var d=0;d<dots.length;d++) dots[d].classList.toggle("on",d===i);
+    var cnt=document.getElementById("rsOppCount"); if(cnt) cnt.textContent=(i+1)+" / "+slides.length+" oportunidades";
   }
 
   /* Forzar el re-scrapeo del PROPIO perfil (Fathom 18/06): adelanta el análisis que
