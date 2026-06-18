@@ -79,6 +79,7 @@
     hook:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M18 4v8a6 6 0 11-12 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="18" cy="3.5" r="2" stroke="currentColor" stroke-width="1.7"/></svg>',
     repeat:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M3 11V9a4 4 0 014-4h11M21 7l-3-2 3-2M21 13v2a4 4 0 01-4 4H6M3 17l3 2-3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     arr:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    arrL:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M19 12H5M11 6l-6 6 6 6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     back:'<svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     x:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
     check:'<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M5 12l5 5 9-10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -309,6 +310,9 @@
       // T1 (IDI): captura de ideas siempre a mano, en cualquier vista de la isla.
       '<button class="cmd-idea" data-act="idea-capture" title="Apunta una idea — se desarrolla en Guiones" aria-label="Apunta una idea"><span class="cmd-idea-bulb">'+IC.bulb+'</span><span class="cmd-idea-t">Apunta una idea</span></button>'+
       demoToggle+
+      // Nivel del Cerebro como overlay persistente arriba del todo (en todas las
+      // páginas), estilo videojuego — pedido por David (Fathom 18/06).
+      brainBadgeHTML()+
       streak+
       pillStatHTML()+
     '</div>';
@@ -843,8 +847,29 @@
     '</div>';
   }
 
+  /* Carrusel de 2-3 oportunidades del día (Fathom 18/06: David quiere un slide con
+     varias ideas, no una sola — refuerza "hay de dónde elegir"). Con 1 sola señal
+     degrada a la card suelta de siempre. */
+  function opportunityCarouselHTML(reels){
+    if(!reels || !reels.length) return '';
+    if(reels.length===1) return opportunityHTML(reels[0],1);
+    var slides=reels.map(function(r,i){
+      return '<div class="opp-slide" role="group" aria-label="Oportunidad '+(i+1)+' de '+reels.length+'">'+opportunityHTML(r,i+1)+'</div>';
+    }).join("");
+    var dots=reels.map(function(r,i){
+      return '<button class="opp-dot'+(i===0?" on":"")+'" data-act="opp-nav" data-k="'+i+'" aria-label="Ir a la oportunidad '+(i+1)+'"></button>';
+    }).join("");
+    return '<section class="opp-carousel" aria-roledescription="carrusel">'+
+      '<button class="opp-arrow prev" data-act="opp-nav" data-k="prev" aria-label="Anterior">'+IC.arrL+'</button>'+
+      '<div class="opp-track" id="rsOppTrack">'+slides+'</div>'+
+      '<button class="opp-arrow next" data-act="opp-nav" data-k="next" aria-label="Siguiente">'+IC.arr+'</button>'+
+      '<div class="opp-dots">'+dots+'</div>'+
+    '</section>';
+  }
+
   /* card destacada — "tu oportunidad de hoy" (principio I: una respuesta) */
-  function opportunityHTML(r){
+  function opportunityHTML(r,idx){
+    idx=idx||1;
     var mega=(r.explosion||0)>=5;
     var thumbInner=r.thumb?'<img src="'+ESC(r.thumb)+'" alt="">':'<div class="play"></div>';
     var why = mega
@@ -860,7 +885,7 @@
     return '<article class="feature">'+
       '<div class="feature-thumb"><div class="thumb">'+thumbInner+'<span class="thumb-tag">reel · '+ESC(r.creator.handle.slice(0,6))+'</span><span class="dur">'+ESC(r.dur)+'</span></div></div>'+
       '<div class="feature-main">'+
-        '<div class="feature-eyebrow">Oportunidad #1 <span class="who">· @'+ESC(r.creator.handle)+' · '+ESC(r.when)+'</span></div>'+
+        '<div class="feature-eyebrow">Oportunidad #'+idx+' <span class="who">· @'+ESC(r.creator.handle)+' · '+ESC(r.when)+'</span></div>'+
         // #1 core-loop (variar recompensa): cuando aparece un bombazo, la vuelta se
         // siente especial (novedad genuina, no siempre igual). Solo si es excepcional.
         (mega?'<div class="opp-mega">🔥 '+L("El más explosivo de la semana","The week's biggest blow-up")+'</div>':'')+
@@ -878,6 +903,31 @@
         '<div class="dmetric"><div class="dk">Likes</div><div class="dv">'+ESC(r.likes)+'</div></div>'+
       '</div>'+
     '</article>';
+  }
+
+  // Navegación del carrusel de oportunidades (sin re-render: scroll directo del track).
+  function oppNav(k){
+    var track=document.getElementById("rsOppTrack"); if(!track) return;
+    var slides=track.querySelectorAll(".opp-slide"); if(!slides.length) return;
+    var w=slides[0].getBoundingClientRect().width||track.clientWidth;
+    var cur=Math.round(track.scrollLeft/w);
+    var i=(k==="prev")?cur-1:(k==="next")?cur+1:(parseInt(k,10)||0);
+    i=Math.max(0,Math.min(slides.length-1,i));
+    track.scrollTo({left:i*w,behavior:"smooth"});
+    var dots=track.parentNode.querySelectorAll(".opp-dot");
+    for(var d=0;d<dots.length;d++) dots[d].classList.toggle("on",d===i);
+  }
+
+  /* Forzar el re-scrapeo del PROPIO perfil (Fathom 18/06): adelanta el análisis que
+     corre solo 2×/semana, a cambio de créditos. En prod encolaría el scrape del IG
+     del usuario; en demo solo cobra y confirma. Sin créditos → al muro. */
+  function forceScrape(){
+    var COST=10;
+    if(isFree() || (S.user.credits||0)<COST){ return showPaywall("force_scrape"); }
+    spend(COST);
+    render();
+    flashSpark(-COST);
+    showToast("🔎 Análisis de tu perfil encolado — si publicaste algo nuevo, tu nivel sube en cuanto termine.");
   }
 
   /* ════════════════════════════════════════════════════════════════
@@ -915,7 +965,7 @@
       '<div><div class="eyebrow"><span class="pip"></span>Portfolio · '+bs.length+' marcas</div>'+
       '<h1 class="h-title">Tus marcas</h1>'+
       '<p class="h-sub">Lo que pasó hoy en cada una. Entra donde haya algo que capitalizar.</p></div>'+
-      '<div class="phead-right">'+brainBadgeHTML()+(S.user.streak>0?'<span class="streak">'+IC.spark+' Racha '+S.user.streak+' días</span>':'')+'</div>'+
+      (S.user.streak>0?'<div class="phead-right"><span class="streak">'+IC.spark+' Racha '+S.user.streak+' días</span></div>':'')+
     '</header>';
     return '<div class="scroll"><div class="canvas">'+
       head+statbar+
@@ -996,7 +1046,7 @@
       '<div><div class="eyebrow"><span class="pip"></span>Radar · @'+ESC(b.handle||S.user.handle||"tu_cuenta")+'</div>'+
       '<h1 class="h-title">Señales de hoy</h1>'+
       '<p class="h-sub">'+line+'</p></div>'+
-      '<div class="phead-right">'+brainBadgeHTML()+(S.user.streak>0?'<span class="streak">'+IC.spark+' Racha '+S.user.streak+' días</span>':'')+'</div>'+
+      (S.user.streak>0?'<div class="phead-right"><span class="streak">'+IC.spark+' Racha '+S.user.streak+' días</span></div>':'')+
     '</header>';
 
     // B: vista «Reels de @X» — todos los reels del competidor, sin recorte.
@@ -1019,7 +1069,8 @@
       '</div></div>';
     }
 
-    var hero=sorted[0], rest=sorted.slice(1);
+    // Fathom 18/06: el día enseña 2-3 oportunidades en carrusel (no una sola).
+    var heroN=sorted.slice(0,Math.min(3,sorted.length)), rest=sorted.slice(heroN.length);
     var fillCount=Math.min(5,S.reels.length)||5;
     var shown = S.feedExpanded ? rest : rest.slice(0,5);
     var rows = shown.map(reelRowHTML).join("");   // A: card + detalle inline si está abierto
@@ -1033,7 +1084,7 @@
       statbarHTML()+
       trackedManageHTML()+
       activationProgressHTML()+   // endowed progress: «1/4 · Roba tu primera idea»
-      opportunityHTML(hero)+
+      opportunityCarouselHTML(heroN)+
       voiceOnboardCardHTML()+   // B6+T1: banner de voz BAJO la oportunidad — no empuja el hero bajo el fold
       nextSeriesHTML("dash")+   // B1+T1: "tu próxima serie" con CTA secundario en el Dashboard
       (S.reels.length?'<div class="plays">'+whaleHTML(fillCount)+'</div>':'')+
@@ -1445,7 +1496,7 @@
           {ok:s.comps>=1,   label:"Sigue a 1 competidor",                             cta:{t:"Añadir competidor", act:"add-comp"}} ],
       3:[ {ok:s.guiones>=3, label:"Crea 3 guiones ("+Math.min(3,s.guiones)+"/3)",     cta:{t:"Robar un guion del radar", act:"tab", k:"dashboard"}},
           {ok:s.voice>=50,  label:"Voz al 50% (vas al "+s.voice+"%)",                 cta:{t:"Refinar mi voz", act:"voice-refine"}} ],
-      4:[ {ok:s.pub>=1,     label:"Publica 1 reel y vincúlalo",                       cta:{t:"Conectar Instagram", act:"tab", k:"metrics"}} ],
+      4:[ {ok:s.pub>=1,     label:"Publica en Instagram — lo detecto al analizar tu perfil",  cta:{t:"Analizar mi perfil ahora · 10 cr", act:"force-scrape"}} ],
       5:[ {ok:s.pub>=5,     label:"5 publicados con métricas ("+Math.min(5,s.pub)+"/5)", cta:{t:"Vincular mis reels", act:"tab", k:"metrics"}},
           {ok:s.voice>=75,  label:"Voz al 75% (vas al "+s.voice+"%)",                 cta:{t:"Refinar mi voz", act:"voice-refine"}} ]
     };
@@ -1942,7 +1993,7 @@
       '<div class="brain-hero">'+
         '<div id="rsBrainStage" class="brain3d-stage"><div class="brain-orb brain3d-fallback">'+IC.brain+'</div></div>'+
         '<div class="brain-hero-body">'+
-          '<div class="brain-lvl">Nivel '+lv.level+' · '+ESC(ecoLevelName(lv.level))+'</div>'+
+          '<div class="brain-lvl">Nivel '+lv.level+' · '+ESC(ecoLevelName(lv.level))+(lv.level>=4?' <span class="brain-pro" title="Eres Pro Reelscript — acceso a grupos solo-pros">🏅 Pro</span>':'')+'</div>'+
           '<div class="brain-voiceline">Te conozco al <b>'+voicePct+'%</b></div>'+
           '<div class="eco-bar" style="margin:10px 0 8px"><div class="eco-fill" style="width:'+Math.max(4,lv.pct)+'%"></div></div>'+
           // B2: umbrales VISIBLES del siguiente nivel (checklist ✓/○) + UNA acción primaria
@@ -1954,7 +2005,10 @@
               }).join('')+'</div>'+
               (lv.nextAction
                 ? '<button class="btn btn-md btn-primary" style="margin-top:12px" data-act="'+ESC(lv.nextAction.cta.act)+'"'+(lv.nextAction.cta.k?' data-k="'+ESC(lv.nextAction.cta.k)+'"':'')+'>'+ESC(lv.nextAction.cta.t)+'</button>'
-                : '')
+                : '')+
+              // Fathom 18/06: el nivel sube SOLO con el auto-scrape (2×/sem); el botón
+              // de arriba solo lo adelanta. Se enseña cuando el salto depende de publicar.
+              (lv.next>=4 ? '<div class="brain-autonote">'+IC.spark+' Analizo tu perfil <b>2×/semana</b> sin que hagas nada — cuando publicas, tu nivel sube en el siguiente análisis. ¿Con prisa? Fuérzalo arriba.</div>' : '')
             : '<div class="brain-next">Nivel máximo: creo con tu voz, tus rivales y tus datos. Guiones casi sin retoques.</div>')+
           '<div class="brain-why">A más nivel, menos retoques: tu voz y tus reels ganadores entran en el prompt de cada «Roba la idea».</div>'+
         '</div>'+
@@ -3540,6 +3594,8 @@
     if(act==="creator-reels-back") return closeCreatorReels();
     if(act==="fav") return toggleFav(id);
     if(act==="filter"){ S.filter=k; return render(); }
+    if(act==="opp-nav"){ return oppNav(k); }
+    if(act==="force-scrape"){ return forceScrape(); }
     if(act==="expand-feed"){ S.feedExpanded=true; return render(); }
     if(act==="add-reel") return addReelManual();
     // growth-2: onboarding de activación
