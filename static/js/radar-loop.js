@@ -2139,6 +2139,13 @@
       '</div>'+
       // Entrenar (inversión): valora hooks → afina tu gusto + alimenta el cerebro 3D.
       brainTrainHTML()+
+      // Forzar re-scrape del propio perfil (Fathom 18/06): adelanta el análisis auto
+      // 2×/sem a cambio de créditos. Siempre disponible (publicaste → sube ya de nivel).
+      '<div class="brain-section-t">'+L("Sube de nivel ya","Level up now")+'</div>'+
+      '<div class="bt-load" style="justify-content:space-between;gap:14px;margin-bottom:20px">'+
+        '<span>'+L("¿Publicaste algo nuevo? Re-analizo tu perfil ahora y tu nivel sube en cuanto detecte tus reels — sin esperar al análisis automático (2×/semana).","Published something new? I re-scan your profile now and your level rises as soon as I detect your reels — no waiting for the automatic scan (2×/week).")+'</span>'+
+        '<button class="btn btn-sm btn-secondary" style="flex-shrink:0" data-act="force-scrape">'+IC.spark+' '+L("Re-analizar mi perfil · 10 cr","Re-scan my profile · 10 cr")+'</button>'+
+      '</div>'+
       // Analizar un reel suelto (sin añadirlo como competidor) — atajo al panel Analizar.
       '<div class="brain-section-t">'+L("Analiza un reel suelto","Analyze a one-off reel")+'</div>'+
       '<div class="bt-load" style="justify-content:space-between;gap:14px;margin-bottom:20px">'+
