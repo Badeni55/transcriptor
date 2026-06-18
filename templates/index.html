@@ -10528,6 +10528,22 @@
     .rs .opp-dot.on { width:22px; border-radius:99px; background:var(--brand-500); border-color:var(--brand-500); }
     .rs .opp-count { font-family:var(--font-mono,ui-monospace,monospace); font-size:11px; letter-spacing:.04em; color:var(--text-tertiary); text-transform:uppercase; }
     .rs--mobile .opp-arrow { display:none; }
+    /* Flash de 1ª compra (Fathom 18/06) */
+    .rs .flash-offer { display:flex; align-items:center; gap:16px; margin-bottom:14px; padding:14px 18px; border-radius:14px; cursor:pointer;
+      color:#fff; background:linear-gradient(120deg, #C4501A, #e0762f 55%, #8b2f0c); border:1px solid #e0884a;
+      box-shadow:0 6px 22px rgba(196,80,26,.32); position:relative; overflow:hidden; transition:transform .12s, box-shadow .15s; }
+    .rs .flash-offer:hover { transform:translateY(-1px); box-shadow:0 10px 28px rgba(196,80,26,.42); }
+    .rs .flash-offer::after { content:""; position:absolute; inset:0; background:linear-gradient(100deg, transparent 30%, rgba(255,255,255,.18) 50%, transparent 70%); transform:translateX(-120%); animation:flashShine 3.2s ease-in-out infinite; }
+    @keyframes flashShine { 0%,60%{ transform:translateX(-120%); } 100%{ transform:translateX(120%); } }
+    .rs .flash-badge { flex-shrink:0; font-family:var(--font-mono,ui-monospace,monospace); font-weight:800; font-size:20px; letter-spacing:-.02em; padding:8px 12px; border-radius:10px; background:rgba(0,0,0,.22); }
+    .rs .flash-txt { display:flex; flex-direction:column; gap:2px; min-width:0; line-height:1.3; }
+    .rs .flash-txt b { font-size:15px; } .rs .flash-txt span { font-size:12.5px; opacity:.92; } .rs .flash-txt s { opacity:.7; }
+    .rs .flash-cd-wrap { margin-left:auto; flex-shrink:0; text-align:center; }
+    .rs .flash-cd-k { display:block; font-size:9.5px; text-transform:uppercase; letter-spacing:.1em; opacity:.85; }
+    .rs .flash-cd { font-family:var(--font-mono,ui-monospace,monospace); font-weight:700; font-size:18px; letter-spacing:.02em; font-variant-numeric:tabular-nums; }
+    .rs .flash-cta { flex-shrink:0; display:inline-flex; align-items:center; gap:6px; font-weight:700; font-size:13px; padding:9px 14px; border-radius:99px; background:#fff; color:#9a3a10; white-space:nowrap; }
+    .rs .flash-cta svg { width:15px; height:15px; }
+    .rs--mobile .flash-offer { flex-wrap:wrap; gap:10px; } .rs--mobile .flash-cd-wrap { margin-left:0; }
     .rs .feature-thumb { position:relative; } .rs .feature-thumb .thumb { width:100%; height:100%; min-height:230px; border:none; border-radius:0; border-right:1px solid var(--border-default); }
     .rs .feature-main { padding:24px 26px; min-width:0; display:flex; flex-direction:column; }
     .rs .feature-eyebrow { font-family:var(--font-mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--brand-500); margin-bottom:13px; display:flex; align-items:center; gap:9px; }

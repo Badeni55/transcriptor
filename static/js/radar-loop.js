@@ -1088,6 +1088,7 @@
     return '<div class="scroll"><div class="canvas">'+
       head+
       (isAgency()?brandTabsHTML():"")+
+      flashBannerHTML()+          // Flash 1ª compra: -30% 48h tras cruzar el muro
       statbarHTML()+
       trackedManageHTML()+
       activationProgressHTML()+   // endowed progress: «1/4 · Roba tu primera idea»
@@ -1442,6 +1443,43 @@
   function isTrial(){ return isDemo() ? isFree() : !!S.user.trialActive; }
   // #2 conversión: guiones restantes HOY (tope diario del trial). null si no es free.
   function freeStealsLeft(){ if(!isFree()) return null; return (S.user.dayLeft!=null ? S.user.dayLeft : 3); }
+
+  /* Flash de 1ª compra (Fathom 18/06, palanca nº1 de conversión): al cruzar el primer
+     muro, -30% el 1er mes de Creator durante 48h, con countdown HONESTO (deadline fijo
+     en localStorage → no se resetea al recargar). En prod: crear producto/precio temporal
+     en la pasarela y validar el % (David). */
+  var FLASH_PCT=30, FLASH_HOURS=48;
+  function flashKey(){ return isDemo()?"rs_flash_demo":"rs_flash_v1"; }
+  function flashDeadline(){ try{ var v=localStorage.getItem(flashKey()); return v?parseInt(v,10):(S._flashDl||0); }catch(e){ return S._flashDl||0; } }
+  function startFlash(){ if(flashDeadline()>0) return; var dl=Date.now()+FLASH_HOURS*3600*1000; S._flashDl=dl; try{ localStorage.setItem(flashKey(),String(dl)); }catch(e){} }
+  function flashActive(){ if(!isFree() && !isTrial()) return false; var dl=flashDeadline(); return dl>0 && (dl-Date.now())>1000; }
+  function flashRemainStr(){
+    var ms=Math.max(0,flashDeadline()-Date.now()), s=Math.floor(ms/1000);
+    var h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=s%60, p=function(n){return (n<10?"0":"")+n;};
+    return p(h)+":"+p(m)+":"+p(ss);
+  }
+  function flashBannerHTML(){
+    if(!flashActive()) return '';
+    var price=Math.round(29*(1-FLASH_PCT/100));   // €29 → €20
+    return '<div class="flash-offer" data-act="open-plans" role="button" tabindex="0" aria-label="Oferta: primer mes de Creator con 30% de descuento">'+
+      '<span class="flash-badge">−'+FLASH_PCT+'%</span>'+
+      '<div class="flash-txt"><b>'+L("Tu primer mes de Creator a €"+price,"Your first month of Creator for €"+price)+'</b>'+
+        '<span>'+L("Solo por cruzar el muro hoy","Just for hitting the wall today")+' · <s>€29</s> → <b>€'+price+'</b></span></div>'+
+      '<div class="flash-cd-wrap"><span class="flash-cd-k">'+L("Termina en","Ends in")+'</span><span class="flash-cd" id="rsFlashCd">'+flashRemainStr()+'</span></div>'+
+      '<span class="flash-cta">'+L("Aprovéchalo","Grab it")+' '+IC.arr+'</span>'+
+    '</div>';
+  }
+  // Countdown vivo: actualiza el reloj cada segundo; al expirar, re-render (quita el banner).
+  function ensureFlashCountdown(){
+    clearInterval(S.flashTimer);
+    if(!document.getElementById("rsFlashCd")) return;
+    S.flashTimer=setInterval(function(){
+      var el=document.getElementById("rsFlashCd");
+      if(!el){ clearInterval(S.flashTimer); return; }
+      if(!flashActive()){ clearInterval(S.flashTimer); render(); return; }
+      el.textContent=flashRemainStr();
+    },1000);
+  }
   function metricsLockHTML(inner){
     return '<div class="rs-lock"><div class="rs-lock-inner" aria-hidden="true">'+inner+'</div>'+
       '<div class="rs-lock-over"><div class="rs-lock-card">'+IC.bolt+
@@ -2338,6 +2376,7 @@
     if(S.view==="gen") startGenSteps();
     // Cerebro 3D: monta/re-ancla al entrar en la pestaña Cerebro, pausa al salir.
     if(S.tab==="brain"){ ensureBrain3D(); ensureBrainTrain(); } else pauseBrain3D();
+    ensureFlashCountdown();   // tic-tac del reloj de la oferta flash si está visible
     // Sección legacy pendiente de la URL (/profile/transcriptions|settings): se abre
     // una vez que #rsLegacy ya existe (primer render). openLegacy consume el flag.
     if(S._pendingLegacy && document.getElementById("rsLegacy")){ var _pl=S._pendingLegacy; S._pendingLegacy=null; openLegacy(_pl); }
@@ -2752,17 +2791,20 @@
   }
   // Muro: free agotó sus guiones del mes (o sin créditos). Abre el modal de planes.
   function showPaywall(err){
+    startFlash();   // 1er muro → arranca la oferta flash de 48h
     var msg = (err==="free_limit_reached")
       ? L("Sin robos gratis este mes. Tu radar tiene más ideas que petan — desbloquéalas.","No free steals left this month. Your radar has more ideas blowing up — unlock them.")
       : L("Necesitas créditos para robar esta idea.","You need credits to steal this idea.");
     showToast(msg, L("Ver planes","See plans"), "open-plans");
     // FIX free-counter: refresca el contador real tras el muro (la pill no debe
     // quedarse en "1 este mes" cuando el restante real es 0).
-    if(!isDemo()){ refreshCredits().then(function(){ render(); }); }
+    if(isDemo()){ render(); } else { refreshCredits().then(function(){ render(); }); }
     if(typeof window.openUpgradeModal==="function"){ try{ window.openUpgradeModal("hazlo_mio_free_limit"); }catch(e){} }
   }
   // Tope diario del trial: aviso suave (no es "sin créditos", es "vuelve mañana").
   function showDailyLimit(){
+    startFlash();   // 1er muro diario → arranca la oferta flash
+    render();       // muestra el banner de la oferta en el radar
     showToast(L("Has hecho tus 3 guiones de hoy. Vuelve mañana — o desbloquea sin límite.",
                 "You've used your 3 scripts for today. Come back tomorrow — or unlock unlimited."),
               L("Ver planes","See plans"), "open-plans");
