@@ -190,6 +190,7 @@
     return {
       cap: v.cap||v.caption||"",
       views: v.views||0, likes: v.likes||0, comments: v.comments||0,
+      shares: v.shares||v.shares_count||0,   // Fathom 18/06: gráfico de compartidos
       thumb: v.thumb||v.thumbnail_b64||v.thumbnail_url||null,
       dur: v.dur||durFmt(v.duration),
       date: v.date||relTime(v.published_at),
@@ -1467,7 +1468,7 @@
     // legibles los pequeños. Los marcadores de media/mediana usan la MISMA
     // escala (si no, mentirían respecto a las barras).
     function logPct(val){ return Math.max(2, Math.round(Math.log(val+1)/Math.log(max+1)*100)); }
-    var tabs=[["views","Views"],["likes","Likes"],["comments","Comments"]].map(function(t){ return '<button class="chip-sm'+(metric===t[0]?" on":"")+'" data-act="metric-chart" data-k="'+t[0]+'">'+t[1]+'</button>'; }).join("");
+    var tabs=[["views","Views"],["likes","Likes"],["comments","Comments"],["shares","Compartidos"]].map(function(t){ return '<button class="chip-sm'+(metric===t[0]?" on":"")+'" data-act="metric-chart" data-k="'+t[0]+'">'+t[1]+'</button>'; }).join("");
     var rows=v.slice(0,10).map(function(x){
       var val=x[metric]||0, pct=logPct(val);
       var lbl=((x.date||"")+" "+(x.cap||"")).slice(0,22);
@@ -3956,10 +3957,10 @@
       top:{ title:"Llevo 3 semanas sin tocar mi bandeja", views:"1,4 M" },
       learned:["Tus reels de ~40s superan tu media de vistas","Abrir con pregunta te funciona (3 de tus mejores lo hacen)","Los hooks de «yo hice X y pasó Y» rinden 2,4× más que los de pregunta"],
       videos:[
-        { cap:"Llevo 3 semanas sin tocar mi bandeja…", views:1400000, likes:112000, comments:840, dur:"0:41", date:"hace 6 d", top:true, viral:true, from_guion:"Llevo 3 semanas sin tocar mi bandeja de entrada", vsMedian:5.8 },
-        { cap:"El prompt de 9 palabras que arregla ChatGPT", views:680000, likes:54000, comments:420, dur:"0:38", date:"hace 12 d", top:true, from_guion:"El prompt de 9 palabras que arregla ChatGPT", vsMedian:3.2 },
-        { cap:"Mi setup de creador en 2026 (tour)", views:90000, likes:5400, comments:80, dur:"1:10", date:"hace 18 d" },
-        { cap:"3 automatizaciones que deberías tener ya", views:210000, likes:16000, comments:190, dur:"0:33", date:"hace 22 d", from_guion:"Automaticé mi facturación de freelance en una tarde", vsMedian:1.6 }
+        { cap:"Llevo 3 semanas sin tocar mi bandeja…", views:1400000, likes:112000, comments:840, shares:31000, dur:"0:41", date:"hace 6 d", top:true, viral:true, from_guion:"Llevo 3 semanas sin tocar mi bandeja de entrada", vsMedian:5.8 },
+        { cap:"El prompt de 9 palabras que arregla ChatGPT", views:680000, likes:54000, comments:420, shares:12400, dur:"0:38", date:"hace 12 d", top:true, from_guion:"El prompt de 9 palabras que arregla ChatGPT", vsMedian:3.2 },
+        { cap:"Mi setup de creador en 2026 (tour)", views:90000, likes:5400, comments:80, shares:760, dur:"1:10", date:"hace 18 d" },
+        { cap:"3 automatizaciones que deberías tener ya", views:210000, likes:16000, comments:190, shares:3800, dur:"0:33", date:"hace 22 d", from_guion:"Automaticé mi facturación de freelance en una tarde", vsMedian:1.6 }
       ]
     };
   }
