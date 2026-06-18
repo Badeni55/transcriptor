@@ -7249,7 +7249,9 @@ def brain_rescrape():
     # Cobro: del mismo pool que credits_available (mensual del plan + topups). 402 si no llega.
     plan = profile.get("plan", "free")
     limit = PLAN_LIMITS.get(plan)
-    unlimited = paid_features_active(profile, user) and limit is None
+    # "unlimited" SOLO para planes de pago sin tope (no para free-en-trial, cuyo limit
+    # también es None → si no, el free se saltaría el cobro).
+    unlimited = paid_features_active(profile, user) and limit is None and plan != "free"
     if not unlimited:
         monthly_rem = max(0, limit - (profile.get("monthly_usage", 0) or 0)) if limit else 0
         topup_credits = (profile.get("credits_cents", 0) or 0) // COST_CENTS
