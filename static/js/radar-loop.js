@@ -841,6 +841,12 @@
       if(r && r.ok && r.d){ S._lbReal=r.d; if(S.tab==="leaderboard") render(); }
     });
   }
+  // DEMO: fotos de static/img/demo-thumbs/ inyectadas por el server en
+  // window.__DEMO_THUMBS__ (no pasan por el shim de fetch del demo). [] si no hay.
+  function _demoThumbs(){
+    return (isDemo() && window.__DEMO_THUMBS__ && window.__DEMO_THUMBS__.length) ? window.__DEMO_THUMBS__ : null;
+  }
+  function demoThumb(i){ var t=_demoThumbs(); return t?t[((i%t.length)+t.length)%t.length]:null; }
   function suggestedCompHTML(){
     var c=suggestedComp(); if(!c) return '';
     var why=c.why || L(c.why_es, c.why_en);   // real → string; demo → bilingüe
@@ -1178,8 +1184,70 @@
       voiceOnboardCardHTML()+   // B6+T1: banner de voz BAJO la oportunidad — no empuja el hero bajo el fold
       nextSeriesHTML("dash")+   // B1+T1: "tu próxima serie" con CTA secundario en el Dashboard
       (S.reels.length?'<div class="plays">'+whaleHTML(fillCount)+'</div>':'')+
-      (rest.length?('<div class="feed-head"><span class="feed-title">Más señales <span class="ct">· '+rest.length+'</span></span>'+filtersHTML()+'</div><div class="feed">'+rows+'</div>'+moreToggle):"")+
+      competitorGalleryHTML()+    // galería horizontal de miniaturas de la competencia
+      communityGalleryHTML()+     // teaser comunidad (Próximamente)
     '</div></div>';
+  }
+  /* GALERÍAS de miniaturas (inspiración: apps de creación visual — filas
+     horizontales de tarjetas verticales con thumbnail + overlay). Fila 1: últimos
+     reels de la competencia (real: thumb_b64; demo: placeholder de color). Fila 2:
+     creaciones de la comunidad (teaser «Próximamente» + waitlist). */
+  function _galGrad(seed){
+    var h=[['#ff6a3d','#ff2d55'],['#5b8cff','#7b3dff'],['#1dd3b0','#0e9f87'],['#ffb648','#ff7a00'],['#6f93ff','#4f7cff'],['#b06cff','#7b3dff'],['#23c4ff','#3d6bff'],['#ff5db1','#ff2d55']];
+    var g=h[_lbHash(String(seed),0,h.length)];
+    return 'linear-gradient(150deg,'+g[0]+','+g[1]+')';
+  }
+  function galleryCardHTML(c){
+    var inner=c.thumb
+      ? '<img src="'+ESC(c.thumb)+'" alt="" loading="lazy">'
+      : '<div class="gcard-ph" style="background:'+_galGrad(c.key||c.handle)+'"><span>▶</span></div>';
+    return '<div class="gcard"'+(c.act?(' data-act="'+c.act+'" data-id="'+ESC(String(c.id||""))+'"'+(c.handle?' data-handle="'+ESC(c.handle)+'"':'')):'')+' role="button" tabindex="0" aria-label="@'+ESC(c.handle)+'">'+
+      inner+
+      (c.badge?'<span class="gcard-badge">'+ESC(c.badge)+'</span>':'')+
+      (c.soon?'<span class="gcard-soon">'+L('Próximamente','Soon')+'</span>':'')+
+      '<div class="gcard-ov"><div class="gcard-h">@'+ESC(c.handle)+'</div>'+(c.cap?'<div class="gcard-cap">'+ESC(c.cap)+'</div>':'')+'</div>'+
+    '</div>';
+  }
+  function galleryHTML(title, sub, cards, moreHTML){
+    if(!cards) return '';
+    return '<section class="rgal"><div class="rgal-head"><div class="rgal-t">'+ESC(title)+
+      (sub?'<span class="rgal-sub">'+ESC(sub)+'</span>':'')+'</div>'+(moreHTML||'')+'</div>'+
+      '<div class="rgal-track">'+cards+'</div></section>';
+  }
+  function competitorGalleryHTML(){
+    var reels=(S.reels||[]);
+    // En demo con fotos: UNA tarjeta por foto (sin repetir), metadatos de reels cíclicos.
+    // En real: una tarjeta por reel con su thumb_b64. Sin nada → no se pinta.
+    var imgs=_demoThumbs();
+    // demo: tantas tarjetas como fotos + 3 más de ejemplo SIN miniatura (placeholder).
+    var n=imgs?(imgs.length+3):Math.min(12, reels.length);
+    if(!n) return '';
+    var cards="";
+    for(var i=0;i<n;i++){
+      var r=reels.length?reels[i%reels.length]:null;
+      cards+=galleryCardHTML({
+        id:(r?r.id:""), handle:(r?r.creator.handle:"creador"), cap:(r?r.cap:""),
+        thumb:(imgs?(i<imgs.length?imgs[i]:null):(r&&r.thumb)),
+        badge:(r&&r.explosionTxt!=null?r.explosionTxt+'×':''),
+        key:(r?(r.id||r.creator.handle):"c"+i), act:(r?"reel-detail":"")
+      });
+    }
+    // Flechas (desktop no desliza). data-act scrollea el track de ESTA sección.
+    var arrows='<div class="rgal-arrows">'+
+      '<button class="rgal-arrow" data-act="rgal-scroll" data-dir="prev" aria-label="'+L("Anterior","Previous")+'">'+IC.arrL+'</button>'+
+      '<button class="rgal-arrow" data-act="rgal-scroll" data-dir="next" aria-label="'+L("Siguiente","Next")+'">'+IC.arr+'</button>'+
+    '</div>';
+    return galleryHTML(L("Lo último de tu competencia","Latest from your rivals"), "", cards, arrows);
+  }
+  // Comunidad (coming-soon): solo título + «Próximamente» + Avísame (waitlist real).
+  function communityGalleryHTML(){
+    return '<section class="rgal"><div class="rgal-head"><div class="rgal-t">'+
+      L("Creaciones de la comunidad","Community creations")+'</div></div>'+
+      '<div class="rgal-soon">'+
+        '<span class="rgal-soon-pill">'+IC.spark+' '+L("Próximamente","Coming soon")+'</span>'+
+        '<button class="rgal-more rgal-more-info" data-act="community-info">'+L("Más información","Learn more")+'</button>'+
+        '<button class="rgal-more" data-act="community-interest">'+L("Avísame cuando esté","Notify me")+' →</button>'+
+      '</div></section>';
   }
 
   /* T1 · Fábrica de ideas embebida en Radar — input suelto + generadores +
@@ -1955,9 +2023,10 @@
         '<div class="soon-body"><div class="soon-h">'+title+' <span class="soon-pill">'+L("Próximamente","Soon")+'</span></div>'+
         '<div class="soon-desc">'+desc+'</div></div></div>';
     };
+    var moreBtn='<button class="btn btn-sm btn-ghost" data-act="community-info">'+IC.spark+' '+L("Más información","Learn more")+'</button>';
     var cta=interested
-      ? '<div class="soon-cta done">'+IC.check+' '+L("Te avisaremos en cuanto llegue ✨","We'll let you know when it lands ✨")+'</div>'
-      : '<div class="soon-cta"><button class="btn btn-sm btn-secondary" data-act="community-interest">'+IC.spark+' '+L("Avísame cuando llegue","Notify me when it's live")+'</button></div>';
+      ? '<div class="soon-cta"><span class="soon-done-inline">'+IC.check+' '+L("Te avisaremos en cuanto llegue ✨","We'll let you know when it lands ✨")+'</span>'+moreBtn+'</div>'
+      : '<div class="soon-cta"><button class="btn btn-sm btn-primary" data-act="community-interest">'+IC.spark+' '+L("Avísame cuando llegue","Notify me when it's live")+'</button>'+moreBtn+'</div>';
     return '<div class="sec-soon-t">'+L("Comunidad de creadores","Creator community")+' <span class="brain-tag">'+L("en camino","on the way")+'</span></div>'+
       '<div class="soon-grid">'+
         card('🎁', L("Pushea tus reels a tu nicho","Push your reels to your niche"),
@@ -1965,6 +2034,35 @@
         card('👥', L("Grupos de creadores","Creator groups"),
              L("Únete a un grupo de tu nicho: <b>comparte métricas</b> y mira en directo qué le está funcionando a los demás.","Join a niche group: <b>share metrics</b> and see live what's working for everyone else."))+
       '</div>'+cta;
+  }
+  /* MINI-MODAL «Más información» de la Comunidad: explica qué será + una animación
+     (carrusel infinito de mini-reels + 🎁 que late = el intercambio en la comunidad).
+     Respeta prefers-reduced-motion. Se abre desde los botones «Más información». */
+  function communityInfoModalHTML(){
+    var thumbs=_demoThumbs()||[];
+    var mini=function(i){
+      var t=thumbs.length?thumbs[i%thumbs.length]:null;
+      return '<div class="ci-mini"'+(t?'':(' style="background:'+_galGrad("ci"+i)+'"'))+'>'+(t?'<img src="'+ESC(t)+'" alt="">':'<span>▶</span>')+'</div>';
+    };
+    var strip=''; for(var i=0;i<7;i++) strip+=mini(i);
+    var interested=!!S.user.communityWaitlist; if(!interested){ try{ interested=localStorage.getItem("rs_community_interest")==="1"; }catch(e){} }
+    return '<div class="ci-overlay" data-act="ci-close">'+
+      '<div class="ci-card" role="dialog" aria-modal="true" aria-label="'+L("Comunidad de creadores","Creator community")+'" data-act="ci-stop">'+
+        '<button class="ci-x" data-act="ci-close" aria-label="'+L("Cerrar","Close")+'">'+IC.x+'</button>'+
+        '<div class="ci-stage"><div class="ci-strip">'+strip+strip+'</div><div class="ci-gift">🎁</div></div>'+
+        '<span class="ci-pill">'+IC.spark+' '+L("Próximamente","Coming soon")+'</span>'+
+        '<h3 class="ci-h">'+L("Comunidad de creadores","Creator community")+'</h3>'+
+        '<p class="ci-sub">'+L("Reelscript dejará de ser solo tú y tu radar: una red entre creadores de tu nicho para crecer juntos.","Reelscript won't just be you and your radar — a network of creators in your niche, growing together.")+'</p>'+
+        '<ul class="ci-feats">'+
+          '<li><span class="ci-fi">🎁</span><div><b>'+L("Pushea tus reels → recibe regalos","Push your reels → get gifts")+'</b>'+L("Comparte tu mejor reel con tu nicho y recibe los suyos ya analizados, listos para robar.","Share your best reel with your niche and get theirs back, already analyzed and ready to steal.")+'</div></li>'+
+          '<li><span class="ci-fi">👥</span><div><b>'+L("Grupos de creadores","Creator groups")+'</b>'+L("Únete a un grupo de tu nicho: comparte métricas y ve en directo qué funciona.","Join a niche group: share metrics and see live what works.")+'</div></li>'+
+          '<li><span class="ci-fi">✨</span><div><b>'+L("Creaciones de la comunidad","Community creations")+'</b>'+L("Un muro con lo que crean otros con Reelscript — inspiración real de tu nicho.","A wall of what others build with Reelscript — real inspiration from your niche.")+'</div></li>'+
+        '</ul>'+
+        (interested
+          ? '<div class="ci-done">'+IC.check+' '+L("Te avisaremos en cuanto llegue ✨","We'll let you know when it lands ✨")+'</div>'
+          : '<button class="btn btn-md btn-primary ci-go" data-act="community-interest">'+IC.spark+' '+L("Avísame cuando llegue","Notify me when it's live")+'</button>')+
+      '</div>'+
+    '</div>';
   }
   // T3: lista REAL de competidores seguidos (con id de tracking → permite dejar de
   // seguir). Se carga aparte del feed; al resolver, repinta las vistas que la
@@ -2647,6 +2745,7 @@
     else if(S.view==="prompter") html+=teleprompterHTML();
     else if(S.view==="fillweek") html+='<div class="overlay" role="dialog" aria-modal="true" aria-label="Llena mi semana"><div class="obar"><button class="back" data-act="close-feed" aria-label="Cerrar">'+IC.x+'</button><span class="otitle">Llena mi semana</span></div><div class="oscroll" id="rsFillHost">'+fillWeekHTML(fillReels(),S._fillPhase==null?0:S._fillPhase)+'</div></div>';
     if(S.sheet) html+=sheetHTML();   // T2: el sheet de entrada va SOBRE cualquier overlay
+    if(S.communityInfo) html+=communityInfoModalHTML();   // mini-modal «Más información» Comunidad
     view.innerHTML=html;
     // T4: el error persistente sobrevive a los re-render mutando el nodo estable.
     var errN=document.getElementById("rsErr"),errM=document.getElementById("rsErrMsg");
@@ -3923,6 +4022,11 @@
     if(act==="brain-train-mode") return setBrainTrainMode(k);
     if(act==="brain-improve") return brainImprove(k==="send");
     if(act==="brain-train-more") return brainTrainMore();
+    if(act==="rgal-scroll"){
+      var sec=btn.closest&&btn.closest(".rgal"); var tr=sec&&sec.querySelector(".rgal-track");
+      if(tr){ var dir=(btn.getAttribute("data-dir")==="next")?1:-1; tr.scrollBy({left:dir*Math.round(tr.clientWidth*0.82), behavior:"smooth"}); }
+      return;
+    }
     if(act==="gt-start") return startGuionTinder();
     if(act==="gt-vote") return guionTinderVote(parseInt(btn.getAttribute("data-k"),10)||0);
     if(act==="gt-reset") return guionTinderReset();
@@ -4000,6 +4104,9 @@
       return render();
     }
     if(act==="versus-quit"){ S.versus=null; showToast(L("Objetivo quitado.","Goal removed.")); return render(); }
+    if(act==="community-info"){ S.communityInfo=true; return render(); }   // abre mini-modal Comunidad
+    if(act==="ci-close"){ S.communityInfo=false; return render(); }
+    if(act==="ci-stop") return;   // clic DENTRO del modal no lo cierra
     if(act==="community-interest"){
       try{ localStorage.setItem("rs_community_interest","1"); }catch(e){}
       try{ if(window.posthog&&window.posthog.capture) window.posthog.capture("community_interest",{from:"ranking"}); }catch(e){}
